@@ -1,35 +1,27 @@
-#CanFlood 
-[parameters] #simple parameters needed by damage and risk models
+[parameters]
+name = test1
+cid = xid
+prec = 2
+validated = True
+ground_water = False
+felv = ground
+event_probs = ari
+ltail = extrapolate
+rtail = 0.5
+drop_tails = True
+integrate = trapz
+ead_plot = True
+res_per_asset = True
 
-#common parameters
-name = test1   #name of the scenario/model run
-cid = xid  #index column for the 3 inventoried data sets (finv, expos, gels)
-prec = 2 #float precision for calculations
-validated = True #flag that the inputs validator tool has checked all the inputs
-
-#damage model pqrs
-ground_water = False #whether to allow wsl < gel
-felv = ground #'datum' or 'ground': whether felv values provided in the inventory are heights or elevations
-
-#risk model pars
-event_probs = ari #indicate what format the event probabilities are in (for aeps): 'ari' or 'aep'
-ltail = extrapolate #left tail treatment code (low prob high damage)
-rtail = 0.5 # right trail treatment (high prob low damage)
-drop_tails = True #whether to remove the tail damages from the results
-integrate = trapz #integration method to apply: trapz, simps (not implemented) https://docs.scipy.org/doc/scipy/reference/integrate.html
-ead_plot = True #whether to generate a plot of the ead as well
-res_per_asset = True #whether to generate results per asset
-
-
-[dmg_fps] #filepaths to data files
-curves=C:\Users\tony.decrescenzo\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\floodiq\Data_Files\cT1\CanFlood - curve set 01.xls #damage curve library
-
-#finv keyed data sets
-finv=C:\Users\tony.decrescenzo\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\floodiq\Data_Files\cT1\finv_icomp_cT1_heights.csv
-expos=C:\Users\tony.decrescenzo\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\floodiq\Data_Files\cT1\exposure_1000_cT1.csv
-gels=C:\Users\tony.decrescenzo\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\floodiq\Data_Files\cT1\gel_cT1.csv
+[dmg_fps]
+curves = C:\Users\tony.decrescenzo\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\floodiq\Data_Files\CanFlood - curve set 01.xls
+finv = C:\Users\tony.decrescenzo\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\floodiq\Data_Files\finv_icomp_cT1_heights.csv
+expos = C:/Users/tony.decrescenzo/AppData/Roaming/QGIS/QGIS3/profiles/default/python/plugins/floodiq/Data_Files\expos_test_1_7.csv
+gels = C:\Users\tony.decrescenzo\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\floodiq\Data_Files\gel_cT1.csv
+#expos file path set from wsamp.py
 
 [risk_fps]
-dmgs=C:\Users\tony.decrescenzo\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\floodiq\Data_Files\dmg_results.csv #damage results
-exlikes=C:\Users\tony.decrescenzo\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\floodiq\Data_Files\elikes_cT1.csv
-aeps=C:\Users\tony.decrescenzo\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\floodiq\Data_Files\eaep_cT1.csv
+dmgs = C:\Users\tony.decrescenzo\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\floodiq\Data_Files\dmg_results.csv
+exlikes = C:\Users\tony.decrescenzo\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\floodiq\Data_Files\elikes_cT1.csv
+aeps = C:\Users\tony.decrescenzo\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\floodiq\Data_Files\eaep_cT1.csv
+

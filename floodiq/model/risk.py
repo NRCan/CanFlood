@@ -3,23 +3,15 @@ Created on Feb. 7, 2020
 
 @author: cefect
 '''
-
-
-
-
-
-
 #==========================================================================
 # logger setup-----------------------
 #==========================================================================
 import logging, logging.config
-logcfg_file = r'C:\LS\03_TOOLS\CanFlood\0.0.2\_pars\logger.conf'
+#logcfg_file = r'C:\Users\tony.decrescenzo\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\floodiq\_pars\logger.conf'
 logger = logging.getLogger() #get the root logger
-logging.config.fileConfig(logcfg_file) #load the configuration file
-logger.info('root logger initiated and configured from file: %s'%(logcfg_file))
-
-
-
+#logging.config.fileConfig(logcfg_file) #load the configuration file
+#logger.info('root logger initiated and configured from file: %s'%(logcfg_file))
+    
 #==============================================================================
 # imports---------------------------
 #==============================================================================
@@ -35,9 +27,8 @@ from scipy import interpolate, integrate
 import hp
 from hp import Error, view
 
-from scripts import Model
 
-
+from model.scripts_ import Model
 
 #==============================================================================
 # functions----------------------
@@ -85,16 +76,15 @@ class RiskModel(Model):
     
     
 
-    
+    dirname = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     def __init__(self,
-                 par_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\model\CanFlood_control_01.txt',
-                 out_dir = r'C:\LS\03_TOOLS\CanFlood\_outs\risk',
-                 logger = None,
+                 par_fp = os.path.join(dirname, 'Documents\CanFlood_control_01.txt'),
+                 out_dir = os.path.join(dirname, 'Data_Files'),
+                 logger = None
                  ):
         
         #init the baseclass
-        super().__init__(par_fp, out_dir, logger=logger) #initilzie teh baseclass
-        
+        super().__init__(par_fp, out_dir, logger) #initilzie teh baseclass
         
         #======================================================================
         # setup funcs
@@ -102,8 +92,6 @@ class RiskModel(Model):
         
         
         self.setup_data()
-        
-
         
         self.logger.debug('finished __init__ on Risk')
         
@@ -836,15 +824,14 @@ class RiskModel(Model):
         
         
 
-    
-if __name__ =="__main__": 
-    
-    
+def main_run():
     print('executing')
-    
+
     _ = RiskModel(logger=logger).run()
     
     print('finished')
+    
+
     
     
     

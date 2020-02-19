@@ -4,20 +4,14 @@ Created on Feb. 7, 2020
 @author: cefect
 '''
 
-
-
-
-
-
 #==========================================================================
 # logger setup-----------------------
 #==========================================================================
 import logging, logging.config
-logcfg_file = r'C:\LS\03_TOOLS\CanFlood\0.0.2\_pars\logger.conf'
+#logcfg_file = r'C:\Users\tony.decrescenzo\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\floodiq\_pars\logger.conf'
 logger = logging.getLogger() #get the root logger
-logging.config.fileConfig(logcfg_file) #load the configuration file
-logger.info('root logger initiated and configured from file: %s'%(logcfg_file))
-
+#logging.config.fileConfig(logcfg_file) #load the configuration file
+#logger.info('root logger initiated and configured from file: %s'%(logcfg_file))
 
 
 #==============================================================================
@@ -33,7 +27,7 @@ import numpy as np
 import hp
 from hp import Error, view
 
-from scripts import Model
+from model.scripts_ import Model
 
 
 #==============================================================================
@@ -73,9 +67,10 @@ class DmgModel(Model):
     exp_pars = {'parameters':list(),
                   'dmg_fps':['curves','expos', 'gels', 'finv']}
     
+    dirname = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     def __init__(self,
-                 par_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\model\CanFlood_control_01.txt',
-                 out_dir = r'C:\LS\03_TOOLS\CanFlood\_outs\dmg',
+                 par_fp = os.path.join(dirname, 'Documents\CanFlood_control_01.txt'),
+                 out_dir = os.path.join(dirname, 'Data_Files'),
                  logger = None,
                  ):
         
@@ -426,7 +421,7 @@ class DmgModel(Model):
         
         #start results container
         res_df = bdf.loc[:, [bid, cid, 'ftag', 'fcap', 'fscale']]
-        del res_df.index.name
+        res_df.index.name = None
         
         #get events name set
         """makes it easier to keep track of all the results by event"""
@@ -721,13 +716,20 @@ class DFunc(object,
             
 
     
-if __name__ =="__main__": 
-    
-    
+def main_run():
     print('executing')
-    
 
-
-
-    
     _ = DmgModel(logger=logger).run()
+    
+    print('finished')
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    

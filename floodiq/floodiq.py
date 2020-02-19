@@ -51,17 +51,21 @@ file_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(file_dir)
 #import model
 #from risk import RiskModel
-import risk
 
-import logging, logging.config
-logcfg_file = r'C:\Users\tony.decrescenzo\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\floodiq\_pars\logger.conf'
-logger = logging.getLogger() #get the root logger
-logging.config.fileConfig(logcfg_file) #load the configuration file
-logger.info('root logger initiated and configured from file: %s'%(logcfg_file))
+import model.risk
+import model.dmg
+import prep.wsamp
+from hp import Error
+
+#import logging, logging.config
+#logcfg_file = r'C:\Users\tony.decrescenzo\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\floodiq\_pars\logger.conf'
+#logger = logging.getLogger() #get the root logger
+#logging.config.fileConfig(logcfg_file) #load the configuration file
+#logger.info('root logger initiated and configured from file: %s'%(logcfg_file))
 
 class FloodIQ:
     """QGIS Plugin Implementation."""
-
+    
     def __init__(self, iface):
         """Constructor.
 
@@ -71,6 +75,13 @@ class FloodIQ:
         :type iface: QgsInterface
         """
         # Save reference to the QGIS interface
+
+        self.sel_val = []
+        self.ras = []
+        self.ras_dict = {}
+        self.vec = None
+        self.outp = None
+        self.fpath = None
         self.iface = iface
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
@@ -210,47 +221,75 @@ class FloodIQ:
         #=======================================================================
         # calculate poly stats
         #=======================================================================
-        #filename = self.dlg.lineEdit.text()
-        pass
-        print('get exposure')
+        self.vec = self.dlg.comboBox.currentLayer()
+        self.ras = list(self.ras_dict.values())
+        if (self.vec is None or len(self.ras) == 0 or self.outp is None):
+            self.iface.messageBar().pushMessage("Input field missing",
+                                                 level=Qgis.Critical, duration=10)
+            return
+        prep.wsamp.main_run(self.ras, self.vec, self.outp)
     
     def run_risk(self):                
         #=======================================================================
         # run risk model
         #=======================================================================
         #filename = self.dlg.lineEdit.text()
-        print('Running Risk Model')
-        risk.RiskModel().run(logger=logger)
-        print('Finished')
-    
+        model.risk.main_run()
+
     def run_damage(self):                
         #=======================================================================
         # run damage model
         #=======================================================================
         #filename = self.dlg.lineEdit.text()
-        pass
-        print('run damage')
+        model.dmg.main_run()
     
     def select_output_file(self):
-        filename, _filter = QFileDialog.getSaveFileName(
-            self.dlg, "Select   output file ","", '*.csv')
-        self.dlg.lineEdit.setText(filename)
+        foldername = QFileDialog.getExistingDirectory(self.dlg, "Select Directory")
+        self.outp = foldername 
+        self.dlg.lineEdit.setText(foldername)
     
+    def add_ras(self):
+        x = [str(self.dlg.listWidget.item(i).text()) for i in range(self.dlg.listWidget.count())]  
+        if (self.dlg.comboBox_2.currentText()) not in x:
+            self.dlg.listWidget.addItem(self.dlg.comboBox_2.currentText())
+            self.ras_dict.update({ (self.dlg.comboBox_2.currentText()) : (self.dlg.comboBox_2.currentLayer()) })
+        
+    def clear_text_edit(self):
+        if len(self.ras_dict) > 0:
+            self.dlg.listWidget.clear()
+            self.ras_dict = {}
+    
+    def remove_text_edit(self):
+        if (self.dlg.listWidget.currentItem()) is not None:
+            value = self.dlg.listWidget.currentItem().text()
+            item = self.dlg.listWidget.takeItem(self.dlg.listWidget.currentRow())
+            item = None
+            for k in list(self.ras_dict):
+                if k == value:
+                    self.ras_dict.pop(value)
+
     def run(self):
         """Run method that performs all the real work"""
 
         # Create the dialog with elements (after translation) and keep reference
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
         if self.first_start == True:
-            self.first_start = False
+            self.first_start = False            
             self.dlg = FloodIQDialog()
             self.dlg.pushButton.clicked.connect(self.select_output_file)
             self.dlg.pushButton_2.clicked.connect(self.get_exp)
             self.dlg.pushButton_3.clicked.connect(self.run_risk)
             self.dlg.pushButton_4.clicked.connect(self.run_damage)
-
+            self.dlg.pushButton_5.clicked.connect(self.clear_text_edit)
+            self.dlg.pushButton_6.clicked.connect(self.remove_text_edit)
+            self.dlg.comboBox_2.currentTextChanged.connect(self.add_ras)            
+        
         # Fetch the currently loaded layers
-        layers = QgsProject.instance().layerTreeRoot().children()
+        layers = self.iface.mapCanvas().layers()
+        layers_vec = [layer for layer in layers if layer.type() == QgsMapLayer.VectorLayer]
+        layers_ras = [layer for layer in layers if layer.type() == QgsMapLayer.RasterLayer]
+        self.dlg.comboBox.setFilters(QgsMapLayerProxyModel.VectorLayer)
+        self.dlg.comboBox_2.setFilters(QgsMapLayerProxyModel.RasterLayer)
         
         # Clear the contents of the comboBox from previous runs
         self.dlg.comboBox.clear()
@@ -258,8 +297,8 @@ class FloodIQ:
         self.dlg.lineEdit.clear()
         
         # Populate the comboBox with names of all the loaded layers
-        self.dlg.comboBox.addItems([layer.name() for layer in layers])
-        self.dlg.comboBox_2.addItems([layer.name() for layer in layers])
+        #self.dlg.comboBox.addItems([layer.name() for layer in layers_vec])
+        #self.dlg.comboBox_2.addItems([layer.name() for layer in layers_ras])
         
         # show the dialog
         self.dlg.show()
