@@ -21,15 +21,42 @@
  *                                                                         *
  ***************************************************************************/
 """
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
+from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QObject
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction
+from qgis.PyQt.QtWidgets import QAction, QFileDialog, QListWidget
 
 # Initialize Qt resources from file resources.py
 from .resources import *
 # Import the code for the dialog
+
 from .canFlood_inPrep_dialog import CanFlood_inPrepDialog
 import os.path
+from qgis.core import QgsProject, Qgis, QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest
+
+# User defined imports
+from qgis.core import *
+from qgis.analysis import *
+import qgis.utils
+import processing
+from processing.core.Processing import Processing
+import sys, os, warnings, tempfile, logging, configparser
+
+sys.path.append(r'C:\IBI\_QGIS_\QGIS 3.8\apps\Python37\Lib\site-packages')
+#sys.path.append(os.path.join(sys.exec_prefix, 'Lib/site-packages'))
+import numpy as np
+import pandas as pd
+
+file_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(file_dir)
+#import model
+#from risk import RiskModel
+
+import model.risk
+import model.dmg
+import prep.wsamp
+#from canFlood_model import CanFlood_Model
+from hp import Error
+from shutil import copyfile
 
 
 class CanFlood_inPrep:
@@ -44,6 +71,12 @@ class CanFlood_inPrep:
         :type iface: QgsInterface
         """
         # Save reference to the QGIS interface
+        self.ras = []
+        self.ras_dict = {}
+        self.vec = None
+        self.wd = None
+        self.cf = None
+        
         self.iface = iface
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
@@ -158,18 +191,16 @@ class CanFlood_inPrep:
         return action
 
     def initGui(self):
-        """Create the menu entries and toolbar icons inside the QGIS GUI."""
-
+        """Create the menu entries and toolbar icons inside the QGIS GUI."""  
+        
         icon_path = ':/plugins/canFlood_inPrep/icon.png'
         self.add_action(
             icon_path,
             text=self.tr(u''),
             callback=self.run,
             parent=self.iface.mainWindow())
-
         # will be set False in run()
         self.first_start = True
-
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -178,7 +209,92 @@ class CanFlood_inPrep:
                 self.tr(u'&CanFlood_inPrep'),
                 action)
             self.iface.removeToolBarIcon(action)
+            
+    # Select input/output files/folders            
+    def select_output_file_vcs(self):
+        filename = QFileDialog.getOpenFileName(self.dlg, "Select File") 
+        self.dlg.lineEdit_curve.setText(str(filename[0]))
+        
+    def select_output_file_cf(self):
+        filename = QFileDialog.getOpenFileName(self.dlg, "Select File")
+        self.dlg.lineEdit_control_1.setText(str(filename[0]))
+        self.dlg.lineEdit_control_2.setText(str(filename[0]))
+        self.cf = str(filename[0])
+    
+    def select_output_folder(self):
+        foldername = QFileDialog.getExistingDirectory(self.dlg, "Select Directory")
+        self.wd = foldername 
+        self.dlg.lineEdit_wd.setText(os.path.normpath(foldername))
+    
+    # Functions related to hazard raster loading/unloading
+    def add_ras(self):
+        x = [str(self.dlg.listWidget_ras.item(i).text()) for i in range(self.dlg.listWidget_ras.count())]
+        self.ras_dict.update({ (self.dlg.comboBox_ras.currentText()) : (self.dlg.comboBox_ras.currentLayer()) })
+        if (self.dlg.comboBox_ras.currentText()) not in x:
+            self.dlg.listWidget_ras.addItem(self.dlg.comboBox_ras.currentText())
+            self.ras_dict.update({ (self.dlg.comboBox_ras.currentText()) : (self.dlg.comboBox_ras.currentLayer()) })
+        
+    def clear_text_edit(self):
+        if len(self.ras_dict) > 0:
+            self.dlg.listWidget_ras.clear()
+            self.ras_dict = {}
+    
+    def remove_text_edit(self):
+        if (self.dlg.listWidget_ras.currentItem()) is not None:
+            value = self.dlg.listWidget_ras.currentItem().text()
+            item = self.dlg.listWidget_ras.takeItem(self.dlg.listWidget_ras.currentRow())
+            item = None
+            for k in list(self.ras_dict):
+                if k == value:
+                    self.ras_dict.pop(value)
 
+    def add_all_text_edit(self):
+        layers = self.iface.mapCanvas().layers()
+        #layers_vec = [layer for layer in layers if layer.type() == QgsMapLayer.VectorLayer]
+        layers_ras = [layer for layer in layers if layer.type() == QgsMapLayer.RasterLayer]
+        x = [str(self.dlg.listWidget_ras.item(i).text()) for i in range(self.dlg.listWidget_ras.count())]
+        for layer in layers_ras:
+            if (layer.name()) not in x:
+                self.ras_dict.update( { layer.name() : layer} )
+                self.dlg.listWidget_ras.addItem(str(layer.name()))
+
+    
+    # Functions related to setting file/folder paths and creating/setting control file                    
+    def set_wd(self):
+        self.wd =  self.dlg.lineEdit_wd.text()
+        self.check_cf()
+        self.dlg.lineEdit_curve.setText(os.path.normpath(os.path.join(self.wd, 'CanFlood - curve set 01.xls')))
+        self.dlg.lineEdit_control_1.setText(os.path.normpath(os.path.join(self.wd, 'CanFlood_control_01.txt')))
+        self.dlg.lineEdit_control_2.setText(os.path.normpath(os.path.join(self.wd, 'CanFlood_control_01.txt')))
+        
+    def check_cf(self):
+        dirname = os.path.dirname(__file__)
+        cf_src = os.path.join(dirname, '_documents/CanFlood_control_01.txt')
+        scratch_src = os.path.join(dirname, '_documents/scratch.txt')
+        cf_path = os.path.join(self.wd, 'CanFlood_control_01.txt')
+        
+        if not (os.path.isfile(cf_path)):
+            copyfile(cf_src, cf_path)
+            
+        if not os.path.exists(scratch_src):
+            open(scratch_src, 'w').close()
+        
+        pars = configparser.ConfigParser(inline_comment_prefixes='#', allow_no_value=True)
+        _ = pars.read(cf_path)
+        
+        pars.set('dmg_fps', 'curves', os.path.normpath(os.path.join(self.wd, 'CanFlood - curve set 01.xls')))
+        pars.set('dmg_fps', 'finv', os.path.normpath(os.path.join(self.wd, 'finv_icomp_cT1_heights.csv')))
+        pars.set('dmg_fps', 'expos', os.path.normpath(os.path.join(self.wd, 'expos_test_1_7.csv')))
+        pars.set('dmg_fps', '#expos file path set from wsamp.py')
+        pars.set('dmg_fps', 'gels', os.path.normpath(os.path.join(self.wd, 'gel_cT1.csv')))
+        
+        pars.set('risk_fps', 'dmgs', os.path.normpath(os.path.join(self.wd, 'dmg_results.csv')))
+        pars.set('risk_fps', 'exlikes', os.path.normpath(os.path.join(self.wd, 'elikes_cT1.csv')))
+        pars.set('risk_fps', 'aeps', os.path.normpath(os.path.join(self.wd, 'eaep_cT1.csv')))
+        
+        with open(cf_path, 'w') as configfile:
+            pars.write(configfile)
+            
 
     def run(self):
         """Run method that performs all the real work"""
@@ -188,7 +304,45 @@ class CanFlood_inPrep:
         if self.first_start == True:
             self.first_start = False
             self.dlg = CanFlood_inPrepDialog()
-
+            
+            # Fetch the currently loaded layers
+            layers = self.iface.mapCanvas().layers()
+            #layers_vec = [layer for layer in layers if layer.type() == QgsMapLayer.VectorLayer]
+            layers_ras = [layer for layer in layers if layer.type() == QgsMapLayer.RasterLayer]
+            
+            self.dlg.comboBox_vec.setFilters(QgsMapLayerProxyModel.VectorLayer)
+            self.dlg.comboBox_ras.setFilters(QgsMapLayerProxyModel.RasterLayer)
+            self.dlg.comboBox_dtm.setFilters(QgsMapLayerProxyModel.RasterLayer)
+            self.dlg.listWidget_ls.addItems(layer.name() for layer in layers_ras)
+            self.dlg.listWidget_ls.setSelectionMode(QListWidget.MultiSelection)
+            
+            # Set folder/file browse buttons
+            self.dlg.pushButton_br_1.clicked.connect(self.select_output_folder)
+            self.dlg.pushButton_br_2.clicked.connect(self.select_output_file_vcs)
+            self.dlg.pushButton_br_3.clicked.connect(self.select_output_file_cf)
+            self.dlg.pushButton_br_4.clicked.connect(self.select_output_file_cf)
+            self.dlg.pushButton_set.clicked.connect(self.set_wd)
+            self.dlg.pushButton_remove.clicked.connect(self.remove_text_edit)
+            self.dlg.pushButton_clear.clicked.connect(self.clear_text_edit)
+            self.dlg.pushButton_add_all.clicked.connect(self.add_all_text_edit)
+            
+            self.dlg.comboBox_ras.currentTextChanged.connect(self.add_ras)
+            
+            self.dlg.buttonBox.accepted.connect(self.dlg.accept)
+            self.dlg.buttonBox.rejected.connect(self.dlg.reject)
+            
+        
+        # Clear the contents of the comboBox from previous runs
+        self.dlg.comboBox_vec.clear()
+        self.dlg.comboBox_ras.clear()
+        self.dlg.comboBox_dtm.clear()
+        self.dlg.comboBox_aoi.clear()
+        self.dlg.listWidget_ras.clear()
+        self.dlg.lineEdit_wd.clear()
+        self.dlg.lineEdit_curve.clear()
+        self.dlg.lineEdit_control_1.clear()
+        self.dlg.lineEdit_control_2.clear()
+        
         # show the dialog
         self.dlg.show()
         # Run the dialog event loop
@@ -197,4 +351,23 @@ class CanFlood_inPrep:
         if result:
             # Do something useful here - delete the line containing pass and
             # substitute with your code.
-            pass
+            #=======================================================================
+            # calculate poly stats
+            #=======================================================================
+            self.vec = self.dlg.comboBox_vec.currentLayer()
+            self.ras = list(self.ras_dict.values())
+            self.cf = self.dlg.lineEdit_control_1.text()
+            if (self.vec is None or len(self.ras) == 0 or self.wd is None or self.cf is None):
+                self.iface.messageBar().pushMessage("Input field missing",
+                                                     level=Qgis.Critical, duration=10)
+                return
+            
+            pars = configparser.ConfigParser(inline_comment_prefixes='#', allow_no_value=True)
+            _ = pars.read(self.cf)
+            pars.set('dmg_fps', 'curves', self.dlg.lineEdit_curve.text())
+            with open(self.cf, 'w') as configfile:
+                pars.write(configfile)
+            
+            prep.wsamp.main_run(self.ras, self.vec, self.wd, self.cf)
+            self.iface.messageBar().pushMessage(
+                "Success", "Process successful", level=Qgis.Success, duration=10)

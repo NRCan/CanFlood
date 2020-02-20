@@ -21,15 +21,41 @@
  *                                                                         *
  ***************************************************************************/
 """
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
+from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QObject
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction
+from qgis.PyQt.QtWidgets import QAction, QFileDialog, QListWidget
 
 # Initialize Qt resources from file resources.py
 from .resources import *
 # Import the code for the dialog
 from .canFlood_model_dialog import CanFlood_ModelDialog
 import os.path
+from qgis.core import QgsProject, Qgis, QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest
+
+# User defined imports
+from qgis.core import *
+from qgis.analysis import *
+import qgis.utils
+import processing
+from processing.core.Processing import Processing
+import sys, os, warnings, tempfile, logging, configparser
+
+sys.path.append(r'C:\IBI\_QGIS_\QGIS 3.8\apps\Python37\Lib\site-packages')
+#sys.path.append(os.path.join(sys.exec_prefix, 'Lib/site-packages'))
+import numpy as np
+import pandas as pd
+
+file_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(file_dir)
+#import model
+#from risk import RiskModel
+
+import canflood_model.model.risk
+import canflood_model.model.dmg
+import prep.wsamp
+#from canFlood_model import CanFlood_Model
+from hp import Error
+from shutil import copyfile
 
 
 class CanFlood_Model:
@@ -44,6 +70,8 @@ class CanFlood_Model:
         :type iface: QgsInterface
         """
         # Save reference to the QGIS interface
+        self.wd = None
+        self.cf = None
         self.iface = iface
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
@@ -179,6 +207,39 @@ class CanFlood_Model:
                 action)
             self.iface.removeToolBarIcon(action)
 
+    def select_output_folder(self):
+        foldername = QFileDialog.getExistingDirectory(self.dlg, "Select Directory")
+        print(foldername)
+        if foldername is not "":
+            self.dlg.lineEdit_wd_1.setText(os.path.normpath(foldername))
+            self.dlg.lineEdit_wd_2.setText(os.path.normpath(foldername))
+            self.dlg.lineEdit_cf_1.setText(os.path.normpath(os.path.join(foldername, 'CanFlood_control_01.txt')))
+            self.dlg.lineEdit_cf_2.setText(os.path.normpath(os.path.join(foldername, 'CanFlood_control_01.txt')))
+    
+    def select_output_file(self):
+        filename = QFileDialog.getOpenFileName(self.dlg, "Select File") 
+        self.dlg.lineEdit_cf_1.setText(str(filename[0]))
+        self.dlg.lineEdit_cf_2.setText(str(filename[0]))
+    
+    def run_risk(self):
+        self.wd = self.dlg.lineEdit_wd_1.text()
+        self.cf = self.dlg.lineEdit_cf_1.text()
+        if (self.wd is None or self.cf is None):
+            self.iface.messageBar().pushMessage("Input field missing",
+                                                level=Qgis.Critical, duration=10)
+        canflood_model.model.risk.main_run(self.wd, self.cf)
+        self.iface.messageBar().pushMessage(
+                "Success", "Process successful", level=Qgis.Success, duration=10)
+    
+    def run_dmg(self):
+        self.wd = self.dlg.lineEdit_wd_1.text()
+        self.cf = self.dlg.lineEdit_cf_1.text()
+        if (self.wd is None or self.cf is None):
+            self.iface.messageBar().pushMessage("Input field missing",
+                                                level=Qgis.Critical, duration=10)
+        canflood_model.model.dmg.main_run(self.wd, self.cf)
+        self.iface.messageBar().pushMessage(
+                "Success", "Process successful", level=Qgis.Success, duration=10)
 
     def run(self):
         """Run method that performs all the real work"""
@@ -188,6 +249,20 @@ class CanFlood_Model:
         if self.first_start == True:
             self.first_start = False
             self.dlg = CanFlood_ModelDialog()
+            self.dlg.pushButton_br_1.clicked.connect(self.select_output_folder)
+            self.dlg.pushButton_br_2.clicked.connect(self.select_output_file)
+            self.dlg.pushButton_br_3.clicked.connect(self.select_output_folder)
+            self.dlg.pushButton_br_4.clicked.connect(self.select_output_file)
+            self.dlg.pushButton_run_1.clicked.connect(self.run_risk)
+            self.dlg.pushButton_run_2.clicked.connect(self.run_dmg)
+            
+            self.dlg.buttonBox.accepted.connect(self.dlg.accept)
+            self.dlg.buttonBox.rejected.connect(self.dlg.reject)
+            
+        self.dlg.lineEdit_wd_1.clear()
+        self.dlg.lineEdit_cf_1.clear()
+        self.dlg.lineEdit_wd_2.clear()
+        self.dlg.lineEdit_cf_2.clear()
 
         # show the dialog
         self.dlg.show()

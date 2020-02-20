@@ -38,7 +38,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>3</number>
    </property>
    <property name="movable">
     <bool>false</bool>
@@ -290,6 +290,19 @@
          </rect>
         </property>
        </widget>
+       <widget class="QPushButton" name="pushButton_add_all">
+        <property name="geometry">
+         <rect>
+          <x>520</x>
+          <y>120</y>
+          <width>81</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Add All</string>
+        </property>
+       </widget>
       </widget>
      </item>
     </layout>
@@ -416,51 +429,10 @@
     <attribute name="title">
      <string>Likelihood Sampler</string>
     </attribute>
-    <widget class="QWidget" name="layoutWidget">
-     <property name="geometry">
-      <rect>
-       <x>7</x>
-       <y>42</y>
-       <width>561</width>
-       <height>531</height>
-      </rect>
-     </property>
-     <layout class="QVBoxLayout" name="_12">
-      <item>
-       <widget class="QLabel" name="label_11">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string>Select Likelihood Polygons to Sample:</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QListWidget" name="inData_3">
-        <property name="cursor" stdset="0">
-         <cursorShape>ArrowCursor</cursorShape>
-        </property>
-        <property name="editTriggers">
-         <set>QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed</set>
-        </property>
-        <property name="selectionMode">
-         <enum>QAbstractItemView::ExtendedSelection</enum>
-        </property>
-        <property name="viewMode">
-         <enum>QListView::ListMode</enum>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
     <widget class="QLabel" name="label_12">
      <property name="geometry">
       <rect>
-       <x>6</x>
+       <x>10</x>
        <y>0</y>
        <width>561</width>
        <height>20</height>
@@ -468,6 +440,35 @@
      </property>
      <property name="text">
       <string>Generate secondary exposure likelihoods (optional)</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_11">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>191</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>Select Likelihood Polygons to Sample:</string>
+     </property>
+    </widget>
+    <widget class="QListWidget" name="listWidget_ls">
+     <property name="geometry">
+      <rect>
+       <x>-5</x>
+       <y>51</y>
+       <width>641</width>
+       <height>571</height>
+      </rect>
      </property>
     </widget>
    </widget>
@@ -544,7 +545,7 @@
   <widget class="QPushButton" name="pushButton_help">
    <property name="geometry">
     <rect>
-     <x>580</x>
+     <x>590</x>
      <y>700</y>
      <width>75</width>
      <height>23</height>
@@ -622,7 +623,7 @@
    </property>
    <property name="geometry">
     <rect>
-     <x>420</x>
+     <x>430</x>
      <y>700</y>
      <width>156</width>
      <height>23</height>
