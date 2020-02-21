@@ -69,8 +69,8 @@ class DmgModel(Model):
     
     dirname = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     def __init__(self,
-                 par_fp = None,
-                 out_dir = None,
+                 par_fp = os.path.join(dirname, 'Documents\CanFlood_control_01.txt'),
+                 out_dir = os.path.join(dirname, 'Data_Files'),
                  logger = None,
                  ):
         
@@ -300,7 +300,6 @@ class DmgModel(Model):
         should also add this to the input validator tool
         """
         boolidx = ddf.drop([bid, cid], axis=1) < 0 #True=wsl below ground
-        print(boolidx)
         if boolidx.any().any():
             msg = 'got %i (of %i) wsl below ground'%(boolidx.sum(), len(boolidx))
             if self.ground_water:
@@ -717,12 +716,10 @@ class DFunc(object,
             
 
     
-def main_run(wd, cf):
+def main_run():
     print('executing')
 
-    _ = DmgModel(par_fp=cf,
-                 out_dir=wd,
-                 logger=logger).run()
+    _ = DmgModel(logger=logger).run()
     
     print('finished')
     

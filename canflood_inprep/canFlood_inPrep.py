@@ -58,6 +58,9 @@ import prep.wsamp
 from hp import Error
 from shutil import copyfile
 
+from .ProjectDataPrep.ProjectDataPrepDialog import DataPrep_Dialog
+from .ProjectModelling.ProjectModellingDialog import Modelling_Dialog
+from .ProjectResults.ProjectResultsDialog import Results_Dialog
 
 class CanFlood_inPrep:
     """QGIS Plugin Implementation."""
@@ -91,6 +94,11 @@ class CanFlood_inPrep:
             self.translator = QTranslator()
             self.translator.load(locale_path)
             QCoreApplication.installTranslator(self.translator)
+
+        # Create the dialog (after translation) and keep reference
+        self.dlg1 = DataPrep_Dialog(self.iface)
+        self.dlg2 = Modelling_Dialog(self.iface)
+        self.dlg3 = Results_Dialog()
 
         # Declare instance attributes
         self.actions = []
@@ -191,17 +199,51 @@ class CanFlood_inPrep:
         return action
 
     def initGui(self):
-        """Create the menu entries and toolbar icons inside the QGIS GUI."""  
         
-        icon_path = ':/plugins/canFlood_inPrep/icon.png'
-        self.add_action(
-            icon_path,
-            text=self.tr(u''),
-            callback=self.run,
-            parent=self.iface.mainWindow())
-        # will be set False in run()
-        self.first_start = True
+        icon_path = ':/plugins/canflood_inprep/icons/CanFlood_Icon.png'
+        """Create the menu entries and toolbar icons inside the QGIS GUI."""  
+        self.toolbar = self.iface.addToolBar('CanFlood')
+        self.toolbar.setObjectName('CanFloodToolBar')
+        
+        # 1----first button---------------------------------
+        self.toolbarProjectDataPrep = QAction(QIcon(':/plugins/canflood_inprep/icons/icon1.png'), \
+            'ProjectDataPrep', self.iface.mainWindow())
+        self.toolbarProjectDataPrep.setObjectName('toolbarProjectDataPrep')
+        self.toolbarProjectDataPrep.setCheckable(False)
+        self.toolbarProjectDataPrep.triggered.connect(self.showToolbarDataPrep)
+        self.toolbar.addAction(self.toolbarProjectDataPrep)
 
+        # 2----second button---------------------------------
+        self.toolbarProjectModelling = QAction(QIcon(':/plugins/canflood_inprep/icons/icon2.png'), \
+            'ProjectModelling', self.iface.mainWindow())
+        self.toolbarProjectModelling.setObjectName('toolbarProjectModelling')
+        self.toolbarProjectModelling.setCheckable(False)
+        self.toolbarProjectModelling.triggered.connect(self.showToolbarProjectModelling)
+        self.toolbar.addAction(self.toolbarProjectModelling)
+
+        # 3----third button---------------------------------
+        self.toolbarProjectResults = QAction(QIcon(':/plugins/canflood_inprep/icons/icon3.png'), \
+            'ProjectResults', self.iface.mainWindow())
+        self.toolbarProjectResults.setObjectName('toolbarProjectResults')
+        self.toolbarProjectResults.setCheckable(False)
+        self.toolbarProjectResults.triggered.connect(self.showToolbarProjectResults)
+        self.toolbar.addAction(self.toolbarProjectResults)
+        
+        # add buttons to menu
+        self.iface.addPluginToMenu("CanFlood", self.toolbarProjectDataPrep)
+        self.iface.addPluginToMenu("CanFlood", self.toolbarProjectModelling)
+        self.iface.addPluginToMenu("CanFlood", self.toolbarProjectResults)
+        
+
+    def showToolbarDataPrep(self):
+        self.dlg1.exec_()
+    
+    def showToolbarProjectModelling(self):
+        self.dlg2.exec_()
+    
+    def showToolbarProjectResults(self):
+        self.dlg3.exec_()
+    
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
@@ -209,165 +251,13 @@ class CanFlood_inPrep:
                 self.tr(u'&CanFlood_inPrep'),
                 action)
             self.iface.removeToolBarIcon(action)
-            
-    # Select input/output files/folders            
-    def select_output_file_vcs(self):
-        filename = QFileDialog.getOpenFileName(self.dlg, "Select File") 
-        self.dlg.lineEdit_curve.setText(str(filename[0]))
-        
-    def select_output_file_cf(self):
-        filename = QFileDialog.getOpenFileName(self.dlg, "Select File")
-        self.dlg.lineEdit_control_1.setText(str(filename[0]))
-        self.dlg.lineEdit_control_2.setText(str(filename[0]))
-        self.cf = str(filename[0])
-    
-    def select_output_folder(self):
-        foldername = QFileDialog.getExistingDirectory(self.dlg, "Select Directory")
-        self.wd = foldername 
-        self.dlg.lineEdit_wd.setText(os.path.normpath(foldername))
-    
-    # Functions related to hazard raster loading/unloading
-    def add_ras(self):
-        x = [str(self.dlg.listWidget_ras.item(i).text()) for i in range(self.dlg.listWidget_ras.count())]
-        self.ras_dict.update({ (self.dlg.comboBox_ras.currentText()) : (self.dlg.comboBox_ras.currentLayer()) })
-        if (self.dlg.comboBox_ras.currentText()) not in x:
-            self.dlg.listWidget_ras.addItem(self.dlg.comboBox_ras.currentText())
-            self.ras_dict.update({ (self.dlg.comboBox_ras.currentText()) : (self.dlg.comboBox_ras.currentLayer()) })
-        
-    def clear_text_edit(self):
-        if len(self.ras_dict) > 0:
-            self.dlg.listWidget_ras.clear()
-            self.ras_dict = {}
-    
-    def remove_text_edit(self):
-        if (self.dlg.listWidget_ras.currentItem()) is not None:
-            value = self.dlg.listWidget_ras.currentItem().text()
-            item = self.dlg.listWidget_ras.takeItem(self.dlg.listWidget_ras.currentRow())
-            item = None
-            for k in list(self.ras_dict):
-                if k == value:
-                    self.ras_dict.pop(value)
-
-    def add_all_text_edit(self):
-        layers = self.iface.mapCanvas().layers()
-        #layers_vec = [layer for layer in layers if layer.type() == QgsMapLayer.VectorLayer]
-        layers_ras = [layer for layer in layers if layer.type() == QgsMapLayer.RasterLayer]
-        x = [str(self.dlg.listWidget_ras.item(i).text()) for i in range(self.dlg.listWidget_ras.count())]
-        for layer in layers_ras:
-            if (layer.name()) not in x:
-                self.ras_dict.update( { layer.name() : layer} )
-                self.dlg.listWidget_ras.addItem(str(layer.name()))
-
-    
-    # Functions related to setting file/folder paths and creating/setting control file                    
-    def set_wd(self):
-        self.wd =  self.dlg.lineEdit_wd.text()
-        self.check_cf()
-        self.dlg.lineEdit_curve.setText(os.path.normpath(os.path.join(self.wd, 'CanFlood - curve set 01.xls')))
-        self.dlg.lineEdit_control_1.setText(os.path.normpath(os.path.join(self.wd, 'CanFlood_control_01.txt')))
-        self.dlg.lineEdit_control_2.setText(os.path.normpath(os.path.join(self.wd, 'CanFlood_control_01.txt')))
-        
-    def check_cf(self):
-        dirname = os.path.dirname(__file__)
-        cf_src = os.path.join(dirname, '_documents/CanFlood_control_01.txt')
-        scratch_src = os.path.join(dirname, '_documents/scratch.txt')
-        cf_path = os.path.join(self.wd, 'CanFlood_control_01.txt')
-        
-        if not (os.path.isfile(cf_path)):
-            copyfile(cf_src, cf_path)
-            
-        if not os.path.exists(scratch_src):
-            open(scratch_src, 'w').close()
-        
-        pars = configparser.ConfigParser(inline_comment_prefixes='#', allow_no_value=True)
-        _ = pars.read(cf_path)
-        
-        pars.set('dmg_fps', 'curves', os.path.normpath(os.path.join(self.wd, 'CanFlood - curve set 01.xls')))
-        pars.set('dmg_fps', 'finv', os.path.normpath(os.path.join(self.wd, 'finv_icomp_cT1_heights.csv')))
-        pars.set('dmg_fps', 'expos', os.path.normpath(os.path.join(self.wd, 'expos_test_1_7.csv')))
-        pars.set('dmg_fps', '#expos file path set from wsamp.py')
-        pars.set('dmg_fps', 'gels', os.path.normpath(os.path.join(self.wd, 'gel_cT1.csv')))
-        
-        pars.set('risk_fps', 'dmgs', os.path.normpath(os.path.join(self.wd, 'dmg_results.csv')))
-        pars.set('risk_fps', 'exlikes', os.path.normpath(os.path.join(self.wd, 'elikes_cT1.csv')))
-        pars.set('risk_fps', 'aeps', os.path.normpath(os.path.join(self.wd, 'eaep_cT1.csv')))
-        
-        with open(cf_path, 'w') as configfile:
-            pars.write(configfile)
-            
 
     def run(self):
         """Run method that performs all the real work"""
-
-        # Create the dialog with elements (after translation) and keep reference
-        # Only create GUI ONCE in callback, so that it will only load when the plugin is started
-        if self.first_start == True:
-            self.first_start = False
-            self.dlg = CanFlood_inPrepDialog()
-            
-            # Fetch the currently loaded layers
-            layers = self.iface.mapCanvas().layers()
-            #layers_vec = [layer for layer in layers if layer.type() == QgsMapLayer.VectorLayer]
-            layers_ras = [layer for layer in layers if layer.type() == QgsMapLayer.RasterLayer]
-            
-            self.dlg.comboBox_vec.setFilters(QgsMapLayerProxyModel.VectorLayer)
-            self.dlg.comboBox_ras.setFilters(QgsMapLayerProxyModel.RasterLayer)
-            self.dlg.comboBox_dtm.setFilters(QgsMapLayerProxyModel.RasterLayer)
-            self.dlg.listWidget_ls.addItems(layer.name() for layer in layers_ras)
-            self.dlg.listWidget_ls.setSelectionMode(QListWidget.MultiSelection)
-            
-            # Set folder/file browse buttons
-            self.dlg.pushButton_br_1.clicked.connect(self.select_output_folder)
-            self.dlg.pushButton_br_2.clicked.connect(self.select_output_file_vcs)
-            self.dlg.pushButton_br_3.clicked.connect(self.select_output_file_cf)
-            self.dlg.pushButton_br_4.clicked.connect(self.select_output_file_cf)
-            self.dlg.pushButton_set.clicked.connect(self.set_wd)
-            self.dlg.pushButton_remove.clicked.connect(self.remove_text_edit)
-            self.dlg.pushButton_clear.clicked.connect(self.clear_text_edit)
-            self.dlg.pushButton_add_all.clicked.connect(self.add_all_text_edit)
-            
-            self.dlg.comboBox_ras.currentTextChanged.connect(self.add_ras)
-            
-            self.dlg.buttonBox.accepted.connect(self.dlg.accept)
-            self.dlg.buttonBox.rejected.connect(self.dlg.reject)
-            
-        
-        # Clear the contents of the comboBox from previous runs
-        self.dlg.comboBox_vec.clear()
-        self.dlg.comboBox_ras.clear()
-        self.dlg.comboBox_dtm.clear()
-        self.dlg.comboBox_aoi.clear()
-        self.dlg.listWidget_ras.clear()
-        self.dlg.lineEdit_wd.clear()
-        self.dlg.lineEdit_curve.clear()
-        self.dlg.lineEdit_control_1.clear()
-        self.dlg.lineEdit_control_2.clear()
-        
         # show the dialog
         self.dlg.show()
         # Run the dialog event loop
         result = self.dlg.exec_()
         # See if OK was pressed
         if result:
-            # Do something useful here - delete the line containing pass and
-            # substitute with your code.
-            #=======================================================================
-            # calculate poly stats
-            #=======================================================================
-            self.vec = self.dlg.comboBox_vec.currentLayer()
-            self.ras = list(self.ras_dict.values())
-            self.cf = self.dlg.lineEdit_control_1.text()
-            if (self.vec is None or len(self.ras) == 0 or self.wd is None or self.cf is None):
-                self.iface.messageBar().pushMessage("Input field missing",
-                                                     level=Qgis.Critical, duration=10)
-                return
-            
-            pars = configparser.ConfigParser(inline_comment_prefixes='#', allow_no_value=True)
-            _ = pars.read(self.cf)
-            pars.set('dmg_fps', 'curves', self.dlg.lineEdit_curve.text())
-            with open(self.cf, 'w') as configfile:
-                pars.write(configfile)
-            
-            prep.wsamp.main_run(self.ras, self.vec, self.wd, self.cf)
-            self.iface.messageBar().pushMessage(
-                "Success", "Process successful", level=Qgis.Success, duration=10)
+            pass

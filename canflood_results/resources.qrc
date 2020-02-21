@@ -1,5 +1,0 @@
-<RCC>
-    <qresource prefix="/plugins/canFlood_results" >
-        <file>icon.png</file>
-    </qresource>
-</RCC>

@@ -78,8 +78,8 @@ class RiskModel(Model):
 
     dirname = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     def __init__(self,
-                 par_fp = None,
-                 out_dir = None,
+                 par_fp = os.path.join(dirname, 'Documents\CanFlood_control_01.txt'),
+                 out_dir = os.path.join(dirname, 'Data_Files'),
                  logger = None
                  ):
         
@@ -824,12 +824,10 @@ class RiskModel(Model):
         
         
 
-def main_run(wd, cf):
+def main_run():
     print('executing')
 
-    _ = RiskModel(par_fp=cf,
-                  out_dir=wd,
-                  logger=logger).run()
+    _ = RiskModel(logger=logger).run()
     
     print('finished')
     
