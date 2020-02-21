@@ -1,5 +1,0 @@
-<RCC>
-    <qresource prefix="/plugins/floodiq" >
-        <file>icon.png</file>
-    </qresource>
-</RCC>
