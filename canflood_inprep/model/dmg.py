@@ -302,7 +302,7 @@ class DmgModel(Model):
         boolidx = ddf.drop([bid, cid], axis=1) < 0 #True=wsl below ground
         print(boolidx)
         if boolidx.any().any():
-            msg = 'got %i (of %i) wsl below ground'%(boolidx.sum(), len(boolidx))
+            msg = 'got %i (of %i) wsl below ground'%(boolidx.sum().sum(), len(boolidx))
             if self.ground_water:
                 raise Error(msg)
             else:
