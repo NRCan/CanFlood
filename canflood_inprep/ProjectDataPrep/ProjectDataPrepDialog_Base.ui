@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>703</width>
-    <height>761</height>
+    <height>900</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -19,11 +19,11 @@
   <property name="maximumSize">
    <size>
     <width>703</width>
-    <height>761</height>
+    <height>900</height>
    </size>
   </property>
   <property name="windowTitle">
-   <string>CanFlood_inPrep</string>
+   <string>CanFlood_inPrep_0.0.1</string>
   </property>
   <widget class="QTabWidget" name="tabWidget">
    <property name="enabled">
@@ -34,7 +34,7 @@
      <x>30</x>
      <y>20</y>
      <width>641</width>
-     <height>648</height>
+     <height>751</height>
     </rect>
    </property>
    <property name="currentIndex">
@@ -66,7 +66,7 @@
        <x>10</x>
        <y>40</y>
        <width>611</width>
-       <height>91</height>
+       <height>81</height>
       </rect>
      </property>
      <property name="title">
@@ -95,19 +95,6 @@
        </rect>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_set">
-      <property name="geometry">
-       <rect>
-        <x>520</x>
-        <y>60</y>
-        <width>75</width>
-        <height>23</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Build</string>
-      </property>
-     </widget>
     </widget>
     <widget class="QGroupBox" name="groupBox_7">
      <property name="geometry">
@@ -119,7 +106,7 @@
       </rect>
      </property>
      <property name="title">
-      <string>Inventory Layer:</string>
+      <string>Inventory Vector Layer:</string>
      </property>
      <widget class="QgsMapLayerComboBox" name="comboBox_vec">
       <property name="geometry">
@@ -144,7 +131,7 @@
      <property name="title">
       <string>Vulnerability Curve Set:</string>
      </property>
-     <widget class="QPushButton" name="pushButton_br_2">
+     <widget class="QPushButton" name="pushButton_SScurves">
       <property name="geometry">
        <rect>
         <x>520</x>
@@ -180,14 +167,20 @@
      <property name="title">
       <string>Project AOI (optional):</string>
      </property>
-     <widget class="QComboBox" name="comboBox_aoi">
+     <widget class="QgsMapLayerComboBox" name="comboBox_aoi">
       <property name="geometry">
        <rect>
-        <x>20</x>
-        <y>40</y>
+        <x>19</x>
+        <y>30</y>
         <width>571</width>
-        <height>22</height>
+        <height>27</height>
        </rect>
+      </property>
+      <property name="allowEmptyLayer">
+       <bool>true</bool>
+      </property>
+      <property name="showCrs">
+       <bool>true</bool>
       </property>
      </widget>
     </widget>
@@ -195,13 +188,13 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>510</y>
+       <y>630</y>
        <width>611</width>
        <height>81</height>
       </rect>
      </property>
      <property name="title">
-      <string>Model Control File:</string>
+      <string>Load Existing Control File</string>
      </property>
      <widget class="QPushButton" name="pushButton_br_3">
       <property name="geometry">
@@ -224,6 +217,58 @@
         <width>481</width>
         <height>21</height>
        </rect>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_12">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>510</y>
+       <width>611</width>
+       <height>81</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Generate New Control File:</string>
+     </property>
+     <widget class="QLineEdit" name="linEdit_ScenTag">
+      <property name="geometry">
+       <rect>
+        <x>120</x>
+        <y>30</y>
+        <width>211</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>run</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButton_generate">
+      <property name="geometry">
+       <rect>
+        <x>450</x>
+        <y>30</y>
+        <width>131</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Generate Control File</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label">
+      <property name="geometry">
+       <rect>
+        <x>16</x>
+        <y>30</y>
+        <width>81</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Scenario Tag:</string>
       </property>
      </widget>
     </widget>
@@ -546,7 +591,7 @@
    <property name="geometry">
     <rect>
      <x>590</x>
-     <y>700</y>
+     <y>820</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -565,7 +610,7 @@
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>680</y>
+     <y>800</y>
      <width>221</width>
      <height>45</height>
     </rect>
@@ -624,7 +669,7 @@
    <property name="geometry">
     <rect>
      <x>430</x>
-     <y>700</y>
+     <y>820</y>
      <width>156</width>
      <height>23</height>
     </rect>

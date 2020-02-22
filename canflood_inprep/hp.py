@@ -29,9 +29,17 @@ from qgis.analysis import QgsNativeAlgorithms
 class Error(Exception):
     """Base class for exceptions in this module."""
     def __init__(self, msg):
-        mod_logger.error(msg)
+        from qgis.utils import iface
+        
+        iface.messageBar().pushMessage("Error",msg, level=Qgis.Critical)
+        QgsMessageLog.logMessage(msg,'CanFlood', level=Qgis.Critical)
         
         
+        
+
+            
+
+    
 class Qproj(object): #baseclass for working w/ pyqgis outside the native console
     
     crs_id = 4326

@@ -91,23 +91,39 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS):
         self.cf = None
         self.iface = iface
         
+        #pull layer info from project
         layers = self.iface.mapCanvas().layers()
         layers_ras = [layer for layer in layers if layer.type() == QgsMapLayer.RasterLayer]
         layers_vec = [layer for layer in layers if layer.type() == QgsMapLayer.VectorLayer]
         
         # Set GUI elements
-        self.comboBox_vec.setFilters(QgsMapLayerProxyModel.VectorLayer)
+        """need to convert this layer to a csv once 'Build' is clicked"""
+        self.comboBox_vec.setFilters(QgsMapLayerProxyModel.VectorLayer) #SS. Inventory Layer: Drop down
+        
+
+        self.comboBox_aoi.setFilters(QgsMapLayerProxyModel.VectorLayer) #SS. Project AOI
+        
+        
         self.comboBox_ras.setFilters(QgsMapLayerProxyModel.RasterLayer)
         self.comboBox_dtm.setFilters(QgsMapLayerProxyModel.RasterLayer)
         self.listWidget_ls.addItems(layer.name() for layer in layers_vec)
         self.listWidget_ls.setSelectionMode(QListWidget.MultiSelection)
         
-        # Set folder/file browse buttons
-        self.pushButton_br_1.clicked.connect(self.select_output_folder)
-        self.pushButton_br_2.clicked.connect(self.select_output_file_vcs)
-        self.pushButton_br_3.clicked.connect(self.select_output_file_cf)
-        self.pushButton_br_4.clicked.connect(self.select_output_file_cf)
-        self.pushButton_set.clicked.connect(self.set_wd)
+        #======================================================================
+        # scenario setup
+        #======================================================================
+        #build from scratch
+        self.pushButton_br_1.clicked.connect(self.select_output_folder) # SS. Working Dir. Browse
+        self.pushButton_SScurves.clicked.connect(self.select_output_file_vcs)# SS. Vuln Curve Set. Browse
+        self.pushButton_generate.clicked.connect(self.build_scenario) #SS. generate
+        
+        #optional select your own
+        self.pushButton_br_3.clicked.connect(self.select_output_file_cf)# SS. Model Control File. Browse
+        
+        
+        """not sure what/where this is
+        self.pushButton_br_4.clicked.connect(self.select_output_file_cf)"""
+        
         self.pushButton_remove.clicked.connect(self.remove_text_edit)
         self.pushButton_clear.clicked.connect(self.clear_text_edit)
         self.pushButton_add_all.clicked.connect(self.add_all_text_edit)
@@ -117,16 +133,48 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS):
         self.buttonBox.accepted.connect(self.run)
         self.buttonBox.rejected.connect(self.reject)
         
-            # Select input/output files/folders            
-    def select_output_file_vcs(self):
-        filename = QFileDialog.getOpenFileName(self, "Select File") 
-        self.lineEdit_curve.setText(str(filename[0]))
+    
+    #==========================================================================
+    # Select input/output files/folders ------------------        
+    #==========================================================================
+              
+    def select_output_file_vcs(self): #SS. Vulnerability Curve Set. file path
+        filename = QFileDialog.getOpenFileName(self, "Select File", filter='.xls') 
+        self.lineEdit_curve.setText(str(filename[0])) #store the user selected filepath
         
-    def select_output_file_cf(self):
+        self.curves_fp = filename[0]
+        
+        QgsMessageLog.logMessage("user selected vulnerability curve set :\n    %s"%self.cf,
+                                 'CanFlood', level=Qgis.Info)
+        
+        """
+        TODO: basic validity checks that this is the expected file t ype/structure 
+        
+        """
+        
+        
+    def select_output_file_cf(self): #select an existing model control file
         filename = QFileDialog.getOpenFileName(self, "Select File")
         self.lineEdit_control_1.setText(str(filename[0]))
         self.lineEdit_control_2.setText(str(filename[0]))
         self.cf = str(filename[0])
+        
+        """
+        TODO: Populate Vulnerability Curve Set box
+        
+        Check the control file is the correct format
+        
+        print out all the values pressent in the control file
+        """
+        
+        self.iface.messageBar().pushMessage("CanFlood", "Pre-constructed Control File selected by User", level=Qgis.Info)
+        
+        QgsMessageLog.logMessage("usere selected control file from :\n    %s"%self.cf,
+                                 'CanFlood', level=Qgis.Info)
+        
+        
+        
+        
     
     def select_output_folder(self):
         foldername = QFileDialog.getExistingDirectory(self, "Select Directory")
@@ -167,42 +215,83 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS):
                 self.listWidget_ras.addItem(str(layer.name()))
 
     # Functions related to setting file/folder paths and creating/setting control file                    
-    def set_wd(self):
-        self.wd =  self.lineEdit_wd.text()
-        self.check_cf()
-        self.lineEdit_curve.setText(os.path.normpath(os.path.join(self.wd, 'CanFlood - curve set 01.xls')))
-        self.lineEdit_control_1.setText(os.path.normpath(os.path.join(self.wd, 'CanFlood_control_01.txt')))
-        self.lineEdit_control_2.setText(os.path.normpath(os.path.join(self.wd, 'CanFlood_control_01.txt')))
+    def build_scenario(self): #called by Scenario Setup 'Build'
+
+    
+        self.wd =  self.lineEdit_wd.text() #pull the wd filepath from the user provided in 'Browse'
+        self.cf_fp = self.build_cf() #build the default control file
         
-    def check_cf(self):
+        """NO. should only populate this automatically from ModelControlFile.Browse
+        self.lineEdit_curve.setText(os.path.normpath(os.path.join(self.wd, 'CanFlood - curve set 01.xls')))"""
+        
+        """TODO:
+        write aoi filepath to scratch file
+        """
+        
+        #display the control file in the dialog
+        self.lineEdit_control_1.setText(self.cf_fp)
+        
+        """not sure what this is
+        self.lineEdit_control_2.setText(os.path.normpath(os.path.join(self.wd, 'CanFlood_control_01.txt')))"""
+        
+        
+        self.iface.messageBar().pushMessage("CanFlood", "Scenario control file created", level=Qgis.Info)
+        
+        
+    def build_cf(self): #build the default control file.
+        #called by build_scenario()
         dirname = os.path.dirname(os.path.abspath(__file__))
+        
+        #get the default template from the program files
         cf_src = os.path.join(dirname, '_documents/CanFlood_control_01.txt')
         #cf_src = os.path.join(dirname, '_documents/CanFlood_control_01.txt')
+        
+        #start the scratch file
         scratch_src = os.path.join(dirname, '_documents/scratch.txt')
-        cf_path = os.path.join(self.wd, 'CanFlood_control_01.txt')
         
+        #get control file name from user provided tag
+        cf_fn = 'CanFlood_cf_%s.txt'%self.linEdit_ScenTag.text()
+        cf_path = os.path.join(self.wd, cf_fn)
+        #cf_path = os.path.join(self.wd, 'CanFlood_control_01.txt')
         
-        if not (os.path.isfile(cf_path)):
-            copyfile(cf_src, cf_path)
+        #see if this exists
+        if os.path.exists(cf_path):
+            raise Error('generated control file already exists \n     %s'%cf_path)
+            
+        
+        #copy over the default template
+        copyfile(cf_src, cf_path)
             
         if not os.path.exists(scratch_src):
             open(scratch_src, 'w').close()
         
+        #======================================================================
+        # update the control file
+        #======================================================================
         pars = configparser.ConfigParser(inline_comment_prefixes='#', allow_no_value=True)
-        _ = pars.read(cf_path)
+        _ = pars.read(cf_path) #read it from the new location
         
         pars.set('dmg_fps', 'curves', os.path.normpath(os.path.join(self.wd, 'CanFlood - curve set 01.xls')))
         pars.set('dmg_fps', 'finv', os.path.normpath(os.path.join(self.wd, 'finv_icomp_cT1_heights.csv')))
+        
+        """shoul donly be set by corresponding tools
         pars.set('dmg_fps', 'expos', os.path.normpath(os.path.join(self.wd, 'expos_test_1_7.csv')))
         pars.set('dmg_fps', '#expos file path set from wsamp.py')
-        pars.set('dmg_fps', 'gels', os.path.normpath(os.path.join(self.wd, 'gel_cT1.csv')))
+        pars.set('dmg_fps', 'gels', os.path.normpath(os.path.join(self.wd, 'gel_cT1.csv')))"""
         
+        """should only be set by the Impact model
         pars.set('risk_fps', 'dmgs', os.path.normpath(os.path.join(self.wd, 'dmg_results.csv')))
         pars.set('risk_fps', 'exlikes', os.path.normpath(os.path.join(self.wd, 'elikes_cT1.csv')))
-        pars.set('risk_fps', 'aeps', os.path.normpath(os.path.join(self.wd, 'eaep_cT1.csv')))
+        pars.set('risk_fps', 'aeps', os.path.normpath(os.path.join(self.wd, 'eaep_cT1.csv')))"""
         
+        #write the config file 
         with open(cf_path, 'w') as configfile:
             pars.write(configfile)
+            
+        QgsMessageLog.logMessage("default CanFlood model config file created :\n    %s"%cf_path,
+                                 'CanFlood', level=Qgis.Info)
+        
+        return cf_path
             
     def run(self):
         # Do something useful here - delete the line containing pass and
@@ -227,3 +316,19 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS):
         canflood_inprep.prep.wsamp.main_run(self.ras, self.vec, self.wd, self.cf)
         self.iface.messageBar().pushMessage(
             "Success", "Process successful", level=Qgis.Success, duration=10)
+        
+       
+    #==========================================================================
+    # def Error(self, msg):
+    #     self.iface.messageBar().pushMessage("Error",msg, level=Qgis.CRITICAL)
+    #     QgsMessageLog.logMessage(msg,'CanFlood', level=Qgis.CRITICAL)
+    #     
+    #     raise 
+    #==========================================================================
+         
+ 
+
+           
+            
+                    
+            
