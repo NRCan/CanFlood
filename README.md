@@ -1,2 +1,2 @@
-# FloodAssessment
-Flood Assessment Tool For QGIS
+# CanFlood
+Flood Risk modelling toolbox for Canada
