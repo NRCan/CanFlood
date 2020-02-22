@@ -21,8 +21,12 @@
  *                                                                         *
  ***************************************************************************/
 """
-
-import os
+#==============================================================================
+# standard imports
+#==============================================================================
+import sys, os, warnings, tempfile, logging, configparser, datetime
+import os.path
+from shutil import copyfile
 
 #from qgis.PyQt import uic
 #from qgis.PyQt import QtWidgets
@@ -38,7 +42,7 @@ from qgis.PyQt.QtWidgets import QAction, QFileDialog, QListWidget
 # Import the code for the dialog
 
 #from .canFlood_inPrep_dialog import CanFlood_inPrepDialog
-import os.path
+
 from qgis.core import QgsProject, Qgis, QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest
 
 # User defined imports
@@ -47,7 +51,7 @@ from qgis.analysis import *
 import qgis.utils
 import processing
 from processing.core.Processing import Processing
-import sys, os, warnings, tempfile, logging, configparser
+
 
 sys.path.append(r'C:\IBI\_QGIS_\QGIS 3.8\apps\Python37\Lib\site-packages')
 #sys.path.append(os.path.join(sys.exec_prefix, 'Lib/site-packages'))
@@ -59,22 +63,28 @@ sys.path.append(file_dir)
 #import model
 #from risk import RiskModel
 
+#==============================================================================
+# custom imports
+#==============================================================================
 import canflood_inprep.model.risk
 import canflood_inprep.model.dmg
-import canflood_inprep.prep.wsamp
+#import canflood_inprep.prep.wsamp
+from canflood_inprep.prep.wsamp import WSLSampler
 #from canFlood_model import CanFlood_Model
+import canflood_inprep.hp as hp
 from canflood_inprep.hp import Error
-from shutil import copyfile
+
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'ProjectDataPrepDialog_Base.ui'))
 
 
-class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS):
+class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler):
     
     def __init__(self, iface, parent=None):
         """Constructor."""
+        super(DataPrep_Dialog, self).__init__(parent)
         super(DataPrep_Dialog, self).__init__(parent)
         self.setupUi(self)
         
@@ -90,6 +100,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS):
         self.wd = None
         self.cf = None
         self.iface = iface
+        self.logger = hp.logger(self) #init the logger
         
         #pull layer info from project
         layers = self.iface.mapCanvas().layers()
@@ -114,11 +125,15 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS):
         #======================================================================
         #build from scratch
         self.pushButton_br_1.clicked.connect(self.select_output_folder) # SS. Working Dir. Browse
-        self.pushButton_SScurves.clicked.connect(self.select_output_file_vcs)# SS. Vuln Curve Set. Browse
+        self.pushButton_SScurves.clicked.connect(self.set_curves_fp)# SS. Vuln Curve Set. Browse
         self.pushButton_generate.clicked.connect(self.build_scenario) #SS. generate
         
         #optional select your own
         self.pushButton_br_3.clicked.connect(self.select_output_file_cf)# SS. Model Control File. Browse
+        
+        #======================================================================
+        # hazard sampler
+        #======================================================================
         
         
         """not sure what/where this is
@@ -130,7 +145,17 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS):
         
         self.comboBox_ras.currentTextChanged.connect(self.add_ras)
         
-        self.buttonBox.accepted.connect(self.run)
+        #self.pushButton_HSgenerate.clicked.connect(self.run_wsamp)
+        
+        self.pushButton_HSgenerate.clicked.connect(self.testit)
+        
+        
+        #======================================================================
+        # general
+        #======================================================================
+        """these should not execut especific tools
+        self.buttonBox.accepted.connect(self.run)"""
+        self.buttonBox.accepted.connect(self.reject)
         self.buttonBox.rejected.connect(self.reject)
         
     
@@ -138,13 +163,14 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS):
     # Select input/output files/folders ------------------        
     #==========================================================================
               
-    def select_output_file_vcs(self): #SS. Vulnerability Curve Set. file path
-        filename = QFileDialog.getOpenFileName(self, "Select File", filter='.xls') 
-        self.lineEdit_curve.setText(str(filename[0])) #store the user selected filepath
+    def set_curves_fp(self): #SS. Vulnerability Curve Set. file path
+        """todo: set filter to xls only"""
+        filename = QFileDialog.getOpenFileName(self, "Select Vulnerability Curve Set") 
+        self.lineEdit_curve.setText(str(filename[0])) #display the user selected filepath
         
         self.curves_fp = filename[0]
         
-        QgsMessageLog.logMessage("user selected vulnerability curve set :\n    %s"%self.cf,
+        QgsMessageLog.logMessage("user selected vulnerability curve set :\n    %s"%self.curves_fp,
                                  'CanFlood', level=Qgis.Info)
         
         """
@@ -216,9 +242,13 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS):
 
     # Functions related to setting file/folder paths and creating/setting control file                    
     def build_scenario(self): #called by Scenario Setup 'Build'
-
-    
+        
+        self.tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
+        
         self.wd =  self.lineEdit_wd.text() #pull the wd filepath from the user provided in 'Browse'
+        
+        self.finv_fp = self.convert_finv() #convert the finv to csv and write to file
+        
         self.cf_fp = self.build_cf() #build the default control file
         
         """NO. should only populate this automatically from ModelControlFile.Browse
@@ -235,8 +265,25 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS):
         self.lineEdit_control_2.setText(os.path.normpath(os.path.join(self.wd, 'CanFlood_control_01.txt')))"""
         
         
-        self.iface.messageBar().pushMessage("CanFlood", "Scenario control file created", level=Qgis.Info)
+        self.iface.messageBar().pushMessage("CanFlood", "Scenario \'%s\' control file created"%self.tag, level=Qgis.Info)
         
+    def convert_finv(self): #convert the finv vector to csv file
+        
+        #store the vecotr layer
+        self.finv_vlay = self.comboBox_vec.currentLayer()
+        
+        #extract data
+        df = hp.vlay_get_fdf(self.finv_vlay)
+        
+        #write it as a csv
+        out_fp = os.path.join(self.wd, 'finv_%s_%s.csv'%(self.tag, self.finv_vlay.name()))
+        df.to_csv(out_fp, index=False)  
+        
+        QgsMessageLog.logMessage("inventory csv written to file:\n    %s"%out_fp,
+                                 'CanFlood', level=Qgis.Info)
+        
+        return out_fp
+                
         
     def build_cf(self): #build the default control file.
         #called by build_scenario()
@@ -250,7 +297,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS):
         scratch_src = os.path.join(dirname, '_documents/scratch.txt')
         
         #get control file name from user provided tag
-        cf_fn = 'CanFlood_cf_%s.txt'%self.linEdit_ScenTag.text()
+        cf_fn = 'CanFlood_%s.txt'%self.tag
         cf_path = os.path.join(self.wd, cf_fn)
         #cf_path = os.path.join(self.wd, 'CanFlood_control_01.txt')
         
@@ -271,8 +318,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS):
         pars = configparser.ConfigParser(inline_comment_prefixes='#', allow_no_value=True)
         _ = pars.read(cf_path) #read it from the new location
         
-        pars.set('dmg_fps', 'curves', os.path.normpath(os.path.join(self.wd, 'CanFlood - curve set 01.xls')))
-        pars.set('dmg_fps', 'finv', os.path.normpath(os.path.join(self.wd, 'finv_icomp_cT1_heights.csv')))
+        pars.set('dmg_fps', 'curves', self.curves_fp)
+        pars.set('dmg_fps', 'finv', self.finv_fp)
         
         """shoul donly be set by corresponding tools
         pars.set('dmg_fps', 'expos', os.path.normpath(os.path.join(self.wd, 'expos_test_1_7.csv')))
@@ -284,6 +331,11 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS):
         pars.set('risk_fps', 'exlikes', os.path.normpath(os.path.join(self.wd, 'elikes_cT1.csv')))
         pars.set('risk_fps', 'aeps', os.path.normpath(os.path.join(self.wd, 'eaep_cT1.csv')))"""
         
+        #set note
+        pars.set('parameters', '#control file template created from \'scenario setup\' on  %s'%(
+            datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')
+            ))
+        
         #write the config file 
         with open(cf_path, 'w') as configfile:
             pars.write(configfile)
@@ -292,6 +344,54 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS):
                                  'CanFlood', level=Qgis.Info)
         
         return cf_path
+    
+    def run_wsamp(self): #execute wsamp
+
+        #=======================================================================
+        # assemble/prepare inputs
+        #=======================================================================
+        #
+        finv = self.comboBox_vec.currentLayer()
+        rlay_l = list(self.ras_dict.values())
+        cf_fp = self.lineEdit_control_1.text()
+        wd = self.lineEdit_wd.text()
+
+        #======================================================================
+        # precheck
+        #======================================================================
+        if finv is None:
+            raise Error('got nothing for finv')
+        if not isinstance(finv, QgsVectorLayer):
+            raise Error('did not get a vector layer for finv')
+        
+        for rlay in rlay_l:
+            if not isinstance(rlay, QgsRasterLayer):
+                raise Error('unexpected type on raster layer')
+            
+        if not os.path.exists(cf_fp):
+            raise Error('control file does not exist: \n    %s'%cf_fp)
+        
+        if not os.path.exists(wd):
+            raise Error('working directory does not exist: \n    %s'%wd)
+        
+        #======================================================================
+        # execute
+        #======================================================================
+
+        """this is a very strange way of executing the backends.
+        doesn't give us access to any of the gui (logger, status bar, crs, etc.)
+        also defeats the purpose of writing the backends as methods"""
+        
+        
+        canflood_inprep.prep.wsamp.main_run(rlay_l, finv, wd, cf_fp)
+        self.iface.messageBar().pushMessage(
+            "CanFlood", "Hazard Sampling Successful", level=Qgis.Success, duration=10)
+        
+        QgsMessageLog.logMessage('Hazard Sampling complete','CanFlood', level=Qgis.Info)
+        
+        return
+                
+                
             
     def run(self):
         # Do something useful here - delete the line containing pass and
@@ -307,25 +407,19 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS):
                                                  level=Qgis.Critical, duration=10)
             return
         
+        """moved to build_scenario
         pars = configparser.ConfigParser(inline_comment_prefixes='#', allow_no_value=True)
         _ = pars.read(self.cf)
         pars.set('dmg_fps', 'curves', self.lineEdit_curve.text())
         with open(self.cf, 'w') as configfile:
-            pars.write(configfile)
+            pars.write(configfile)"""
+        
         
         canflood_inprep.prep.wsamp.main_run(self.ras, self.vec, self.wd, self.cf)
         self.iface.messageBar().pushMessage(
             "Success", "Process successful", level=Qgis.Success, duration=10)
         
-       
-    #==========================================================================
-    # def Error(self, msg):
-    #     self.iface.messageBar().pushMessage("Error",msg, level=Qgis.CRITICAL)
-    #     QgsMessageLog.logMessage(msg,'CanFlood', level=Qgis.CRITICAL)
-    #     
-    #     raise 
-    #==========================================================================
-         
+
  
 
            

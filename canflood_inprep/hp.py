@@ -17,6 +17,7 @@ mod_logger = logging.getLogger('hp') #creates a child logger of the root
 # imports------------
 #==============================================================================
 #python
+import os
 import pandas as pd
 import numpy as np
 #qgis
@@ -31,7 +32,7 @@ class Error(Exception):
     def __init__(self, msg):
         from qgis.utils import iface
         
-        iface.messageBar().pushMessage("Error",msg, level=Qgis.Critical)
+        iface.messageBar().pushMessage("Error", msg, level=Qgis.Critical)
         QgsMessageLog.logMessage(msg,'CanFlood', level=Qgis.Critical)
         
         
@@ -61,7 +62,9 @@ class Qproj(object): #baseclass for working w/ pyqgis outside the native console
     def __init__(self, 
                  **kwargs):
 
-        
+        """
+        should run during plugin init
+        """
         mod_logger.debug('Qproj super')
         
         super().__init__(**kwargs) #initilzie teh baseclass
@@ -130,7 +133,6 @@ class Qproj(object): #baseclass for working w/ pyqgis outside the native console
 
         return True
 
-    
     def set_vdrivers(self):
         
         #build vector drivers list by extension
@@ -249,8 +251,75 @@ class Qproj(object): #baseclass for working w/ pyqgis outside the native console
         
         return out_fp
         
-     
+        
+class logger(object): #workaround for qgis logging pythonic
+    log_tabnm = 'CanFlood' # qgis logging panel tab name
     
+    log_nm = '' #logger name
+    
+    def __init__(self, parent):
+        #attach
+        self.parent = parent
+        
+        self.iface = parent.iface
+        
+    def getChild(self, new_childnm):
+        
+        #build a new logger
+        child_log = logger(self.parent)
+        
+        #nest the name
+        child_log.log_nm = '%s.%s'%(self.log_nm, new_childnm)
+        
+        return child_log
+        
+    def info(self, msg):
+        self._loghlp(msg, Qgis.Info, push=False)
+
+
+    def debug(self, msg_raw):
+        msg = '%s: %s'%(self.log_nm, msg_raw)
+        QgsLogger.debug(msg)
+        
+    def warning(self, msg):
+        self._loghlp(msg, Qgis.Warning, push=False)
+
+        
+    def push(self, msg):
+        self._loghlp(msg, Qgis.Info, push=True)
+
+    def error(self, msg):
+        self._loghlp(msg, Qgis.Critical, push=True)
+        
+    def _loghlp(self, #helper function for generalized logging
+                msg_raw, qlevel, push=False):
+        
+        msg = '%s: %s'%(self.log_nm, msg_raw)
+        
+        QgsMessageLog.logMessage(msg, self.log_tabnm, level=qlevel)
+        
+        if push:
+            self.iface.messageBar().pushMessage(self.log_tabnm, msg, level=qlevel)
+        
+        
+     
+class QprojPlug(object): #baseclass for plugins
+    
+    """not a great way to init this one
+    def __init__(self):
+        self.logger = logger()"""
+    
+
+            
+    def testit(self):
+        self.iface.messageBar().pushMessage("CanFlood", "youre doing a test", level=Qgis.Info)
+        
+        self.logger.info('test the logger')
+        self.logger.error('erro rtest')
+        
+        log = self.logger.getChild('testit')
+        
+        log.info('testing the child')
         
 
 #==============================================================================

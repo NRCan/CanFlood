@@ -38,20 +38,20 @@ import processing
 from processing.core.Processing import Processing
 
 # custom imports
-import hp
-from hp import *
-from hp import Error, view, Qproj
+from canflood_inprep.hp import *
+#from hp import Error, view, Qproj,vlay_fieldnl
 
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class WSLSampler(Qproj):
+class WSLSampler(QprojPlug):
 
     
     def __init__(self,
                  logger, out_dir, tag='test',
                  ):
         
+        raise Error('shouldnt run during plugins')
         logger.info('simple wrapper inits')
         
         
@@ -473,12 +473,13 @@ class WSLSampler(Qproj):
         
         
         return fieldn_l
-        
+    
+
         
 def main_run(ras, vec, outp, cf):
     
     
-    print('executing')
+
     
     #==========================================================================
     # dev data
