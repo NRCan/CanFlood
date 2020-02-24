@@ -20,8 +20,8 @@ Read the above '[CanFlood - UsersManual (0.0.1).docx](https://github.com/IBIGrou
 
 
 ## I'm getting Errors!
-Check to see if there is a similar issue on the above 'Issues' tab.  Hopefully this thread will resolve the problem, if not, reply to the thread.
+Check to see if there is a similar issue on the above '[Issues](https://github.com/IBIGroupCanWest/CanFlood/issues)' tab.  Hopefully this thread will resolve the problem, if not, reply to the thread.
 
-If there is no issue ticket yet, create a new one on the above 'Issues' tab with a screen shot of the error (and output from First Aid is possible). 
+If there is no issue ticket yet, create a new one on the above '[Issues](https://github.com/IBIGroupCanWest/CanFlood/issues)' tab with a screen shot of the error (and output from the QGIS plugin First Aid if possible). 
 
 Using this issue tracker will help us track all the problems, and provide a useful reference for other users.
