@@ -17,3 +17,7 @@ Flood Risk modelling toolbox for Canada
 ## Getting Started
 
 Read the above 'CanFlood - UsersManual (0.0.1).docx'
+
+
+## I'm getting Errors!
+
