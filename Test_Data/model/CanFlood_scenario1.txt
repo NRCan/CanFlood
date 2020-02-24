@@ -1,0 +1,31 @@
+[parameters]
+name = scenario1
+cid = xid
+prec = 2
+ground_water = False
+felv = datum
+event_probs = ari
+ltail = extrapolate
+rtail = 0.5
+drop_tails = True
+integrate = trapz
+ead_plot = True
+res_per_asset = True
+
+[dmg_fps]
+curves = C:\LS\03_TOOLS\CanFlood\_ins\prep\cT2\CanFlood_curves_rfda_20200218.xls
+finv = C:\LS\03_TOOLS\CanFlood\_wdirs\20200223d\finv_scenario1_finv_cT2.csv
+expos = C:\LS\03_TOOLS\CanFlood\_wdirs\20200223d\expos_scenario1_4_32.csv
+gels = 
+
+[risk_fps]
+dmgs = C:\LS\03_TOOLS\CanFlood\_wdirs\20200223d\dmgs_scenario1_run1.csv
+exlikes = 
+aeps = C:\LS\03_TOOLS\CanFlood\_wdirs\20200223d\aeps_4_scenario1.csv
+
+[validation]
+risk1 = False
+imp2 = True
+risk2 = True
+risk3 = False
+
