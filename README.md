@@ -8,7 +8,7 @@ Flood Risk modelling toolbox for Canada
 
 2) In Qgis, install the plugin 'First Aid' from the plugin repository (https://plugins.qgis.org/plugins/firstaid/). This plugin provides additional support for vieweing errors in other plugins (essential during the development stage).
 
-3) Download from above canflood_001_20200223.zip (right click > save as)
+3) [Download here](https://github.com/IBIGroupCanWest/CanFlood/blob/master/canflood_001_20200223.zip) or from above canflood_001_20200223.zip (right click > save as) 
 
 4) In Qgis, extract this plugin to your profile (Plugins > Manage and Install... > Install from Zip > navigate to canflood_001_20200223.zip > Install Plugin
 
