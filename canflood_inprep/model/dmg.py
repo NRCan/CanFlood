@@ -22,7 +22,7 @@ import configparser, os
 
 import pandas as pd
 import numpy as np
-
+import math
 #custom imports
 import hp
 from hp import Error, view
@@ -98,7 +98,10 @@ class DmgModel(Model):
         #======================================================================
         
         self.logger.debug('finished __init__ on Dmg')
-        
+        #======================================================================
+        # class variables
+        #======================================================================
+        self.progress = 0 # ranges from 0 to 100
 
  
     def setup_dfuncs(self, # build curve workers
@@ -465,7 +468,13 @@ class DmgModel(Model):
         # RAW: loop and calc raw damage by ftag
         #======================================================================
         first = True
+        self.progress = 0
+        len_valid_tags = len(valid_tags)
+        valid_tags_count = 0
         for indxr, ftag in enumerate(valid_tags):
+            # update progress variable
+            self.progress = math.ceil(100 * valid_tags_count / len_valid_tags)
+            
             log = logger.getChild('run.%s'%ftag)
             
             #identify these entries
@@ -537,7 +546,10 @@ class DmgModel(Model):
                 
             first = False
             log.debug('finished raw_damages for %i events'%dboolcol.sum())
-            
+         
+        # finished loop
+        self.progres = 100
+           
         log = logger.getChild('run')
 
         
