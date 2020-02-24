@@ -475,16 +475,16 @@ class DmgModel(Model):
             # update progress variable
             self.progress = math.ceil(100 * valid_tags_count / len_valid_tags)
             
-            log = logger.getChild('run.%s'%ftag)
+            log = self.logger.getChild('run.%s'%ftag)
             
             #identify these entries
             boolidx = np.logical_and(
                 bdf['ftag'] == ftag, #with the right ftag
                 vboolidx) #and in the valid set
             
-            log.info('(%i/%i) claculting \'%s\' w/ %i assets'%(
+            log.info('(%i/%i) calculating \'%s\' w/ %i assets'%(
                 indxr+1, len(valid_tags), ftag, boolidx.sum()))
-            
+            log.info('%i progress'%(self.progress))
             #==================================================================
             # calc damage by tag.depth
             #==================================================================
@@ -497,7 +497,7 @@ class DmgModel(Model):
             #get this DFunc
             dfunc = self.dfuncs_d[ftag]
             
-            log.debug('calc for %i (of %i) uniqe depths'%(
+            log.debug('calc for %i (of %i) unique depths'%(
                 len(deps_ar), tddf.size))
             
             """multi-threading would nice for this loop"""
