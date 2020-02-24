@@ -236,6 +236,8 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
             
             if checkBox.isChecked():
                 pars.set('parameters', pval, 'True')
+            else:
+                pars.set('parameters', pval, 'False')
         
 
         #write the config file 

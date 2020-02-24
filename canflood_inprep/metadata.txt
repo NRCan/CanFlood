@@ -5,15 +5,15 @@
 [general]
 name=CanFlood
 qgisMinimumVersion=3.10
-description=This plugin preps CanFlood data
-version=0.1
+description=flood risk modelling toolkit for Canada
+version=0.0.1
 author=Seth Bryant, Tony De Crescenzo
 email=tony.decrescenzo@ibigroup.com
 
 about=This plugin preps CanFlood data
 
 tracker=http://bugs
-repository=http://repo
+repository=https://github.com/IBIGroupCanWest/FloodAssessment
 # End of mandatory metadata
 
 # Recommended items:

@@ -116,6 +116,10 @@ class RiskModel(Model):
         boolcol = ddf.columns.str.endswith('_dmg')
         enm_l = ddf.columns[boolcol].str.replace('_dmg', '').tolist()
         
+        #rename these
+        ren_d = dict(zip(ddf.columns[boolcol].values, enm_l))
+        ddf = ddf.rename(columns=ren_d)
+        
         #some checks
         assert len(enm_l) > 1, 'failed to identify sufficient damage columns'
         assert cid in ddf.columns, 'missing %s in damages'%cid
@@ -124,7 +128,7 @@ class RiskModel(Model):
         
         #set indexes
         ddf = ddf.set_index(cid, drop=True).sort_index(axis=1).sort_index(axis=0)
-        ddf.columns = enm_l
+        
         
         ddf = ddf.round(self.prec)
         
@@ -245,6 +249,13 @@ class RiskModel(Model):
         #no duplicates. .just rename by aep
         else:
             ddf1 = ddf.rename(columns = aep_ser.to_dict()).sort_index(axis=1)
+            
+            """
+            fp = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200223d\dmgs_scenario1_run1.csv'
+            df1 = pd.read_csv(fp)
+            ddf.sum()
+            
+            """
             
         #======================================================================
         # checks
@@ -521,7 +532,9 @@ class RiskModel(Model):
         #======================================================================
         # check it
         #======================================================================
-        assert np.all(df['ead'] > 0), 'got negative eads'
+        boolidx = df['ead'] < 0
+        if boolidx.any():
+            log.warning('got %i (of %i) negative eads'%( boolidx.sum(), len(boolidx)))
         
         #======================================================================
         # clean results
