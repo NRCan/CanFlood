@@ -20,7 +20,7 @@ Happy flood modelling!
 
 1) ensure Qgis 3.10 or newer is installed and working on your system. 
 
-2) In Qgis, install the plugin 'First Aid' from the plugin repository (https://plugins.qgis.org/plugins/firstaid/). This plugin provides additional support for vieweing errors in other plugins (essential during the development stage).
+2) In Qgis, install the plugin 'First Aid' from the plugin repository (https://plugins.qgis.org/plugins/firstaid/). This plugin provides additional support for viewing errors in other plugins (essential during the development stage).
 
 3) [Download here](https://github.com/IBIGroupCanWest/CanFlood/raw/master/canflood_001_20200223.zip) or from above canflood_001_20200223.zip (right click > save as) 
 
