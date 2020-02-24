@@ -2,7 +2,6 @@
 name = test1
 cid = xid
 prec = 2
-validated = True
 ground_water = False
 felv = ground
 event_probs = ari
@@ -25,3 +24,8 @@ dmgs =
 exlikes =
 aeps = 
 
+[validation]
+risk1 = False
+imp2 = False
+risk2 = False
+risk3 = False

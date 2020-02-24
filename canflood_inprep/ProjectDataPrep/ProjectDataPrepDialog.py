@@ -33,9 +33,9 @@ from shutil import copyfile
 from PyQt5 import uic
 from PyQt5 import QtWidgets
 
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QObject
+from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QObject 
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction, QFileDialog, QListWidget
+from qgis.PyQt.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
 
 # Initialize Qt resources from file resources.py
 #from .resources import *
@@ -55,8 +55,29 @@ from processing.core.Processing import Processing
 
 sys.path.append(r'C:\IBI\_QGIS_\QGIS 3.8\apps\Python37\Lib\site-packages')
 #sys.path.append(os.path.join(sys.exec_prefix, 'Lib/site-packages'))
-import numpy as np
-import pandas as pd
+
+
+
+"""
+TODO: dependency check
+
+"""
+#==============================================================================
+# pandas depdendency check
+#==============================================================================
+msg = 'requires pandas version >=0.25.3'
+try:
+    import pandas as pd
+except:
+    qgis.utils.iface.messageBar().pushMessage('CanFlood', msg, level=Qgis.Critical)
+    raise ImportError(msg)
+    
+if not pd.__version__ >= '0.25.3':
+    qgis.utils.iface.messageBar().pushMessage('CanFlood', msg, level=Qgis.Critical)
+    raise ImportError(msg)
+
+
+import numpy as np #Im assuming if pandas is fine, numpy will be fine
 
 file_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(file_dir)
@@ -80,10 +101,14 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'ProjectDataPrepDialog_Base.ui'))
 
 
-class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler):
+class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler, hp.QprojPlug):
+    
+    event_name_set = [] #event names
+    
+    invalid_cids = ['fid', 'ogc_fid']
     
     def __init__(self, iface, parent=None):
-        """Constructor."""
+        """these will only ini tthe first baseclass (QtWidgets.QDialog)"""
         super(DataPrep_Dialog, self).__init__(parent)
         super(DataPrep_Dialog, self).__init__(parent)
         self.setupUi(self)
@@ -97,10 +122,12 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler):
         self.ras = []
         self.ras_dict = {}
         self.vec = None
-        self.wd = None
-        self.cf = None
+
         self.iface = iface
-        self.logger = hp.logger(self) #init the logger
+        
+        self.qproj_setup()
+        
+
         
         #pull layer info from project
         layers = self.iface.mapCanvas().layers()
@@ -108,28 +135,41 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler):
         layers_vec = [layer for layer in layers if layer.type() == QgsMapLayer.VectorLayer]
         
         # Set GUI elements
-        """need to convert this layer to a csv once 'Build' is clicked"""
-        self.comboBox_vec.setFilters(QgsMapLayerProxyModel.VectorLayer) #SS. Inventory Layer: Drop down
-        
-
-        self.comboBox_aoi.setFilters(QgsMapLayerProxyModel.VectorLayer) #SS. Project AOI
-        
-        
         self.comboBox_ras.setFilters(QgsMapLayerProxyModel.RasterLayer)
         self.comboBox_dtm.setFilters(QgsMapLayerProxyModel.RasterLayer)
+        
+        """old Likelihood Sampler populators
         self.listWidget_ls.addItems(layer.name() for layer in layers_vec)
-        self.listWidget_ls.setSelectionMode(QListWidget.MultiSelection)
+        self.listWidget_ls.setSelectionMode(QListWidget.MultiSelection)"""
         
         #======================================================================
         # scenario setup
         #======================================================================
-        #build from scratch
-        self.pushButton_br_1.clicked.connect(self.select_output_folder) # SS. Working Dir. Browse
-        self.pushButton_SScurves.clicked.connect(self.set_curves_fp)# SS. Vuln Curve Set. Browse
+        #gui elements
+        self.comboBox_vec.setFilters(QgsMapLayerProxyModel.VectorLayer) #SS. Inventory Layer: Drop down
+        self.comboBox_aoi.setFilters(QgsMapLayerProxyModel.VectorLayer) #SS. Project AOI
+        self.comboBox_SSelv.addItems(['datum', 'ground'])
+        
+        self.comboBox_vec.layerChanged.connect(self.update_cid_cb)
+        
+        
+        """
+        development
+        """
+        self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200223d\CanFlood_scenario1.txt')
+        self.lineEdit_wd.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200223d')
+        
+        
+        
+        
+        #user input
+        self.checkBox_SSoverwrite.stateChanged.connect(self.set_overwrite)
+        
+        self.pushButton_wd.clicked.connect(self.browse_wd) # SS. Working Dir. Browse
+        self.pushButton_SScurves.clicked.connect(self.browse_curves)# SS. Vuln Curve Set. Browse
         self.pushButton_generate.clicked.connect(self.build_scenario) #SS. generate
         
-        #optional select your own
-        self.pushButton_br_3.clicked.connect(self.select_output_file_cf)# SS. Model Control File. Browse
+        self.pushButton_cf.clicked.connect(self.select_output_file_cf)# SS. Model Control File. Browse
         
         #======================================================================
         # hazard sampler
@@ -147,7 +187,33 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler):
         
         #self.pushButton_HSgenerate.clicked.connect(self.run_wsamp)
         
-        self.pushButton_HSgenerate.clicked.connect(self.testit)
+        self.pushButton_HSgenerate.clicked.connect(self.run_wsamp)
+        
+        #======================================================================
+        # event likelihoods
+        #======================================================================
+        self.pushButton_ELstore.clicked.connect(self.store_eaep)
+        
+        """dev button
+        self.pushButton_ELdev.clicked.connect(self._pop_el_table)"""
+        
+        
+        #======================================================================
+        # Likelihood Sampler
+        #======================================================================
+        
+        
+        #======================================================================
+        # DTM sampler
+        #======================================================================
+        self.pushButton_DTMsamp.clicked.connect(self.run_dsamp)
+        
+        
+        #======================================================================
+        # validator
+        #======================================================================
+        self.pushButton_Validate.clicked.connect(self.run_validate)
+        
         
         
         #======================================================================
@@ -157,31 +223,28 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler):
         self.buttonBox.accepted.connect(self.run)"""
         self.buttonBox.accepted.connect(self.reject)
         self.buttonBox.rejected.connect(self.reject)
+        self.pushButton_help.clicked.connect(self.run_help)
         
     
     #==========================================================================
-    # Select input/output files/folders ------------------        
+    # UI Buttom Actions-----------------      
     #==========================================================================
               
-    def set_curves_fp(self): #SS. Vulnerability Curve Set. file path
+    def browse_curves(self): #SS. Vulnerability Curve Set. file path
         """todo: set filter to xls only"""
-        filename = QFileDialog.getOpenFileName(self, "Select Vulnerability Curve Set") 
-        self.lineEdit_curve.setText(str(filename[0])) #display the user selected filepath
-        
-        self.curves_fp = filename[0]
-        
-        QgsMessageLog.logMessage("user selected vulnerability curve set :\n    %s"%self.curves_fp,
-                                 'CanFlood', level=Qgis.Info)
-        
-        """
-        TODO: basic validity checks that this is the expected file t ype/structure 
-        
-        """
+        filename = QFileDialog.getOpenFileName(self, "Select Vulnerability Curve Set")[0] 
+        if not filename == '':
+            self.lineEdit_curve.setText(filename) #display the user selected filepath
+             
+            self.logger.push('curve set selected')
+            self.logger.info(filename)
+
+
         
         
     def select_output_file_cf(self): #select an existing model control file
         filename = QFileDialog.getOpenFileName(self, "Select File")
-        self.lineEdit_control_1.setText(str(filename[0]))
+        self.lineEdit_cf_fp.setText(str(filename[0]))
         self.lineEdit_control_2.setText(str(filename[0]))
         self.cf = str(filename[0])
         
@@ -202,13 +265,33 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler):
         
         
     
-    def select_output_folder(self):
-        foldername = QFileDialog.getExistingDirectory(self, "Select Directory")
-        if foldername not in "":
-            self.wd = foldername 
-            self.lineEdit_wd.setText(os.path.normpath(foldername))
-    
-    # Functions related to hazard raster loading/unloading
+    def browse_wd(self):
+        wd = QFileDialog.getExistingDirectory(self, "Select Working Directory")
+        if wd not in "": #see if it was cancelled
+            self.lineEdit_wd.setText(os.path.normpath(wd))
+            
+        
+            if not os.path.exists(wd):
+                os.makedirs(wd)
+                self.logger.info('requested working directory does not exist. built')
+            
+            self.logger.push('set working directory')
+            
+        
+            
+
+        
+    def update_cid_cb(self): #update teh fields drop down any time the main layer changes
+        self.logger.info('user changed finv layer to %s'%self.comboBox_vec.currentLayer().name())
+        self.mFieldComboBox_cid.setLayer(self.comboBox_vec.currentLayer()) #field selector
+        
+
+
+        
+        
+    #==========================================================================
+    # Layer Loading---------------
+    #==========================================================================
     def add_ras(self):
         x = [str(self.listWidget_ras.item(i).text()) for i in range(self.listWidget_ras.count())]
         self.ras_dict.update({ (self.comboBox_ras.currentText()) : (self.comboBox_ras.currentLayer()) })
@@ -240,52 +323,42 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler):
                 self.ras_dict.update( { layer.name() : layer} )
                 self.listWidget_ras.addItem(str(layer.name()))
 
-    # Functions related to setting file/folder paths and creating/setting control file                    
+    #==========================================================================
+    # tool commands------------                   
+    #==========================================================================
+    def run_help(self):
+        """todo: link to help pdf"""
+        raise Error('not implemented')
+    
+    
+    def slice_aoi(self, vlay):
+        
+        aoi_vlay = self.comboBox_aoi.currentLayer()
+        
+        if aoi_vlay is None:
+            self.logger.info('no aoi selected... not slicing')
+            return vlay
+        else:
+            self.logger.warning('aoi slicing not impelemented')
+            return vlay
+            
+            #raise Error('aoi slicing not implemented')
+        
+        
+    
     def build_scenario(self): #called by Scenario Setup 'Build'
         
         self.tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
         
+        self.cid = self.mFieldComboBox_cid.currentField() #user selected field
+        
         self.wd =  self.lineEdit_wd.text() #pull the wd filepath from the user provided in 'Browse'
         
-        self.finv_fp = self.convert_finv() #convert the finv to csv and write to file
+        finv_fp = self.convert_finv() #convert the finv to csv and write to file
         
-        self.cf_fp = self.build_cf() #build the default control file
-        
-        """NO. should only populate this automatically from ModelControlFile.Browse
-        self.lineEdit_curve.setText(os.path.normpath(os.path.join(self.wd, 'CanFlood - curve set 01.xls')))"""
-        
-        """TODO:
-        write aoi filepath to scratch file
-        """
-        
-        #display the control file in the dialog
-        self.lineEdit_control_1.setText(self.cf_fp)
-        
-        """not sure what this is
-        self.lineEdit_control_2.setText(os.path.normpath(os.path.join(self.wd, 'CanFlood_control_01.txt')))"""
-        
-        
-        self.iface.messageBar().pushMessage("CanFlood", "Scenario \'%s\' control file created"%self.tag, level=Qgis.Info)
-        
-    def convert_finv(self): #convert the finv vector to csv file
-        
-        #store the vecotr layer
-        self.finv_vlay = self.comboBox_vec.currentLayer()
-        
-        #extract data
-        df = hp.vlay_get_fdf(self.finv_vlay)
-        
-        #write it as a csv
-        out_fp = os.path.join(self.wd, 'finv_%s_%s.csv'%(self.tag, self.finv_vlay.name()))
-        df.to_csv(out_fp, index=False)  
-        
-        QgsMessageLog.logMessage("inventory csv written to file:\n    %s"%out_fp,
-                                 'CanFlood', level=Qgis.Info)
-        
-        return out_fp
-                
-        
-    def build_cf(self): #build the default control file.
+        #======================================================================
+        # build the control file
+        #======================================================================
         #called by build_scenario()
         dirname = os.path.dirname(os.path.abspath(__file__))
         
@@ -303,7 +376,12 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler):
         
         #see if this exists
         if os.path.exists(cf_path):
-            raise Error('generated control file already exists \n     %s'%cf_path)
+            msg = 'generated control file already exists. overwrite=%s \n     %s'%(
+                self.overwrite, cf_path)
+            if self.overwrite:
+                self.logger.warning(msg)
+            else:
+                raise Error(msg)
             
         
         #copy over the default template
@@ -315,11 +393,17 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler):
         #======================================================================
         # update the control file
         #======================================================================
-        pars = configparser.ConfigParser(inline_comment_prefixes='#', allow_no_value=True)
+        pars = configparser.ConfigParser(allow_no_value=True)
         _ = pars.read(cf_path) #read it from the new location
         
-        pars.set('dmg_fps', 'curves', self.curves_fp)
-        pars.set('dmg_fps', 'finv', self.finv_fp)
+        #parameters
+        pars.set('parameters', 'cid', self.cid) #user selected field
+        pars.set('parameters', 'name', self.tag) #user selected field
+        pars.set('parameters', 'felv', self.comboBox_SSelv.currentText()) #user selected field
+        
+        #filepaths
+        pars.set('dmg_fps', 'curves',  self.lineEdit_curve.text())
+        pars.set('dmg_fps', 'finv', finv_fp)
         
         """shoul donly be set by corresponding tools
         pars.set('dmg_fps', 'expos', os.path.normpath(os.path.join(self.wd, 'expos_test_1_7.csv')))
@@ -343,22 +427,106 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler):
         QgsMessageLog.logMessage("default CanFlood model config file created :\n    %s"%cf_path,
                                  'CanFlood', level=Qgis.Info)
         
-        return cf_path
+        """NO. should only populate this automatically from ModelControlFile.Browse
+        self.lineEdit_curve.setText(os.path.normpath(os.path.join(self.wd, 'CanFlood - curve set 01.xls')))"""
+        
+        """TODO:
+        write aoi filepath to scratch file
+        """
+        
+        #======================================================================
+        # wrap
+        #======================================================================
+        
+        #display the control file in the dialog
+        self.lineEdit_cf_fp.setText(cf_path)
+        
+        """not sure what this is
+        self.lineEdit_control_2.setText(os.path.normpath(os.path.join(self.wd, 'CanFlood_control_01.txt')))"""
+        
+        self.logger.push("Scenario \'%s\' control file created"%self.tag)
+
+        
+    def convert_finv(self): #convert the finv vector to csv file
+        
+        #======================================================================
+        # check the cid
+        #======================================================================
+        if self.cid == '' or self.cid in self.invalid_cids:
+            raise Error('user selected invalid cid \'%s\''%self.cid)  
+        
+            
+        
+        #store the vecotr layer
+        self.finv_vlay = self.comboBox_vec.currentLayer()
+        
+        #extract data
+        df = hp.vlay_get_fdf(self.finv_vlay)
+          
+        #drop geometery indexes
+        for gindx in self.invalid_cids:   
+            df = df.drop(gindx, axis=1, errors='ignore')
+            
+        if not self.cid in df.columns:
+            raise Error('cid not found in finv_df')
+        
+        #write it as a csv
+        out_fp = os.path.join(self.wd, 'finv_%s_%s.csv'%(self.tag, self.finv_vlay.name()))
+        df.to_csv(out_fp, index=False)  
+        
+        QgsMessageLog.logMessage("inventory csv written to file:\n    %s"%out_fp,
+                                 'CanFlood', level=Qgis.Info)
+        
+        return out_fp
+                
+        
+
     
     def run_wsamp(self): #execute wsamp
+        
 
+        self.logger.info('user pressed \'pushButton_HSgenerate\'')
         #=======================================================================
         # assemble/prepare inputs
         #=======================================================================
-        #
-        finv = self.comboBox_vec.currentLayer()
+        
+        finv_raw = self.comboBox_vec.currentLayer()
         rlay_l = list(self.ras_dict.values())
-        cf_fp = self.lineEdit_control_1.text()
-        wd = self.lineEdit_wd.text()
+        
+        crs = self.qproj.crs()
+
+        cf_fp1 = self.get_cf_fp()
+        self.wd = self.lineEdit_wd.text()
+        
+
+        #update some parameters
+        cid = self.mFieldComboBox_cid.currentField() #user selected field
+        
+
+        
+         
+        #======================================================================
+        # """dev paths"""
+        # cf_fp1 = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200222\CanFlood_run.txt'
+        # wd = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200222'
+        # cid = 'xid' #user selected field
+        #======================================================================
+
+
+        
+        #======================================================================
+        # aoi slice
+        #======================================================================
+        finv = self.slice_aoi(finv_raw)
+        
 
         #======================================================================
         # precheck
         #======================================================================
+
+        
+        
+        
         if finv is None:
             raise Error('got nothing for finv')
         if not isinstance(finv, QgsVectorLayer):
@@ -368,57 +536,435 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler):
             if not isinstance(rlay, QgsRasterLayer):
                 raise Error('unexpected type on raster layer')
             
-        if not os.path.exists(cf_fp):
-            raise Error('control file does not exist: \n    %s'%cf_fp)
+        if not os.path.exists(self.wd):
+            raise Error('working directory does not exist:  %s'%self.wd)
         
-        if not os.path.exists(wd):
-            raise Error('working directory does not exist: \n    %s'%wd)
+        if cid is None or cid=='':
+            raise Error('need to select a cid')
+        
+        if not cid in [field.name() for field in finv.fields()]:
+            raise Error('requested cid field \'%s\' not found on the finv_raw'%cid)
+            
         
         #======================================================================
         # execute
         #======================================================================
 
-        """this is a very strange way of executing the backends.
+        """
+        2020-02-22: this is a very strange way of executing the backends.
         doesn't give us access to any of the gui (logger, status bar, crs, etc.)
-        also defeats the purpose of writing the backends as methods"""
+        also defeats the purpose of writing the backends as methods
+        changed so that we just inherit the backend as a baseclass
         
         
         canflood_inprep.prep.wsamp.main_run(rlay_l, finv, wd, cf_fp)
         self.iface.messageBar().pushMessage(
             "CanFlood", "Hazard Sampling Successful", level=Qgis.Success, duration=10)
         
-        QgsMessageLog.logMessage('Hazard Sampling complete','CanFlood', level=Qgis.Info)
+        QgsMessageLog.logMessage('Hazard Sampling complete','CanFlood', level=Qgis.Info)"""
+        
+        finv = self.wsampRun(rlay_l, finv, control_fp=cf_fp1, cid=cid, crs=crs)
+        
+        #======================================================================
+        # add to map
+        #======================================================================
+        if self.checkBox_HSloadres.isChecked():
+            self.qproj.addMapLayer(finv)
+            self.logger.info('added \'%s\' to canvas'%finv.name())
+            
+        #======================================================================
+        # update event names
+        #======================================================================
+        self.event_name_set = [lay.name() for lay in rlay_l]
+        
+        self.logger.info('set %i event names: \n    %s'%(len(self.event_name_set), 
+                                                         self.event_name_set))
+        
+        #======================================================================
+        # populate the EL table
+        #======================================================================
+        
+        l = self.event_name_set
+        for tbl in [self.fieldsTable_LS, self.fieldsTable_EL]:
+
+            tbl.setRowCount(len(l)) #add this many rows
+            
+            for rindx, ename in enumerate(l):
+                tbl.setItem(rindx, 0, QTableWidgetItem(ename))
+            
+        self.logger.info('populated tables with event names')
+
+        
         
         return
+    
+    def run_dsamp(self): #sample dtm raster
+        
+        self.logger.info('user pressed \'pushButton_DTMsamp\'')
+
+        
+        #=======================================================================
+        # assemble/prepare inputs
+        #=======================================================================
+        
+        finv_raw = self.comboBox_vec.currentLayer()
+        rlay = self.comboBox_dtm.currentLayer()
+        
+        crs = self.qproj.crs()
+
+        cf_fp1 = self.get_cf_fp()
+        self.wd = self.lineEdit_wd.text()
+        
+
+        #update some parameters
+        cid = self.mFieldComboBox_cid.currentField() #user selected field
+        
+
+        
+         
+        #======================================================================
+        # """dev paths"""
+        # cf_fp1 = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200222\CanFlood_run.txt'
+        # wd = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200222'
+        # cid = 'xid' #user selected field
+        #======================================================================
+
+        
+        #======================================================================
+        # aoi slice
+        #======================================================================
+        finv = self.slice_aoi(finv_raw)
+        
+
+        #======================================================================
+        # precheck
+        #======================================================================
+                
+        if finv is None:
+            raise Error('got nothing for finv')
+        if not isinstance(finv, QgsVectorLayer):
+            raise Error('did not get a vector layer for finv')
+        
+
+        if not isinstance(rlay, QgsRasterLayer):
+            raise Error('unexpected type on raster layer')
+            
+        if not os.path.exists(self.wd):
+            raise Error('working directory does not exist:  %s'%self.wd)
+        
+        if cid is None or cid=='':
+            raise Error('need to select a cid')
+        
+        if not cid in [field.name() for field in finv.fields()]:
+            raise Error('requested cid field \'%s\' not found on the finv_raw'%cid)
+            
+        
+        #======================================================================
+        # execute
+        #======================================================================
+        
+        finv = self.wsampRun([rlay], finv, control_fp=cf_fp1, cid=cid, crs=crs,
+                             parkey= ('dmg_fps', 'gels'))
+        
+        #======================================================================
+        # add to map
+        #======================================================================
+        if self.checkBox_DTMloadres.isChecked():
+            self.qproj.addMapLayer(finv)
+            self.logger.info('added \'%s\' to canvas'%finv.name())
+            
+            
+        
+    
+
+    
+    def _pop_el_table(self): #developing the table widget
+        
+        #======================================================================
+        # dev data
+        #======================================================================
+
+        l = ['e1', 'e2', 'e3']
+        tbl = self.fieldsTable_EL
+        tbl.setRowCount(len(l)) #add this many rows
+        
+        for rindx, ename in enumerate(l):
+            tbl.setItem(rindx, 0, QTableWidgetItem(ename))
+            
+        self.logger.push('populated likelihoods table with event names')
+            
+            
+    
+    def store_eaep(self): #saving the event likelihoods table to file
+
+        self.logger.info('user pushed \'pushButton_ELstore\'')
+        
+
+        #======================================================================
+        # collect variables
+        #======================================================================
+        #get displayed control file path
+        cf_fp = self.get_cf_fp()
+        
+        
+        #likelihood paramter
+        if self.radioButton_ELari.isChecked():
+            event_probs = 'ari'
+        else:
+            event_probs = 'aep'
+        self.logger.info('\'event_probs\' set to \'%s\''%event_probs)
+        
+        
+        #======================================================================
+        # collcet table data
+        #======================================================================
+
+        df = hp.qtbl_get_df(self.fieldsTable_EL)
+        
+        self.logger.info('extracted data w/ %s \n%s'%(str(df.shape), df))
+        
+        # check it
+        if df.iloc[:, 1].isna().any():
+            raise Error('got %i nulls in the likelihood column'%df.iloc[:,1].isna().sum())
+        
+        miss_l = set(self.event_name_set).symmetric_difference(df.iloc[:,0].values)
+        if len(miss_l)>0:
+            raise Error('event name mismatch')
+        
+        
+        #======================================================================
+        # clean it
+        #======================================================================
+        aep_df = df.set_index(df.columns[0]).iloc[:,0].to_frame().T
+        
+
+        
+        #======================================================================
+        # #write to file
+        #======================================================================
+        ofn = os.path.join(self.lineEdit_wd.text(), 'aeps_%i_%s.csv'%(len(aep_df.columns), self.tag))
+        eaep_fp = self.output_df(aep_df, ofn, write_index=False)
+        
+        
+        
+        #======================================================================
+        # update the control file
+        #======================================================================
+        self.logger.info('reading control file: %s'%cf_fp)
+        pars = configparser.ConfigParser(inline_comment_prefixes='#', allow_no_value=True)
+        _ = pars.read(cf_fp) #read it
+        
+        pars.set('parameters', 'event_probs', event_probs) #user selected field
+        pars.set('risk_fps', 'aeps', eaep_fp) #user selected field
+        
+        pars.set('risk_fps', '#aeps file path set from wsamp.py at %s'
+                 %(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')))
+                
+                
+        
+        #write the config file 
+        with open(cf_fp, 'w') as configfile:
+            pars.write(configfile)
+            
+        self.logger.push('generated \'aeps\' and set \'event_probs\' to control file')
+        
+    def run_validate(self):
+        """
+        a lot of this is duplicated in  model.scripts_.setup_pars
+        
+        TODO: consolidate with setup_pars
+        
+        """
+        log = self.logger.getChild('valid')
+        log.info('user pressed \'pushButton_Validate\'')
+        
+        #======================================================================
+        # load the control file
+        #======================================================================
+        #get the control file path
+        cf_fp = self.get_cf_fp()
+        
+        #build/run theparser
+        log.info('validating control file: \n    %s'%cf_fp)
+        pars = configparser.ConfigParser(inline_comment_prefixes='#', allow_no_value=True)
+        _ = pars.read(cf_fp) #read it
+        
+        #======================================================================
+        # set the validation parameters
+        #======================================================================
+        #import the class objects
+        from canflood_inprep.model.dmg import DmgModel
+        from canflood_inprep.model.risk import RiskModel
+        
+        #populate all possible test parameters
+        """
+        todo: finish this
+        """
+        vpars_pos_d = {
+                    'risk1':(self.checkBox_Vr1, ('risk_fps', None, None)),
+                   'imp2':(self.checkBox_Vi2, ('dmg_fps', DmgModel.exp_dprops, DmgModel.exp_pars)),
+                   'risk2':(self.checkBox_Vr2, ('risk_fps', None, None)),
+                   #'risk2':(self.checkBox_Vr2, (RiskModel.exp_dprops, RiskModel.exp_pars)),
+                   'risk3':(self.checkBox_Vr3, (None, None, None)),
+                                           }
+        
+        #select based on user check boxes
+        vpars_d = dict()
+        for vtag, (checkBox, (section, eprops, epars)) in vpars_pos_d.items():
+            if checkBox.isChecked():
+                vpars_d[vtag] = (section, eprops, epars)
+                
+        if len(vpars_d) == 0:
+            raise Error('no validation options selected!')
+        
+        log.info('user selected %i validation parameter sets'%len(vpars_d))
+        
+        #======================================================================
+        # validate parameters
+        #======================================================================
+        dfiles_d = dict() #collective list of data files for secondary checking
+        for vtag, (section, eprops, epars) in vpars_d.items():
+            log.info('checking %s'%vtag)
+            #==================================================================
+            # #check variables
+            #==================================================================
+            if not epars is None:
+                for sect_chk, vars_l in epars.items():
+                    assert sect_chk in pars.sections(), 'missing expected section %s'%sect_chk
+                    
+                    for varnm in vars_l:
+                        assert varnm in pars[sect_chk], 'missing expected variable \'%s.%s\''%(sect_chk, varnm)
+            else:
+                log.warning('\'%s\' has no variable validation parameters!'%vtag)
+                    
+                    
+            #==================================================================
+            # #check expected data files
+            #==================================================================
+            if not eprops is None:
+                for varnm, dprops_d in eprops.items():
+                    
+                    #see if this is in the control file
+                    assert varnm in pars[section], '\'%s\' expected \'%s.%s\''%(vtag, section, varnm)
+                    
+                    #get the filepath
+                    fp = pars[section][varnm]
+                    fh_clean, ext = os.path.splitext(os.path.split(fp)[1])
+    
+                    #check existance
+                    if not os.path.exists(fp):
+                        log.warning('specified \'%s\' filepath does not exist: \n    %s'%(varnm, fp))
+                        continue
+                    
+                    #load the data
+                    if ext == '.csv':
+                        data = pd.read_csv(fp, header=0, index_col=None)
+                    elif ext == '.xls':
+                        data = pd.read_excel(fp)
+                    else:
+                        raise Error('unepxected filetype for \"%s.%s\' = \"%s\''%(vtag, varnm, ext))
+                    
+                    #add this to the collective
+                    if not varnm in dfiles_d:
+                        dfiles_d[varnm] = data
+                    
+                    
+                    #check the data propoerites expectations
+                    for chk_type, evals in dprops_d.items():
+                        
+                        #extension
+                        if chk_type == 'ext':
+                            assert ext in evals, '\'%s\' got unexpected extension: %s'%(varnm, ext)
+                            
+                        #column names
+                        elif chk_type == 'colns':
+                            miss_l = set(evals).difference(data.columns)
+                            assert len(miss_l)==0, '\'%s\' is missing %i expected column names: %s'%(
+                                varnm, len(miss_l), miss_l)
+                            
+                        else:
+                            raise Error('unexpected chk_type: %s'%chk_type)
+                        
+                    log.info('%s.%s passed %i data expectation checks'%(
+                        vtag, varnm, len(dprops_d)))
+            else:
+                log.warning('\'%s\' has no data property validation parameters!'%vtag)
+                        
+                
+            #==================================================================
+            # #set validation flag
+            #==================================================================
+            pars.set('validation', vtag, 'True')
+            log.info('\'%s\' validated'%vtag)
+            
+        
+        #======================================================================
+        # secondary checks
+        #======================================================================
+        """for special data checks (that apply to multiple models)"""
+        for dname, data in dfiles_d.items():
+            pass
+        
+        #======================================================================
+        # update control file
+        #======================================================================
+        with open(cf_fp, 'w') as configfile:
+            pars.write(configfile)
+            
+        log.info('updated control file:\n    %s'%cf_fp)
+            
+            
+        #======================================================================
+        # wrap
+        #======================================================================
+        log.push('validated %i model parameter sets'%len(vpars_d))
+        
+        return
+            
+            
+            
+                    
+                
+            
+        
+
+            
+            
+             
+        
+        
+        
                 
                 
             
-    def run(self):
-        # Do something useful here - delete the line containing pass and
-        # substitute with your code.
-        #=======================================================================
-        # calculate poly stats
-        #=======================================================================
-        self.vec = self.comboBox_vec.currentLayer()
-        self.ras = list(self.ras_dict.values())
-        self.cf = self.lineEdit_control_1.text()
-        if (self.vec is None or len(self.ras) == 0 or self.wd is None or self.cf is None):
-            self.iface.messageBar().pushMessage("Input field missing",
-                                                 level=Qgis.Critical, duration=10)
-            return
-        
-        """moved to build_scenario
-        pars = configparser.ConfigParser(inline_comment_prefixes='#', allow_no_value=True)
-        _ = pars.read(self.cf)
-        pars.set('dmg_fps', 'curves', self.lineEdit_curve.text())
-        with open(self.cf, 'w') as configfile:
-            pars.write(configfile)"""
-        
-        
-        canflood_inprep.prep.wsamp.main_run(self.ras, self.vec, self.wd, self.cf)
-        self.iface.messageBar().pushMessage(
-            "Success", "Process successful", level=Qgis.Success, duration=10)
-        
+    #==========================================================================
+    # def run(self):
+    #     # Do something useful here - delete the line containing pass and
+    #     # substitute with your code.
+    #     #=======================================================================
+    #     # calculate poly stats
+    #     #=======================================================================
+    #     self.vec = self.comboBox_vec.currentLayer()
+    #     self.ras = list(self.ras_dict.values())
+    #     self.cf = self.lineEdit_cf_fp.text()
+    #     if (self.vec is None or len(self.ras) == 0 or self.wd is None or self.cf is None):
+    #         self.iface.messageBar().pushMessage("Input field missing",
+    #                                              level=Qgis.Critical, duration=10)
+    #         return
+    #     
+    #     """moved to build_scenario
+    #     pars = configparser.ConfigParser(inline_comment_prefixes='#', allow_no_value=True)
+    #     _ = pars.read(self.cf)
+    #     pars.set('dmg_fps', 'curves', self.lineEdit_curve.text())
+    #     with open(self.cf, 'w') as configfile:
+    #         pars.write(configfile)"""
+    #     
+    #     
+    #     canflood_inprep.prep.wsamp.main_run(self.ras, self.vec, self.wd, self.cf)
+    #     self.iface.messageBar().pushMessage(
+    #         "Success", "Process successful", level=Qgis.Success, duration=10)
+    #     
+    #==========================================================================
 
  
 

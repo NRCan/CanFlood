@@ -22,7 +22,8 @@
  ***************************************************************************/
 """
 
-import os
+import os,  os.path, warnings, tempfile, logging, configparser, sys
+from shutil import copyfile
 
 from qgis.PyQt import uic
 from qgis.PyQt import QtWidgets
@@ -36,7 +37,7 @@ from qgis.PyQt.QtWidgets import QAction, QFileDialog, QListWidget
 # Import the code for the dialog
 
 #from .canFlood_inPrep_dialog import CanFlood_inPrepDialog
-import os.path
+
 from qgis.core import QgsProject, Qgis, QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest
 
 # User defined imports
@@ -45,7 +46,7 @@ from qgis.analysis import *
 import qgis.utils
 import processing
 from processing.core.Processing import Processing
-import sys, os, warnings, tempfile, logging, configparser
+
 
 sys.path.append(r'C:\IBI\_QGIS_\QGIS 3.8\apps\Python37\Lib\site-packages')
 #sys.path.append(os.path.join(sys.exec_prefix, 'Lib/site-packages'))
@@ -57,19 +58,22 @@ sys.path.append(file_dir)
 #import model
 #from risk import RiskModel
 
-import canflood_inprep.model.risk
-import canflood_inprep.model.dmg
-import canflood_inprep.prep.wsamp
+from canflood_inprep.model.risk import RiskModel
+from canflood_inprep.model.dmg import DmgModel
+
 #from canFlood_model import CanFlood_Model
+import canflood_inprep.hp as hp
 from canflood_inprep.hp import Error
-from shutil import copyfile
+
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'ProjectModellingDialog_Base.ui'))
 
 
-class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS):
+class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,  
+                       #RiskModel, DmgModel, #model base classes NO! need to keep these separate 
+                       hp.QprojPlug):
     def __init__(self, iface, parent=None):
         """Constructor."""
         super(Modelling_Dialog, self).__init__(parent)
@@ -80,17 +84,84 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
         
-        self.wd = None
-        self.cf = None
+
         self.iface = iface
         
-        self.pushButton_br_1.clicked.connect(self.select_output_folder)
-        self.pushButton_br_2.clicked.connect(self.select_output_file)
-        self.pushButton_br_3.clicked.connect(self.select_output_folder)
-        self.pushButton_br_4.clicked.connect(self.select_output_file)
-        self.pushButton_run_1.clicked.connect(self.run_risk)
-        self.pushButton_run_2.clicked.connect(self.run_dmg)
+        self.qproj_setup()
         
+        """remapped everything
+        self.pushButton_wd.clicked.connect(self.select_output_folder) #risk
+        self.pushButton_br_2.clicked.connect(self.select_output_file)
+        self.pushButton_cf.clicked.connect(self.select_output_folder)
+        self.pushButton_br_4.clicked.connect(self.select_output_file)
+        self.pushButton_run_1.clicked.connect(self.run_risk) #r1. run
+        self.pushButton_run_2.clicked.connect(self.run_dmg)"""
+        
+        #======================================================================
+        # setup
+        #======================================================================
+        """
+        lineEdit_wd
+        pushButton_wd
+        """
+        #control file
+        def cf_browse():
+            return self.browse_button(self.lineEdit_cf_fp, 
+                                      prompt='Select Control File',
+                                      qfd = QFileDialog.getOpenFileName)
+            
+        self.pushButton_cf.clicked.connect(cf_browse)
+        
+        #working directory
+        def wd_browse():
+            return self.browse_button(self.lineEdit_wd, 
+                                      prompt='Select Working Directory',
+                                      qfd = QFileDialog.getExistingDirectory)
+            
+        self.pushButton_wd.clicked.connect(wd_browse)
+        
+        """
+        development
+        """
+        self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200223d\CanFlood_scenario1.txt')
+        self.lineEdit_wd.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200223d')
+        
+        
+        #overwrite control
+        self.checkBox_SSoverwrite.stateChanged.connect(self.set_overwrite)
+        
+        #======================================================================
+        # risk level 1
+        #======================================================================
+        self.pushButton_r1Run.clicked.connect(self.run_risk1)
+        
+        #======================================================================
+        # impacts level 2
+        #======================================================================
+        self.pushButton_i2run.clicked.connect(self.run_impact2)
+        
+        #======================================================================
+        # risk level 2
+        #======================================================================
+        self.pushButton_r2Run.clicked.connect(self.run_risk2)
+        
+        #======================================================================
+        # risk level 3
+        #======================================================================
+        self.pushButton_r3Run.clicked.connect(self.run_risk3)
+        
+        
+        def r3_browse():
+            return self.browse_button(self.lineEdit_r3cf, 
+                                      prompt='Select SOFDA Control File',
+                                      qfd = QFileDialog.getOpenFileName)
+            
+        
+        self.pushButton_r3.clicked.connect(r3_browse)
+        
+        #======================================================================
+        # commons
+        #======================================================================
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
         
@@ -98,35 +169,96 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS):
         foldername = QFileDialog.getExistingDirectory(self, "Select Directory")
         print(foldername)
         if foldername is not "":
-            self.lineEdit_wd_1.setText(os.path.normpath(foldername))
-            self.lineEdit_wd_2.setText(os.path.normpath(foldername))
-            self.lineEdit_cf_1.setText(os.path.normpath(os.path.join(foldername, 'CanFlood_control_01.txt')))
+            self.lineEdit_wd.setText(os.path.normpath(foldername))
+            self.lineEdit_wd_2.setText(os.path.normpath(foldername)) #i2. bar
+            self.lineEdit_cf_1.setText(os.path.normpath(os.path.join(foldername, 'CanFlood_control_01.txt'))) #r1. browse
             self.lineEdit_cf_2.setText(os.path.normpath(os.path.join(foldername, 'CanFlood_control_01.txt')))
     
     def select_output_file(self):
         filename = QFileDialog.getOpenFileName(self, "Select File") 
-        self.lineEdit_cf_1.setText(str(filename[0]))
+        self.lineEdit_cf_1.setText(str(filename[0])) #r1. browse
         self.lineEdit_cf_2.setText(str(filename[0]))
-    
-    def run_risk(self):
-        self.wd = self.lineEdit_wd_1.text()
-        self.cf = self.lineEdit_cf_1.text()
-        if (self.wd is None or self.cf is None):
-            self.iface.messageBar().pushMessage("Input field missing",
-                                                level=Qgis.Critical, duration=10)
-        canflood_inprep.model.risk.main_run(self.wd, self.cf)
-        self.iface.messageBar().pushMessage(
-                "Success", "Process successful", level=Qgis.Success, duration=10)
-    
-    def run_dmg(self):
-        self.wd = self.lineEdit_wd_1.text()
-        self.cf = self.lineEdit_cf_1.text()
-        if (self.wd is None or self.cf is None):
-            self.iface.messageBar().pushMessage("Input field missing",
-                                                level=Qgis.Critical, duration=10)
-        canflood_inprep.model.dmg.main_run(self.wd, self.cf)
-        self.iface.messageBar().pushMessage(
-                "Success", "Process successful", level=Qgis.Success, duration=10)
         
-    def run(self):
-        pass
+    def set_run_pars(self): #setting generic parmaeters for a run
+        self.wd= self.get_wd()
+        self.cf_fp = self.get_cf_fp()
+        self.tag = self.linEdit_Stag.text()
+        
+    #==========================================================================
+    # run commands
+    #==========================================================================
+    def run_risk1(self):
+        self.set_run_pars()
+        raise Error('not implemented')
+        
+        
+    def run_impact2(self):
+        #collect parameters from gui
+        self.set_run_pars()
+        
+        #======================================================================
+        # #build/run model
+        #======================================================================
+        model = DmgModel(par_fp = self.cf_fp,
+                         out_dir = self.wd,
+                         logger = self.logger)
+        
+        #run the model        
+        cres_df = model.run()
+        
+        #======================================================================
+        # save reuslts
+        #======================================================================
+        out_fp = self.output_df(cres_df, 'dmgs_%s_%s'%(model.name, self.tag))
+        
+        #update parameter file
+        self.update_cf({'risk_fps':{'dmgs':out_fp}})
+
+        self.logger.push('Impacts2 complete')
+        
+        if self.checkBox_i2RunRisk.isChecked():
+            self.logger.info('linking in Risk 2')
+            self.run_risk2()
+    
+    def run_risk2(self):
+        self.set_run_pars()
+        
+        #======================================================================
+        # #update control file with user selection
+        #======================================================================
+        pars = configparser.ConfigParser(allow_no_value=True)
+        _ = pars.read(self.cf_fp) #read it from the new location
+        
+        for pval, checkBox in {'res_per_asset':self.checkBox_r2rpa,
+                               'ead_plot':self.checkBox_r2ep,                               
+                               }.items():
+            
+            
+            if checkBox.isChecked():
+                pars.set('parameters', pval, 'True')
+        
+
+        #write the config file 
+        with open(self.cf_fp, 'w') as configfile:
+            pars.write(configfile)
+        
+        #======================================================================
+        # run the model
+        #======================================================================
+        RiskModel(par_fp = self.cf_fp,
+                         out_dir = self.wd,
+                         logger = self.logger).run()
+       
+        self.logger.push('Risk2 complete')
+        
+        if self.checkBox_r2ires.isChecked():
+            self.logger.info('linking in results')
+            
+            """
+            TODO: link up  Results to Inventory Geometry
+
+            """
+
+        
+    def run_risk3(self):
+        raise Error('not implemented')

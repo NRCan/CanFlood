@@ -27,7 +27,7 @@ import numpy as np
 import hp
 from hp import Error, view
 
-from model.scripts_ import Model
+from canflood_inprep.model.common import Model
 
 
 #==============================================================================
@@ -53,6 +53,7 @@ class DmgModel(Model):
     #==========================================================================
     # #program vars
     #==========================================================================
+    valid_par = 'imp2'
     datafp_section = 'dmg_fps'
     bid = 'bid' #indexer for expanded finv
 
@@ -64,10 +65,13 @@ class DmgModel(Model):
                     'finv':{'ext':'.csv', 'colns':['f0_tag', 'f0_scale', 'f0_cap', 'f0_elv']},
                     }
     
+    opt_dfiles = ['gels'] #optional data files
+    
     exp_pars = {'parameters':list(),
                   'dmg_fps':['curves','expos', 'gels', 'finv']}
     
     dirname = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    
     def __init__(self,
                  par_fp = None,
                  out_dir = None,
@@ -95,6 +99,7 @@ class DmgModel(Model):
         
         self.logger.debug('finished __init__ on Dmg')
         
+
  
     def setup_dfuncs(self, # build curve workers
                  df_d, #{tab name: raw curve data
@@ -107,6 +112,9 @@ class DmgModel(Model):
         
         #loop through each frame and build the func
         for tabn, df in df_d.items():
+            if not isinstance(df, pd.DataFrame):
+                raise Error('unexpected type on tab \'%s\': %s'%(tabn, type(df)))
+            
             #build it
             dfunc = DFunc(tabn).build(df, log)
             
@@ -300,7 +308,7 @@ class DmgModel(Model):
         should also add this to the input validator tool
         """
         boolidx = ddf.drop([bid, cid], axis=1) < 0 #True=wsl below ground
-        print(boolidx)
+
         if boolidx.any().any():
             msg = 'got %i (of %i) wsl below ground'%(boolidx.sum().sum(), len(boolidx))
             if self.ground_water:
@@ -315,6 +323,21 @@ class DmgModel(Model):
         self.bdf, self.ddf = bdf, ddf
         
         log.debug('finished')
+        
+        #======================================================================
+        # check aeps
+        #======================================================================
+        if 'aeps' in self.pars['risk_fps']:
+            aep_fp = self.pars['risk_fps'].get('aeps')
+            
+            if not os.path.exists(aep_fp):
+                log.warning('aep_fp does not exist... skipping check')
+            else:
+                aep_data = pd.read_csv(aep_fp)
+                
+                miss_l = set(aep_data.columns).difference(wdf.columns)
+                if len(miss_l) > 0:
+                    raise Error('exposure file does not match aep data: \n    %s'%miss_l)
             
 
         
@@ -335,6 +358,9 @@ class DmgModel(Model):
         # #get damages per bid
         bres_df = self.bdmg()
         
+        if bres_df is None:
+            return None
+        
         # recast as cid
         cres_df = bres_df.groupby(self.cid).sum().drop(self.bid, axis=1)
         
@@ -354,16 +380,14 @@ class DmgModel(Model):
         
         
         
+        """handle outputs with the dialog.
+        for external runs, user can use output method
         #======================================================================
         # output
         #======================================================================
-        """need to create a unique output folder (timestamped) and output:
-        log file
-        parameter file (copy)
-        results data (cres_df)
-        summary data (reserved for future dev"""
+        self.output(cres_df, 'dmg_results')"""
+
         
-        self.output(cres_df, 'dmg_results')
         
         log.info('finished')
         
@@ -383,6 +407,7 @@ class DmgModel(Model):
         
         #set some locals
         bdf ,ddf = self.bdf, self.ddf
+        """ddf is appending _1 to column names"""
         cid, bid = self.cid, self.bid
         
         #identifier for depth columns
@@ -411,6 +436,11 @@ class DmgModel(Model):
         ).any(axis=1)  
         
         #valid_bids = ddf.loc[boolidx, cid].values
+        
+        if not vboolidx.any():
+            log.warning('no valid depths!')
+            """not sure what to return here"""
+            return None
         
         #get tags w/ depths
         """indexes shoul dmatchy"""
@@ -518,6 +548,9 @@ class DmgModel(Model):
         # SCALED--------------
         #======================================================================
         #loop and add scaled damages
+        """
+        view(events_df)
+        """
         for event, e_ser in events_df.iterrows():
 
             #find this raw damage column
@@ -584,6 +617,9 @@ class DmgModel(Model):
         
         res_df1 = res_df.loc[:, boolcol]
         
+        #clean up columns
+        
+        
         assert res_df1.notna().all().all(), 'got some nulls'
         
         log.info('finished w/ %s'%str(res_df1.shape))
@@ -628,6 +664,8 @@ class DFunc(object,
         
         log = logger.getChild('%s'%self.tabn)
         
+        log.info('on df %s:\n%s'%(str(df_raw.shape), df_raw))
+        
         #======================================================================
         # precheck
         #======================================================================
@@ -636,6 +674,13 @@ class DFunc(object,
         assert len(miss_l) == 0, \
             'tab \'%s\' missing %i expected row names: %s'%(
                 self.tabn, len(miss_l), miss_l)
+            
+        """
+        import pandas as pd
+        fp = r'C:\LS\03_TOOLS\CanFlood\_ins\prep\cT2\CanFlood_curves_rfda_20200218.xls'
+        data.keys()
+        df_raw = data['AA_MC']
+        """
             
         
         #======================================================================
@@ -676,6 +721,10 @@ class DFunc(object,
         dd_df.columns = dd_df.iloc[0,:].to_list()
         dd_df = dd_df.drop(dd_df.index[0], axis=0).reset_index(drop=True) #drop the depth-damage row
         
+        #typeset it
+        dd_df.iloc[:,0:2] = dd_df.iloc[:,0:2].astype(float)
+        
+       
         ar = np.sort(np.array([dd_df.iloc[:,0].tolist(), dd_df.iloc[:,1].tolist()]), axis=1)
         self.dd_ar = ar
         

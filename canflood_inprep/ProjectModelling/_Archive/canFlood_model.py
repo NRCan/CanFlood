@@ -249,9 +249,9 @@ class CanFlood_Model:
         if self.first_start == True:
             self.first_start = False
             self.dlg = CanFlood_ModelDialog()
-            self.dlg.pushButton_br_1.clicked.connect(self.select_output_folder)
+            self.dlg.pushButton_wd.clicked.connect(self.select_output_folder)
             self.dlg.pushButton_br_2.clicked.connect(self.select_output_file)
-            self.dlg.pushButton_br_3.clicked.connect(self.select_output_folder)
+            self.dlg.pushButton_cf.clicked.connect(self.select_output_folder)
             self.dlg.pushButton_br_4.clicked.connect(self.select_output_file)
             self.dlg.pushButton_run_1.clicked.connect(self.run_risk)
             self.dlg.pushButton_run_2.clicked.connect(self.run_dmg)

@@ -7,7 +7,7 @@ Created on Feb. 9, 2020
 #==========================================================================
 # logger setup-----------------------
 #==========================================================================
-import logging, logging.config, configparser
+import logging, logging.config, configparser, datetime
 #logcfg_file = r'C:\LS\03_TOOLS\CanFlood\0.0.2\_pars\logger.conf'
 logger = logging.getLogger() #get the root logger
 #logging.config.fileConfig(logcfg_file) #load the configuration file
@@ -44,7 +44,7 @@ from canflood_inprep.hp import *
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class WSLSampler(QprojPlug):
+class WSLSampler(object):
 
     
     def __init__(self,
@@ -60,17 +60,15 @@ class WSLSampler(QprojPlug):
         # attach inputs
         #=======================================================================
         self.logger = logger.getChild('Qsimp')
-        self.out_dir = out_dir
+        self.wd = out_dir
         self.tag = tag
 
         
         super().__init__() #initilzie teh baseclass
         
         self.logger.info('init finished')
-        
-        
-        
-    def load_layers(self, #load data to project
+                
+    def load_layers(self, #load data to project (for console runs)
                     rfp_l, finv_fp,
                     providerLib='ogr'
                     ):
@@ -153,12 +151,14 @@ class WSLSampler(QprojPlug):
         return list(raster_d.values()), vlay
             
 
-    def run(self,
+    def wsampRun(self, 
             raster_l, #set of rasters to sample 
             finv_raw, #inventory layer
-            control_fp = '', #control file path (for writing results to the control file)
-            cid = 'xid', #index field name on finv
+            control_fp = None, #control file path (for writing results to the control file)
+            cid = None, #index field name on finv
             crs = None,
+            out_dir = None,
+            parkey = ('dmg_fps', 'expos')
             ):
         
         """
@@ -179,9 +179,13 @@ class WSLSampler(QprojPlug):
         #======================================================================
         # defaults
         #======================================================================
-        log = self.logger.getChild('run')
+        log = self.logger.getChild('wsampRun')
+        if control_fp is None: control_fp = self.cf_fp
+        if cid is None: cid = self.cid
         if crs is None: crs = self.crs
+        if out_dir is None: out_dir = self.wd
         
+        log.push('executing on %i rasters'%len(raster_l))
         #======================================================================
         # #check the data
         #======================================================================
@@ -191,19 +195,15 @@ class WSLSampler(QprojPlug):
         assert isinstance(finv_raw, QgsVectorLayer), 'bad type on finv_raw'
         assert finv_raw.crs() == crs, 'finv_raw crs doesnt match project'
         assert cid in [field.name() for field in finv_raw.fields()], \
-            'requested cid field \'%s\' not found on the finv_raw'
+            'requested cid field \'%s\' not found on the finv_raw'%cid
         
         
         #check the rasters
+        rname_l = []
         for rlay in raster_l:
             assert isinstance(rlay, QgsRasterLayer)
             assert rlay.crs() == crs, 'rlay %s crs doesnt match project'%(rlay.name())
-        
-        #======================================================================
-        # slice data by project aoi
-        #======================================================================
-        """todo"""
-        
+            rname_l.append(rlay.name())
         #======================================================================
         # prep the finv_raw
         #======================================================================
@@ -220,9 +220,14 @@ class WSLSampler(QprojPlug):
         # sample-----------------
         #======================================================================
         gtype = QgsWkbTypes().displayString(finv.wkbType())
-        
-        if 'Polygon' in gtype or 'Line' in gtype: 
+        names_d = dict()
+        if 'Polygon' in gtype: 
+            
+            """TODO:
             #ask for sample type (min/max/mean)
+            
+            does this do lines also?
+            """
             
             #sample each raster
             
@@ -231,6 +236,7 @@ class WSLSampler(QprojPlug):
             log.info('sampling %i raster layers'%len(raster_l))
             
             #loop and sample each raster on these points
+            
             for indxr, rlay in enumerate(raster_l):
                 
     
@@ -277,8 +283,10 @@ class WSLSampler(QprojPlug):
             log.info('sampling %i raster layers'%len(raster_l))
             
             #loop and sample each raster on these points
+            names_d = dict()
             for indxr, rlay in enumerate(raster_l):
                 
+                ofnl =  [field.name() for field in finv.fields()]
     
                 log.info('    %i/%i sampling \'%s\' on \'%s\''%(indxr+1, len(raster_l), finv.name(), rlay.name()))
             
@@ -298,6 +306,20 @@ class WSLSampler(QprojPlug):
                 assert len(finv.fields()) == finv_fcnt + indxr +1, \
                     'bad field length on %i'%indxr
                     
+                """this is adding a suffix onto the names... need to clean below
+                if not rlay.name() in [field.name() for field in finv.fields()]:
+                    raise Error('rlay name \'%s\' failed to get set'%rlay.name())"""
+                    
+                #get/updarte the field names
+                nfnl =  [field.name() for field in finv.fields()]
+                new_fn = set(nfnl).difference(ofnl) #new field names not in the old
+                
+                if len(new_fn) > 1:
+                    raise Error('bad mismatch: %i \n    %s'%(len(new_fn), new_fn))
+                elif len(new_fn) == 1:
+                    names_d[list(new_fn)[0]] = rlay.name()
+                     
+                    
                 log.debug('sampled %i values on raster \'%s\''%(
                     finv.dataProvider().featureCount(), rlay.name()))
                 
@@ -309,7 +331,7 @@ class WSLSampler(QprojPlug):
 
         log.info('sampling finished')
         
-        res_name = 'expos_%s_%i_%i'%(self.tag, len(raster_l), finv.dataProvider().featureCount())
+        res_name = '%s_%s_%i_%i'%(parkey[1], self.tag, len(raster_l), finv.dataProvider().featureCount())
         
         finv.setName(res_name)
         #======================================================================
@@ -323,42 +345,54 @@ class WSLSampler(QprojPlug):
         
         
         #======================================================================
-        # write data
+        # write data----------------
         #======================================================================
         #extract data
         df = vlay_get_fdf(finv)
-        out_fp = self.output_df(df, '%s.csv'%res_name, out_dir = self.out_dir)
+        
+        #rename
+        if len(names_d) > 0:
+            df = df.rename(columns=names_d)
+            log.info('renaming columns: %s'%names_d)
+        
+        
+        #check the raster names
+        miss_l = set(rname_l).difference(df.columns.to_list())
+        if len(miss_l)>0:
+            raise Error('failed to map %i raster layer names onto results: \n    %s'%(len(miss_l), miss_l))
+        
+        
+        out_fp = self.output_df(df, '%s.csv'%res_name, out_dir = out_dir, write_index=False)
         
         
         #======================================================================
         # set control file
         #======================================================================
-        #build it
+
         if not os.path.exists(control_fp):
-            raise Error('not implemented')
-            #create control file template
+            raise Error('no control file passed')
+
             
         #load it
         log.info('reading parameters from \n     %s'%control_fp)
-        pars = configparser.ConfigParser(inline_comment_prefixes='#', allow_no_value=True)
+        pars = configparser.ConfigParser(allow_no_value=True)
         _ = pars.read(control_fp)
         
 
         #pars['dmg_fps']['expos'] = out_fp
-        pars.set('dmg_fps', 'expos', out_fp)
-        pars.set('dmg_fps', '#expos file path set from wsamp.py')
+        pars.set(parkey[0], parkey[1], out_fp)
+        pars.set(parkey[0], '#%s file path set from wsamp.py at %s'
+                 %(parkey[1], datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')))
         
         #write it
         with open(control_fp, 'w') as configfile:
             pars.write(configfile)
             
-        log.info('updated dmg_fps.expos = %s'%out_fp)
+        log.info('updated %s.%s = %s'%(parkey[0], parkey[1], out_fp))
+
 
         
-        #======================================================================
-        # wrap
-        #======================================================================
-        #set 'event_name_set' variable based on names of loaded rasters
+        return finv
         
 
 
@@ -476,45 +510,47 @@ class WSLSampler(QprojPlug):
     
 
         
-def main_run(ras, vec, outp, cf):
-    
-    
-
-    
-    #==========================================================================
-    # dev data
-    #==========================================================================
-    #data_dir = r'C:\Users\tony.decrescenzo\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\floodiq\Geo_Files'
-    #raster_fns = ['Gld_10e2_fail_cT1.tif', 'Gld_10e2_si_cT1.tif', 'Gld_20e1_fail_cT1.tif', 'Gld_20e1_si_cT1.tif']
-    
-    #raster_fps = [os.path.join(data_dir, fn) for fn in raster_fns]
-    
-    #finv_fp = r'C:\Users\tony.decrescenzo\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\floodiq\Geo_Files\finv_icomp_cT1.gpkg'
-    
-    #==========================================================================
-    # initilize
-    #==========================================================================
-    wrkr =  WSLSampler(logger=logger, 
-                       out_dir = outp,
-                       tag='test')
-    
-    #set the coordinate system
-    """I assume this will just be the project coordinate system"""
-    wrkr.set_crs(authid = 3005) 
-    
-    #load the data
-    """ (I assume these will already be loaded in the project)"""
-    #raster_l, finv = wrkr.load_layers(raster_fps, finv_fp)
-    
-    #==========================================================================
-    # run
-    #==========================================================================
-    dirname = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-    wrkr.run(ras, vec,
-             control_fp =  cf,
-             )
-    
-    print('finished')
+#==============================================================================
+# def main_run(ras, vec, outp, cf):
+#     
+#     
+# 
+#     
+#     #==========================================================================
+#     # dev data
+#     #==========================================================================
+#     #data_dir = r'C:\Users\tony.decrescenzo\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\floodiq\Geo_Files'
+#     #raster_fns = ['Gld_10e2_fail_cT1.tif', 'Gld_10e2_si_cT1.tif', 'Gld_20e1_fail_cT1.tif', 'Gld_20e1_si_cT1.tif']
+#     
+#     #raster_fps = [os.path.join(data_dir, fn) for fn in raster_fns]
+#     
+#     #finv_fp = r'C:\Users\tony.decrescenzo\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\floodiq\Geo_Files\finv_icomp_cT1.gpkg'
+#     
+#     #==========================================================================
+#     # initilize
+#     #==========================================================================
+#     wrkr =  WSLSampler(logger=logger, 
+#                        out_dir = outp,
+#                        tag='test')
+#     
+#     #set the coordinate system
+#     """I assume this will just be the project coordinate system"""
+#     wrkr.set_crs(authid = 3005) 
+#     
+#     #load the data
+#     """ (I assume these will already be loaded in the project)"""
+#     #raster_l, finv = wrkr.load_layers(raster_fps, finv_fp)
+#     
+#     #==========================================================================
+#     # run
+#     #==========================================================================
+#     dirname = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+#     wrkr.run(ras, vec,
+#              control_fp =  cf,
+#              )
+#     
+#     print('finished')
+#==============================================================================
     
 
             

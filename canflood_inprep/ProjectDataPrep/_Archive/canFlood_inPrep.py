@@ -233,7 +233,7 @@ class CanFlood_inPrep:
         
     def select_output_file_cf(self):
         filename = QFileDialog.getOpenFileName(self.dlg, "Select File")
-        self.dlg.lineEdit_control_1.setText(str(filename[0]))
+        self.dlg.lineEdit_cf_fp.setText(str(filename[0]))
         self.dlg.lineEdit_control_2.setText(str(filename[0]))
         self.cf = str(filename[0])
     
@@ -280,7 +280,7 @@ class CanFlood_inPrep:
         self.wd =  self.dlg.lineEdit_wd.text()
         self.check_cf()
         self.dlg.lineEdit_curve.setText(os.path.normpath(os.path.join(self.wd, 'CanFlood - curve set 01.xls')))
-        self.dlg.lineEdit_control_1.setText(os.path.normpath(os.path.join(self.wd, 'CanFlood_control_01.txt')))
+        self.dlg.lineEdit_cf_fp.setText(os.path.normpath(os.path.join(self.wd, 'CanFlood_control_01.txt')))
         self.dlg.lineEdit_control_2.setText(os.path.normpath(os.path.join(self.wd, 'CanFlood_control_01.txt')))
         
     def check_cf(self):
@@ -333,9 +333,9 @@ class CanFlood_inPrep:
             self.dlg.listWidget_ls.setSelectionMode(QListWidget.MultiSelection)
             
             # Set folder/file browse buttons
-            self.dlg.pushButton_br_1.clicked.connect(self.select_output_folder)
+            self.dlg.pushButton_wd.clicked.connect(self.select_output_folder)
             self.dlg.pushButton_br_2.clicked.connect(self.select_output_file_vcs)
-            self.dlg.pushButton_br_3.clicked.connect(self.select_output_file_cf)
+            self.dlg.pushButton_cf.clicked.connect(self.select_output_file_cf)
             self.dlg.pushButton_br_4.clicked.connect(self.select_output_file_cf)
             self.dlg.pushButton_set.clicked.connect(self.set_wd)
             self.dlg.pushButton_remove.clicked.connect(self.remove_text_edit)
@@ -356,7 +356,7 @@ class CanFlood_inPrep:
         self.dlg.listWidget_ras.clear()
         self.dlg.lineEdit_wd.clear()
         self.dlg.lineEdit_curve.clear()
-        self.dlg.lineEdit_control_1.clear()
+        self.dlg.lineEdit_cf_fp.clear()
         self.dlg.lineEdit_control_2.clear()
         
         # show the dialog
@@ -372,7 +372,7 @@ class CanFlood_inPrep:
             #=======================================================================
             self.vec = self.dlg.comboBox_vec.currentLayer()
             self.ras = list(self.ras_dict.values())
-            self.cf = self.dlg.lineEdit_control_1.text()
+            self.cf = self.dlg.lineEdit_cf_fp.text()
             if (self.vec is None or len(self.ras) == 0 or self.wd is None or self.cf is None):
                 self.iface.messageBar().pushMessage("Input field missing",
                                                      level=Qgis.Critical, duration=10)

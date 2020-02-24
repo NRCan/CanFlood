@@ -28,7 +28,7 @@ import hp
 from hp import Error, view
 
 
-from model.scripts_ import Model
+from canflood_inprep.model.common import Model
 
 #==============================================================================
 # functions----------------------
@@ -48,6 +48,7 @@ class RiskModel(Model):
     integrate = 'trapz'
     ead_plot = False
     res_per_asset = False
+    valid_par = 'risk2'
     
     
     #==========================================================================
@@ -67,6 +68,8 @@ class RiskModel(Model):
     exp_pars = {'parameters':list(),
                   'risk_fps':['dmgs','aeps'], #exlikes is optional
                   }
+    
+    opt_dfiles = ['exlikes']
     
     #expected data properties
     exp_dprops = {'dmgs':{'ext':'.csv', 'colns':[]},
@@ -142,7 +145,7 @@ class RiskModel(Model):
 
         #column names
         miss_l = set(ddf.columns).difference(adf.columns)
-        assert len(miss_l) == 0, '%i column mismatch between exlikes and damages: %s'%(
+        assert len(miss_l) == 0, '%i column mismatch between aeps and damages: %s'%(
             len(miss_l), miss_l)
         
         #convert to a series
@@ -254,7 +257,7 @@ class RiskModel(Model):
         boolidx = ddf1.apply(lambda x: x.is_monotonic_increasing, axis=1)
         if boolidx.any():
             log.debug(ddf1.loc[boolidx, :])
-            raise Error(' %i (of %i)  assets have non-monotonic-increasing damages. see logger'%(
+            log.warning(' %i (of %i)  assets have non-monotonic-increasing damages. see logger'%(
                 boolidx.sum(), len(boolidx)))
             
         #======================================================================
@@ -642,7 +645,7 @@ class RiskModel(Model):
         # defaults
         #======================================================================
         log = self.logger.getChild('risk_plot')
-        if out_dir is None: out_dir = self.out_dir
+        if out_dir is None: out_dir = self.wd
         if overwrite is None: overwrite = self.overwrite
         
         #======================================================================

@@ -3,11 +3,11 @@
 # This file should be included when you package your plugin.# Mandatory items:
 
 [general]
-name=CanFlood_inPrep
-qgisMinimumVersion=3.0
+name=CanFlood
+qgisMinimumVersion=3.10
 description=This plugin preps CanFlood data
 version=0.1
-author=Tony De Crescenzo
+author=Seth Bryant, Tony De Crescenzo
 email=tony.decrescenzo@ibigroup.com
 
 about=This plugin preps CanFlood data
