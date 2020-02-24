@@ -1,6 +1,10 @@
 # CanFlood
 Flood Risk modelling toolbox for Canada
 
+## Alpha Release!
+The CanFlood plugin is out and (mostly) working!  
+
+Here are the 
 
 ## Installation Insturctions 
 
@@ -16,7 +20,7 @@ Flood Risk modelling toolbox for Canada
 
 ## Getting Started
 
-Read the above '[CanFlood - UsersManual (0.0.1).docx](https://github.com/IBIGroupCanWest/CanFlood/raw/master/CanFlood%20-%20UsersManual%20(0.0.1).docx)'
+Read the above '[CanFlood - UsersManual (0.0.1).docx](https://github.com/IBIGroupCanWest/CanFlood/raw/master/CanFlood%20-%20UsersManual%20(0.0.1).docx)' and follow the guidance in the 'Tutorial'.
 
 
 ## I'm getting Errors!
