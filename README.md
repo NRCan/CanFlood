@@ -1,10 +1,17 @@
 # CanFlood
 Flood Risk modelling toolbox for Canada
 
-## Alpha Release!
+## Alpha Release
 The CanFlood plugin is out and (mostly) working!  
 
-Here are the 
+Here are the working tools:
+Build: Scenario Setup, Hazard Sampler, Event Likelihoods, DTM Sampler, Validation (partial)
+Model: Setup, Impacts (L2), Risk (L2)
+Results: none
+
+We welcome/encourage any comments, bugs, or issues you have/find. Please create a GitHub 'issue' ticket (on the issue tab) to let us know about these things.
+
+Happy flood modelling!
 
 ## Installation Insturctions 
 
