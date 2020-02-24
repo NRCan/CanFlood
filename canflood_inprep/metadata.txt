@@ -12,8 +12,8 @@ email=tony.decrescenzo@ibigroup.com
 
 about=This plugin preps CanFlood data
 
-tracker=http://bugs
-repository=https://github.com/IBIGroupCanWest/FloodAssessment
+tracker=https://github.com/IBIGroupCanWest/CanFlood/issues
+repository=https://github.com/IBIGroupCanWest/CanFlood
 # End of mandatory metadata
 
 # Recommended items:
@@ -25,7 +25,7 @@ hasProcessingProvider=no
 # Tags are comma separated with spaces allowed
 tags=python
 
-homepage=http://homepage
+homepage=https://github.com/IBIGroupCanWest/CanFlood
 category=Plugins
 icon=icon.png
 # experimental flag
