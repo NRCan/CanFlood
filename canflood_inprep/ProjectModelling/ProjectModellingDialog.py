@@ -123,8 +123,10 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         """
         development
         """
-        self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200223d\CanFlood_scenario1.txt')
-        self.lineEdit_wd.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200223d')
+        #======================================================================
+        # self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200223d\CanFlood_scenario1.txt')
+        # self.lineEdit_wd.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200223d')
+        #======================================================================
         
         
         #overwrite control
@@ -209,7 +211,8 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #======================================================================
         # save reuslts
         #======================================================================
-        out_fp = self.output_df(cres_df, 'dmgs_%s_%s'%(model.name, self.tag))
+        out_fp = self.output_df(cres_df, '%s_%s_%i_dmgs.csv'%(
+            model.name, self.tag, len(cres_df)))
         
         #update parameter file
         self.update_cf({'risk_fps':{'dmgs':out_fp}})

@@ -2,7 +2,7 @@
 Flood Risk modelling toolbox for Canada
 
 
-##Installation Insturctions 
+## Installation Insturctions 
 
 1) ensure Qgis 3.10 or newer is installed and working on your system. 
 
@@ -13,3 +13,7 @@ Flood Risk modelling toolbox for Canada
 4) In Qgis, extract this plugin to your profile (Plugins > Manage and Install... > Install from Zip > navigate to canflood_001_20200223.zip > Install Plugin
 
 5) In Qgis, Turn the plugin on (Plugins > Manage and Install ... > Installed > check 'CanFlood'
+
+## Getting Started
+
+Read the above 'CanFlood - UsersManual (0.0.1).docx'

@@ -664,7 +664,7 @@ class DFunc(object,
         
         log = logger.getChild('%s'%self.tabn)
         
-        log.info('on df %s:\n%s'%(str(df_raw.shape), df_raw))
+        #log.info('on df %s:\n%s'%(str(df_raw.shape), df_raw))
         
         #======================================================================
         # precheck

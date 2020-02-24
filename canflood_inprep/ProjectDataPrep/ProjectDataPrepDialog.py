@@ -138,9 +138,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler, hp.QprojPlug):
         self.comboBox_ras.setFilters(QgsMapLayerProxyModel.RasterLayer)
         self.comboBox_dtm.setFilters(QgsMapLayerProxyModel.RasterLayer)
         
-        """old Likelihood Sampler populators
-        self.listWidget_ls.addItems(layer.name() for layer in layers_vec)
-        self.listWidget_ls.setSelectionMode(QListWidget.MultiSelection)"""
+
         
         #======================================================================
         # scenario setup
@@ -153,11 +151,13 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler, hp.QprojPlug):
         self.comboBox_vec.layerChanged.connect(self.update_cid_cb)
         
         
-        """
-        development
-        """
-        self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200223d\CanFlood_scenario1.txt')
-        self.lineEdit_wd.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200223d')
+        #======================================================================
+        # """
+        # development
+        # """
+        # self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200223d\CanFlood_scenario1.txt')
+        # self.lineEdit_wd.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200223d')
+        #======================================================================
         
         
         
