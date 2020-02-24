@@ -16,7 +16,7 @@ We welcome/encourage any comments, bugs, or issues you have/find. Please create 
 
 Happy flood modelling!
 
-## Installation Insturctions 
+## Installation Instructions 
 
 1) ensure Qgis 3.10 or newer is installed and working on your system. 
 
