@@ -6,10 +6,6 @@ Created on Feb. 7, 2020
 common helper functions for use across project
 '''
 
-"""
-todo: migrate off of here
-
-"""
 #==============================================================================
 # logger----------
 #==============================================================================
@@ -35,18 +31,10 @@ from qgis.analysis import QgsNativeAlgorithms
 from qgis.PyQt.QtWidgets import QAction, QFileDialog, QListWidget
 
 
-QgsMessageLog.logMessage('todo: migrate off of hp','CanFlood', level=Qgis.Critical)
+
 #==============================================================================
 # classes------------
 #==============================================================================
-class Error(Exception):
-    """Base class for exceptions in this module."""
-    def __init__(self, msg):
-        from qgis.utils import iface
-        
-        iface.messageBar().pushMessage("Error", msg, level=Qgis.Critical)
-        QgsMessageLog.logMessage(msg,'CanFlood', level=Qgis.Critical)
-        
 
         
         
