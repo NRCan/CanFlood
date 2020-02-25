@@ -471,11 +471,15 @@ class DmgModel(Model):
         self.progress = 0
         len_valid_tags = len(valid_tags)
         valid_tags_count = 0
+        
+        
+        
         for indxr, ftag in enumerate(valid_tags):
             # update progress variable
-            self.progress = math.ceil(100 * valid_tags_count / len_valid_tags)
-            
+            self.progress = math.ceil((100.0 * valid_tags_count) / len_valid_tags)
+            valid_tags_count += 1
             log = self.logger.getChild('run.%s'%ftag)
+            
             
             #identify these entries
             boolidx = np.logical_and(
