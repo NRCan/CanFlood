@@ -112,8 +112,14 @@ class DmgModel(Model):
         
         #loop through each frame and build the func
         for tabn, df in df_d.items():
+            if tabn.startswith('_'):
+                log.warning('skipping dummy tab \'%s\''%tabn)
+                continue
+            
             if not isinstance(df, pd.DataFrame):
                 raise Error('unexpected type on tab \'%s\': %s'%(tabn, type(df)))
+            
+            
             
             #build it
             dfunc = DFunc(tabn).build(df, log)
