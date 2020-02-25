@@ -27,9 +27,9 @@ from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProj
 
 # custom imports
 if __name__ =="__main__": 
-    from hp.exceptions import Error
+    from hlpr.exceptions import Error
 else:
-    from hp.exceptions import QError as Error
+    from hlpr.exceptions import QError as Error
 
 
 #==============================================================================
