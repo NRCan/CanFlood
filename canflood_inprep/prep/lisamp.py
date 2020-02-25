@@ -3,12 +3,17 @@ Created on Feb. 9, 2020
 
 @author: cefect
 '''
+#==============================================================================
+# imports---------------
+#==============================================================================
 import os
 from qgis.core import QgsWkbTypes
 from hp import Error
 
 import pandas as pd
-
+#==============================================================================
+# classes-------------
+#==============================================================================
 class LiSamp(object):
     
     def run(self,
@@ -162,3 +167,6 @@ class LiSamp(object):
         log.debug('finished in %i loops '%len(probs))
     
     return total_prob
+
+
+

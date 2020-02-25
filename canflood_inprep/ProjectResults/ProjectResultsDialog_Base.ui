@@ -23,7 +23,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>CanFlood_Results</string>
+   <string>CanFlood_Results_0.1.1</string>
   </property>
   <widget class="QTabWidget" name="tabWidget">
    <property name="geometry">
