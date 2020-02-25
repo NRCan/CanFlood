@@ -236,13 +236,15 @@ class CanFlood_inPrep:
         
 
     def showToolbarDataPrep(self):
-        self.dlg1.exec_()
+        # Using exec_() creating a blocking dialog, show creates a non-blocking dialog
+        #self.dlg1.exec_()
+        self.dlg1.show()
     
     def showToolbarProjectModelling(self):
-        self.dlg2.exec_()
+        self.dlg2.show()
     
     def showToolbarProjectResults(self):
-        self.dlg3.exec_()
+        self.dlg3.show()
     
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""

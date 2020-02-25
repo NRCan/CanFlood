@@ -22,7 +22,7 @@ import configparser, os
 
 import pandas as pd
 import numpy as np
-
+import math
 #custom imports
 import hp
 from hp import Error, view
@@ -98,7 +98,10 @@ class DmgModel(Model):
         #======================================================================
         
         self.logger.debug('finished __init__ on Dmg')
-        
+        #======================================================================
+        # class variables
+        #======================================================================
+        self.progress = 0 # ranges from 0 to 100
 
  
     def setup_dfuncs(self, # build curve workers
@@ -471,17 +474,27 @@ class DmgModel(Model):
         # RAW: loop and calc raw damage by ftag
         #======================================================================
         first = True
+        self.progress = 0
+        len_valid_tags = len(valid_tags)
+        valid_tags_count = 0
+        
+        
+        
         for indxr, ftag in enumerate(valid_tags):
-            log = logger.getChild('run.%s'%ftag)
+            # update progress variable
+            self.progress = math.ceil((100.0 * valid_tags_count) / len_valid_tags)
+            valid_tags_count += 1
+            log = self.logger.getChild('run.%s'%ftag)
+            
             
             #identify these entries
             boolidx = np.logical_and(
                 bdf['ftag'] == ftag, #with the right ftag
                 vboolidx) #and in the valid set
             
-            log.info('(%i/%i) claculting \'%s\' w/ %i assets'%(
+            log.info('(%i/%i) calculating \'%s\' w/ %i assets'%(
                 indxr+1, len(valid_tags), ftag, boolidx.sum()))
-            
+            log.info('%i progress'%(self.progress))
             #==================================================================
             # calc damage by tag.depth
             #==================================================================
@@ -494,7 +507,7 @@ class DmgModel(Model):
             #get this DFunc
             dfunc = self.dfuncs_d[ftag]
             
-            log.debug('calc for %i (of %i) uniqe depths'%(
+            log.debug('calc for %i (of %i) unique depths'%(
                 len(deps_ar), tddf.size))
             
             """multi-threading would nice for this loop"""
@@ -543,7 +556,10 @@ class DmgModel(Model):
                 
             first = False
             log.debug('finished raw_damages for %i events'%dboolcol.sum())
-            
+         
+        # finished loop
+        self.progres = 100
+           
         log = logger.getChild('run')
 
         
