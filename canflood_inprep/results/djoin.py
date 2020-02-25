@@ -175,6 +175,9 @@ if __name__ =="__main__":
     if not os.path.exists(logcfg_file):
         raise Error('logger config file does not exist:\n    %s'%logcfg_file)    
     
+    from pathlib import Path
+    
+    os.getcwd()
     
     logger = logging.getLogger() #get the root logger
     logging.config.fileConfig(logcfg_file) #load the configuration file

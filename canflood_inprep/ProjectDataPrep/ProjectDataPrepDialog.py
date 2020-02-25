@@ -219,11 +219,21 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler, hp.QprojPlug):
         #======================================================================
         # general
         #======================================================================
-        """these should not execut especific tools
-        self.buttonBox.accepted.connect(self.run)"""
+
         self.buttonBox.accepted.connect(self.reject)
+        
+
         self.buttonBox.rejected.connect(self.reject)
         self.pushButton_help.clicked.connect(self.run_help)
+        
+        
+        """testing
+        def test():
+            self.logger.push('testing this')
+        
+        self.buttonBox.accepted.connect(test)"""
+        
+        
         
     
     #==========================================================================
