@@ -28,6 +28,16 @@ Happy flood modelling!
 
 5) In Qgis, Turn the plugin on (Plugins > Manage and Install ... > Installed > check 'CanFlood'
 
+### Troubleshooting Installation.
+
+Some installations of QGIS may not come with all required packages. The error can be resolved by entering the following commands in the python console. 
+
+```python
+import pip
+pip._internal.main(['install', 'pandas'])
+```
+For help doing this please refer to this [solution](https://github.com/IBIGroupCanWest/CanFlood/issues/6) with screenshots.
+
 ## Getting Started
 
 Read the above '[CanFlood - UsersManual (0.0.1).docx](https://github.com/IBIGroupCanWest/CanFlood/raw/master/CanFlood%20-%20UsersManual%20(0.0.1).docx)' and follow the guidance in the 'Tutorial'.
