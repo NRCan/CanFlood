@@ -292,8 +292,12 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler, hp.QprojPlug):
 
         
     def update_cid_cb(self): #update teh fields drop down any time the main layer changes
-        self.logger.info('user changed finv layer to %s'%self.comboBox_vec.currentLayer().name())
-        self.mFieldComboBox_cid.setLayer(self.comboBox_vec.currentLayer()) #field selector
+        
+        try:
+            #self.logger.info('user changed finv layer to %s'%self.comboBox_vec.currentLayer().name())
+            self.mFieldComboBox_cid.setLayer(self.comboBox_vec.currentLayer()) #field selector
+        except:
+            self.logger.debug('failed set current layer')
         
 
 
