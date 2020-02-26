@@ -240,7 +240,7 @@ if __name__ =="__main__":
     # execute
     #==========================================================================
     res_vlay = Djoiner(mod_logger, out_dir).djoinRun(
-        vlay_raw, data_fp,'xid', tag='test',
+        vlay_raw, data_fp,'xid', tag='CanFlood',
         keep_fnl=['fclass', 'xid'])
     
     #==========================================================================
