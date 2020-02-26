@@ -76,10 +76,10 @@ class Djoiner(base_class):
         
         
     def djoinRun(self,
-              vlay_raw, #layer to join csv to
+              vlay_raw, #layer to join csv to (finv)
               data_fp, #filepath to tabular data
               link_coln, #linking column/field name
-              keep_fnl = 'all', #list of field names to keep (or 'all' to keep all)
+              keep_fnl = 'all', #list of field names to keep from the vlay (or 'all' to keep all)
               layname = None,
               tag = None,
               
@@ -232,6 +232,12 @@ if __name__ =="__main__":
     # load layers
     #==========================================================================
     finv_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\20200225\finv_cconv_20200224_aoiT4.gpkg'
+    
+    """
+    fid    xid    f0_tag    f0_scale    f0_cap    f0_elv    f1_cap    f1_elv    f1_scale    f1_tag    f3_cap    f3_elv    f3_scale    f3_tag    zid    fclass    sclass    gel    buck_id
+
+    
+    """
     vlay_raw = load_vlay(finv_fp)
     
     data_fp = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200224\scenario1_risk_passet.csv'
@@ -241,7 +247,7 @@ if __name__ =="__main__":
     #==========================================================================
     res_vlay = Djoiner(mod_logger, out_dir).djoinRun(
         vlay_raw, data_fp,'xid', tag='CanFlood',
-        keep_fnl=['fclass', 'xid'])
+        keep_fnl=['fclass', 'xid', 'sclass'])
     
     #==========================================================================
     # save results
