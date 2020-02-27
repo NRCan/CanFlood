@@ -51,7 +51,7 @@ sys.path.append(file_dir)
 #from risk import RiskModel
 
 import canflood_model.model.risk
-import canflood_model.model.dmg
+import canflood_model.model.dmg2
 import prep.wsamp
 #from canFlood_model import CanFlood_Model
 from hp import Error
@@ -237,7 +237,7 @@ class CanFlood_Model:
         if (self.wd is None or self.cf is None):
             self.iface.messageBar().pushMessage("Input field missing",
                                                 level=Qgis.Critical, duration=10)
-        canflood_model.model.dmg.main_run(self.wd, self.cf)
+        canflood_model.model.dmg2.main_run(self.wd, self.cf)
         self.iface.messageBar().pushMessage(
                 "Success", "Process successful", level=Qgis.Success, duration=10)
 

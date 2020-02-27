@@ -58,8 +58,8 @@ sys.path.append(file_dir)
 #import model
 #from risk import RiskModel
 
-from canflood_inprep.model.risk import RiskModel
-from canflood_inprep.model.dmg import DmgModel
+from canflood_inprep.model.risk2 import RiskModel
+from canflood_inprep.model.dmg2 import Dmg2
 
 #from canFlood_model import CanFlood_Model
 import canflood_inprep.hp as hp
@@ -72,7 +72,7 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 
 
 class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,  
-                       #RiskModel, DmgModel, #model base classes NO! need to keep these separate 
+                       #RiskModel, Dmg2, #model base classes NO! need to keep these separate 
                        hp.QprojPlug):
     def __init__(self, iface, parent=None):
         """Constructor."""
@@ -201,7 +201,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #======================================================================
         # #build/run model
         #======================================================================
-        model = DmgModel(par_fp = self.cf_fp,
+        model = Dmg2(par_fp = self.cf_fp,
                          out_dir = self.wd,
                          logger = self.logger)
         

@@ -33,7 +33,7 @@ from canflood_inprep.model.common import Model
 #==============================================================================
 # functions----------------------
 #==============================================================================
-class DmgModel(Model):
+class Dmg2(Model):
     
     #==========================================================================
     # parameters from user
@@ -785,7 +785,7 @@ class DFunc(object,
 def main_run(wd, cf):
     print('executing')
 
-    _ = DmgModel(par_fp=cf,
+    _ = Dmg2(par_fp=cf,
                  out_dir=wd,
                  logger=logger).run()
     

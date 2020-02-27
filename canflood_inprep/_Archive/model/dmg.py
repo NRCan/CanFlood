@@ -33,7 +33,7 @@ from model.scripts_ import Model
 #==============================================================================
 # functions----------------------
 #==============================================================================
-class DmgModel(Model):
+class Dmg2(Model):
     
     #==========================================================================
     # parameters from user
@@ -719,7 +719,7 @@ class DFunc(object,
 def main_run():
     print('executing')
 
-    _ = DmgModel(logger=logger).run()
+    _ = Dmg2(logger=logger).run()
     
     print('finished')
     

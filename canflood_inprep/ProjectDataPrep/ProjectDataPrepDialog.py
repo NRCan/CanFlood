@@ -87,8 +87,8 @@ sys.path.append(file_dir)
 #==============================================================================
 # custom imports
 #==============================================================================
-import canflood_inprep.model.risk
-import canflood_inprep.model.dmg
+import canflood_inprep.model.risk2
+import canflood_inprep.model.dmg2
 #import canflood_inprep.prep.wsamp
 from canflood_inprep.prep.wsamp import WSLSampler
 #from canFlood_model import CanFlood_Model
@@ -807,8 +807,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler, hp.QprojPlug):
         # set the validation parameters
         #======================================================================
         #import the class objects
-        from canflood_inprep.model.dmg import DmgModel
-        from canflood_inprep.model.risk import RiskModel
+        from canflood_inprep.model.dmg2 import Dmg2
+        from canflood_inprep.model.risk2 import RiskModel
         
         #populate all possible test parameters
         """
@@ -816,7 +816,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler, hp.QprojPlug):
         """
         vpars_pos_d = {
                     'risk1':(self.checkBox_Vr1, ('risk_fps', None, None)),
-                   'imp2':(self.checkBox_Vi2, ('dmg_fps', DmgModel.exp_dprops, DmgModel.exp_pars)),
+                   'imp2':(self.checkBox_Vi2, ('dmg_fps', Dmg2.exp_dprops, Dmg2.exp_pars)),
                    'risk2':(self.checkBox_Vr2, ('risk_fps', None, None)),
                    #'risk2':(self.checkBox_Vr2, (RiskModel.exp_dprops, RiskModel.exp_pars)),
                    'risk3':(self.checkBox_Vr3, (None, None, None)),

@@ -51,8 +51,8 @@ sys.path.append(file_dir)
 #import model
 #from risk import RiskModel
 
-import model.risk
-import model.dmg
+import model.risk2
+import model.dmg2
 import prep.wsamp
 #from canFlood_model import CanFlood_Model
 from hp import Error

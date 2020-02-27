@@ -82,6 +82,14 @@ class Model(object):
     
     def setup_pars(self, #load parameters from file
                        par_fp):
+        
+        """
+        TODO: fix so:
+        1) calculate the necessary parameters for this run
+        2) pull those parameters from the control file
+        3) load the data from the parameters
+        4) check the data against expectations
+        """
         #======================================================================
         # prechecks and setup
         #======================================================================
@@ -184,11 +192,9 @@ class Model(object):
             #     else:
             #         raise Error('missing required \'%s\''%varnm)
             #==================================================================
-
-                
-                
-                
             
+
+
             #pull parameters
             dprops = self.exp_dprops[varnm]
             
