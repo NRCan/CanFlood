@@ -352,7 +352,6 @@ class DmgModel(Model):
         
         return
         
-    
     def run(self, #main runner fucntion
             ):
         #======================================================================
@@ -401,11 +400,6 @@ class DmgModel(Model):
         log.info('finished')
         
         return cres_df
-        
-
-
-        
-        
         
     def bdmg(self, #get damages on binv
             ):
