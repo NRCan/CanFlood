@@ -30,13 +30,7 @@ Happy flood modelling!
 
 ### Troubleshooting Installation.
 
-Some installations of QGIS may not come with all required packages. The error can be resolved by entering the following commands in the python console. 
-
-```python
-import pip
-pip._internal.main(['install', 'pandas'])
-```
-For help doing this please refer to this [solution](https://github.com/IBIGroupCanWest/CanFlood/issues/6) with screenshots.
+Some installations of QGIS may not come pre-installed with all required packages and dependencies. If you get a ModuleNotFound error regarding 'pandas', see the following [solution](https://github.com/IBIGroupCanWest/CanFlood/issues/6) with screenshots.
 
 ## Getting Started
 
