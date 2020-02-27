@@ -322,7 +322,7 @@ def qtbl_get_df( #extract data to a frame from a qtable
             qval = table.item(i, j)
             
             if not qval is None:
-                tmp_df.ix[i, j] = qval.text()
+                tmp_df.iloc[i, j] = qval.text()
 
     return tmp_df
 
