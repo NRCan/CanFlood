@@ -246,6 +246,17 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #write the config file 
         with open(self.cf_fp, 'w') as configfile:
             pars.write(configfile)
+            
+        """
+        todo: special check to see that the damage results are in
+
+        
+        if not os.path.exists(pars['risk_fps']['dmgs']):
+            raise Error('invalid impacts file. did you run the impact model?! \n    %s'%pars['risk_fps']['dmgs'])
+        
+        
+                """
+        
         
         #======================================================================
         # run the model
