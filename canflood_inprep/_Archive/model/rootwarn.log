@@ -1,6 +1,0 @@
-2020-02-13 15:42:31,979.WARNING.Model.risk_plot:  passed output file path already esists :
-    C:\Users\tony.decrescenzo\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\floodiq\Data_Files\test1_smry_plot.svg
-2020-02-13 15:42:32,122.WARNING.Model.output:  file exists 
-    C:\Users\tony.decrescenzo\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\floodiq\Data_Files\test1_risk_total.csv
-2020-02-13 15:42:32,126.WARNING.Model.output:  file exists 
-    C:\Users\tony.decrescenzo\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\floodiq\Data_Files\test1_risk_passet.csv
