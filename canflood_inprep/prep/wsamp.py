@@ -165,6 +165,7 @@ class WSLSampler(base_class):
             finv_raw, #inventory layer
             cid = None, #index field name on finv
             crs = None,
+            fname='expos', #prefix for file name
             
             ):
         
@@ -322,7 +323,7 @@ class WSLSampler(base_class):
 
         log.info('sampling finished')
         
-        res_name = 'expos_%s_%i_%i'%(self.tag, len(raster_l), finv.dataProvider().featureCount())
+        res_name = '%s_%s_%i_%i'%(fname, self.tag, len(raster_l), finv.dataProvider().featureCount())
         
         finv.setName(res_name)
         
@@ -342,7 +343,7 @@ class WSLSampler(base_class):
         
         #report on number of nulls
         
-    def write(self, vlay,
+    def write_res(self, vlay,
               out_dir = None, #directory for puts
               names_d = None, #names conversion
               rname_l = None,

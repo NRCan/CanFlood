@@ -552,7 +552,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
         wrkr.check()
         
         #save csv results to file
-        wrkr.write(res_vlay, out_dir = out_dir)
+        wrkr.write_res(res_vlay, out_dir = out_dir)
         
         #update ocntrol file
         wrkr.upd_cf(cf_fp)
@@ -604,7 +604,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
         crs = self.qproj.crs()
 
         cf_fp = self.get_cf_fp()
-        self.wd = self.lineEdit_wd.text()
+        out_dir = self.lineEdit_wd.text()
         
 
         #update some parameters
@@ -630,8 +630,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
         if not isinstance(rlay, QgsRasterLayer):
             raise Error('unexpected type on raster layer')
             
-        if not os.path.exists(self.wd):
-            raise Error('working directory does not exist:  %s'%self.wd)
+        if not os.path.exists(out_dir):
+            raise Error('working directory does not exist:  %s'%out_dir)
         
         if cid is None or cid=='':
             raise Error('need to select a cid')
@@ -649,16 +649,17 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
                           tag=self.tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
                           )
-        res_vlay = wrkr.run(rlay_l, finv, cid=cid, crs=crs)
+        
+        res_vlay = wrkr.run([rlay], finv, cid=cid, crs=crs, fname='gels')
         
         #check it
         wrkr.check()
         
         #save csv results to file
-        wrkr.write(res_vlay, out_dir = out_dir)
+        wrkr.write_res(res_vlay, out_dir = out_dir)
         
         #update ocntrol file
-        wrkr.upd_cf(cf_fp)
+
         
         #======================================================================
         # add to map
@@ -667,16 +668,10 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
             self.qproj.addMapLayer(finv)
             self.logger.info('added \'%s\' to canvas'%finv.name())
             
-            
+        self.logger.push('dsamp finished')    
         
-    
-
-    
     def _pop_el_table(self): #developing the table widget
         
-        #======================================================================
-        # dev data
-        #======================================================================
 
         l = ['e1', 'e2', 'e3']
         tbl = self.fieldsTable_EL
