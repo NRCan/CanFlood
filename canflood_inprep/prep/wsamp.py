@@ -54,17 +54,20 @@ class WSLSampler(base_class):
     rname_l =None
     
     def __init__(self,
-                 logger, tag='test',
+                 logger, tag='test', feedback=None,
                  ):
         
 
         logger.info('simple wrapper inits')
+        
+        if feedback is None: feedback = QgsProcessingFeedback()
 
         #=======================================================================
         # attach inputs
         #=======================================================================
         self.logger = logger.getChild('Qsimp')
         self.tag = tag
+        self.feedback = feedback
 
         self.logger.info('init finished')
         
@@ -394,59 +397,61 @@ class WSLSampler(base_class):
             cf_fp = cf_fp
             )
         
-    def deletecolumn(self,
-                     in_vlay,
-                     fieldn_l, #list of field names
-                     invert=False, #whether to invert selected field names
-                     layname = None,
-
-
-                     ):
-
-        #=======================================================================
-        # presets
-        #=======================================================================
-        algo_nm = 'qgis:deletecolumn'
-        log = self.logger.getChild('deletecolumn')
-        self.vlay = in_vlay
-
-        #=======================================================================
-        # field manipulations
-        #=======================================================================
-        fieldn_l = self._field_handlr(in_vlay, fieldn_l,  invert=invert)
-        
-            
-
-        if len(fieldn_l) == 0:
-            log.debug('no fields requsted to drop... skipping')
-            return self.vlay
-
-        #=======================================================================
-        # assemble pars
-        #=======================================================================
-        #assemble pars
-        ins_d = { 'COLUMN' : fieldn_l, 
-                 'INPUT' : in_vlay, 
-                 'OUTPUT' : 'TEMPORARY_OUTPUT'}
-        
-        log.debug('executing \'%s\' with ins_d: \n    %s'%(algo_nm, ins_d))
-        
-        res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
-        
-        res_vlay = res_d['OUTPUT']
-
-        
-        #===========================================================================
-        # post formatting
-        #===========================================================================
-        if layname is None: 
-            layname = '%s_delf'%self.vlay.name()
-            
-        res_vlay.setName(layname) #reset the name
-
-        
-        return res_vlay 
-    
+#==============================================================================
+#     def xxxdeletecolumn(self,
+#                      in_vlay,
+#                      fieldn_l, #list of field names
+#                      invert=False, #whether to invert selected field names
+#                      layname = None,
+# 
+# 
+#                      ):
+# 
+#         #=======================================================================
+#         # presets
+#         #=======================================================================
+#         algo_nm = 'qgis:deletecolumn'
+#         log = self.logger.getChild('deletecolumn')
+#         self.vlay = in_vlay
+# 
+#         #=======================================================================
+#         # field manipulations
+#         #=======================================================================
+#         fieldn_l = self._field_handlr(in_vlay, fieldn_l,  invert=invert)
+#         
+#             
+# 
+#         if len(fieldn_l) == 0:
+#             log.debug('no fields requsted to drop... skipping')
+#             return self.vlay
+# 
+#         #=======================================================================
+#         # assemble pars
+#         #=======================================================================
+#         #assemble pars
+#         ins_d = { 'COLUMN' : fieldn_l, 
+#                  'INPUT' : in_vlay, 
+#                  'OUTPUT' : 'TEMPORARY_OUTPUT'}
+#         
+#         log.debug('executing \'%s\' with ins_d: \n    %s'%(algo_nm, ins_d))
+#         
+#         res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
+#         
+#         res_vlay = res_d['OUTPUT']
+# 
+#         
+#         #===========================================================================
+#         # post formatting
+#         #===========================================================================
+#         if layname is None: 
+#             layname = '%s_delf'%self.vlay.name()
+#             
+#         res_vlay.setName(layname) #reset the name
+# 
+#         
+#         return res_vlay 
+#     
+#==============================================================================
     def _field_handlr(self, #common handling for fields
                       vlay, #layer to check for field presence
                       fieldn_l, #list of fields to handle

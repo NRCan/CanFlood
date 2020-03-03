@@ -159,7 +159,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
             return self.browse_buttom(self.lineEdit_wd, prompt='Select Working Directory',
                                       qfd = QFileDialog.getExistingDirectory)
             
-        self.pushButton_wd.clicked.connect(self.browse_wd) # SS. Working Dir. Browse
+        self.pushButton_wd.clicked.connect(browse_wd) # SS. Working Dir. Browse
         
         #Inventory Vector Layer        
         self.comboBox_vec.layerChanged.connect(self.update_cid_cb) #SS inventory vector layer
@@ -235,8 +235,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
         to speed up testing.. manually configure the project
         """
         
-        self.lineEdit_wd.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200302\CanFlood_scenario1.txt')
-        
+        self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200302\CanFlood_scenario1.txt')
+        self.lineEdit_wd.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200302')
         
         
     
@@ -542,7 +542,10 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
         """
         finv = self.wsampRun(rlay_l, finv, control_fp=cf_fp1, cid=cid, crs=crs)"""
         #build the sample
-        wrkr = WSLSampler(self.logger)
+        wrkr = WSLSampler(self.logger, 
+                          tag=self.tag, #set by build_scenario() 
+                          feedback = self.feedback, #needs to be connected to progress bar
+                          )
         res_vlay = wrkr.run(rlay_l, finv, cid=cid, crs=crs)
         
         #check it
@@ -600,7 +603,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
         
         crs = self.qproj.crs()
 
-        cf_fp1 = self.get_cf_fp()
+        cf_fp = self.get_cf_fp()
         self.wd = self.lineEdit_wd.text()
         
 
@@ -608,16 +611,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
         cid = self.mFieldComboBox_cid.currentField() #user selected field
         
 
-        
-         
-        #======================================================================
-        # """dev paths"""
-        # cf_fp1 = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200222\CanFlood_run.txt'
-        # wd = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200222'
-        # cid = 'xid' #user selected field
-        #======================================================================
-
-        
         #======================================================================
         # aoi slice
         #======================================================================
@@ -650,9 +643,22 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
         #======================================================================
         # execute
         #======================================================================
+
+        #build the sample
+        wrkr = WSLSampler(self.logger, 
+                          tag=self.tag, #set by build_scenario() 
+                          feedback = self.feedback, #needs to be connected to progress bar
+                          )
+        res_vlay = wrkr.run(rlay_l, finv, cid=cid, crs=crs)
         
-        finv = self.wsampRun([rlay], finv, control_fp=cf_fp1, cid=cid, crs=crs,
-                             parkey= ('dmg_fps', 'gels'))
+        #check it
+        wrkr.check()
+        
+        #save csv results to file
+        wrkr.write(res_vlay, out_dir = out_dir)
+        
+        #update ocntrol file
+        wrkr.upd_cf(cf_fp)
         
         #======================================================================
         # add to map

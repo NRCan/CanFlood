@@ -66,6 +66,8 @@ class QprojPlug(object): #baseclass for plugins
         
         self.logger = logger(self) #init the logger
         self.qproj = QgsProject.instance()
+        
+        """todo: connect this with status bar?"""
         self.feedback = QgsProcessingFeedback()
         
         self.crs = self.qproj.crs()
