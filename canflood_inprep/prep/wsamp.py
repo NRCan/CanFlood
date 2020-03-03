@@ -32,14 +32,10 @@ if __name__ =="__main__":
     mod_logger = basic_logger()   
     
     from hlpr.exceptions import Error
-    
-
 #plugin runs
 else:
     #base_class = object
     from hlpr.exceptions import QError as Error
-    
-from hlpr.Q import Qcoms as base_class
     
 
 from hlpr.Q import *
@@ -48,33 +44,17 @@ from hlpr.basic import *
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class WSLSampler(base_class):
+class WSLSampler(Qcoms):
+    """
+    sampling hazard rasters from the inventory
+    """
     out_fp = None
     names_d = None
     rname_l =None
     
-    def __init__(self,
-                 logger, tag='test', feedback=None,
-                 ):
-        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-        logger.info('simple wrapper inits')
-        
-        if feedback is None: feedback = QgsProcessingFeedback()
-
-        #=======================================================================
-        # attach inputs
-        #=======================================================================
-        self.logger = logger.getChild('Qsimp')
-        self.tag = tag
-        self.feedback = feedback
-
-        self.logger.info('init finished')
-        
-        return
-        
-    def ini_base(self):
-        super().__init__() #initilzie teh baseclass
                 
     def load_layers(self, #load data to project (for console runs)
                     rfp_l, finv_fp,
@@ -453,64 +433,6 @@ class WSLSampler(base_class):
 #         return res_vlay 
 #     
 #==============================================================================
-    def _field_handlr(self, #common handling for fields
-                      vlay, #layer to check for field presence
-                      fieldn_l, #list of fields to handle
-                      invert = False,
-                      
-                      ):
-        
-        log = self.logger.getChild('_field_handlr')
-
-        #=======================================================================
-        # all flag
-        #=======================================================================
-        if isinstance(fieldn_l, str):
-            if fieldn_l == 'all':
-
-                fieldn_l = vlay_fieldnl(vlay)
-                log.debug('user passed \'all\', retrieved %i fields: \n    %s'%(
-                    len(fieldn_l), fieldn_l))
-                                
-                
-            else:
-                raise Error('unrecognized fieldn_l\'%s\''%fieldn_l)
-            
-        #=======================================================================
-        # type setting
-        #=======================================================================
-        if isinstance(fieldn_l, tuple) or isinstance(fieldn_l, np.ndarray) or isinstance(fieldn_l, set):
-            fieldn_l = list(fieldn_l)
-            
-        #=======================================================================
-        # checking
-        #=======================================================================
-        if not isinstance(fieldn_l, list):
-            raise Error('expected a list for fields, instead got \n    %s'%fieldn_l)
-        
-        
-    
-    
-        vlay_check(vlay, exp_fieldns=fieldn_l)
-        
-        
-        #=======================================================================
-        # #handle inversions
-        #=======================================================================
-        if invert:
-            big_fn_s = set(vlay_fieldnl(vlay)) #get all the fields
-
-            #get the difference
-            fieldn_l = list(big_fn_s.difference(set(fieldn_l)))
-            
-            self.logger.debug('inverted selection from %i to %i fields'%
-                      (len(big_fn_s),  len(fieldn_l)))
-            
-            
-        
-        
-        return fieldn_l
-    
 
 if __name__ =="__main__": 
     #==========================================================================
@@ -525,8 +447,8 @@ if __name__ =="__main__":
     #==========================================================================
     # load the data
     #==========================================================================
-    wrkr = WSLSampler(mod_logger)
-    wrkr.ini_base()
+    wrkr = WSLSampler(mod_logger, tag='test_tag', feedback=QgsProcessingFeedback())
+    wrkr.ini_standalone()
     rlay_l, finv_vlay = wrkr.load_layers(raster_fps, finv_fp)
     
     
@@ -543,7 +465,7 @@ if __name__ =="__main__":
     #==========================================================================
     # save results
     #==========================================================================
-    outfp = wrkr.write(res_vlay, )
+    outfp = wrkr.write_res(res_vlay, )
     
     wrkr.upd_cf(os.path.join(data_dir, 'CanFlood_control_01.txt'))
 

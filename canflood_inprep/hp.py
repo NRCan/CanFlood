@@ -313,7 +313,7 @@ class logger(object): #workaround for qgis logging pythonic
         
         
      
-class QprojPlug(object): #baseclass for plugins
+class xxxQprojPlug(object): #baseclass for plugins
     
     tag='scenario1'
     overwrite=True

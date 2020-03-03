@@ -65,6 +65,8 @@ from canflood_inprep.model.dmg2 import Dmg2
 import canflood_inprep.hp as hp
 from canflood_inprep.hp import Error
 
+import hlpr.plug
+
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
@@ -72,8 +74,7 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 
 
 class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,  
-                       #RiskModel, Dmg2, #model base classes NO! need to keep these separate 
-                       hp.QprojPlug):
+                       hlpr.plug.QprojPlug):
     def __init__(self, iface, parent=None):
         """Constructor."""
         super(Modelling_Dialog, self).__init__(parent)

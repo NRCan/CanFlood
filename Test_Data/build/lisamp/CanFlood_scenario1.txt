@@ -11,18 +11,18 @@ drop_tails = True
 integrate = trapz
 ead_plot = True
 res_per_asset = True
-#control file template created from 'scenario setup' on  2020-03-02 12.33.42
 
 [dmg_fps]
 curves = C
-finv = C:\LS\03_TOOLS\CanFlood\_wdirs\20200302\finv_scenario1_finv_cconv_20200224_aoiT4.csv
-expos = 
+finv = C:\LS\03_TOOLS\CanFlood\_wdirs\20200302\finv_scenario1_finv_cT2.csv
+expos = C:\LS\03_TOOLS\CanFlood\_wdirs\20200302\expos_scenario1_4_32.csv
 gels = 
 
 [risk_fps]
 dmgs = 
-exlikes = 
+exlikes = C:\Users\cefect\CanFlood\lisamp\exlikes_lisamp_testr.csv
 aeps = 
+#'exlikes' file path set from lisamp.py at 2020-03-03 12.39.27
 
 [validation]
 risk1 = False

@@ -87,13 +87,14 @@ sys.path.append(file_dir)
 #==============================================================================
 # custom imports
 #==============================================================================
-import canflood_inprep.model.risk2
-import canflood_inprep.model.dmg2
+
 #import canflood_inprep.prep.wsamp
-from canflood_inprep.prep.wsamp import WSLSampler
+from prep.wsamp import WSLSampler
+from prep.lisamp import LikeSampler
 #from canFlood_model import CanFlood_Model
-import canflood_inprep.hp as hp
-from canflood_inprep.hp import Error
+import hp
+import hlpr.plug
+from hp import Error
 
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
@@ -101,7 +102,7 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'ProjectDataPrepDialog_Base.ui'))
 
 
-class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
+class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     
     event_name_set = [] #event names
     
@@ -132,41 +133,60 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
 
     def connect_slots(self):
         
-        #pull layer info from project
-        layers = self.iface.mapCanvas().layers()
-        layers_ras = [layer for layer in layers if layer.type() == QgsMapLayer.RasterLayer]
-        layers_vec = [layer for layer in layers if layer.type() == QgsMapLayer.VectorLayer]
-        
-        # Set GUI elements
-        self.comboBox_ras.setFilters(QgsMapLayerProxyModel.RasterLayer)
-        self.comboBox_dtm.setFilters(QgsMapLayerProxyModel.RasterLayer)
-        
-
+        #self.testit()
         #======================================================================
-        # scenario setup tab
+        # pull project data
+        #======================================================================
+        #pull layer info from project
+        rlays_d = dict()
+        vlays_d = dict()
+        for layname, layer in QgsProject.instance().mapLayers().items():
+            if isinstance(layer, QgsVectorLayer):
+                vlays_d[layname] = layer
+            elif isinstance(layer, QgsRasterLayer):
+                rlays_d[layname] = layer
+            else:
+                self.logger.debug('%s not filtered'%layname)
+        #======================================================================
+        # scenario setup tab----------
         #======================================================================
         #populate guis
         self.comboBox_vec.setFilters(QgsMapLayerProxyModel.VectorLayer) #SS. Inventory Layer: Drop down
         self.comboBox_aoi.setFilters(QgsMapLayerProxyModel.VectorLayer) #SS. Project AOI
         self.comboBox_SSelv.addItems(['datum', 'ground']) #ss elevation type
-        
-        
-        
                
         
         #Working Directory
         def browse_wd():
-            return self.browse_buttom(self.lineEdit_wd, prompt='Select Working Directory',
+            return self.browse_button(self.lineEdit_wd, prompt='Select Working Directory',
                                       qfd = QFileDialog.getExistingDirectory)
             
         self.pushButton_wd.clicked.connect(browse_wd) # SS. Working Dir. Browse
         
-        #Inventory Vector Layer        
-        self.comboBox_vec.layerChanged.connect(self.update_cid_cb) #SS inventory vector layer
+        #======================================================================
+        # #Inventory Vector Layer
+        #======================================================================
+        def upd_cid():
+            return self.mfcb_connect(
+                self.mFieldComboBox_cid, self.comboBox_vec.currentLayer(),
+                fn_str = 'id' )
+                
+        self.comboBox_vec.layerChanged.connect(upd_cid) #SS inventory vector layer
+        
+        #find a good layer
+        try:
+            for layname, vlay in vlays_d.items():
+                if layname.startswith('finv'):
+                    break
+            
+            self.logger.info('setting comboBox_vec = %s'%vlay.name())
+            self.comboBox_vec.setLayer(vlay)
+        except Exception as e:
+            self.logger.warning('failed to set inventory layer w: \n    %s'%e)
         
         #Vulnerability Curve Set
         def browse_curves():
-            return self.browse_buttom(self.lineEdit_curve, prompt='Select Curve Set',
+            return self.browse_button(self.lineEdit_curve, prompt='Select Curve Set',
                                       qfd = QFileDialog.getOpenFileName)
             
         self.pushButton_SScurves.clicked.connect(browse_curves)# SS. Vuln Curve Set. Browse
@@ -181,8 +201,10 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
         self.pushButton_cf.clicked.connect(self.browse_cf)# SS. Model Control File. Browse
         
         #======================================================================
-        # hazard sampler
+        # hazard sampler---------
         #======================================================================
+        # Set GUI elements
+        self.comboBox_ras.setFilters(QgsMapLayerProxyModel.RasterLayer)
         """
         todo: swap this out with better selection widget
         """
@@ -206,13 +228,46 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
         
         
         #======================================================================
-        # Likelihood Sampler
+        # Likelihood Sampler-----------
         #======================================================================
+        #list of combo box names on the likelihood sampler tab
+        self.ls_cb_d = { #set {hazard raster : lpol}
+            1: (self.MLCB_LS1_event_3, self.MLCB_LS1_lpol_3),
+            2: (self.MLCB_LS1_event_4, self.MLCB_LS1_lpol_4),
+            3: (self.MLCB_LS1_event_5, self.MLCB_LS1_lpol_5),
+            4: (self.MLCB_LS1_event, self.MLCB_LS1_lpol),
+            }
         
+ 
+
         
+        #loop and set filteres
+        first = True
+        for sname, (mlcb_haz, mlcb_lpol) in self.ls_cb_d.items():
+            #setup the field combo box
+            if first:
+                def upd_lfield(): #updating the field box
+                    return self.mfcb_connect(
+                        self.mFieldComboBox_LSfn, mlcb_lpol.currentLayer(),
+                        fn_str = 'fail' )
+            
+                #connect to update the field name box
+                mlcb_lpol.layerChanged.connect(upd_lfield)
+                first = False
+                
+            #set drop down filters
+            mlcb_haz.setFilters(QgsMapLayerProxyModel.RasterLayer)
+            mlcb_haz.setAllowEmptyLayer(True)
+            mlcb_lpol.setFilters(QgsMapLayerProxyModel.PolygonLayer)
+            mlcb_lpol.setAllowEmptyLayer(True)
+            
+        #connect execute
+        self.pushButton_LSsample.clicked.connect(self.run_lisamp)
+                    
         #======================================================================
         # DTM sampler
         #======================================================================
+        self.comboBox_dtm.setFilters(QgsMapLayerProxyModel.RasterLayer)
         self.pushButton_DTMsamp.clicked.connect(self.run_dsamp)
         
         #======================================================================
@@ -227,7 +282,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
         self.buttonBox.accepted.connect(self.reject)
         self.buttonBox.rejected.connect(self.reject)
         self.pushButton_help.clicked.connect(self.run_help)
-        
+        self.logger.info('DataPrep ui initilized')
         #======================================================================
         # dev
         #======================================================================
@@ -237,6 +292,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
         
         self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200302\CanFlood_scenario1.txt')
         self.lineEdit_wd.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200302')
+        
         
         
     
@@ -283,13 +339,22 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
             
 
         
-    def update_cid_cb(self): #update teh fields drop down any time the main layer changes
+    def xxxupdate_cid_cb(self): #update teh fields drop down any time the main layer changes
         
         try:
             #self.logger.info('user changed finv layer to %s'%self.comboBox_vec.currentLayer().name())
             self.mFieldComboBox_cid.setLayer(self.comboBox_vec.currentLayer()) #field selector
-        except:
-            self.logger.debug('failed set current layer')
+            
+            #try and find a good match
+            for field in self.comboBox_vec.currentLayer().fields():
+                if 'id' in field.name():
+                    self.logger.debug('matched on field %s'%field.name())
+                    break
+                
+            self.mFieldComboBox_cid.setField(field.name())
+            
+        except Exception as e:
+            self.logger.info('failed set current layer w/ \n    %s'%e)
         
 
 
@@ -489,9 +554,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
 
     
     def run_wsamp(self): #execute wsamp
-        
+        log = self.logger.getChild('run_wsamp')
 
-        self.logger.info('user pressed \'pushButton_HSgenerate\'')
+        log.info('user pressed \'pushButton_HSgenerate\'')
         #=======================================================================
         # assemble/prepare inputs
         #=======================================================================
@@ -543,9 +608,13 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
         finv = self.wsampRun(rlay_l, finv, control_fp=cf_fp1, cid=cid, crs=crs)"""
         #build the sample
         wrkr = WSLSampler(self.logger, 
-                          tag=self.tag, #set by build_scenario() 
+                          tag = self.tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
                           )
+        """
+        wrkr.tag
+        """
+        
         res_vlay = wrkr.run(rlay_l, finv, cid=cid, crs=crs)
         
         #check it
@@ -558,6 +627,12 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
         wrkr.upd_cf(cf_fp)
         
         #======================================================================
+        # post---------
+        #======================================================================
+        """
+        the hazard sampler sets up a lot of the other tools
+        """
+        #======================================================================
         # add to map
         #======================================================================
         if self.checkBox_HSloadres.isChecked():
@@ -569,22 +644,49 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
         #======================================================================
         self.event_name_set = [lay.name() for lay in rlay_l]
         
-        self.logger.info('set %i event names: \n    %s'%(len(self.event_name_set), 
+        log.info('set %i event names: \n    %s'%(len(self.event_name_set), 
                                                          self.event_name_set))
         
         #======================================================================
-        # populate the EL table
+        # populate Event Likelihoods table
         #======================================================================
         l = self.event_name_set
-        for tbl in [self.fieldsTable_LS, self.fieldsTable_EL]:
+        for tbl in [self.fieldsTable_EL]:
 
             tbl.setRowCount(len(l)) #add this many rows
             
             for rindx, ename in enumerate(l):
                 tbl.setItem(rindx, 0, QTableWidgetItem(ename))
             
-        self.logger.info('populated tables with event names')
+        log.info('populated tables with event names')
+        
+        #======================================================================
+        # populate lisamp
+        #======================================================================
+        
+                #get the mlcb
+                
+        try:
+            rlay_d = {indxr: rlay for indxr, rlay in enumerate(rlay_l)}
+            
+            for indxr, (sname, (mlcb_h, mlcb_v)) in enumerate(self.ls_cb_d.items()):
+                if indxr in rlay_d:
+                    mlcb_h.setLayer(rlay_l[indxr])
+                    
+                else:
+                    """
+                    todo: clear the remaining comboboxes
+                    """
+                    break
 
+
+        except Exception as e:
+            log.error('failed to populate lisamp fields w/\n    %s'%e)
+            
+        
+        #======================================================================
+        # wrap
+        #======================================================================
         self.logger.push('wsamp finished')
         
         return
@@ -669,6 +771,95 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
             self.logger.info('added \'%s\' to canvas'%finv.name())
             
         self.logger.push('dsamp finished')    
+        
+    def run_lisamp(self): #sample dtm raster
+        
+        self.logger.info('user pressed \'pushButton_DTMsamp\'')
+
+        
+        #=======================================================================
+        # assemble/prepare inputs
+        #=======================================================================
+        finv_raw = self.comboBox_vec.currentLayer()
+        crs = self.qproj.crs()
+        cf_fp = self.get_cf_fp()
+        out_dir = self.lineEdit_wd.text()
+        cid = self.mFieldComboBox_cid.currentField() #user selected field
+        
+        lfield = self.mFieldComboBox_LSfn.currentField()
+        
+        #collect lpols
+        lpol_d = dict()
+        for sname, (mlcb_haz, mlcb_lpol) in self.ls_cb_d.items():
+            hlay = mlcb_haz.currentLayer()
+            
+            if not isinstance(hlay, QgsRasterLayer):
+                continue
+            
+            lpol_vlay = mlcb_lpol.currentLayer()
+            
+            if not isinstance(lpol_vlay, QgsVectorLayer):
+                raise Error('must provide a matching VectorLayer for set %s'%sname)
+
+            lpol_d[hlay.name()] = lpol_vlay 
+            
+        #======================================================================
+        # aoi slice
+        #======================================================================
+        finv = self.slice_aoi(finv_raw)
+        
+
+        #======================================================================
+        # precheck
+        #======================================================================
+                
+        if finv is None:
+            raise Error('got nothing for finv')
+        if not isinstance(finv, QgsVectorLayer):
+            raise Error('did not get a vector layer for finv')
+                    
+        if not os.path.exists(out_dir):
+            raise Error('working directory does not exist:  %s'%out_dir)
+        
+        if cid is None or cid=='':
+            raise Error('need to select a cid')
+        
+        if not cid in [field.name() for field in finv.fields()]:
+            raise Error('requested cid field \'%s\' not found on the finv_raw'%cid)
+            
+        
+        #======================================================================
+        # execute
+        #======================================================================
+
+        #build the sample
+        wrkr = LikeSampler(self.logger, 
+                          tag=self.tag, #set by build_scenario() 
+                          feedback = self.feedback, #needs to be connected to progress bar
+                          )
+        
+        res_df = wrkr.run(finv, lpol_d, cid=cid, lfield=lfield)
+        
+        #check it
+        wrkr.check()
+        
+        #save csv results to file
+        wrkr.write_res(res_df, out_dir = out_dir)
+        
+        #update ocntrol file
+        wrkr.upd_cf(cf_fp)
+        
+        #======================================================================
+        # add to map
+        #======================================================================
+        if self.checkBox_LSloadres.isChecked():
+            res_vlay = wrkr.vectorize(res_df)
+            self.qproj.addMapLayer(res_vlay)
+            self.logger.info('added \'%s\' to canvas'%finv.name())
+            
+        self.logger.push('lisamp finished')    
+        
+        return
         
     def _pop_el_table(self): #developing the table widget
         
@@ -782,8 +973,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
         # set the validation parameters
         #======================================================================
         #import the class objects
-        from canflood_inprep.model.dmg2 import Dmg2
-        from canflood_inprep.model.risk2 import RiskModel
+        from model.dmg2 import Dmg2
+        from model.risk2 import RiskModel
         
         #populate all possible test parameters
         """

@@ -164,6 +164,45 @@ class QprojPlug(object): #baseclass for plugins
         
         self.logger.info('user selected: \n    %s'%fp)
         
+    def mfcb_connect(self, #helper to update a field combo box
+                           mfcb, #mFieldComboBox
+                           layer, #layer to set in the combo box
+                           fn_str = None, #optional field name for auto setting
+                           ):
+        
+        try:
+            mfcb.setLayer(layer)
+            
+            #try and match
+            for field in layer.fields():
+                if fn_str in field.name():
+                    break
+                
+            mfcb.setField(field.name())
+            
+        except Exception as e:
+            self.logger.info('failed set current layer w/ \n    %s'%e)
+            
+        return 
+    
+    """
+                #self.logger.info('user changed finv layer to %s'%self.comboBox_vec.currentLayer().name())
+            self.mFieldComboBox_cid.setLayer(self.comboBox_vec.currentLayer()) #field selector
+            
+            #try and find a good match
+            for field in self.comboBox_vec.currentLayer().fields():
+                if 'id' in field.name():
+                    self.logger.debug('matched on field %s'%field.name())
+                    break
+                
+            self.mFieldComboBox_cid.setField(field.name())
+            
+        except Exception as e:
+            self.logger.info('failed set current layer w/ \n    %s'%e)
+    """
+        
+    
+        
     def set_overwrite(self): #action for checkBox_SSoverwrite state change
         if self.checkBox_SSoverwrite.isChecked():
             self.overwrite= True
@@ -177,7 +216,7 @@ class QprojPlug(object): #baseclass for plugins
 
         
  
-    def testit(self): #for testing the ui
+    def testit2(self, *args, **kwargs): #for testing the ui
         self.iface.messageBar().pushMessage("CanFlood", "youre doing a test", level=Qgis.Info)
         
         self.logger.info('test the logger')
@@ -186,6 +225,7 @@ class QprojPlug(object): #baseclass for plugins
         log = self.logger.getChild('testit')
         
         log.info('testing the child')
+        
         
 class logger(object): #workaround for qgis logging pythonic
     log_tabnm = 'CanFlood' # qgis logging panel tab name

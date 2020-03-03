@@ -10,7 +10,7 @@ helper functions w/ Qgis api
 # imports------------
 #==============================================================================
 #python
-import os, configparser, logging, inspect, copy, datetime
+import os, configparser, logging, inspect, copy, datetime, re
 import pandas as pd
 import numpy as np
 #qgis
@@ -83,20 +83,38 @@ class Qcoms(object): #baseclass for working w/ pyqgis outside the native console
     
     qap = None
     
-    def __init__(self, 
-                 **kwargs):
-
-        """
-        should run during plugin init
-        """
-        #======================================================================
-        # basic setups
-        #======================================================================
-        self.logger=mod_logger
-        self.logger.debug('Qproj __init__ start')
+    def __init__(self,
+                 logger, tag='test', feedback=None,
+                 ):
         
 
-        self.out_dir = os.getcwd()
+        logger.info('simple wrapper inits')
+        
+        if feedback is None: feedback = QgsProcessingFeedback()
+
+        #=======================================================================
+        # attach inputs
+        #=======================================================================
+        self.logger = logger.getChild('Qsimp')
+        self.tag = tag
+        self.feedback = feedback
+
+        self.logger.info('init finished')
+        
+        return
+    
+    #==========================================================================
+    # standalone methods-----------
+    #==========================================================================
+        
+    def ini_standalone(self, out_dir=None):
+        if out_dir is None: out_dir = os.getcwd()
+        
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+            self.logger.info('created requested output directory: \n    %s'%out_dir)
+
+        self.out_dir =out_dir
         
         #=======================================================================
         # setup qgis
@@ -119,7 +137,7 @@ class Qcoms(object): #baseclass for working w/ pyqgis outside the native console
             raise Error('failed checks')
         
         
-        mod_logger.info('Qproj __INIT__ finished')
+        mod_logger.info('Qproj __INIT__ finished w/ out_dir:\n    %s'%out_dir)
         
         
         return
@@ -243,6 +261,47 @@ class Qcoms(object): #baseclass for working w/ pyqgis outside the native console
         
         return True
     
+    def load_vlay(self, fp, logger=None, providerLib='ogr'):
+        
+        assert os.path.exists(fp), 'requested file does not exist: %s'%fp
+        
+        if logger is None: logger = self.logger
+        log = logger.getChild('load_vlay')
+        
+        basefn = os.path.splitext(os.path.split(fp)[1])[0]
+        vlay_raw = QgsVectorLayer(fp,basefn,providerLib)
+        
+        
+        
+
+        # checks
+        if not isinstance(vlay_raw, QgsVectorLayer): 
+            raise IOError
+        
+        #check if this is valid
+        if not vlay_raw.isValid():
+            raise Error('loaded vlay \'%s\' is not valid. \n \n did you initilize?'%vlay_raw.name())
+        
+        #check if it has geometry
+        if vlay_raw.wkbType() == 100:
+            raise Error('loaded vlay has NoGeometry')
+        
+        
+        self.mstore.addMapLayer(vlay_raw)
+        
+        
+        vlay = vlay_raw
+        dp = vlay.dataProvider()
+
+        log.info('loaded vlay \'%s\' as \'%s\' %s geo  with %i feats from file: \n     %s'
+                    %(vlay.name(), dp.storageType(), QgsWkbTypes().displayString(vlay.wkbType()), dp.featureCount(), fp))
+        
+        return vlay
+    
+    #==========================================================================
+    # helper methods-----------------
+    #==========================================================================
+    
     def update_cf(self, #update one parameter  control file 
                   new_pars_d, #new paraemeters {section : {valnm : value }}
                   cf_fp = None):
@@ -296,12 +355,17 @@ class Qcoms(object): #baseclass for working w/ pyqgis outside the native console
         #======================================================================
         # defaults
         #======================================================================
-        if out_dir is None: out_dir = self.wd
+        if out_dir is None: out_dir = self.out_dir
         if overwrite is None: overwrite = self.overwrite
         log = self.logger.getChild('output')
         
+        #======================================================================
+        # prechecks
+        #======================================================================
         assert isinstance(out_dir, str), 'unexpected type on out_dir: %s'%type(out_dir)
         assert os.path.exists(out_dir), 'requested output directory doesnot exist: \n    %s'%out_dir
+        assert isinstance(df, pd.DataFrame)
+        assert len(df) >0, 'no data'
         
         
         #extension check
@@ -327,9 +391,13 @@ class Qcoms(object): #baseclass for working w/ pyqgis outside the native console
         
         log.info('wrote to %s to file: \n    %s'%(str(df.shape), out_fp))
         
+        self.out_fp = out_fp #set for other methods
+        
         return out_fp
     
-    
+    #==========================================================================
+    # algos--------------
+    #==========================================================================
     def deletecolumn(self,
                      in_vlay,
                      fieldn_l, #list of field names
@@ -382,7 +450,354 @@ class Qcoms(object): #baseclass for working w/ pyqgis outside the native console
 
         
         return res_vlay 
+
+    def joinattributesbylocation(self,
+                                 #data definitions
+                                 vlay,
+                                 join_vlay, #layer from which to extract attribue values onto th ebottom vlay
+                                 jlay_fieldn_l, #list of field names to extract from the join_vlay
+                                 selected_only = False,
+                                 jvlay_selected_only = False, #only consider selected features on the join layer
+                                 
+                                 #algo controls
+                                 prefix = '',
+                                 method=0, #one-to-many
+                                 predicate_l = ['intersects'],#list of geometric serach predicates
+                                 discard_nomatch = False, #Discard records which could not be joined
+                                 
+                                 #data expectations
+                                 join_nullvs = True, #allow null values on  jlay_fieldn_l on join_vlay
+                                 join_df = None, #if join_nullvs=FALSE, data to check for nulls (skips making a vlay_get_fdf)
+                                 allow_field_rename = False, #allow joiner fields to be renamed when mapped onto the main
+                                 allow_none = False,
+
+                                 #geometry expectations
+                                 expect_all_hits = False, #wheter every main feature intersects a join feature
+                                 expect_j_overlap = False, #wheter to expect the join_vlay to beoverlapping
+                                 expect_m_overlap = False, #wheter to expect the mainvlay to have overlaps
+                     ):
+        """        
+        discard_nomatch: 
+            TRUE: two resulting layers have no features in common
+            FALSE: in layer retains all non matchers, out layer only has the non-matchers?
         
+        METHOD: Join type
+
+        - 0: Create separate feature for each located feature (one-to-many)
+        - 1: Take attributes of the first located feature only (one-to-one)
+        
+        """
+        #=======================================================================
+        # presets
+        #=======================================================================
+        self.vlay = vlay
+        algo_nm = 'qgis:joinattributesbylocation'
+        
+        predicate_d = {'intersects':0,'contains':1,'equals':2,'touches':3,'overlaps':4,'within':5, 'crosses':6}
+        
+
+        log = self.logger.getChild('joinattributesbylocation')
+
+        jlay_fieldn_l = self._field_handlr(join_vlay, 
+                                           jlay_fieldn_l, 
+                                           invert=False)
+        
+        jgeot = vlay_get_bgeo_type(join_vlay)
+        mgeot = vlay_get_bgeo_type(self.vlay)
+        
+        mfcnt = self.vlay.dataProvider().featureCount()
+        #jfcnt = join_vlay.dataProvider().featureCount()
+        
+        mfnl = vlay_fieldnl(self.vlay)
+        
+        expect_overlaps = expect_j_overlap or expect_m_overlap
+        #=======================================================================
+        # geometry expectation prechecks
+        #=======================================================================
+        if not (jgeot == 'polygon' or mgeot == 'polygon'):
+            raise Error('one of the layres has to be a polygon')
+        
+        if not jgeot=='polygon':
+            if expect_j_overlap:
+                raise Error('join vlay is not a polygon, expect_j_overlap should =False')
+            
+        if not mgeot=='polygon':
+            if expect_m_overlap:
+                raise Error('main vlay is not a polygon, expect_m_overlap should =False')
+        
+        if expect_all_hits:
+            if discard_nomatch:
+                raise Error('discard_nomatch should =FALSE if  you expect all hits')
+            
+            if allow_none:
+                raise Error('expect_all_hits=TRUE and allow_none=TRUE')
+
+            
+        #method checks
+        if method==0:
+            if not jgeot == 'polygon':
+                raise Error('passed method 1:m but jgeot != polygon')
+            
+        if not expect_j_overlap:
+            if not method==0:
+                raise Error('for expect_j_overlap=False, method must = 0 (1:m) for validation')
+
+               
+        #=======================================================================
+        # data expectation checks
+        #=======================================================================
+        #make sure none of the joiner fields are already on the layer
+        if len(mfnl)>0: #see if there are any fields on the main
+            l = linr(jlay_fieldn_l, mfnl, result_type='matching')
+            
+            if len(l) > 0:
+                #w/a prefix
+                if not prefix=='':
+                    log.debug('%i fields on the joiner \'%s\' are already on \'%s\'... prefixing w/ \'%s\': \n    %s'%(
+                        len(l), join_vlay.name(), self.vlay.name(), prefix, l))
+                else:
+                    log.debug('%i fields on the joiner \'%s\' are already on \'%s\'...renameing w/ auto-sufix: \n    %s'%(
+                        len(l), join_vlay.name(), self.vlay.name(), l))
+                    
+                    if not allow_field_rename:
+                        raise Error('%i field names overlap: %s'%(len(l), l))
+                
+                
+        #make sure that the joiner attributes are not null
+        if not join_nullvs:
+            if jvlay_selected_only:
+                raise Error('not implmeneted')
+            
+            #pull thedata
+            if join_df is None:
+                join_df = vlay_get_fdf(join_vlay, fieldn_l=jlay_fieldn_l, db_f=self.db_f, logger=log)
+                
+            #slice to the columns of interest
+            join_df = join_df.loc[:, jlay_fieldn_l]
+                
+            #check for nulls
+            booldf = join_df.isna()
+            
+            if np.any(booldf):
+                raise Error('got %i nulls on \'%s\' field %s data'%(
+                    booldf.sum().sum(), join_vlay.name(), jlay_fieldn_l))
+            
+
+        #=======================================================================
+        # assemble pars
+        #=======================================================================
+        #convert predicate to code
+        pred_code_l = [predicate_d[name] for name in predicate_l]
+
+            
+        #selection flags
+        if selected_only:
+            """WARNING! This will limit the output to only these features
+            (despite the DISCARD_NONMATCHING flag)"""
+            
+            main_input = self._get_sel_obj(self.vlay)
+        else:
+            main_input = self.vlay
+        
+        if jvlay_selected_only:
+            join_input = self._get_sel_obj(join_vlay)
+        else:
+            join_input = join_vlay
+
+        #assemble pars
+        ins_d = { 'DISCARD_NONMATCHING' : discard_nomatch, 
+                 'INPUT' : main_input, 
+                 'JOIN' : join_input, 
+                 'JOIN_FIELDS' : jlay_fieldn_l,
+                 'METHOD' : method, 
+                 'OUTPUT' : 'TEMPORARY_OUTPUT', 
+                 #'NON_MATCHING' : 'TEMPORARY_OUTPUT', #not working as expected. see get_misses
+                 'PREDICATE' : pred_code_l, 
+                 'PREFIX' : prefix}
+        
+        
+        
+        log.info('extracting %i fields from %i feats from \'%s\' to \'%s\' join fields: %s'%
+                  (len(jlay_fieldn_l), join_vlay.dataProvider().featureCount(), 
+                   join_vlay.name(), self.vlay.name(), jlay_fieldn_l))
+        
+        log.debug('executing \'%s\' with ins_d: \n    %s'%(algo_nm, ins_d))
+        
+        res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
+        
+        res_vlay, join_cnt = res_d['OUTPUT'], res_d['JOINED_COUNT']
+        
+        """
+        res_d['OUTPUT'].dataProvider().featureCount()
+        """
+        
+        log.debug('got results: \n    %s'%res_d)
+        
+
+        #===========================================================================
+        # post formatting
+        #===========================================================================
+        #======================================================================
+        # if self.layname is None: 
+        #     self.layname = '%s_fjoin'%self.vlay.name()
+        #     
+        # res_vlay.setName(self.layname) #reset the name
+        #======================================================================
+        
+
+        #===========================================================================
+        # post checks
+        #===========================================================================
+        
+        hit_fcnt = res_vlay.dataProvider().featureCount()
+        
+        
+        if not expect_overlaps:
+            if not discard_nomatch:
+                if not hit_fcnt == mfcnt:
+                    raise Error('in and out fcnts dont match')
+
+        else:
+            log.debug('expect_overlaps=False, unable to check fcnts')
+
+
+
+        #all misses
+        if join_cnt == 0:
+            log.warning('got no joins from \'%s\' to \'%s\''%(
+                self.vlay.name(), join_vlay.name()))
+            
+            if not allow_none:
+                raise Error('got no joins!')
+            
+            if discard_nomatch:
+                if not hit_fcnt == 0:
+                    raise Error('no joins but got some hits')
+           
+        #some hits 
+        else:
+            #check there are no nulls
+            if discard_nomatch and not join_nullvs:
+                #get data on first joiner
+                fid_val_ser = vlay_get_fdata(res_vlay, jlay_fieldn_l[0], logger=log, fmt='ser')
+                
+                if np.any(fid_val_ser.isna()):                  
+                    raise Error('discard=True and join null=FALSe but got %i (of %i) null \'%s\' values in the reuslt'%(
+                        fid_val_ser.isna().sum(), len(fid_val_ser), fid_val_ser.name
+                        ))
+                
+        #=======================================================================
+        # miss retrival
+        #=======================================================================
+        """removed"""
+        #=======================================================================
+        # get the new field names
+        #=======================================================================
+        new_fn_l = set(vlay_fieldnl(res_vlay)).difference(vlay_fieldnl(self.vlay))
+                    
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        log.debug('finished joining %i fields from %i (of %i) feats from \'%s\' to \'%s\' join fields: %s'%
+                  (len(new_fn_l), join_cnt, self.vlay.dataProvider().featureCount(),
+                   join_vlay.name(), self.vlay.name(), new_fn_l))
+        
+
+        return res_vlay, new_fn_l, join_cnt
+    
+    #==========================================================================
+    # privates----------
+    #==========================================================================
+    def _field_handlr(self, #common handling for fields
+                      vlay, #layer to check for field presence
+                      fieldn_l, #list of fields to handle
+                      invert = False,
+                      ):
+        
+        log = self.logger.getChild('_field_handlr')
+
+        #=======================================================================
+        # all flag
+        #=======================================================================
+        if isinstance(fieldn_l, str):
+            if fieldn_l == 'all':
+
+                fieldn_l = vlay_fieldnl(vlay)
+                log.debug('user passed \'all\', retrieved %i fields: \n    %s'%(
+                    len(fieldn_l), fieldn_l))
+                                
+                
+            else:
+                raise Error('unrecognized fieldn_l\'%s\''%fieldn_l)
+            
+        #=======================================================================
+        # type setting
+        #=======================================================================
+        if isinstance(fieldn_l, tuple) or isinstance(fieldn_l, np.ndarray) or isinstance(fieldn_l, set):
+            fieldn_l = list(fieldn_l)
+            
+        #=======================================================================
+        # checking
+        #=======================================================================
+        if not isinstance(fieldn_l, list):
+            raise Error('expected a list for fields, instead got \n    %s'%fieldn_l)
+        
+        
+    
+    
+        vlay_check(vlay, exp_fieldns=fieldn_l)
+        
+        
+        #=======================================================================
+        # #handle inversions
+        #=======================================================================
+        if invert:
+            big_fn_s = set(vlay_fieldnl(vlay)) #get all the fields
+
+            #get the difference
+            fieldn_l = list(big_fn_s.difference(set(fieldn_l)))
+            
+            self.logger.debug('inverted selection from %i to %i fields'%
+                      (len(big_fn_s),  len(fieldn_l)))
+            
+            
+        
+        
+        return fieldn_l
+    
+    def _get_sel_obj(self, vlay): #get the processing object for algos with selections
+        
+        log = self.logger.getChild('_get_sel_obj')
+        
+        if vlay.selectedFeatureCount() == 0:
+            raise Error('Nothing selected. exepects some pre selection')
+        
+        """consider moving this elsewhere"""
+        #handle project layer store
+        if QgsProject.instance().mapLayer(vlay.id()) is None:
+            #layer not on project yet. add it
+            if QgsProject.instance().addMapLayer(vlay, False) is None:
+                raise Error('failed to add map layer \'%s\''%vlay.name())
+
+        
+       
+        log.debug('based on %i selected features from \'%s\': %s'
+                  %(len(vlay.selectedFeatureIds()), vlay.name(), vlay.selectedFeatureIds()))
+            
+        return QgsProcessingFeatureSourceDefinition(vlay.id(), True)
+    
+    def _in_out_checking(self,res_vlay,
+                         ):
+        
+        """placeholder"""
+        #===========================================================================
+        # setups and defaults
+        #===========================================================================
+        log = self.logger.getChild('_in_out_checking')
+
+
+            
+        return
 
 #==============================================================================
 # FUNCTIONS----------
@@ -1611,6 +2026,18 @@ def field_new(fname,
     
     return new_qfield
 
+def vlay_get_bgeo_type(vlay,
+                       match_flags=re.IGNORECASE,
+                       ):
+    
+    gstr = QgsWkbTypes().displayString(vlay.wkbType()).lower()
+    
+    for gtype in ('polygon', 'point', 'line'):
+        if re.search(gtype, gstr,  flags=match_flags):
+            return gtype
+        
+    raise Error('failed to match')
+
 #==============================================================================
 # type checks-----------------
 #==============================================================================
@@ -1793,8 +2220,6 @@ def df_to_qvlayd( #convert a data frame into the layer data structure (keeyd by 
 
 if __name__ == '__main__':
     print('start')
-    Qproj()
-        
 
     
     print('finished')
