@@ -1712,7 +1712,7 @@ p, li { white-space: pre-wrap; }
                  </sizepolicy>
                 </property>
                 <property name="title">
-                 <string>Set 2 (hazard layer: secondary exposure likelihoods layer):</string>
+                 <string>Set 2</string>
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_5">
                  <item>
@@ -1737,7 +1737,7 @@ p, li { white-space: pre-wrap; }
                  </sizepolicy>
                 </property>
                 <property name="title">
-                 <string>Set 3 (hazard layer: secondary exposure likelihoods layer):</string>
+                 <string>Set 3</string>
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_6">
                  <item>
@@ -1762,7 +1762,7 @@ p, li { white-space: pre-wrap; }
                  </sizepolicy>
                 </property>
                 <property name="title">
-                 <string>Set 4 (hazard layer: secondary exposure likelihoods layer):</string>
+                 <string>Set 4</string>
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_2">
                  <item>

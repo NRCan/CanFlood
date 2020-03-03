@@ -434,7 +434,7 @@ if __name__ =="__main__":
     
     wrkr.upd_cf(os.path.join(data_dir, 'CanFlood_scenario1.txt'))
 
-    force_open_dir(os.getcwd())
+    force_open_dir(out_dir)
 
     print('finished')
     

@@ -27,7 +27,7 @@ import math
 import hp
 from hp import Error, view
 
-from canflood_inprep.model.common import Model
+from model.common import Model
 
 
 #==============================================================================
