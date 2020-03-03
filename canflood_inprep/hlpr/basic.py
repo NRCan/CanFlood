@@ -222,8 +222,35 @@ def get_basefn(filepath):
     basefn, ext = os.path.splitext(fhead)
     return basefn
     
+def force_open_dir(folder_path_raw, logger=mod_logger): #force explorer to open a folder
+    logger = logger.getChild('force_open_dir')
     
+    if not os.path.exists(folder_path_raw):
+        logger.error('passed directory does not exist: \n    %s'%folder_path_raw)
+        return False
+        
+    import subprocess
+    
+    #===========================================================================
+    # convert directory to raw string literal for windows
+    #===========================================================================
+    try:
+        #convert forward to backslashes
+        folder_path=  folder_path_raw.replace('/', '\\')
+    except:
+        logger.error('failed during string conversion')
+        return False
+    
+    try:
 
+        args = r'explorer "' + str(folder_path) + '"'
+        subprocess.Popen(args) #spawn process in explorer
+        'this doesnt seem to be working'
+        logger.info('forced open folder: \n    %s'%folder_path)
+        return True
+    except:
+        logger.error('unable to open directory: \n %s'%dir)
+        return False
     
     
     

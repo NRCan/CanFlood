@@ -20,7 +20,7 @@ import pandas as pd
 
 
 #Qgis imports
-from qgis.core import *
+
 from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject
 
 
@@ -35,14 +35,13 @@ if __name__ =="__main__":
     
     from hlpr.exceptions import Error
     
-    from hlpr.plug import QprojPlug as base_class
 
 #plugin runs
 else:
-    base_class = object
+    #base_class = object
     from hlpr.exceptions import QError as Error
     
-
+from hlpr.Q import Qcoms as base_class
 
 from hlpr.Q import *
 from hlpr.basic import *
@@ -55,7 +54,7 @@ class Djoiner(base_class):
 
     
     def __init__(self,
-                 logger, out_dir, tag='test',
+                 logger, tag='test',
                  ):
         
         """inherited by the dialog.
@@ -66,7 +65,7 @@ class Djoiner(base_class):
         # attach inputs
         #=======================================================================
         self.logger = logger.getChild('Djoiner')
-        self.wd = out_dir
+
         self.tag = tag
 
         
@@ -225,7 +224,7 @@ class Djoiner(base_class):
     
 
 if __name__ =="__main__": 
-    
+    print('start')
     out_dir = os.getcwd()
     
     #==========================================================================
@@ -245,7 +244,9 @@ if __name__ =="__main__":
     #==========================================================================
     # execute
     #==========================================================================
-    res_vlay = Djoiner(mod_logger, out_dir).djoinRun(
+    wrkr = Djoiner(mod_logger)
+    
+    res_vlay = wrkr.djoinRun(
         vlay_raw, data_fp,'xid', tag='CanFlood',
         keep_fnl=['fclass', 'xid', 'sclass'])
     
@@ -255,6 +256,7 @@ if __name__ =="__main__":
     vlay_write(res_vlay, 
                os.path.join(os.getcwd(), '%s.gpkg'%res_vlay.name()),
                overwrite=True)    
+    
     print('finished')
     
 

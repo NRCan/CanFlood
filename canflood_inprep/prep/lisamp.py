@@ -2,15 +2,51 @@
 Created on Feb. 9, 2020
 
 @author: cefect
+
+likelihood sampler
+sampling overlapping polygons at inventory points to calculate combined likelihoods
 '''
+#==========================================================================
+# logger setup-----------------------
+#==========================================================================
+import logging, configparser, datetime
+
+
+
 #==============================================================================
-# imports---------------
+# imports------------
 #==============================================================================
 import os
-from qgis.core import QgsWkbTypes
-from hp import Error
-
+import numpy as np
 import pandas as pd
+
+
+#Qgis imports
+from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject
+
+#==============================================================================
+# custom imports
+#==============================================================================
+
+#standalone runs
+if __name__ =="__main__": 
+    from hlpr.logr import basic_logger
+    mod_logger = basic_logger()   
+    
+    from hlpr.exceptions import Error
+    
+    from hlpr.plug import QprojPlug as base_class
+
+#plugin runs
+else:
+    base_class = object
+    from hlpr.exceptions import QError as Error
+    
+    
+
+from hlpr.Q import *
+from hlpr.basic import *
+
 #==============================================================================
 # classes-------------
 #==============================================================================
@@ -24,23 +60,7 @@ class LiSamp(object):
             cid = 'xid', #index field name on finv
             ):
         
-        """
-        #======================================================================
-        # dev inputs
-        #======================================================================
-        
-        lpol_vlay_l
-             exposure_likes_10e2_cT1_20200209.gpkg, exposure_likes_20e1_cT1_20200209.gpkg
-             
-        enames_d
-             {'exposure_likes_10e2_cT1_20200209':'Gld_10e2_fail_cT1', 'exposure_likes_20e1_cT1_20200209':'Gld_20e1_fail_cT1'}
-             
-        finv:
-            finv_icomp_cT1.gpkg
-        
-        """
-        
-        
+
         
         #======================================================================
         # #load the data
@@ -169,4 +189,17 @@ class LiSamp(object):
     return total_prob
 
 
+if __name__ =="__main__": 
+    
+    out_dir = os.getcwd()
+
+    #==========================================================================
+    # load layers
+    #==========================================================================
+    data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\build\lisamp'
+    lpol_d = {'Gld_10e2_fail_cT1':r'exposure_likes_10e2_cT1_20200209.gpkg', 
+              'Gld_20e1_fail_cT1':r'exposure_likes_20e1_cT1_20200209.gpkg'}
+    
+    
+    
 

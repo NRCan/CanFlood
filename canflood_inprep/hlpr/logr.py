@@ -41,5 +41,18 @@ def basic_logger(): #for logging outside the plugin
     logging.config.fileConfig(logcfg_file) #load the configuration file
     logger.info('root logger initiated and configured from file: %s'%(logcfg_file))
     
+
+    
     return logger
+
+
+
+
+
+if __name__ =="__main__": 
+    log = basic_logger()
+    
+    log.push('test')
+
+        
     

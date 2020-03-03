@@ -1,0 +1,32 @@
+[parameters]
+name = scenario1
+cid = xid
+prec = 2
+ground_water = False
+felv = datum
+event_probs = ari
+ltail = extrapolate
+rtail = 0.5
+drop_tails = True
+integrate = trapz
+ead_plot = True
+res_per_asset = True
+#control file template created from 'scenario setup' on  2020-03-02 12.33.42
+
+[dmg_fps]
+curves = C
+finv = C:\LS\03_TOOLS\CanFlood\_wdirs\20200302\finv_scenario1_finv_cconv_20200224_aoiT4.csv
+expos = 
+gels = 
+
+[risk_fps]
+dmgs = 
+exlikes = 
+aeps = 
+
+[validation]
+risk1 = False
+imp2 = False
+risk2 = False
+risk3 = False
+

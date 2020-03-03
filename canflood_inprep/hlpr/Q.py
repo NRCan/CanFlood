@@ -15,8 +15,12 @@ import pandas as pd
 import numpy as np
 #qgis
 from qgis.core import *
+    
 from qgis.analysis import QgsNativeAlgorithms
-from PyQt5.QtCore import QVariant, QMetaType
+from PyQt5.QtCore import QVariant, QMetaType 
+
+"""throws depceciationWarning"""
+import processing  
 
 mod_logger = logging.getLogger('Q') #creates a child logger of the root
 
@@ -62,7 +66,7 @@ type_qvar_py_d = {10:str, 2:int, 135:float, 6:float, 4:int, 1:bool, 16:datetime.
 # classes -------------
 #==============================================================================
 
-class Qproj(object): #baseclass for working w/ pyqgis outside the native console
+class Qcoms(object): #baseclass for working w/ pyqgis outside the native console
     
     crs_id = 4326
     crs = QgsCoordinateReferenceSystem(crs_id)
@@ -77,8 +81,7 @@ class Qproj(object): #baseclass for working w/ pyqgis outside the native console
     
     overwrite=True
     
-    
-    
+    qap = None
     
     def __init__(self, 
                  **kwargs):
@@ -86,18 +89,25 @@ class Qproj(object): #baseclass for working w/ pyqgis outside the native console
         """
         should run during plugin init
         """
-        mod_logger.debug('Qproj super')
+        #======================================================================
+        # basic setups
+        #======================================================================
+        self.logger=mod_logger
+        self.logger.debug('Qproj __init__ start')
         
-        super().__init__(**kwargs) #initilzie teh baseclass
-        
+
+        self.out_dir = os.getcwd()
         
         #=======================================================================
         # setup qgis
         #=======================================================================
-        #self.qap = self.init_qgis()
+        self.qap = self.init_qgis()
         self.qproj = QgsProject.instance()
+        
+
 
         self.algo_init = self.init_algos()
+        
         
         self.set_vdrivers()
         
@@ -109,7 +119,7 @@ class Qproj(object): #baseclass for working w/ pyqgis outside the native console
             raise Error('failed checks')
         
         
-        self.logger.info('Qproj __INIT__ finished')
+        mod_logger.info('Qproj __INIT__ finished')
         
         
         return
@@ -139,12 +149,19 @@ class Qproj(object): #baseclass for working w/ pyqgis outside the native console
             raise Error('QGIS failed to initiate')
         
     def init_algos(self): #initiilize processing and add providers
+        """
+        crashing without raising an Exception
+        """
     
     
         log = self.logger.getChild('init_algos')
+        
+        if not isinstance(self.qap, QgsApplication):
+            raise Error('qgis has not been properly initlized yet')
+        
         from processing.core.Processing import Processing
     
-        Processing.initialize()
+        Processing.initialize() #crashing without raising an Exception
     
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
         
@@ -226,11 +243,55 @@ class Qproj(object): #baseclass for working w/ pyqgis outside the native console
         
         return True
     
+    def update_cf(self, #update one parameter  control file 
+                  new_pars_d, #new paraemeters {section : {valnm : value }}
+                  cf_fp = None):
+        
+        log = self.logger.getChild('update_cf')
+        
+        #get defaults
+        if cf_fp is None: cf_fp = self.cf_fp
+        
+        assert os.path.exists(cf_fp), 'bad cf_fp: %s'%cf_fp
+        
+        #initiliae the parser
+        pars = configparser.ConfigParser(allow_no_value=True)
+        _ = pars.read(cf_fp) #read it from the new location
+        
+        #loop and make updates
+        for section, val_t in new_pars_d.items():
+            assert isinstance(val_t, tuple), 'bad subtype'
+            assert section in pars, 'requested section \'%s\' not in the pars!'%section
+            
+            for subval in val_t:
+                #value key pairs
+                if isinstance(subval, dict):
+                    for valnm, value in subval.items():
+                        pars.set(section, valnm, value)
+                        
+                #single values    
+                elif isinstance(subval, str):
+                    pars.set(section, subval)
+                    
+                else:
+                    raise Error('unrecognized value type: %s'%type(subval))
+                
+        
+        #write the config file 
+        with open(cf_fp, 'w') as configfile:
+            pars.write(configfile)
+            
+        log.info('updated contyrol file w/ %i pars at :\n    %s'%(
+            len(new_pars_d), cf_fp))
+        
+        return
+    
     def output_df(self, #dump some outputs
                       df, 
                       out_fn,
                       out_dir = None,
                       overwrite=None,
+                      write_index=False,
             ):
         #======================================================================
         # defaults
@@ -262,13 +323,67 @@ class Qproj(object): #baseclass for working w/ pyqgis outside the native console
         #======================================================================
         # writ eit
         #======================================================================
-        df.to_csv(out_fp, index=True)
+        df.to_csv(out_fp, index=write_index)
         
         log.info('wrote to %s to file: \n    %s'%(str(df.shape), out_fp))
         
         return out_fp
+    
+    
+    def deletecolumn(self,
+                     in_vlay,
+                     fieldn_l, #list of field names
+                     invert=False, #whether to invert selected field names
+                     layname = None,
+
+
+                     ):
+
+        #=======================================================================
+        # presets
+        #=======================================================================
+        algo_nm = 'qgis:deletecolumn'
+        log = self.logger.getChild('deletecolumn')
+        self.vlay = in_vlay
+
+        #=======================================================================
+        # field manipulations
+        #=======================================================================
+        fieldn_l = self._field_handlr(in_vlay, fieldn_l,  invert=invert)
         
+            
+
+        if len(fieldn_l) == 0:
+            log.debug('no fields requsted to drop... skipping')
+            return self.vlay
+
+        #=======================================================================
+        # assemble pars
+        #=======================================================================
+        #assemble pars
+        ins_d = { 'COLUMN' : fieldn_l, 
+                 'INPUT' : in_vlay, 
+                 'OUTPUT' : 'TEMPORARY_OUTPUT'}
         
+        log.debug('executing \'%s\' with ins_d: \n    %s'%(algo_nm, ins_d))
+        
+        res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
+        
+        res_vlay = res_d['OUTPUT']
+
+        
+        #===========================================================================
+        # post formatting
+        #===========================================================================
+        if layname is None: 
+            layname = '%s_delf'%self.vlay.name()
+            
+        res_vlay.setName(layname) #reset the name
+
+        
+        return res_vlay 
+        
+
 #==============================================================================
 # FUNCTIONS----------
 #==============================================================================
@@ -527,7 +642,7 @@ def vlay_write( #write  a layer to file
         
     if not destCRS.isValid(): 
         raise Error('invalid destCrs')
-    
+        
     
     error = QgsVectorFileWriter.writeAsVectorFormat(
             vlay, out_fp, fileEncoding, destCRS,
@@ -1676,6 +1791,11 @@ def df_to_qvlayd( #convert a data frame into the layer data structure (keeyd by 
     return d
 
 
-    
+if __name__ == '__main__':
+    print('start')
+    Qproj()
+        
 
+    
+    print('finished')
 
