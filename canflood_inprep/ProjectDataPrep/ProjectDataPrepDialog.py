@@ -155,13 +155,21 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
                
         
         #Working Directory
+        def browse_wd():
+            return self.browse_buttom(self.lineEdit_wd, prompt='Select Working Directory',
+                                      qfd = QFileDialog.getExistingDirectory)
+            
         self.pushButton_wd.clicked.connect(self.browse_wd) # SS. Working Dir. Browse
         
         #Inventory Vector Layer        
         self.comboBox_vec.layerChanged.connect(self.update_cid_cb) #SS inventory vector layer
         
         #Vulnerability Curve Set
-        self.pushButton_SScurves.clicked.connect(self.browse_curves)# SS. Vuln Curve Set. Browse
+        def browse_curves():
+            return self.browse_buttom(self.lineEdit_curve, prompt='Select Curve Set',
+                                      qfd = QFileDialog.getOpenFileName)
+            
+        self.pushButton_SScurves.clicked.connect(browse_curves)# SS. Vuln Curve Set. Browse
         
         #program controls
         self.checkBox_SSoverwrite.stateChanged.connect(self.set_overwrite) #SS overwrite data files
@@ -170,7 +178,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
         self.pushButton_generate.clicked.connect(self.build_scenario) #SS. generate
         
         #CanFlood Control File
-        self.pushButton_cf.clicked.connect(self.select_output_file_cf)# SS. Model Control File. Browse
+        self.pushButton_cf.clicked.connect(self.browse_cf)# SS. Model Control File. Browse
         
         #======================================================================
         # hazard sampler
@@ -207,30 +215,27 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
         #======================================================================
         self.pushButton_DTMsamp.clicked.connect(self.run_dsamp)
         
-        
         #======================================================================
         # validator
         #======================================================================
         self.pushButton_Validate.clicked.connect(self.run_validate)
         
-        
-        
+
         #======================================================================
         # general
         #======================================================================
-
         self.buttonBox.accepted.connect(self.reject)
-        
-
         self.buttonBox.rejected.connect(self.reject)
         self.pushButton_help.clicked.connect(self.run_help)
         
+        #======================================================================
+        # dev
+        #======================================================================
+        """"
+        to speed up testing.. manually configure the project
+        """
         
-        """testing
-        def test():
-            self.logger.push('testing this')
-        
-        self.buttonBox.accepted.connect(test)"""
+        self.lineEdit_wd.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200302\CanFlood_scenario1.txt')
         
         
         
@@ -239,7 +244,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
     # UI Buttom Actions-----------------      
     #==========================================================================
               
-    def browse_curves(self): #SS. Vulnerability Curve Set. file path
+    def xxxbrowse_curves(self): #SS. Vulnerability Curve Set. file path
         """todo: set filter to xls only"""
         filename = QFileDialog.getOpenFileName(self, "Select Vulnerability Curve Set")[0] 
         if not filename == '':
@@ -248,35 +253,26 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
             self.logger.push('curve set selected')
             self.logger.info(filename)
 
-    def select_output_file_cf(self): #select an existing model control file
-        filename = QFileDialog.getOpenFileName(self, "Select File")
-        self.lineEdit_cf_fp.setText(str(filename[0]))
-        self.lineEdit_control_2.setText(str(filename[0]))
-        self.cf = str(filename[0])
+    def browse_cf(self): #select an existing model control file
+        self.browse_button(self.lineEdit_cf_fp, prompt='Select CanFlood control file',
+                           qfd=QFileDialog.getOpenFileName)
         
         """
         TODO: Populate Vulnerability Curve Set box
-        
+         
         Check the control file is the correct format
-        
+         
         print out all the values pressent in the control file
         """
-        
-        self.iface.messageBar().pushMessage("CanFlood", "Pre-constructed Control File selected by User", level=Qgis.Info)
-        
-        QgsMessageLog.logMessage("usere selected control file from :\n    %s"%self.cf,
-                                 'CanFlood', level=Qgis.Info)
-        
-        
-        
-        
-    
-    def browse_wd(self):
+
+    def xxxbrowse_wd(self):
+        #laungh the gui
         wd = QFileDialog.getExistingDirectory(self, "Select Working Directory")
+        
+        #fill in the text and check it
         if wd not in "": #see if it was cancelled
             self.lineEdit_wd.setText(os.path.normpath(wd))
             
-        
             if not os.path.exists(wd):
                 os.makedirs(wd)
                 self.logger.info('requested working directory does not exist. built')

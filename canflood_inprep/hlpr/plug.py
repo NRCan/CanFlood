@@ -23,6 +23,11 @@ import pandas as pd
 #Qgis imports
 from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject
 
+
+from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QObject 
+from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
+
 #==============================================================================
 # custom imports
 #==============================================================================
@@ -33,14 +38,12 @@ if __name__ =="__main__":
     mod_logger = basic_logger()   
     
     from hlpr.exceptions import Error
-    
-    from hlpr.plug import QprojPlug as base_class
 
 #plugin runs
 else:
-    base_class = object
+
     from hlpr.exceptions import QError as Error
-    
+
     
 
 from hlpr.Q import *
