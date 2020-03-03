@@ -1615,7 +1615,7 @@ p, li { white-space: pre-wrap; }
            <string>Likelihood Sampler</string>
           </attribute>
           <layout class="QGridLayout" name="gridLayout_8">
-           <item row="4" column="0" colspan="2">
+           <item row="5" column="0" colspan="2">
             <widget class="QGroupBox" name="groupBox_13">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
@@ -1675,7 +1675,7 @@ p, li { white-space: pre-wrap; }
               </size>
              </property>
              <property name="title">
-              <string>Specify hazard layer and secondary exposure polygon map</string>
+              <string>Specify hazard layer and secondary exposure polygon map (or leave blank)</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout">
               <item>
@@ -1788,7 +1788,7 @@ p, li { white-space: pre-wrap; }
              </property>
             </widget>
            </item>
-           <item row="2" column="0">
+           <item row="3" column="0">
             <spacer name="verticalSpacer_2">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
@@ -1800,6 +1800,18 @@ p, li { white-space: pre-wrap; }
               </size>
              </property>
             </spacer>
+           </item>
+           <item row="2" column="0">
+            <widget class="QGroupBox" name="groupBox_21">
+             <property name="title">
+              <string>Likelihood field name:</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_2">
+              <item>
+               <widget class="QgsFieldComboBox" name="mFieldComboBox_LSfn"/>
+              </item>
+             </layout>
+            </widget>
            </item>
           </layout>
          </widget>

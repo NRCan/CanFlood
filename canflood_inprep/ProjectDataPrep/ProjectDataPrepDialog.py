@@ -90,8 +90,10 @@ sys.path.append(file_dir)
 
 #import canflood_inprep.prep.wsamp
 from prep.wsamp import WSLSampler
+from prep.lisamp import LikeSampler
 #from canFlood_model import CanFlood_Model
 import hp
+import hlpr.plug
 from hp import Error
 
 
@@ -100,7 +102,7 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'ProjectDataPrepDialog_Base.ui'))
 
 
-class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
+class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     
     event_name_set = [] #event names
     
@@ -131,6 +133,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
 
     def connect_slots(self):
         
+        #self.testit()
         #======================================================================
         # pull project data
         #======================================================================
@@ -155,7 +158,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
         
         #Working Directory
         def browse_wd():
-            return self.browse_buttom(self.lineEdit_wd, prompt='Select Working Directory',
+            return self.browse_button(self.lineEdit_wd, prompt='Select Working Directory',
                                       qfd = QFileDialog.getExistingDirectory)
             
         self.pushButton_wd.clicked.connect(browse_wd) # SS. Working Dir. Browse
@@ -163,9 +166,12 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
         #======================================================================
         # #Inventory Vector Layer
         #======================================================================
-
+        def upd_cid():
+            return self.mfcb_connect(
+                self.mFieldComboBox_cid, self.comboBox_vec.currentLayer(),
+                fn_str = 'id' )
                 
-        self.comboBox_vec.layerChanged.connect(self.update_cid_cb) #SS inventory vector layer
+        self.comboBox_vec.layerChanged.connect(upd_cid) #SS inventory vector layer
         
         #find a good layer
         try:
@@ -180,7 +186,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
         
         #Vulnerability Curve Set
         def browse_curves():
-            return self.browse_buttom(self.lineEdit_curve, prompt='Select Curve Set',
+            return self.browse_button(self.lineEdit_curve, prompt='Select Curve Set',
                                       qfd = QFileDialog.getOpenFileName)
             
         self.pushButton_SScurves.clicked.connect(browse_curves)# SS. Vuln Curve Set. Browse
@@ -232,19 +238,32 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
             4: (self.MLCB_LS1_event, self.MLCB_LS1_lpol),
             }
         
+ 
+
+        
         #loop and set filteres
+        first = True
         for sname, (mlcb_haz, mlcb_lpol) in self.ls_cb_d.items():
+            #setup the field combo box
+            if first:
+                def upd_lfield(): #updating the field box
+                    return self.mfcb_connect(
+                        self.mFieldComboBox_LSfn, mlcb_lpol.currentLayer(),
+                        fn_str = 'fail' )
+            
+                #connect to update the field name box
+                mlcb_lpol.layerChanged.connect(upd_lfield)
+                first = False
+                
+            #set drop down filters
             mlcb_haz.setFilters(QgsMapLayerProxyModel.RasterLayer)
             mlcb_haz.setAllowEmptyLayer(True)
             mlcb_lpol.setFilters(QgsMapLayerProxyModel.PolygonLayer)
             mlcb_lpol.setAllowEmptyLayer(True)
             
-            
-            
-            
-
-            
-        
+        #connect execute
+        self.pushButton_LSsample.clicked.connect(self.run_lisamp)
+                    
         #======================================================================
         # DTM sampler
         #======================================================================
@@ -320,7 +339,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
             
 
         
-    def update_cid_cb(self): #update teh fields drop down any time the main layer changes
+    def xxxupdate_cid_cb(self): #update teh fields drop down any time the main layer changes
         
         try:
             #self.logger.info('user changed finv layer to %s'%self.comboBox_vec.currentLayer().name())
@@ -761,20 +780,29 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
         #=======================================================================
         # assemble/prepare inputs
         #=======================================================================
-        
         finv_raw = self.comboBox_vec.currentLayer()
-        rlay = self.comboBox_dtm.currentLayer()
-        
         crs = self.qproj.crs()
-
         cf_fp = self.get_cf_fp()
         out_dir = self.lineEdit_wd.text()
-        
-
-        #update some parameters
         cid = self.mFieldComboBox_cid.currentField() #user selected field
         
+        lfield = self.mFieldComboBox_LSfn.currentField()
+        
+        #collect lpols
+        lpol_d = dict()
+        for sname, (mlcb_haz, mlcb_lpol) in self.ls_cb_d.items():
+            hlay = mlcb_haz.currentLayer()
+            
+            if not isinstance(hlay, QgsRasterLayer):
+                continue
+            
+            lpol_vlay = mlcb_lpol.currentLayer()
+            
+            if not isinstance(lpol_vlay, QgsVectorLayer):
+                raise Error('must provide a matching VectorLayer for set %s'%sname)
 
+            lpol_d[hlay.name()] = lpol_vlay 
+            
         #======================================================================
         # aoi slice
         #======================================================================
@@ -789,11 +817,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
             raise Error('got nothing for finv')
         if not isinstance(finv, QgsVectorLayer):
             raise Error('did not get a vector layer for finv')
-        
-
-        if not isinstance(rlay, QgsRasterLayer):
-            raise Error('unexpected type on raster layer')
-            
+                    
         if not os.path.exists(out_dir):
             raise Error('working directory does not exist:  %s'%out_dir)
         
@@ -809,30 +833,33 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
         #======================================================================
 
         #build the sample
-        wrkr = WSLSampler(self.logger, 
+        wrkr = LikeSampler(self.logger, 
                           tag=self.tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
                           )
         
-        res_vlay = wrkr.run([rlay], finv, cid=cid, crs=crs, fname='gels')
+        res_df = wrkr.run(finv, lpol_d, cid=cid, lfield=lfield)
         
         #check it
         wrkr.check()
         
         #save csv results to file
-        wrkr.write_res(res_vlay, out_dir = out_dir)
+        wrkr.write_res(res_df, out_dir = out_dir)
         
         #update ocntrol file
-
+        wrkr.upd_cf(cf_fp)
         
         #======================================================================
         # add to map
         #======================================================================
-        if self.checkBox_DTMloadres.isChecked():
-            self.qproj.addMapLayer(finv)
+        if self.checkBox_LSloadres.isChecked():
+            res_vlay = wrkr.vectorize(res_df)
+            self.qproj.addMapLayer(res_vlay)
             self.logger.info('added \'%s\' to canvas'%finv.name())
             
-        self.logger.push('dsamp finished')    
+        self.logger.push('lisamp finished')    
+        
+        return
         
     def _pop_el_table(self): #developing the table widget
         
