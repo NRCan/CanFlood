@@ -78,28 +78,39 @@ class Qcoms(object): #baseclass for working w/ pyqgis outside the native console
 
     algo_init = False #flag indicating whether the algos have been initialized
     
-    
+    out_dir = None
     overwrite=True
     
     qap = None
     
     def __init__(self,
                  logger, tag='test', feedback=None,
+                 out_dir=None,
                  ):
         
 
         logger.info('simple wrapper inits')
         
-        if feedback is None: feedback = QgsProcessingFeedback()
-
+        #setup output directory
+        if out_dir is None: out_dir = os.getcwd()
+        
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+            self.logger.info('created requested output directory: \n    %s'%out_dir)
+        self.out_dir =out_dir
+        
         #=======================================================================
         # attach inputs
         #=======================================================================
+            
+        if feedback is None: feedback = QgsProcessingFeedback()
+
+
         self.logger = logger.getChild('Qsimp')
         self.tag = tag
         self.feedback = feedback
 
-        self.logger.info('init finished')
+        self.logger.info('Qcoms.__init__ finished w/ out_dir: \n    %s'%self.out_dir)
         
         return
     
@@ -107,15 +118,7 @@ class Qcoms(object): #baseclass for working w/ pyqgis outside the native console
     # standalone methods-----------
     #==========================================================================
         
-    def ini_standalone(self, out_dir=None):
-        if out_dir is None: out_dir = os.getcwd()
-        
-        if not os.path.exists(out_dir):
-            os.makedirs(out_dir)
-            self.logger.info('created requested output directory: \n    %s'%out_dir)
-
-        self.out_dir =out_dir
-        
+    def ini_standalone(self, ):
         #=======================================================================
         # setup qgis
         #=======================================================================
@@ -137,7 +140,7 @@ class Qcoms(object): #baseclass for working w/ pyqgis outside the native console
             raise Error('failed checks')
         
         
-        mod_logger.info('Qproj __INIT__ finished w/ out_dir:\n    %s'%out_dir)
+        mod_logger.info('Qproj __INIT__ finished')
         
         
         return
@@ -319,7 +322,7 @@ class Qcoms(object): #baseclass for working w/ pyqgis outside the native console
         
         #loop and make updates
         for section, val_t in new_pars_d.items():
-            assert isinstance(val_t, tuple), 'bad subtype'
+            assert isinstance(val_t, tuple), '\"%s\' has bad subtype: %s'%(section, type(val_t))
             assert section in pars, 'requested section \'%s\' not in the pars!'%section
             
             for subval in val_t:

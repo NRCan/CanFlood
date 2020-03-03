@@ -28,12 +28,12 @@ import hp
 from hp import Error, view
 
 
-from canflood_inprep.model.common import Model
+from model.common import Model
 
 #==============================================================================
 # functions----------------------
 #==============================================================================
-class RiskModel(Model):
+class Risk2(Model):
     
     #==========================================================================
     # parameters from user
@@ -76,7 +76,6 @@ class RiskModel(Model):
                    'exlikes':{'ext':'.csv', 'colns':[]},
                     'aeps':{'ext':'.csv', 'colns':[]},
                     }
-    
     
 
     dirname = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -834,20 +833,7 @@ class RiskModel(Model):
         return out_fp
             
         
-        
-        
-        
-        
-        
 
-def main_run(wd, cf):
-    print('executing')
-
-    _ = RiskModel(par_fp=cf,
-                  out_dir=wd,
-                  logger=logger).run()
-    
-    print('finished')
     
 
     

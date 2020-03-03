@@ -290,8 +290,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         to speed up testing.. manually configure the project
         """
         
-        self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200302\CanFlood_scenario1.txt')
-        self.lineEdit_wd.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200302')
+        self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200303\CanFlood_scenario1.txt')
+        self.lineEdit_wd.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200303')
         
         
         
@@ -876,8 +876,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             
     
     def store_eaep(self): #saving the event likelihoods table to file
-
-        self.logger.info('user pushed \'pushButton_ELstore\'')
+        log = self.logger.getChild('store_eaep')
+        log.info('user pushed \'pushButton_ELstore\'')
         
 
         #======================================================================
@@ -885,7 +885,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
         #get displayed control file path
         cf_fp = self.get_cf_fp()
-        
+        out_dir = self.lineEdit_wd.text()
         
         #likelihood paramter
         if self.radioButton_ELari.isChecked():
@@ -923,28 +923,31 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # #write to file
         #======================================================================
         ofn = os.path.join(self.lineEdit_wd.text(), 'aeps_%i_%s.csv'%(len(aep_df.columns), self.tag))
-        eaep_fp = self.output_df(aep_df, ofn, write_index=False)
+        
+        from hlpr.Q import Qcoms
+        #build a shell worker for these taxks
+        wrkr = Qcoms(log, tag=self.tag, feedback=self.feedback, out_dir=out_dir)
+        
+        eaep_fp = wrkr.output_df(aep_df, ofn, 
+                                  overwrite=self.overwrite, write_index=False)
         
         
         
         #======================================================================
         # update the control file
         #======================================================================
-        self.logger.info('reading control file: %s'%cf_fp)
-        pars = configparser.ConfigParser(inline_comment_prefixes='#', allow_no_value=True)
-        _ = pars.read(cf_fp) #read it
+        wrkr.update_cf(
+            {
+                'parameters':({'event_progs':event_probs},),
+                'risk_fps':({'aeps':eaep_fp}, 
+                            '#aeps file path set from wsamp.py at %s'%(
+                                datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')))
+                          
+             },
+            cf_fp = cf_fp
+            )
         
-        pars.set('parameters', 'event_probs', event_probs) #user selected field
-        pars.set('risk_fps', 'aeps', eaep_fp) #user selected field
         
-        pars.set('risk_fps', '#aeps file path set from wsamp.py at %s'
-                 %(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')))
-                
-                
-        
-        #write the config file 
-        with open(cf_fp, 'w') as configfile:
-            pars.write(configfile)
             
         self.logger.push('generated \'aeps\' and set \'event_probs\' to control file')
         

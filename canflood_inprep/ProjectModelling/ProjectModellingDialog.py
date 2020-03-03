@@ -55,15 +55,17 @@ import pandas as pd
 
 file_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(file_dir)
-#import model
-#from risk import RiskModel
 
-from canflood_inprep.model.risk2 import RiskModel
-from canflood_inprep.model.dmg2 import Dmg2
+#==============================================================================
+# custom imports 
+#==============================================================================
+from model.risk1 import Risk1
+from model.risk2 import Risk2
+from model.dmg2 import Dmg2
 
 #from canFlood_model import CanFlood_Model
-import canflood_inprep.hp as hp
-from canflood_inprep.hp import Error
+#import canflood_inprep.hp as hp
+#from canflood_inprep.hp import Error
 
 import hlpr.plug
 
@@ -89,6 +91,10 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         self.iface = iface
         
         self.qproj_setup()
+        
+        self.connect_slots()
+        
+    def connect_slots(self):
         
         """remapped everything
         self.pushButton_wd.clicked.connect(self.select_output_folder) #risk
@@ -167,6 +173,8 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #======================================================================
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
+        
+        self.logger.info('Model ui connected')
         
     def select_output_folder(self):
         foldername = QFileDialog.getExistingDirectory(self, "Select Directory")
@@ -256,13 +264,13 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
             raise Error('invalid impacts file. did you run the impact model?! \n    %s'%pars['risk_fps']['dmgs'])
         
         
-                """
+        """
         
         
         #======================================================================
         # run the model
         #======================================================================
-        RiskModel(par_fp = self.cf_fp,
+        Risk2(par_fp = self.cf_fp,
                          out_dir = self.wd,
                          logger = self.logger).run()
        
