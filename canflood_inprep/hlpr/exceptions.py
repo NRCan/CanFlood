@@ -11,6 +11,7 @@ from qgis.core import QgsMessageLog, Qgis
 class QError(Exception):
     """Base class for exceptions in this module."""
     def __init__(self, msg):
+
         from qgis.utils import iface
         
         try:

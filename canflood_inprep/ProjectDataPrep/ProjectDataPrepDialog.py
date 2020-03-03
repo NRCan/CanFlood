@@ -101,7 +101,7 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'ProjectDataPrepDialog_Base.ui'))
 
 
-class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler, hp.QprojPlug):
+class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
     
     event_name_set = [] #event names
     
@@ -127,7 +127,10 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler, hp.QprojPlug):
         
         self.qproj_setup()
         
+        self.connect_slots()
+        
 
+    def connect_slots(self):
         
         #pull layer info from project
         layers = self.iface.mapCanvas().layers()
@@ -139,54 +142,50 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler, hp.QprojPlug):
         self.comboBox_dtm.setFilters(QgsMapLayerProxyModel.RasterLayer)
         
 
-        
         #======================================================================
-        # scenario setup
+        # scenario setup tab
         #======================================================================
-        #gui elements
+        #populate guis
         self.comboBox_vec.setFilters(QgsMapLayerProxyModel.VectorLayer) #SS. Inventory Layer: Drop down
         self.comboBox_aoi.setFilters(QgsMapLayerProxyModel.VectorLayer) #SS. Project AOI
-        self.comboBox_SSelv.addItems(['datum', 'ground'])
-        
-        self.comboBox_vec.layerChanged.connect(self.update_cid_cb)
-        
-        
-        #======================================================================
-        # """
-        # development
-        # """
-        # self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200223d\CanFlood_scenario1.txt')
-        # self.lineEdit_wd.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200223d')
-        #======================================================================
+        self.comboBox_SSelv.addItems(['datum', 'ground']) #ss elevation type
         
         
         
+               
         
-        #user input
-        self.checkBox_SSoverwrite.stateChanged.connect(self.set_overwrite)
-        
+        #Working Directory
         self.pushButton_wd.clicked.connect(self.browse_wd) # SS. Working Dir. Browse
+        
+        #Inventory Vector Layer        
+        self.comboBox_vec.layerChanged.connect(self.update_cid_cb) #SS inventory vector layer
+        
+        #Vulnerability Curve Set
         self.pushButton_SScurves.clicked.connect(self.browse_curves)# SS. Vuln Curve Set. Browse
+        
+        #program controls
+        self.checkBox_SSoverwrite.stateChanged.connect(self.set_overwrite) #SS overwrite data files
+        
+        #generate new control file      
         self.pushButton_generate.clicked.connect(self.build_scenario) #SS. generate
         
+        #CanFlood Control File
         self.pushButton_cf.clicked.connect(self.select_output_file_cf)# SS. Model Control File. Browse
         
         #======================================================================
         # hazard sampler
         #======================================================================
-        
-        
-        """not sure what/where this is
-        self.pushButton_br_4.clicked.connect(self.select_output_file_cf)"""
-        
+        """
+        todo: swap this out with better selection widget
+        """
+        #selection       
         self.pushButton_remove.clicked.connect(self.remove_text_edit)
         self.pushButton_clear.clicked.connect(self.clear_text_edit)
         self.pushButton_add_all.clicked.connect(self.add_all_text_edit)
         
         self.comboBox_ras.currentTextChanged.connect(self.add_ras)
         
-        #self.pushButton_HSgenerate.clicked.connect(self.run_wsamp)
-        
+        #execute
         self.pushButton_HSgenerate.clicked.connect(self.run_wsamp)
         
         #======================================================================
@@ -249,9 +248,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler, hp.QprojPlug):
             self.logger.push('curve set selected')
             self.logger.info(filename)
 
-
-        
-        
     def select_output_file_cf(self): #select an existing model control file
         filename = QFileDialog.getOpenFileName(self, "Select File")
         self.lineEdit_cf_fp.setText(str(filename[0]))
@@ -503,30 +499,17 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler, hp.QprojPlug):
         #=======================================================================
         # assemble/prepare inputs
         #=======================================================================
-        
         finv_raw = self.comboBox_vec.currentLayer()
         rlay_l = list(self.ras_dict.values())
         
         crs = self.qproj.crs()
 
-        cf_fp1 = self.get_cf_fp()
-        self.wd = self.lineEdit_wd.text()
+        cf_fp = self.get_cf_fp()
+        out_dir = self.lineEdit_wd.text()
         
 
         #update some parameters
         cid = self.mFieldComboBox_cid.currentField() #user selected field
-        
-
-        
-         
-        #======================================================================
-        # """dev paths"""
-        # cf_fp1 = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200222\CanFlood_run.txt'
-        # wd = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200222'
-        # cid = 'xid' #user selected field
-        #======================================================================
-
-
         
         #======================================================================
         # aoi slice
@@ -538,9 +521,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler, hp.QprojPlug):
         # precheck
         #======================================================================
 
-        
-        
-        
         if finv is None:
             raise Error('got nothing for finv')
         if not isinstance(finv, QgsVectorLayer):
@@ -550,8 +530,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler, hp.QprojPlug):
             if not isinstance(rlay, QgsRasterLayer):
                 raise Error('unexpected type on raster layer')
             
-        if not os.path.exists(self.wd):
-            raise Error('working directory does not exist:  %s'%self.wd)
+        if not os.path.exists(out_dir):
+            raise Error('working directory does not exist:  %s'%out_dir)
         
         if cid is None or cid=='':
             raise Error('need to select a cid')
@@ -559,32 +539,31 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler, hp.QprojPlug):
         if not cid in [field.name() for field in finv.fields()]:
             raise Error('requested cid field \'%s\' not found on the finv_raw'%cid)
             
-        
+        assert os.path.exists(cf_fp), 'bad control file specified'
         #======================================================================
         # execute
         #======================================================================
-
         """
-        2020-02-22: this is a very strange way of executing the backends.
-        doesn't give us access to any of the gui (logger, status bar, crs, etc.)
-        also defeats the purpose of writing the backends as methods
-        changed so that we just inherit the backend as a baseclass
+        finv = self.wsampRun(rlay_l, finv, control_fp=cf_fp1, cid=cid, crs=crs)"""
+        #build the sample
+        wrkr = WSLSampler(self.logger)
+        res_vlay = wrkr.run(rlay_l, finv, cid=cid, crs=crs)
         
+        #check it
+        wrkr.check()
         
-        canflood_inprep.prep.wsamp.main_run(rlay_l, finv, wd, cf_fp)
-        self.iface.messageBar().pushMessage(
-            "CanFlood", "Hazard Sampling Successful", level=Qgis.Success, duration=10)
+        #save csv results to file
+        wrkr.write(res_vlay, out_dir = out_dir)
         
-        QgsMessageLog.logMessage('Hazard Sampling complete','CanFlood', level=Qgis.Info)"""
-        
-        finv = self.wsampRun(rlay_l, finv, control_fp=cf_fp1, cid=cid, crs=crs)
+        #update ocntrol file
+        wrkr.upd_cf(cf_fp)
         
         #======================================================================
         # add to map
         #======================================================================
         if self.checkBox_HSloadres.isChecked():
-            self.qproj.addMapLayer(finv)
-            self.logger.info('added \'%s\' to canvas'%finv.name())
+            self.qproj.addMapLayer(res_vlay)
+            self.logger.info('added \'%s\' to canvas'%res_vlay.name())
             
         #======================================================================
         # update event names
@@ -597,7 +576,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler, hp.QprojPlug):
         #======================================================================
         # populate the EL table
         #======================================================================
-        
         l = self.event_name_set
         for tbl in [self.fieldsTable_LS, self.fieldsTable_EL]:
 
@@ -608,7 +586,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, WSLSampler, hp.QprojPlug):
             
         self.logger.info('populated tables with event names')
 
-        
+        self.logger.push('wsamp finished')
         
         return
     

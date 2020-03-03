@@ -7,27 +7,44 @@ Created on Feb. 25, 2020
 helper functions for use in plugins
 '''
 
+#==========================================================================
+# logger setup-----------------------
+#==========================================================================
+import logging, configparser, datetime
+
 #==============================================================================
 # imports------------
 #==============================================================================
-#python
-import os, configparser, logging
-import pandas as pd
+import os
 import numpy as np
-#qgis
-from qgis.core import *
-from qgis.analysis import QgsNativeAlgorithms
-from qgis.PyQt.QtWidgets import QAction, QFileDialog, QListWidget
+import pandas as pd
 
-mod_logger = logging.getLogger('Q') #creates a child logger of the root
+
+#Qgis imports
+from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject
 
 #==============================================================================
-# customs
+# custom imports
 #==============================================================================
+
+#standalone runs
 if __name__ =="__main__": 
+    from hlpr.logr import basic_logger
+    mod_logger = basic_logger()   
+    
     from hlpr.exceptions import Error
+    
+    from hlpr.plug import QprojPlug as base_class
+
+#plugin runs
 else:
+    base_class = object
     from hlpr.exceptions import QError as Error
+    
+    
+
+from hlpr.Q import *
+from hlpr.basic import *
 
 #==============================================================================
 # classes-----------
@@ -52,7 +69,7 @@ class QprojPlug(object): #baseclass for plugins
         
         
     
-    def output_df(self, #dump some outputs
+    def xxxoutput_df(self, #dump some outputs
                       df, 
                       out_fn,
                       out_dir = None,
@@ -150,95 +167,11 @@ class QprojPlug(object): #baseclass for plugins
             
         self.logger.push('overwrite set to %s'%self.overwrite)
         
-    def update_cf(self, #update one parameter  control file 
-                  new_pars_d, #new paraemeters {section : {valnm : value }}
-                  cf_fp = None):
-        
-        log = self.logger.getChild('update_cf')
-        
-        #get defaults
-        if cf_fp is None: cf_fp = self.cf_fp
-        
-        #initiliae the parser
-        pars = configparser.ConfigParser(allow_no_value=True)
-        _ = pars.read(self.cf_fp) #read it from the new location
-        
-        #loop and make updates
-        for section, val_d in new_pars_d.items():
-            for valnm, value in val_d.items():
-                pars.set(section, valnm, value)
-        
-        #write the config file 
-        with open(self.cf_fp, 'w') as configfile:
-            pars.write(configfile)
-            
-        log.info('updated contyrol file w/ %i pars at :\n    %s'%(
-            len(new_pars_d), cf_fp))
-        
-        return
+
     
-    def deletecolumn(self,
-                     in_vlay,
-                     fieldn_l, #list of field names
-                     invert=False, #whether to invert selected field names
-                     layname = None,
-
-
-                     ):
-
-        #=======================================================================
-        # presets
-        #=======================================================================
-        algo_nm = 'qgis:deletecolumn'
-        log = self.logger.getChild('deletecolumn')
-        self.vlay = in_vlay
-
-        #=======================================================================
-        # field manipulations
-        #=======================================================================
-        fieldn_l = self._field_handlr(in_vlay, fieldn_l,  invert=invert)
-        
-            
-
-        if len(fieldn_l) == 0:
-            log.debug('no fields requsted to drop... skipping')
-            return self.vlay
-
-        #=======================================================================
-        # assemble pars
-        #=======================================================================
-        #assemble pars
-        ins_d = { 'COLUMN' : fieldn_l, 
-                 'INPUT' : in_vlay, 
-                 'OUTPUT' : 'TEMPORARY_OUTPUT'}
-        
-        log.debug('executing \'%s\' with ins_d: \n    %s'%(algo_nm, ins_d))
-        
-        res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
-        
-        res_vlay = res_d['OUTPUT']
 
         
-        #===========================================================================
-        # post formatting
-        #===========================================================================
-        if layname is None: 
-            layname = '%s_delf'%self.vlay.name()
-            
-        res_vlay.setName(layname) #reset the name
-
-        
-        return res_vlay 
-        
-        
-
-        
-        
-        
-      
-        
-        
-            
+ 
     def testit(self): #for testing the ui
         self.iface.messageBar().pushMessage("CanFlood", "youre doing a test", level=Qgis.Info)
         
@@ -249,8 +182,6 @@ class QprojPlug(object): #baseclass for plugins
         
         log.info('testing the child')
         
-
-
 class logger(object): #workaround for qgis logging pythonic
     log_tabnm = 'CanFlood' # qgis logging panel tab name
     
@@ -299,9 +230,10 @@ class logger(object): #workaround for qgis logging pythonic
         
         if push:
             self.iface.messageBar().pushMessage(self.log_tabnm, msg, level=qlevel)
-            
-            
-            
+#==============================================================================
+# functions-----------
+#==============================================================================
+         
 def qtbl_get_df( #extract data to a frame from a qtable
         table, 
             ):
