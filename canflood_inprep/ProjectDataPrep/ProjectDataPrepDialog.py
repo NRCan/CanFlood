@@ -87,10 +87,9 @@ sys.path.append(file_dir)
 #==============================================================================
 # custom imports
 #==============================================================================
-import canflood_inprep.model.risk2
-import canflood_inprep.model.dmg2
+
 #import canflood_inprep.prep.wsamp
-from canflood_inprep.prep.wsamp import WSLSampler
+from prep.wsamp import WSLSampler
 #from canFlood_model import CanFlood_Model
 import canflood_inprep.hp as hp
 from canflood_inprep.hp import Error
@@ -543,9 +542,13 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
         finv = self.wsampRun(rlay_l, finv, control_fp=cf_fp1, cid=cid, crs=crs)"""
         #build the sample
         wrkr = WSLSampler(self.logger, 
-                          tag=self.tag, #set by build_scenario() 
+                          tag = self.tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
                           )
+        """
+        wrkr.tag
+        """
+        
         res_vlay = wrkr.run(rlay_l, finv, cid=cid, crs=crs)
         
         #check it
@@ -590,6 +593,87 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hp.QprojPlug):
         return
     
     def run_dsamp(self): #sample dtm raster
+        
+        self.logger.info('user pressed \'pushButton_DTMsamp\'')
+
+        
+        #=======================================================================
+        # assemble/prepare inputs
+        #=======================================================================
+        
+        finv_raw = self.comboBox_vec.currentLayer()
+        rlay = self.comboBox_dtm.currentLayer()
+        
+        crs = self.qproj.crs()
+
+        cf_fp = self.get_cf_fp()
+        out_dir = self.lineEdit_wd.text()
+        
+
+        #update some parameters
+        cid = self.mFieldComboBox_cid.currentField() #user selected field
+        
+
+        #======================================================================
+        # aoi slice
+        #======================================================================
+        finv = self.slice_aoi(finv_raw)
+        
+
+        #======================================================================
+        # precheck
+        #======================================================================
+                
+        if finv is None:
+            raise Error('got nothing for finv')
+        if not isinstance(finv, QgsVectorLayer):
+            raise Error('did not get a vector layer for finv')
+        
+
+        if not isinstance(rlay, QgsRasterLayer):
+            raise Error('unexpected type on raster layer')
+            
+        if not os.path.exists(out_dir):
+            raise Error('working directory does not exist:  %s'%out_dir)
+        
+        if cid is None or cid=='':
+            raise Error('need to select a cid')
+        
+        if not cid in [field.name() for field in finv.fields()]:
+            raise Error('requested cid field \'%s\' not found on the finv_raw'%cid)
+            
+        
+        #======================================================================
+        # execute
+        #======================================================================
+
+        #build the sample
+        wrkr = WSLSampler(self.logger, 
+                          tag=self.tag, #set by build_scenario() 
+                          feedback = self.feedback, #needs to be connected to progress bar
+                          )
+        
+        res_vlay = wrkr.run([rlay], finv, cid=cid, crs=crs, fname='gels')
+        
+        #check it
+        wrkr.check()
+        
+        #save csv results to file
+        wrkr.write_res(res_vlay, out_dir = out_dir)
+        
+        #update ocntrol file
+
+        
+        #======================================================================
+        # add to map
+        #======================================================================
+        if self.checkBox_DTMloadres.isChecked():
+            self.qproj.addMapLayer(finv)
+            self.logger.info('added \'%s\' to canvas'%finv.name())
+            
+        self.logger.push('dsamp finished')    
+        
+    def run_lisamp(self): #sample dtm raster
         
         self.logger.info('user pressed \'pushButton_DTMsamp\'')
 
