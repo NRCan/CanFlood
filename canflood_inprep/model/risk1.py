@@ -176,20 +176,20 @@ class Risk1(Model):
         one value per cid?
         """
         
-        #======================================================================
-        # drop down to worst case
-        #======================================================================
-        cdf = ddf.groupby(self.cid).max().drop(self.bid, axis=1)
-        """what does this do for nulls?"""
+
 
         
         #======================================================================
         # convert exposures to binary
         #======================================================================
+        boolcol = ddf.columns.isin([bid, cid])
+        
+        ddf1 = ddf.loc[:, ~boolcol]
+        
         #get relvant bids
         booldf = pd.DataFrame(np.logical_and(
-            cdf > 0,#get bids w/ positive depths
-            cdf.notna()) #real depths
+            ddf1 > 0,#get bids w/ positive depths
+            ddf1.notna()) #real depths
             )
 
 
@@ -200,8 +200,28 @@ class Risk1(Model):
         
         log.info('got %i (of %i) exposures'%(booldf.sum().sum(), ddf.size))
         
-        bdf = cdf.where(booldf, other=0.0)
-        bdf = bdf.where(~booldf, other=1.0)
+        bidf = ddf1.where(booldf, other=0.0)
+        bidf = bidf.where(~booldf, other=1.0)
+        
+        #======================================================================
+        # scale
+        #======================================================================
+        if 'fscale' in bdf:
+            log.info('scaling binaries values by \'fscale\' column')
+            
+            
+            bidf = bidf.multiply(bdf.set_index(bid)['fscale'], axis=0)
+            
+            
+        #======================================================================
+        # drop down to worst case
+        #======================================================================
+        #reattach indexers
+        bidf1 = bidf.join(ddf.loc[:, boolcol])
+        
+        
+        cdf = bidf1.groupby(cid).max().drop(bid, axis=1)
+        """what does this do for nulls?"""
         
 
         #======================================================================
@@ -209,11 +229,11 @@ class Risk1(Model):
         #======================================================================
         #take maximum expected value at each asset
         if 'exlikes' in self.data_d:
-            bres_df = self.resolve_multis(bdf, self.data_d['exlikes'], aep_ser, log)
+            bres_df = self.resolve_multis(cdf, self.data_d['exlikes'], aep_ser, log)
             
         #no duplicates. .just rename by aep
         else:
-            bres_df = bdf.rename(columns = aep_ser.to_dict()).sort_index(axis=1)
+            bres_df = cdf.rename(columns = aep_ser.to_dict()).sort_index(axis=1)
             
 
 
@@ -347,6 +367,15 @@ class Risk1(Model):
         bdf.index.name=bid
         
         assert cid in bdf.columns, 'bdf missing %s'%cid
+        
+        #======================================================================
+        # adjust fscale
+        #======================================================================
+        if 'fscale' in bdf.columns:
+            boolidx = bdf['fscale'].isna()
+            if boolidx.any():
+                log.info('setting %i null fscale values to 1'%boolidx.sum())
+                bdf.loc[:, 'fscale'] = bdf['fscale'].fillna(1.0)
             
         #======================================================================
         # convert asset heights to elevations
@@ -440,11 +469,11 @@ if __name__ =="__main__":
     #==========================================================================
 
     
-    cf_fp = r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\risk1\wex\CanFlood_risk1.txt'
+    cf_fp = r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\risk1\basic\CanFlood_risk1.txt'
     
     wrkr = Risk1(cf_fp, out_dir=out_dir, logger=mod_logger, tag=tag)
     
-    res, res_df = wrkr.run()
+    res, res_df = wrkr.run(res_per_asset=True)
     
     #======================================================================
     # plot

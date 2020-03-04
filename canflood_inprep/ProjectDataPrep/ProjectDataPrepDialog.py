@@ -580,7 +580,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         """
         finv = self.wsampRun(rlay_l, finv, control_fp=cf_fp1, cid=cid, crs=crs)"""
         #build the sample
-        wrkr = WSLSampler(self.logger, 
+        wrkr = WSLSampler(logger=self.logger, 
                           tag = self.tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
                           )
@@ -720,7 +720,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
 
         #build the sample
-        wrkr = WSLSampler(self.logger, 
+        wrkr = WSLSampler(logger=self.logger, 
                           tag=self.tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
                           )
@@ -810,7 +810,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
 
         #build the sample
-        wrkr = LikeSampler(self.logger, 
+        wrkr = LikeSampler(logger=self.logger, 
                           tag=self.tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
                           crs = crs,
@@ -904,7 +904,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         from hlpr.Q import Qcoms
         #build a shell worker for these taxks
-        wrkr = Qcoms(log, tag=self.tag, feedback=self.feedback, out_dir=out_dir)
+        wrkr = Qcoms(logger=log, tag=self.tag, feedback=self.feedback, out_dir=out_dir)
         
         eaep_fp = wrkr.output_df(aep_df, ofn, 
                                   overwrite=self.overwrite, write_index=False)
@@ -930,6 +930,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.logger.push('generated \'aeps\' and set \'event_probs\' to control file')
         
     def run_validate(self):
+        raise Error('broken')
         """
         a lot of this is duplicated in  model.scripts_.setup_pars
         

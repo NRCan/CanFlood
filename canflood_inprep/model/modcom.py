@@ -1250,9 +1250,9 @@ class Model(ComWrkr):
         # labels
         #======================================================================
         
-        val_str = 'total EAD = ' + dfmt.format(ead_tot/basev)
+        val_str = 'total Annualized = ' + dfmt.format(ead_tot/basev)
         
-        title = 'CanFlood \'%s\' EAD-%s plot on %i events'%(self.name,xlab, len(dmg_ser))
+        title = 'CanFlood \'%s\' Annualized-%s plot on %i events'%(self.name,xlab, len(dmg_ser))
         
         #======================================================================
         # figure setup
