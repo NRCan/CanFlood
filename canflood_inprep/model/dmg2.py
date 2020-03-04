@@ -2,106 +2,137 @@
 Created on Feb. 7, 2020
 
 @author: cefect
+
+impacts model 2
 '''
 
-#==========================================================================
-# logger setup-----------------------
-#==========================================================================
-import logging, logging.config
-#logcfg_file = r'C:\Users\tony.decrescenzo\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\floodiq\_pars\logger.conf'
-logger = logging.getLogger() #get the root logger
-#logging.config.fileConfig(logcfg_file) #load the configuration file
-#logger.info('root logger initiated and configured from file: %s'%(logcfg_file))
 
 
 #==============================================================================
 # imports---------------------------
 #==============================================================================
 #python standards
-import configparser, os
+import configparser, os, logging
 
 import pandas as pd
 import numpy as np
 import math
-#custom imports
-import hp
-from hp import Error, view
 
-from model.common import Model
+#==============================================================================
+# custom imports
+#==============================================================================
+
+#standalone runs
+if __name__ =="__main__": 
+    from hlpr.logr import basic_logger
+    mod_logger = basic_logger()   
+    
+    from hlpr.exceptions import Error
+    
+#plugin runs
+else:
+    mod_logger = logging.getLogger('dmg2') #get the root logger
+
+    from hlpr.exceptions import QError as Error
+
+from hlpr.Q import *
+from hlpr.basic import *
+from model.modcom import Model
 
 
 #==============================================================================
 # functions----------------------
 #==============================================================================
 class Dmg2(Model):
-    
-    #==========================================================================
-    # parameters from user
-    #==========================================================================
-
-    ground_water = False
-    felv = 'datum'
-    
-    
-    #==========================================================================
-    # data containers
-    #==========================================================================
-    
-    dfuncs_d = dict() #container for damage functions
-    
-    
     #==========================================================================
     # #program vars
     #==========================================================================
-    valid_par = 'imp2'
-    datafp_section = 'dmg_fps'
-    bid = 'bid' #indexer for expanded finv
+    valid_par = 'dmg2'
+    #datafp_section = 'dmg_fps'
+    
+    
+    #expectations from parameter file
+    exp_pars_md = {#mandataory: section: {variable: handles} 
+        'parameters' :
+            {'name':{'type':str}, 'cid':{'type':str},
+             'felv':{'values':('ground', 'datum')},
+             'prec':{'type':int}, 
+             },
+        'dmg_fps':{
+             'finv':{'ext':('.csv',)},
+             'curves':{'ext':('.xls',)},
+             'expos':{'ext':('.csv',)},
+                    },
+        'validation':{
+            'dmg2':{'type':bool}
+                    }
+                    }
+    
+    exp_pars_op = {#optional expectations
+        'dmg_fps':{
+            'gels':{'ext':('.csv',)},
+                    }
+                    }
+    
 
     
     #expected data properties
-    exp_dprops = {'curves':{'ext':'.xls'},
-                   'expos':{'ext':'.csv', 'colns':[]},
-                    'gels':{'ext':'.csv', 'colns':[]},
-                    'finv':{'ext':'.csv', 'colns':['f0_tag', 'f0_scale', 'f0_cap', 'f0_elv']},
-                    }
+    #==========================================================================
+    # exp_dprops = {'curves':{'ext':'.xls'},
+    #                'expos':{'ext':'.csv', 'colns':[]},
+    #                 'gels':{'ext':'.csv', 'colns':[]},
+    #                 'finv':{'ext':'.csv', 'colns':['f0_tag', 'f0_scale', 'f0_cap', 'f0_elv']},
+    #                 }
+    # 
+    # opt_dfiles = ['gels'] #optional data files
+    #==========================================================================
     
-    opt_dfiles = ['gels'] #optional data files
+    #==========================================================================
+    # exp_pars = {'parameters':list(),
+    #               'dmg_fps':['curves','expos', 'gels', 'finv']}
+    #==========================================================================
     
-    exp_pars = {'parameters':list(),
-                  'dmg_fps':['curves','expos', 'gels', 'finv']}
-    
-    dirname = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    #dirname = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     
     def __init__(self,
-                 par_fp = None,
-                 out_dir = None,
-                 logger = None,
+                 cf_fp,
+                 **kwargs
                  ):
         
         #init the baseclass
-        super().__init__(par_fp, out_dir, logger=logger) #initilzie teh baseclass
+        super().__init__(cf_fp, **kwargs) #initilzie Model
        
-        
-        
+        self.dfuncs_d = dict() #container for damage functions
+        self.resname = 'dmgs_%s_%s'%(self.name, self.tag)
         #======================================================================
         # setup funcs
         #======================================================================
+        
+        self.load_data()
     
         self.setup_dfuncs(self.data_d['curves'])
         
         self.setup_finv()
         
-        self.setup_binv()
+        self.setup_expo_data()
         
         #======================================================================
         # wrap
         #======================================================================
         
-        self.logger.debug('finished __init__ on Dmg')
-        #======================================================================
-        # class variables
-        #======================================================================
-        self.progress = 0 # ranges from 0 to 100
+        self.logger.debug('finished __init__ on Dmg2')
+        
+    def load_data(self):
+        log = self.logger.getChild('load_data')
+        
+        self.data_d['curves'] = pd.read_excel(self.curves, sheet_name=None, header=None, index_col=None)
+        self.data_d['expos'] = pd.read_csv(self.expos)
+        self.data_d['finv'] = pd.read_csv(self.finv)
+        
+        if not self.gels == '':
+            self.data_d['gels'] = pd.read_csv(self.gels)
+        
+        log.info('finished')
 
  
     def setup_dfuncs(self, # build curve workers
@@ -134,223 +165,7 @@ class Dmg2(Model):
             len(self.dfuncs_d), list(self.dfuncs_d.keys())))
         
         
-    def setup_finv(self): #check and consolidate inventory like data sets
-        
-        log = self.logger.getChild('setup_finv')
-        cid = self.cid
-        
-        #======================================================================
-        # check ftag membership
-        #======================================================================
-        #check all the tags are in the dfunc
-        fdf = self.data_d['finv']
-        tag_boolcol = fdf.columns.str.contains('tag')
-        
-        f_ftags = pd.Series(pd.unique(fdf.loc[:, tag_boolcol].values.ravel())
-                            ).dropna().to_list()
 
-        c_ftags = list(self.dfuncs_d.keys())
-        
-        miss_l = set(f_ftags).difference(c_ftags)
-        
-        assert len(miss_l) == 0, '%i ftags in the finv not in the curves: \n    %s'%(
-            len(miss_l), miss_l)
-        
-        
-        #set this for later
-        self.f_ftags = f_ftags
-        
-        
-        #======================================================================
-        # set indexes on data sets
-        #======================================================================
-        #get list of data sets
-        if self.felv == 'datum':
-            l = ['finv', 'expos']
-        elif self.felv == 'ground':
-            l = ['finv', 'expos', 'gels']
-        else:
-            raise Error('unexpected \'felv\' key %s'%self.felv)
-        
-        #loop and set
-        first = True
-        for dname, df in {dname:self.data_d[dname] for dname in l}.items():
-            
-            #check the indexer is there
-            assert cid in df.columns, '%s is missing the speciied index column \'%s\''%(
-                dname, cid)
-            
-            #set the indexer
-            df = df.set_index(cid, drop=True).sort_index(axis=0)
-            
-            #check the indexes match
-            if first:
-                fdf = df.copy() #set again
-                first = False
-            else:
-
-                assert np.array_equal(fdf.index, df.index), \
-                    '\"%s\' index does not match the finv'%dname
-                    
-            #update the dict
-            self.data_d[dname] = df
-        log.debug('finished index check on %i'%len(l))
-        
-        #======================================================================
-        # add gel to the fdf
-        #======================================================================
-        if self.felv == 'ground':
-            assert 'gels' not in fdf.columns, 'gels already on fdf'
-            
-            gdf = self.data_d['gels']
-    
-            #check length expectation
-            assert len(gdf.columns)==1, 'expected 1 column on gels, got %i'%len(gdf.columns)
-    
-            
-            #rename the column
-            gdf = gdf.rename(columns={gdf.columns[0]:'gels'}).round(self.prec)
-            
-            #do the join join
-            fdf = fdf.join(gdf)
-            
-
-        
-        #update
-        self.data_d['finv'] = fdf
-        
-    def setup_binv(self): # expand finv to  unitary (one curve per row)
-        #======================================================================
-        # defaults
-        #======================================================================
-        log = self.logger.getChild('setup_binv')
-        fdf = self.data_d['finv']
-        cid, bid = self.cid, self.bid
-        
-        #======================================================================
-        # expand
-        #======================================================================
-
-        #get tag column names
-        tag_coln_l = fdf.columns[fdf.columns.str.endswith('tag')].tolist()
-        
-        assert tag_coln_l[0] == 'f0_tag', 'expected first tag column to be \'ftag\''
-        
-        #get nested prefixes
-        prefix_l = [coln[:2] for coln in tag_coln_l]
-        
-        #======================================================================
-        # expand: nested entries
-        #======================================================================
-        if len(prefix_l) > 1:
-        
-            #loop and collected nests
-            bdf = None
-            
-            for prefix in prefix_l:
-                #identify prefix columns
-                pboolcol = fdf.columns.str.startswith(prefix) #columns w/ prefix
-                
-                assert pboolcol.sum() == 4, 'expects 4 columns w/ prefix %s'%prefix
-                
-                #get slice and clean
-                df = fdf.loc[:, pboolcol].dropna(axis=0, how='all').sort_index(axis=1)
-                df.columns = ['fcap', 'felv', 'fscale', 'ftag']
-                df = df.reset_index()
-                
-                #add to main
-                if bdf is None:
-                    bdf = df
-                else:
-                    bdf = bdf.append(df, ignore_index=True, sort=False)
-                            
-                log.info('for \"%s\' got %s'%(prefix, str(df.shape)))
-                
-                
-            #add back in other needed columns
-            boolcol = fdf.columns.isin(['gels']) #additional columns to pivot out
-            if boolcol.any(): #if we are only linking in gels, these may not exist
-                bdf = bdf.merge(fdf.loc[:, boolcol], on=cid, how='left',validate='m:1')
-            
-            log.info('expanded inventory from %i nest sets to finv %s'%(
-                len(prefix_l), str(bdf.shape)))
-        #======================================================================
-        # expand: nothing nested
-        #======================================================================
-        else:
-            bdf = fdf.copy()
-            
-        #set an indexer columns
-        """safer to keep this index as a column also"""
-        bdf[bid] = bdf.index
-        bdf.index.name=bid
-            
-        #======================================================================
-        # convert asset heights to elevations
-        #======================================================================
-        if self.felv == 'ground':
-            bdf.loc[:, 'felv'] = bdf['felv'] + bdf['gels']
-                
-            log.info('converted asset ground heights to datum elevations')
-            
-        #======================================================================
-        # get depths (from wsl and elv)
-        #======================================================================
-        wdf = self.data_d['expos'] #wsl
-        
-        #pivot these out to bids
-        ddf = bdf.loc[:, [bid, cid]].join(wdf.round(self.prec), on=cid
-                                          ).set_index(bid, drop=False)
-               
-        #loop and subtract to get depths
-        boolcol = ~ddf.columns.isin([cid, bid]) #columns w/ depth values
-        
-        for coln in ddf.columns[boolcol]:
-            ddf.loc[:, coln] = (ddf[coln] - bdf['felv']).round(self.prec)
-            
-        #log.info('converted wsl (min/max/avg %.2f/%.2f/%.2f) to depths (min/max/avg %.2f/%.2f/%.2f)'%( ))
-        log.debug('converted wsl to depth %s'%str(ddf.shape))
-        
-        # #check that wsl is above ground
-
-        """
-        should also add this to the input validator tool
-        """
-        boolidx = ddf.drop([bid, cid], axis=1) < 0 #True=wsl below ground
-
-        if boolidx.any().any():
-            msg = 'got %i (of %i) wsl below ground'%(boolidx.sum().sum(), len(boolidx))
-            if self.ground_water:
-                raise Error(msg)
-            else:
-                log.warning(msg)
-        
-        #======================================================================
-        # wrap
-        #======================================================================
-        #attach frames
-        self.bdf, self.ddf = bdf, ddf
-        
-        log.debug('finished')
-        
-        #======================================================================
-        # check aeps
-        #======================================================================
-        if 'aeps' in self.pars['risk_fps']:
-            aep_fp = self.pars['risk_fps'].get('aeps')
-            
-            if not os.path.exists(aep_fp):
-                log.warning('aep_fp does not exist... skipping check')
-            else:
-                aep_data = pd.read_csv(aep_fp)
-                
-                miss_l = set(aep_data.columns).difference(wdf.columns)
-                if len(miss_l) > 0:
-                    raise Error('exposure file does not match aep data: \n    %s'%miss_l)
-            
-
-        
-        return
         
     def run(self, #main runner fucntion
             ):
@@ -554,7 +369,7 @@ class Dmg2(Model):
         # finished loop
         self.progres = 100
            
-        log = logger.getChild('run')
+        log = self.logger.getChild('run')
 
         
         log.info('finished getting raw damages for %i dfuncs and %i events'%(
@@ -643,6 +458,28 @@ class Dmg2(Model):
         """
         view(res_df1)
         """
+        
+    def upd_cf(self, #update the control file 
+               out_fp = None,cf_fp = None):
+        #======================================================================
+        # set defaults
+        #======================================================================
+        if out_fp is None: out_fp = self.out_fp
+        if cf_fp is None: cf_fp = self.cf_fp
+        
+        return self.update_cf(
+            {
+            'risk_fps':(
+                {'dmgs':self.out_fp}, 
+                '#\'dmgs\' file path set from dmg2.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                ),
+            'validation':(
+                {'risk2':'True'},
+                )
+             },
+            cf_fp = cf_fp
+            )
+                
                 
 
         
@@ -779,19 +616,34 @@ class DFunc(object,
         return dmg
 
 
-            
-
+if __name__ =="__main__": 
     
-def main_run(wd, cf):
-    print('executing')
-
-    _ = Dmg2(par_fp=cf,
-                 out_dir=wd,
-                 logger=logger).run()
+    out_dir = os.path.join(os.getcwd(), 'dmg2')
+    tag='dev'
+    #==========================================================================
+    # dev data
+    #=========================================================================
+    cf_fp = r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\dmg2\CanFlood_dmg2.txt'
     
+    #==========================================================================
+    # build/execute
+    #==========================================================================
+    
+    wrkr = Dmg2(cf_fp, out_dir=out_dir, logger=mod_logger, tag=tag)
+    
+    res_df = wrkr.run()
+    
+    #==========================================================================
+    # output
+    #==========================================================================
+    
+    out_fp = wrkr.output_df(res_df, wrkr.resname)
+    
+    wrkr.upd_cf()
+
+    force_open_dir(out_dir)
+
     print('finished')
-    
-    
     
     
     

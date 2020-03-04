@@ -1,0 +1,31 @@
+[parameters]
+name = dmg2
+cid = xid
+prec = 2
+ground_water = False
+felv = datum
+event_probs = ari
+ltail = extrapolate
+rtail = 0.5
+drop_tails = True
+integrate = trapz
+res_per_asset = True
+
+[dmg_fps]
+curves =
+finv = C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\risk2\wex\finv_dmg2_finv_cT2.csv
+expos = 
+gels = 
+
+[risk_fps]
+dmgs = C:\Users\cefect\CanFlood\dmg2\dmgs_dmg2_session.csv
+exlikes = C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\risk2\wex\exlikes_dmg2.csv
+aeps = C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\risk2\wex\aeps_4_dmg2.csv
+#'dmgs' file path set from dmg2.py at 2020-03-03 21.03.56
+
+[validation]
+risk1 = False
+dmg2 = True
+risk2 = True
+risk3 = False
+

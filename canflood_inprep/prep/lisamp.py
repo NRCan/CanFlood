@@ -52,7 +52,7 @@ class LikeSampler(Qcoms):
     """
     sampling failure likelihood polygons with the inventory
     """
-    cid = 'not_set'
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
@@ -111,16 +111,19 @@ class LikeSampler(Qcoms):
         for ename, vlay in lpol_d.items():
             if not isinstance(vlay, QgsVectorLayer):
                 raise Error('bad type on %s layer: %s'%(ename, type(vlay)))
-            assert 'Polygon' in QgsWkbTypes().displayString(vlay.wkbType())
-            assert lfield in [field.name() for field in vlay.fields()]
+            assert 'Polygon' in QgsWkbTypes().displayString(vlay.wkbType()), \
+                'unexpected geometry: %s'%QgsWkbTypes().displayString(vlay.wkbType())
+            assert lfield in [field.name() for field in vlay.fields()], 'specified lfield \"%s\' not on layer'
             assert vlay.isValid()
             
+            assert vlay.crs() == self.crs, 'crs mismatch on %s'%vlay.name()
             #==================================================================
             # #check values
             #==================================================================
             
             chk_df = vlay_get_fdf(vlay, logger=log)
             chk_ser = chk_df.loc[:, lfield]
+            
             #check fo rnulls
             boolidx = chk_ser.isna()
             assert not boolidx.any(), 'got nulls on %s'%ename
@@ -138,7 +141,7 @@ class LikeSampler(Qcoms):
         assert isinstance(finv, QgsVectorLayer), 'bad type on finv'
         assert finv.isValid(), 'invalid finv'
         assert cid in  [field.name() for field in finv.fields()], 'missing cid %s'%cid
-        
+        assert finv.crs() == self.crs, 'crs mismatch on %s'%finv.name()
             
         #======================================================================
         # slice data by project aoi
@@ -173,18 +176,25 @@ class LikeSampler(Qcoms):
                                                   expect_j_overlap=True,
                                                   )
             #extract raw sampling data
-            sdf = vlay_get_fdf(svlay, logger=log)
+            sdf_raw = vlay_get_fdf(svlay, logger=log)
             
             #==================================================================
             # #do some checks
             #=================================================================
             #check columns
-            miss_l = set(sdf.columns).symmetric_difference([lfield, cid])
+            miss_l = set(sdf_raw.columns).symmetric_difference([lfield, cid])
             assert len(miss_l) == 0, 'bad columns on the reuslts'
             #make sure all the cids made it
-            miss_l = set(cid_l).difference(sdf[cid].unique().tolist())
+            miss_l = set(cid_l).difference(sdf_raw[cid].unique().tolist())
             assert len(miss_l) == 0, 'failed to get %i assets in the smaple'%len(miss_l)
             
+            #==================================================================
+            # clean it
+            #==================================================================
+            boolidx = sdf_raw[lfield].isna()
+            log.info('got %i (of %i) misses. dropping these'%(boolidx.sum(), len(boolidx)))
+            
+            sdf = sdf_raw.dropna(subset=[lfield], axis=0, how='any')
 
             #==================================================================
             # #pivot this out to unique cids
@@ -200,7 +210,13 @@ class LikeSampler(Qcoms):
             for cval in cid_l:
                 #get this data
                 boolidx = sdf[cid] == cval
-                cid_samp_d[cval] = sdf.drop(cid, axis=1)[boolidx].iloc[:, 0].dropna().tolist()
+                pvals_l = sdf.drop(cid, axis=1)[boolidx].iloc[:, 0].dropna().tolist()
+                
+                """this will yield an empty list for nulls
+                if len(pvals_l) == 0:
+                    raise Error('got empty result')"""
+                 
+                cid_samp_d[cval] =pvals_l
                 
             #wrap event loop
             en_c_sval_d[ename] = cid_samp_d #add to reuslts
@@ -228,14 +244,17 @@ class LikeSampler(Qcoms):
             #loop through each asset and resolve sample values
             cid_res_d = dict() #harmonized likelihood results
             for cval, pvals in cid_samp_d.items():
+                
                 #log = self.logger.getChild('run.%s.%s'%(ename, cval))
                 #simple unitaries
                 if len(pvals) == 1:
                     cid_res_d[cval] = pvals[0]
                     
+                elif len(pvals) == 0:
+                    cid_res_d[cval] = np.nan
+                    
                 #multi value
                 else:
-                    
                     #calc union probability for multi predictions
                     cid_res_d[cval] = self.union_probabilities(pvals, logger=log)
                     
@@ -262,6 +281,9 @@ class LikeSampler(Qcoms):
         
         assert res_df.max().max() <=1.0, 'bad max'
         assert res_df.min().min() >= 0.0, 'bad min'
+        
+        miss_l = set(res_df.index).symmetric_difference(cid_l)
+        assert len(miss_l)==0, 'missed some cids'
         #======================================================================
         # wrap
         #======================================================================
@@ -295,6 +317,11 @@ class LikeSampler(Qcoms):
         """
         if logger is None: logger=self.logger
         #log = self.logger.getChild('union_probabilities')
+        #======================================================================
+        # prechecks
+        #======================================================================
+        assert isinstance(probs, list), 'unexpected type: %s'%type(probs)
+        assert len(probs) >0, 'got empty container'
         #======================================================================
         # prefilter
         #======================================================================
@@ -366,7 +393,7 @@ class LikeSampler(Qcoms):
         pass #placeholder
     
     def write_res(self, res_df,**kwargs):
-        return self.output_df(res_df, self.resname,**kwargs)
+        return self.output_df(res_df, self.resname,write_index=True, **kwargs)
     
     def upd_cf(self, cf_fp): #configured control file updater
         return self.update_cf(
@@ -407,11 +434,12 @@ if __name__ =="__main__":
     # load the data
     #==========================================================================
     
-    wrkr = LikeSampler(mod_logger, tag='lisamp_testr', feedback=QgsProcessingFeedback())
-    wrkr.ini_standalone(out_dir=out_dir) #setup for a standalone run
+    wrkr = LikeSampler(mod_logger, tag='lisamp_testr', feedback=QgsProcessingFeedback(), out_dir=out_dir)
+    wrkr.ini_standalone() #setup for a standalone run
     
     lpol_d, finv_vlay = wrkr.load_layers(lpol_fp_d, finv_fp)
     
+    wrkr.crs = finv_vlay.crs()
     #==========================================================================
     # execute
     #==========================================================================
