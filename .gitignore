@@ -2,3 +2,4 @@
 *.project
 *.gpkg-shm
 *.gpkg-wal
+*.pyc
