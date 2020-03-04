@@ -169,19 +169,21 @@ class QprojPlug(object): #baseclass for plugins
                            layer, #layer to set in the combo box
                            fn_str = None, #optional field name for auto setting
                            ):
-        
-        try:
-            mfcb.setLayer(layer)
-            
-            #try and match
-            for field in layer.fields():
-                if fn_str in field.name():
-                    break
+        if isinstance(layer, QgsVectorLayer):
+            try:
+                mfcb.setLayer(layer)
                 
-            mfcb.setField(field.name())
-            
-        except Exception as e:
-            self.logger.info('failed set current layer w/ \n    %s'%e)
+                #try and match
+                for field in layer.fields():
+                    if fn_str in field.name():
+                        break
+                    
+                mfcb.setField(field.name())
+                
+            except Exception as e:
+                self.logger.warning('failed set current layer w/ \n    %s'%e)
+        else:
+            self.logger.warning('failed to get a vectorlayer')
             
         return 
     
