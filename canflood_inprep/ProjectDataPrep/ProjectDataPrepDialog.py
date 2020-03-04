@@ -241,22 +241,26 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #loop and set filteres
         first = True
         for sname, (mlcb_haz, mlcb_lpol) in self.ls_cb_d.items():
-            #setup the field combo box
-            if first:
-                def upd_lfield(): #updating the field box
-                    return self.mfcb_connect(
-                        self.mFieldComboBox_LSfn, mlcb_lpol.currentLayer(),
-                        fn_str = 'fail' )
-            
-                #connect to update the field name box
-                mlcb_lpol.layerChanged.connect(upd_lfield)
-                first = False
-                
             #set drop down filters
             mlcb_haz.setFilters(QgsMapLayerProxyModel.RasterLayer)
             mlcb_haz.setAllowEmptyLayer(True)
             mlcb_lpol.setFilters(QgsMapLayerProxyModel.PolygonLayer)
             mlcb_lpol.setAllowEmptyLayer(True)
+            
+            if first:
+                mlcb_lpol_1 = mlcb_lpol
+                first = False
+
+            
+        #connect to update the field name box
+        def upd_lfield(): #updating the field box
+            return self.mfcb_connect(
+                self.mFieldComboBox_LSfn, mlcb_lpol_1.currentLayer(),
+                fn_str = 'fail' )
+    
+        
+        mlcb_lpol_1.layerChanged.connect(upd_lfield)
+        
             
         #connect execute
         self.pushButton_LSsample.clicked.connect(self.run_lisamp)

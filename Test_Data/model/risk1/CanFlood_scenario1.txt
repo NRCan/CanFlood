@@ -12,21 +12,20 @@ integrate = trapz
 ead_plot = True
 res_per_asset = True
 
-
 [dmg_fps]
 curves = 
-finv = C:\LS\03_TOOLS\CanFlood\_wdirs\20200303\finv_scenario1_finv_icomp_cT1.csv
-expos = C:\LS\03_TOOLS\CanFlood\_wdirs\20200303\expos_scenario1_4_11.csv
+finv = C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\risk1\finv_scenario1_finv_cT2.csv
+expos = C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\risk1\expos_scenario1_4_32.csv
 gels = 
 
 [risk_fps]
 dmgs = 
-exlikes = 
-aeps = C:\LS\03_TOOLS\CanFlood\_wdirs\20200303\aeps_4_scenario1.csv
-#aeps file path set from wsamp.py at 2020-03-03 15.54.26
+exlikes = C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\risk1\exlikes_scenario1.csv
+aeps = C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\risk1\aeps_4_scenario1.csv
+#'exlikes' file path set from lisamp.py at 2020-03-03 20.07.07
 
 [validation]
-risk1 = True
+risk1 = False
 imp2 = False
 risk2 = False
 risk3 = False
