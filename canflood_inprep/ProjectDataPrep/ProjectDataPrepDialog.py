@@ -824,9 +824,13 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         if cid is None or cid=='':
             raise Error('need to select a cid')
         
+        if lfield is None or lfield=='':
+            raise Error('must select a valid lfield')
+        
         if not cid in [field.name() for field in finv.fields()]:
             raise Error('requested cid field \'%s\' not found on the finv_raw'%cid)
             
+        
         
         #======================================================================
         # execute
@@ -938,7 +942,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
         wrkr.update_cf(
             {
-                'parameters':({'event_progs':event_probs},),
+                'parameters':({'event_probs':event_probs},),
                 'risk_fps':({'aeps':eaep_fp}, 
                             '#aeps file path set from wsamp.py at %s'%(
                                 datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')))

@@ -111,8 +111,9 @@ class LikeSampler(Qcoms):
         for ename, vlay in lpol_d.items():
             if not isinstance(vlay, QgsVectorLayer):
                 raise Error('bad type on %s layer: %s'%(ename, type(vlay)))
-            assert 'Polygon' in QgsWkbTypes().displayString(vlay.wkbType())
-            assert lfield in [field.name() for field in vlay.fields()]
+            assert 'Polygon' in QgsWkbTypes().displayString(vlay.wkbType()), \
+                'unexpected geometry: %s'%QgsWkbTypes().displayString(vlay.wkbType())
+            assert lfield in [field.name() for field in vlay.fields()], 'specified lfield \"%s\' not on layer'
             assert vlay.isValid()
             
             #==================================================================

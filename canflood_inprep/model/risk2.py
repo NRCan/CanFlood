@@ -79,6 +79,8 @@ class Risk2(Model):
     
 
     dirname = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    
+    
     def __init__(self,
                  par_fp = None,
                  out_dir = None,
@@ -98,20 +100,20 @@ class Risk2(Model):
         self.logger.debug('finished __init__ on Risk')
         
         
-        
-    def setup_data(self): #data setups and checks
+    def setup_data(self):
         #======================================================================
         # defaults
         #======================================================================
         log = self.logger.getChild('setup_data')
         cid = self.cid
         
-        
         #======================================================================
         # setup damages
         #======================================================================
         #get event names from damages
-        ddf = self.data_d['dmgs']
+        ddf = pd.read_csv(self.dmgs)
+        
+        #trim suffix
         boolcol = ddf.columns.str.endswith('_dmg')
         enm_l = ddf.columns[boolcol].str.replace('_dmg', '').tolist()
         
@@ -136,97 +138,9 @@ class Risk2(Model):
         #set it
         self.data_d['dmgs'] = ddf
         
-        #======================================================================
-        # aeps
-        #======================================================================
-        adf = self.data_d['aeps']
-        assert len(adf) ==1, 'expected only 1 row on aeps'
+        self.load_risk_data(ddf)
         
 
-            
-        
-
-        #column names
-        miss_l = set(ddf.columns).difference(adf.columns)
-        assert len(miss_l) == 0, '%i column mismatch between aeps and damages: %s'%(
-            len(miss_l), miss_l)
-        
-        #convert to a series
-        aep_ser = adf.iloc[0, adf.columns.isin(ddf.columns)].astype(int).sort_values()
-        
-        #convert to aep
-        if self.event_probs == 'ari':
-            aep_ser = 1/aep_ser
-            log.info('converted %i aris to aeps'%len(aep_ser))
-        elif self.event_probs == 'aep': pass
-        else: raise Error('unepxected event_probs key %s'%self.event_probs)
-        
-        #check all aeps are below 1
-        boolar = np.logical_and(
-            aep_ser < 1,
-            aep_ser > 0)
-        
-        assert np.all(boolar), 'passed aeps out of range'
-        
-        #check if we have duplicate events and require exposure likelihoods
-        if not aep_ser.is_unique:
-            assert 'exlikes' in self.data_d, 'duplicate aeps passed but no exlikes data provdied'
-            
-            log.info('duplicated aeps provided... maximum expected values will be calculated')
-
-        
-        
-        #wrap
-        log.debug('prepared aep_ser w/ %i'%len(aep_ser))
-        self.aep_ser = aep_ser.sort_values()
-        
-        
-        
-        #======================================================================
-        # exlikes
-        #======================================================================
-        #check against ddf
-        if 'exlikes' in self.data_d:
-            edf = self.data_d['exlikes']
-            
-            assert cid in edf.columns, 'exlikes missing %s'%cid
-            
-            #slice it
-            edf = edf.set_index(cid).sort_index(axis=1).sort_index(axis=0)
-            
-            #replace nulls w/ 1
-            """better not to pass any nulls.. but if so.. should treat them as 1
-            also best not to apply precision to these values
-            """
-            edf = edf.fillna(1.0)
-            
-            
-            
-            
-            #column names
-            miss_l = set(ddf.columns).difference(edf.columns)
-            assert len(miss_l) == 0, '%i column mismatch between exlikes and damages: %s'%(
-                len(miss_l), miss_l)
-            
-            #xids
-            miss_l = set(ddf.index).difference(edf.index)
-            assert len(miss_l) == 0, '%i column mismatch between exlikes and damages: %s'%(
-                len(miss_l), miss_l)
-            
-            #slice down to those in teh damages
-            """not sure if we'll ever have to deal w/ more data in the edf than in the damages"""
-            edf = edf.loc[edf.index.isin(ddf.index), edf.columns.isin(ddf.columns)]
-        
-            log.info('prepared edf w/ %s'%str(edf.shape))
-            
-            #set it
-            self.data_d['exlikes'] = edf
-        
-
-        #======================================================================
-        # wrap
-        #======================================================================
-        self.logger.debug('finished')
         
 
     def run(self, #main runner fucntion

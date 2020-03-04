@@ -1,0 +1,12 @@
+xid,ftag,fscale,fcap,felv,f1_cap,f1_elv,f1_scale,f1_tag,f2_cap,f2_elv,f2_scale,f2_tag,zid,fclass,sclass,gel,buck_id
+13830,sfd.1sty.70s.bsmt.md.no,107.86,109000.0,11.63,50000.0,9.83,79.06,fin,,,,,30340182,sfd,1sty.70s.bsmt.md.no,10.63,19
+13831,sfd.1sty.70s.bsmt.md.no,119.47,113000.0,11.36,50000.0,9.56,119.47,fin,,,,,30340161,sfd,1sty.70s.bsmt.md.no,10.36,19
+13834,sfd.1sty.old.bsmt.md.carpt,99.78,67000.0,11.63,50000.0,9.83,97.46,fin,50000.0,10.63,50.0,carpt,30340194,sfd,1sty.old.bsmt.md.carpt,10.63,20
+13835,sfd.1sty.old.crwl.md.gar,72.93,56500.0,11.58,,,,,50000.0,10.58,50.0,gar,30340193,sfd,1sty.old.crwl.md.gar,10.58,15
+13836,sfd.1sty.old.crwl.md.gar,80.73,62100.0,11.57,,,,,50000.0,10.57,50.0,gar,30340103,sfd,1sty.old.crwl.md.gar,10.57,15
+13837,sfd.1sty.old.bsmt.md.gar,116.59,93000.0,11.58,50000.0,9.78,116.59,fin,50000.0,10.58,50.0,gar,30340202,sfd,1sty.old.bsmt.md.gar,10.58,7
+13844,sfd.1sty.70s.bsmt.md.gar,117.24,136000.0,11.14,50000.0,9.34,117.24,fin,50000.0,10.14,50.0,gar,30340191,sfd,1sty.70s.bsmt.md.gar,10.14,3
+16163,sfd.1sty.70s.bsmt.md.gar,96.34,94000.0,11.84,50000.0,10.04,96.34,fin,50000.0,10.84,50.0,gar,30328390,sfd,1sty.70s.bsmt.md.gar,10.84,3
+77562,sfd.2sty.80s.slab.md.gar,137.619,263118.888,11.7,,,,,50000.0,10.7,50.0,gar,30328360,sfd,2sty.80s.slab.md.gar,10.7,1
+2595,mf.D.80s.md.lo,1089.069,1025000.0,11.63,,,,,,,,,30341090,mf,D.80s.md.lo,10.63,2
+2596,mf.D.80s.md.lo,1089.069,1305000.0,11.82,,,,,,,,,30328371,mf,D.80s.md.lo,10.82,2

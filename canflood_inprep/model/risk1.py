@@ -27,17 +27,96 @@ import numpy as np
 
 from scipy import interpolate, integrate
 
-#custom imports
-import hp
-from hp import Error, view
+#==============================================================================
+# custom imports
+#==============================================================================
+
+#standalone runs
+if __name__ =="__main__": 
+    from hlpr.logr import basic_logger
+    mod_logger = basic_logger()   
+    
+    from hlpr.exceptions import Error
+    
 
 
+#plugin runs
+else:
+
+    from hlpr.exceptions import QError as Error
+
+from hlpr.Q import *
+from hlpr.basic import *
 from model.common import Model
 
 
 
 class Risk1(Model):
-    pass
+    """
+    model for summarizing inundation counts (positive depths)
+    """
+    
+    valid_par='risk1'
+    
+    #expectations from parameter file
+    exp_pars_md = {#mandataory: section: {variable: handles} 
+        'parameters' :
+            {'name':{'type':str}, 'cid':{'type':str},'res_per_asset':{'type':bool}, 
+             'event_probs':{'values':('ari', 'aep')}, 'felv':{'values':('ground', 'datum')},
+             'prec':{'type':int}, 'res_per_asset':{'type':bool}
+             },
+        'dmg_fps':{
+             'finv':{'ext':('.csv',)},
+             'expos':{'ext':('.csv',)},
+                    },
+        'risk_fps':{
+             'aeps':{'ext':('.csv',)}
+                    },
+        'validation':{
+            'risk1':{'type':bool}
+                    }
+         }
+    
+    exp_pars_op = {#optional expectations
+        'dmg_fps':{
+            'gels':{'ext':('.csv',)}
+            
+            }
+        }
+    
+    def __init__(self,
+                 par_fp,
+                 out_dir = None,
+                 logger = None
+                 ):
+        
+        #init the baseclass
+        super().__init__(par_fp, out_dir, logger) #initilzie teh baseclass
+        
+        #======================================================================
+        # setup funcs
+        #======================================================================
+        
+        
+        self.load_data()
+        
+        self.logger.debug('finished __init__ on Risk1')
+        
+    def load_data(self): #load the data files
+        cid = self.cid
+        #load exposure data
+        ddf = pd.read_csv(self.expos, index_col=None)
+        
+        #check it
+        assert cid in ddf.columns, 'expos missing index column \"%s\''%cid
+        
+        #clean it
+        ddf = ddf.set_index(cid, drop=True).sort_index(axis=1).sort_index(axis=0)
+        
+        #load remainders
+        
+        self.load_risk_data(ddf)
+        
 
 
 
@@ -58,47 +137,11 @@ if __name__ =="__main__":
     #==========================================================================
     # dev data
     #==========================================================================
-    data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\risk1'
-    
-    finv_fp = os.path.join(data_dir, r'finv_cT2.gpkg')
-    
-    lpol_fn_d = {'Gld_10e2_fail_cT1':r'exposure_likes_10e2_cT1_20200209.gpkg', 
-              'Gld_20e1_fail_cT1':r'exposure_likes_20e1_cT1_20200209.gpkg'}
-    
-    
-    lpol_fp_d = {k:os.path.join(data_dir, v) for k, v in lpol_fn_d.items()}
-    
-    #==========================================================================
-    # load the data
-    #==========================================================================
-    
-    wrkr = LikeSampler(mod_logger, tag='lisamp_testr', feedback=QgsProcessingFeedback())
-    wrkr.ini_standalone(out_dir=out_dir) #setup for a standalone run
-    
-    lpol_d, finv_vlay = wrkr.load_layers(lpol_fp_d, finv_fp)
-    
-    #==========================================================================
-    # execute
-    #==========================================================================
-    res_df = wrkr.run(finv_vlay, lpol_d)
-    
-    #convet to a vector
-    res_vlay = wrkr.vectorize(res_df)
-    
-    
-    wrkr.check()
-    
-    #==========================================================================
-    # save results
-    #==========================================================================
-    vlay_write(res_vlay, 
-               os.path.join(wrkr.out_dir, '%s.gpkg'%wrkr.resname),
-               overwrite=True, logger=mod_logger)
-    
-    outfp = wrkr.write_res(res_df)
-    
-    wrkr.upd_cf(os.path.join(data_dir, 'CanFlood_scenario1.txt'))
 
-    force_open_dir(out_dir)
+    
+    cf_fp = r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\risk1\CanFlood_scenario1.txt'
+    
+    Risk1(cf_fp, out_dir=out_dir, logger=mod_logger)
+    
 
     print('finished')

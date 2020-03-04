@@ -6,30 +6,72 @@ Created on Feb. 9, 2020
 #==============================================================================
 # logger----------
 #==============================================================================
-import logging
-mod_logger = logging.getLogger('hp') #creates a child logger of the root
 
 #==============================================================================
 # imports------------
 #==============================================================================
 
-import configparser, os
+import configparser, os, inspect
 import pandas as pd
 import numpy as np
 
-from hp import Error
+#==============================================================================
+# custom
+#==============================================================================
+#standalone runs
+if __name__ =="__main__": 
+    from hlpr.logr import basic_logger
+    mod_logger = basic_logger()   
+    
+    from hlpr.exceptions import Error
+    
+#plugin runs
+else:
 
+    from hlpr.exceptions import QError as Error
+    
+from hlpr.basic import *
 
-
+#==============================================================================
+# class-----------
+#==============================================================================
 class Model(object):
     
     #==========================================================================
-    # parameters from user
+    # parameters from control file
     #==========================================================================
-    validated = False
-    name = 'run1'
-    cid = 'xid' #indexer
-    prec = 2 #precision
+    #[parameters]
+    name = ''
+    cid = ''
+    prec = 2
+    ground_water = False
+    felv = ''
+    event_probs = 'ari'
+    ltail = 'extrapolate'
+    rtail = 0.5
+    drop_tails = True
+    integrate = 'trapz'
+    ead_plot = True
+    res_per_asset = True
+
+    
+    #[dmg_fps]
+    curves = ''
+    finv = ''
+    expos = ''
+    gels = ''
+    
+    #[risk_fps]
+    dmgs = ''
+    exlikes = ''
+    aeps = ''
+
+    
+    #[validation]
+    risk1 = True
+    imp2 = False
+    risk2 = False
+    risk3 = False
     
     
     #==========================================================================
@@ -51,10 +93,11 @@ class Model(object):
         
         #attachments
         self.wd = out_dir
+        self.out_dir = out_dir
         self.logger = logger.getChild('Model')
         
         #parameter setup
-        self.setup_pars(par_fp)
+        self.setup_pars2(par_fp)
         
         
         #check our validity tag
@@ -66,18 +109,204 @@ class Model(object):
         self.logger.debug('finished __init__ on Model')
         
         
-    def init_model(self, #plugin runs
+    def xxxinit_model(self, #plugin runs
                    par_fp, out_dir):
-        
+
         #attachments
         self.wd = out_dir
         
         #parameter setup
         self.setup_pars(par_fp)
         
-
-        
         self.logger.debug('finished __init__ on Model')
+        
+        
+    def setup_pars2(self, #load parmaeteres from file, check, and attach
+                    par_fp):
+        
+        log = self.logger.getChild('setup_pars')
+        
+        assert os.path.exists(par_fp), 'provided parameter file path does not exist \n    %s'%par_fp
+        
+        #======================================================================
+        # validate the control file for this run
+        #======================================================================
+        #load/build
+        self.pars = configparser.ConfigParser(inline_comment_prefixes='#')
+        log.info('reading parameters from \n     %s'%self.pars.read(par_fp))
+        
+        #======================================================================
+        # check control file against expectations
+        #======================================================================
+        #check sections
+        miss_l = set(self.exp_pars_md.keys()).difference(self.pars.sections())
+        
+        if len(miss_l) > 0:
+            raise Error('missing %i expected sections in control file: %s'%(len(miss_l), miss_l))
+        
+        #======================================================================
+        # mandatory check and collect 
+        #======================================================================
+        cpars_d = dict()
+        cnt = 0
+        for sect, vchk_d in self.exp_pars_md.items():
+            cpars_d[sect] = dict()
+            
+            if not sect in self.pars.sections():
+                raise Error('missing section %s'%sect)
+            
+            #check presence
+            miss_l = set(vchk_d.keys()).difference(self.pars[sect])
+            if len(miss_l) > 0:
+                raise Error('\'%s\' missing %i (of %i) expected varirables: \n    %s'%(
+                    sect, len(miss_l), len(vchk_d), miss_l))
+                
+            #check attributes
+            for varnm, achk_d in vchk_d.items():
+                assert isinstance(achk_d, dict), '%s.%s bad type'%(sect, varnm)
+                assert hasattr(self, varnm), '\'%s\' does not exist on %s'%(varnm, self)
+
+                
+                #==============================================================
+                # #get value from parameter                
+                #==============================================================
+                pval_raw = self.pars[sect][varnm]
+                
+                #get native type
+                ntype = type(getattr(self, varnm))
+                
+                #special type retrivial
+                if ntype == bool:
+                    pval = self.pars[sect].getboolean(varnm)
+                else:
+                    #set the type
+                    pval = ntype(pval_raw)
+                
+                #==============================================================
+                # check it
+                #==============================================================
+                self.par_hndl_chk(sect, varnm, pval, achk_d)
+                
+
+                #==============================================================
+                # store value
+                #==============================================================
+                log.debug('%s.%s passed %i checks'%(sect, varnm, len(achk_d)))
+                cpars_d[sect][varnm] = pval
+                cnt +=1
+        
+        log.info('collected MANDATORY %i variables from %i sections from paramter file'%(
+            cnt, len(cpars_d)))
+        #======================================================================
+        # optional check and collect
+        #======================================================================
+        cnt2 = 0
+        for sect, vchk_d in self.exp_pars_op.items(): 
+            #add a page to the container
+            if not sect in cpars_d:
+                cpars_d[sect] = dict()
+                
+            #loop and see if they have been provided
+            for varnm, achk_d in vchk_d.items():
+                assert isinstance(achk_d, dict), '%s.%s bad type'%(sect, varnm)
+                assert hasattr(self, varnm), '\'%s\' does not exist on %s'%(varnm, self)
+                
+                
+                #==============================================================
+                # #get value from parameter                
+                #==============================================================
+                pval_raw = self.pars[sect][varnm]
+                
+                if pval_raw is None or pval_raw == '':
+                    log.debug('%s.%s blank.. skipping'%(sect, varnm))
+                    continue
+                
+                #get native type
+                ntype = type(getattr(self, varnm))
+                
+                #special type retrivial
+                if ntype == bool:
+                    pval = self.pars[sect].getboolean(varnm)
+                else:
+                    #set the type
+                    pval = ntype(pval_raw)
+                
+                #==============================================================
+                # check it
+                #==============================================================
+                self.par_hndl_chk(sect, varnm, pval, achk_d)
+                
+                #==============================================================
+                # store value
+                #==============================================================
+                log.debug('%s.%s passed %i checks'%(sect, varnm, len(achk_d)))
+                cpars_d[sect][varnm] = pval
+                cnt2+=1
+        
+        log.info('collected OPTIONAl %i variables from %i sections from paramter file'%(
+            cnt2, len(cpars_d)))
+        
+        #======================================================================
+        # attach all the paramers
+        #======================================================================
+        cnt = 0
+        for sect, spars_d in cpars_d.items():
+            for varnm, val in spars_d.items():
+                setattr(self, varnm, val)
+                log.debug('set %s=%s'%(varnm, val))
+                cnt +=1
+                
+        log.info('attached %i parmaeters to self'%cnt)
+                
+        
+        
+        return cpars_d
+                
+                
+                
+    def par_hndl_chk(self, #check a parameter aginast provided handles
+                     sect, varnm, pval, achk_d
+                     ):
+        
+        assert not pval is None, '%s.%s got none'%(sect, varnm)
+        #==============================================================
+        # #check each handle
+        #==============================================================
+        for chk_hndl, hvals in achk_d.items():
+            
+            if chk_hndl is None:
+                pass
+            elif chk_hndl == 'type':
+                assert inspect.isclass(hvals)
+                assert isinstance(pval,hvals), '%s.%s expected %s got type: %s'%(sect, varnm, hvals, type(pval))
+                
+            elif chk_hndl == 'values':
+                assert isinstance(hvals, tuple)
+                assert pval in hvals, '%s.%s unexpected value: %s'%(sect, varnm, type(pval))
+            
+            elif chk_hndl == 'ext':
+                assert isinstance(pval, str), '%s.%s expected a filepath '%(sect, varnm)
+                assert os.path.exists(pval), '%s.%s passed bad filepath: %s'%(sect, varnm, pval)
+                
+                ext = os.path.splitext(os.path.split(pval)[1])[1]
+
+                
+                if isinstance(hvals, tuple):
+                    assert ext in hvals, '%s.%s  unrecognized extension: %s'%( sect, varnm, ext)
+                elif isinstance(hvals, str):
+                    assert ext == hvals, '%s.%s  unrecognized extension: %s'%( sect, varnm, ext)
+                else:
+                    raise Error('%s.%s bad hvals'%sect, varnm)
+                    
+            
+            else:
+                raise Error('unrecognized check handle: %s'%chk_hndl)
+                        
+        return
+            
+            
+        
+        
 
     
     def setup_pars(self, #load parameters from file
@@ -256,6 +485,107 @@ class Model(object):
         
         
         log.debug('finished loading and checking parameter file')
+        
+    def load_risk_data(self, 
+                       ddf, #dmaage or exposure data to compare against
+                       ): #data setups and checks
+        #======================================================================
+        # defaults
+        #======================================================================
+        log = self.logger.getChild('setup_data')
+        cid = self.cid
+        
+        
+
+        
+        #======================================================================
+        # aeps
+        #======================================================================
+        adf = pd.read_csv(self.aeps) 
+        assert len(adf) ==1, 'expected only 1 row on aeps'
+        
+        #column names
+        miss_l = set(ddf.columns).difference(adf.columns)
+        assert len(miss_l) == 0, '%i column mismatch between aeps and damages: %s'%(
+            len(miss_l), miss_l)
+        
+        #convert to a series
+        aep_ser = adf.iloc[0, adf.columns.isin(ddf.columns)].astype(int).sort_values()
+        
+        #convert to aep
+        if self.event_probs == 'ari':
+            aep_ser = 1/aep_ser
+            log.info('converted %i aris to aeps'%len(aep_ser))
+        elif self.event_probs == 'aep': pass
+        else: raise Error('unepxected event_probs key %s'%self.event_probs)
+        
+        #check all aeps are below 1
+        boolar = np.logical_and(
+            aep_ser < 1,
+            aep_ser > 0)
+        
+        assert np.all(boolar), 'passed aeps out of range'
+        
+        #check if we have duplicate events and require exposure likelihoods
+        if not aep_ser.is_unique:
+            assert 'exlikes' in self.data_d, 'duplicate aeps passed but no exlikes data provdied'
+            
+            log.info('duplicated aeps provided... maximum expected values will be calculated')
+
+        
+        
+        #wrap
+        log.debug('prepared aep_ser w/ %i'%len(aep_ser))
+        self.aep_ser = aep_ser.sort_values()
+        
+        
+        
+        #======================================================================
+        # exlikes
+        #======================================================================
+        #check against ddf
+        if not self.exlikes == '':
+            edf = pd.read_csv(self.exlikes)
+            
+            assert cid in edf.columns, 'exlikes missing %s'%cid
+            
+            #slice it
+            edf = edf.set_index(cid).sort_index(axis=1).sort_index(axis=0)
+            
+            #replace nulls w/ 1
+            """better not to pass any nulls.. but if so.. should treat them as 1
+            also best not to apply precision to these values
+            """
+            edf = edf.fillna(1.0)
+            
+            
+            
+            
+            #column names
+            miss_l = set(ddf.columns).difference(edf.columns)
+            assert len(miss_l) == 0, '%i column mismatch between exlikes and damages: %s'%(
+                len(miss_l), miss_l)
+            
+            #xids
+            miss_l = set(ddf.index).difference(edf.index)
+            assert len(miss_l) == 0, '%i column mismatch between exlikes and damages: %s'%(
+                len(miss_l), miss_l)
+            
+            #slice down to those in teh damages
+            """not sure if we'll ever have to deal w/ more data in the edf than in the damages"""
+            edf = edf.loc[edf.index.isin(ddf.index), edf.columns.isin(ddf.columns)]
+        
+            log.info('prepared edf w/ %s'%str(edf.shape))
+            
+            #set it
+            self.data_d['exlikes'] = edf
+        
+
+        #======================================================================
+        # wrap
+        #======================================================================
+        self.logger.debug('finished')
+        
         
         
     def output(self, #dump some outputs
