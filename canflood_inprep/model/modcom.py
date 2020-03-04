@@ -672,7 +672,7 @@ class Model(ComWrkr):
         if self.felv == 'datum':
             l = ['finv', 'expos']
         elif self.felv == 'ground':
-            l = ['finv', 'expos', 'gels']
+            l = ['finv', 'expos', 'gels']            
         else:
             raise Error('unexpected \'felv\' key %s'%self.felv)
         

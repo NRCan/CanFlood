@@ -135,6 +135,9 @@ class Risk1(Model):
         #======================================================================
         self.data_d['finv'] = pd.read_csv(self.finv, index_col=None)
         
+        if not self.gels == '':
+            self.data_d['gels'] = pd.read_csv(self.gels)
+        
         #======================================================================
         # #load remainders
         #======================================================================
@@ -366,7 +369,8 @@ class Risk1(Model):
         bdf[bid] = bdf.index
         bdf.index.name=bid
         
-        assert cid in bdf.columns, 'bdf missing %s'%cid
+        if not cid in bdf.columns:
+            raise Error('bdf missing %s'%cid)
         
         #======================================================================
         # adjust fscale
@@ -455,22 +459,27 @@ class Risk1(Model):
 
 if __name__ =="__main__": 
     
-    out_dir = os.path.join(os.getcwd(), 'risk1')
-    tag = 'test'
-    ead_plot = True
-    """
-    l = [0.0, 0.0, 1.0]
-    
-    l.remove(0.0)
-    """
 
+    ead_plot = True
     #==========================================================================
     # dev data
     #==========================================================================
-
+    #==========================================================================
+    # out_dir = os.path.join(os.getcwd(), 'risk1')
+    # tag = 'dev'
+    # cf_fp = r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\risk1\wex\CanFlood_risk1.txt'
+    #==========================================================================
     
-    cf_fp = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\CanFlood_tutorial2.txt'
+    #==========================================================================
+    # 20200304 ICI.rec
+    #==========================================================================
+    tag = 'ICI_rec'
+    out_dir = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\model'
+    cf_fp = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\CanFlood_scenario1.txt'
     
+    #==========================================================================
+    # execute
+    #==========================================================================
     wrkr = Risk1(cf_fp, out_dir=out_dir, logger=mod_logger, tag=tag)
     
     res, res_df = wrkr.run(res_per_asset=True)
