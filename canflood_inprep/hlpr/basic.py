@@ -23,17 +23,190 @@ import numpy as np
 
 mod_logger = logging.getLogger('hp') #creates a child logger of the root
 
-# custom imports
+#==============================================================================
+# custom
+#==============================================================================
+#standalone runs
 if __name__ =="__main__": 
-    from hlpr.exceptions import Error
-else:
-    from hlpr.exceptions import QError as Error
+    from hlpr.logr import basic_logger
+    mod_logger = basic_logger()   
 
-     
+    
+#plugin runs
+else:
+    mod_logger = logging.getLogger('common') #get the root logger
+
+from hlpr.exceptions import QError as Error
 
 #==============================================================================
 # functions-------------
 #==============================================================================
+class ComWrkr(object): #common methods for all classes
+    
+    def __init__(self, tag='session', cid='not_set', cf_fp='',
+                 overwrite=True, 
+                 out_dir=None, logger=mod_logger):
+        
+        #======================================================================
+        # get defaults
+        #======================================================================
+        self.logger = logger.getChild('ComWrkr')
+        #setup output directory
+        if out_dir is None: out_dir = os.getcwd()
+        
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+            self.logger.info('created requested output directory: \n    %s'%out_dir)
+
+        
+        #setup logger
+        
+        
+        #======================================================================
+        # attach
+        #======================================================================
+        
+        self.tag = tag
+        self.cid = cid
+        self.overwrite=overwrite
+        self.out_dir = out_dir
+        self.cf_fp = cf_fp
+        self.progress = 0 # progress counter ranges from 0 to 100
+        
+        self.logger.info('ComWrkr.__init__ finished')
+        
+        
+    def update_cf(self, #update one parameter  control file 
+                  new_pars_d, #new paraemeters {section : {valnm : value }}
+                  cf_fp = None):
+        
+        log = self.logger.getChild('update_cf')
+        
+        #get defaults
+        if cf_fp is None: cf_fp = self.cf_fp
+        
+        assert os.path.exists(cf_fp), 'bad cf_fp: %s'%cf_fp
+        
+        #initiliae the parser
+        pars = configparser.ConfigParser(allow_no_value=True)
+        _ = pars.read(cf_fp) #read it from the new location
+        
+        #loop and make updates
+        for section, val_t in new_pars_d.items():
+            assert isinstance(val_t, tuple), '\"%s\' has bad subtype: %s'%(section, type(val_t))
+            assert section in pars, 'requested section \'%s\' not in the pars!'%section
+            
+            for subval in val_t:
+                #value key pairs
+                if isinstance(subval, dict):
+                    for valnm, value in subval.items():
+                        pars.set(section, valnm, value)
+                        
+                #single values    
+                elif isinstance(subval, str):
+                    pars.set(section, subval)
+                    
+                else:
+                    raise Error('unrecognized value type: %s'%type(subval))
+                
+        
+        #write the config file 
+        with open(cf_fp, 'w') as configfile:
+            pars.write(configfile)
+            
+        log.info('updated contyrol file w/ %i pars at :\n    %s'%(
+            len(new_pars_d), cf_fp))
+        
+        return
+    
+    
+    def output_df(self, #dump some outputs
+                      df, 
+                      out_fn,
+                      out_dir = None,
+                      overwrite=None,
+                      write_index=False,
+            ):
+        #======================================================================
+        # defaults
+        #======================================================================
+        if out_dir is None: out_dir = self.out_dir
+        if overwrite is None: overwrite = self.overwrite
+        log = self.logger.getChild('output')
+        
+        #======================================================================
+        # prechecks
+        #======================================================================
+        assert isinstance(out_dir, str), 'unexpected type on out_dir: %s'%type(out_dir)
+        assert os.path.exists(out_dir), 'requested output directory doesnot exist: \n    %s'%out_dir
+        assert isinstance(df, pd.DataFrame)
+        assert len(df) >0, 'no data'
+        
+        
+        #extension check
+        if not out_fn.endswith('.csv'):
+            out_fn = out_fn+'.csv'
+        
+        #output file path
+        out_fp = os.path.join(out_dir, out_fn)
+        
+        #======================================================================
+        # checeks
+        #======================================================================
+        if os.path.exists(out_fp):
+            log.warning('file exists \n    %s'%out_fp)
+            if not overwrite:
+                raise Error('file already exists')
+            
+
+        #======================================================================
+        # writ eit
+        #======================================================================
+        df.to_csv(out_fp, index=write_index)
+        
+        log.info('wrote to %s to file: \n    %s'%(str(df.shape), out_fp))
+        
+        self.out_fp = out_fp #set for other methods
+        
+        return out_fp
+    
+    def output_fig(self, fig,
+                   out_dir = None, overwrite=None,
+                   
+                   #figure file controls
+                 fmt='svg', 
+                  transparent=True, 
+                  dpi = 150,):
+        #======================================================================
+        # defaults
+        #======================================================================
+        if out_dir is None: out_dir = self.out_dir
+        if overwrite is None: overwrite = self.overwrite
+        log = self.logger.getChild('output')
+        
+        #======================================================================
+        # output
+        #======================================================================
+        #file setup
+        out_fp = os.path.join(out_dir, '%s_smry_plot.%s'%(self.name, fmt))
+            
+        if os.path.exists(out_fp):
+            msg = 'passed output file path already esists :\n    %s'%out_fp
+            if overwrite: 
+                log.warning(msg)
+            else: 
+                raise Error(msg)
+            
+        #write the file
+        try: 
+            fig.savefig(out_fp, dpi = dpi, format = fmt, transparent=transparent)
+            log.info('saved figure to file: %s'%out_fp)
+        except Exception as e:
+            raise Error('failed to write figure to file w/ \n    %s'%e)
+        
+        return out_fp
+    
+    
 
 
 def view(df):

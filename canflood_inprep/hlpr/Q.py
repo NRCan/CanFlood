@@ -27,10 +27,20 @@ mod_logger = logging.getLogger('Q') #creates a child logger of the root
 #==============================================================================
 # customs
 #==============================================================================
+
+#standalone runs
 if __name__ =="__main__": 
-    from hlpr.exceptions import Error
+    from hlpr.logr import basic_logger
+    mod_logger = basic_logger()   
+
+    
+#plugin runs
 else:
-    from hlpr.exceptions import QError as Error
+    mod_logger = logging.getLogger('common') #get the root logger
+    
+    
+
+from hlpr.exceptions import QError as Error
     
 
 from hlpr.basic import *
@@ -66,7 +76,7 @@ type_qvar_py_d = {10:str, 2:int, 135:float, 6:float, 4:int, 1:bool, 16:datetime.
 # classes -------------
 #==============================================================================
 
-class Qcoms(object): #baseclass for working w/ pyqgis outside the native console
+class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native console
     
     crs_id = 4326
     
@@ -78,28 +88,21 @@ class Qcoms(object): #baseclass for working w/ pyqgis outside the native console
 
     algo_init = False #flag indicating whether the algos have been initialized
     
-    out_dir = None
-    overwrite=True
-    
     qap = None
     
-    cid = 'not_set'
+    
     
     def __init__(self,
-                 logger, tag='test', feedback=None,
-                 out_dir=None, crs = None,
+                 feedback=None, crs = None,
+                 **kwargs
                  ):
         
 
-        logger.info('simple wrapper inits')
+        mod_logger.info('simple wrapper inits')
         
-        #setup output directory
-        if out_dir is None: out_dir = os.getcwd()
+        super().__init__(**kwargs) #initilzie teh baseclass
         
-        if not os.path.exists(out_dir):
-            os.makedirs(out_dir)
-            self.logger.info('created requested output directory: \n    %s'%out_dir)
-        self.out_dir =out_dir
+
         
         #crs
         if crs is None: crs = QgsCoordinateReferenceSystem(self.crs_id)
@@ -111,9 +114,6 @@ class Qcoms(object): #baseclass for working w/ pyqgis outside the native console
             
         if feedback is None: feedback = QgsProcessingFeedback()
 
-
-        self.logger = logger.getChild('Qsimp')
-        self.tag = tag
         self.feedback = feedback
 
         self.logger.info('Qcoms.__init__ finished w/ out_dir: \n    %s'%self.out_dir)
@@ -312,98 +312,9 @@ class Qcoms(object): #baseclass for working w/ pyqgis outside the native console
     # helper methods-----------------
     #==========================================================================
     
-    def update_cf(self, #update one parameter  control file 
-                  new_pars_d, #new paraemeters {section : {valnm : value }}
-                  cf_fp = None):
-        
-        log = self.logger.getChild('update_cf')
-        
-        #get defaults
-        if cf_fp is None: cf_fp = self.cf_fp
-        
-        assert os.path.exists(cf_fp), 'bad cf_fp: %s'%cf_fp
-        
-        #initiliae the parser
-        pars = configparser.ConfigParser(allow_no_value=True)
-        _ = pars.read(cf_fp) #read it from the new location
-        
-        #loop and make updates
-        for section, val_t in new_pars_d.items():
-            assert isinstance(val_t, tuple), '\"%s\' has bad subtype: %s'%(section, type(val_t))
-            assert section in pars, 'requested section \'%s\' not in the pars!'%section
-            
-            for subval in val_t:
-                #value key pairs
-                if isinstance(subval, dict):
-                    for valnm, value in subval.items():
-                        pars.set(section, valnm, value)
-                        
-                #single values    
-                elif isinstance(subval, str):
-                    pars.set(section, subval)
-                    
-                else:
-                    raise Error('unrecognized value type: %s'%type(subval))
-                
-        
-        #write the config file 
-        with open(cf_fp, 'w') as configfile:
-            pars.write(configfile)
-            
-        log.info('updated contyrol file w/ %i pars at :\n    %s'%(
-            len(new_pars_d), cf_fp))
-        
-        return
     
-    def output_df(self, #dump some outputs
-                      df, 
-                      out_fn,
-                      out_dir = None,
-                      overwrite=None,
-                      write_index=False,
-            ):
-        #======================================================================
-        # defaults
-        #======================================================================
-        if out_dir is None: out_dir = self.out_dir
-        if overwrite is None: overwrite = self.overwrite
-        log = self.logger.getChild('output')
-        
-        #======================================================================
-        # prechecks
-        #======================================================================
-        assert isinstance(out_dir, str), 'unexpected type on out_dir: %s'%type(out_dir)
-        assert os.path.exists(out_dir), 'requested output directory doesnot exist: \n    %s'%out_dir
-        assert isinstance(df, pd.DataFrame)
-        assert len(df) >0, 'no data'
-        
-        
-        #extension check
-        if not out_fn.endswith('.csv'):
-            out_fn = out_fn+'.csv'
-        
-        #output file path
-        out_fp = os.path.join(out_dir, out_fn)
-        
-        #======================================================================
-        # checeks
-        #======================================================================
-        if os.path.exists(out_fp):
-            log.warning('file exists \n    %s'%out_fp)
-            if not overwrite:
-                raise Error('file already exists')
-            
+    
 
-        #======================================================================
-        # writ eit
-        #======================================================================
-        df.to_csv(out_fp, index=write_index)
-        
-        log.info('wrote to %s to file: \n    %s'%(str(df.shape), out_fp))
-        
-        self.out_fp = out_fp #set for other methods
-        
-        return out_fp
     
     #==========================================================================
     # algos--------------
