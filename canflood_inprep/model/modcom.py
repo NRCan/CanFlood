@@ -94,13 +94,35 @@ class Model(ComWrkr):
         
         super().__init__(**kwargs) #initilzie teh baseclass
         
+        self.cf_fp = cf_fp
+        
         
         #attachments
         self.data_d = dict() #dictionary for loaded data sets
-        self.cf_fp = cf_fp
+        
         
         #parameter setup
-        self.setup_pars2(cf_fp)
+        self.setup_pars2(self.cf_fp)
+        
+        
+        #check our validity tag
+        if not getattr(self, self.valid_par):
+            raise Error('control file not validated for \'%s\'. please run InputValidator'%self.valid_par)
+        
+
+
+        self.logger.debug('finished __init__ on Model')
+        
+        
+    def xxxinit_model(self, #plugin runs
+                   ):
+
+        #attachments
+        self.data_d = dict() #dictionary for loaded data sets
+        
+        
+        #parameter setup
+        self.setup_pars2(self.cf_fp)
         
         
         #check our validity tag
@@ -109,20 +131,6 @@ class Model(ComWrkr):
         
         #wrap
         
-
-        self.logger.debug('finished __init__ on Model')
-        
-        
-    def xxxinit_model(self, #plugin runs
-                   cf_fp, out_dir):
-
-        #attachments
-        self.wd = out_dir
-        
-        #parameter setup
-        self.setup_pars(cf_fp)
-        
-        self.logger.debug('finished __init__ on Model')
         
         
     def setup_pars2(self, #load parmaeteres from file, check, and attach
@@ -272,6 +280,7 @@ class Model(ComWrkr):
     def par_hndl_chk(self, #check a parameter aginast provided handles
                      sect, varnm, pval, achk_d
                      ):
+        
         log = self.logger.getChild('par_hndl_chk')
         assert not pval is None or pval == '', '%s.%s got none'%(sect, varnm)
         if achk_d is None:
