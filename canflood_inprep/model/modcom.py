@@ -562,6 +562,9 @@ class Model(ComWrkr):
             
             assert cid in edf.columns, 'exlikes missing %s'%cid
             
+            #==================================================================
+            # clean
+            #==================================================================
             #slice it
             edf = edf.set_index(cid).sort_index(axis=1).sort_index(axis=0)
             
@@ -571,10 +574,18 @@ class Model(ComWrkr):
             """
             edf = edf.fillna(1.0)
             
-            #check columns
+            #==================================================================
+            # check
+            #==================================================================
+            #check event name membership
             miss_l = set(edf.columns).difference(ddf.columns)
             if len(miss_l) >0:
                 raise Error('passed exlikes columns dont match ddf: %s'%miss_l)
+            
+            #check logic against aeps
+            """todo: add this to the validator tool somehow"""
+            if len(aep_ser.unique()) == len(aep_ser):
+                raise Error('passed exlikes, but there are no duplicated event: \n    %s'%aep_ser)
             
             #==================================================================
             # #add missing likelihoods
@@ -862,6 +873,13 @@ class Model(ComWrkr):
         #======================================================================
         log = logger.getChild('resolve_multis')
         
+        #======================================================================
+        # precheck
+        #======================================================================
+        aep_ser = aep_ser.astype(float)
+        
+        if len(aep_ser.unique()) == len(aep_ser):
+            raise Error('resolving multi but there are no duplicated events')
         
         #======================================================================
         # get expected values of all damages
@@ -871,14 +889,17 @@ class Model(ComWrkr):
         but leave this check for the input validator"""
         evdf = ddf*edf
         
-        log.debug('calucated expected values for %i damages'%evdf.size)
+        log.info('calucated expected values for %i damages'%evdf.size)
+        
+        
 
+        assert not evdf.isna().any().any()
         #======================================================================
         # loop by unique aep and resolve
         #======================================================================
         res_df = pd.DataFrame(index=evdf.index, columns = aep_ser.unique().tolist())
         for aep in aep_ser.unique().tolist():
-            
+            assert isinstance(aep, float)
             #==================================================================
             # get these events
             #==================================================================
@@ -895,16 +916,17 @@ class Model(ComWrkr):
             #==================================================================
             # resolve
             #==================================================================
+            log.debug('resolving with %i event names: %s'%(len(evn_l), evn_l))
             #only 1 event.. nothing to resolve
             if len(evn_l) == 1:
                 """
                 possible if a hazard layer doesn't have a corresponding failure layer
                 """
                 log.warning('only got 1 event \'%s\' for aep %.2e'%(
-                    aep_ser.index[boolar], aep))
+                    aep_ser.index[boolar].values, aep))
                 
                 #use these
-                res_df.loc[:, aep] =  evdf.loc[:, evn_l]
+                res_df.loc[:, aep] =  evdf.loc[:, evn_l].iloc[:, 0]
             
             #multiple events... take maximum
             else:
@@ -913,10 +935,15 @@ class Model(ComWrkr):
                 
                 res_df.loc[:, aep] = evdf.loc[:, evn_l].max(axis=1)
                 
+            if res_df[aep].isna().any():
+                print('yay')
+                raise Error('got nulls on %s'%aep)
+                
         #======================================================================
         # warp
         #======================================================================
-        assert res_df.notna().all().all(), 'got some nulls'
+        if not res_df.notna().all().all():
+            raise Error('got %i nulls'%res_df.isna().sum().sum())
         
         log.info('resolved to %i unique event damages'%len(res_df.columns))
         

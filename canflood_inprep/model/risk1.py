@@ -469,7 +469,7 @@ if __name__ =="__main__":
     #==========================================================================
 
     
-    cf_fp = r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\risk1\wex\CanFlood_risk1.txt'
+    cf_fp = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\CanFlood_tutorial2.txt'
     
     wrkr = Risk1(cf_fp, out_dir=out_dir, logger=mod_logger, tag=tag)
     

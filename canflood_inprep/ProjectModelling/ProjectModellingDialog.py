@@ -56,6 +56,7 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 
 class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,  
                        hlpr.plug.QprojPlug):
+    
     def __init__(self, iface, parent=None):
         """Constructor."""
         super(Modelling_Dialog, self).__init__(parent)
@@ -162,8 +163,8 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         to speed up testing.. manually configure the project
         """
         
-        self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\dmg2\CanFlood_dmg2.txt')
-        self.lineEdit_wd.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200303')
+        self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\CanFlood_tutorial2.txt')
+        self.lineEdit_wd.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\model')
         
         
         
@@ -197,10 +198,11 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         res_per_asset = self.checkBox_r2rpa_2.isChecked()
 
         
-        model = Risk1(cf_fp, out_dir=out_dir, logger=mod_logger, tag=tag)
+        model = Risk1(cf_fp, out_dir=out_dir, logger=self.logger, tag=tag)
         
         res, res_df = model.run(res_per_asset=res_per_asset)
         
+        log.info('user pressed RunRisk1')
         #======================================================================
         # plot
         #======================================================================
@@ -273,7 +275,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #======================================================================
         # run the model
         #======================================================================
-        model = Risk2(cf_fp, out_dir=out_dir, logger=mod_logger, tag=tag)
+        model = Risk2(cf_fp, out_dir=out_dir, logger=self.logger, tag=tag)
         
         res_ser, res_df = model.run(res_per_asset=res_per_asset)
         

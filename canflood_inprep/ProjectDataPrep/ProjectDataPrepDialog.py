@@ -202,12 +202,17 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
         # Likelihood Sampler-----------
         #======================================================================
+        """todo: rename the buttons so they align w/ the set labels"""
         #list of combo box names on the likelihood sampler tab
         self.ls_cb_d = { #set {hazard raster : lpol}
             1: (self.MLCB_LS1_event_3, self.MLCB_LS1_lpol_3),
             2: (self.MLCB_LS1_event_4, self.MLCB_LS1_lpol_4),
             3: (self.MLCB_LS1_event_5, self.MLCB_LS1_lpol_5),
             4: (self.MLCB_LS1_event, self.MLCB_LS1_lpol),
+            5: (self.MLCB_LS1_event_6, self.MLCB_LS1_lpol_6),
+            6: (self.MLCB_LS1_event_7, self.MLCB_LS1_lpol_7),
+            7: (self.MLCB_LS1_event_2, self.MLCB_LS1_lpol_2),
+            8: (self.MLCB_LS1_event_8, self.MLCB_LS1_lpol_8)
             }
         
         #loop and set filteres
@@ -263,8 +268,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         to speed up testing.. manually configure the project
         """
         
-        self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200303\CanFlood_scenario1.txt')
-        self.lineEdit_wd.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200303')
+        self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\CanFlood_scenario1.txt')
+        self.lineEdit_wd.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304')
         
         
         
