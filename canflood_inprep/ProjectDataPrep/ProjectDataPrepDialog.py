@@ -238,9 +238,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             4: (self.MLCB_LS1_event, self.MLCB_LS1_lpol),
             }
         
- 
-
-        
         #loop and set filteres
         first = True
         for sname, (mlcb_haz, mlcb_lpol) in self.ls_cb_d.items():
@@ -840,6 +837,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         wrkr = LikeSampler(self.logger, 
                           tag=self.tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
+                          crs = crs,
                           )
         
         res_df = wrkr.run(finv, lpol_d, cid=cid, lfield=lfield)

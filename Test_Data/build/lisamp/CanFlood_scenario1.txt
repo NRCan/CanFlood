@@ -22,7 +22,7 @@ gels =
 dmgs = 
 exlikes = C:\Users\cefect\CanFlood\lisamp\exlikes_lisamp_testr.csv
 aeps = 
-#'exlikes' file path set from lisamp.py at 2020-03-03 12.39.27
+#'exlikes' file path set from lisamp.py at 2020-03-03 18.12.35
 
 [validation]
 risk1 = False

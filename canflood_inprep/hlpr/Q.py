@@ -69,7 +69,7 @@ type_qvar_py_d = {10:str, 2:int, 135:float, 6:float, 4:int, 1:bool, 16:datetime.
 class Qcoms(object): #baseclass for working w/ pyqgis outside the native console
     
     crs_id = 4326
-    crs = QgsCoordinateReferenceSystem(crs_id)
+    
     driverName = 'SpatiaLite' #default data creation driver type
     
 
@@ -83,9 +83,11 @@ class Qcoms(object): #baseclass for working w/ pyqgis outside the native console
     
     qap = None
     
+    cid = 'not_set'
+    
     def __init__(self,
                  logger, tag='test', feedback=None,
-                 out_dir=None,
+                 out_dir=None, crs = None,
                  ):
         
 
@@ -98,6 +100,10 @@ class Qcoms(object): #baseclass for working w/ pyqgis outside the native console
             os.makedirs(out_dir)
             self.logger.info('created requested output directory: \n    %s'%out_dir)
         self.out_dir =out_dir
+        
+        #crs
+        if crs is None: crs = QgsCoordinateReferenceSystem(self.crs_id)
+        self.crs = crs
         
         #=======================================================================
         # attach inputs
@@ -119,6 +125,7 @@ class Qcoms(object): #baseclass for working w/ pyqgis outside the native console
     #==========================================================================
         
     def ini_standalone(self, ):
+
         #=======================================================================
         # setup qgis
         #=======================================================================
