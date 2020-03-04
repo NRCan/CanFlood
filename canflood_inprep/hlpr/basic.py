@@ -45,7 +45,9 @@ class ComWrkr(object): #common methods for all classes
     
     def __init__(self, tag='session', cid='not_set', cf_fp='',
                  overwrite=True, 
-                 out_dir=None, logger=mod_logger):
+                 out_dir=None, logger=mod_logger,
+                 prec = 4,
+                 ):
         
         #======================================================================
         # get defaults
@@ -71,6 +73,7 @@ class ComWrkr(object): #common methods for all classes
         self.overwrite=overwrite
         self.out_dir = out_dir
         self.cf_fp = cf_fp
+        self.prec = prec
         self.progress = 0 # progress counter ranges from 0 to 100
         
         self.logger.info('ComWrkr.__init__ finished')

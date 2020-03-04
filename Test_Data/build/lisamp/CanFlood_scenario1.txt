@@ -20,9 +20,9 @@ gels =
 
 [risk_fps]
 dmgs = 
-exlikes = C:\Users\cefect\CanFlood\lisamp\exlikes_lisamp_testr.csv
+exlikes = C:\Users\cefect\CanFlood\lisamp\exlikes_dev.csv
 aeps = 
-#'exlikes' file path set from lisamp.py at 2020-03-03 18.12.35
+#'exlikes' file path set from lisamp.py at 2020-03-04 16.19.01
 
 [validation]
 risk1 = False
