@@ -72,7 +72,7 @@ class Risk2(Model):
     exp_pars_md = {#mandataory: section: {variable: handles} 
         'parameters' :
             {'name':{'type':str}, 'cid':{'type':str},
-             'res_per_asset':{'type':bool}, 
+
              'felv':{'values':('ground', 'datum')},
              'event_probs':{'values':('aep', 'ari')},
              'ltail':None, 'rtail':None, 'drop_tails':{'type':bool},
@@ -190,6 +190,7 @@ class Risk2(Model):
         
 
     def run(self, #main runner fucntion
+            res_per_asset=False,
             ):
         #======================================================================
         # defaults
@@ -197,6 +198,7 @@ class Risk2(Model):
         log = self.logger.getChild('run')
         ddf, aep_ser, cid = self.data_d['dmgs'],self.data_d['aeps'], self.cid
         
+        assert isinstance(res_per_asset, bool)
         
         #======================================================================
         # resolve alternate damages (per evemt)
@@ -227,7 +229,7 @@ class Risk2(Model):
         #======================================================================
         # get ead per asset
         #======================================================================
-        if self.res_per_asset:
+        if res_per_asset:
             res_df = self.calc_ead(ddf1, drop_tails=self.drop_tails, logger=log)
                         
         else:
@@ -267,7 +269,7 @@ if __name__ =="__main__":
     #==========================================================================
     # dev data
     #=========================================================================
-    cf_fp = r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\risk2\CanFlood_dmg2.txt'
+    cf_fp = r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\risk2\wex\CanFlood_dmg2.txt'
     ead_plot = True
     
     #==========================================================================

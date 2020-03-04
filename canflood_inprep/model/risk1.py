@@ -57,7 +57,7 @@ class Risk1(Model):
     exp_pars_md = {#mandataory: section: {variable: handles} 
         'parameters' :
             {'name':{'type':str}, 'cid':{'type':str},
-             'res_per_asset':{'type':bool}, 
+             
              'event_probs':{'values':('ari', 'aep')}, 
              'felv':{'values':('ground', 'datum')},
              'prec':{'type':int}, 
@@ -84,6 +84,8 @@ class Risk1(Model):
                     },
         
         }
+    
+
     
     #==========================================================================
     # plot controls
@@ -142,7 +144,8 @@ class Risk1(Model):
         
         log.info('finished')
         
-    def run(self):
+    def run(self,
+            res_per_asset=False):
         #======================================================================
         # defaults
         #======================================================================
@@ -155,6 +158,7 @@ class Risk1(Model):
         #======================================================================
         # prechecks
         #======================================================================
+        assert isinstance(res_per_asset, bool)
         assert cid in ddf.columns, 'ddf missing %s'%cid
         assert bid in ddf.columns, 'ddf missing %s'%bid
         assert ddf.index.name == bid, 'ddf bad index'
@@ -234,7 +238,7 @@ class Risk1(Model):
         #======================================================================
         # get ead per asset
         #======================================================================
-        if self.res_per_asset:
+        if res_per_asset:
             res_df = self.calc_ead(bres_df, drop_tails=self.drop_tails, logger=log)
                         
         else:

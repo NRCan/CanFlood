@@ -468,9 +468,13 @@ class Dmg2(Model):
         if cf_fp is None: cf_fp = self.cf_fp
         
         return self.update_cf(
-            {'risk_fps':(
+            {
+            'risk_fps':(
                 {'dmgs':self.out_fp}, 
                 '#\'dmgs\' file path set from dmg2.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                ),
+            'validation':(
+                {'risk2':'True'},
                 )
              },
             cf_fp = cf_fp

@@ -56,8 +56,7 @@ class Model(ComWrkr):
     rtail = 0.5
     drop_tails = True
     integrate = 'trapz'
-    ead_plot = True
-    res_per_asset = True
+
 
     
     #[dmg_fps]
