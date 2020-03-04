@@ -580,7 +580,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         """
         finv = self.wsampRun(rlay_l, finv, control_fp=cf_fp1, cid=cid, crs=crs)"""
         #build the sample
-        wrkr = WSLSampler(self.logger, 
+        wrkr = WSLSampler(logger=self.logger, 
                           tag = self.tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
                           )
@@ -720,7 +720,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
 
         #build the sample
-        wrkr = WSLSampler(self.logger, 
+        wrkr = WSLSampler(logger=self.logger, 
                           tag=self.tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
                           )
@@ -810,7 +810,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
 
         #build the sample
-        wrkr = LikeSampler(self.logger, 
+        wrkr = LikeSampler(logger=self.logger, 
                           tag=self.tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
                           crs = crs,
@@ -904,7 +904,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         from hlpr.Q import Qcoms
         #build a shell worker for these taxks
-        wrkr = Qcoms(log, tag=self.tag, feedback=self.feedback, out_dir=out_dir)
+        wrkr = Qcoms(logger=log, tag=self.tag, feedback=self.feedback, out_dir=out_dir)
         
         eaep_fp = wrkr.output_df(aep_df, ofn, 
                                   overwrite=self.overwrite, write_index=False)
@@ -930,6 +930,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.logger.push('generated \'aeps\' and set \'event_probs\' to control file')
         
     def run_validate(self):
+        #raise Error('broken')
         """
         a lot of this is duplicated in  model.scripts_.setup_pars
         
@@ -951,29 +952,29 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         _ = pars.read(cf_fp) #read it
         
         #======================================================================
-        # set the validation parameters
+        # assemble the validation parameters
         #======================================================================
         #import the class objects
         from model.dmg2 import Dmg2
-        from model.risk2 import RiskModel
+        from model.risk2 import Risk2
+        from model.risk1 import Risk1
         
         #populate all possible test parameters
         """
         todo: finish this
         """
         vpars_pos_d = {
-                    'risk1':(self.checkBox_Vr1, ('risk_fps', None, None)),
-                   'imp2':(self.checkBox_Vi2, ('dmg_fps', Dmg2.exp_dprops, Dmg2.exp_pars)),
-                   'risk2':(self.checkBox_Vr2, ('risk_fps', None, None)),
-                   #'risk2':(self.checkBox_Vr2, (RiskModel.exp_dprops, RiskModel.exp_pars)),
-                   'risk3':(self.checkBox_Vr3, (None, None, None)),
+                    'risk1':(self.checkBox_Vr1, Risk1),
+                   'dmg2':(self.checkBox_Vi2, Dmg2),
+                   'risk2':(self.checkBox_Vr2, Risk2),
+                   #'risk3':(self.checkBox_Vr3, (None, None, None)),
                                            }
         
         #select based on user check boxes
         vpars_d = dict()
-        for vtag, (checkBox, (section, eprops, epars)) in vpars_pos_d.items():
+        for vtag, (checkBox, model) in vpars_pos_d.items():
             if checkBox.isChecked():
-                vpars_d[vtag] = (section, eprops, epars)
+                vpars_d[vtag] = model
                 
         if len(vpars_d) == 0:
             raise Error('no validation options selected!')
@@ -981,106 +982,166 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         log.info('user selected %i validation parameter sets'%len(vpars_d))
         
         #======================================================================
-        # validate parameters
+        # validate
         #======================================================================
-        dfiles_d = dict() #collective list of data files for secondary checking
-        for vtag, (section, eprops, epars) in vpars_d.items():
-            log.info('checking %s'%vtag)
-            #==================================================================
-            # #check variables
-            #==================================================================
-            if not epars is None:
-                for sect_chk, vars_l in epars.items():
-                    assert sect_chk in pars.sections(), 'missing expected section %s'%sect_chk
-                    
-                    for varnm in vars_l:
-                        assert varnm in pars[sect_chk], 'missing expected variable \'%s.%s\''%(sect_chk, varnm)
-            else:
-                log.warning('\'%s\' has no variable validation parameters!'%vtag)
-                    
-                    
-            #==================================================================
-            # #check expected data files
-            #==================================================================
-            if not eprops is None:
-                for varnm, dprops_d in eprops.items():
-                    
-                    #see if this is in the control file
-                    assert varnm in pars[section], '\'%s\' expected \'%s.%s\''%(vtag, section, varnm)
-                    
-                    #get the filepath
-                    fp = pars[section][varnm]
-                    fh_clean, ext = os.path.splitext(os.path.split(fp)[1])
-    
-                    #check existance
-                    if not os.path.exists(fp):
-                        log.warning('specified \'%s\' filepath does not exist: \n    %s'%(varnm, fp))
-                        continue
-                    
-                    #load the data
-                    if ext == '.csv':
-                        data = pd.read_csv(fp, header=0, index_col=None)
-                    elif ext == '.xls':
-                        data = pd.read_excel(fp)
-                    else:
-                        raise Error('unepxected filetype for \"%s.%s\' = \"%s\''%(vtag, varnm, ext))
-                    
-                    #add this to the collective
-                    if not varnm in dfiles_d:
-                        dfiles_d[varnm] = data
-                    
-                    
-                    #check the data propoerites expectations
-                    for chk_type, evals in dprops_d.items():
-                        
-                        #extension
-                        if chk_type == 'ext':
-                            assert ext in evals, '\'%s\' got unexpected extension: %s'%(varnm, ext)
-                            
-                        #column names
-                        elif chk_type == 'colns':
-                            miss_l = set(evals).difference(data.columns)
-                            assert len(miss_l)==0, '\'%s\' is missing %i expected column names: %s'%(
-                                varnm, len(miss_l), miss_l)
-                            
-                        else:
-                            raise Error('unexpected chk_type: %s'%chk_type)
-                        
-                    log.info('%s.%s passed %i data expectation checks'%(
-                        vtag, varnm, len(dprops_d)))
-            else:
-                log.warning('\'%s\' has no data property validation parameters!'%vtag)
-                        
-                
-            #==================================================================
-            # #set validation flag
-            #==================================================================
-            pars.set('validation', vtag, 'True')
-            log.info('\'%s\' validated'%vtag)
+
+        
+        vflag_d = dict()
+        for vtag, model in vpars_d.items():
             
-        
-        #======================================================================
-        # secondary checks
-        #======================================================================
-        """for special data checks (that apply to multiple models)"""
-        for dname, data in dfiles_d.items():
-            pass
-        
+
+            """needto play with init sequences to get this to work"""
+    #==========================================================================
+    #         #==================================================================
+    #         # check expectations
+    #         #==================================================================
+    #         for sect, vchk_d in model.exp_pars_md.items():
+    #             
+    #             #check attributes
+    #             for varnm, achk_d in vchk_d.items():
+
+    #                 assert hasattr(model, varnm), '\'%s\' does not exist on %s'%(varnm, model)
+    # 
+    #                 
+    #                 #==============================================================
+    #                 # #get value from parameter                
+    #                 #==============================================================
+    #                 pval_raw = pars[sect][varnm]
+    #                 
+    #                 #get native type
+    #                 ntype = type(getattr(model, varnm))
+    #                 
+    #                 #special type retrivial
+    #                 if ntype == bool:
+    #                     pval = pars[sect].getboolean(varnm)
+    #                 else:
+    #                     #set the type
+    #                     pval = ntype(pval_raw)
+    #                 
+    #                 #==============================================================
+    #                 # check it
+    #                 #==============================================================
+    #                 model.par_hndl_chk(sect, varnm, pval, achk_d)
+    #==========================================================================
+                    
+            #==================================================================
+            # set validation flag
+            #==================================================================
+            vflag_d[model.valid_par] = 'True'
+            
         #======================================================================
         # update control file
         #======================================================================
-        with open(cf_fp, 'w') as configfile:
-            pars.write(configfile)
-            
-        log.info('updated control file:\n    %s'%cf_fp)
-            
-            
-        #======================================================================
-        # wrap
-        #======================================================================
-        log.push('validated %i model parameter sets'%len(vpars_d))
+        self.update_cf(
+            {'validation':(vflag_d, )
+             },
+            cf_fp = cf_fp
+            )
         
-        return
+        
+        #======================================================================
+        # validate parameters
+        #======================================================================
+    #==========================================================================
+    #     dfiles_d = dict() #collective list of data files for secondary checking
+    #     for vtag, (section, eprops, epars) in vpars_d.items():
+    #         log.info('checking %s'%vtag)
+    #         #==================================================================
+    #         # #check variables
+    #         #==================================================================
+    #         if not epars is None:
+    #             for sect_chk, vars_l in epars.items():
+    #                 assert sect_chk in pars.sections(), 'missing expected section %s'%sect_chk
+    #                 
+    #                 for varnm in vars_l:
+    #                     assert varnm in pars[sect_chk], 'missing expected variable \'%s.%s\''%(sect_chk, varnm)
+    #         else:
+    #             log.warning('\'%s\' has no variable validation parameters!'%vtag)
+    #                 
+    #                 
+    #         #==================================================================
+    #         # #check expected data files
+    #         #==================================================================
+    #         if not eprops is None:
+    #             for varnm, dprops_d in eprops.items():
+    #                 
+    #                 #see if this is in the control file
+    #                 assert varnm in pars[section], '\'%s\' expected \'%s.%s\''%(vtag, section, varnm)
+    #                 
+    #                 #get the filepath
+    #                 fp = pars[section][varnm]
+    #                 fh_clean, ext = os.path.splitext(os.path.split(fp)[1])
+    # 
+    #                 #check existance
+    #                 if not os.path.exists(fp):
+    #                     log.warning('specified \'%s\' filepath does not exist: \n    %s'%(varnm, fp))
+    #                     continue
+    #                 
+    #                 #load the data
+    #                 if ext == '.csv':
+    #                     data = pd.read_csv(fp, header=0, index_col=None)
+    #                 elif ext == '.xls':
+    #                     data = pd.read_excel(fp)
+    #                 else:
+    #                     raise Error('unepxected filetype for \"%s.%s\' = \"%s\''%(vtag, varnm, ext))
+    #                 
+    #                 #add this to the collective
+    #                 if not varnm in dfiles_d:
+    #                     dfiles_d[varnm] = data
+    #                 
+    #                 
+    #                 #check the data propoerites expectations
+    #                 for chk_type, evals in dprops_d.items():
+    #                     
+    #                     #extension
+    #                     if chk_type == 'ext':
+    #                         assert ext in evals, '\'%s\' got unexpected extension: %s'%(varnm, ext)
+    #                         
+    #                     #column names
+    #                     elif chk_type == 'colns':
+    #                         miss_l = set(evals).difference(data.columns)
+    #                         assert len(miss_l)==0, '\'%s\' is missing %i expected column names: %s'%(
+    #                             varnm, len(miss_l), miss_l)
+    #                         
+    #                     else:
+    #                         raise Error('unexpected chk_type: %s'%chk_type)
+    #                     
+    #                 log.info('%s.%s passed %i data expectation checks'%(
+    #                     vtag, varnm, len(dprops_d)))
+    #         else:
+    #             log.warning('\'%s\' has no data property validation parameters!'%vtag)
+    #                     
+    #             
+    #         #==================================================================
+    #         # #set validation flag
+    #         #==================================================================
+    #         pars.set('validation', vtag, 'True')
+    #         log.info('\'%s\' validated'%vtag)
+    #         
+    #     
+    #     #======================================================================
+    #     # secondary checks
+    #     #======================================================================
+    #     """for special data checks (that apply to multiple models)"""
+    #     for dname, data in dfiles_d.items():
+    #         pass
+    #     
+    #     #======================================================================
+    #     # update control file
+    #     #======================================================================
+    #     with open(cf_fp, 'w') as configfile:
+    #         pars.write(configfile)
+    #         
+    #     log.info('updated control file:\n    %s'%cf_fp)
+    #         
+    #         
+    #     #======================================================================
+    #     # wrap
+    #     #======================================================================
+    #     log.push('validated %i model parameter sets'%len(vpars_d))
+    #     
+    #     return
+    #==========================================================================
             
             
             

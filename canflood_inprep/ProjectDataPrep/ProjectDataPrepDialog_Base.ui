@@ -86,7 +86,7 @@
           </size>
          </property>
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <property name="movable">
           <bool>false</bool>
@@ -2425,7 +2425,7 @@ p, li { white-space: pre-wrap; }
              <string>Impacts (L2)</string>
             </property>
             <property name="checked">
-             <bool>true</bool>
+             <bool>false</bool>
             </property>
            </widget>
            <widget class="QCheckBox" name="checkBox_Vr2">
@@ -2441,7 +2441,7 @@ p, li { white-space: pre-wrap; }
              <string>Risk  (L2)</string>
             </property>
             <property name="checked">
-             <bool>true</bool>
+             <bool>false</bool>
             </property>
            </widget>
            <widget class="QCheckBox" name="checkBox_Vr3">
