@@ -63,6 +63,10 @@ class Dmg2(Model):
              'curves':{'ext':('.xls',)},
              'expos':{'ext':('.csv',)},
                     },
+        'risk_fps':{
+             'aeps':{'ext':('.csv',)}, #only required for checks
+                    },
+             
         'validation':{
             'dmg2':{'type':bool}
                     }
@@ -74,25 +78,9 @@ class Dmg2(Model):
                     }
                     }
     
+    group_cnt = 4
 
-    
-    #expected data properties
-    #==========================================================================
-    # exp_dprops = {'curves':{'ext':'.xls'},
-    #                'expos':{'ext':'.csv', 'colns':[]},
-    #                 'gels':{'ext':'.csv', 'colns':[]},
-    #                 'finv':{'ext':'.csv', 'colns':['f0_tag', 'f0_scale', 'f0_cap', 'f0_elv']},
-    #                 }
-    # 
-    # opt_dfiles = ['gels'] #optional data files
-    #==========================================================================
-    
-    #==========================================================================
-    # exp_pars = {'parameters':list(),
-    #               'dmg_fps':['curves','expos', 'gels', 'finv']}
-    #==========================================================================
-    
-    #dirname = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+
     
     def __init__(self,
                  cf_fp,
@@ -103,6 +91,12 @@ class Dmg2(Model):
         super().__init__(cf_fp, **kwargs) #initilzie Model
        
         self.dfuncs_d = dict() #container for damage functions
+        
+        #update the inventory expectations
+        self.finv_exp_d = dict(zip(**self.finv_exp_d,
+                                   **{'f1_tag':{'type':np.string},
+                                      }
+                                   ))
         
         self.logger.debug('finished __init__ on Dmg2')
         
@@ -115,13 +109,28 @@ class Dmg2(Model):
         #======================================================================
         self.init_model()
         
-        self.load_data()
+        #self.load_data()
+        self.load_finv()
+        self.load_aeps()
+        self.load_expos()
     
+        self.data_d['curves'] = pd.read_excel(self.curves, sheet_name=None, header=None, index_col=None)
+        
+        if self.felv == 'ground':
+            self.load_gels()
+            self.add_gels()
+        
         self.setup_dfuncs(self.data_d['curves'])
         
-        self.setup_finv()
+        #self.setup_finv()
+        
         
         self.setup_expo_data()
+        
+        #======================================================================
+        # checks
+        #======================================================================
+        self.check_ftags()
         
         #======================================================================
         # wrap
@@ -131,7 +140,7 @@ class Dmg2(Model):
         
         return self
         
-    def load_data(self):
+    def xxxload_data(self):
         log = self.logger.getChild('load_data')
         
         self.data_d['curves'] = pd.read_excel(self.curves, sheet_name=None, header=None, index_col=None)
@@ -172,6 +181,185 @@ class Dmg2(Model):
             
         log.info('finishe building %i curves \n    %s'%(
             len(self.dfuncs_d), list(self.dfuncs_d.keys())))
+        
+    def check_ftags(self):
+        fdf = self.data_d['finv']
+        
+        #check all the tags are in the dfunc
+        
+        tag_boolcol = fdf.columns.str.contains('tag')
+        
+        f_ftags = pd.Series(pd.unique(fdf.loc[:, tag_boolcol].values.ravel())
+                            ).dropna().to_list()
+
+        c_ftags = list(self.dfuncs_d.keys())
+        
+        miss_l = set(f_ftags).difference(c_ftags)
+        
+        assert len(miss_l) == 0, '%i ftags in the finv not in the curves: \n    %s'%(
+            len(miss_l), miss_l)
+        
+        
+        #set this for later
+        self.f_ftags = f_ftags
+        
+    def xxxsetup_expo_data(self):# expand finv to  unitary (one curve per row)
+        #======================================================================
+        # #======================================================================
+        # # defaults
+        # #======================================================================
+        # log = self.logger.getChild('setup_binv')
+        # fdf = self.data_d['finv']
+        # cid, bid = self.cid, self.bid
+        # 
+        # assert fdf.index.name == cid, 'bad index on fdf'
+        #======================================================================
+        
+        #======================================================================
+        # expand
+        #======================================================================
+
+        #======================================================================
+        # #get tag column names
+        # tag_coln_l = fdf.columns[fdf.columns.str.endswith('tag')].tolist()
+        # 
+        # assert tag_coln_l[0] == 'f0_tag', 'expected first tag column to be \'ftag\''
+        # 
+        # #get nested prefixes
+        # prefix_l = [coln[:2] for coln in tag_coln_l]
+        # 
+        # #======================================================================
+        # # expand: nested entries
+        # #======================================================================
+        # if len(prefix_l) > 1:
+        # 
+        #     #loop and collected nests
+        #     bdf = None
+        #     
+        #     for prefix in prefix_l:
+        #         #identify prefix columns
+        #         pboolcol = fdf.columns.str.startswith(prefix) #columns w/ prefix
+        #         
+        #         assert pboolcol.sum() == 4, 'expects 4 columns w/ prefix %s'%prefix
+        #         
+        #         #get slice and clean
+        #         df = fdf.loc[:, pboolcol].dropna(axis=0, how='all').sort_index(axis=1)
+        #         df.columns = ['fcap', 'felv', 'fscale', 'ftag']
+        #         df = df.reset_index()
+        #         
+        #         #add to main
+        #         if bdf is None:
+        #             bdf = df
+        #         else:
+        #             bdf = bdf.append(df, ignore_index=True, sort=False)
+        #                     
+        #         log.info('for \"%s\' got %s'%(prefix, str(df.shape)))
+        #         
+        #         
+        #     #add back in other needed columns
+        #     boolcol = fdf.columns.isin(['gels']) #additional columns to pivot out
+        #     if boolcol.any(): #if we are only linking in gels, these may not exist
+        #         bdf = bdf.merge(fdf.loc[:, boolcol], on=cid, how='left',validate='m:1')
+        #     
+        #     log.info('expanded inventory from %i nest sets %s to finv %s'%(
+        #         len(prefix_l), str(fdf.shape), str(bdf.shape)))
+        #======================================================================
+        #======================================================================
+        # expand: nothing nested
+        #======================================================================
+        #======================================================================
+        # else:
+        #     bdf = fdf.copy()
+        #     
+        # #set an indexer columns
+        # """safer to keep this index as a column also"""
+        # bdf[bid] = bdf.index
+        # bdf.index.name=bid
+        # 
+        # assert cid in bdf.columns, 'bdf missing %s'%cid
+        #======================================================================
+            
+        #======================================================================
+        # convert asset heights to elevations
+        #======================================================================
+        #======================================================================
+        # if self.felv == 'ground':
+        #     bdf.loc[:, 'felv'] = bdf['felv'] + bdf['gels']
+        #         
+        #     log.info('converted asset ground heights to datum elevations')
+        # else:
+        #     log.debug('felv = \'%s\' no conversion'%self.felv)
+        #======================================================================
+            
+        #======================================================================
+        # get depths (from wsl and elv)
+        #======================================================================
+#==============================================================================
+#         wdf = self.data_d['expos'] #wsl
+#         
+#         #pivot these out to bids
+#         ddf = bdf.loc[:, [bid, cid]].join(wdf.round(self.prec), 
+#                                           on=cid
+#                                           ).set_index(bid, drop=False)
+#                
+#         #loop and subtract to get depths
+#         boolcol = ~ddf.columns.isin([cid, bid]) #columns w/ depth values
+#         
+#         for coln in ddf.columns[boolcol]:
+#             ddf.loc[:, coln] = (ddf[coln] - bdf['felv']).round(self.prec)
+#             
+#         #log.info('converted wsl (min/max/avg %.2f/%.2f/%.2f) to depths (min/max/avg %.2f/%.2f/%.2f)'%( ))
+#         log.debug('converted wsl to depth %s'%str(ddf.shape))
+#         
+#         # #check that wsl is above ground
+# 
+#         """
+#         should also add this to the input validator tool
+#         """
+#         boolidx = ddf.drop([bid, cid], axis=1) < 0 #True=wsl below ground
+# 
+#         if boolidx.any().any():
+#             msg = 'got %i (of %i) wsl below ground'%(boolidx.sum().sum(), len(boolidx))
+#             if self.ground_water:
+#                 raise Error(msg)
+#             else:
+#                 log.warning(msg)
+#                 
+#         #======================================================================
+#         # check monotocity
+#         #======================================================================
+#         
+#         #======================================================================
+#         # wrap
+#         #======================================================================
+#         #attach frames
+#         self.bdf, self.ddf = bdf, ddf
+#         
+#         log.debug('finished')
+#         
+#         #======================================================================
+#         # check aeps
+#         #======================================================================
+#         if 'aeps' in self.pars['risk_fps']:
+#             aep_fp = self.pars['risk_fps'].get('aeps')
+#             
+#             if not os.path.exists(aep_fp):
+#                 log.warning('aep_fp does not exist... skipping check')
+#             else:
+#                 aep_data = pd.read_csv(aep_fp)
+#                 
+#                 miss_l = set(aep_data.columns).difference(wdf.columns)
+#                 if len(miss_l) > 0:
+#                     raise Error('exposure file does not match aep data: \n    %s'%miss_l)
+#==============================================================================
+            
+
+        
+        return
+        
+    
+        
+        
         
         
 

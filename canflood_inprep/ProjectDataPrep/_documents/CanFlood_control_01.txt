@@ -2,7 +2,7 @@
 name = test1
 cid = xid
 prec = 2
-ground_water = False
+ground_water = True
 felv = ground
 event_probs = ari
 ltail = extrapolate
@@ -16,7 +16,7 @@ curves =
 finv = 
 expos = 
 gels = 
-#expos file path set from wsamp.py
+
 
 [risk_fps]
 dmgs = 

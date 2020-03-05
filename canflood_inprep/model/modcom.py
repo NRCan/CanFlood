@@ -81,6 +81,14 @@ class Model(ComWrkr):
     # program vars
     #==========================================================================
     bid = 'bid' #indexer for expanded finv
+
+    #expectations fo rinventory    
+    finv_exp_d = {
+        'f0_scale':{'type':np.number},
+        'f0_elv':{'type':np.number},
+        }
+    
+    max_depth = 20 #maximum depth for throwing an error in build_depths()
     
 
     
@@ -105,7 +113,7 @@ class Model(ComWrkr):
         
         #======================================================================
         # #parameter setup
-        # self.setup_pars2(self.cf_fp)
+        # self.cf_attach_pars(self.cf_fp)
         # 
         # 
         # #check our validity tag
@@ -118,13 +126,14 @@ class Model(ComWrkr):
         self.logger.debug('finished __init__ on Model')
         
         
-    def init_model(self, #plugin runs
+    def init_model(self, #common inits for all model classes
                    ):
-
-        
+        """
+        should be called by the model's own 'setup()' func
+        """        
         
         #parameter setup
-        self.setup_pars2(self.cf_fp)
+        self.cf_attach_pars(self.cf_fp)
         
         
         #check our validity tag
@@ -136,10 +145,10 @@ class Model(ComWrkr):
         
         
         
-    def setup_pars2(self, #load parmaeteres from file, check, and attach
+    def cf_attach_pars(self, #load parmaeteres from file, check, and attach
                     cf_fp):
         
-        log = self.logger.getChild('setup_pars')
+        log = self.logger.getChild('cf_attach_pars')
         
         assert os.path.exists(cf_fp), 'provided parameter file path does not exist \n    %s'%cf_fp
         
@@ -323,190 +332,451 @@ class Model(ComWrkr):
                 raise Error('unrecognized check handle: %s'%chk_hndl)
         log.debug('%s.%s passed %i checks'%(sect, varnm, len(achk_d)))
         return
-            
-            
-        
-        
-
     
-    def xxxsetup_pars(self, #load parameters from file
-                       cf_fp):
+
+    def load_finv(self,#loading expo data
+                   fp = None,
+                   dtag = 'finv',
+                   finv_exp_d = None, #finv expeectations
+                   ):
+        
+        log = self.logger.getChild('load_finv')
+        if fp is None: fp = getattr(self, dtag)
+        if finv_exp_d is None: finv_exp_d = self.finv_exp_d
+        cid = self.cid
+        
+        #======================================================================
+        # precehcsk
+        #======================================================================
+        assert os.path.exists(fp), '%s got invalid filepath \n    %s'%(dtag, fp)
+        #======================================================================
+        # load it
+        #======================================================================
+        df_raw = pd.read_csv(fp, index_col=None)
+        
+        #======================================================================
+        # check it
+        #======================================================================
+        assert cid in df_raw.columns, '%s missing index column \"%s\''%(dtag, cid)
+        
+        
+        #======================================================================
+        # clean it
+        #======================================================================
+        #df = df_raw
+        df = df_raw.set_index(cid, drop=True).sort_index(axis=0)
+        
+        #======================================================================
+        # post check
+        #======================================================================
+        
+        #use expectation handles
+        for coln, hndl_d in finv_exp_d.items():
+            assert isinstance(hndl_d, dict)
+            assert coln in df.columns, '%s missing expected column \'%s\''%(dtag, coln)
+            ser = df[coln]
+            for hndl, cval in hndl_d.items():
+                
+                if hndl=='type':
+                    assert np.issubdtype(ser.dtype, cval), '%s.%s bad type: %s'%(dtag, coln, ser.dtype)
+                elif hndl == 'contains':
+                    assert cval in ser, '%s.%s should contain %s'%(dtag, coln, cval)
+                else:
+                    raise Error('unexpected handle: %s'%hndl)
+        
+        #======================================================================
+        # set it
+        #======================================================================
+        self.cindex = df.index.copy() #set this for checks later
+        self.data_d[dtag] = df
+        
+        log.info('finished loading %s as %s'%(dtag, str(df.shape)))
+        
+    def load_aeps(self,#loading expo data
+                   fp = None,
+                   dtag = 'aeps',
+                   ):
+        
+        log = self.logger.getChild('load_aep')
+        if fp is None: fp = getattr(self, dtag)
+
+        #check load sequence
+        assert os.path.exists(fp), '%s got invalid filepath \n    %s'%(dtag, fp)
+        assert 'finv' in self.data_d, 'call load_finv first'
+        
+        #======================================================================
+        # load it
+        #======================================================================
+        adf = pd.read_csv(self.aeps)
+        
+        #======================================================================
+        # precheck
+        #======================================================================
+        assert len(adf) ==1, 'expected only 1 row on aeps'
+        
+
+        #convert to a series
+        aser_raw = adf.iloc[0,:]
+        
+        #======================================================================
+        # check
+        #======================================================================
+        boolar = aser_raw == 0
+        assert not boolar.any(), 'got some zeros in aep_ser'
+        #======================================================================
+        # convert
+        #======================================================================
+        #convert to aep
+        if self.event_probs == 'ari':
+            aep_ser = aser_raw.astype(int)
+            aep_ser = 1/aep_ser
+            log.info('converted %i aris to aeps'%len(aep_ser))
+        elif self.event_probs == 'aep': 
+            aep_ser = aser_raw.astype(float)
+            pass
+        else: 
+            raise Error('unepxected event_probs key %s'%self.event_probs)
+        
+        #extreme to likely
+        aep_ser = aep_ser.sort_values(ascending=True)
+        aep_ser.name='aeps'
+        #======================================================================
+        # check range
+        #======================================================================
+        #check all aeps are below 1
+        boolar = np.logical_and(
+            aep_ser < 1,
+            aep_ser > 0)
+        
+        assert np.all(boolar), 'passed aeps out of range'
+        
+        #======================================================================
+        # #wrap
+        #======================================================================
+        log.debug('prepared aep_ser w/ %i: \n    %s'%(len(aep_ser), aep_ser.to_dict()))
+        
+        
+        #self.aep_ser = aep_ser.sort_values()
+        self.data_d[dtag] = aep_ser #setting for consistency. 
+        
+        self.expcols = aep_ser.index.copy() #set for later checks
+        
+    def load_expos(self,#loading any exposure type data (expos, or exlikes)
+                   fp = None,
+                   dtag = 'expos',
+                   check_monot=False, #whether to check monotonciy
+                   logger=None,
+                   ):
+        #======================================================================
+        # defaults
+        #======================================================================
+        if logger is None: logger=self.logger
+        
+        log = logger.getChild('load_expos')
+        if fp is None: fp = getattr(self, dtag)
+        cid = self.cid
+        
+        assert 'finv' in self.data_d, 'call load_finv first'
+        assert 'aeps' in self.data_d, 'call load_aep first'
+        assert isinstance(self.expcols, pd.Index), 'bad expcols'
+        assert isinstance(self.cindex, pd.Index), 'bad cindex'
+        assert os.path.exists(fp), '%s got invalid filepath \n    %s'%(dtag, fp)
+        #======================================================================
+        # load it
+        #======================================================================
+        df_raw = pd.read_csv(fp, index_col=None)
+        
+        #======================================================================
+        # precheck
+        #======================================================================
+        assert cid in df_raw.columns, '%s missing index column \"%s\''%(dtag, cid)
+        assert df_raw.columns.dtype.char == 'O','bad event names on %s'%dtag
+        
+
+        
+        #======================================================================
+        # clean it
+        #======================================================================
+        df = df_raw.set_index(cid, drop=True).sort_index(axis=1).sort_index(axis=0)
+        
+        #======================================================================
+        # postcheck
+        #======================================================================
+        """
+        NO! exlikes generally is shorter
+        allowing the expos to be larger than the finv 
         
         """
-        TODO: fix so:
-        1) calculate the necessary parameters for this run
-        2) pull those parameters from the control file
-        3) load the data from the parameters
-        4) check the data against expectations
+        #check cids
+        miss_l = set(self.cindex).difference(df.index)
+        assert len(miss_l) == 0, 'some assets on %s not found in finv'%dtag
+        
+        #check events
         """
-        #======================================================================
-        # prechecks and setup
-        #======================================================================
-
-        log = self.logger.getChild('setup_pars')
+        must match the aeps
+        """
+        if dtag == 'exlikes':
+            miss_l = set(df.columns).difference(self.expcols)
+        else:
+            miss_l = set(self.expcols).difference(df.columns)
+            
+        assert len(miss_l) == 0, '%i events on \'%s\' not found in aep_ser: \n    %s'%(
+            len(miss_l), dtag, miss_l)
         
-        assert os.path.exists(cf_fp), 'provided parameter file path does not exist \n    %s'%cf_fp
+        
+        #check dtype of columns
+        for ename, chk_dtype in df.dtypes.items():
+            assert np.issubdtype(chk_dtype, np.number), 'bad dtype %s.%s'%(dtag, ename)
+            
+        #======================================================================
+        # slice
+        #======================================================================
+        df = df.loc[self.cindex,:]
         
         #======================================================================
-        # load and build
+        # postcheck2
         #======================================================================
-        self.pars = configparser.ConfigParser(inline_comment_prefixes='#')
-        log.info('reading parameters from \n     %s'%self.pars.read(cf_fp))
+        booldf = df.isna()
+        if booldf.any().any():
+            """wsl nulls are left as such by build_depths()"""
+            log.warning('\'%s\' got %i (of %i) null values'%(
+                dtag, booldf.sum().sum(), booldf.size))
+        
+        assert np.array_equal(self.cindex, df.index), 'cid mismatch'
+        
+        
+        
+        if check_monot:
+            self.check_monot(df, aep_ser = self.data_d['aeps'])
 
+
+        #======================================================================
+        # set it
+        #======================================================================
+        
+        self.data_d[dtag] = df
+        
+        log.info('finished loading %s as %s'%(dtag, str(df.shape)))
+        
+    def load_exlikes(self,#loading any exposure type data (expos, or exlikes)
+                     dtag = 'exlikes',
+                   **kwargs
+                   ):
+        
+        log = self.logger.getChild('load_exlikes')
+        
+        aep_ser = self.data_d['aeps']
+        #======================================================================
+        # load the data
+        #======================================================================
+        
+        self.load_expos(dtag=dtag, **kwargs) #use the load_expos
+        
+        edf = self.data_d.pop(dtag)
+        
+        log.info('loading w/ %s'%str(edf.shape))
+        #======================================================================
+        # repair assets w/ missing secondaries
+        #======================================================================
+        #replace nulls w/ 1
+        """better not to pass any nulls.. but if so.. should treat them as ZERO!!
+        Null = no failure polygon = no failure
+        also best not to apply precision to these values
+        """
+        booldf = edf.isna()
+        if booldf.any().any():
+            log.warning('got %i (of %i) nulls!... filling with zeros'%(booldf.sum().sum(), booldf.size))
+        edf = edf.fillna(0.0)
+        
+        #==================================================================
+        # check
+        #==================================================================
+        #check logic against aeps
+        if aep_ser.is_unique:
+            raise Error('passed exlikes, but there are no duplicated event: \n    %s'%aep_ser)
+        
+
+        #==================================================================
+        # #add missing likelihoods
+        #==================================================================
+        """
+        missing column = no secondary likelihoods at all for this event.
+        all = 1
+        """
+        
+        miss_l = set(self.expcols).difference(edf.columns)
+        if len(miss_l) > 0:
+            
+            log.info('passed exlikes missing %i secondary exposure likelihoods... treating these as 1\n    %s'%(
+                len(miss_l), miss_l))
+            
+            for coln in miss_l:
+                edf[coln] = 1.0
+            
+        
+    
+        log.info('prepared edf w/ %s'%str(edf.shape))
+        
+        #==================================================================
+        # check it
+        #==================================================================
+
+        
+        #set it
+        self.data_d[dtag] = edf
+        
+    def load_gels(self,#loading expo data
+                   fp = None,
+                   dtag = 'gels'):
+        
+        log = self.logger.getChild('load_gels')
+        if fp is None: fp = getattr(self, dtag)
+        cid = self.cid
+        
+        #======================================================================
+        # precheck
+        #======================================================================
+        assert 'finv' in self.data_d, 'call load_finv first'
+        assert isinstance(self.cindex, pd.Index), 'bad cindex'
+        assert os.path.exists(fp), '%s got invalid filepath \n    %s'%(dtag, fp)
+        
+        #======================================================================
+        # load it
+        #======================================================================
+        df_raw = pd.read_csv(fp, index_col=None)
+        
+        #======================================================================
+        # check it
+        #======================================================================
+        assert cid in df_raw.columns, '%s missing index column \"%s\''%(dtag, cid)
+        assert len(df_raw.columns)==2, 'expected 1 column on gels, got %i'%len(df_raw.columns)
+        
+        #======================================================================
+        # clean it
+        #======================================================================
+        #df = df_raw
+        df = df_raw.set_index(cid, drop=True).sort_index(axis=0)
+        
+        df = df.rename(columns={df.columns[0]:'gels'}).round(self.prec)
         
         
         #======================================================================
         # post checks
-        #======================================================================       
-        #check variables
-        for section, vars_l in self.exp_pars.items():
-            assert section in self.pars.sections(), 'missing expected section %s'%section
-            
-            for varnm in vars_l:
-                assert varnm in self.pars[section], 'missing expected variable \'%s.%s\''%(section, varnm)
-                
-
-            
         #======================================================================
-        # attach all parmaetrs to class
-        #======================================================================
-        for varnm, val in self.pars['parameters'].items():
-            if not hasattr(self, varnm):
-                log.warning('no parameter \'%s\' found.. skipping'%varnm)
-                continue
+        #check cids
+        assert np.array_equal(self.cindex, df.index), 'cid mismatch'
 
-            
-            #get the type
-            set_type = type(getattr(self, varnm))
-            
-            #special type retrivial
-            if set_type == bool:
-                nval = self.pars['parameters'].getboolean(varnm)
-            else:
-                #set the type
-                nval = set_type(val)
-
-            #attach
-            setattr(self, varnm, nval)
-            log.debug('set \'%s\' type %s as \'%s\''%(varnm, set_type.__name__, nval))
-            
-        log.debug('attached %i variables to self: \n    %s'%(
-            len(self.pars['parameters']), self.pars['parameters']))
         
+        #check dtype of columns
+        for ename, chk_dtype in df.dtypes.items():
+            assert np.issubdtype(chk_dtype, np.number), 'bad dtype %s.%s'%(dtag, ename)
+            
+        boolidx = df.iloc[:,0].isna()
+        if boolidx.any():
+            raise Error('got %i (of %i) null ground elevation values'%(boolidx.sum(), len(boolidx)))
+        
+        boolidx = df.iloc[:,0] < 0
+        if boolidx.any():
+            log.warning('got %i ground elevations below zero'%boolidx.sum())
         
         #======================================================================
-        # attach validity flags
+        # set it
         #======================================================================
-        for varnm, val in self.pars['validation'].items():
-            setattr(self, varnm, self.pars['validation'].getboolean(varnm))
-            
-        #======================================================================
-        # special checks
-        #======================================================================
-        assert self.felv in ['datum', 'ground'], \
-            'got unexpected felv value \'%s\''%self.felv
-            
-        #remove the dtm if the inventory is already absolute
-        if self.felv == 'datum':
-            try:
-                del self.exp_dprops['gels']
-            except:
-                pass
-                  
-        #======================================================================
-        # load data files        
-        #======================================================================
-        for varnm, fp in self.pars[self.datafp_section].items():
-            
-            
-            if fp is None or fp == '':
-                if varnm in self.opt_dfiles:
-                    log.warning('%s.%s is optional and not provided... skipping'%(
-                        self.datafp_section, varnm))
-                    continue
-                else:
-                    raise Error('no filepath specfied for \'%s\''%varnm)
-                 
-                
-            #==================================================================
-            # if not varnm in self.exp_dprops: #set it as a dummy
-            #     self.exp_dprops[varnm] = ''
-            #     
-            # #check if there
-            # if self.exp_dprops[varnm] == '':
-            #     if varnm in self.opt_dfiles:
-            #         log.warning('%s.%s is optional and not provided... skipping'%(
-            #             self.datafp_section, varnm))
-            #         continue
-            #     else:
-            #         raise Error('missing required \'%s\''%varnm)
-            #==================================================================
-            
-
-
-            #pull parameters
-            dprops = self.exp_dprops[varnm]
-            
-
-            
-            fh_clean, ext = os.path.splitext(os.path.split(fp)[1])
-
-            #==================================================================
-            # prechecks
-            #==================================================================
-            #check existance
-            assert os.path.exists(fp), 'passed \'%s\' filepath does not exist: \n    %s'%(varnm, fp)
-            
-            #check extension
-            assert ext == self.exp_dprops[varnm]['ext'], 'unexpected filepath for %s'%varnm
-            
-            #==================================================================
-            # #load to frame
-            #==================================================================
-            if ext == '.csv':
-                #load the data
-                data = pd.read_csv(fp, header=0, index_col=None)
-                
-                #check the column names
-                miss_l = set(dprops['colns']).difference(data.columns)
-                assert len(miss_l)==0, '\'%s\' is missing %i expected column names: %s'%(
-                    varnm, len(miss_l), miss_l)
-                
-            #==================================================================
-            # #load spreadsheet
-            #==================================================================
-            elif ext == '.xls':
-                data = pd.read_excel(fp, sheet_name=None, header=None, index_col=None)
-                
-                """
-                import pandas as pd
-                fp = r'C:\LS\03_TOOLS\CanFlood\_ins\prep\cT2\CanFlood_curves_rfda_20200218.xls'
-                pd.read_excel(fp, sheet
-                
-                data.keys()
-                
-                data['AA_MC']
-                
-                """
-                log.info('loadedd %i sheets from xls:\n    %s'%(len(data), list(data.keys())))
-
-                if not isinstance(data, dict):
-                    raise Error('unexpected type')
-                
-            else:
-                raise Error('unepxected extnesion \"%s\''%ext)
-                
-            #add
-            
-            self.data_d[varnm] = data
-            
-            log.info('loaded \'%s\' w/ %i from \'%s\''%(
-                    varnm, len(data), fh_clean))
+        self.data_d[dtag] = df
+        
+        log.info('finished loading %s as %s'%(dtag, str(df.shape)))
         
         
-        log.debug('finished loading and checking parameter file')
+    def load_dmgs(self,#loading any exposure type data (expos, or exlikes)
+                   fp = None,
+                   dtag = 'dmgs',
+                   check_monot=False, #whether to check monotonciy
+                   logger=None,
+                   ):
+        #======================================================================
+        # defaults
+        #======================================================================
+        if logger is None: logger=self.logger
         
-    def load_risk_data(self, 
+        log = logger.getChild('load_dmgs')
+        if fp is None: fp = getattr(self, dtag)
+        cid = self.cid
+        
+        assert 'finv' in self.data_d, 'call load_finv first'
+        assert 'aeps' in self.data_d, 'call load_aep first'
+        assert isinstance(self.expcols, pd.Index), 'bad expcols'
+        assert isinstance(self.cindex, pd.Index), 'bad cindex'
+        assert os.path.exists(fp), '%s got invalid filepath \n    %s'%(dtag, fp)
+        #======================================================================
+        # load it
+        #======================================================================
+        df_raw = pd.read_csv(fp, index_col=None)
+        
+        #======================================================================
+        # precheck
+        #======================================================================
+        assert cid in df_raw.columns, '%s missing index column \"%s\''%(dtag, cid)
+        assert df_raw.columns.dtype.char == 'O','bad event names on %s'%dtag
+        
+
+        
+        #======================================================================
+        # clean it
+        #======================================================================
+        df = df_raw.copy()
+        #drop dmg suffix
+        boolcol = df.columns.str.endswith('_dmg')
+        enm_l = df.columns[boolcol].str.replace('_dmg', '').tolist()
+        
+        #rename these
+        ren_d = dict(zip(df.columns[boolcol].values, enm_l))
+        df = df.rename(columns=ren_d)
+        
+        
+        df = df.set_index(cid, drop=True).sort_index(axis=0)
+        
+        df = df.round(self.prec)
+        
+        #======================================================================
+        # postcheck
+        #======================================================================
+        assert len(enm_l) > 1, 'failed to identify sufficient damage columns'
+        
+
+        #check cids
+        assert np.array_equal(self.cindex, df.index), 'cid mismatch'
+        
+        #check events
+        """
+        must match the aeps
+        """
+        miss_l = set(self.expcols).difference(df.columns)
+            
+        assert len(miss_l) == 0, '%i events on \'%s\' not found in aep_ser: \n    %s'%(
+            len(miss_l), dtag, miss_l)
+        
+        
+        #check dtype of columns
+        for ename, chk_dtype in df.dtypes.items():
+            assert np.issubdtype(chk_dtype, np.number), 'bad dtype %s.%s'%(dtag, ename)
+            
+        
+        #======================================================================
+        # postcheck2
+        #======================================================================
+        if check_monot:
+            self.check_monot(df, aep_ser = self.data_d['aeps'])
+
+
+        #======================================================================
+        # set it
+        #======================================================================
+        
+        self.data_d[dtag] = df
+        
+        log.info('finished loading %s as %s'%(dtag, str(df.shape)))
+    
+    def xxxload_risk_data(self, 
                        ddf, #dmaage or exposure data to compare against
                        ): #data setups and checks
         #======================================================================
@@ -521,35 +791,37 @@ class Model(ComWrkr):
         #======================================================================
         # aeps
         #======================================================================
-        adf = pd.read_csv(self.aeps) 
-        assert len(adf) ==1, 'expected only 1 row on aeps'
-        
-        #column names
-        miss_l = set(ddf.columns).difference(adf.columns)
-        assert len(miss_l) == 0, '%i column mismatch between aeps and damages: %s'%(
-            len(miss_l), miss_l)
-        
-        #convert to a series
-        aep_ser = adf.iloc[0, adf.columns.isin(ddf.columns)].astype(int).sort_values()
-        
-        #convert to aep
-        if self.event_probs == 'ari':
-            aep_ser = 1/aep_ser
-            log.info('converted %i aris to aeps'%len(aep_ser))
-        elif self.event_probs == 'aep': pass
-        else: raise Error('unepxected event_probs key %s'%self.event_probs)
-        
-        #check all aeps are below 1
-        boolar = np.logical_and(
-            aep_ser < 1,
-            aep_ser > 0)
-        
-        assert np.all(boolar), 'passed aeps out of range'
-        
-        #wrap
-        log.debug('prepared aep_ser w/ %i'%len(aep_ser))
-        #self.aep_ser = aep_ser.sort_values()
-        self.data_d['aeps'] = aep_ser.sort_values().copy() #setting for consistency. 
+        #======================================================================
+        # adf = pd.read_csv(self.aeps) 
+        # assert len(adf) ==1, 'expected only 1 row on aeps'
+        # 
+        # #column names
+        # miss_l = set(ddf.columns).difference(adf.columns)
+        # assert len(miss_l) == 0, '%i column mismatch between aeps and damages: %s'%(
+        #     len(miss_l), miss_l)
+        # 
+        # #convert to a series
+        # aep_ser = adf.iloc[0, adf.columns.isin(ddf.columns)].astype(int).sort_values()
+        # 
+        # #convert to aep
+        # if self.event_probs == 'ari':
+        #     aep_ser = 1/aep_ser
+        #     log.info('converted %i aris to aeps'%len(aep_ser))
+        # elif self.event_probs == 'aep': pass
+        # else: raise Error('unepxected event_probs key %s'%self.event_probs)
+        # 
+        # #check all aeps are below 1
+        # boolar = np.logical_and(
+        #     aep_ser < 1,
+        #     aep_ser > 0)
+        # 
+        # assert np.all(boolar), 'passed aeps out of range'
+        # 
+        # #wrap
+        # log.debug('prepared aep_ser w/ %i'%len(aep_ser))
+        # #self.aep_ser = aep_ser.sort_values()
+        # self.data_d['aeps'] = aep_ser.sort_values().copy() #setting for consistency. 
+        #======================================================================
         
         
         
@@ -557,81 +829,83 @@ class Model(ComWrkr):
         # exlikes
         #======================================================================
         #check against ddf
-        if not self.exlikes == '':
-            edf = pd.read_csv(self.exlikes)
-            
-            assert cid in edf.columns, 'exlikes missing %s'%cid
-            
-            #==================================================================
-            # clean
-            #==================================================================
-            #slice it
-            edf = edf.set_index(cid).sort_index(axis=1).sort_index(axis=0)
-            
-            #replace nulls w/ 1
-            """better not to pass any nulls.. but if so.. should treat them as ZERO!!
-            Null = no failure polygon = no failure
-            also best not to apply precision to these values
-            """
-            edf = edf.fillna(0.0)
-            
-            #==================================================================
-            # check
-            #==================================================================
-            #check event name membership
-            miss_l = set(edf.columns).difference(ddf.columns)
-            if len(miss_l) >0:
-                raise Error('passed exlikes columns dont match ddf: %s'%miss_l)
-            
-            #check logic against aeps
-            """todo: add this to the validator tool somehow"""
-            if len(aep_ser.unique()) == len(aep_ser):
-                raise Error('passed exlikes, but there are no duplicated event: \n    %s'%aep_ser)
-            
-            #check monotoncity
-            if not self.check_monot(edf, aep_ser=aep_ser,event_probs='aep'):
-                raise Error('exlikes data non-monotonic')
-            
-            #==================================================================
-            # #add missing likelihoods
-            #==================================================================
-            """
-            missing column = no secondary likelihoods at all for this event.
-            all = 1
-            """
-            
-            miss_l = set(ddf.columns).difference(edf.columns)
-            if len(miss_l) > 0:
-                
-                log.info('passed exlikes missing %i secondary exposure likelihoods... treating these as 1\n    %s'%(
-                    len(miss_l), miss_l))
-                
-                for coln in miss_l:
-                    edf[coln] = 1.0
-                
-                #column names
-                miss_l = set(ddf.columns).difference(edf.columns)
-                assert len(miss_l) == 0, '%i column mismatch between exlikes and ddf: %s'%(
-                    len(miss_l), miss_l)
-            
-            #xids
-            miss_l = set(ddf.index).difference(edf.index)
-            assert len(miss_l) == 0, '%i column mismatch between exlikes and damages: %s'%(
-                len(miss_l), miss_l)
-            
-            #slice down to those in teh damages
-            """not sure if we'll ever have to deal w/ more data in the edf than in the damages"""
-            edf = edf.loc[edf.index.isin(ddf.index), edf.columns.isin(ddf.columns)]
-        
-            log.info('prepared edf w/ %s'%str(edf.shape))
-            
-            #==================================================================
-            # check it
-            #==================================================================
-
-            
-            #set it
-            self.data_d['exlikes'] = edf
+        #if not self.exlikes == '':
+#==============================================================================
+#             edf = pd.read_csv(self.exlikes)
+#             
+#             assert cid in edf.columns, 'exlikes missing %s'%cid
+#             
+#             #==================================================================
+#             # clean
+#             #==================================================================
+#             #slice it
+#             edf = edf.set_index(cid).sort_index(axis=1).sort_index(axis=0)
+#             
+#             #replace nulls w/ 1
+#             """better not to pass any nulls.. but if so.. should treat them as ZERO!!
+#             Null = no failure polygon = no failure
+#             also best not to apply precision to these values
+#             """
+#             edf = edf.fillna(0.0)
+#             
+#             #==================================================================
+#             # check
+#             #==================================================================
+#             #check event name membership
+#             miss_l = set(edf.columns).difference(ddf.columns)
+#             if len(miss_l) >0:
+#                 raise Error('passed exlikes columns dont match ddf: %s'%miss_l)
+#             
+#             #check logic against aeps
+#             """todo: add this to the validator tool somehow"""
+#             if len(aep_ser.unique()) == len(aep_ser):
+#                 raise Error('passed exlikes, but there are no duplicated event: \n    %s'%aep_ser)
+#             
+#             #check monotoncity
+#             if not self.check_monot(edf, aep_ser=aep_ser,event_probs='aep'):
+#                 raise Error('exlikes data non-monotonic')
+#             
+#             #==================================================================
+#             # #add missing likelihoods
+#             #==================================================================
+#             """
+#             missing column = no secondary likelihoods at all for this event.
+#             all = 1
+#             """
+#             
+#             miss_l = set(ddf.columns).difference(edf.columns)
+#             if len(miss_l) > 0:
+#                 
+#                 log.info('passed exlikes missing %i secondary exposure likelihoods... treating these as 1\n    %s'%(
+#                     len(miss_l), miss_l))
+#                 
+#                 for coln in miss_l:
+#                     edf[coln] = 1.0
+#                 
+#                 #column names
+#                 miss_l = set(ddf.columns).difference(edf.columns)
+#                 assert len(miss_l) == 0, '%i column mismatch between exlikes and ddf: %s'%(
+#                     len(miss_l), miss_l)
+#             
+#             #xids
+#             miss_l = set(ddf.index).difference(edf.index)
+#             assert len(miss_l) == 0, '%i column mismatch between exlikes and damages: %s'%(
+#                 len(miss_l), miss_l)
+#             
+#             #slice down to those in teh damages
+#             """not sure if we'll ever have to deal w/ more data in the edf than in the damages"""
+#             edf = edf.loc[edf.index.isin(ddf.index), edf.columns.isin(ddf.columns)]
+#         
+#             log.info('prepared edf w/ %s'%str(edf.shape))
+#             
+#             #==================================================================
+#             # check it
+#             #==================================================================
+# 
+#             
+#             #set it
+#             self.data_d['exlikes'] = edf
+#==============================================================================
         
         #======================================================================
         # post checks
@@ -648,144 +922,192 @@ class Model(ComWrkr):
         #======================================================================
         self.logger.debug('finished')
         
-    def setup_finv(self): #check and consolidate inventory like data sets
+    def add_gels(self): #add gels to finv (that's heights)
+        log = self.logger.getChild('add_gels')
+        
+        
+        assert self.felv == 'ground'
+        assert 'gels' in self.data_d
+        assert 'finv' in self.data_d
+        
+        #======================================================================
+        # get data
+        #======================================================================
+        gdf = self.data_d['gels']
+        fdf = self.data_d.pop('finv')
+
+        log.info('on dtm values %s and finv %s'%(str(gdf.shape), str(fdf.shape)))
+        #==================================================================
+        # checks
+        #==================================================================
+        #check length expectation
+        assert 'gels' not in fdf.columns, 'gels already on fdf'
+        
+                
+        #======================================================================
+        # #do the join join
+        #======================================================================
+        fdf = fdf.join(gdf)
+        
+        log.debug('finished with %s'%str(fdf.shape))
+        
+        self.data_d['finv'] = fdf
+            
+        
+    
+    def xxxsetup_finv(self): #check and consolidate inventory like data sets
         
         log = self.logger.getChild('setup_finv')
         cid = self.cid
         fdf = self.data_d['finv']
-        #======================================================================
-        # check ftag membership
-        #======================================================================
-        if hasattr(self, 'dfunc_d'):
-            #check all the tags are in the dfunc
-            
-            tag_boolcol = fdf.columns.str.contains('tag')
-            
-            f_ftags = pd.Series(pd.unique(fdf.loc[:, tag_boolcol].values.ravel())
-                                ).dropna().to_list()
-    
-            c_ftags = list(self.dfuncs_d.keys())
-            
-            miss_l = set(f_ftags).difference(c_ftags)
-            
-            assert len(miss_l) == 0, '%i ftags in the finv not in the curves: \n    %s'%(
-                len(miss_l), miss_l)
-            
-            
-            #set this for later
-            self.f_ftags = f_ftags
-        
-        
+
         #======================================================================
         # set indexes on data sets
         #======================================================================
-        #get list of data sets
-        if self.felv == 'datum':
-            l = ['finv', 'expos']
-        elif self.felv == 'ground':
-            l = ['finv', 'expos', 'gels']            
-        else:
-            raise Error('unexpected \'felv\' key %s'%self.felv)
-        
-        #loop and set
-        first = True
-        for dname, df in {dname:self.data_d[dname] for dname in l}.items():
-            
-            #check the indexer is there
-            assert cid in df.columns, '%s is missing the special index column \'%s\''%(
-                dname, cid)
-            
-            #set the indexer
-            df = df.set_index(cid, drop=True).sort_index(axis=0)
-            
-            #check the indexes match
-            if first:
-                fdf = df.copy() #set again
-                first = False
-            else:
-
-                assert np.array_equal(fdf.index, df.index), \
-                    '\"%s\' index does not match the finv'%dname
-                    
-            #update the dict
-            self.data_d[dname] = df
-        log.debug('finished index check on %i'%len(l))
+#==============================================================================
+#         #get list of data sets
+#         if self.felv == 'datum':
+#             l = ['finv', 'expos']
+#         elif self.felv == 'ground':
+#             l = ['finv', 'expos', 'gels']            
+#         else:
+#             raise Error('unexpected \'felv\' key %s'%self.felv)
+#         
+#         #loop and set
+#         first = True
+#         for dname, df in {dname:self.data_d[dname] for dname in l}.items():
+#             
+#             #check the indexer is there
+#             assert cid in df.columns, '%s is missing the special index column \'%s\''%(
+#                 dname, cid)
+#             
+#             #set the indexer
+#             df = df.set_index(cid, drop=True).sort_index(axis=0)
+#             
+#             #check the indexes match
+#             if first:
+#                 fdf = df.copy() #set again
+#                 first = False
+#             else:
+# 
+#                 assert np.array_equal(fdf.index, df.index), \
+#                     '\"%s\' index does not match the finv'%dname
+#                     
+#             #update the dict
+#             self.data_d[dname] = df
+#         log.debug('finished index check on %i'%len(l))
+#==============================================================================
         
         #======================================================================
         # add gel to the fdf
         #======================================================================
-        if self.felv == 'ground':
-            
-            
-            gdf = self.data_d['gels']
-    
-            #==================================================================
-            # checks
-            #==================================================================
-            #check length expectation
-            assert 'gels' not in fdf.columns, 'gels already on fdf'
-            assert len(gdf.columns)==1, 'expected 1 column on gels, got %i'%len(gdf.columns)
-            boolidx = gdf.iloc[:,0].isna()
-            if boolidx.any():
-                raise Error('got %i (of %i) null ground elevation values'%(boolidx.sum(), len(boolidx)))
-            
-            boolidx = gdf.iloc[:,0] < 0
-            if boolidx.any():
-                log.warning('got %i ground elevations below zero'%boolidx.sum())
-    
-            
-            #rename the column
-            gdf = gdf.rename(columns={gdf.columns[0]:'gels'}).round(self.prec)
-            
-            #do the join join
-            fdf = fdf.join(gdf)
-            
-
+#==============================================================================
+#         if self.felv == 'ground':
+#             
+#             
+#             gdf = self.data_d['gels']
+#     
+#             #==================================================================
+#             # checks
+#             #==================================================================
+#             #check length expectation
+#             assert 'gels' not in fdf.columns, 'gels already on fdf'
+#             assert len(gdf.columns)==1, 'expected 1 column on gels, got %i'%len(gdf.columns)
+#             boolidx = gdf.iloc[:,0].isna()
+#             if boolidx.any():
+#                 raise Error('got %i (of %i) null ground elevation values'%(boolidx.sum(), len(boolidx)))
+#             
+#             boolidx = gdf.iloc[:,0] < 0
+#             if boolidx.any():
+#                 log.warning('got %i ground elevations below zero'%boolidx.sum())
+#     
+#             
+#             #rename the column
+#             gdf = gdf.rename(columns={gdf.columns[0]:'gels'}).round(self.prec)
+#             
+#             #do the join join
+#             fdf = fdf.join(gdf)
+#             
+# 
+#         
+#         #update
+#         self.data_d['finv'] = fdf
+#==============================================================================
         
-        #update
-        self.data_d['finv'] = fdf
+    def build_exp_finv(self, #assemble the expanded finv
+                    group_cnt = None, #number of groups to epxect per prefix
+                    ):
         
-
-        
-    def setup_expo_data(self):# expand finv to  unitary (one curve per row)
         #======================================================================
         # defaults
         #======================================================================
-        log = self.logger.getChild('setup_binv')
+        log = self.logger.getChild('build_exp_finv')
         fdf = self.data_d['finv']
         cid, bid = self.cid, self.bid
         
+        if group_cnt is None: group_cnt = self.group_cnt
+        
+        #======================================================================
+        # group_cnt defaults
+        #======================================================================
+        assert isinstance(group_cnt, int)
+        
+        exp_fcolns = [cid, 'fscale', 'felv']
+        if group_cnt == 2:
+            pass
+            
+        elif group_cnt == 4:
+            exp_fcolns = exp_fcolns + ['ftag', 'fcap']
+            
+        else:
+            raise Error('bad group_cnt %i'%group_cnt)
+            
+        
+        
+        #======================================================================
+        # precheck
+        #======================================================================
+        """do this in the loaders"""
         assert fdf.index.name == cid, 'bad index on fdf'
         
         #======================================================================
-        # expand
+        # get prefix values
         #======================================================================
-
-        #get tag column names
-        tag_coln_l = fdf.columns[fdf.columns.str.endswith('tag')].tolist()
+        #pull all the elv columns
+        tag_coln_l = fdf.columns[fdf.columns.str.endswith('elv')].tolist()
         
-        assert tag_coln_l[0] == 'f0_tag', 'expected first tag column to be \'ftag\''
+        assert len(tag_coln_l) > 0, 'no \'elv\' columns found in inventory'
+        assert tag_coln_l[0] == 'f0_elv', 'expected first tag column to be \'f0_elv\''
         
-        #get nested prefixes
+        #get nested prefix values
         prefix_l = [coln[:2] for coln in tag_coln_l]
         
+        log.info('got %i prefixes: %s'%(len(prefix_l), prefix_l))
+        
+        
         #======================================================================
-        # expand: nested entries
+        # expand: nested entries---------------
         #======================================================================
         if len(prefix_l) > 1:
         
-            #loop and collected nests
+            #==================================================================
+            # #loop and collected nests
+            #==================================================================
             bdf = None
             
             for prefix in prefix_l:
                 #identify prefix columns
                 pboolcol = fdf.columns.str.startswith(prefix) #columns w/ prefix
                 
-                assert pboolcol.sum() == 4, 'expects 4 columns w/ prefix %s'%prefix
+                assert pboolcol.sum()>=group_cnt, 'prefix \'%s\' group_cnt %i != %i'%(
+                    prefix, pboolcol.sum(), group_cnt)
                 
+                 
                 #get slice and clean
                 df = fdf.loc[:, pboolcol].dropna(axis=0, how='all').sort_index(axis=1)
-                df.columns = ['fcap', 'felv', 'fscale', 'ftag']
+                
+                #get clean column names
+                df.columns = df.columns.str.replace('%s_'%prefix, 'f')
                 df = df.reset_index()
                 
                 #add to main
@@ -797,99 +1119,183 @@ class Model(ComWrkr):
                 log.info('for \"%s\' got %s'%(prefix, str(df.shape)))
                 
                 
-            #add back in other needed columns
+            #==================================================================
+            # #add back in other needed columns
+            #==================================================================
             boolcol = fdf.columns.isin(['gels']) #additional columns to pivot out
+            
             if boolcol.any(): #if we are only linking in gels, these may not exist
                 bdf = bdf.merge(fdf.loc[:, boolcol], on=cid, how='left',validate='m:1')
+                
+                log.debug('joined back in %i columns: %s'%(
+                    boolcol.sum(), fdf.loc[:, boolcol].columns.tolist()))
             
+            #wrap
             log.info('expanded inventory from %i nest sets %s to finv %s'%(
                 len(prefix_l), str(fdf.shape), str(bdf.shape)))
         #======================================================================
         # expand: nothing nested
         #======================================================================
-        else:
-            bdf = fdf.copy()
+        elif len(prefix_l) == 1:
+            log.info('no nested columns. using raw inventory')
             
-        #set an indexer columns
-        """safer to keep this index as a column also"""
+
+            #identify and check prefixes
+            prefix = prefix_l.pop(0)
+            pboolcol = fdf.columns.str.startswith(prefix) #columns w/ prefix
+            
+            assert pboolcol.sum() == group_cnt, 'prefix \'%s\' group_cnt %i != %i'%(
+                prefix, pboolcol.sum(), group_cnt)
+                
+            #build dummy bdf
+            bdf = fdf.copy()
+            bdf[cid] = bdf.index #need to duplicate it
+            
+            #fix the columns
+            bdf.columns = bdf.columns.str.replace('%s_'%prefix, 'f')
+            
+        else:
+            raise Error('bad prefix match')
+        
+        #set indexers
         bdf[bid] = bdf.index
         bdf.index.name=bid
         
-        assert cid in bdf.columns, 'bdf missing %s'%cid
-            
         #======================================================================
-        # convert asset heights to elevations
+        # check
+        #======================================================================
+        miss_l = set(exp_fcolns).difference(bdf.columns)
+        assert len(miss_l) == 0
+        
+        
+        #======================================================================
+        # adjust fscale--------------
+        #======================================================================
+        boolidx = bdf['fscale'].isna()
+        if boolidx.any():
+            log.info('setting %i null fscale values to 1'%boolidx.sum())
+            bdf.loc[:, 'fscale'] = bdf['fscale'].fillna(1.0)
+            
+        
+        #======================================================================
+        # convert heights ----------
         #======================================================================
         if self.felv == 'ground':
+            assert 'gels' in bdf.columns, 'missing gels column'            
+            assert bdf['gels'].notna().all()
+
+
             bdf.loc[:, 'felv'] = bdf['felv'] + bdf['gels']
                 
             log.info('converted asset ground heights to datum elevations')
-        else:
+            
+        elif self.felv=='datum':
             log.debug('felv = \'%s\' no conversion'%self.felv)
-            
-        #======================================================================
-        # get depths (from wsl and elv)
-        #======================================================================
-        wdf = self.data_d['expos'] #wsl
-        
-        #pivot these out to bids
-        ddf = bdf.loc[:, [bid, cid]].join(wdf.round(self.prec), 
-                                          on=cid
-                                          ).set_index(bid, drop=False)
-               
-        #loop and subtract to get depths
-        boolcol = ~ddf.columns.isin([cid, bid]) #columns w/ depth values
-        
-        for coln in ddf.columns[boolcol]:
-            ddf.loc[:, coln] = (ddf[coln] - bdf['felv']).round(self.prec)
-            
-        #log.info('converted wsl (min/max/avg %.2f/%.2f/%.2f) to depths (min/max/avg %.2f/%.2f/%.2f)'%( ))
-        log.debug('converted wsl to depth %s'%str(ddf.shape))
-        
-        # #check that wsl is above ground
-
-        """
-        should also add this to the input validator tool
-        """
-        boolidx = ddf.drop([bid, cid], axis=1) < 0 #True=wsl below ground
-
-        if boolidx.any().any():
-            msg = 'got %i (of %i) wsl below ground'%(boolidx.sum().sum(), len(boolidx))
-            if self.ground_water:
-                raise Error(msg)
-            else:
-                log.warning(msg)
-                
-        #======================================================================
-        # check monotocity
-        #======================================================================
+        else:
+            raise Error('unrecognized felv=%s'%self.felv)
         
         #======================================================================
         # wrap
         #======================================================================
-        #attach frames
-        self.bdf, self.ddf = bdf, ddf
+        log.info('finished with %s'%str(bdf.shape))
+        self.bdf = bdf
         
-        log.debug('finished')
+        
+        
+        
+    def build_depths(self): #build the expanded depths data
         
         #======================================================================
-        # check aeps
+        # defaults
         #======================================================================
-        if 'aeps' in self.pars['risk_fps']:
-            aep_fp = self.pars['risk_fps'].get('aeps')
-            
-            if not os.path.exists(aep_fp):
-                log.warning('aep_fp does not exist... skipping check')
-            else:
-                aep_data = pd.read_csv(aep_fp)
-                
-                miss_l = set(aep_data.columns).difference(wdf.columns)
-                if len(miss_l) > 0:
-                    raise Error('exposure file does not match aep data: \n    %s'%miss_l)
-            
+        log = self.logger.getChild('build_depths')
+        bdf = self.bdf.copy()
+        cid, bid = self.cid, self.bid
+
 
         
-        return
+        wdf = self.data_d['expos'] #wsl
+
+        #======================================================================
+        # expand
+        #======================================================================
+        #get the indexers from the expanded finv
+        edx_df = self.bdf.loc[:, [bid, cid]]
+        
+        #pivot these out to bids
+        ddf = edx_df.join(wdf.round(self.prec),  on=cid
+                                          ).set_index(bid, drop=False)
+                                          
+
+        #======================================================================
+        # calc depths
+        #======================================================================
+        #loop and subtract to get depths
+        boolcol = ~ddf.columns.isin([cid, bid]) #columns w/ depth values
+        
+        for coln in ddf.columns[boolcol]:
+            #boolidx1=  ddf[coln].isna()
+            ddf.loc[:, coln] = (ddf[coln] - bdf['felv']).round(self.prec)
+            #boolidx2 = ddf[coln].isna()
+            
+            #assert np.array_equal(boolidx1, boolidx2)
+            """
+            maintains nulls
+            """
+            
+        log.debug('converted wsl to depth %s'%str(ddf.shape))
+        
+        
+        #======================================================================
+        # fill nulls
+        #======================================================================
+        booldf = ddf.drop([bid, cid], axis=1).isna()
+        if booldf.any().any():
+            log.warning('setting %i (of %i) null depth values to zero'%(
+                booldf.sum().sum(), booldf.size))
+            
+            ddf = ddf.fillna(0.0)
+        
+        #======================================================================
+        # negative depths
+        #======================================================================
+        booldf = ddf.loc[:,boolcol] < 0 #True=wsl below ground
+
+        if booldf.any().any():
+            """
+            note these are un-nesetd assets, so counts will be larger than expected
+            """
+            log.warning('setting %i (of %i) negative depths to zero'%(
+                booldf.sum().sum(), len(booldf)))
+            
+            ddf = ddf.where(~booldf, other=0)
+            
+        #======================================================================
+        # post checks
+        #======================================================================
+                
+        assert np.array_equal(ddf.index, bdf.index)
+        
+        #max depth
+        boolidx = ddf.loc[:,boolcol].max(axis=1)>self.max_depth
+        if boolidx.any():
+            log.debug('\n%s'%ddf[boolidx])
+            raise Error('%i (of %i) nested curves exceed max depth: %.2f. see logger'%(
+                boolidx.sum(), len(boolidx), self.max_depth))
+        
+                
+        #======================================================================
+        # wrap
+        #======================================================================
+        log.info('assembled depth_df w/ \nmax:\n%s\nmean: \n%s'%(
+            ddf.loc[:,boolcol].max(),
+            ddf.loc[:,boolcol].mean()
+            ))
+        
+        self.ddf = ddf
+        
+
+        
         
     def resolve_multis(self,
                        ddf, edf, aep_ser,
@@ -981,8 +1387,8 @@ class Model(ComWrkr):
     
     def check_monot(self,
                      df_raw, #event:asset like data. expectes columns as aep 
-                     #split_key = None, #optional key to split hazard columns by
-                     aep_ser=None, event_probs = 'ari', #optional kwargs for column conversion
+                     split_key = False, #optional key to split hazard columns by
+                     aep_ser=None, event_probs = 'aep', #optional kwargs for column conversion
                      logger=None
                      ):
         """
@@ -995,7 +1401,7 @@ class Model(ComWrkr):
         #======================================================================
         
         if logger is None: logger=self.logger
-        split_key = self.split_key
+        if split_key is None: split_key = self.split_key
         log = logger.getChild('check_monot')
         
         #======================================================================
@@ -1072,7 +1478,7 @@ class Model(ComWrkr):
         #======================================================================
         # splitting
         #======================================================================
-        if not split_key is None:
+        if not split_key == False:
             boolcol = df_raw.columns.str.contains(split_key)
             
             if not boolcol.any():

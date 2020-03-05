@@ -147,14 +147,22 @@ class Risk2(Model):
         
         self.resname = 'risk2_%s_%s'%(self.tag, self.name)
         
-        self.setup_data()
+        #self.setup_data()
+        self.load_finv()
+        self.load_aeps()
+        self.load_dmgs()
+        
+        if not self.exlikes == '':
+            self.load_exlikes()
+        
+        
         
         self.logger.debug('finished setup() on Risk2')
         
         return self
         
         
-    def setup_data(self):
+    def xxxsetup_data(self):
         #======================================================================
         # defaults
         #======================================================================
@@ -167,32 +175,38 @@ class Risk2(Model):
         #get event names from damages
         ddf = pd.read_csv(self.dmgs)
         
-        #trim suffix
-        boolcol = ddf.columns.str.endswith('_dmg')
-        enm_l = ddf.columns[boolcol].str.replace('_dmg', '').tolist()
+        #======================================================================
+        # #trim suffix
+        # boolcol = ddf.columns.str.endswith('_dmg')
+        # enm_l = ddf.columns[boolcol].str.replace('_dmg', '').tolist()
+        # 
+        # #rename these
+        # ren_d = dict(zip(ddf.columns[boolcol].values, enm_l))
+        # ddf = ddf.rename(columns=ren_d)
+        #======================================================================
         
-        #rename these
-        ren_d = dict(zip(ddf.columns[boolcol].values, enm_l))
-        ddf = ddf.rename(columns=ren_d)
+        #======================================================================
+        # #some checks
+        # assert len(enm_l) > 1, 'failed to identify sufficient damage columns'
+        # assert cid in ddf.columns, 'missing %s in damages'%cid
+        # assert ddf[cid].is_unique, 'expected unique %s'%cid
+        # assert ddf.notna().any().any(), 'got some nulls on dmgs'
+        # 
+        # #set indexes
+        # ddf = ddf.set_index(cid, drop=True).sort_index(axis=1).sort_index(axis=0)
+        # 
+        # 
+        # ddf = ddf.round(self.prec)
+        #======================================================================
         
-        #some checks
-        assert len(enm_l) > 1, 'failed to identify sufficient damage columns'
-        assert cid in ddf.columns, 'missing %s in damages'%cid
-        assert ddf[cid].is_unique, 'expected unique %s'%cid
-        assert ddf.notna().any().any(), 'got some nulls on dmgs'
+        #======================================================================
+        # log.info('prepared ddf w/ %s'%str(ddf.shape))
+        # 
+        # #set it
+        # self.data_d['dmgs'] = ddf
+        #======================================================================
         
-        #set indexes
-        ddf = ddf.set_index(cid, drop=True).sort_index(axis=1).sort_index(axis=0)
-        
-        
-        ddf = ddf.round(self.prec)
-        
-        log.info('prepared ddf w/ %s'%str(ddf.shape))
-        
-        #set it
-        self.data_d['dmgs'] = ddf
-        
-        self.load_risk_data(ddf)
+        #self.load_risk_data(ddf)
         
         log.info('finished')
         
@@ -277,13 +291,14 @@ if __name__ =="__main__":
     #==========================================================================
     # dev data
     #=========================================================================
+    tag = 'dev'
     cf_fp = r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\risk2\wex\CanFlood_dmg2.txt'
-    ead_plot = True
+    ead_plot = False
     
     #==========================================================================
     # build/execute
     #==========================================================================
-    wrkr = Risk2(cf_fp, out_dir=out_dir, logger=mod_logger).setup()
+    wrkr = Risk2(cf_fp, out_dir=out_dir, logger=mod_logger, tag=tag).setup()
     
     res_ser, res_df = wrkr.run()
     

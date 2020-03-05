@@ -22,7 +22,7 @@ gels =
 dmgs = C:\Users\cefect\CanFlood\dmg2\dmgs__dev.csv
 exlikes = C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\dmg2\exlikes_dmg2.csv
 aeps = C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\dmg2\aeps_4_dmg2.csv
-#'dmgs' file path set from dmg2.py at 2020-03-04 16.59.27
+#'dmgs' file path set from dmg2.py at 2020-03-05 12.17.53
 
 [validation]
 risk1 = False
