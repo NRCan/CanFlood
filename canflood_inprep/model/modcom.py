@@ -87,6 +87,7 @@ class Model(ComWrkr):
     
     def __init__(self, #console runs
                  cf_fp, #control file path """ note: this could also be attached by basic.ComWrkr.__init__()"""
+                 split_key=None,#for checking monotonicy on exposure sets with duplicate events
                  **kwargs):
         
         mod_logger.info('Model.__init__ start')
@@ -95,6 +96,7 @@ class Model(ComWrkr):
         super().__init__(**kwargs) #initilzie teh baseclass
         
         self.cf_fp = cf_fp
+        self.split_key= split_key
         
         
         #attachments
@@ -979,7 +981,7 @@ class Model(ComWrkr):
     
     def check_monot(self,
                      df_raw, #event:asset like data. expectes columns as aep 
-                     split_key = None, #optional key to split hazard columns by
+                     #split_key = None, #optional key to split hazard columns by
                      aep_ser=None, event_probs = 'ari', #optional kwargs for column conversion
                      logger=None
                      ):
@@ -993,6 +995,7 @@ class Model(ComWrkr):
         #======================================================================
         
         if logger is None: logger=self.logger
+        split_key = self.split_key
         log = logger.getChild('check_monot')
         
         #======================================================================
@@ -1072,6 +1075,9 @@ class Model(ComWrkr):
         if not split_key is None:
             boolcol = df_raw.columns.str.contains(split_key)
             
+            if not boolcol.any():
+                raise Error('failed to split events by \"%s\''%split_key)
+            
             res1 = chk_func(df_raw.loc[:,boolcol], log.getChild(split_key))
             res2 = chk_func(df_raw.loc[:,~boolcol], log.getChild('no%s'%split_key))
             
@@ -1082,61 +1088,6 @@ class Model(ComWrkr):
             
         return result
             
-        
-        
-
-    def xxxcheck_expos(self, 
-                    df, 
-                    aep_ser=None,
-                    event_probs = 'ari',
-                    
-                    logger=None):
-        """"
-        todo: combine this with other setup funcs
-        """
-        if logger is None: logger=self.logger
-        log = logger.getChild('check_expos')
-        
-
-        
-        #======================================================================
-        # conversions
-        #======================================================================
-
-        #======================================================================
-        # check it
-        #======================================================================
-        
-        result = self.check_monot(df1, logger=log)
-        
-        if result:
-            log.info('ALL %i entries w/ %i events passed monoticy test'%(len(df1), len(aep_ser)))
-        
-        return 
-        
-        #======================================================================
-        # find offenders
-        #======================================================================
-        #======================================================================
-        # boolidx1 = df1.apply(lambda x: x.is_monotonic_increasing, axis=1)
-        # 
-        # boolidx2 = df1.isna().all(axis=1)
-        # 
-        # 
-        # boolidx = np.logical_and(
-        #     boolidx1, #fail monoticy test
-        #     ~boolidx2, #some real values that should have passed the test
-        #     )
-        # 
-        # if boolidx.any():
-        #     log.warning('%i (of %i) entries failed monoticity test'%(boolidx.sum(), len(boolidx)))
-        #     return False
-        # else:
-        #     log.info('%i entries w/ %i events passed monoticy test'%(len(boolidx), len(aep_ser)))
-        #     return True
-        #======================================================================
-            
-        
 
     def calc_ead(self,
                  df_raw, #xid: aep

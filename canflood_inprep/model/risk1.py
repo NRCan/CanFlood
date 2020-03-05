@@ -293,10 +293,14 @@ class Risk1(Model):
         #======================================================================
         wdf = self.data_d['expos'] #wsl
         
+        assert isinstance(wdf, pd.DataFrame)
+        assert len(wdf)==len(fdf)
+        assert len(wdf.columns) == len(aep_ser)
+        
         #check monotoncity of WSL these
-        if not self.check_monot(wdf, split_key='fail', 
+        if not self.check_monot(wdf,
                                 aep_ser = aep_ser, event_probs='aep', logger=log):
-            raise Error('non-monotonic exposure values')
+            log.warning('non-monotonic exposure values')
         
         
         #pivot these out to bids
@@ -381,22 +385,7 @@ class Risk1(Model):
         #======================================================================
         # check monotocity
         #======================================================================
-        
-        #======================================================================
-        # if not self.check_monot(
-        #     ddf.loc[:, boolcol].drop('bid', errors='ignore'),
-        #     aep_ser = aep_ser, event_probs='aep'):
-        #     raise Error('failure events failed monotoncity check')
-        # 
-        # if not self.check_monot(
-        #     ddf.loc[:, ~boolcol].drop('bid', errors='ignore'),
-        #     aep_ser = aep_ser, event_probs='aep'):
-        #     raise Error('simu events failed monotoncity check')
-        #======================================================================
-        
-        
-        
-        
+
         #======================================================================
         # adjust depths by exposure grade
         #======================================================================
@@ -515,28 +504,45 @@ if __name__ =="__main__":
     # dev data
     #==========================================================================
     #==========================================================================
-    # out_dir = os.path.join(os.getcwd(), 'risk1')
-    # tag = 'dev'
-    # cf_fp = r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\risk1\wex\CanFlood_risk1.txt'
+    # runpars_d = {
+    #     'Dev':{
+    #         'out_dir': os.path.join(os.getcwd(), 'risk1'),
+    #         'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\risk1\wex\CanFlood_risk1.txt',
+    #         }
+    #     }
     #==========================================================================
     
     #==========================================================================
-    # 20200304
+    # tutorial 2
     #==========================================================================
-    runpars_d = {
-        'TDDnrp':{
-            'out_dir':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDDnrp\risk1',
-            'cf_fp': r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDDnrp\CanFlood_TDDnrp.txt',
-             },
-        'TDDres':{
-            'out_dir':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDD_res\risk1',
-            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDD_res\CanFlood_TDDres.txt',            
-            },
-        'ICIrec':{
-            'out_dir':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\risk1',
-            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\CanFlood_ICIrec.txt',
+    runpars_d={
+        'Tut2':{
+            'out_dir':os.path.join(os.getcwd(), 'risk1', 'Tut2'),
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200305\CanFlood_Tutorial2.txt',
+            
             }
         }
+    #==========================================================================
+    # 20200304
+    #==========================================================================
+    #==========================================================================
+    # runpars_d = {
+    #     'TDDnrp':{
+    #         'out_dir':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDDnrp\risk1',
+    #         'cf_fp': r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDDnrp\CanFlood_TDDnrp.txt',
+    #          },
+    #     'TDDres':{
+    #         'out_dir':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDD_res\risk1',
+    #         'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDD_res\CanFlood_TDDres.txt',            
+    #         },
+    #     'ICIrec':{
+    #         'out_dir':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\risk1',
+    #         'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\CanFlood_ICIrec.txt',
+    #         }
+    #     }
+    #==========================================================================
+    
+    
 
     
     for tag, pars in runpars_d.items():
