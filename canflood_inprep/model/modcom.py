@@ -101,24 +101,24 @@ class Model(ComWrkr):
         self.data_d = dict() #dictionary for loaded data sets
         
         
-        #parameter setup
-        self.setup_pars2(self.cf_fp)
-        
-        
-        #check our validity tag
-        if not getattr(self, self.valid_par):
-            raise Error('control file not validated for \'%s\'. please run InputValidator'%self.valid_par)
+        #======================================================================
+        # #parameter setup
+        # self.setup_pars2(self.cf_fp)
+        # 
+        # 
+        # #check our validity tag
+        # if not getattr(self, self.valid_par):
+        #     raise Error('control file not validated for \'%s\'. please run InputValidator'%self.valid_par)
+        #======================================================================
         
 
 
         self.logger.debug('finished __init__ on Model')
         
         
-    def xxxinit_model(self, #plugin runs
+    def init_model(self, #plugin runs
                    ):
 
-        #attachments
-        self.data_d = dict() #dictionary for loaded data sets
         
         
         #parameter setup
@@ -130,6 +130,7 @@ class Model(ComWrkr):
             raise Error('control file not validated for \'%s\'. please run InputValidator'%self.valid_par)
         
         #wrap
+        self.logger.debug('finished init_modelon Model')
         
         
         
@@ -949,6 +950,10 @@ class Model(ComWrkr):
         
         return res_df.sort_index(axis=1)
     
+    #==========================================================================
+    # validators-----------
+    #==========================================================================
+    
     def check_monot(self,
                      df, logger=None
                      ):
@@ -972,6 +977,10 @@ class Model(ComWrkr):
             return False
         else:
             return True
+        
+    def check_expos(self, 
+                    df,  logger=None):
+        if logger is None: logger=self.logger
         
     def calc_ead(self,
                  df_raw, #xid: aep
@@ -1432,4 +1441,33 @@ class Model(ComWrkr):
         
         return out_fp
 
-      
+if __name__ =="__main__":
+    
+    out_dir = os.path.join(os.getcwd(), 'modcoms')
+    cf_fp = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\CanFlood_scenario1.txt' 
+    tag='dev'
+    
+    wrkr = Model(cf_fp, out_dir=out_dir, logger=mod_logger, tag=tag)
+    
+    #==========================================================================
+    # load exposure data
+    #==========================================================================
+    df = pd.read_csv(wrkr.expos)
+    
+    #==========================================================================
+    # validate it
+    #==========================================================================
+    wrkr.check_expos(df)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    

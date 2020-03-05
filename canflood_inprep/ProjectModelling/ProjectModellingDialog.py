@@ -198,7 +198,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         res_per_asset = self.checkBox_r2rpa_2.isChecked()
 
         
-        model = Risk1(cf_fp, out_dir=out_dir, logger=self.logger, tag=tag)
+        model = Risk1(cf_fp, out_dir=out_dir, logger=self.logger, tag=tag).setup()
         
         res, res_df = model.run(res_per_asset=res_per_asset)
         
@@ -237,7 +237,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #======================================================================
         # #build/run model
         #======================================================================
-        model = Dmg2(cf_fp, out_dir = out_dir, logger = self.logger, tag=tag)
+        model = Dmg2(cf_fp, out_dir = out_dir, logger = self.logger, tag=tag).setup()
         
         #run the model        
         cres_df = model.run()
@@ -275,7 +275,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #======================================================================
         # run the model
         #======================================================================
-        model = Risk2(cf_fp, out_dir=out_dir, logger=self.logger, tag=tag)
+        model = Risk2(cf_fp, out_dir=out_dir, logger=self.logger, tag=tag).setup()
         
         res_ser, res_df = model.run(res_per_asset=res_per_asset)
         

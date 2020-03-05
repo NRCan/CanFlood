@@ -90,7 +90,7 @@ class Risk1(Model):
     #==========================================================================
     # plot controls
     #==========================================================================
-    plot_fmt = '{0}'
+    plot_fmt = '{0:.2f}' #floats w/ 2 decimal
     y1lab = 'impacts'
     
     def __init__(self,
@@ -104,7 +104,15 @@ class Risk1(Model):
         #======================================================================
         # setup funcs
         #======================================================================
-        self.resname = 'risk1_%s_%s'%(self.tag, self.name)
+        
+        
+        
+        self.logger.debug('finished __init__ on Risk1')
+        
+        
+    def setup(self):
+        
+        self.init_model()
         
         self.load_data()
         
@@ -113,7 +121,12 @@ class Risk1(Model):
         """really.. should just restric to one function per asset for level1"""
         self.setup_expo()
         
-        self.logger.debug('finished __init__ on Risk1')
+        self.resname = 'risk1_%s_%s'%(self.tag, self.name)
+        
+        self.logger.debug('finished setup_data on Risk1')
+        
+        return self
+        
         
     def load_data(self): #load the data files
         log = self.logger.getChild('load_data')
@@ -304,9 +317,15 @@ class Risk1(Model):
         
         assert fdf.index.name == cid, 'bad index on fdf'
         
+        """
+        fdf.columns
+        """
         #======================================================================
         # expand
         #======================================================================
+        miss_l = set(['f0_scale', 'f0_elv']).difference(fdf.columns)
+        if len(miss_l) > 0:
+            raise Error('passed inventory missing %i columns: \n    %s'%(len(miss_l), miss_l))
 
         #get tag column names
         tag_coln_l = fdf.columns[fdf.columns.str.endswith('elv')].tolist()
@@ -362,7 +381,20 @@ class Risk1(Model):
         # expand: nothing nested
         #======================================================================
         else:
+            """
+            todo: 
+            """
+            log.info('no nested columns. using raw inventory')
             bdf = fdf.copy()
+            bdf[cid] = bdf.index #need to duplicate it
+            
+            bdf = bdf.rename(columns={'f0_scale':'fscale', 'f0_elv':'felv'})
+            
+            """
+            bdf.columns
+            
+            """
+            
             
         #set an indexer columns
         """safer to keep this index as a column also"""
@@ -372,14 +404,17 @@ class Risk1(Model):
         if not cid in bdf.columns:
             raise Error('bdf missing %s'%cid)
         
+        assert 'fscale' in bdf.columns
+        assert 'felv' in bdf.columns
+        
         #======================================================================
         # adjust fscale
         #======================================================================
-        if 'fscale' in bdf.columns:
-            boolidx = bdf['fscale'].isna()
-            if boolidx.any():
-                log.info('setting %i null fscale values to 1'%boolidx.sum())
-                bdf.loc[:, 'fscale'] = bdf['fscale'].fillna(1.0)
+
+        boolidx = bdf['fscale'].isna()
+        if boolidx.any():
+            log.info('setting %i null fscale values to 1'%boolidx.sum())
+            bdf.loc[:, 'fscale'] = bdf['fscale'].fillna(1.0)
             
         #======================================================================
         # convert asset heights to elevations
@@ -464,23 +499,25 @@ if __name__ =="__main__":
     #==========================================================================
     # dev data
     #==========================================================================
-    #==========================================================================
-    # out_dir = os.path.join(os.getcwd(), 'risk1')
-    # tag = 'dev'
-    # cf_fp = r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\risk1\wex\CanFlood_risk1.txt'
-    #==========================================================================
+    out_dir = os.path.join(os.getcwd(), 'risk1')
+    tag = 'dev'
+    cf_fp = r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\risk1\wex\CanFlood_risk1.txt'
     
     #==========================================================================
     # 20200304 ICI.rec
     #==========================================================================
-    tag = 'ICI_rec'
-    out_dir = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\model'
-    cf_fp = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\CanFlood_scenario1.txt'
+    #==========================================================================
+    # tag = 'ICI_rec'
+    # out_dir = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\model'
+    # cf_fp = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\CanFlood_scenario1.txt'
+    #==========================================================================
     
     #==========================================================================
     # execute
     #==========================================================================
     wrkr = Risk1(cf_fp, out_dir=out_dir, logger=mod_logger, tag=tag)
+    
+    wrkr.setup()
     
     res, res_df = wrkr.run(res_per_asset=True)
     
