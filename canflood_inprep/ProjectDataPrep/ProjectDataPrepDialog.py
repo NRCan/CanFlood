@@ -741,14 +741,16 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         wrkr.write_res(res_vlay, out_dir = out_dir)
         
         #update ocntrol file
-        wrkr.update_cf(
-            {'dmg_fps':(
-             {'gels':wrkr.out_fp},
-             '#\'gels\' file path set from wsamp.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
-             )
-             },
-            cf_fp
-            )
+        wrkr.update_cf({
+            'dmg_fps':(
+                {'gels':wrkr.out_fp},
+                '#\'gels\' file path set from wsamp.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                    ),
+            'parameters':(
+                {'felv':'ground'},                
+                )
+            
+                    },cf_fp)
         
         #======================================================================
         # add to map

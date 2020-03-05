@@ -286,39 +286,62 @@ class Risk2(Model):
         
 if __name__ =="__main__": 
     
-    out_dir = os.path.join(os.getcwd(), 'risk2')
-    
+    #==========================================================================
+    # run controls
+    #==========================================================================
+    ead_plot = True
+    res_per_asset = True
     #==========================================================================
     # dev data
     #=========================================================================
-    tag = 'dev'
-    cf_fp = r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\risk2\wex\CanFlood_dmg2.txt'
-    ead_plot = False
+    #==========================================================================
+    # tag = 'dev'
+    # cf_fp = r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\risk2\wex\CanFlood_dmg2.txt'
+    # out_dir = os.path.join(os.getcwd(), 'risk2')
+    #==========================================================================
+    
+    #==========================================================================
+    # tutorial 2
+    #==========================================================================
+    runpars_d={
+        'Tut2':{
+            'out_dir':os.path.join(os.getcwd(), 'risk2', 'Tut2'),
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200305\CanFlood_Tut2.txt',
+            }
+        }
+    
+    
     
     #==========================================================================
     # build/execute
     #==========================================================================
-    wrkr = Risk2(cf_fp, out_dir=out_dir, logger=mod_logger, tag=tag).setup()
-    
-    res_ser, res_df = wrkr.run()
-    
-
-    
-    #======================================================================
-    # plot
-    #======================================================================
-    if ead_plot:
-        fig = wrkr.risk_plot()
-        _ = wrkr.output_fig(fig)
+    for tag, pars in runpars_d.items():
+        cf_fp, out_dir = pars['cf_fp'], pars['out_dir']
+        log = mod_logger.getChild(tag)
+        assert os.path.exists(cf_fp)
+        
+        
+        wrkr = Risk2(cf_fp, out_dir=out_dir, logger=mod_logger, tag=tag).setup()
+        
+        res_ser, res_df = wrkr.run(res_per_asset=res_per_asset)
         
     
-    #==========================================================================
-    # output
-    #==========================================================================
-    wrkr.output_df(res_ser, '%s_%s'%(wrkr.resname, 'ttl'))
-    
-    if not res_df is None:
-        _ = wrkr.output_df(res_df, '%s_%s'%(wrkr.resname, 'passet'))
+        
+        #======================================================================
+        # plot
+        #======================================================================
+        if ead_plot:
+            fig = wrkr.risk_plot()
+            _ = wrkr.output_fig(fig)
+            
+        
+        #==========================================================================
+        # output
+        #==========================================================================
+        wrkr.output_df(res_ser, '%s_%s'%(wrkr.resname, 'ttl'))
+        
+        if not res_df is None:
+            _ = wrkr.output_df(res_df, '%s_%s'%(wrkr.resname, 'passet'))
     
 
 

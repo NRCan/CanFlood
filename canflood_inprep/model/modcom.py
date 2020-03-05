@@ -392,6 +392,10 @@ class Model(ComWrkr):
         
         log.info('finished loading %s as %s'%(dtag, str(df.shape)))
         
+
+            
+            
+        
     def load_aeps(self,#loading expo data
                    fp = None,
                    dtag = 'aeps',
@@ -684,7 +688,8 @@ class Model(ComWrkr):
         #======================================================================
         self.data_d[dtag] = df
         
-        log.info('finished loading %s as %s'%(dtag, str(df.shape)))
+        log.info('finished loading %s as %s w/ \n    min=%.2f, mean=%.2f, max=%.2f'%(
+            dtag, str(df.shape), df.min().min(), df.mean().mean(), df.max().max()))
         
         
     def load_dmgs(self,#loading any exposure type data (expos, or exlikes)
@@ -1180,6 +1185,11 @@ class Model(ComWrkr):
         #======================================================================
         # convert heights ----------
         #======================================================================
+        s = bdf.loc[:, 'felv']
+        
+        log.info('\'%s\' felv: \n    min=%.2f, mean=%.2f, max=%.2f'%(
+             self.felv, s.min(), s.mean(), s.max()))
+            
         if self.felv == 'ground':
             assert 'gels' in bdf.columns, 'missing gels column'            
             assert bdf['gels'].notna().all()
@@ -1187,7 +1197,11 @@ class Model(ComWrkr):
 
             bdf.loc[:, 'felv'] = bdf['felv'] + bdf['gels']
                 
-            log.info('converted asset ground heights to datum elevations')
+            #log.info('converted asset ground heights to datum elevations')
+            s = bdf.loc[:, 'felv']
+            
+            log.info('converted felv to \'datum\' \n    min=%.2f, mean=%.2f, max=%.2f'%(
+                 s.min(), s.mean(), s.max()))
             
         elif self.felv=='datum':
             log.debug('felv = \'%s\' no conversion'%self.felv)
@@ -1266,15 +1280,18 @@ class Model(ComWrkr):
             note these are un-nesetd assets, so counts will be larger than expected
             """
             log.warning('setting %i (of %i) negative depths to zero'%(
-                booldf.sum().sum(), len(booldf)))
+                booldf.sum().sum(), booldf.size))
             
-            ddf = ddf.where(~booldf, other=0)
+            ddf.loc[:, boolcol] = ddf.loc[:,boolcol].where(~booldf, other=0)
             
         #======================================================================
         # post checks
         #======================================================================
                 
-        assert np.array_equal(ddf.index, bdf.index)
+        assert np.array_equal(ddf.index, bdf.index)        
+        assert bid in ddf.columns
+        assert ddf.index.name == bid
+        assert np.array_equal(ddf.index.values, ddf[bid].values)
         
         #max depth
         boolidx = ddf.loc[:,boolcol].max(axis=1)>self.max_depth
@@ -1282,6 +1299,7 @@ class Model(ComWrkr):
             log.debug('\n%s'%ddf[boolidx])
             raise Error('%i (of %i) nested curves exceed max depth: %.2f. see logger'%(
                 boolidx.sum(), len(boolidx), self.max_depth))
+        
         
                 
         #======================================================================
@@ -1810,7 +1828,7 @@ class Model(ComWrkr):
         
         val_str = 'total Annualized = ' + dfmt.format(ead_tot/basev)
         
-        title = 'CanFlood \'%s\' Annualized-%s plot on %i events'%(self.name,xlab, len(dmg_ser))
+        title = 'CanFlood \'%s.%s\' Annualized-%s plot on %i events'%(self.name,self.tag, xlab, len(dmg_ser))
         
         #======================================================================
         # figure setup
@@ -2072,7 +2090,7 @@ class Model(ComWrkr):
         
 
         
-    def output_df(self, #dump some outputs
+    def xxxoutput_df(self, #dump some outputs
                       df, 
                       out_fn,
                       out_dir = None,
@@ -2087,7 +2105,8 @@ class Model(ComWrkr):
         
         assert isinstance(out_dir, str), 'unexpected type on out_dir: %s'%type(out_dir)
         assert os.path.exists(out_dir), 'requested output directory doesnot exist: \n    %s'%out_dir
-        
+        assert isinstance(df, pd.DataFrame)
+        assert df.size>0
         
         #extension check
         if not out_fn.endswith('.csv'):

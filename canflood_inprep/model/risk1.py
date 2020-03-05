@@ -111,6 +111,7 @@ class Risk1(Model):
         
         self.init_model()
         
+        self.resname = 'risk1_%s_%s'%(self.tag, self.name)
         #self.load_data()
         #======================================================================
         # load data files
@@ -128,12 +129,12 @@ class Risk1(Model):
         
         #self.setup_finv()
         
-        """really.. should just restric to one function per asset for level1"""
+
         #self.setup_expo()
         self.build_exp_finv() #build the expanded finv
         self.build_depths()
         
-        self.resname = 'risk1_%s_%s'%(self.tag, self.name)
+        
         
         self.logger.debug('finished setup_data on Risk1')
         
@@ -299,7 +300,7 @@ if __name__ =="__main__":
     runpars_d={
         'Tut2':{
             'out_dir':os.path.join(os.getcwd(), 'risk1', 'Tut2'),
-            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200305\CanFlood_Tutorial2.txt',
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200305\CanFlood_Tut2.txt',
              
             }
         }
@@ -328,6 +329,7 @@ if __name__ =="__main__":
     
     for tag, pars in runpars_d.items():
         cf_fp, out_dir = pars['cf_fp'], pars['out_dir']
+        assert os.path.exists(cf_fp)
         log = mod_logger.getChild(tag)
         #==========================================================================
         # execute
