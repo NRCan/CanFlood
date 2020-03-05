@@ -440,11 +440,11 @@ if __name__ =="__main__":
     #==========================================================================
     tag = 'ICI_rec'
       
-    out_dir = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDD_res'
+    out_dir = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDDnrp'
       
-    cf_fp = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDD_res\CanFlood_TDDres.txt'
+    cf_fp = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDDnrp\CanFlood_scenario1.txt'
       
-    finv_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\20200304\finv\TDD_res\finv_cconv_20200224_TDDres.gpkg'
+    finv_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\20200304\finv\TDD_nrp\finv_cconv_20200224_TDDnrp.gpkg'
       
       
     data_dir = r'e:\02_INFO\Golder\20200228\jill_20200302\layers'
@@ -478,7 +478,7 @@ if __name__ =="__main__":
     res_df = wrkr.run(finv_vlay, lpol_d)
     
     #convet to a vector
-    res_vlay = wrkr.vectorize(res_df)
+    #res_vlay = wrkr.vectorize(res_df)
     
     
     wrkr.check()

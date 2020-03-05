@@ -90,7 +90,7 @@ class Risk1(Model):
     #==========================================================================
     # plot controls
     #==========================================================================
-    plot_fmt = '{0:.2f}' #floats w/ 2 decimal
+    plot_fmt = '{0:.0f}' #floats w/ 2 decimal
     y1lab = 'impacts'
     
     def __init__(self,
@@ -521,35 +521,52 @@ if __name__ =="__main__":
     #==========================================================================
     
     #==========================================================================
-    # 20200304 ICI.rec
+    # 20200304
     #==========================================================================
-    tag = 'ICI_rec'
-    out_dir = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\model'
-    cf_fp = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\CanFlood_scenario1.txt'
+    runpars_d = {
+        'TDDnrp':{
+            'out_dir':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDDnrp\risk1',
+            'cf_fp': r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDDnrp\CanFlood_TDDnrp.txt',
+             },
+        'TDDres':{
+            'out_dir':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDD_res\risk1',
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDD_res\CanFlood_TDDres.txt',            
+            },
+        'ICIrec':{
+            'out_dir':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\risk1',
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\CanFlood_ICIrec.txt',
+            }
+        }
+
     
-    #==========================================================================
-    # execute
-    #==========================================================================
-    wrkr = Risk1(cf_fp, out_dir=out_dir, logger=mod_logger, tag=tag)
-    
-    wrkr.setup()
-    
-    res, res_df = wrkr.run(res_per_asset=True)
-    
-    #======================================================================
-    # plot
-    #======================================================================
-    if ead_plot:
-        fig = wrkr.risk_plot()
-        _ = wrkr.output_fig(fig)
-    
-    #==========================================================================
-    # output
-    #==========================================================================
-    wrkr.output_df(res, '%s_%s'%(wrkr.resname, 'ttl'))
-    
-    if not res_df is None:
-        _ = wrkr.output_df(res_df, '%s_%s'%(wrkr.resname, 'passet'))
+    for tag, pars in runpars_d.items():
+        cf_fp, out_dir = pars['cf_fp'], pars['out_dir']
+        log = mod_logger.getChild(tag)
+        #==========================================================================
+        # execute
+        #==========================================================================
+        wrkr = Risk1(cf_fp, out_dir=out_dir, logger=log, tag=tag)
+        
+        wrkr.setup()
+        
+        res, res_df = wrkr.run(res_per_asset=True)
+        
+        #======================================================================
+        # plot
+        #======================================================================
+        if ead_plot:
+            fig = wrkr.risk_plot()
+            _ = wrkr.output_fig(fig)
+        
+        #==========================================================================
+        # output
+        #==========================================================================
+        wrkr.output_df(res, '%s_%s'%(wrkr.resname, 'ttl'))
+        
+        if not res_df is None:
+            _ = wrkr.output_df(res_df, '%s_%s'%(wrkr.resname, 'passet'))
+            
+        log.info('finished')
     
 
     force_open_dir(out_dir)

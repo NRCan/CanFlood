@@ -241,9 +241,21 @@ if __name__ =="__main__":
     runpars_d = {
         'ICIrec':{
             'finv_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200304\finv\ICI_rec\finv_ICIrec_20200304_aoi05f.gpkg',
-            'data_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\model\risk1_ICI_rec_scenario1_passet.csv',
+            'data_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\risk1\risk1_ICIrec_scenario1_passet.csv',
             'keep_fn':'all',
             'link_coln':'xid',
+            },
+        'TDDres':{
+            'finv_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200304\finv\TDD_res\finv_cconv_20200224_TDDres.gpkg',
+            'data_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDD_res\risk1\risk1_TDDres_TDDres_passet.csv',
+            'keep_fn':'all',
+            'link_coln':'xid',
+            },
+        'TDDnrp':{
+            'finv_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200304\finv\TDD_nrp\finv_cconv_20200224_TDDnrp.gpkg',
+            'data_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDDnrp\risk1\risk1_TDDnrp_scenario1_passet.csv',
+            'keep_fn':'all',
+            'link_coln':'xid',          
             }
         
         
