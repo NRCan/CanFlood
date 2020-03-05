@@ -3,3 +3,5 @@
 *.gpkg-shm
 *.gpkg-wal
 *.pyc
+*tif.aux.xml
+*.cpython-37.pyc

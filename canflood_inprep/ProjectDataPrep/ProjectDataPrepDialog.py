@@ -29,8 +29,8 @@ from processing.core.Processing import Processing
 #sys.path.append(r'C:\IBI\_QGIS_\QGIS 3.8\apps\Python37\Lib\site-packages')
 #sys.path.append(os.path.join(sys.exec_prefix, 'Lib/site-packages'))
 
-file_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(file_dir)
+#file_dir = os.path.dirname(os.path.abspath(__file__))
+#sys.path.append(file_dir)
 
 
 """
@@ -588,6 +588,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         wrkr = WSLSampler(logger=self.logger, 
                           tag = self.tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
+                          cid=cid,
                           )
         """
         wrkr.tag
@@ -728,12 +729,13 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         wrkr = WSLSampler(logger=self.logger, 
                           tag=self.tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
+                          cid=cid,
                           )
         
         res_vlay = wrkr.run([rlay], finv, cid=cid, crs=crs, fname='gels')
         
         #check it
-        wrkr.check()
+        wrkr.dtm_check(res_vlay)
         
         #save csv results to file
         wrkr.write_res(res_vlay, out_dir = out_dir)

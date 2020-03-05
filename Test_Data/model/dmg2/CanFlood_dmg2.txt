@@ -19,10 +19,10 @@ expos = C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\dmg2\expos_dmg2_4_32.csv
 gels = 
 
 [risk_fps]
-dmgs = C:\LS\03_TOOLS\CanFlood\_wdirs\20200303\dmgs_dmg2_run1.csv
+dmgs = C:\Users\cefect\CanFlood\dmg2\dmgs__dev.csv
 exlikes = C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\dmg2\exlikes_dmg2.csv
 aeps = C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\dmg2\aeps_4_dmg2.csv
-#'dmgs' file path set from dmg2.py at 2020-03-04 11.14.06
+#'dmgs' file path set from dmg2.py at 2020-03-04 16.59.27
 
 [validation]
 risk1 = False

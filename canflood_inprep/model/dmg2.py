@@ -103,10 +103,17 @@ class Dmg2(Model):
         super().__init__(cf_fp, **kwargs) #initilzie Model
        
         self.dfuncs_d = dict() #container for damage functions
+        
+        self.logger.debug('finished __init__ on Dmg2')
+        
+    def setup(self):
         self.resname = 'dmgs_%s_%s'%(self.name, self.tag)
+        
+        
         #======================================================================
         # setup funcs
         #======================================================================
+        self.init_model()
         
         self.load_data()
     
@@ -120,7 +127,9 @@ class Dmg2(Model):
         # wrap
         #======================================================================
         
-        self.logger.debug('finished __init__ on Dmg2')
+        self.logger.debug('finished setup() on Dmg2')
+        
+        return self
         
     def load_data(self):
         log = self.logger.getChild('load_data')
@@ -629,7 +638,7 @@ if __name__ =="__main__":
     # build/execute
     #==========================================================================
     
-    wrkr = Dmg2(cf_fp, out_dir=out_dir, logger=mod_logger, tag=tag)
+    wrkr = Dmg2(cf_fp, out_dir=out_dir, logger=mod_logger, tag=tag).setup()
     
     res_df = wrkr.run()
     
