@@ -150,6 +150,8 @@ class Risk1(Model):
         
         if not self.gels == '':
             self.data_d['gels'] = pd.read_csv(self.gels)
+            
+            
         
         #======================================================================
         # #load remainders
@@ -160,147 +162,7 @@ class Risk1(Model):
         
         log.info('finished')
         
-    def run(self,
-            res_per_asset=False):
-        #======================================================================
-        # defaults
-        #======================================================================
-        log = self.logger.getChild('run')
-        #ddf_raw, finv,  = self.data_d['expos'],self.data_d['finv'] 
-        aep_ser = self.data_d['aeps']
-        cid, bid = self.cid, self.bid        
-        bdf ,ddf = self.bdf, self.ddf
-        
-        #======================================================================
-        # prechecks
-        #======================================================================
-        assert isinstance(res_per_asset, bool)
-        assert cid in ddf.columns, 'ddf missing %s'%cid
-        assert bid in ddf.columns, 'ddf missing %s'%bid
-        assert ddf.index.name == bid, 'ddf bad index'
-        
-        #identifier for depth columns
-        #dboolcol = ~ddf.columns.isin([cid, bid])
-        log.info('running on %i assets and %i events'%(len(bdf), len(ddf.columns)-2))
-        
-        #======================================================================
-        # adjust depths by exposure grade
-        #======================================================================
-        """
-        resserved for future dev
-        
-        one value per cid?
-        """
-        
 
-
-        
-        #======================================================================
-        # convert exposures to binary
-        #======================================================================
-        boolcol = ddf.columns.isin([bid, cid])
-        
-        ddf1 = ddf.loc[:, ~boolcol]
-        
-        #get relvant bids
-        booldf = pd.DataFrame(np.logical_and(
-            ddf1 > 0,#get bids w/ positive depths
-            ddf1.notna()) #real depths
-            )
-
-
-        if booldf.all().all():
-            log.warning('got all %i entries as null... no impacts'%(ddf.size))
-            raise Error('dome')
-            return
-        
-        log.info('got %i (of %i) exposures'%(booldf.sum().sum(), ddf.size))
-        
-        bidf = ddf1.where(booldf, other=0.0)
-        bidf = bidf.where(~booldf, other=1.0)
-        
-        #======================================================================
-        # scale
-        #======================================================================
-        if 'fscale' in bdf:
-            log.info('scaling binaries values by \'fscale\' column')
-            
-            
-            bidf = bidf.multiply(bdf.set_index(bid)['fscale'], axis=0)
-            
-            
-        #======================================================================
-        # drop down to worst case
-        #======================================================================
-        #reattach indexers
-        bidf1 = bidf.join(ddf.loc[:, boolcol])
-        
-        
-        cdf = bidf1.groupby(cid).max().drop(bid, axis=1)
-        """what does this do for nulls?"""
-        
-
-        #======================================================================
-        # resolve alternate impacts (per evemt)
-        #======================================================================
-        #take maximum expected value at each asset
-        if 'exlikes' in self.data_d:
-            bres_df = self.resolve_multis(cdf, self.data_d['exlikes'], aep_ser, log)
-            
-        #no duplicates. .just rename by aep
-        else:
-            bres_df = cdf.rename(columns = aep_ser.to_dict()).sort_index(axis=1)
-            
-
-
-        
-        log.info('got damages for %i events and %i assets'%(
-            len(bres_df), len(bres_df.columns)))
-        
-        #======================================================================
-        # checks
-        #======================================================================
-        #check the columns
-        assert np.array_equal(bres_df.columns.values, aep_ser.unique()), 'column name problem'
-        
-        
-        _ = self.check_monot(bres_df)
-        
-        #======================================================================
-        # totals
-        #======================================================================        
-        res_ser = self.calc_ead(bres_df.sum(axis=0).to_frame().T, logger=log).iloc[0]
-        self.res_ser = res_ser.copy() #set for risk_plot()
-        #======================================================================
-        # get ead per asset
-        #======================================================================
-        if res_per_asset:
-            res_df = self.calc_ead(bres_df, drop_tails=self.drop_tails, logger=log)
-                        
-        else:
-            res_df = None
-            
-        
-
-        log.info('finished on %i assets and %i damage cols'%(len(bres_df), len(res_ser)))
-        
-
-        #format resul series
-        res = res_ser.to_frame()
-        res.index.name = 'aep'
-        res.columns = ['$']
-        
-        #remove tails
-        if self.drop_tails:
-            res = res.iloc[1:-2,:] #slice of ends 
-            res.loc['ead'] = res_ser['ead'] #add ead back
-        
-         
-        log.info('finished')
-
-
-        return res, res_df
-    
     def setup_expo(self):
         """
         risk1 only requires an elv column
@@ -314,7 +176,7 @@ class Risk1(Model):
         log = self.logger.getChild('setup_binv')
         fdf = self.data_d['finv']
         cid, bid = self.cid, self.bid
-        
+        aep_ser = self.data_d['aeps']
         assert fdf.index.name == cid, 'bad index on fdf'
         
         """
@@ -381,21 +243,13 @@ class Risk1(Model):
         # expand: nothing nested
         #======================================================================
         else:
-            """
-            todo: 
-            """
+
             log.info('no nested columns. using raw inventory')
             bdf = fdf.copy()
             bdf[cid] = bdf.index #need to duplicate it
             
             bdf = bdf.rename(columns={'f0_scale':'fscale', 'f0_elv':'felv'})
-            
-            """
-            bdf.columns
-            
-            """
-            
-            
+
         #set an indexer columns
         """safer to keep this index as a column also"""
         bdf[bid] = bdf.index
@@ -420,7 +274,13 @@ class Risk1(Model):
         # convert asset heights to elevations
         #======================================================================
         if self.felv == 'ground':
-            assert 'gels' in bdf.columns, 'missing gels column'
+            """
+            this column is set by setup_finv()
+            """
+            assert 'gels' in bdf.columns, 'missing gels column'            
+            assert bdf['gels'].notna().all()
+
+            
             
             bdf.loc[:, 'felv'] = bdf['felv'] + bdf['gels']
                 
@@ -432,6 +292,12 @@ class Risk1(Model):
         # get depths (from wsl and elv)
         #======================================================================
         wdf = self.data_d['expos'] #wsl
+        
+        #check monotoncity of WSL these
+        if not self.check_monot(wdf, split_key='fail', 
+                                aep_ser = aep_ser, event_probs='aep', logger=log):
+            raise Error('non-monotonic exposure values')
+        
         
         #pivot these out to bids
         ddf = bdf.loc[:, [bid, cid]].join(wdf.round(self.prec), 
@@ -450,7 +316,7 @@ class Risk1(Model):
         # #check that wsl is above ground
 
         """
-        should also add this to the input validator tool
+        todo: add this to the input validator tool
         """
         boolidx = ddf.drop([bid, cid], axis=1) < 0 #True=wsl below ground
 
@@ -488,9 +354,158 @@ class Risk1(Model):
         
         return
 
+    def run(self,
+            res_per_asset=False):
+        #======================================================================
+        # defaults
+        #======================================================================
+        log = self.logger.getChild('run')
+        #ddf_raw, finv,  = self.data_d['expos'],self.data_d['finv'] 
+        aep_ser = self.data_d['aeps']
+        cid, bid = self.cid, self.bid        
+        bdf ,ddf = self.bdf, self.ddf
+        
+        #======================================================================
+        # prechecks
+        #======================================================================
+        assert isinstance(res_per_asset, bool)
+        assert cid in ddf.columns, 'ddf missing %s'%cid
+        assert bid in ddf.columns, 'ddf missing %s'%bid
+        assert ddf.index.name == bid, 'ddf bad index'
+        
+        #identifier for depth columns
+        #dboolcol = ~ddf.columns.isin([cid, bid])
+        log.info('running on %i assets and %i events'%(len(bdf), len(ddf.columns)-2))
+        
+        
+        #======================================================================
+        # check monotocity
+        #======================================================================
+        
+        #======================================================================
+        # if not self.check_monot(
+        #     ddf.loc[:, boolcol].drop('bid', errors='ignore'),
+        #     aep_ser = aep_ser, event_probs='aep'):
+        #     raise Error('failure events failed monotoncity check')
+        # 
+        # if not self.check_monot(
+        #     ddf.loc[:, ~boolcol].drop('bid', errors='ignore'),
+        #     aep_ser = aep_ser, event_probs='aep'):
+        #     raise Error('simu events failed monotoncity check')
+        #======================================================================
+        
+        
+        
+        
+        #======================================================================
+        # adjust depths by exposure grade
+        #======================================================================
+        """
+        resserved for future dev
+        
+        one value per cid?
+        """
+        #======================================================================
+        # convert exposures to binary
+        #======================================================================
+        boolcol = ddf.columns.isin([bid, cid])
+        
+        ddf1 = ddf.loc[:, ~boolcol]
+        
+        #get relvant bids
+        booldf = pd.DataFrame(np.logical_and(
+            ddf1 > 0,#get bids w/ positive depths
+            ddf1.notna()) #real depths
+            )
 
 
+        if booldf.all().all():
+            log.warning('got all %i entries as null... no impacts'%(ddf.size))
+            raise Error('dome')
+            return
+        
+        log.info('got %i (of %i) exposures'%(booldf.sum().sum(), ddf.size))
+        
+        bidf = ddf1.where(booldf, other=0.0)
+        bidf = bidf.where(~booldf, other=1.0)
+        
+        #======================================================================
+        # scale
+        #======================================================================
+        if 'fscale' in bdf:
+            log.info('scaling binaries values by \'fscale\' column')
+            bidf = bidf.multiply(bdf.set_index(bid)['fscale'], axis=0)
+            
+            
+        #======================================================================
+        # drop down to worst case
+        #======================================================================
+        #reattach indexers
+        bidf1 = bidf.join(ddf.loc[:, boolcol])
+        
+        
+        cdf = bidf1.groupby(cid).max().drop(bid, axis=1)
+        """what does this do for nulls?"""
+        
 
+        #======================================================================
+        # resolve alternate impacts (per evemt)
+        #======================================================================
+        #take maximum expected value at each asset
+        if 'exlikes' in self.data_d:
+            bres_df = self.resolve_multis(cdf, self.data_d['exlikes'], aep_ser, log)
+            
+        #no duplicates. .just rename by aep
+        else:
+            bres_df = cdf.rename(columns = aep_ser.to_dict()).sort_index(axis=1)
+            
+        log.info('got damages for %i events and %i assets'%(
+            len(bres_df), len(bres_df.columns)))
+        
+        #======================================================================
+        # checks
+        #======================================================================
+        #check the columns
+        assert np.array_equal(bres_df.columns.values, aep_ser.unique()), 'column name problem'
+        
+        
+        _ = self.check_monot(bres_df)
+        
+        #======================================================================
+        # totals
+        #======================================================================        
+        res_ser = self.calc_ead(bres_df.sum(axis=0).to_frame().T, logger=log).iloc[0]
+        self.res_ser = res_ser.copy() #set for risk_plot()
+        #======================================================================
+        # get ead per asset
+        #======================================================================
+        if res_per_asset:
+            res_df = self.calc_ead(bres_df, drop_tails=self.drop_tails, logger=log)
+                        
+        else:
+            res_df = None
+            
+        
+
+        log.info('finished on %i assets and %i damage cols'%(len(bres_df), len(res_ser)))
+        
+
+        #format resul series
+        res = res_ser.to_frame()
+        res.index.name = 'aep'
+        res.columns = ['$']
+        
+        #remove tails
+        if self.drop_tails:
+            res = res.iloc[1:-2,:] #slice of ends 
+            res.loc['ead'] = res_ser['ead'] #add ead back
+        
+         
+        log.info('finished')
+
+
+        return res, res_df
+    
 
 if __name__ =="__main__": 
     
@@ -499,18 +514,18 @@ if __name__ =="__main__":
     #==========================================================================
     # dev data
     #==========================================================================
-    out_dir = os.path.join(os.getcwd(), 'risk1')
-    tag = 'dev'
-    cf_fp = r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\risk1\wex\CanFlood_risk1.txt'
+    #==========================================================================
+    # out_dir = os.path.join(os.getcwd(), 'risk1')
+    # tag = 'dev'
+    # cf_fp = r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\risk1\wex\CanFlood_risk1.txt'
+    #==========================================================================
     
     #==========================================================================
     # 20200304 ICI.rec
     #==========================================================================
-    #==========================================================================
-    # tag = 'ICI_rec'
-    # out_dir = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\model'
-    # cf_fp = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\CanFlood_scenario1.txt'
-    #==========================================================================
+    tag = 'ICI_rec'
+    out_dir = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\model'
+    cf_fp = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\CanFlood_scenario1.txt'
     
     #==========================================================================
     # execute

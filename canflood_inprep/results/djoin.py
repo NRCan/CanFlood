@@ -41,7 +41,7 @@ else:
     #base_class = object
     from hlpr.exceptions import QError as Error
     
-from hlpr.Q import Qcoms as base_class
+from hlpr.Q import Qcoms
 
 from hlpr.Q import *
 from hlpr.basic import *
@@ -50,44 +50,39 @@ from hlpr.basic import *
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Djoiner(base_class):
+class Djoiner(Qcoms):
 
     
     def __init__(self,
-                 logger, tag='test',
+                 **kwargs
                  ):
         
         """inherited by the dialog.
         init is not called during the plugin"""
-        logger.info('simple wrapper inits')
+        mod_logger.info('simple wrapper inits')
         
-        #=======================================================================
-        # attach inputs
-        #=======================================================================
-        self.logger = logger.getChild('Djoiner')
-
-        self.tag = tag
 
         
-        super().__init__() #initilzie teh baseclass
+        super().__init__(**kwargs) #initilzie teh baseclass
         
         self.logger.info('init finished')
         
         
-    def djoinRun(self,
+    def run(self,#join a vectorlay to a data frame from a key
               vlay_raw, #layer to join csv to (finv)
               data_fp, #filepath to tabular data
               link_coln, #linking column/field name
               keep_fnl = 'all', #list of field names to keep from the vlay (or 'all' to keep all)
               layname = None,
               tag = None,
-              
-              ): #join a vectorlay to a data frame from a key
+              logger = None,
+              ): 
         
         #=======================================================================
         # defaults
         #=======================================================================
-        log = self.logger.getChild('djoin')
+        if logger is None: logger = self.logger
+        log = logger.getChild('djoin')
         if tag is None: tag = self.tag
 
 
@@ -225,37 +220,68 @@ class Djoiner(base_class):
 
 if __name__ =="__main__": 
     print('start')
-    out_dir = os.getcwd()
+    out_dir = os.path.join(os.getcwd(), 'djoin')
     
     #==========================================================================
-    # load layers
+    # dev data
     #==========================================================================
-    finv_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\20200225\finv_cconv_20200224_aoiT4.gpkg'
+    #==========================================================================
+    # data_d = {
+    #     'cconv':(
+    #         r'C:\LS\03_TOOLS\CanFlood\_ins\20200225\finv_cconv_20200224_aoiT4.gpkg',
+    #         r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200224\scenario1_risk_passet.csv'
+    #         )
+    #     
+    #     }
+    #==========================================================================
     
-    """
-    fid    xid    f0_tag    f0_scale    f0_cap    f0_elv    f1_cap    f1_elv    f1_scale    f1_tag    f3_cap    f3_elv    f3_scale    f3_tag    zid    fclass    sclass    gel    buck_id
-
-    
-    """
-    vlay_raw = load_vlay(finv_fp)
-    
-    data_fp = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200224\scenario1_risk_passet.csv'
+    #==========================================================================
+    # 20200304
+    #==========================================================================
+    runpars_d = {
+        'ICIrec':{
+            'finv_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200304\finv\ICI_rec\finv_ICIrec_20200304_aoi05f.gpkg',
+            'data_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\model\risk1_ICI_rec_scenario1_passet.csv',
+            'keep_fn':'all',
+            'link_coln':'xid',
+            }
+        
+        
+        }
     
     #==========================================================================
     # execute
     #==========================================================================
-    wrkr = Djoiner(mod_logger)
+    wrkr = Djoiner(logger=mod_logger, out_dir=out_dir)
     
-    res_vlay = wrkr.djoinRun(
-        vlay_raw, data_fp,'xid', tag='CanFlood',
-        keep_fnl=['fclass', 'xid', 'sclass'])
+    for tag, pars_d in runpars_d.items():
+        log = mod_logger.getChild(tag)
+        vlay_raw = load_vlay(pars_d['finv_fp'])
+        
+        """
+                      vlay_raw, #layer to join csv to (finv)
+              data_fp, #filepath to tabular data
+              link_coln, #linking column/field name
+              keep_fnl = 'all', #list of field names to keep from the vlay (or 'all' to keep all)
+        """
+        
+        res_vlay = wrkr.run(
+            vlay_raw, 
+            pars_d['data_fp'],pars_d['link_coln'], tag=tag,
+            keep_fnl=pars_d['keep_fn'],
+            logger=log)
+        
+        #==========================================================================
+        # save results
+        #==========================================================================
+        ofp = os.path.join(out_dir, '%s.gpkg'%res_vlay.name())
+        vlay_write(res_vlay, ofp, overwrite=True)
+        
+        log.info('finished')    
+        
+        
     
-    #==========================================================================
-    # save results
-    #==========================================================================
-    vlay_write(res_vlay, 
-               os.path.join(os.getcwd(), '%s.gpkg'%res_vlay.name()),
-               overwrite=True)    
+    force_open_dir(out_dir)
     
     print('finished')
     

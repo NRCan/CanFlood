@@ -588,6 +588,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         wrkr = WSLSampler(logger=self.logger, 
                           tag = self.tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
+                          cid=cid,
                           )
         """
         wrkr.tag
@@ -728,12 +729,13 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         wrkr = WSLSampler(logger=self.logger, 
                           tag=self.tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
+                          cid=cid,
                           )
         
         res_vlay = wrkr.run([rlay], finv, cid=cid, crs=crs, fname='gels')
         
         #check it
-        wrkr.check()
+        wrkr.dtm_check(res_vlay)
         
         #save csv results to file
         wrkr.write_res(res_vlay, out_dir = out_dir)
