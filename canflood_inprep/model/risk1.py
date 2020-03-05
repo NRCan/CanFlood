@@ -5,12 +5,6 @@ Created on Feb. 27, 2020
 
 impact lvl 1 model
 '''
-
-
-#==========================================================================
-# logger setup-----------------------
-#==========================================================================
-
     
 #==============================================================================
 # imports---------------------------
@@ -40,7 +34,7 @@ else:
 
     from hlpr.exceptions import QError as Error
 
-from hlpr.Q import *
+#from hlpr.Q import *
 from hlpr.basic import *
 from model.modcom import Model
 
