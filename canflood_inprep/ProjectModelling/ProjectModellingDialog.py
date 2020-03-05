@@ -19,7 +19,7 @@ from qgis.PyQt.QtWidgets import QAction, QFileDialog, QListWidget
 
 #from .canFlood_inPrep_dialog import CanFlood_inPrepDialog
 
-from qgis.core import QgsProject, Qgis, QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest
+
 
 # User defined imports
 from qgis.core import *
@@ -29,13 +29,13 @@ import processing
 from processing.core.Processing import Processing
 
 
-sys.path.append(r'C:\IBI\_QGIS_\QGIS 3.8\apps\Python37\Lib\site-packages')
+#sys.path.append(r'C:\IBI\_QGIS_\QGIS 3.8\apps\Python37\Lib\site-packages')
 #sys.path.append(os.path.join(sys.exec_prefix, 'Lib/site-packages'))
 import numpy as np
 import pandas as pd
 
-file_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(file_dir)
+#file_dir = os.path.dirname(os.path.abspath(__file__))
+#sys.path.append(file_dir)
 
 #==============================================================================
 # custom imports 
@@ -198,7 +198,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         res_per_asset = self.checkBox_r2rpa_2.isChecked()
 
         
-        model = Risk1(cf_fp, out_dir=out_dir, logger=self.logger, tag=tag)
+        model = Risk1(cf_fp, out_dir=out_dir, logger=self.logger, tag=tag).setup()
         
         res, res_df = model.run(res_per_asset=res_per_asset)
         
@@ -237,7 +237,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #======================================================================
         # #build/run model
         #======================================================================
-        model = Dmg2(cf_fp, out_dir = out_dir, logger = self.logger, tag=tag)
+        model = Dmg2(cf_fp, out_dir = out_dir, logger = self.logger, tag=tag).setup()
         
         #run the model        
         cres_df = model.run()
@@ -275,7 +275,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #======================================================================
         # run the model
         #======================================================================
-        model = Risk2(cf_fp, out_dir=out_dir, logger=self.logger, tag=tag)
+        model = Risk2(cf_fp, out_dir=out_dir, logger=self.logger, tag=tag).setup()
         
         res_ser, res_df = model.run(res_per_asset=res_per_asset)
         

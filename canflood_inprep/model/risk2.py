@@ -136,14 +136,22 @@ class Risk2(Model):
         #init the baseclass
         super().__init__(cf_fp, **kwargs) #initilzie Model
         
+        self.logger.debug('finished __init__ on Risk')
+        
+        
+    def setup(self):
         #======================================================================
         # setup funcs
         #======================================================================
+        self.init_model()
+        
         self.resname = 'risk2_%s_%s'%(self.tag, self.name)
         
         self.setup_data()
         
-        self.logger.debug('finished __init__ on Risk')
+        self.logger.debug('finished setup() on Risk2')
+        
+        return self
         
         
     def setup_data(self):
@@ -275,7 +283,7 @@ if __name__ =="__main__":
     #==========================================================================
     # build/execute
     #==========================================================================
-    wrkr = Risk2(cf_fp, out_dir=out_dir, logger=mod_logger)
+    wrkr = Risk2(cf_fp, out_dir=out_dir, logger=mod_logger).setup()
     
     res_ser, res_df = wrkr.run()
     

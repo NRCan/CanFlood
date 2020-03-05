@@ -312,8 +312,18 @@ class WSLSampler(Qcoms):
         
         return finv
     
-    def check(self):
-        pass
+    def dtm_check(self, vlay):
+        
+        log = self.logger.getChild('dtm_check')
+        
+        df = vlay_get_fdf(vlay)
+        
+        boolidx = df.isna()
+        if boolidx.any().any():
+            log.error('got some nulls')
+        
+        log.info('passed checks')
+        
         #======================================================================
         # #check results
         #======================================================================
@@ -323,7 +333,11 @@ class WSLSampler(Qcoms):
         
         #report on number of nulls
         
-    def write_res(self, vlay,
+    def check(self):
+        pass
+        
+    def write_res(self, 
+                  vlay,
               out_dir = None, #directory for puts
               names_d = None, #names conversion
               rname_l = None,

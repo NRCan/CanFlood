@@ -25,6 +25,6 @@ aeps =
 
 [validation]
 risk1 = False
-imp2 = False
+dmg2 = False
 risk2 = False
 risk3 = False
