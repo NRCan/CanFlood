@@ -29,8 +29,8 @@ from processing.core.Processing import Processing
 #sys.path.append(r'C:\IBI\_QGIS_\QGIS 3.8\apps\Python37\Lib\site-packages')
 #sys.path.append(os.path.join(sys.exec_prefix, 'Lib/site-packages'))
 
-file_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(file_dir)
+#file_dir = os.path.dirname(os.path.abspath(__file__))
+#sys.path.append(file_dir)
 
 
 """
