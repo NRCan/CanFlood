@@ -85,6 +85,8 @@ class Risk1(Model):
         
         }
     
+    group_cnt = 2
+    
 
     
     #==========================================================================
@@ -101,11 +103,6 @@ class Risk1(Model):
         #init the baseclass
         super().__init__(cf_fp, **kwargs) #initilzie Model
         
-        #======================================================================
-        # setup funcs
-        #======================================================================
-        
-        
         
         self.logger.debug('finished __init__ on Risk1')
         
@@ -114,249 +111,34 @@ class Risk1(Model):
         
         self.init_model()
         
-        self.load_data()
-        
-        self.setup_finv()
-        
-        """really.. should just restric to one function per asset for level1"""
-        self.setup_expo()
-        
         self.resname = 'risk1_%s_%s'%(self.tag, self.name)
+        #self.load_data()
+        #======================================================================
+        # load data files
+        #======================================================================
+        self.load_finv()
+        self.load_aeps()
+        self.load_expos(dtag='expos')
+        
+        if not self.exlikes == '':
+            self.load_exlikes()
+        
+        if self.felv == 'ground':
+            self.load_gels()
+            self.add_gels()
+        
+        #self.setup_finv()
+        
+
+        #self.setup_expo()
+        self.build_exp_finv() #build the expanded finv
+        self.build_depths()
+        
+        
         
         self.logger.debug('finished setup_data on Risk1')
         
         return self
-        
-        
-    def load_data(self): #load the data files
-        log = self.logger.getChild('load_data')
-        cid = self.cid
-        #======================================================================
-        # #load exposure data
-        #======================================================================
-        ddf = pd.read_csv(self.expos, index_col=None)
-        self.data_d['expos'] = ddf.copy()
-        
-        #check it
-        assert cid in ddf.columns, 'expos missing index column \"%s\''%cid
-        
-        #clean it
-        ddf = ddf.set_index(cid, drop=True).sort_index(axis=1).sort_index(axis=0)
-        
-        #======================================================================
-        # load finv
-        #======================================================================
-        self.data_d['finv'] = pd.read_csv(self.finv, index_col=None)
-        
-        if not self.gels == '':
-            self.data_d['gels'] = pd.read_csv(self.gels)
-            
-            
-        
-        #======================================================================
-        # #load remainders
-        #======================================================================
-        
-        self.load_risk_data(ddf)
-        
-        
-        log.info('finished')
-        
-
-    def setup_expo(self):
-        """
-        risk1 only requires an elv column
-        
-        todo: consolidate this with modcom.setup_expo_data()
-        
-        """
-        #======================================================================
-        # defaults
-        #======================================================================
-        log = self.logger.getChild('setup_binv')
-        fdf = self.data_d['finv']
-        cid, bid = self.cid, self.bid
-        aep_ser = self.data_d['aeps']
-        assert fdf.index.name == cid, 'bad index on fdf'
-        
-        """
-        fdf.columns
-        """
-        #======================================================================
-        # expand
-        #======================================================================
-        miss_l = set(['f0_scale', 'f0_elv']).difference(fdf.columns)
-        if len(miss_l) > 0:
-            raise Error('passed inventory missing %i columns: \n    %s'%(len(miss_l), miss_l))
-
-        #get tag column names
-        tag_coln_l = fdf.columns[fdf.columns.str.endswith('elv')].tolist()
-        
-        assert len(tag_coln_l) > 0, 'no \'elv\' columns found in inventory'
-        
-        assert tag_coln_l[0] == 'f0_elv', 'expected first tag column to be \'f0_elv\''
-        
-        #get nested prefixes
-        prefix_l = [coln[:2] for coln in tag_coln_l]
-        
-        #======================================================================
-        # expand: nested entries
-        #======================================================================
-        if len(prefix_l) > 1:
-        
-            #loop and collected nests
-            bdf = None
-            
-            for prefix in prefix_l:
-                #identify prefix columns
-                pboolcol = fdf.columns.str.startswith(prefix) #columns w/ prefix
-                
-                assert pboolcol.sum() <= 4, 'expects 4 columns w/ prefix %s'%prefix
-                assert pboolcol.sum() >= 1, 'expects at least 1 w/ prefix %s'%prefix
-                
-                #get slice and clean
-                df = fdf.loc[:, pboolcol].dropna(axis=0, how='all').sort_index(axis=1)
-                
-                #get clean column names
-                
-                
-                df.columns = df.columns.str.replace('%s_'%prefix, 'f')
-                df = df.reset_index()
-                
-                #add to main
-                if bdf is None:
-                    bdf = df
-                else:
-                    bdf = bdf.append(df, ignore_index=True, sort=False)
-                            
-                log.info('for \"%s\' got %s'%(prefix, str(df.shape)))
-                
-                
-            #add back in other needed columns
-            boolcol = fdf.columns.isin(['gels']) #additional columns to pivot out
-            if boolcol.any(): #if we are only linking in gels, these may not exist
-                bdf = bdf.merge(fdf.loc[:, boolcol], on=cid, how='left',validate='m:1')
-            
-            log.info('expanded inventory from %i nest sets %s to finv %s'%(
-                len(prefix_l), str(fdf.shape), str(bdf.shape)))
-        #======================================================================
-        # expand: nothing nested
-        #======================================================================
-        else:
-
-            log.info('no nested columns. using raw inventory')
-            bdf = fdf.copy()
-            bdf[cid] = bdf.index #need to duplicate it
-            
-            bdf = bdf.rename(columns={'f0_scale':'fscale', 'f0_elv':'felv'})
-
-        #set an indexer columns
-        """safer to keep this index as a column also"""
-        bdf[bid] = bdf.index
-        bdf.index.name=bid
-        
-        if not cid in bdf.columns:
-            raise Error('bdf missing %s'%cid)
-        
-        assert 'fscale' in bdf.columns
-        assert 'felv' in bdf.columns
-        
-        #======================================================================
-        # adjust fscale
-        #======================================================================
-
-        boolidx = bdf['fscale'].isna()
-        if boolidx.any():
-            log.info('setting %i null fscale values to 1'%boolidx.sum())
-            bdf.loc[:, 'fscale'] = bdf['fscale'].fillna(1.0)
-            
-        #======================================================================
-        # convert asset heights to elevations
-        #======================================================================
-        if self.felv == 'ground':
-            """
-            this column is set by setup_finv()
-            """
-            assert 'gels' in bdf.columns, 'missing gels column'            
-            assert bdf['gels'].notna().all()
-
-            
-            
-            bdf.loc[:, 'felv'] = bdf['felv'] + bdf['gels']
-                
-            log.info('converted asset ground heights to datum elevations')
-        else:
-            log.debug('felv = \'%s\' no conversion'%self.felv)
-            
-        #======================================================================
-        # get depths (from wsl and elv)
-        #======================================================================
-        wdf = self.data_d['expos'] #wsl
-        
-        assert isinstance(wdf, pd.DataFrame)
-        assert len(wdf)==len(fdf)
-        assert len(wdf.columns) == len(aep_ser)
-        
-        #check monotoncity of WSL these
-        if not self.check_monot(wdf,
-                                aep_ser = aep_ser, event_probs='aep', logger=log):
-            log.warning('non-monotonic exposure values')
-        
-        
-        #pivot these out to bids
-        ddf = bdf.loc[:, [bid, cid]].join(wdf.round(self.prec), 
-                                          on=cid
-                                          ).set_index(bid, drop=False)
-               
-        #loop and subtract to get depths
-        boolcol = ~ddf.columns.isin([cid, bid]) #columns w/ depth values
-        
-        for coln in ddf.columns[boolcol]:
-            ddf.loc[:, coln] = (ddf[coln] - bdf['felv']).round(self.prec)
-            
-        #log.info('converted wsl (min/max/avg %.2f/%.2f/%.2f) to depths (min/max/avg %.2f/%.2f/%.2f)'%( ))
-        log.debug('converted wsl to depth %s'%str(ddf.shape))
-        
-        # #check that wsl is above ground
-
-        """
-        todo: add this to the input validator tool
-        """
-        boolidx = ddf.drop([bid, cid], axis=1) < 0 #True=wsl below ground
-
-        if boolidx.any().any():
-            msg = 'got %i (of %i) wsl below ground'%(boolidx.sum().sum(), len(boolidx))
-            if self.ground_water:
-                raise Error(msg)
-            else:
-                log.warning(msg)
-        
-        #======================================================================
-        # wrap
-        #======================================================================
-        #attach frames
-        self.bdf, self.ddf = bdf, ddf
-        
-        log.debug('finished')
-        
-        #======================================================================
-        # check aeps
-        #======================================================================
-        if 'aeps' in self.pars['risk_fps']:
-            aep_fp = self.pars['risk_fps'].get('aeps')
-            
-            if not os.path.exists(aep_fp):
-                log.warning('aep_fp does not exist... skipping check')
-            else:
-                aep_data = pd.read_csv(aep_fp)
-                
-                miss_l = set(aep_data.columns).difference(wdf.columns)
-                if len(miss_l) > 0:
-                    raise Error('exposure file does not match aep data: \n    %s'%miss_l)
-            
-
-        
-        return
 
     def run(self,
             res_per_asset=False):
@@ -518,8 +300,8 @@ if __name__ =="__main__":
     runpars_d={
         'Tut2':{
             'out_dir':os.path.join(os.getcwd(), 'risk1', 'Tut2'),
-            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200305\CanFlood_Tutorial2.txt',
-            
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200305\CanFlood_Tut2.txt',
+             
             }
         }
     #==========================================================================
@@ -547,11 +329,12 @@ if __name__ =="__main__":
     
     for tag, pars in runpars_d.items():
         cf_fp, out_dir = pars['cf_fp'], pars['out_dir']
+        assert os.path.exists(cf_fp)
         log = mod_logger.getChild(tag)
         #==========================================================================
         # execute
         #==========================================================================
-        wrkr = Risk1(cf_fp, out_dir=out_dir, logger=log, tag=tag)
+        wrkr = Risk1(cf_fp, out_dir=out_dir, logger=log, tag=tag, split_key='fail')
         
         wrkr.setup()
         

@@ -128,7 +128,7 @@ class ComWrkr(object): #common methods for all classes
                       out_fn,
                       out_dir = None,
                       overwrite=None,
-                      write_index=False,
+                      write_index=True,
             ):
         #======================================================================
         # defaults
@@ -167,7 +167,7 @@ class ComWrkr(object): #common methods for all classes
         #======================================================================
         df.to_csv(out_fp, index=write_index)
         
-        log.info('wrote to %s to file: \n    %s'%(str(df.shape), out_fp))
+        log.info('wrote to %s to filezzz: \n    %s'%(str(df.shape), out_fp))
         
         self.out_fp = out_fp #set for other methods
         

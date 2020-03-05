@@ -63,6 +63,10 @@ class Dmg2(Model):
              'curves':{'ext':('.xls',)},
              'expos':{'ext':('.csv',)},
                     },
+        'risk_fps':{
+             'aeps':{'ext':('.csv',)}, #only required for checks
+                    },
+             
         'validation':{
             'dmg2':{'type':bool}
                     }
@@ -74,25 +78,9 @@ class Dmg2(Model):
                     }
                     }
     
+    group_cnt = 4
 
-    
-    #expected data properties
-    #==========================================================================
-    # exp_dprops = {'curves':{'ext':'.xls'},
-    #                'expos':{'ext':'.csv', 'colns':[]},
-    #                 'gels':{'ext':'.csv', 'colns':[]},
-    #                 'finv':{'ext':'.csv', 'colns':['f0_tag', 'f0_scale', 'f0_cap', 'f0_elv']},
-    #                 }
-    # 
-    # opt_dfiles = ['gels'] #optional data files
-    #==========================================================================
-    
-    #==========================================================================
-    # exp_pars = {'parameters':list(),
-    #               'dmg_fps':['curves','expos', 'gels', 'finv']}
-    #==========================================================================
-    
-    #dirname = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+
     
     def __init__(self,
                  cf_fp,
@@ -104,24 +92,48 @@ class Dmg2(Model):
        
         self.dfuncs_d = dict() #container for damage functions
         
+        #update the inventory expectations
+        self.finv_exp_d = {**self.finv_exp_d,
+                                   **{'f1_tag':{'type':np.object},
+                                      }
+                           }
+        
         self.logger.debug('finished __init__ on Dmg2')
         
     def setup(self):
-        self.resname = 'dmgs_%s_%s'%(self.name, self.tag)
+        
         
         
         #======================================================================
         # setup funcs
         #======================================================================
         self.init_model()
+        self.resname = 'dmgs_%s_%s'%(self.name, self.tag)
         
-        self.load_data()
+        #self.load_data()
+        self.load_finv()
+        self.load_aeps()
+        self.load_expos()
     
+        self.data_d['curves'] = pd.read_excel(self.curves, sheet_name=None, header=None, index_col=None)
+        
+        if self.felv == 'ground':
+            self.load_gels()
+            self.add_gels()
+        
         self.setup_dfuncs(self.data_d['curves'])
         
-        self.setup_finv()
+        #self.setup_finv()
         
-        self.setup_expo_data()
+        
+        #self.setup_expo_data()
+        self.build_exp_finv() #build the expanded finv
+        self.build_depths()
+        
+        #======================================================================
+        # checks
+        #======================================================================
+        self.check_ftags()
         
         #======================================================================
         # wrap
@@ -130,20 +142,7 @@ class Dmg2(Model):
         self.logger.debug('finished setup() on Dmg2')
         
         return self
-        
-    def load_data(self):
-        log = self.logger.getChild('load_data')
-        
-        self.data_d['curves'] = pd.read_excel(self.curves, sheet_name=None, header=None, index_col=None)
-        self.data_d['expos'] = pd.read_csv(self.expos)
-        self.data_d['finv'] = pd.read_csv(self.finv)
-        
-        if not self.gels == '':
-            self.data_d['gels'] = pd.read_csv(self.gels)
-        
-        log.info('finished')
-
- 
+         
     def setup_dfuncs(self, # build curve workers
                  df_d, #{tab name: raw curve data
                  ):
@@ -173,9 +172,27 @@ class Dmg2(Model):
         log.info('finishe building %i curves \n    %s'%(
             len(self.dfuncs_d), list(self.dfuncs_d.keys())))
         
+    def check_ftags(self):
+        fdf = self.data_d['finv']
         
+        #check all the tags are in the dfunc
+        
+        tag_boolcol = fdf.columns.str.contains('tag')
+        
+        f_ftags = pd.Series(pd.unique(fdf.loc[:, tag_boolcol].values.ravel())
+                            ).dropna().to_list()
 
+        c_ftags = list(self.dfuncs_d.keys())
         
+        miss_l = set(f_ftags).difference(c_ftags)
+        
+        assert len(miss_l) == 0, '%i ftags in the finv not in the curves: \n    %s'%(
+            len(miss_l), miss_l)
+        
+        
+        #set this for later
+        self.f_ftags = f_ftags
+
     def run(self, #main runner fucntion
             ):
         #======================================================================
@@ -202,7 +219,7 @@ class Dmg2(Model):
         #======================================================================
         # checks
         #======================================================================
-        cid = self.cid
+
         fdf = self.data_d['finv']
         
         miss_l = set(fdf.index.values).symmetric_difference(cres_df.index.values)
@@ -210,18 +227,10 @@ class Dmg2(Model):
         assert len(miss_l) == 0, 'result inventory mismatch'
         assert np.array_equal(fdf.index, cres_df.index), 'index mismatch'
         
-        
-        
-        """handle outputs with the dialog.
-        for external runs, user can use output method
-        #======================================================================
-        # output
-        #======================================================================
-        self.output(cres_df, 'dmg_results')"""
-
-        
-        
-        log.info('finished')
+        log.info('maxes:\n%s'%(
+            cres_df.max()))
+        log.info('finished w/ %s and TtlDmg = %.2f'%(
+            str(cres_df.shape), cres_df.sum().sum()))
         
         return cres_df
         
@@ -236,6 +245,11 @@ class Dmg2(Model):
         bdf ,ddf = self.bdf, self.ddf
         """ddf is appending _1 to column names"""
         cid, bid = self.cid, self.bid
+        
+        
+        assert bid in ddf.columns
+        assert ddf.index.name == bid
+        assert np.array_equal(ddf.index.values, ddf[bid].values)
         
         #identifier for depth columns
         dboolcol = ~ddf.columns.isin([cid, bid])
@@ -266,7 +280,6 @@ class Dmg2(Model):
         
         if not vboolidx.any():
             log.warning('no valid depths!')
-            """not sure what to return here"""
             return None
         
         #get tags w/ depths
@@ -299,9 +312,11 @@ class Dmg2(Model):
         
         
         for indxr, ftag in enumerate(valid_tags):
+
             # update progress variable
             self.progress = math.ceil((100.0 * valid_tags_count) / len_valid_tags)
             valid_tags_count += 1
+            
             log = self.logger.getChild('run.%s'%ftag)
             
             
@@ -310,14 +325,21 @@ class Dmg2(Model):
                 bdf['ftag'] == ftag, #with the right ftag
                 vboolidx) #and in the valid set
             
-            log.info('(%i/%i) calculating \'%s\' w/ %i assets'%(
-                indxr+1, len(valid_tags), ftag, boolidx.sum()))
+            assert boolidx.any()
+            
+            log.info('(%i/%i) calculating \'%s\' w/ %i assets (of %i)'%(
+                indxr+1, len(valid_tags), ftag, boolidx.sum(), len(boolidx)))
+            
             log.info('%i progress'%(self.progress))
             #==================================================================
             # calc damage by tag.depth
             #==================================================================
             #get these depths
             tddf = ddf.loc[boolidx, :]
+            
+            """
+            todo: add check for max depth to improve performance
+            """
             
             deps_ar = pd.Series(np.unique(np.ravel(tddf.loc[:, dboolcol].values))
                                 ).dropna().values
@@ -488,10 +510,7 @@ class Dmg2(Model):
              },
             cf_fp = cf_fp
             )
-                
-                
-
-        
+                   
 class DFunc(object, 
             ): #damage function
     
@@ -627,28 +646,50 @@ class DFunc(object,
 
 if __name__ =="__main__": 
     
-    out_dir = os.path.join(os.getcwd(), 'dmg2')
-    tag='dev'
+
     #==========================================================================
     # dev data
     #=========================================================================
-    cf_fp = r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\dmg2\CanFlood_dmg2.txt'
+    #==========================================================================
+    # out_dir = os.path.join(os.getcwd(), 'dmg2')
+    # tag='dev'
+    # 
+    # cf_fp = r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\dmg2\CanFlood_dmg2.txt'
+    #==========================================================================
+    
+    #==========================================================================
+    # tutorial 2
+    #==========================================================================
+    runpars_d={
+        'Tut2':{
+            'out_dir':os.path.join(os.getcwd(), 'dmg2', 'Tut2'),
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200305\CanFlood_Tut2.txt',
+             
+            }
+        }
     
     #==========================================================================
     # build/execute
     #==========================================================================
-    
-    wrkr = Dmg2(cf_fp, out_dir=out_dir, logger=mod_logger, tag=tag).setup()
-    
-    res_df = wrkr.run()
-    
-    #==========================================================================
-    # output
-    #==========================================================================
-    
-    out_fp = wrkr.output_df(res_df, wrkr.resname)
-    
-    wrkr.upd_cf()
+    for tag, pars in runpars_d.items():
+        cf_fp, out_dir = pars['cf_fp'], pars['out_dir']
+        log = mod_logger.getChild(tag)
+        assert os.path.exists(cf_fp)
+        
+        wrkr = Dmg2(cf_fp, out_dir=out_dir, logger=log, tag=tag).setup()
+        
+        res_df = wrkr.run()
+        
+        if res_df is None:
+            log.warning('skipping')
+            continue
+        #==========================================================================
+        # output
+        #==========================================================================
+        
+        out_fp = wrkr.output_df(res_df, wrkr.resname)
+        
+        wrkr.upd_cf()
 
     force_open_dir(out_dir)
 
