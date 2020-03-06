@@ -331,7 +331,7 @@ class RFDAconv(Qcoms):
                 #======================================================================
                 tag = '%s_%s'%(cnp, ctype)
                 dcurve_d = {'tag':tag,
-                        'desc':'rfda converted and combined w/ bsmt_ht = %.2f'%bsmt_ht,
+                        'desc':'rfda converted and combined w/ bsmt_ht = %.2f, M+B '%bsmt_ht,
                         'source':'Alberta (2014)',
                         'location':'Alberta',
                         'date':2014,
@@ -345,9 +345,9 @@ class RFDAconv(Qcoms):
                 res_d[tag] = {**dcurve_d, **res_ser.to_dict()}
                 
                 if ctype == 'S':
-                    res_bm_S_d[cnp] = (dcurve_d, res_ser)
+                    res_bm_S_d[cnp] = res_ser
                 elif ctype == 'C':
-                    res_bm_C_d[cnp] = (dcurve_d, res_ser)
+                    res_bm_C_d[cnp] = res_ser
                 else:raise Error('bad ctype')
                 
                 
@@ -356,8 +356,30 @@ class RFDAconv(Qcoms):
         #======================================================================
         # create combined mf+bsmt+S+C
         #======================================================================
-        for cnp, (Sdcd, Sser) in res_bm_S_d.items():
-            C_d = res_bm_C_d[cnp]
+        for cnp, Sser in res_bm_S_d.items():
+            Cser = res_bm_C_d[cnp]
+            
+            assert np.array_equal(Sser.index, Cser.index), 'index mismatch'
+            assert not cnp in res_d, 'tag already taken'
+            
+            #==================================================================
+            # cpombine
+            #==================================================================
+            res_ser = Cser + Sser
+            
+            dcurve_d = {'tag':cnp,
+                        'desc':'rfda converted and combined w/ bsmt_ht = %.2f, BC+BS+MC+MS'%bsmt_ht,
+                        'source':'Alberta (2014)',
+                        'location':'Alberta',
+                        'date':2014,
+                        'vuln_units':'$CAD/m2',
+                        'dep_units':'m',
+                        'scale':'occupied space area',
+                        'ftype':'depth-damage',
+                        'depth':'damage'}
+            
+            res_d[cnp] = {**dcurve_d, **res_ser.to_dict()}
+            
             
         
         #==============================================================================

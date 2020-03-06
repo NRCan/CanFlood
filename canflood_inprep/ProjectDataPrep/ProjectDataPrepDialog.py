@@ -264,7 +264,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             
         self.pushButton_wd_OthRf_cv.clicked.connect(browse_curves)
             
-        self.mMapLayerComboBox_OthR_rinv.setFilters(QgsMapLayerProxyModel.PointsLayer)
+        self.mMapLayerComboBox_OthR_rinv.setFilters(QgsMapLayerProxyModel.PointLayer)
         
         self.pushButton_OthRfda.clicked.connect(self.run_rfda)
 
@@ -1038,7 +1038,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         if os.path.exists(crv_fp):
             df_raw = pd.read_excel(crv_fp, header=None)
             
-            df_d = wrkr.to_curveset(df_raw, bsmt_ht=1.8, logger=log)
+            df_d = wrkr.to_curveset(df_raw, bsmt_ht=bsmt_ht, logger=log)
             
             basefn = os.path.splitext(os.path.split(crv_fp)[1])[0]
             
