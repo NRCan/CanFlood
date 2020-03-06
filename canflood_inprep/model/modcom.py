@@ -93,7 +93,7 @@ class Model(ComWrkr):
 
     
     
-    def __init__(self, #console runs
+    def __init__(self,
                  cf_fp, #control file path """ note: this could also be attached by basic.ComWrkr.__init__()"""
                  split_key=None,#for checking monotonicy on exposure sets with duplicate events
                  **kwargs):
@@ -110,17 +110,7 @@ class Model(ComWrkr):
         #attachments
         self.data_d = dict() #dictionary for loaded data sets
         
-        
-        #======================================================================
-        # #parameter setup
-        # self.cf_attach_pars(self.cf_fp)
-        # 
-        # 
-        # #check our validity tag
-        # if not getattr(self, self.valid_par):
-        #     raise Error('control file not validated for \'%s\'. please run InputValidator'%self.valid_par)
-        #======================================================================
-        
+
 
 
         self.logger.debug('finished __init__ on Model')
@@ -2137,15 +2127,7 @@ class Model(ComWrkr):
 
 if __name__ =="__main__":
     
-    
-    
-    
-        
 
-
-    
-    
-    
     """checking monotonocity
     #==========================================================================
     # chekc failure events
