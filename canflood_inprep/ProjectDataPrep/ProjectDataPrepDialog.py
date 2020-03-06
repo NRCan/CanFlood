@@ -63,6 +63,7 @@ import numpy as np #Im assuming if pandas is fine, numpy will be fine
 #import canflood_inprep.prep.wsamp
 from prep.wsamp import WSLSampler
 from prep.lisamp import LikeSampler
+from prep.oth_rfda import RFDAconv
 #from canFlood_model import CanFlood_Model
 import hp
 import hlpr.plug
@@ -243,16 +244,29 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.pushButton_LSsample.clicked.connect(self.run_lisamp)
                     
         #======================================================================
-        # DTM sampler
+        # DTM sampler---------
         #======================================================================
         self.comboBox_dtm.setFilters(QgsMapLayerProxyModel.RasterLayer)
         self.pushButton_DTMsamp.clicked.connect(self.run_dsamp)
         
         #======================================================================
-        # validator
+        # validator-----------
         #======================================================================
         self.pushButton_Validate.clicked.connect(self.run_validate)
         
+        #======================================================================
+        # other------------
+        #======================================================================
+        #Vulnerability Curve Set
+        def browse_rfda_crv():
+            return self.browse_button(self.lineEdit_wd_OthRf_cv, prompt='Select RFDA curve .xls',
+                                      qfd = QFileDialog.getOpenFileName)
+            
+        self.pushButton_wd_OthRf_cv.clicked.connect(browse_curves)
+            
+        self.mMapLayerComboBox_OthR_rinv.setFilters(QgsMapLayerProxyModel.PointsLayer)
+        
+        self.pushButton_OthRfda.clicked.connect(self.run_rfda)
 
         #======================================================================
         # general
@@ -277,15 +291,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     #==========================================================================
     # UI Buttom Actions-----------------      
     #==========================================================================
-              
-    def xxxbrowse_curves(self): #SS. Vulnerability Curve Set. file path
-        """todo: set filter to xls only"""
-        filename = QFileDialog.getOpenFileName(self, "Select Vulnerability Curve Set")[0] 
-        if not filename == '':
-            self.lineEdit_curve.setText(filename) #display the user selected filepath
-             
-            self.logger.push('curve set selected')
-            self.logger.info(filename)
 
     def browse_cf(self): #select an existing model control file
         self.browse_button(self.lineEdit_cf_fp, prompt='Select CanFlood control file',
@@ -298,42 +303,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
          
         print out all the values pressent in the control file
         """
-
-    def xxxbrowse_wd(self):
-        #laungh the gui
-        wd = QFileDialog.getExistingDirectory(self, "Select Working Directory")
-        
-        #fill in the text and check it
-        if wd not in "": #see if it was cancelled
-            self.lineEdit_wd.setText(os.path.normpath(wd))
-            
-            if not os.path.exists(wd):
-                os.makedirs(wd)
-                self.logger.info('requested working directory does not exist. built')
-            
-            self.logger.push('set working directory')
-            
-        
-            
-
-        
-    def xxxupdate_cid_cb(self): #update teh fields drop down any time the main layer changes
-        
-        try:
-            #self.logger.info('user changed finv layer to %s'%self.comboBox_vec.currentLayer().name())
-            self.mFieldComboBox_cid.setLayer(self.comboBox_vec.currentLayer()) #field selector
-            
-            #try and find a good match
-            for field in self.comboBox_vec.currentLayer().fields():
-                if 'id' in field.name():
-                    self.logger.debug('matched on field %s'%field.name())
-                    break
-                
-            self.mFieldComboBox_cid.setField(field.name())
-            
-        except Exception as e:
-            self.logger.info('failed set current layer w/ \n    %s'%e)
-        
 
 
         
@@ -1005,38 +974,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             
 
             """needto play with init sequences to get this to work"""
-    #==========================================================================
-    #         #==================================================================
-    #         # check expectations
-    #         #==================================================================
-    #         for sect, vchk_d in model.exp_pars_md.items():
-    #             
-    #             #check attributes
-    #             for varnm, achk_d in vchk_d.items():
 
-    #                 assert hasattr(model, varnm), '\'%s\' does not exist on %s'%(varnm, model)
-    # 
-    #                 
-    #                 #==============================================================
-    #                 # #get value from parameter                
-    #                 #==============================================================
-    #                 pval_raw = pars[sect][varnm]
-    #                 
-    #                 #get native type
-    #                 ntype = type(getattr(model, varnm))
-    #                 
-    #                 #special type retrivial
-    #                 if ntype == bool:
-    #                     pval = pars[sect].getboolean(varnm)
-    #                 else:
-    #                     #set the type
-    #                     pval = ntype(pval_raw)
-    #                 
-    #                 #==============================================================
-    #                 # check it
-    #                 #==============================================================
-    #                 model.par_hndl_chk(sect, varnm, pval, achk_d)
-    #==========================================================================
                     
             #==================================================================
             # set validation flag
@@ -1052,112 +990,70 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             cf_fp = cf_fp
             )
         
+        return
+    
+    def run_rfda(self): #Other.Rfda tab
+        log = self.logger.getChild('run_rfda')
         
         #======================================================================
-        # validate parameters
+        # collect from  ui
         #======================================================================
-    #==========================================================================
-    #     dfiles_d = dict() #collective list of data files for secondary checking
-    #     for vtag, (section, eprops, epars) in vpars_d.items():
-    #         log.info('checking %s'%vtag)
-    #         #==================================================================
-    #         # #check variables
-    #         #==================================================================
-    #         if not epars is None:
-    #             for sect_chk, vars_l in epars.items():
-    #                 assert sect_chk in pars.sections(), 'missing expected section %s'%sect_chk
-    #                 
-    #                 for varnm in vars_l:
-    #                     assert varnm in pars[sect_chk], 'missing expected variable \'%s.%s\''%(sect_chk, varnm)
-    #         else:
-    #             log.warning('\'%s\' has no variable validation parameters!'%vtag)
-    #                 
-    #                 
-    #         #==================================================================
-    #         # #check expected data files
-    #         #==================================================================
-    #         if not eprops is None:
-    #             for varnm, dprops_d in eprops.items():
-    #                 
-    #                 #see if this is in the control file
-    #                 assert varnm in pars[section], '\'%s\' expected \'%s.%s\''%(vtag, section, varnm)
-    #                 
-    #                 #get the filepath
-    #                 fp = pars[section][varnm]
-    #                 fh_clean, ext = os.path.splitext(os.path.split(fp)[1])
-    # 
-    #                 #check existance
-    #                 if not os.path.exists(fp):
-    #                     log.warning('specified \'%s\' filepath does not exist: \n    %s'%(varnm, fp))
-    #                     continue
-    #                 
-    #                 #load the data
-    #                 if ext == '.csv':
-    #                     data = pd.read_csv(fp, header=0, index_col=None)
-    #                 elif ext == '.xls':
-    #                     data = pd.read_excel(fp)
-    #                 else:
-    #                     raise Error('unepxected filetype for \"%s.%s\' = \"%s\''%(vtag, varnm, ext))
-    #                 
-    #                 #add this to the collective
-    #                 if not varnm in dfiles_d:
-    #                     dfiles_d[varnm] = data
-    #                 
-    #                 
-    #                 #check the data propoerites expectations
-    #                 for chk_type, evals in dprops_d.items():
-    #                     
-    #                     #extension
-    #                     if chk_type == 'ext':
-    #                         assert ext in evals, '\'%s\' got unexpected extension: %s'%(varnm, ext)
-    #                         
-    #                     #column names
-    #                     elif chk_type == 'colns':
-    #                         miss_l = set(evals).difference(data.columns)
-    #                         assert len(miss_l)==0, '\'%s\' is missing %i expected column names: %s'%(
-    #                             varnm, len(miss_l), miss_l)
-    #                         
-    #                     else:
-    #                         raise Error('unexpected chk_type: %s'%chk_type)
-    #                     
-    #                 log.info('%s.%s passed %i data expectation checks'%(
-    #                     vtag, varnm, len(dprops_d)))
-    #         else:
-    #             log.warning('\'%s\' has no data property validation parameters!'%vtag)
-    #                     
-    #             
-    #         #==================================================================
-    #         # #set validation flag
-    #         #==================================================================
-    #         pars.set('validation', vtag, 'True')
-    #         log.info('\'%s\' validated'%vtag)
-    #         
-    #     
-    #     #======================================================================
-    #     # secondary checks
-    #     #======================================================================
-    #     """for special data checks (that apply to multiple models)"""
-    #     for dname, data in dfiles_d.items():
-    #         pass
-    #     
-    #     #======================================================================
-    #     # update control file
-    #     #======================================================================
-    #     with open(cf_fp, 'w') as configfile:
-    #         pars.write(configfile)
-    #         
-    #     log.info('updated control file:\n    %s'%cf_fp)
-    #         
-    #         
-    #     #======================================================================
-    #     # wrap
-    #     #======================================================================
-    #     log.push('validated %i model parameter sets'%len(vpars_d))
-    #     
-    #     return
-    #==========================================================================
+        rinv_vlay = self.mMapLayerComboBox_OthR_rinv.currentLayer()
+        crv_fp = self.lineEdit_wd_OthRf_cv.text()
+        bsmt_ht = self.lineEdit_OthRf_bht.text()
+        #cid = self.mFieldComboBox_cid.currentField() #user selected field
+        
+        crs = self.qproj.crs()
+        out_dir = self.lineEdit_wd.text()
+        
+        try:
+            bsmt_ht = float(bsmt_ht)
+        except Exception as e:
+            raise Error('failed to convert bsmt_ht to float w/ \n    %s'%e)
+        
+        
+        #======================================================================
+        # input checks
+        #======================================================================
+        #======================================================================
+        # if cid is None or cid=='':
+        #     raise Error('need to select a cid')
+        #======================================================================
+        
+        wrkr = RFDAconv(logger=self.logger, out_dir=out_dir, tag=self.tag)
+        #======================================================================
+        # invnentory convert
+        #======================================================================
+        if isinstance(rinv_vlay, QgsVectorLayer):
             
             
+            finv_vlay = wrkr.to_finv(rinv_vlay)
+            
+            self.qproj.addMapLayer(finv_vlay)
+            self.logger.info('added \'%s\' to canvas'%finv_vlay.name())
+            
+        #======================================================================
+        # curve convert
+        #======================================================================
+        if os.path.exists(crv_fp):
+            df_raw = pd.read_excel(crv_fp, header=None)
+            
+            df_d = wrkr.to_curveset(df_raw, bsmt_ht=1.8, logger=log)
+            
+            basefn = os.path.splitext(os.path.split(crv_fp)[1])[0]
+            
+            ofp = wrkr.output(df_d, basefn=basefn)
+            
+        #======================================================================
+        # wrap
+        #======================================================================
+        self.logger.push('finished')
+            
+
+            
+            
+    
+     
             
                     
                 
@@ -1171,37 +1067,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         
                 
-                
-            
-    #==========================================================================
-    # def run(self):
-    #     # Do something useful here - delete the line containing pass and
-    #     # substitute with your code.
-    #     #=======================================================================
-    #     # calculate poly stats
-    #     #=======================================================================
-    #     self.vec = self.comboBox_vec.currentLayer()
-    #     self.ras = list(self.ras_dict.values())
-    #     self.cf = self.lineEdit_cf_fp.text()
-    #     if (self.vec is None or len(self.ras) == 0 or self.wd is None or self.cf is None):
-    #         self.iface.messageBar().pushMessage("Input field missing",
-    #                                              level=Qgis.Critical, duration=10)
-    #         return
-    #     
-    #     """moved to build_scenario
-    #     pars = configparser.ConfigParser(inline_comment_prefixes='#', allow_no_value=True)
-    #     _ = pars.read(self.cf)
-    #     pars.set('dmg_fps', 'curves', self.lineEdit_curve.text())
-    #     with open(self.cf, 'w') as configfile:
-    #         pars.write(configfile)"""
-    #     
-    #     
-    #     canflood_inprep.prep.wsamp.main_run(self.ras, self.vec, self.wd, self.cf)
-    #     self.iface.messageBar().pushMessage(
-    #         "Success", "Process successful", level=Qgis.Success, duration=10)
-    #     
-    #==========================================================================
-
+  
  
 
            

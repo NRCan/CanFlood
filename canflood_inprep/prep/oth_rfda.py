@@ -197,14 +197,12 @@ class RFDAconv(Qcoms):
         #ctype = df.loc[boolidx,24].to_dict() #get all the types
         
         #==============================================================================
-        # create individuals
+        # create individuals--------------------
         #==============================================================================
         res_d = dict() #container for CanFlood function tabs
         dd_set_d = dict() #container for all the depth damages
         
         boolar = df.columns.isin(['dcount', 'cnp', 'oindex'])
-        
-        
         
         
         for cname, row in df.iterrows():
@@ -252,7 +250,7 @@ class RFDAconv(Qcoms):
         
 
         #==============================================================================
-        # create combined basement+mf
+        # create combined basement+mf----------------
         #==============================================================================
         #slice to this
         boolidx = df.loc[:, 24].isin(['MC', 'MS', 'BC', 'BS'])
@@ -264,6 +262,9 @@ class RFDAconv(Qcoms):
         cnp_l = df_res.loc[:, 'cnp'].unique().tolist()
         
         #loop and collect
+        res_bm_C_d = dict() #collect just these
+        res_bm_S_d = dict() #collect just these
+        
         for cnp in cnp_l:
             #loop on structural and contents
             for ctype in ('S', 'C'):
@@ -343,7 +344,22 @@ class RFDAconv(Qcoms):
                 #add it in
                 res_d[tag] = {**dcurve_d, **res_ser.to_dict()}
                 
+                if ctype == 'S':
+                    res_bm_S_d[cnp] = (dcurve_d, res_ser)
+                elif ctype == 'C':
+                    res_bm_C_d[cnp] = (dcurve_d, res_ser)
+                else:raise Error('bad ctype')
+                
+                
                 print('added %s'%tag)
+                
+        #======================================================================
+        # create combined mf+bsmt+S+C
+        #======================================================================
+        for cnp, (Sdcd, Sser) in res_bm_S_d.items():
+            C_d = res_bm_C_d[cnp]
+            
+        
         #==============================================================================
         # convert
         #==============================================================================
@@ -356,6 +372,26 @@ class RFDAconv(Qcoms):
         #======================================================================
         log.info('finished w/ %i'%len(df_d))
         return df_d
+    
+    def output(self, df_d,
+               basefn = 'curves',
+               out_dir = None):
+        
+        if out_dir is None: out_dir = self.out_dir
+        
+        
+        ofp = os.path.join(out_dir, '%s_cset.xls'%basefn)
+        
+        
+        #write to multiple tabs
+        writer = pd.ExcelWriter(ofp, engine='xlsxwriter')
+        for tabnm, df in df_d.items():
+            df.to_excel(writer, sheet_name=tabnm, index=True, header=False)
+        writer.save()
+        
+        log.info('wrote %i sheets to file: \n    %s'%(len(df_d), ofp))
+        
+        return ofp
         
         
 
@@ -392,16 +428,8 @@ if __name__ =="__main__":
     # output
     #==========================================================================
     basefn = os.path.splitext(os.path.split(crv_fp)[1])[0]
-    ofp = os.path.join(out_dir, '%s_cset.xls'%basefn)
-    
-    
-    #write to multiple tabs
-    writer = pd.ExcelWriter(ofp, engine='xlsxwriter')
-    for tabnm, df in df_d.items():
-        df.to_excel(writer, sheet_name=tabnm, index=True, header=False)
-    writer.save()
-    
-    log.info('wrote %i sheets to file: \n    %s'%(len(df_d), ofp))
+    ofp = wrkr.output(df_d, basefn=basefn)
+
 
     
     
