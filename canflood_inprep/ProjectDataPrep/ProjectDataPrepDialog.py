@@ -1020,7 +1020,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #     raise Error('need to select a cid')
         #======================================================================
         
-        wrkr = RFDAconv(logger=self.logger, out_dir=out_dir, tag=self.tag)
+        wrkr = RFDAconv(logger=self.logger, out_dir=out_dir, tag=self.tag, bsmt_ht = bsmt_ht)
         #======================================================================
         # invnentory convert
         #======================================================================
@@ -1030,7 +1030,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             finv_vlay = wrkr.to_finv(rinv_vlay)
             
             self.qproj.addMapLayer(finv_vlay)
-            self.logger.info('added \'%s\' to canvas'%finv_vlay.name())
+            log.info('added \'%s\' to canvas'%finv_vlay.name())
             
         #======================================================================
         # curve convert
@@ -1038,11 +1038,14 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         if os.path.exists(crv_fp):
             df_raw = pd.read_excel(crv_fp, header=None)
             
-            df_d = wrkr.to_curveset(df_raw, bsmt_ht=bsmt_ht, logger=log)
+            df_d = wrkr.to_curveset(df_raw, logger=log)
             
             basefn = os.path.splitext(os.path.split(crv_fp)[1])[0]
             
             ofp = wrkr.output(df_d, basefn=basefn)
+            
+        else:
+            log.info('no valid crv_fp provided')
             
         #======================================================================
         # wrap

@@ -19,6 +19,17 @@ import numpy as np
 from scipy import interpolate, integrate
 
 #==============================================================================
+# parametessr
+#==============================================================================
+l1 = ['False', 'FALSE', 'false', 'NO', 'No', 'no', 'N', 'n']
+l2 = ['True','TRUE','true', 'yes','YES','Yes', 'Y', 'y']
+truefalse_d = {
+    **dict(zip(l1, np.full(len(l1), True))),
+    **dict(zip(l2, np.full(len(l2), False)))
+    }
+
+
+#==============================================================================
 # custom imports
 #==============================================================================
 
@@ -46,12 +57,14 @@ class RFDAconv(Qcoms):
     legacy_ind_d = {0:'id1',1:'address',2:'id2',10:'class', 11:'struct_type', 13:'area', 
                     18:'bsmt_f', 19:'ff_height', 20:'lon',21:'lat', 25:'gel'}
     
+    
 
     
-    
-    
     def __init__(self, 
+                 bsmt_ht = 1.8,
                   **kwargs):
+        
+        self.bsmt_ht = bsmt_ht
         
         mod_logger.info('RFDAconv.__init__ start')
         super().__init__(**kwargs) #initilzie teh baseclass
@@ -59,13 +72,16 @@ class RFDAconv(Qcoms):
     def to_finv(self, #convert an .xls to a .gpkg
                 rinv_vlay,
                 drop_colns=['ogc_fid', 'fid'], #optional columns to drop from df
+                bsmt_ht = None
                 ): 
+        if bsmt_ht is None: bsmt_ht = self.bsmt_ht
         
         log = self.logger.getChild('to_finv')
         
         cid = self.cid
         
         assert isinstance(rinv_vlay, QgsVectorLayer)
+        assert isinstance(bsmt_ht, float)
         
         dp = rinv_vlay.dataProvider()
         assert dp.featureCount() >0, 'no features'
@@ -100,7 +116,7 @@ class RFDAconv(Qcoms):
         #======================================================================
         res_df = pd.DataFrame(index=df.index)
         res_df[self.cid] = df['id1'].astype(int)
-        res_df['f0_tag'] = df['class'] + df['struct_type']
+        res_df['f0_tag'] = df['class'] + df['struct_type'] #suffix addded for main/basement below
         res_df['f0_elv'] = df['gel'] + df['ff_height']
         res_df.loc[:,'f0_elv'] = res_df['f0_elv'].round(self.prec)
         res_df['f0_scale'] = df['area'].round(self.prec)
@@ -126,6 +142,34 @@ class RFDAconv(Qcoms):
         assert not res_df['f0_scale'].isna().any(), 'got some nulls on %s'%back_lab_d['area']
         
         #======================================================================
+        # basements
+        #======================================================================
+        #convert/cleean basements
+        boolidx = df['bsmt_f'].replace(truefalse_d).astype(bool)
+        
+        log.info('adding nested curves for %i (of %i) basements'%(boolidx.sum(), len(boolidx)))
+        
+        #basements        
+        res_df.loc[boolidx,'f1_tag'] = res_df.loc[boolidx, 'f0_tag'] + '_B'
+        res_df.loc[boolidx,'f1_scale'] = res_df.loc[boolidx, 'f0_scale']
+        res_df.loc[boolidx,'f1_elv'] = res_df.loc[boolidx, 'f0_elv'] - bsmt_ht
+        res_df['f1_cap'] = np.nan
+        
+        """
+        view(res_df)
+        """
+        
+        
+        
+        
+        #re-tag main floor
+        res_df.loc[:,'f0_tag'] = res_df['f0_tag'] + '_M'
+        
+        
+        
+        
+        
+        #======================================================================
         # add in everything else
         #======================================================================
         res_df = res_df.join(df)
@@ -149,13 +193,14 @@ class RFDAconv(Qcoms):
     
     def to_curveset(self,
                     df_raw,
-                    bsmt_ht = 1.8, #for combination curves,
+                    bsmt_ht =None, #for combination curves,
                     logger=None,
                     ):
         if logger is None: logger = self.logger
+        if bsmt_ht is None: bsmt_ht = self.bsmt_ht
         
         log = logger.getChild('to_curveset')
-        
+        assert isinstance(bsmt_ht, float)
         #==============================================================================
         # load
         #==============================================================================
@@ -201,6 +246,7 @@ class RFDAconv(Qcoms):
         #==============================================================================
         res_d = dict() #container for CanFlood function tabs
         dd_set_d = dict() #container for all the depth damages
+        dd_set_d2 = dict()
         
         boolar = df.columns.isin(['dcount', 'cnp', 'oindex'])
         
@@ -245,7 +291,8 @@ class RFDAconv(Qcoms):
             
             #add it in
             res_d[cname] = {**dcurve_d, **dd_d}
-            dd_set_d[cname] = dd_d #used below
+            dd_set_d[cname] = dd_d  #used below  B+M
+            dd_set_d2[cname] = dd_d  #used below S+C
             print('added %s'%dcurve_d['tag'])
         
 
@@ -354,7 +401,7 @@ class RFDAconv(Qcoms):
                 print('added %s'%tag)
                 
         #======================================================================
-        # create combined mf+bsmt+S+C
+        # create combined mf+bsmt+S+C----------
         #======================================================================
         for cnp, Sser in res_bm_S_d.items():
             Cser = res_bm_C_d[cnp]
@@ -380,6 +427,34 @@ class RFDAconv(Qcoms):
             
             res_d[cnp] = {**dcurve_d, **res_ser.to_dict()}
             
+        #======================================================================
+        # combine Contes + Struc
+        #======================================================================
+        for cnp in cnp_l:
+            for floor in ('B', 'M'):
+                dd_C_ser =  dd_set_d2['%s_%sC'%(cnp, floor)]
+                dd_S_ser =  dd_set_d2['%s_%sS'%(cnp, floor)]
+                
+                res_ser = pd.Series(dd_C_ser) + pd.Series(dd_S_ser)
+                
+                tag = '%s_%s'%(cnp, floor)
+                
+                assert not tag in res_d
+                
+                dcurve_d = {'tag':tag,
+                        'desc':'rfda converted and combined w/ bsmt_ht = %.2f, C+S'%bsmt_ht,
+                        'source':'Alberta (2014)',
+                        'location':'Alberta',
+                        'date':2014,
+                        'vuln_units':'$CAD/m2',
+                        'dep_units':'m',
+                        'scale':'occupied space area',
+                        'ftype':'depth-damage',
+                        'depth':'damage'}
+                
+                res_d[tag] = {**dcurve_d, **res_ser.to_dict()}
+                
+            
             
         
         #==============================================================================
@@ -397,7 +472,11 @@ class RFDAconv(Qcoms):
     
     def output(self, df_d,
                basefn = 'curves',
-               out_dir = None):
+               out_dir = None,
+               logger=None):
+        if logger is None: logger = self.logger
+            
+        log = logger.getChild('output')
         
         if out_dir is None: out_dir = self.out_dir
         
@@ -421,42 +500,45 @@ class RFDAconv(Qcoms):
 if __name__ =="__main__": 
     overwrite=True
     
-    #==========================================================================
-    # dev data: curve conversion
-    #==========================================================================
-    out_dir = os.path.join(os.getcwd(), 'rfda')
-    crv_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\rfda\HighRiver\20200305\DamageCurves.xls'
-    tag = 'dev'
-    
-    
-    #==========================================================================
-    # load
-    #==========================================================================
-    assert os.path.exists(crv_fp)
-    df_raw = pd.read_excel(crv_fp, header=None)
-        
-    wrkr = RFDAconv(logger=mod_logger, out_dir=out_dir, tag=tag)
-    #==========================================================================
-    # execute
-    #==========================================================================
-    log = mod_logger.getChild(tag)
-    
+
+#==============================================================================
+#     #==========================================================================
+#     # dev data: curve conversion
+#     #==========================================================================
+#     out_dir = os.path.join(os.getcwd(), 'rfda')
+#     crv_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\rfda\HighRiver\20200305\DamageCurves.xls'
+#     tag = 'dev'
+#     
+#     
+#     #==========================================================================
+#     # load
+#     #==========================================================================
+#     assert os.path.exists(crv_fp)
+#     df_raw = pd.read_excel(crv_fp, header=None)
+#         
+#     wrkr = RFDAconv(logger=mod_logger, out_dir=out_dir, tag=tag)
+#     #==========================================================================
+#     # execute
+#     #==========================================================================
+#     log = mod_logger.getChild(tag)
+#     
+# 
+#     
+#     
+#     df_d = wrkr.to_curveset(df_raw, bsmt_ht=1.8, logger=log)
+#     
+#     #==========================================================================
+#     # output
+#     #==========================================================================
+#     basefn = os.path.splitext(os.path.split(crv_fp)[1])[0]
+#     ofp = wrkr.output(df_d, basefn=basefn)
+#==============================================================================
 
     
-    
-    df_d = wrkr.to_curveset(df_raw, bsmt_ht=1.8, logger=log)
-    
+     
     #==========================================================================
-    # output
+    # inventory conversion
     #==========================================================================
-    basefn = os.path.splitext(os.path.split(crv_fp)[1])[0]
-    ofp = wrkr.output(df_d, basefn=basefn)
-
-
-    
-    
-    
-    """inventory conversion
     #==========================================================================
     # dev data
     #==========================================================================
@@ -464,9 +546,9 @@ if __name__ =="__main__":
     inv_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\rfda\HighRiver\20200305\HighRiverResDirect_rinv.gpkg'
     tag = 'dev'
     cid = 'xid'
-    
-    
-    
+     
+     
+     
     #==========================================================================
     # load data
     #==========================================================================
@@ -477,16 +559,16 @@ if __name__ =="__main__":
     #==========================================================================
     log = mod_logger.getChild(tag)
     wrkr = RFDAconv(logger=mod_logger, out_dir=out_dir, tag=tag, cid=cid)
-    
+     
     finv_vlay = wrkr.to_finv(rinv_vlay)
-    
-    
+     
+     
     #==========================================================================
     # ouput
     #==========================================================================
-    
+     
     vlay_write(finv_vlay, os.path.join(out_dir, finv_vlay.name()), logger=log, overwrite=overwrite)
-    """
+
      
     
     force_open_dir(out_dir)

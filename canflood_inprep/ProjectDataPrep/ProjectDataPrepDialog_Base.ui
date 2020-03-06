@@ -86,7 +86,7 @@
           </size>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>7</number>
          </property>
          <property name="movable">
           <bool>false</bool>
@@ -2585,6 +2585,9 @@ p, li { white-space: pre-wrap; }
                 <layout class="QHBoxLayout" name="horizontalLayout_11">
                  <item>
                   <widget class="QgsMapLayerComboBox" name="mMapLayerComboBox_OthR_rinv">
+                   <property name="allowEmptyLayer">
+                    <bool>true</bool>
+                   </property>
                    <property name="showCrs">
                     <bool>true</bool>
                    </property>
