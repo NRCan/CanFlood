@@ -74,6 +74,8 @@ class RFDAconv(Qcoms):
                 drop_colns=['ogc_fid', 'fid'], #optional columns to drop from df
                 bsmt_ht = None
                 ): 
+        
+        
         if bsmt_ht is None: bsmt_ht = self.bsmt_ht
         
         log = self.logger.getChild('to_finv')
@@ -95,7 +97,7 @@ class RFDAconv(Qcoms):
         df_raw = vlay_get_fdf(rinv_vlay, logger=log)
         df = df_raw.drop(drop_colns,axis=1, errors='ignore')
         
-        assert len(df.columns) == 26, 'expects 26 columns'
+        assert len(df.columns) >= 26, 'expects at least 26 columns. got %i'%len(df.columns)
         
         log.info('loaded w/ %s'%str(df.shape))
         
@@ -110,17 +112,29 @@ class RFDAconv(Qcoms):
         
         log.info('converted columns:\n    %s'%lab_d)
         
+        #id non-res
+        nboolidx = df['struct_type'].str.startswith('S')
         
+        log.info('%i (of %i) flagged as NRP'%(nboolidx.sum(), len(nboolidx)))
+        """
+        view(df)
+        """
         #======================================================================
         # convert
         #======================================================================
         res_df = pd.DataFrame(index=df.index)
         res_df[self.cid] = df['id1'].astype(int)
-        res_df['f0_tag'] = df['class'] + df['struct_type'] #suffix addded for main/basement below
+        
         res_df['f0_elv'] = df['gel'] + df['ff_height']
         res_df.loc[:,'f0_elv'] = res_df['f0_elv'].round(self.prec)
         res_df['f0_scale'] = df['area'].round(self.prec)
         res_df['f0_cap'] = np.nan
+        
+        #resi
+        res_df['f0_tag'] = df['class'] + df['struct_type'] #suffix addded for main/basement below
+        
+        #NRP
+        res_df.loc[nboolidx, 'f0_tag'] = df.loc[nboolidx, 'class']
         
         #======================================================================
         # check
@@ -149,30 +163,27 @@ class RFDAconv(Qcoms):
         
         log.info('adding nested curves for %i (of %i) basements'%(boolidx.sum(), len(boolidx)))
         
-        #basements        
+        #resi basements        
         res_df.loc[boolidx,'f1_tag'] = res_df.loc[boolidx, 'f0_tag'] + '_B'
         res_df.loc[boolidx,'f1_scale'] = res_df.loc[boolidx, 'f0_scale']
         res_df.loc[boolidx,'f1_elv'] = res_df.loc[boolidx, 'f0_elv'] - bsmt_ht
         res_df['f1_cap'] = np.nan
         
-        """
-        view(res_df)
-        """
-        
-        
-        
-        
         #re-tag main floor
         res_df.loc[:,'f0_tag'] = res_df['f0_tag'] + '_M'
         
-        
-        
-        
-        
+        #NRP
+        res_df.loc[nboolidx, 'f0_tag'] = df.loc[nboolidx, 'class'] #re-tag
+        res_df.loc[nboolidx, 'f1_tag'] = df.loc[nboolidx, 'struct_type']
+        res_df.loc[nboolidx, 'f1_elv'] = res_df.loc[nboolidx, 'f0_elv']
         #======================================================================
         # add in everything else
         #======================================================================
         res_df = res_df.join(df)
+        
+        """
+        view(res_df)
+        """
         
         #======================================================================
         # generate vlay
@@ -543,7 +554,7 @@ if __name__ =="__main__":
     # dev data
     #==========================================================================
     out_dir = os.path.join(os.getcwd(), 'rfda')
-    inv_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\rfda\HighRiver\20200305\HighRiverResDirect_rinv.gpkg'
+    inv_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\prep\other\rfda\HighRiverNONResDirect.gpkg'
     tag = 'dev'
     cid = 'xid'
      
