@@ -2,6 +2,9 @@
 """
 second call
 """
+#==============================================================================
+#import------------------------------------------------------------------ 
+#==============================================================================
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QObject
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QFileDialog, QListWidget
@@ -26,17 +29,21 @@ import sys, os, warnings, tempfile, logging, configparser
 #sys.path.append(os.path.join(sys.exec_prefix, 'Lib/site-packages'))
 import numpy as np
 import pandas as pd
+"""
+Tony's testing workaround?
+the absolute imports don't seem to work at this
 
-#file_dir = os.path.dirname(os.path.abspath(__file__))
-#sys.path.append(file_dir)
-#import model
-#from risk import RiskModel
+there has to be a better way"""
 
-import model.risk2
-import model.dmg2
-import prep.wsamp
+
+file_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(file_dir)
+
+
+
+
 #from canFlood_model import CanFlood_Model
-from hp import Error
+from .hp import Error
 from shutil import copyfile
 
 from .ProjectDataPrep.ProjectDataPrepDialog import DataPrep_Dialog

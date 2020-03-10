@@ -65,8 +65,8 @@ from prep.wsamp import WSLSampler
 from prep.lisamp import LikeSampler
 from prep.oth_rfda import RFDAconv
 #from canFlood_model import CanFlood_Model
-import hp
-import hlpr.plug
+#import hp
+from hlpr.plug import QprojPlug
 
 from hlpr.basic import *
 
@@ -75,7 +75,7 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'ProjectDataPrepDialog_Base.ui'))
 
 
-class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
+class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
     
     event_name_set = [] #event names
     
