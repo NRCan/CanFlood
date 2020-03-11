@@ -65,9 +65,10 @@ from prep.wsamp import WSLSampler
 from prep.lisamp import LikeSampler
 from prep.oth_rfda import RFDAconv
 #from canFlood_model import CanFlood_Model
-#import hp
-from hlpr.plug import QprojPlug
+import hp
 
+from hlpr.plug import *
+from hlpr.Q import *
 from hlpr.basic import *
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
@@ -262,7 +263,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             return self.browse_button(self.lineEdit_wd_OthRf_cv, prompt='Select RFDA curve .xls',
                                       qfd = QFileDialog.getOpenFileName)
             
-        self.pushButton_wd_OthRf_cv.clicked.connect(browse_curves)
+        self.pushButton_wd_OthRf_cv.clicked.connect(browse_rfda_crv)
             
         self.mMapLayerComboBox_OthR_rinv.setFilters(QgsMapLayerProxyModel.PointLayer)
         
@@ -479,7 +480,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.finv_vlay = self.comboBox_vec.currentLayer()
         
         #extract data
-        df = hp.vlay_get_fdf(self.finv_vlay)
+        df = vlay_get_fdf(self.finv_vlay)
           
         #drop geometery indexes
         for gindx in self.invalid_cids:   
@@ -862,7 +863,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         # collcet table data
         #======================================================================
 
-        df = hp.qtbl_get_df(self.fieldsTable_EL)
+        df = qtbl_get_df(self.fieldsTable_EL)
         
         self.logger.info('extracted data w/ %s \n%s'%(str(df.shape), df))
         
