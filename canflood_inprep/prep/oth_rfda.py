@@ -58,8 +58,6 @@ class RFDAconv(Qcoms):
                     18:'bsmt_f', 19:'ff_height', 20:'lon',21:'lat', 25:'gel'}
     
     
-
-    
     def __init__(self, 
                  bsmt_ht = 1.8,
                   **kwargs):
