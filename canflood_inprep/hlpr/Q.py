@@ -124,7 +124,7 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
     # standalone methods-----------
     #==========================================================================
         
-    def ini_standalone(self, ):
+    def ini_standalone(self, ): #initilize calls
 
         #=======================================================================
         # setup qgis

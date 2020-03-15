@@ -52,8 +52,30 @@ class WSLSampler(Qcoms):
     names_d = None
     rname_l =None
     
+    
+    psmp_codes = {
+                 0:'Count',
+                 1: 'Sum',
+                 2: 'Mean',
+                 3: 'Median',
+                 #4: Std. dev.
+                 5: 'Min',
+                 6: 'Max',
+                # 7: Range
+                # 8: Minority
+                # 9: Majority (mode)
+                # 10: Variety
+                # 11: Variance
+                # 12: All
+                }
+
+    
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        
+        #flip the codes
+        self.psmp_codes = dict(zip(self.psmp_codes.values(), self.psmp_codes.keys()))
 
                 
     def load_layers(self, #load data to project (for console runs)
@@ -146,6 +168,7 @@ class WSLSampler(Qcoms):
             cid = None, #index field name on finv
             crs = None,
             fname='expos', #prefix for file name
+            psmp_stat='Max', #for polygon finvs, statistic to sample
             
             ):
         
@@ -191,7 +214,7 @@ class WSLSampler(Qcoms):
         assert finv_fcnt== 1, 'failed to drop all the fields'
         
         #======================================================================
-        # sample-----------------
+        # sample.Poly-----------------
         #======================================================================
         gtype = QgsWkbTypes().displayString(finv.wkbType())
         names_d = dict()
@@ -202,7 +225,12 @@ class WSLSampler(Qcoms):
             
             does this do lines also?
             """
-            
+            #===================================================================
+            # setup
+            #===================================================================
+            #statistics
+            assert psmp_stat in self.psmp_codes, 'unrecognized psmp_stat'
+            psmp_code = self.psmp_codes[psnp_stat]
             #sample each raster
             
             algo_nm = 'qgis:zonalstatistics'
@@ -217,29 +245,40 @@ class WSLSampler(Qcoms):
                 log.info('    %i/%i sampling \'%s\' on \'%s\''%(indxr+1, len(raster_l), finv.name(), rlay.name()))
             
                 #build the algo params
-                params_d = {'COLUMN_PREFIX' : rlay.name(),
+                params_d = {'COLUMN_PREFIX' : indxr,
                             'INPUT_RASTER' : rlay,
                             'INPUT_VECTOR' : finv,
                             'RASTER_BAND' : 1,
-                            'STATS' : [2]}
+                            'STATS' : [psmp_code]}
                 
                 #execute the algo
                 res_d = processing.run(algo_nm, params_d, feedback=self.feedback)
             
                 #extract and clean results
                 finv = res_d['INPUT_VECTOR']
-                print(finv)
-                #finv = processing.getObject(res_d['OUTPUT'])
+
                 finv.setName('%s_%i'%(finv_name, indxr))
                 
-                assert len(finv.fields()) == finv_fcnt + indxr +1, \
-                    'bad field length on %i'%indxr
+                #get/updarte the field names
+                nfnl =  [field.name() for field in finv.fields()]
+                new_fn = set(nfnl).difference(ofnl) #new field names not in the old
+                
+                if len(new_fn) > 1:
+                    raise Error('bad mismatch: %i \n    %s'%(len(new_fn), new_fn))
+                elif len(new_fn) == 1:
+                    names_d[list(new_fn)[0]] = rlay.name()
+                
+                #===============================================================
+                # assert len(finv.fields()) == finv_fcnt + indxr +1, \
+                #     'bad field length on %i'%indxr
+                #===============================================================
                     
                 log.debug('sampled %i values on raster \'%s\''%(
                     finv.dataProvider().featureCount(), rlay.name()))
-                
-                
-            
+
+        #=======================================================================
+        # sample.Line--------------
+        #=======================================================================
         elif 'Line' in gtype: 
             raise Error('not implemented')
         
@@ -249,7 +288,7 @@ class WSLSampler(Qcoms):
     
             
         #======================================================================
-        # sample.points
+        # sample.Points----------------
         #======================================================================
         elif 'Point' in gtype: 
             algo_nm = 'qgis:rastersampling'
@@ -298,7 +337,7 @@ class WSLSampler(Qcoms):
                     finv.dataProvider().featureCount(), rlay.name()))
                 
         else:
-            raise Error('unexpected geo type')
+            raise Error('unexpected geo type: %s'%gtype)
         
 
         log.info('sampling finished')
@@ -450,19 +489,30 @@ class WSLSampler(Qcoms):
 
 if __name__ =="__main__": 
     #==========================================================================
-    # dev data
+    # tutorial 3
     #==========================================================================
-    data_dir = r'C:\LS\03_TOOLS\CanFlood\_ins\prep\wsamp\cT1'
+    data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\3\data'
     
-    raster_fns = ['Gld_10e2_fail_cT1.tif', 'Gld_10e2_si_cT1.tif', 'Gld_20e1_fail_cT1.tif', 'Gld_20e1_si_cT1.tif']
+    raster_fns = ['haz_1000yr_cT2.tif', 'haz_1000yr_fail_cT2.tif', 'haz_100yr_cT2.tif', 
+                  'haz_200yr_cT2.tif','haz_50yr_cT2.tif']
+    
     raster_fps = [os.path.join(data_dir, fn) for fn in raster_fns]
     
-    finv_fp = os.path.join(data_dir, r'finv_icomp_cT1.gpkg')
+    finv_fp = os.path.join(data_dir, r'finv_polys_t3.gpkg')
+    
+    cf_fp = os.path.join(data_dir, 'CanFlood_control_01.txt')
+    
+    
+    cid='zid'
+    tag='tut3'
+    out_dir = os.path.join(os.getcwd(), 'wsamp', tag)
     #==========================================================================
     # load the data
     #==========================================================================
-    wrkr = WSLSampler(mod_logger, tag='test_tag', feedback=QgsProcessingFeedback())
+    wrkr = WSLSampler(logger=mod_logger, tag=tag, out_dir=out_dir)
     wrkr.ini_standalone()
+    
+    
     rlay_l, finv_vlay = wrkr.load_layers(raster_fps, finv_fp)
     
     
@@ -470,7 +520,7 @@ if __name__ =="__main__":
     # execute
     #==========================================================================
     res_vlay = wrkr.run(rlay_l, finv_vlay, 
-             cid='zid',
+             cid=cid,
              crs = finv_vlay.crs(),
              )
        
@@ -481,9 +531,9 @@ if __name__ =="__main__":
     #==========================================================================
     outfp = wrkr.write_res(res_vlay, )
     
-    wrkr.upd_cf(os.path.join(data_dir, 'CanFlood_control_01.txt'))
+    wrkr.upd_cf(cf_fp)
 
-    force_open_dir(os.getcwd())
+    force_open_dir(out_dir)
 
     print('finished')
     
