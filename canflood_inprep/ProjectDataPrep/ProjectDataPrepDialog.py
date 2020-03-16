@@ -140,6 +140,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         # #Inventory Vector Layer
         #======================================================================
+        #change the 'cid' display when the finv selection changes
         def upd_cid():
             return self.mfcb_connect(
                 self.mFieldComboBox_cid, self.comboBox_vec.currentLayer(),
@@ -189,7 +190,34 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         self.comboBox_ras.currentTextChanged.connect(self.add_ras)
         
-        #execute
+        
+        #=======================================================================
+        # #complex
+        #=======================================================================
+        #display the gtype when the finv changes
+        def upd_gtype():
+            vlay = self.comboBox_vec.currentLayer()
+            gtype = QgsWkbTypes().displayString(vlay.wkbType())
+            self.label_HS_finvgtype.setText(gtype)
+            
+        self.comboBox_vec.layerChanged.connect(upd_gtype) #SS inventory vector layer
+        
+        #display sampling stats options to user 
+        def upd_stat():
+            vlay = self.comboBox_vec.currentLayer()
+            gtype = QgsWkbTypes().displayString(vlay.wkbType())
+            self.comboBox_HS_stat.clear()
+            
+            if 'Polygon' in gtype:
+                self.comboBox_HS_stat.addItems(
+                    ['Mean','Median','Min','Max'])
+                
+        self.comboBox_vec.layerChanged.connect(upd_stat) #SS inventory vector layer
+            
+        
+        #=======================================================================
+        # #execute
+        #=======================================================================
         self.pushButton_HSgenerate.clicked.connect(self.run_wsamp)
         
         #======================================================================
@@ -283,8 +311,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         to speed up testing.. manually configure the project
         """
         
-        self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\CanFlood_scenario1.txt')
-        self.lineEdit_wd.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304')
+        self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200316\CanFlood_scenario1.txt')
+        self.lineEdit_wd.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200316')
         
         
         
@@ -366,18 +394,34 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
     
     def build_scenario(self): #called by Scenario Setup 'Build'
-        
+        log = self.logger.getChild('build_scenario')
         self.tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
         
         self.cid = self.mFieldComboBox_cid.currentField() #user selected field
         
         self.wd =  self.lineEdit_wd.text() #pull the wd filepath from the user provided in 'Browse'
         
-        finv_fp = self.convert_finv() #convert the finv to csv and write to file
+        
+        
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        assert isinstance(self.wd, str)
+        assert isinstance(self.cid, str)
+        assert isinstance(self.tag, str)
+        
+        if not os.path.exists(self.wd):
+            os.makedirs(self.wd)
+            log.info('built working directory: %s'%self.wd)
+            
+        
         
         #======================================================================
         # build the control file
         #======================================================================
+        finv_fp = self.convert_finv() #convert the finv to csv and write to file
+        assert os.path.exists(finv_fp)
+        
         #called by build_scenario()
         dirname = os.path.dirname(os.path.abspath(__file__))
         
@@ -398,7 +442,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             msg = 'generated control file already exists. overwrite=%s \n     %s'%(
                 self.overwrite, cf_path)
             if self.overwrite:
-                self.logger.warning(msg)
+                log.warning(msg)
             else:
                 raise Error(msg)
             
@@ -412,6 +456,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         # update the control file
         #======================================================================
+        """todo: switch over to helper function"""
         pars = configparser.ConfigParser(allow_no_value=True)
         _ = pars.read(cf_path) #read it from the new location
         
@@ -424,15 +469,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         pars.set('dmg_fps', 'curves',  self.lineEdit_curve.text())
         pars.set('dmg_fps', 'finv', finv_fp)
         
-        """shoul donly be set by corresponding tools
-        pars.set('dmg_fps', 'expos', os.path.normpath(os.path.join(self.wd, 'expos_test_1_7.csv')))
-        pars.set('dmg_fps', '#expos file path set from wsamp.py')
-        pars.set('dmg_fps', 'gels', os.path.normpath(os.path.join(self.wd, 'gel_cT1.csv')))"""
-        
-        """should only be set by the Impact model
-        pars.set('risk_fps', 'dmgs', os.path.normpath(os.path.join(self.wd, 'dmg_results.csv')))
-        pars.set('risk_fps', 'exlikes', os.path.normpath(os.path.join(self.wd, 'elikes_cT1.csv')))
-        pars.set('risk_fps', 'aeps', os.path.normpath(os.path.join(self.wd, 'eaep_cT1.csv')))"""
         
         #set note
         pars.set('parameters', '#control file template created from \'scenario setup\' on  %s'%(
@@ -443,8 +479,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         with open(cf_path, 'w') as configfile:
             pars.write(configfile)
             
-        QgsMessageLog.logMessage("default CanFlood model config file created :\n    %s"%cf_path,
-                                 'CanFlood', level=Qgis.Info)
+        log.info("default CanFlood model config file created :\n    %s"%cf_path)
         
         """NO. should only populate this automatically from ModelControlFile.Browse
         self.lineEdit_curve.setText(os.path.normpath(os.path.join(self.wd, 'CanFlood - curve set 01.xls')))"""
@@ -463,7 +498,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         """not sure what this is
         self.lineEdit_control_2.setText(os.path.normpath(os.path.join(self.wd, 'CanFlood_control_01.txt')))"""
         
-        self.logger.push("Scenario \'%s\' control file created"%self.tag)
+        log.push("Scenario \'%s\' control file created"%self.tag)
 
         
     def convert_finv(self): #convert the finv vector to csv file
@@ -519,6 +554,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
 
         #update some parameters
         cid = self.mFieldComboBox_cid.currentField() #user selected field
+        psmp_stat = self.comboBox_HS_stat.currentText()
         
         #======================================================================
         # aoi slice
@@ -547,7 +583,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         if not cid in [field.name() for field in finv.fields()]:
             raise Error('requested cid field \'%s\' not found on the finv_raw'%cid)
-            
+        
+
         assert os.path.exists(cf_fp), 'bad control file specified'
         #======================================================================
         # execute
@@ -564,7 +601,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         wrkr.tag
         """
         
-        res_vlay = wrkr.run(rlay_l, finv, cid=cid, crs=crs)
+        res_vlay = wrkr.run(rlay_l, finv, cid=cid, crs=crs, psmp_stat=psmp_stat)
         
         #check it
         wrkr.check()

@@ -241,6 +241,9 @@ class WSLSampler(Qcoms):
             log.info('    %i/%i sampling \'%s\' on \'%s\''%(indxr+1, len(raster_l), finv.name(), rlay.name()))
             ofnl =  [field.name() for field in finv.fields()]
             
+            #===================================================================
+            # sample.poly----------
+            #===================================================================
             if 'Polygon' in gtype: 
                 
                 params_d = {'COLUMN_PREFIX':indxr, 
@@ -418,7 +421,7 @@ class WSLSampler(Qcoms):
 if __name__ =="__main__": 
     write_vlay=True
     #===========================================================================
-    # tutorial 1
+    # tutorial 1 (points)
     #===========================================================================
     #===========================================================================
     # data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\data'
@@ -438,7 +441,7 @@ if __name__ =="__main__":
     #===========================================================================
     
     #==========================================================================
-    # tutorial 3
+    # tutorial 3 (polygons)
     #==========================================================================
     data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\3\data'
      
@@ -484,7 +487,7 @@ if __name__ =="__main__":
     outfp = wrkr.write_res(res_vlay)
     if write_vlay:
         ofp = os.path.join(out_dir, res_vlay.name()+'.gpkg')
-        vlay_write(res_vlay,ofp)
+        vlay_write(res_vlay,ofp, overwrite=True)
     
     wrkr.upd_cf(cf_fp)
 
