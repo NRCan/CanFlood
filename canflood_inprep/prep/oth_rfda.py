@@ -24,8 +24,8 @@ from scipy import interpolate, integrate
 l1 = ['False', 'FALSE', 'false', 'NO', 'No', 'no', 'N', 'n']
 l2 = ['True','TRUE','true', 'yes','YES','Yes', 'Y', 'y']
 truefalse_d = {
-    **dict(zip(l1, np.full(len(l1), True))),
-    **dict(zip(l2, np.full(len(l2), False)))
+    **dict(zip(l1, np.full(len(l1), False))),
+    **dict(zip(l2, np.full(len(l2), True)))
     }
 
 
@@ -57,7 +57,7 @@ class RFDAconv(Qcoms):
     legacy_ind_d = {0:'id1',1:'address',2:'id2',10:'class', 11:'struct_type', 13:'area', 
                     18:'bsmt_f', 19:'ff_height', 20:'lon',21:'lat', 25:'gel'}
     
-    
+
     def __init__(self, 
                  bsmt_ht = 1.8,
                   **kwargs):
