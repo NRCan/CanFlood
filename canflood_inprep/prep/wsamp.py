@@ -44,7 +44,7 @@ from hlpr.basic import *
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class WSLSampler(Qcoms):
+class Rsamp(Qcoms):
     """
     sampling hazard rasters from the inventory
     """
@@ -333,6 +333,25 @@ class WSLSampler(Qcoms):
         
         return finv
     
+    def inundation(self,
+                   dthresh=0, #depth threshold for inundation analysis
+                   ):
+        
+        assert 'Polygon' in gtype
+        
+        for rlay in rlays_l:
+            #get depth raster
+            
+            #reduce to all values above depththreshold 
+        
+            #get cell size of raster
+            
+            #get cell counts per polygon
+            
+            #multiply counts by size
+        
+        
+    
 
     
 
@@ -464,7 +483,7 @@ if __name__ =="__main__":
     #==========================================================================
     # load the data
     #==========================================================================
-    wrkr = WSLSampler(logger=mod_logger, tag=tag, out_dir=out_dir)
+    wrkr = Rsamp(logger=mod_logger, tag=tag, out_dir=out_dir)
     wrkr.ini_standalone()
     
     

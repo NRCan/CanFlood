@@ -24,33 +24,7 @@ import processing
 from processing.core.Processing import Processing
 
 
-#paths
-"""not sure what these are doing"""
-#sys.path.append(r'C:\IBI\_QGIS_\QGIS 3.8\apps\Python37\Lib\site-packages')
-#sys.path.append(os.path.join(sys.exec_prefix, 'Lib/site-packages'))
 
-#file_dir = os.path.dirname(os.path.abspath(__file__))
-#sys.path.append(file_dir)
-
-
-"""
-TODO: dependency check
-
-"""
-#==============================================================================
-# pandas depdendency check
-#==============================================================================
-"""moved up
-msg = 'requires pandas version >=0.25.3'
-try:
-    import pandas as pd
-except:
-    qgis.utils.iface.messageBar().pushMessage('CanFlood', msg, level=Qgis.Critical)
-    raise ImportError(msg)
-    
-if not pd.__version__ >= '0.25.3':
-    qgis.utils.iface.messageBar().pushMessage('CanFlood', msg, level=Qgis.Critical)
-    raise ImportError(msg)"""
 
 import pandas as pd
 import numpy as np #Im assuming if pandas is fine, numpy will be fine
@@ -61,7 +35,7 @@ import numpy as np #Im assuming if pandas is fine, numpy will be fine
 #==============================================================================
 
 #import canflood_inprep.prep.wsamp
-from prep.wsamp import WSLSampler
+from prep.wsamp import Rsamp
 from prep.lisamp import LikeSampler
 from prep.oth_rfda import RFDAconv
 #from canFlood_model import CanFlood_Model
@@ -592,7 +566,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         """
         finv = self.wsampRun(rlay_l, finv, control_fp=cf_fp1, cid=cid, crs=crs)"""
         #build the sample
-        wrkr = WSLSampler(logger=self.logger, 
+        wrkr = Rsamp(logger=self.logger, 
                           tag = self.tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
                           cid=cid,
@@ -733,7 +707,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
 
         #build the sample
-        wrkr = WSLSampler(logger=self.logger, 
+        wrkr = Rsamp(logger=self.logger, 
                           tag=self.tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
                           cid=cid,
@@ -1029,6 +1003,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
              },
             cf_fp = cf_fp
             )
+        
+        log.push('completed %i validations'%len(vpars_d))
         
         return
     

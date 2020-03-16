@@ -25,8 +25,7 @@ import processing
 from processing.core.Processing import Processing
 import sys, os, warnings, tempfile, logging, configparser
 
-#sys.path.append(r'C:\IBI\_QGIS_\QGIS 3.8\apps\Python37\Lib\site-packages')
-#sys.path.append(os.path.join(sys.exec_prefix, 'Lib/site-packages'))
+
 import numpy as np
 import pandas as pd
 """
@@ -36,8 +35,8 @@ the absolute imports don't seem to work at this
 there has to be a better way"""
 
 
-file_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(file_dir)
+#file_dir = os.path.dirname(os.path.abspath(__file__))
+#sys.path.append(file_dir)
 
 
 
@@ -50,8 +49,8 @@ from .ProjectDataPrep.ProjectDataPrepDialog import DataPrep_Dialog
 from .ProjectModelling.ProjectModellingDialog import Modelling_Dialog
 from .ProjectResults.ProjectResultsDialog import Results_Dialog
 
-class CanFlood_inPrep:
-    """QGIS Plugin Implementation."""
+class CanFlood:
+
 
     def __init__(self, iface):
         """Constructor.
