@@ -321,15 +321,14 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
 
         #Import a Raster Layer
         rlayer = QgsRasterLayer(fp, basefn)
-        if not rlayer.isValid():
-            print("Layer failed to load!")
+        
         
         
         #===========================================================================
-        # checks
+        # wrap
         #===========================================================================
-        if not isinstance(rlayer, QgsRasterLayer): 
-            raise IOError
+        assert rlayer.isValid(), "Layer failed to load!"
+        assert isinstance(rlayer, QgsRasterLayer), 'failed to get a QgsRasterLayer'
         
 
         #add it to the store
@@ -656,6 +655,156 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
         
 
         return res_vlay, new_fn_l, join_cnt
+    
+    
+    def cliprasterwithpolygon(self,
+                              rlay_raw,
+                              poly_vlay,
+                              ofp = None,
+                              layname = None,
+                              #output = 'TEMPORARY_OUTPUT',
+                              logger = None,
+                              ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger = self.logger
+        log = logger.getChild('cliprasterwithpolygon')
+        
+        if layname is None:
+            if not ofp is None:
+                layname = os.path.splitext(os.path.split(ofp)[1])[0]
+            else:
+                layname = '%s_clipd'%rlay_raw.name()
+            
+        if ofp is None: 
+            ofp = os.path.join(self.out_dir,layname+'.sdat')
+            
+        algo_nm = 'saga:cliprasterwithpolygon'
+            
+
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        
+        if os.path.exists(ofp):
+            msg = 'requested filepath exists: %s'%ofp
+            if self.overwrite:
+                log.warning(msg)
+            else:
+                raise Error(msg)
+            
+        if not os.path.exists(os.path.dirname(ofp)):
+            os.makedirs(os.path.dirname(ofp))
+            
+        #assert QgsRasterLayer.isValidRasterFileName(ofp), 'invalid filename: %s'%ofp
+            
+        assert 'Poly' in QgsWkbTypes().displayString(poly_vlay.wkbType())
+        
+        assert rlay_raw.crs() == poly_vlay.crs()
+            
+            
+        #=======================================================================
+        # run algo        
+        #=======================================================================
+        ins_d = { 'INPUT' : rlay_raw, 
+                 'OUTPUT' : ofp, 
+                 'POLYGONS' : poly_vlay }
+        
+        log.debug('executing \'%s\' with ins_d: \n    %s'%(algo_nm, ins_d))
+        
+        res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
+        
+        log.info('finished w/ \n    %s'%res_d)
+        
+        assert os.path.exists(res_d['OUTPUT']), 'failed to get a result'
+        
+        res_rlay = QgsRasterLayer(res_d['OUTPUT'], layname)
+
+        #=======================================================================
+        # #post check
+        #=======================================================================
+        assert isinstance(res_rlay, QgsRasterLayer), 'got bad type: %s'%type(res_rlay)
+        assert res_rlay.isValid()
+           
+   
+        res_rlay.setName(layname) #reset the name
+           
+        log.info('finished w/ %s'%res_rlay.name())
+          
+        return res_rlay
+    
+    def srastercalculator(self,
+                          formula,
+                          rlay_d, #container of raster layers to perform calculations on
+                          logger=None,
+                          layname=None,
+                          ofp=None,
+                          ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger = self.logger
+        log = logger.getChild('rastercalculator')
+        
+        
+        assert 'a' in rlay_d
+        
+        if layname is None:
+            if not ofp is None:
+                layname = os.path.splitext(os.path.split(ofp)[1])[0]
+            else:
+                layname = '%s_calc'%rlay_d['a'].name()
+            
+        if ofp is None: 
+            ofp = os.path.join(self.out_dir, layname+'.sdat')
+            
+        if not os.path.exists(os.path.dirname(ofp)):
+            log.info('building basedir: %s'%os.path.dirname(ofp))
+            os.makedirs(os.path.dirname(ofp))
+            
+        #=======================================================================
+        # execute
+        #=======================================================================
+            
+        algo_nm = 'saga:rastercalculator'
+        
+        
+        
+        ins_d = { 'FORMULA' : formula, 
+                'GRIDS' : rlay_d.pop('a'),
+                'RESAMPLING' : 3,
+                'RESULT' : ofp,
+                'TYPE' : 7,
+                'USE_NODATA' : False,
+                'XGRIDS' : list(rlay_d.values())}
+        
+        
+        log.debug('executing \'%s\' with ins_d: \n    %s'%(algo_nm, ins_d))
+        
+        res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
+        
+        log.info('finished w/ \n    %s'%res_d)
+        
+        assert os.path.exists(res_d['RESULT']), 'failed to get a result'
+        
+        res_rlay = QgsRasterLayer(res_d['RESULT'], layname)
+
+        #=======================================================================
+        # #post check
+        #=======================================================================
+        assert isinstance(res_rlay, QgsRasterLayer), 'got bad type: %s'%type(res_rlay)
+        assert res_rlay.isValid()
+           
+   
+        res_rlay.setName(layname) #reset the name
+           
+        log.info('finished w/ %s'%res_rlay.name())
+          
+        return res_rlay
+        
+        
     
     #==========================================================================
     # privates----------

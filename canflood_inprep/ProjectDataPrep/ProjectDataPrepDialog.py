@@ -171,20 +171,22 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #display the gtype when the finv changes
         def upd_gtype():
             vlay = self.comboBox_vec.currentLayer()
-            gtype = QgsWkbTypes().displayString(vlay.wkbType())
-            self.label_HS_finvgtype.setText(gtype)
+            if isinstance(vlay,QgsVectorLayer):
+                gtype = QgsWkbTypes().displayString(vlay.wkbType())
+                self.label_HS_finvgtype.setText(gtype)
             
         self.comboBox_vec.layerChanged.connect(upd_gtype) #SS inventory vector layer
         
         #display sampling stats options to user 
         def upd_stat():
             vlay = self.comboBox_vec.currentLayer()
-            gtype = QgsWkbTypes().displayString(vlay.wkbType())
-            self.comboBox_HS_stat.clear()
-            
-            if 'Polygon' in gtype:
-                self.comboBox_HS_stat.addItems(
-                    ['Mean','Median','Min','Max'])
+            if isinstance(vlay,QgsVectorLayer):
+                gtype = QgsWkbTypes().displayString(vlay.wkbType())
+                self.comboBox_HS_stat.clear()
+                
+                if 'Polygon' in gtype:
+                    self.comboBox_HS_stat.addItems(
+                        ['Mean','Median','Min','Max'])
                 
         self.comboBox_vec.layerChanged.connect(upd_stat) #SS inventory vector layer
             

@@ -341,7 +341,7 @@ class Rsamp(Qcoms):
         
         return finv
     
-    def samp_inun(self,finv, raster_l, dtm_rlay, dthresh,
+    def samp_inun(self,finv, raster_l, dtmlay_raw, dthresh,
                    ):
         #=======================================================================
         # defaults
@@ -349,20 +349,51 @@ class Rsamp(Qcoms):
         log = self.logger.getChild('samp_inun')
         gtype=self.gtype
         
+        master_od = self.out_dir
+        self.out_dir = os.path.join(master_od, 'inun')
         #=======================================================================
         # precheck
         #=======================================================================
         assert 'Polygon' in gtype
-        assert isinstance(dtm_rlay, QgsRasterLayer)
+        assert isinstance(dtmlay_raw, QgsRasterLayer)
         assert isinstance(dthresh, float)
         
+        #=======================================================================
+        # setup the dtm------
+        #=======================================================================
+        #clip to just the polygons
+        log.info('trimming dtm raster')
+        dtm_rlay = self.cliprasterwithpolygon(dtmlay_raw,finv, logger=log)
+        
+        #=======================================================================
+        # sample loop        ---------
+        #=======================================================================
+        """
+        too memory intensive to handle writing of all these.
+        an advanced user could retrive from the working folder if desiered
+        """
         for rlay in raster_l:
             log = self.logger.getChild('samp_inun.%s'%rlay.name())
-            log.info('generating depth raster')
-            pass
+
+
             #get depth raster
+            self.out_dir = os.path.join(master_od, 'inun', 'dep')
+            log.info('calculating depth raster')
+            dep_rlay = self.srastercalculator('a-b',
+                               {'a':rlay, 'b':dtm_rlay},
+                               logger=log,
+                               layname= '%s_dep'%rlay.name(),
+                               )
             
-            #reduce to all values above depththreshold 
+            #reduce to all values above depththreshold
+            self.out_dir = os.path.join(master_od, 'inun', 'dthresh')
+            log.info('calculating %.2f threshold raster'%dthresh) 
+            thr_rlay = self.srastercalculator(
+                                'ifelse(a>%.1f,1,0/0)'%dthresh, #null if not above minval
+                               {'a':dep_rlay},
+                               logger=log,
+                               layname= '%s_mv'%dep_rlay.name()
+                               )
         
             #get cell size of raster
             
@@ -370,9 +401,9 @@ class Rsamp(Qcoms):
             
             #multiply counts by size
         
-        
-    
 
+        
+        
     
 
     
