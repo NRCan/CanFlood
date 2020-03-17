@@ -308,6 +308,37 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
         
         return vlay
     
+    def load_rlay(self, fp, logger=None):
+        if logger is None: logger = self.logger
+        log = logger.getChild('load_rlay')
+        
+        assert os.path.exists(fp), 'requested file does not exist: %s'%fp
+        assert QgsRasterLayer.isValidRasterFileName(fp),  \
+            'requested file is not a valid raster file type: %s'%fp
+        
+        basefn = os.path.splitext(os.path.split(fp)[1])[0]
+        
+
+        #Import a Raster Layer
+        rlayer = QgsRasterLayer(fp, basefn)
+        if not rlayer.isValid():
+            print("Layer failed to load!")
+        
+        
+        #===========================================================================
+        # checks
+        #===========================================================================
+        if not isinstance(rlayer, QgsRasterLayer): 
+            raise IOError
+        
+
+        #add it to the store
+        self.mstore.addMapLayer(rlayer)
+        
+        log.info('loaded \'%s\' from \n    %s'%(rlayer.name(), fp))
+        
+        return rlayer
+    
     #==========================================================================
     # helper methods-----------------
     #==========================================================================

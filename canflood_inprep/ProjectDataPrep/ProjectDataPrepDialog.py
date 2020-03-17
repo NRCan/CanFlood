@@ -34,12 +34,12 @@ import numpy as np #Im assuming if pandas is fine, numpy will be fine
 # custom imports
 #==============================================================================
 
-#import canflood_inprep.prep.wsamp
 from prep.wsamp import Rsamp
 from prep.lisamp import LikeSampler
 from prep.oth_rfda import RFDAconv
+
 #from canFlood_model import CanFlood_Model
-import hp
+#import hp
 
 from hlpr.plug import *
 from hlpr.Q import *

@@ -13,13 +13,11 @@ from qgis.PyQt import QtWidgets
 # custom imports
 #==============================================================================
 
-#import canflood_inprep.prep.wsamp
-from prep.wsamp import WSLSampler
-from prep.lisamp import LikeSampler
-#from canFlood_model import CanFlood_Model
-import hp
+
+
+
 import hlpr.plug
-from hp import Error
+
 
 
 

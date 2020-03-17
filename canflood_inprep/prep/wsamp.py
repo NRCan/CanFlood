@@ -71,9 +71,12 @@ class Rsamp(Qcoms):
 
     
     
-    def __init__(self, *args, **kwargs):
+    def __init__(self,
+                 fname='expos', #prefix for file name
+                  *args, **kwargs):
         super().__init__(*args, **kwargs)
         
+        self.fname=fname
         #flip the codes
         self.psmp_codes = dict(zip(self.psmp_codes.values(), self.psmp_codes.keys()))
 
@@ -93,32 +96,10 @@ class Rsamp(Qcoms):
         raster_d = dict()
         
         for fp in rfp_l:
-            assert os.path.exists(fp), 'requested file does not exist: %s'%fp
-            assert QgsRasterLayer.isValidRasterFileName(fp),  \
-                'requested file is not a valid raster file type: %s'%fp
-            
-            basefn = os.path.splitext(os.path.split(fp)[1])[0]
-            
-
-            #Import a Raster Layer
-            rlayer = QgsRasterLayer(fp, basefn)
-            if not rlayer.isValid():
-                print("Layer failed to load!")
-            
-            
-            #===========================================================================
-            # checks
-            #===========================================================================
-            if not isinstance(rlayer, QgsRasterLayer): 
-                raise IOError
-            
-
-            #add it to the store
-            self.mstore.addMapLayer(rlayer)
-            
-            log.info('loaded \'%s\' from file: %s'%(rlayer.name(), fp))
+            rlayer = self.load_rlay(fp)
             
             #add it in
+            basefn = os.path.splitext(os.path.split(fp)[1])[0]
             raster_d[basefn] = rlayer
             
         #======================================================================
@@ -161,15 +142,23 @@ class Rsamp(Qcoms):
         #======================================================================
         
         return list(raster_d.values()), vlay
+    
+
             
 
     def run(self, 
             raster_l, #set of rasters to sample 
             finv_raw, #inventory layer
-            cid = None, #index field name on finv
+            as_inun=False, #whether to sample for inundation (rather than wsl values)
+            cid = 'xid', #index field name on finv
             crs = None,
-            fname='expos', #prefix for file name
+            
+            #exposure value controls
             psmp_stat='Max', #for polygon finvs, statistic to sample
+            
+            #inundation sampling controls
+            dtm_rlay=None, #dtm raster
+            dthresh = 0, #fordepth threshold
             
             ):
         
@@ -205,19 +194,42 @@ class Rsamp(Qcoms):
         #======================================================================
         # prep the finv_raw
         #======================================================================
-        finv_name = finv_raw.name()
+        self.finv_name = finv_raw.name()
         
         #drop all the fields except the cid
         finv = self.deletecolumn(finv_raw, [cid], invert=True)
         
         #check field lengths
-        finv_fcnt = len(finv.fields())
-        assert finv_fcnt== 1, 'failed to drop all the fields'
+        self.finv_fcnt = len(finv.fields())
+        assert self.finv_fcnt== 1, 'failed to drop all the fields'
         
+        self.gtype = QgsWkbTypes().displayString(finv.wkbType())
+        #=======================================================================
+        # exercute
+        #=======================================================================
+        if as_inun:
+            res_vlay = self.samp_inun(finv,raster_l, dtm_rlay, dthresh)
+        else:
+            res_vlay = self.samp_vals(finv,raster_l, psmp_stat)
+            
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        log.info('sampling finished')
+        
+        res_name = '%s_%s_%i_%i'%(self.fname, self.tag, len(raster_l), finv.dataProvider().featureCount())
+        
+        finv.setName(res_name)
+            
+        return res_vlay
+        
+    def samp_vals(self, finv, raster_l,psmp_stat):
+        
+        log = self.logger.getChild('samp_vals')
         #=======================================================================
         # prep the loop
         #=======================================================================
-        gtype = QgsWkbTypes().displayString(finv.wkbType())
+        gtype=self.gtype
         if 'Polygon' in gtype: 
             assert psmp_stat in self.psmp_codes, 'unrecognized psmp_stat' 
             psmp_code = self.psmp_codes[psmp_stat] #sample each raster
@@ -230,7 +242,7 @@ class Rsamp(Qcoms):
 
         
         #=======================================================================
-        # sample loop-------
+        # sample loop
         #=======================================================================
         
         names_d = dict()
@@ -293,10 +305,10 @@ class Rsamp(Qcoms):
             #===================================================================
             # sample.wrap
             #===================================================================
-            assert len(finv.fields()) == finv_fcnt + indxr +1, \
+            assert len(finv.fields()) == self.finv_fcnt + indxr +1, \
                 'bad field length on %i'%indxr
                 
-            finv.setName('%s_%i'%(finv_name, indxr))
+            finv.setName('%s_%i'%(self.finv_name, indxr))
             
             #===================================================================
             # correct field names
@@ -322,24 +334,32 @@ class Rsamp(Qcoms):
             
         
 
-        log.info('sampling finished')
-        
-        res_name = '%s_%s_%i_%i'%(fname, self.tag, len(raster_l), finv.dataProvider().featureCount())
-        
-        finv.setName(res_name)
+
         
         self.names_d = names_d #needed by write()
 
         
         return finv
     
-    def inundation(self,
-                   dthresh=0, #depth threshold for inundation analysis
+    def samp_inun(self,finv, raster_l, dtm_rlay, dthresh,
                    ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        log = self.logger.getChild('samp_inun')
+        gtype=self.gtype
         
+        #=======================================================================
+        # precheck
+        #=======================================================================
         assert 'Polygon' in gtype
+        assert isinstance(dtm_rlay, QgsRasterLayer)
+        assert isinstance(dthresh, float)
         
-        for rlay in rlays_l:
+        for rlay in raster_l:
+            log = self.logger.getChild('samp_inun.%s'%rlay.name())
+            log.info('generating depth raster')
+            pass
             #get depth raster
             
             #reduce to all values above depththreshold 
@@ -439,6 +459,7 @@ class Rsamp(Qcoms):
 
 if __name__ =="__main__": 
     write_vlay=True
+    
     #===========================================================================
     # tutorial 1 (points)
     #===========================================================================
@@ -466,14 +487,18 @@ if __name__ =="__main__":
      
     raster_fns = ['haz_1000yr_cT2.tif', 'haz_1000yr_fail_cT2.tif', 'haz_100yr_cT2.tif', 
                   'haz_200yr_cT2.tif','haz_50yr_cT2.tif']
-     
-     
-     
-    finv_fp = os.path.join(data_dir, r'finv_polys_t3.gpkg')
+    
+    
+      
+    finv_fp = os.path.join(data_dir, 'finv_polys_t3.gpkg')
      
     cf_fp = os.path.join(data_dir, 'CanFlood_control_01.txt')
-     
-     
+    
+    #inundation sampling
+    dtm_fp = os.path.join(data_dir, 'dtm_cT1.tif')
+    as_inun=True
+    dthresh = 0.5
+    
     cid='zid'
     tag='tut3'
     
@@ -489,30 +514,38 @@ if __name__ =="__main__":
     
     rlay_l, finv_vlay = wrkr.load_layers(raster_fps, finv_fp)
     
+    if not dtm_fp is None:
+        dtm_rlay = wrkr.load_rlay(dtm_fp)
+    else:
+        dtm_rlay = None
     
     #==========================================================================
     # execute
     #==========================================================================
     res_vlay = wrkr.run(rlay_l, finv_vlay, 
              cid=cid,
-             crs = finv_vlay.crs(),
+             crs = finv_vlay.crs(), 
+             as_inun=as_inun, dtm_rlay=dtm_rlay,dthresh=dthresh,
              )
        
     wrkr.check()
+
     
     #==========================================================================
     # save results
     #==========================================================================
-    outfp = wrkr.write_res(res_vlay)
-    if write_vlay:
-        ofp = os.path.join(out_dir, res_vlay.name()+'.gpkg')
-        vlay_write(res_vlay,ofp, overwrite=True)
-    
-    wrkr.upd_cf(cf_fp)
-
-    force_open_dir(out_dir)
-
-    print('finished')
+#===============================================================================
+#     outfp = wrkr.write_res(res_vlay)
+#     if write_vlay:
+#         ofp = os.path.join(out_dir, res_vlay.name()+'.gpkg')
+#         vlay_write(res_vlay,ofp, overwrite=True)
+#     
+#     wrkr.upd_cf(cf_fp)
+# 
+#     force_open_dir(out_dir)
+# 
+#     print('finished')
+#===============================================================================
     
     
     
