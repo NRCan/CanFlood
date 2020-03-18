@@ -217,9 +217,9 @@ class Rsamp(Qcoms):
         #=======================================================================
         log.info('sampling finished')
         
-        res_name = '%s_%s_%i_%i'%(self.fname, self.tag, len(raster_l), finv.dataProvider().featureCount())
+        res_name = '%s_%s_%i_%i'%(self.fname, self.tag, len(raster_l), res_vlay.dataProvider().featureCount())
         
-        finv.setName(res_name)
+        res_vlay.setName(res_name)
             
         return res_vlay
         

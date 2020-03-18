@@ -86,7 +86,7 @@
           </size>
          </property>
          <property name="currentIndex">
-          <number>2</number>
+          <number>0</number>
          </property>
          <property name="movable">
           <bool>false</bool>
@@ -158,6 +158,13 @@ p, li { white-space: pre-wrap; }
                <widget class="QPushButton" name="pushButton_wd">
                 <property name="text">
                  <string>Browse</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_wd_open">
+                <property name="text">
+                 <string>Open</string>
                 </property>
                </widget>
               </item>
@@ -961,26 +968,7 @@ p, li { white-space: pre-wrap; }
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_17">
                  <item>
-                  <layout class="QHBoxLayout" name="horizontalLayout_27">
-                   <item>
-                    <widget class="QCheckBox" name="checkBox_HS_in">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>175</width>
-                       <height>16777215</height>
-                      </size>
-                     </property>
-                     <property name="text">
-                      <string>Exposure as Inundation%</string>
-                     </property>
-                    </widget>
-                   </item>
+                  <layout class="QHBoxLayout" name="horizontalLayout_28">
                    <item>
                     <widget class="QLabel" name="label_15">
                      <property name="sizePolicy">
@@ -1001,6 +989,29 @@ p, li { white-space: pre-wrap; }
                      </property>
                     </widget>
                    </item>
+                  </layout>
+                 </item>
+                 <item>
+                  <layout class="QHBoxLayout" name="horizontalLayout_27">
+                   <item>
+                    <widget class="QCheckBox" name="checkBox_HS_in">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>250</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>Exposure as Inundation%</string>
+                     </property>
+                    </widget>
+                   </item>
                    <item>
                     <widget class="QLabel" name="label_16">
                      <property name="sizePolicy">
@@ -1015,7 +1026,7 @@ p, li { white-space: pre-wrap; }
                     </widget>
                    </item>
                    <item>
-                    <widget class="QgsDoubleSpinBox" name="mQgsDoubleSpinBox"/>
+                    <widget class="QgsDoubleSpinBox" name="mQgsDoubleSpinBox_HS"/>
                    </item>
                   </layout>
                  </item>

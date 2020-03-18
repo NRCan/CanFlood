@@ -104,12 +104,18 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.comboBox_SSelv.addItems(['datum', 'ground']) #ss elevation type
                
         
-        #Working Directory
+        #Working Directory browse
         def browse_wd():
             return self.browse_button(self.lineEdit_wd, prompt='Select Working Directory',
                                       qfd = QFileDialog.getExistingDirectory)
             
         self.pushButton_wd.clicked.connect(browse_wd) # SS. Working Dir. Browse
+        
+        #WD force open
+        def open_wd():
+            force_open_dir(self.lineEdit_wd.text())
+        
+        self.pushButton_wd_open.clicked.connect(open_wd)
         
         #======================================================================
         # #Inventory Vector Layer
@@ -147,7 +153,11 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.pushButton_generate.clicked.connect(self.build_scenario) #SS. generate
         
         #CanFlood Control File
-        self.pushButton_cf.clicked.connect(self.browse_cf)# SS. Model Control File. Browse
+        def browse_cf():
+            return self.browse_button(self.lineEdit_cf_fp, prompt='Select CanFlood control file',
+                           qfd=QFileDialog.getOpenFileName)
+            
+        self.pushButton_cf.clicked.connect(browse_cf)# SS. Model Control File. Browse
         
         #======================================================================
         # hazard sampler---------
@@ -169,7 +179,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         #connect dtm layer name to display box
         def upd_dtmlayname():
-            vlay = self.comboBox_vec.currentLayer()
+            vlay = self.comboBox_dtm.currentLayer()
             if isinstance(vlay,QgsVectorLayer):
                 self.label_HS_dtmln.setText(vlay.name())
                 
@@ -297,32 +307,15 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         """"
         to speed up testing.. manually configure the project
         """
-        
-        self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200316\CanFlood_scenario1.txt')
-        self.lineEdit_wd.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200316')
+
+        debug_dir =os.path.join(os.path.expanduser('~'), 'CanFlood', 'build')
+        self.lineEdit_cf_fp.setText(os.path.join(debug_dir, 'CanFlood_scenario1.txt'))
+        self.lineEdit_wd.setText(debug_dir)
         
         
         
     
-    #==========================================================================
-    # UI Buttom Actions-----------------      
-    #==========================================================================
 
-    def browse_cf(self): #select an existing model control file
-        self.browse_button(self.lineEdit_cf_fp, prompt='Select CanFlood control file',
-                           qfd=QFileDialog.getOpenFileName)
-        
-        """
-        TODO: Populate Vulnerability Curve Set box
-         
-        Check the control file is the correct format
-         
-        print out all the values pressent in the control file
-        """
-
-
-        
-        
     #==========================================================================
     # Layer Loading---------------
     #==========================================================================
@@ -595,6 +588,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                           tag = self.tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
                           cid=cid,crs = crs,
+                          out_dir = out_dir
                           )
         """
         wrkr.tag
@@ -608,7 +602,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         wrkr.check()
         
         #save csv results to file
-        wrkr.write_res(res_vlay, out_dir = out_dir)
+        wrkr.write_res(res_vlay, )
         
         #update ocntrol file
         wrkr.upd_cf(cf_fp)
