@@ -164,7 +164,18 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         self.comboBox_ras.currentTextChanged.connect(self.add_ras)
         
-        
+        #=======================================================================
+        # inundation
+        #=======================================================================
+        #connect dtm layer name to display box
+        def upd_dtmlayname():
+            vlay = self.comboBox_vec.currentLayer()
+            if isinstance(vlay,QgsVectorLayer):
+                self.label_HS_dtmln.setText(vlay.name())
+                
+        self.comboBox_dtm.layerChanged.connect(upd_dtmlayname)
+            
+
         #=======================================================================
         # #complex
         #=======================================================================
@@ -532,6 +543,18 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         cid = self.mFieldComboBox_cid.currentField() #user selected field
         psmp_stat = self.comboBox_HS_stat.currentText()
         
+        #inundation
+        as_inun = self.checkBox_HS_in.isChecked()
+        
+        if as_inun:
+            dthresh = self.mQgsDoubleSpinBox_HS.value()
+            dtm_rlay=self.comboBox_dtm.currentLayer()
+            
+            assert isinstance(dthresh, float)
+            assert isinstance(dtm_rlay, QgsRasterLayer)
+            
+        else:
+            dthresh, dtm_rlay = None, None
         #======================================================================
         # aoi slice
         #======================================================================
@@ -571,13 +594,15 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         wrkr = Rsamp(logger=self.logger, 
                           tag = self.tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
-                          cid=cid,
+                          cid=cid,crs = crs,
                           )
         """
         wrkr.tag
         """
         
-        res_vlay = wrkr.run(rlay_l, finv, cid=cid, crs=crs, psmp_stat=psmp_stat)
+        res_vlay = wrkr.run(rlay_l, finv,
+                            psmp_stat=psmp_stat,
+                            as_inun=as_inun, dtm_rlay=dtm_rlay, dthresh=dthresh)
         
         #check it
         wrkr.check()
