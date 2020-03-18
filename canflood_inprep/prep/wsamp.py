@@ -7,7 +7,7 @@ Created on Feb. 9, 2020
 #==========================================================================
 # logger setup-----------------------
 #==========================================================================
-import logging, configparser, datetime
+import logging, configparser, datetime, shutil
 
 
 
@@ -150,7 +150,7 @@ class Rsamp(Qcoms):
             raster_l, #set of rasters to sample 
             finv_raw, #inventory layer
             as_inun=False, #whether to sample for inundation (rather than wsl values)
-            cid = 'xid', #index field name on finv
+            cid = None, #index field name on finv
             crs = None,
             
             #exposure value controls
@@ -332,10 +332,6 @@ class Rsamp(Qcoms):
             log.debug('sampled %i values on raster \'%s\''%(
                 finv.dataProvider().featureCount(), rlay.name()))
             
-        
-
-
-        
         self.names_d = names_d #needed by write()
 
         
@@ -351,6 +347,17 @@ class Rsamp(Qcoms):
         
         master_od = self.out_dir
         self.out_dir = os.path.join(master_od, 'inun')
+        
+        #clear the working directory
+        """neded for SAGA algo workaround"""
+        if os.path.exists(self.out_dir):
+            log.warning('specified out_dir exists. clearing contents')
+            try:
+                shutil.rmtree(self.out_dir)
+            except Exception as e:
+                raise Error('failed to clear working directory. remove layers from workspace? \n    %s'%e)
+        os.makedirs(self.out_dir)
+        
         #=======================================================================
         # precheck
         #=======================================================================
@@ -361,19 +368,28 @@ class Rsamp(Qcoms):
         #=======================================================================
         # setup the dtm------
         #=======================================================================
-        #clip to just the polygons
         log.info('trimming dtm raster')
-        dtm_rlay = self.cliprasterwithpolygon(dtmlay_raw,finv, logger=log)
+        #add a buffer and dissolve
+        """makes the raster clipping a bitcleaner and faster"""
+        finv_buf = self.buffer(finv,
+                                dtmlay_raw.rasterUnitsPerPixelX()*3,#buffer by 3x the pixel size
+                                 dissolve=True, logger=log )
+        
+        #clip to just the polygons
+        dtm_rlay = self.cliprasterwithpolygon(dtmlay_raw,finv_buf, logger=log)
         
         #=======================================================================
-        # sample loop        ---------
+        # sample loop---------
         #=======================================================================
         """
         too memory intensive to handle writing of all these.
         an advanced user could retrive from the working folder if desiered
         """
-        for rlay in raster_l:
+        names_d = dict()
+        parea_d = dict()
+        for indxr, rlay in enumerate(raster_l):
             log = self.logger.getChild('samp_inun.%s'%rlay.name())
+            ofnl = [field.name() for field in finv.fields()]
 
 
             #get depth raster
@@ -397,17 +413,124 @@ class Rsamp(Qcoms):
         
             #get cell size of raster
             
-            #get cell counts per polygon
+            #===================================================================
+            # #get cell counts per polygon
+            #===================================================================
+            log.info('getting pixel counts on %i polys'%finv.dataProvider().featureCount())
+            algo_nm = 'qgis:zonalstatistics'
+            ins_d = {       'COLUMN_PREFIX':indxr, 
+                            'INPUT_RASTER':thr_rlay, 
+                            'INPUT_VECTOR':finv, 
+                            'RASTER_BAND':1, 
+                            'STATS':[1],#0: pixel counts, 1: sum
+                            }
+                
+            #execute the algo
+            res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
+            #extract and clean results
+            finv = res_d['INPUT_VECTOR']
             
-            #multiply counts by size
+            #===================================================================
+            # update pixel size
+            #===================================================================
+            parea_d[rlay.name()] = rlay.rasterUnitsPerPixelX()*rlay.rasterUnitsPerPixelY()
+            
+            
+            #===================================================================
+            # correct field names
+            #===================================================================
+            """
+            algos don't assign good field names.
+            collecting a conversion dictionary then adjusting below
+            """
+            #get/updarte the field names
+            nfnl =  [field.name() for field in finv.fields()]
+            new_fn = set(nfnl).difference(ofnl) #new field names not in the old
+            
+            if len(new_fn) > 1:
+                raise Error('bad mismatch: %i \n    %s'%(len(new_fn), new_fn))
+            elif len(new_fn) == 1:
+                names_d[list(new_fn)[0]] = rlay.name()
+            else:
+                raise Error('bad fn match')
+            
+        #=======================================================================
+        # area calc-----------
+        #=======================================================================
+        log = self.logger.getChild('samp_inun')
+        self.out_dir = os.path.join(master_od, 'inun')
+        log.info('calculating areas on %i results fields:\n    %s'%(len(names_d), list(names_d.keys())))
         
+        #add geometry fields
+        finv = self.addgeometrycolumns(finv, logger = log)
+        
+        df_raw  = vlay_get_fdf(finv, logger=log)
+        
+        df = df_raw.rename(columns=names_d)
+
+        self.names_d
 
         
+        #multiply each column by corresponding raster's cell size
+        res_df = df.loc[:, names_d.values()].multiply(pd.Series(parea_d)).round(self.prec)
+        res_df = res_df.rename(columns={coln:'%s_a'%coln for coln in res_df.columns})
         
-    
+        #divide by area of each polygon
+        frac_df = res_df.div(df_raw['area'], axis=0).round(self.prec)
+        d = {coln:'%s_pct_raw'%coln for coln in frac_df.columns}
+        frac_df = frac_df.rename(columns=d)
+        res_df = res_df.join(frac_df)#add back in results
+        
+        #adjust for excessive fractions
+        booldf = frac_df>1
+        d1 = {coln:'%s_pct'%ename for ename, coln in d.items()}
+        if booldf.any().any():
+            log.warning('got %i (of %i) pct values >1.00. setting to 1.0 (bad pixel/polygon ratio?)'%(
+                booldf.sum().sum(), booldf.size))
+            
+            fix_df = frac_df.where(~booldf, 1.0)
+            fix_df = fix_df.rename(columns=d1)
+            res_df = res_df.join(fix_df)
+            
+        else:
+            res_df = res_df.rename(columns=d1)
+        
+        #add back in all the raw
+        res_df = res_df.join(df_raw.rename(columns=names_d))
+        
+        #set the reuslts converter
+        self.names_d = {coln:ename for coln, ename in dict(zip(d1.values(), names_d.values())).items()}
+        
+        #=======================================================================
+        # write working reuslts
+        #=======================================================================
+        ofp = os.path.join(self.out_dir, 'res_df.csv')
+        res_df.to_csv(ofp, index=None)
+        log.info('wrote working data to \n    %s'%ofp)
+        
+        #slice to results only
+        res_df = res_df.loc[:,[self.cid]+list(d1.values())]
+        
+        log.info('data assembed w/ %s: \n    %s'%(str(res_df.shape), res_df.columns.tolist()))
+        
+        """
+        view(res_df)
+        """
+        
+        
+        #=======================================================================
+        # bundle back into vectorlayer
+        #=======================================================================
+        geo_d = vlay_get_fdata(finv, geo_obj=True, logger=log)
+        res_vlay = vlay_new_df(res_df, finv.crs(), geo_d=geo_d, logger=log,
+                               layname='%s_inun'%finv.name())
+        
+        log.info('finisished w/ %s'%res_vlay.name())
+        self.out_dir = master_od
+        
+        return res_vlay
+        
 
-    
-    
     def dtm_check(self, vlay):
         
         log = self.logger.getChild('dtm_check')
@@ -516,8 +639,12 @@ if __name__ =="__main__":
     #==========================================================================
     data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\3\data'
      
-    raster_fns = ['haz_1000yr_cT2.tif', 'haz_1000yr_fail_cT2.tif', 'haz_100yr_cT2.tif', 
-                  'haz_200yr_cT2.tif','haz_50yr_cT2.tif']
+    raster_fns = ['haz_1000yr_cT2.tif', 
+                  #'haz_1000yr_fail_cT2.tif', 
+                  #'haz_100yr_cT2.tif', 
+                  #'haz_200yr_cT2.tif',
+                  'haz_50yr_cT2.tif',
+                  ]
     
     
       
@@ -539,7 +666,7 @@ if __name__ =="__main__":
     #==========================================================================
     # load the data
     #==========================================================================
-    wrkr = Rsamp(logger=mod_logger, tag=tag, out_dir=out_dir)
+    wrkr = Rsamp(logger=mod_logger, tag=tag, out_dir=out_dir, cid=cid)
     wrkr.ini_standalone()
     
     
@@ -554,7 +681,6 @@ if __name__ =="__main__":
     # execute
     #==========================================================================
     res_vlay = wrkr.run(rlay_l, finv_vlay, 
-             cid=cid,
              crs = finv_vlay.crs(), 
              as_inun=as_inun, dtm_rlay=dtm_rlay,dthresh=dthresh,
              )
@@ -565,18 +691,16 @@ if __name__ =="__main__":
     #==========================================================================
     # save results
     #==========================================================================
-#===============================================================================
-#     outfp = wrkr.write_res(res_vlay)
-#     if write_vlay:
-#         ofp = os.path.join(out_dir, res_vlay.name()+'.gpkg')
-#         vlay_write(res_vlay,ofp, overwrite=True)
-#     
-#     wrkr.upd_cf(cf_fp)
-# 
-#     force_open_dir(out_dir)
-# 
-#     print('finished')
-#===============================================================================
+    outfp = wrkr.write_res(res_vlay)
+    if write_vlay:
+        ofp = os.path.join(out_dir, res_vlay.name()+'.gpkg')
+        vlay_write(res_vlay,ofp, overwrite=True)
+     
+    wrkr.upd_cf(cf_fp)
+ 
+    force_open_dir(out_dir)
+ 
+    print('finished')
     
     
     

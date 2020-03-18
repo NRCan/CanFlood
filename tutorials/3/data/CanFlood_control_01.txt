@@ -13,9 +13,9 @@ integrate = trapz
 [dmg_fps]
 curves = 
 finv = 
-expos = C:\Users\cefect\CanFlood\wsamp\tut3\expos_tut3_5_26.csv
+expos = C:\Users\cefect\CanFlood\wsamp\tut3\finv_polys_t3_gcol_inun.csv
 gels = 
-#'expos' file path set from wsamp.py at 2020-03-17 10.22.40
+#'expos' file path set from wsamp.py at 2020-03-17 19.10.41
 
 [risk_fps]
 dmgs = 

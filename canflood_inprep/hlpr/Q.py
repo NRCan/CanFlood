@@ -680,6 +680,14 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
         if ofp is None: 
             ofp = os.path.join(self.out_dir,layname+'.sdat')
             
+        if os.path.exists(ofp):
+            msg = 'requseted filepath exists: %s'%ofp
+            if self.overwrite:
+                log.warning('DELETING'+msg)
+                os.remove(ofp)
+            else:
+                raise Error(msg)
+            
         algo_nm = 'saga:cliprasterwithpolygon'
             
 
@@ -715,7 +723,7 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
         
         res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
         
-        log.info('finished w/ \n    %s'%res_d)
+        log.debug('finished w/ \n    %s'%res_d)
         
         assert os.path.exists(res_d['OUTPUT']), 'failed to get a result'
         
@@ -730,7 +738,7 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
    
         res_rlay.setName(layname) #reset the name
            
-        log.info('finished w/ %s'%res_rlay.name())
+        log.debug('finished w/ %s'%res_rlay.name())
           
         return res_rlay
     
@@ -746,7 +754,7 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
         # defaults
         #=======================================================================
         if logger is None: logger = self.logger
-        log = logger.getChild('rastercalculator')
+        log = logger.getChild('srastercalculator')
         
         
         assert 'a' in rlay_d
@@ -763,6 +771,14 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
         if not os.path.exists(os.path.dirname(ofp)):
             log.info('building basedir: %s'%os.path.dirname(ofp))
             os.makedirs(os.path.dirname(ofp))
+            
+        if os.path.exists(ofp):
+            msg = 'requseted filepath exists: %s'%ofp
+            if self.overwrite:
+                log.warning(msg)
+                os.remove(ofp)
+            else:
+                raise Error(msg)
             
         #=======================================================================
         # execute
@@ -785,7 +801,7 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
         
         res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
         
-        log.info('finished w/ \n    %s'%res_d)
+        log.debug('finished w/ \n    %s'%res_d)
         
         assert os.path.exists(res_d['RESULT']), 'failed to get a result'
         
@@ -800,9 +816,113 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
    
         res_rlay.setName(layname) #reset the name
            
-        log.info('finished w/ %s'%res_rlay.name())
+        log.debug('finished w/ %s'%res_rlay.name())
           
         return res_rlay
+    
+    def addgeometrycolumns(self, #add geometry data as columns
+                           vlay,
+                           layname=None,
+                           logger=None,
+                           ): 
+        if logger is None: logger=self.logger
+        log = logger.getChild('addgeometrycolumns')
+        
+        algo_nm = 'qgis:exportaddgeometrycolumns'
+
+        
+
+        #=======================================================================
+        # assemble pars
+        #=======================================================================
+        #assemble pars
+        ins_d = { 'CALC_METHOD' : 0,  #use layer's crs
+                 'INPUT' : vlay, 
+                 'OUTPUT' : 'TEMPORARY_OUTPUT'}
+        
+        log.debug('executing \'%s\' with ins_d: \n    %s'%(algo_nm, ins_d))
+        
+        res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
+        
+        res_vlay = res_d['OUTPUT']
+        
+
+        
+        #===========================================================================
+        # post formatting
+        #===========================================================================
+        if layname is None: 
+            layname = '%s_gcol'%self.vlay.name()
+            
+        res_vlay.setName(layname) #reset the name
+
+
+        return res_vlay
+    
+    def buffer(self, vlay,
+                    distance, #buffer distance to apply
+                      dissolve = False,
+                      end_cap_style = 0,
+                      join_style = 0,
+                      miter_limit = 2,
+                      segments = 5,
+                      logger=None, layname=None,
+                      ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger = self.logger
+        
+        if layname is None: 
+            layname = '%s_buf'%vlay.name()
+        
+        algo_nm = 'native:buffer'
+        log = self.logger.getChild('buffer')
+        
+        distance = float(distance)
+        
+
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        if distance==0 or np.isnan(distance):
+            raise Error('got no buffer!')
+        
+        
+        #=======================================================================
+        # build ins
+        #=======================================================================
+        """
+        distance = 3.0
+        
+        dcopoy = copy.copy(distance)
+        """
+        
+        ins_d = { 
+            'INPUT': vlay,
+            'DISSOLVE' : dissolve, 
+            'DISTANCE' : distance, 
+            'END_CAP_STYLE' : end_cap_style, 
+            'JOIN_STYLE' : join_style, 
+            'MITER_LIMIT' : miter_limit, 
+            'OUTPUT' : 'TEMPORARY_OUTPUT', 
+            'SEGMENTS' : segments}
+        
+        #=======================================================================
+        # execute
+        #=======================================================================
+        log.debug('executing \'native:buffer\' with ins_d: \n    %s'%ins_d)
+        
+        res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
+        
+        res_vlay = res_d['OUTPUT']
+
+        res_vlay.setName(layname) #reset the name
+
+        log.debug('finished')
+        return res_vlay
+    
+    
         
         
     
@@ -1603,7 +1723,7 @@ def vlay_new_df(#build a vlay from a df
             geo_d = None, #container of geometry objects {fid: QgsGeometry}
             geo_fn_tup = None, #if geo_d=None, tuple of field names to search for coordinate data
             
-            layname='df',
+            layname='df_layer',
 
             allow_fid_mismatch = False,
             
