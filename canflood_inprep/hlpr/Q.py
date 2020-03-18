@@ -124,7 +124,7 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
     # standalone methods-----------
     #==========================================================================
         
-    def ini_standalone(self, ):
+    def ini_standalone(self, ): #initilize calls
 
         #=======================================================================
         # setup qgis
@@ -307,6 +307,36 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
                     %(vlay.name(), dp.storageType(), QgsWkbTypes().displayString(vlay.wkbType()), dp.featureCount(), fp))
         
         return vlay
+    
+    def load_rlay(self, fp, logger=None):
+        if logger is None: logger = self.logger
+        log = logger.getChild('load_rlay')
+        
+        assert os.path.exists(fp), 'requested file does not exist: %s'%fp
+        assert QgsRasterLayer.isValidRasterFileName(fp),  \
+            'requested file is not a valid raster file type: %s'%fp
+        
+        basefn = os.path.splitext(os.path.split(fp)[1])[0]
+        
+
+        #Import a Raster Layer
+        rlayer = QgsRasterLayer(fp, basefn)
+        
+        
+        
+        #===========================================================================
+        # wrap
+        #===========================================================================
+        assert rlayer.isValid(), "Layer failed to load!"
+        assert isinstance(rlayer, QgsRasterLayer), 'failed to get a QgsRasterLayer'
+        
+
+        #add it to the store
+        self.mstore.addMapLayer(rlayer)
+        
+        log.info('loaded \'%s\' from \n    %s'%(rlayer.name(), fp))
+        
+        return rlayer
     
     #==========================================================================
     # helper methods-----------------
@@ -625,6 +655,276 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
         
 
         return res_vlay, new_fn_l, join_cnt
+    
+    
+    def cliprasterwithpolygon(self,
+                              rlay_raw,
+                              poly_vlay,
+                              ofp = None,
+                              layname = None,
+                              #output = 'TEMPORARY_OUTPUT',
+                              logger = None,
+                              ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger = self.logger
+        log = logger.getChild('cliprasterwithpolygon')
+        
+        if layname is None:
+            if not ofp is None:
+                layname = os.path.splitext(os.path.split(ofp)[1])[0]
+            else:
+                layname = '%s_clipd'%rlay_raw.name()
+            
+        if ofp is None: 
+            ofp = os.path.join(self.out_dir,layname+'.sdat')
+            
+        if os.path.exists(ofp):
+            msg = 'requseted filepath exists: %s'%ofp
+            if self.overwrite:
+                log.warning('DELETING'+msg)
+                os.remove(ofp)
+            else:
+                raise Error(msg)
+            
+        algo_nm = 'saga:cliprasterwithpolygon'
+            
+
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        
+        if os.path.exists(ofp):
+            msg = 'requested filepath exists: %s'%ofp
+            if self.overwrite:
+                log.warning(msg)
+            else:
+                raise Error(msg)
+            
+        if not os.path.exists(os.path.dirname(ofp)):
+            os.makedirs(os.path.dirname(ofp))
+            
+        #assert QgsRasterLayer.isValidRasterFileName(ofp), 'invalid filename: %s'%ofp
+            
+        assert 'Poly' in QgsWkbTypes().displayString(poly_vlay.wkbType())
+        
+        assert rlay_raw.crs() == poly_vlay.crs()
+            
+            
+        #=======================================================================
+        # run algo        
+        #=======================================================================
+        ins_d = { 'INPUT' : rlay_raw, 
+                 'OUTPUT' : ofp, 
+                 'POLYGONS' : poly_vlay }
+        
+        log.debug('executing \'%s\' with ins_d: \n    %s'%(algo_nm, ins_d))
+        
+        res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
+        
+        log.debug('finished w/ \n    %s'%res_d)
+        
+        assert os.path.exists(res_d['OUTPUT']), 'failed to get a result'
+        
+        res_rlay = QgsRasterLayer(res_d['OUTPUT'], layname)
+
+        #=======================================================================
+        # #post check
+        #=======================================================================
+        assert isinstance(res_rlay, QgsRasterLayer), 'got bad type: %s'%type(res_rlay)
+        assert res_rlay.isValid()
+           
+   
+        res_rlay.setName(layname) #reset the name
+           
+        log.debug('finished w/ %s'%res_rlay.name())
+          
+        return res_rlay
+    
+    def srastercalculator(self,
+                          formula,
+                          rlay_d, #container of raster layers to perform calculations on
+                          logger=None,
+                          layname=None,
+                          ofp=None,
+                          ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger = self.logger
+        log = logger.getChild('srastercalculator')
+        
+        
+        assert 'a' in rlay_d
+        
+        if layname is None:
+            if not ofp is None:
+                layname = os.path.splitext(os.path.split(ofp)[1])[0]
+            else:
+                layname = '%s_calc'%rlay_d['a'].name()
+            
+        if ofp is None: 
+            ofp = os.path.join(self.out_dir, layname+'.sdat')
+            
+        if not os.path.exists(os.path.dirname(ofp)):
+            log.info('building basedir: %s'%os.path.dirname(ofp))
+            os.makedirs(os.path.dirname(ofp))
+            
+        if os.path.exists(ofp):
+            msg = 'requseted filepath exists: %s'%ofp
+            if self.overwrite:
+                log.warning(msg)
+                os.remove(ofp)
+            else:
+                raise Error(msg)
+            
+        #=======================================================================
+        # execute
+        #=======================================================================
+            
+        algo_nm = 'saga:rastercalculator'
+        
+        
+        
+        ins_d = { 'FORMULA' : formula, 
+                'GRIDS' : rlay_d.pop('a'),
+                'RESAMPLING' : 3,
+                'RESULT' : ofp,
+                'TYPE' : 7,
+                'USE_NODATA' : False,
+                'XGRIDS' : list(rlay_d.values())}
+        
+        
+        log.debug('executing \'%s\' with ins_d: \n    %s'%(algo_nm, ins_d))
+        
+        res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
+        
+        log.debug('finished w/ \n    %s'%res_d)
+        
+        assert os.path.exists(res_d['RESULT']), 'failed to get a result'
+        
+        res_rlay = QgsRasterLayer(res_d['RESULT'], layname)
+
+        #=======================================================================
+        # #post check
+        #=======================================================================
+        assert isinstance(res_rlay, QgsRasterLayer), 'got bad type: %s'%type(res_rlay)
+        assert res_rlay.isValid()
+           
+   
+        res_rlay.setName(layname) #reset the name
+           
+        log.debug('finished w/ %s'%res_rlay.name())
+          
+        return res_rlay
+    
+    def addgeometrycolumns(self, #add geometry data as columns
+                           vlay,
+                           layname=None,
+                           logger=None,
+                           ): 
+        if logger is None: logger=self.logger
+        log = logger.getChild('addgeometrycolumns')
+        
+        algo_nm = 'qgis:exportaddgeometrycolumns'
+
+        
+
+        #=======================================================================
+        # assemble pars
+        #=======================================================================
+        #assemble pars
+        ins_d = { 'CALC_METHOD' : 0,  #use layer's crs
+                 'INPUT' : vlay, 
+                 'OUTPUT' : 'TEMPORARY_OUTPUT'}
+        
+        log.debug('executing \'%s\' with ins_d: \n    %s'%(algo_nm, ins_d))
+        
+        res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
+        
+        res_vlay = res_d['OUTPUT']
+        
+
+        
+        #===========================================================================
+        # post formatting
+        #===========================================================================
+        if layname is None: 
+            layname = '%s_gcol'%self.vlay.name()
+            
+        res_vlay.setName(layname) #reset the name
+
+
+        return res_vlay
+    
+    def buffer(self, vlay,
+                    distance, #buffer distance to apply
+                      dissolve = False,
+                      end_cap_style = 0,
+                      join_style = 0,
+                      miter_limit = 2,
+                      segments = 5,
+                      logger=None, layname=None,
+                      ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger = self.logger
+        
+        if layname is None: 
+            layname = '%s_buf'%vlay.name()
+        
+        algo_nm = 'native:buffer'
+        log = self.logger.getChild('buffer')
+        
+        distance = float(distance)
+        
+
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        if distance==0 or np.isnan(distance):
+            raise Error('got no buffer!')
+        
+        
+        #=======================================================================
+        # build ins
+        #=======================================================================
+        """
+        distance = 3.0
+        
+        dcopoy = copy.copy(distance)
+        """
+        
+        ins_d = { 
+            'INPUT': vlay,
+            'DISSOLVE' : dissolve, 
+            'DISTANCE' : distance, 
+            'END_CAP_STYLE' : end_cap_style, 
+            'JOIN_STYLE' : join_style, 
+            'MITER_LIMIT' : miter_limit, 
+            'OUTPUT' : 'TEMPORARY_OUTPUT', 
+            'SEGMENTS' : segments}
+        
+        #=======================================================================
+        # execute
+        #=======================================================================
+        log.debug('executing \'native:buffer\' with ins_d: \n    %s'%ins_d)
+        
+        res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
+        
+        res_vlay = res_d['OUTPUT']
+
+        res_vlay.setName(layname) #reset the name
+
+        log.debug('finished')
+        return res_vlay
+    
+    
+        
+        
     
     #==========================================================================
     # privates----------
@@ -1423,7 +1723,7 @@ def vlay_new_df(#build a vlay from a df
             geo_d = None, #container of geometry objects {fid: QgsGeometry}
             geo_fn_tup = None, #if geo_d=None, tuple of field names to search for coordinate data
             
-            layname='df',
+            layname='df_layer',
 
             allow_fid_mismatch = False,
             

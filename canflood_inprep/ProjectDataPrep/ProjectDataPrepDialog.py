@@ -24,33 +24,7 @@ import processing
 from processing.core.Processing import Processing
 
 
-#paths
-"""not sure what these are doing"""
-#sys.path.append(r'C:\IBI\_QGIS_\QGIS 3.8\apps\Python37\Lib\site-packages')
-#sys.path.append(os.path.join(sys.exec_prefix, 'Lib/site-packages'))
 
-#file_dir = os.path.dirname(os.path.abspath(__file__))
-#sys.path.append(file_dir)
-
-
-"""
-TODO: dependency check
-
-"""
-#==============================================================================
-# pandas depdendency check
-#==============================================================================
-"""moved up
-msg = 'requires pandas version >=0.25.3'
-try:
-    import pandas as pd
-except:
-    qgis.utils.iface.messageBar().pushMessage('CanFlood', msg, level=Qgis.Critical)
-    raise ImportError(msg)
-    
-if not pd.__version__ >= '0.25.3':
-    qgis.utils.iface.messageBar().pushMessage('CanFlood', msg, level=Qgis.Critical)
-    raise ImportError(msg)"""
 
 import pandas as pd
 import numpy as np #Im assuming if pandas is fine, numpy will be fine
@@ -60,12 +34,12 @@ import numpy as np #Im assuming if pandas is fine, numpy will be fine
 # custom imports
 #==============================================================================
 
-#import canflood_inprep.prep.wsamp
-from prep.wsamp import WSLSampler
+from prep.wsamp import Rsamp
 from prep.lisamp import LikeSampler
 from prep.oth_rfda import RFDAconv
+
 #from canFlood_model import CanFlood_Model
-import hp
+#import hp
 
 from hlpr.plug import *
 from hlpr.Q import *
@@ -130,16 +104,23 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.comboBox_SSelv.addItems(['datum', 'ground']) #ss elevation type
                
         
-        #Working Directory
+        #Working Directory browse
         def browse_wd():
             return self.browse_button(self.lineEdit_wd, prompt='Select Working Directory',
                                       qfd = QFileDialog.getExistingDirectory)
             
         self.pushButton_wd.clicked.connect(browse_wd) # SS. Working Dir. Browse
         
+        #WD force open
+        def open_wd():
+            force_open_dir(self.lineEdit_wd.text())
+        
+        self.pushButton_wd_open.clicked.connect(open_wd)
+        
         #======================================================================
         # #Inventory Vector Layer
         #======================================================================
+        #change the 'cid' display when the finv selection changes
         def upd_cid():
             return self.mfcb_connect(
                 self.mFieldComboBox_cid, self.comboBox_vec.currentLayer(),
@@ -172,7 +153,11 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.pushButton_generate.clicked.connect(self.build_scenario) #SS. generate
         
         #CanFlood Control File
-        self.pushButton_cf.clicked.connect(self.browse_cf)# SS. Model Control File. Browse
+        def browse_cf():
+            return self.browse_button(self.lineEdit_cf_fp, prompt='Select CanFlood control file',
+                           qfd=QFileDialog.getOpenFileName)
+            
+        self.pushButton_cf.clicked.connect(browse_cf)# SS. Model Control File. Browse
         
         #======================================================================
         # hazard sampler---------
@@ -189,7 +174,47 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         self.comboBox_ras.currentTextChanged.connect(self.add_ras)
         
-        #execute
+        #=======================================================================
+        # inundation
+        #=======================================================================
+        #connect dtm layer name to display box
+        def upd_dtmlayname():
+            vlay = self.comboBox_dtm.currentLayer()
+            if isinstance(vlay,QgsVectorLayer):
+                self.label_HS_dtmln.setText(vlay.name())
+                
+        self.comboBox_dtm.layerChanged.connect(upd_dtmlayname)
+            
+
+        #=======================================================================
+        # #complex
+        #=======================================================================
+        #display the gtype when the finv changes
+        def upd_gtype():
+            vlay = self.comboBox_vec.currentLayer()
+            if isinstance(vlay,QgsVectorLayer):
+                gtype = QgsWkbTypes().displayString(vlay.wkbType())
+                self.label_HS_finvgtype.setText(gtype)
+            
+        self.comboBox_vec.layerChanged.connect(upd_gtype) #SS inventory vector layer
+        
+        #display sampling stats options to user 
+        def upd_stat():
+            vlay = self.comboBox_vec.currentLayer()
+            if isinstance(vlay,QgsVectorLayer):
+                gtype = QgsWkbTypes().displayString(vlay.wkbType())
+                self.comboBox_HS_stat.clear()
+                
+                if 'Polygon' in gtype:
+                    self.comboBox_HS_stat.addItems(
+                        ['Mean','Median','Min','Max'])
+                
+        self.comboBox_vec.layerChanged.connect(upd_stat) #SS inventory vector layer
+            
+        
+        #=======================================================================
+        # #execute
+        #=======================================================================
         self.pushButton_HSgenerate.clicked.connect(self.run_wsamp)
         
         #======================================================================
@@ -282,32 +307,15 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         """"
         to speed up testing.. manually configure the project
         """
-        
-        self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\CanFlood_scenario1.txt')
-        self.lineEdit_wd.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304')
+
+        debug_dir =os.path.join(os.path.expanduser('~'), 'CanFlood', 'build')
+        self.lineEdit_cf_fp.setText(os.path.join(debug_dir, 'CanFlood_scenario1.txt'))
+        self.lineEdit_wd.setText(debug_dir)
         
         
         
     
-    #==========================================================================
-    # UI Buttom Actions-----------------      
-    #==========================================================================
 
-    def browse_cf(self): #select an existing model control file
-        self.browse_button(self.lineEdit_cf_fp, prompt='Select CanFlood control file',
-                           qfd=QFileDialog.getOpenFileName)
-        
-        """
-        TODO: Populate Vulnerability Curve Set box
-         
-        Check the control file is the correct format
-         
-        print out all the values pressent in the control file
-        """
-
-
-        
-        
     #==========================================================================
     # Layer Loading---------------
     #==========================================================================
@@ -366,18 +374,34 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
     
     def build_scenario(self): #called by Scenario Setup 'Build'
-        
+        log = self.logger.getChild('build_scenario')
         self.tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
         
         self.cid = self.mFieldComboBox_cid.currentField() #user selected field
         
         self.wd =  self.lineEdit_wd.text() #pull the wd filepath from the user provided in 'Browse'
         
-        finv_fp = self.convert_finv() #convert the finv to csv and write to file
+        
+        
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        assert isinstance(self.wd, str)
+        assert isinstance(self.cid, str)
+        assert isinstance(self.tag, str)
+        
+        if not os.path.exists(self.wd):
+            os.makedirs(self.wd)
+            log.info('built working directory: %s'%self.wd)
+            
+        
         
         #======================================================================
         # build the control file
         #======================================================================
+        finv_fp = self.convert_finv() #convert the finv to csv and write to file
+        assert os.path.exists(finv_fp)
+        
         #called by build_scenario()
         dirname = os.path.dirname(os.path.abspath(__file__))
         
@@ -398,7 +422,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             msg = 'generated control file already exists. overwrite=%s \n     %s'%(
                 self.overwrite, cf_path)
             if self.overwrite:
-                self.logger.warning(msg)
+                log.warning(msg)
             else:
                 raise Error(msg)
             
@@ -412,6 +436,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         # update the control file
         #======================================================================
+        """todo: switch over to helper function"""
         pars = configparser.ConfigParser(allow_no_value=True)
         _ = pars.read(cf_path) #read it from the new location
         
@@ -424,15 +449,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         pars.set('dmg_fps', 'curves',  self.lineEdit_curve.text())
         pars.set('dmg_fps', 'finv', finv_fp)
         
-        """shoul donly be set by corresponding tools
-        pars.set('dmg_fps', 'expos', os.path.normpath(os.path.join(self.wd, 'expos_test_1_7.csv')))
-        pars.set('dmg_fps', '#expos file path set from wsamp.py')
-        pars.set('dmg_fps', 'gels', os.path.normpath(os.path.join(self.wd, 'gel_cT1.csv')))"""
-        
-        """should only be set by the Impact model
-        pars.set('risk_fps', 'dmgs', os.path.normpath(os.path.join(self.wd, 'dmg_results.csv')))
-        pars.set('risk_fps', 'exlikes', os.path.normpath(os.path.join(self.wd, 'elikes_cT1.csv')))
-        pars.set('risk_fps', 'aeps', os.path.normpath(os.path.join(self.wd, 'eaep_cT1.csv')))"""
         
         #set note
         pars.set('parameters', '#control file template created from \'scenario setup\' on  %s'%(
@@ -443,8 +459,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         with open(cf_path, 'w') as configfile:
             pars.write(configfile)
             
-        QgsMessageLog.logMessage("default CanFlood model config file created :\n    %s"%cf_path,
-                                 'CanFlood', level=Qgis.Info)
+        log.info("default CanFlood model config file created :\n    %s"%cf_path)
         
         """NO. should only populate this automatically from ModelControlFile.Browse
         self.lineEdit_curve.setText(os.path.normpath(os.path.join(self.wd, 'CanFlood - curve set 01.xls')))"""
@@ -463,7 +478,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         """not sure what this is
         self.lineEdit_control_2.setText(os.path.normpath(os.path.join(self.wd, 'CanFlood_control_01.txt')))"""
         
-        self.logger.push("Scenario \'%s\' control file created"%self.tag)
+        log.push("Scenario \'%s\' control file created"%self.tag)
 
         
     def convert_finv(self): #convert the finv vector to csv file
@@ -519,7 +534,20 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
 
         #update some parameters
         cid = self.mFieldComboBox_cid.currentField() #user selected field
+        psmp_stat = self.comboBox_HS_stat.currentText()
         
+        #inundation
+        as_inun = self.checkBox_HS_in.isChecked()
+        
+        if as_inun:
+            dthresh = self.mQgsDoubleSpinBox_HS.value()
+            dtm_rlay=self.comboBox_dtm.currentLayer()
+            
+            assert isinstance(dthresh, float)
+            assert isinstance(dtm_rlay, QgsRasterLayer)
+            
+        else:
+            dthresh, dtm_rlay = None, None
         #======================================================================
         # aoi slice
         #======================================================================
@@ -547,7 +575,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         if not cid in [field.name() for field in finv.fields()]:
             raise Error('requested cid field \'%s\' not found on the finv_raw'%cid)
-            
+        
+
         assert os.path.exists(cf_fp), 'bad control file specified'
         #======================================================================
         # execute
@@ -555,22 +584,25 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         """
         finv = self.wsampRun(rlay_l, finv, control_fp=cf_fp1, cid=cid, crs=crs)"""
         #build the sample
-        wrkr = WSLSampler(logger=self.logger, 
+        wrkr = Rsamp(logger=self.logger, 
                           tag = self.tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
-                          cid=cid,
+                          cid=cid,crs = crs,
+                          out_dir = out_dir
                           )
         """
         wrkr.tag
         """
         
-        res_vlay = wrkr.run(rlay_l, finv, cid=cid, crs=crs)
+        res_vlay = wrkr.run(rlay_l, finv,
+                            psmp_stat=psmp_stat,
+                            as_inun=as_inun, dtm_rlay=dtm_rlay, dthresh=dthresh)
         
         #check it
         wrkr.check()
         
         #save csv results to file
-        wrkr.write_res(res_vlay, out_dir = out_dir)
+        wrkr.write_res(res_vlay, )
         
         #update ocntrol file
         wrkr.upd_cf(cf_fp)
@@ -696,7 +728,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
 
         #build the sample
-        wrkr = WSLSampler(logger=self.logger, 
+        wrkr = Rsamp(logger=self.logger, 
                           tag=self.tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
                           cid=cid,
@@ -992,6 +1024,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
              },
             cf_fp = cf_fp
             )
+        
+        log.push('completed %i validations'%len(vpars_d))
         
         return
     
