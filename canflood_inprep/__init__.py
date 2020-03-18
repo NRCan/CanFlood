@@ -27,6 +27,13 @@ if not pd.__version__ >= '0.25.3' and pd.__version__<='1.0.0':
     raise ImportError(msg)
 
 
+#===============================================================================
+# add module directory to environemnt
+#===============================================================================
+import os, sys
+file_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(file_dir)
+
 
 
 # noinspection PyPep8Naming
@@ -37,5 +44,5 @@ def classFactory(iface):  # pylint: disable=invalid-name
     :type iface: QgsInterface
     """
     #
-    from .canFlood_inPrep import CanFlood_inPrep
-    return CanFlood_inPrep(iface)
+    from .canFlood_inPrep import CanFlood
+    return CanFlood(iface)

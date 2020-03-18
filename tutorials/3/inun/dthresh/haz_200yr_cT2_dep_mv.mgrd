@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SAGA_METADATA>
+  <HISTORY saga-version="2.3.2">
+    <MODULE library="grid_calculus" id="1" name="Grid Calculator">
+      <OPTION type="grid_system" id="PARAMETERS_GRID_SYSTEM" name="Grid system">
+        <CELLSIZE>9.57218</CELLSIZE>
+        <XMIN>1293549.73449</XMIN>
+        <XMAX>1300527.8537100002</XMAX>
+        <YMIN>469436.4123730088</YMIN>
+        <YMAX>472958.9746130088</YMAX>
+      </OPTION>
+      <OPTION type="text" id="FORMULA" name="Formula">ifelse(a&gt;1.0,1,0/0)</OPTION>
+      <OPTION type="text" id="NAME" name="Name">Calculation</OPTION>
+      <OPTION type="boolean" id="FNAME" name="Take Formula">FALSE</OPTION>
+      <OPTION type="boolean" id="USE_NODATA" name="Use NoData">FALSE</OPTION>
+      <OPTION type="choice" id="TYPE" name="Data Type" index="7">4 byte floating point number</OPTION>
+      <INPUT_LIST type="grid_list" id="GRIDS" name="Grids" system="PARAMETERS_GRID_SYSTEM">
+        <haz200yrcT2dep type="grid_list" id="GRIDS" name="Grids" system="PARAMETERS_GRID_SYSTEM">
+          <FILE>C:/Users/cefect/AppData/Local/Temp/processing_157ce9a451214e6d96997c4d86db80b3/processing_05269072492d4d568085297957e1812f/a181016acfcb4785a74ef04047cd67c8/haz200yrcT2dep.sgrd</FILE>
+        </haz200yrcT2dep>
+      </INPUT_LIST>
+      <OUTPUT type="grid" id="RESULT" name="Result">Calculation</OUTPUT>
+    </MODULE>
+  </HISTORY>
+  <SOURCE>
+    <FILE>C:\LS\03_TOOLS\_git\CanFlood\tutorials\3\inun\dthresh\haz_200yr_cT2_dep_mv.sgrd</FILE>
+    <DATABASE></DATABASE>
+    <PROJECTION></PROJECTION>
+  </SOURCE>
+  <DESCRIPTION></DESCRIPTION>
+</SAGA_METADATA>

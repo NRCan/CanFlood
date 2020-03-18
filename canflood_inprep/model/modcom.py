@@ -1305,9 +1305,21 @@ class Model(ComWrkr):
 
         
         
-    def resolve_multis(self,
-                       ddf, edf, aep_ser,
+    def resolve_multis(self, #selecting maximum expected value for repeat events
+                       ddf, #damages per event
+                       edf, #secondary liklihoods per event
+                       aep_ser,
                        logger):
+        """
+        we accept multiple exposure sets for a single event likelihood (
+        e.g. 'failure' raster and 'no fail')
+        
+        these are assigned secondary liklihoods in the edf
+        
+        the resolve_multis function takes the maximum expected value of the asset
+        considering severity and conditional probability 
+        e.g. resolved damage = max(damage w/o fail, damage w/ fail * fail prob)
+        """
         #======================================================================
         # setup
         #======================================================================
@@ -1330,9 +1342,6 @@ class Model(ComWrkr):
         evdf = ddf*edf
         
         log.info('calucated expected values for %i damages'%evdf.size)
-        
-        
-
         assert not evdf.isna().any().any()
         #======================================================================
         # loop by unique aep and resolve

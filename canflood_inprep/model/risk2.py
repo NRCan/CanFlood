@@ -161,55 +161,6 @@ class Risk2(Model):
         
         return self
         
-        
-    def xxxsetup_data(self):
-        #======================================================================
-        # defaults
-        #======================================================================
-        log = self.logger.getChild('setup_data')
-        cid = self.cid
-        
-        #======================================================================
-        # setup damages
-        #======================================================================
-        #get event names from damages
-        ddf = pd.read_csv(self.dmgs)
-        
-        #======================================================================
-        # #trim suffix
-        # boolcol = ddf.columns.str.endswith('_dmg')
-        # enm_l = ddf.columns[boolcol].str.replace('_dmg', '').tolist()
-        # 
-        # #rename these
-        # ren_d = dict(zip(ddf.columns[boolcol].values, enm_l))
-        # ddf = ddf.rename(columns=ren_d)
-        #======================================================================
-        
-        #======================================================================
-        # #some checks
-        # assert len(enm_l) > 1, 'failed to identify sufficient damage columns'
-        # assert cid in ddf.columns, 'missing %s in damages'%cid
-        # assert ddf[cid].is_unique, 'expected unique %s'%cid
-        # assert ddf.notna().any().any(), 'got some nulls on dmgs'
-        # 
-        # #set indexes
-        # ddf = ddf.set_index(cid, drop=True).sort_index(axis=1).sort_index(axis=0)
-        # 
-        # 
-        # ddf = ddf.round(self.prec)
-        #======================================================================
-        
-        #======================================================================
-        # log.info('prepared ddf w/ %s'%str(ddf.shape))
-        # 
-        # #set it
-        # self.data_d['dmgs'] = ddf
-        #======================================================================
-        
-        #self.load_risk_data(ddf)
-        
-        log.info('finished')
-        
 
     def run(self, #main runner fucntion
             res_per_asset=False,
@@ -239,8 +190,6 @@ class Risk2(Model):
         #======================================================================
         #check the columns
         assert np.array_equal(ddf1.columns.values, aep_ser.unique()), 'column name problem'
-        
-        
         _ = self.check_monot(ddf1)
             
         #======================================================================

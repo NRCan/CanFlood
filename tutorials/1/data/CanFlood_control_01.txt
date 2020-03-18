@@ -1,0 +1,30 @@
+[parameters]
+name = test1
+cid = xid
+prec = 2
+ground_water = True
+felv = ground
+event_probs = ari
+ltail = extrapolate
+rtail = 0.5
+drop_tails = True
+integrate = trapz
+
+[dmg_fps]
+curves = 
+finv = 
+expos = C:\Users\cefect\CanFlood\wsamp\tut1\expos_tut1_5_32.csv
+gels = 
+#'expos' file path set from wsamp.py at 2020-03-16 10.16.15
+
+[risk_fps]
+dmgs = 
+exlikes = 
+aeps = 
+
+[validation]
+risk1 = False
+dmg2 = False
+risk2 = False
+risk3 = False
+

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SAGA_METADATA>
+  <HISTORY saga-version="2.3.2">
+    <MODULE library="shapes_grid" id="7" name="Clip Grid with Polygon">
+      <OPTION type="grid_system" id="PARAMETERS_GRID_SYSTEM" name="Grid system">
+        <CELLSIZE>9.998304561</CELLSIZE>
+        <XMIN>1289717.3431265568</XMIN>
+        <XMAX>1303684.9745982739</XMAX>
+        <YMIN>464272.3654522806</YMIN>
+        <YMAX>473030.8802477166</YMAX>
+      </OPTION>
+      <OPTION type="boolean" id="NODATA" name="Exclude No-Data Area">FALSE</OPTION>
+      <INPUT_LIST type="grid_list" id="INPUT" name="Input" system="PARAMETERS_GRID_SYSTEM">
+        <dtmcT1 type="grid_list" id="INPUT" name="Input" system="PARAMETERS_GRID_SYSTEM">
+          <FILE>C:/Users/cefect/AppData/Local/Temp/processing_157ce9a451214e6d96997c4d86db80b3/processing_05269072492d4d568085297957e1812f/436e23c78a2c4a24a8cb772048570a6b/dtmcT1.sgrd</FILE>
+        </dtmcT1>
+      </INPUT_LIST>
+      <INPUT type="shapes" id="POLYGONS" name="Polygons">
+        <FILE>C:/Users/cefect/AppData/Local/Temp/processing_157ce9a451214e6d96997c4d86db80b3/processing_05269072492d4d568085297957e1812f/1d1b07c8df6f4fb182786b80a5414027/POLYGONS.shp</FILE>
+      </INPUT>
+      <OUTPUT type="grid_list" id="OUTPUT" name="Output">dtmcT1</OUTPUT>
+    </MODULE>
+  </HISTORY>
+  <SOURCE>
+    <FILE>C:\LS\03_TOOLS\_git\CanFlood\tutorials\3\inun\dtm_cT1_clipd.sgrd</FILE>
+    <DATABASE></DATABASE>
+    <PROJECTION></PROJECTION>
+  </SOURCE>
+  <DESCRIPTION></DESCRIPTION>
+</SAGA_METADATA>
