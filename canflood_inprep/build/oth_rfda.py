@@ -552,7 +552,7 @@ if __name__ =="__main__":
     # dev data
     #==========================================================================
     out_dir = os.path.join(os.getcwd(), 'rfda')
-    inv_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\prep\other\rfda\HighRiverNONResDirect.gpkg'
+    inv_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\build\other\rfda\HighRiverNONResDirect.gpkg'
     tag = 'dev'
     cid = 'xid'
      

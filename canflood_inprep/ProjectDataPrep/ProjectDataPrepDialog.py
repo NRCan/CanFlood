@@ -34,9 +34,9 @@ import numpy as np #Im assuming if pandas is fine, numpy will be fine
 # custom imports
 #==============================================================================
 
-from prep.wsamp import Rsamp
-from prep.lisamp import LikeSampler
-from prep.oth_rfda import RFDAconv
+from build.wsamp import Rsamp
+from build.lisamp import LikeSampler
+from build.oth_rfda import RFDAconv
 
 #from canFlood_model import CanFlood_Model
 #import hp
@@ -220,7 +220,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         # event likelihoods
         #======================================================================
-        self.pushButton_ELstore.clicked.connect(self.store_eaep)
+        self.pushButton_ELstore.clicked.connect(self.set_event_vals)
         
         """dev button
         self.pushButton_ELdev.clicked.connect(self._pop_el_table)"""
@@ -373,7 +373,16 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         
     
-    def build_scenario(self): #called by Scenario Setup 'Build'
+    def build_scenario(self): #'Generate' on the setup tab
+        """
+        Generate a CanFlood project from scratch
+        
+        This tab facilitates the creation of a Control File from user specified parameters and inventory, 
+            as well as providing general file control variables for the other tools in the toolset.
+            
+        
+        
+        """
         log = self.logger.getChild('build_scenario')
         self.tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
         
@@ -871,8 +880,12 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             
             
     
-    def store_eaep(self): #saving the event likelihoods table to file
-        log = self.logger.getChild('store_eaep')
+    def set_event_vals(self): #saving the event likelihoods table to file
+        """store user specified event variables into the 'aep' dataset
+        
+        
+        """
+        log = self.logger.getChild('set_event_vals')
         log.info('user pushed \'pushButton_ELstore\'')
         
 
@@ -918,7 +931,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         # #write to file
         #======================================================================
-        ofn = os.path.join(self.lineEdit_wd.text(), 'aeps_%i_%s.csv'%(len(aep_df.columns), self.tag))
+        ofn = os.path.join(self.lineEdit_wd.text(), 'evals_%i_%s.csv'%(len(aep_df.columns), self.tag))
         
         from hlpr.Q import Qcoms
         #build a shell worker for these taxks
@@ -935,9 +948,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         wrkr.update_cf(
             {
                 'parameters':({'event_probs':event_probs},),
-                'risk_fps':({'aeps':eaep_fp}, 
-                            '#aeps file path set from wsamp.py at %s'%(
-                                datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')))
+                'risk_fps':({'evals':eaep_fp}, 
+                            '#evals file path set from %s.py at %s'%(
+                                __name__, datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')))
                           
              },
             cf_fp = cf_fp

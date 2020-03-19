@@ -112,7 +112,7 @@ class Dmg2(Model):
         
         #self.load_data()
         self.load_finv()
-        self.load_aeps()
+        self.load_evals()
         self.load_expos()
     
         self.data_d['curves'] = pd.read_excel(self.curves, sheet_name=None, header=None, index_col=None)
@@ -558,7 +558,7 @@ class DFunc(object,
             
         """
         import pandas as pd
-        fp = r'C:\LS\03_TOOLS\CanFlood\_ins\prep\cT2\CanFlood_curves_rfda_20200218.xls'
+        fp = r'C:\LS\03_TOOLS\CanFlood\_ins\build\cT2\CanFlood_curves_rfda_20200218.xls'
         data.keys()
         df_raw = data['AA_MC']
         """

@@ -57,12 +57,13 @@ class Risk1(Model):
              'prec':{'type':int}, 
              'drop_tails':{'type':bool},
              },
+            
         'dmg_fps':{
              'finv':{'ext':('.csv',)}, #should only need the expos
              'expos':{'ext':('.csv',)},
                     },
         'risk_fps':{
-             'aeps':{'ext':('.csv',)}
+             'evals':{'ext':('.csv',)}
                     },
         'validation':{
             'risk1':{'type':bool}
@@ -111,7 +112,7 @@ class Risk1(Model):
         # load data files
         #======================================================================
         self.load_finv()
-        self.load_aeps()
+        self.load_evals()
         self.load_expos(dtag='expos')
         
         if not self.exlikes == '':

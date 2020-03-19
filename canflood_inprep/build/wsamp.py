@@ -45,8 +45,12 @@ from hlpr.basic import *
 # functions-------------------
 #==============================================================================
 class Rsamp(Qcoms):
-    """
-    sampling hazard rasters from the inventory
+    """ sampling hazard rasters from the inventory
+    
+    METHODS:
+        run(): main caller for Hazard Sampler 'Sample' button
+    
+    
     """
     out_fp = None
     names_d = None
@@ -161,6 +165,10 @@ class Rsamp(Qcoms):
             dthresh = 0, #fordepth threshold
             
             ):
+        """
+        Generate the exposure dataset ('expos') from a set of hazard event rasters
+        
+        """
         
         #======================================================================
         # defaults
@@ -192,7 +200,7 @@ class Rsamp(Qcoms):
         
         self.rname_l = rname_l
         #======================================================================
-        # prep the finv_raw
+        # build the finv_raw
         #======================================================================
         self.finv_name = finv_raw.name()
         
@@ -227,7 +235,7 @@ class Rsamp(Qcoms):
         
         log = self.logger.getChild('samp_vals')
         #=======================================================================
-        # prep the loop
+        # build the loop
         #=======================================================================
         gtype=self.gtype
         if 'Polygon' in gtype: 

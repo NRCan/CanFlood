@@ -68,7 +68,7 @@ class Model(ComWrkr):
     #[risk_fps]
     dmgs = ''
     exlikes = ''
-    aeps = ''
+    evals = ''
 
     
     #[validation]
@@ -386,12 +386,12 @@ class Model(ComWrkr):
             
             
         
-    def load_aeps(self,#loading expo data
+    def load_evals(self,#loading expo data
                    fp = None,
-                   dtag = 'aeps',
+                   dtag = 'evals',
                    ):
         
-        log = self.logger.getChild('load_aep')
+        log = self.logger.getChild('load_evals')
         if fp is None: fp = getattr(self, dtag)
 
         #check load sequence
@@ -401,7 +401,7 @@ class Model(ComWrkr):
         #======================================================================
         # load it
         #======================================================================
-        adf = pd.read_csv(self.aeps)
+        adf = pd.read_csv(fp)
         
         #======================================================================
         # precheck
@@ -698,7 +698,7 @@ class Model(ComWrkr):
         cid = self.cid
         
         assert 'finv' in self.data_d, 'call load_finv first'
-        assert 'aeps' in self.data_d, 'call load_aep first'
+        assert 'evals' in self.data_d, 'call load_evals first'
         assert isinstance(self.expcols, pd.Index), 'bad expcols'
         assert isinstance(self.cindex, pd.Index), 'bad cindex'
         assert os.path.exists(fp), '%s got invalid filepath \n    %s'%(dtag, fp)
@@ -1559,7 +1559,7 @@ class Model(ComWrkr):
         boolidx = (df_raw > 0).any(axis=1) #only want those with some real damages
         
         #======================================================================
-        # setup left tail
+        # left tail-------------
         #======================================================================
         df = df_raw.copy()
         #flat projection
@@ -1579,7 +1579,7 @@ class Model(ComWrkr):
             raise Error('unexected ltail key'%ltail)
         
         #======================================================================
-        # setup right tail
+        # right tail------------
         #======================================================================
         if rtail == 'extrapolate':
             """just using the average for now...
@@ -1715,7 +1715,7 @@ class Model(ComWrkr):
                 dx = dx)
             
         elif self.integrate == 'simps':
-            raise Error('not tested')
+            self.logger.warning('integration method not tested')
             
             ead_tot = integrate.simps(
                 y, #yaxis - aeps

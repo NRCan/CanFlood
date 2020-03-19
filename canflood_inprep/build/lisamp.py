@@ -149,7 +149,7 @@ class LikeSampler(Qcoms):
         
         
         #======================================================================
-        # prep finv
+        # build finv
         #======================================================================
         #clean out finv
         fc_vlay = self.deletecolumn(finv, [cid], invert=True, layname='fclean')

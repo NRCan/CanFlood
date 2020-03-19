@@ -5,7 +5,7 @@ prec = 2                #float precision for calculations
 ground_water = True     #whether to allow wsl < gel
 felv = ground           #'datum' or 'ground': whether felv values provided in the inventory are heights or elevations
 event_probs = ari       #format of event probabilities (in 'aeps' data file): 'ari' or 'aep'
-ltail = extrapolate     #EAD extrapoloation: left tail treatment code (low prob high damage)
+ltail = extrapolate     #EAD extrapolation: left tail treatment code (low prob high damage)
 rtail = 0.5             #EAD extrapolation: right trail treatment (high prob low damage)
 drop_tails = True       #whether to remove the extrapolated values from the results
 integrate = trapz       #integration method to apply: trapz, simps 
@@ -21,7 +21,7 @@ gels =                  #ground elevation data filepath
 [risk_fps]
 dmgs =                  #damage data results filepath 
 exlikes =               #secondary exposure likelihood data filepath
-aeps =                  #event probability data filepath
+evals =                  #event probability data filepath
 
 [validation] #flag that the inputs validator tool has checked all the inputs
 risk1 = False

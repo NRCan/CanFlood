@@ -51,7 +51,7 @@ class Risk2(Model):
             
         exlikes -- secondary exposure likelihood data file path (default N/A)
         
-        aeps -- event probability data file path (default N/A)
+        evals -- event probability data file path (default N/A)
         
         event_probs -- format of event probabilities (in 'aeps' data file) 
                         (default 'ari')
@@ -119,7 +119,7 @@ class Risk2(Model):
                     },
         'risk_fps':{
              'dmgs':{'ext':('.csv',)},
-             'aeps':{'ext':('.csv',)},
+             'evals':{'ext':('.csv',)},
 
                     },        
         'validation':{
@@ -163,7 +163,7 @@ class Risk2(Model):
         
         #self.setup_data()
         self.load_finv()
-        self.load_aeps()
+        self.load_evals()
         self.load_dmgs()
         
         if not self.exlikes == '':
@@ -183,7 +183,7 @@ class Risk2(Model):
         # defaults
         #======================================================================
         log = self.logger.getChild('run')
-        ddf, aep_ser, cid = self.data_d['dmgs'],self.data_d['aeps'], self.cid
+        ddf, aep_ser, cid = self.data_d['dmgs'],self.data_d['evals'], self.cid
         
         assert isinstance(res_per_asset, bool)
         

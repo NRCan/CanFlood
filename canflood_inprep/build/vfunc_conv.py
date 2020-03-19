@@ -19,7 +19,7 @@ from hp import view
 # inputs
 #==============================================================================
 #filepath to rfda damage curves (to be converted)
-rfda_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\prep\vfunc_conv\Calgary2016_rfda_curves.csv'
+rfda_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\build\vfunc_conv\Calgary2016_rfda_curves.csv'
 
 
 bsmt_ht = 1.8 #for combination curves
