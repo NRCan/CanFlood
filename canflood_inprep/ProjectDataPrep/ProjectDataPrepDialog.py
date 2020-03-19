@@ -881,7 +881,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             
     
     def set_event_vals(self): #saving the event likelihoods table to file
-        """store user specified event variables into the 'aep' dataset
+        """store user specified event variables into the 'evals' dataset
         
         
         """
