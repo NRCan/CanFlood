@@ -1,29 +1,29 @@
 [parameters]
-name = test1
-cid = xid
-prec = 2
-ground_water = True
-felv = ground
-event_probs = ari
-ltail = extrapolate
-rtail = 0.5
-drop_tails = True
-integrate = trapz
+name = test1            #name of the scenario/model run
+cid = xid               #index column for the 3 inventoried data sets (finv, expos, gels)
+prec = 2                #float precision for calculations
+ground_water = True     #whether to allow wsl < gel
+felv = ground           #'datum' or 'ground': whether felv values provided in the inventory are heights or elevations
+event_probs = ari       #format of event probabilities (in 'aeps' data file): 'ari' or 'aep'
+ltail = extrapolate     #EAD extrapoloation: left tail treatment code (low prob high damage)
+rtail = 0.5             #EAD extrapolation: right trail treatment (high prob low damage)
+drop_tails = True       #whether to remove the extrapolated values from the results
+integrate = trapz       #integration method to apply: trapz, simps 
 
 
 [dmg_fps]
-curves = 
-finv = 
-expos = 
-gels = 
+curves =                #damage curve library filepath
+finv =                  #inventory data filepath
+expos =                 #exposure data filepath
+gels =                  #ground elevation data filepath
 
 
 [risk_fps]
-dmgs = 
-exlikes =
-aeps = 
+dmgs =                  #damage data results filepath 
+exlikes =               #secondary exposure likelihood data filepath
+aeps =                  #event probability data filepath
 
-[validation]
+[validation] #flag that the inputs validator tool has checked all the inputs
 risk1 = False
 dmg2 = False
 risk2 = False

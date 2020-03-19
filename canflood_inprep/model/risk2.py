@@ -41,25 +41,58 @@ from model.modcom import Model
 # functions----------------------
 #==============================================================================
 class Risk2(Model):
+    """Risk T2 tool for calculating expected value for a set of events from impact results
     
-    #==========================================================================
-    # parameters from user
-    #==========================================================================
+    METHODS:
+        run(): main model executor
 
-    #==========================================================================
-    # ground_water = False
-    # felv = 'datum'
-    # event_probs = 'aep'
-    # ltail = 'extrapolate'
-    # rtail = 'extrapolate'
-    # drop_tails = False
-    # integrate = 'trapz'
-    # ead_plot = False
-    # res_per_asset = False
-    # valid_par = 'risk2'
-    #==========================================================================
+    Control File Parameters:
+        dmgs -- damage data results file path (default N/A)
+            
+        exlikes -- secondary exposure likelihood data file path (default N/A)
+        
+        aeps -- event probability data file path (default N/A)
+        
+        event_probs -- format of event probabilities (in 'aeps' data file) 
+                        (default 'ari')
+                        
+            'aeps'           event probabilities in aeps file expressed as 
+                            annual exceedance probabilities
+            'aris'           expressed as annual recurrance intervals
+            
+        
+        ltail -- zero probability event extrapolation handle 
+                (default 'extrapolate')
+            'flat'           set the zero probability event equal to the most 
+                            extreme impacts in the passed series
+            'extrapolate'    set the zero probability event by extrapolating from 
+                            the most extreme impact
+            'none'           do not extrapolate (not recommended)
+            float            use the passed value as the zero probability impact value
+             
+        
+        rtail -- zreo impacts event extrapolation handle    (default 0.5)
+            'extrapolate'    set the zero impact event by extrapolating from the 
+                            least extreme impact
+            'none'           do not extrapolate (not recommended) 
+            float           use the passed value as the zero impacts aep value
+        
+        drop_tails -- flag to drop the extrapolated values from the results 
+                            (default True)
+        
+        integrate -- numpy integration method to apply (default 'trapz')
+        
+        risk2 -- Risk2 validation flag (default False)
+        
+        res_per_asset -- flag to generate results per asset 
+        
+
+
     
     
+    
+    """
+
 
     #==========================================================================
     # #program vars
@@ -106,26 +139,7 @@ class Risk2(Model):
     plot_fmt = '${:,.0f}'
     y1lab = '$dmg'
     
-    #bid = 'bid' #indexer for expanded finv
-    #datafp_section = 'risk_fps'
 
-    #minimum expectations for parameter file
-    #==========================================================================
-    # exp_pars = {'parameters':list(),
-    #               'risk_fps':['dmgs','aeps'], #exlikes is optional
-    #               }
-    # 
-    # opt_dfiles = ['exlikes']
-    # 
-    # #expected data properties
-    # exp_dprops = {'dmgs':{'ext':'.csv', 'colns':[]},
-    #                'exlikes':{'ext':'.csv', 'colns':[]},
-    #                 'aeps':{'ext':'.csv', 'colns':[]},
-    #                 }
-    #==========================================================================
-    
-
-    #dirname = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     
     
     def __init__(self,
@@ -139,7 +153,7 @@ class Risk2(Model):
         self.logger.debug('finished __init__ on Risk')
         
         
-    def setup(self):
+    def _setup(self):
         #======================================================================
         # setup funcs
         #======================================================================
@@ -157,7 +171,7 @@ class Risk2(Model):
         
         
         
-        self.logger.debug('finished setup() on Risk2')
+        self.logger.debug('finished _setup() on Risk2')
         
         return self
         
@@ -270,7 +284,7 @@ if __name__ =="__main__":
         assert os.path.exists(cf_fp)
         
         
-        wrkr = Risk2(cf_fp, out_dir=out_dir, logger=mod_logger, tag=tag).setup()
+        wrkr = Risk2(cf_fp, out_dir=out_dir, logger=mod_logger, tag=tag)._setup()
         
         res_ser, res_df = wrkr.run(res_per_asset=res_per_asset)
         

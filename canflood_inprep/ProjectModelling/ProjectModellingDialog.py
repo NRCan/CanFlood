@@ -273,7 +273,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #======================================================================
         # run the model
         #======================================================================
-        model = Risk2(cf_fp, out_dir=out_dir, logger=self.logger, tag=tag).setup()
+        model = Risk2(cf_fp, out_dir=out_dir, logger=self.logger, tag=tag)._setup()
         
         res_ser, res_df = model.run(res_per_asset=res_per_asset)
         
