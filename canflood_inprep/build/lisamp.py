@@ -50,7 +50,12 @@ from hlpr.basic import *
 #==============================================================================
 class LikeSampler(Qcoms):
     """
-    sampling failure likelihood polygons with the inventory
+    Generate conditional probability data set ('exlikes') for each asset
+    
+    where conditional probability polygons overlap, the union_probabilities() method 
+    is used to calculate the union probability of multiple events
+    using the exclusion principle
+
     """
     
     def __init__(self, *args, **kwargs):
@@ -100,6 +105,10 @@ class LikeSampler(Qcoms):
             cid = 'xid', #index field name on finv
             lfield = 'p_fail', #field with likelihhood value
             ):
+        """
+        sample conditional probability polygon 'lfield' values with finv geometry
+        
+        """
         
         log = self.logger.getChild('run')
 

@@ -24,13 +24,16 @@
 """
 
 
-# noinspection PyPep8Naming
-def classFactory(iface):  # pylint: disable=invalid-name
-    """Load CanFlood_inPrep class from file CanFlood_inPrep.
-
-    :param iface: A QGIS interface instance.
-    :type iface: QgsInterface
-    """
-    #
-    from .canFlood_inPrep import CanFlood_inPrep
-    return CanFlood_inPrep(iface)
+#===============================================================================
+# # noinspection PyPep8Naming
+# def classFactory(iface):  # pylint: disable=invalid-name
+#     raise Error('test')
+#     """Load CanFlood_inPrep class from file CanFlood_inPrep.
+# 
+#     :param iface: A QGIS interface instance.
+#     :type iface: QgsInterface
+#     """
+#     #
+#     from .canFlood_inPrep import CanFlood_inPrep
+#     return CanFlood_inPrep(iface)
+#===============================================================================

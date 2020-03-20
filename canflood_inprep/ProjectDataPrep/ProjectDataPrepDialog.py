@@ -57,9 +57,11 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
     invalid_cids = ['fid', 'ogc_fid']
     
     def __init__(self, iface, parent=None):
-        """these will only ini tthe first baseclass (QtWidgets.QDialog)"""
+        """these will only ini tthe first baseclass (QtWidgets.QDialog)
+        
+        required"""
         super(DataPrep_Dialog, self).__init__(parent)
-        super(DataPrep_Dialog, self).__init__(parent)
+        #super(DataPrep_Dialog, self).__init__(parent)
         self.setupUi(self)
         
         # Set up the user interface from Designer through FORM_CLASS.
