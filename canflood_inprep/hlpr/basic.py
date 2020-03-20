@@ -45,7 +45,8 @@ class ComWrkr(object): #common methods for all classes
     
     def __init__(self, tag='session', cid='not_set', cf_fp='',
                  overwrite=True, 
-                 out_dir=None, logger=mod_logger,
+                 out_dir=None, 
+                 logger=mod_logger,
                  prec = 4,
                  ):
         

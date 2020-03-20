@@ -45,7 +45,7 @@ there has to be a better way"""
 from .hlpr.exceptions import QError as Error
 from shutil import copyfile
 
-from .ProjectDataPrep.ProjectDataPrepDialog import DataPrep_Dialog
+from .build.BuildDialog import DataPrep_Dialog
 from .ProjectModelling.ProjectModellingDialog import Modelling_Dialog
 from .ProjectResults.ProjectResultsDialog import Results_Dialog
 
@@ -189,14 +189,14 @@ class CanFlood:
 
     def initGui(self):
         
-        icon_path = ':/plugins/canflood_inprep/icons/CanFlood_Icon.png'
+        #icon_path = ':/plugins/canflood_inprep/icons/CanFlood_Icon.png'
         """Create the menu entries and toolbar icons inside the QGIS GUI."""  
         self.toolbar = self.iface.addToolBar('CanFlood')
         self.toolbar.setObjectName('CanFloodToolBar')
         
         # 1----first button---------------------------------
         self.toolbarProjectDataPrep = QAction(QIcon(
-            ':/plugins/canflood_inprep/icons/Andy_Tools_Hammer_Spanner.png'), 
+            ':/plugins/canflood_inprep/icons/Andy_Tools_Hammer_Spanner_23x23.png'), 
             'Build', self.iface.mainWindow())
         
         self.toolbarProjectDataPrep.setObjectName('Build')
@@ -206,17 +206,17 @@ class CanFlood:
 
         # 2----second button---------------------------------
         self.toolbarProjectModelling = QAction(
-            QIcon(':/plugins/canflood_inprep/icons/icon2.png'),
+            QIcon(':/plugins/canflood_inprep/icons/house_flood.png'),
             'Model', self.iface.mainWindow())
         
-        self.toolbarProjectModelling.setObjectName('toolbarProjectModelling')
+        self.toolbarProjectModelling.setObjectName('Model')
         self.toolbarProjectModelling.setCheckable(False)
         self.toolbarProjectModelling.triggered.connect(self.showToolbarProjectModelling)
         self.toolbar.addAction(self.toolbarProjectModelling)
 
         # 3----third button---------------------------------
         self.toolbarProjectResults = QAction(
-            QIcon(':/plugins/canflood_inprep/icons/icon3.png'), 
+            QIcon(':/plugins/canflood_inprep/icons/eye_23x23.png'), 
             'Results', self.iface.mainWindow())
         
         self.toolbarProjectResults.setObjectName('toolbarProjectResults')

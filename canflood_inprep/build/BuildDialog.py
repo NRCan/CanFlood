@@ -47,7 +47,7 @@ from hlpr.basic import *
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'ProjectDataPrepDialog_Base.ui'))
+    os.path.dirname(__file__), 'build.ui'))
 
 
 class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):

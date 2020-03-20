@@ -17,8 +17,6 @@ from qgis.PyQt.QtWidgets import QAction, QFileDialog, QListWidget
 #from .resources import *
 # Import the code for the dialog
 
-#from .canFlood_inPrep_dialog import CanFlood_inPrepDialog
-
 
 
 # User defined imports
