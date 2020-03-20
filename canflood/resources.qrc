@@ -1,8 +1,9 @@
 <RCC>
-    <qresource prefix="/plugins/canflood_inprep" >
-        <file>icons/CanFlood_Icon.png</file>
-		<file>icons/Andy_Tools_Hammer_Spanner_23x23.png</file>
-		<file>icons/house_flood.png</file>
-		<file>icons/eye_23x23.png</file>
-    </qresource>
+  <qresource prefix="/plugins/canflood_inprep">
+    <file>icons/logo_23x23.png</file>
+    <file>icons/logo_100x100.png</file>
+    <file>icons/Andy_Tools_Hammer_Spanner_23x23.png</file>
+    <file>icons/house_flood.png</file>
+    <file>icons/eye_23x23.png</file>
+  </qresource>
 </RCC>

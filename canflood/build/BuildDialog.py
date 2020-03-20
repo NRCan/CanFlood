@@ -301,7 +301,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         self.buttonBox.accepted.connect(self.reject)
         self.buttonBox.rejected.connect(self.reject)
-        self.pushButton_help.clicked.connect(self.run_help)
+
         self.logger.info('DataPrep ui initilized')
         #======================================================================
         # dev
@@ -355,9 +355,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
     #==========================================================================
     # tool commands------------                   
     #==========================================================================
-    def run_help(self):
-        """todo: link to help pdf"""
-        raise Error('not implemented')
+
     
     
     def slice_aoi(self, vlay):
