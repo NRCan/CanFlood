@@ -6,7 +6,7 @@
 name=CanFlood
 qgisMinimumVersion=3.10
 description=flood risk modelling toolkit for Canada
-version=0.0.1
+version=0.1.0
 author=Seth Bryant, Tony De Crescenzo
 email=tony.decrescenzo@ibigroup.com
 
@@ -23,7 +23,7 @@ hasProcessingProvider=no
 # changelog=
 
 # Tags are comma separated with spaces allowed
-tags=python
+tags=python, flood risk, risk
 
 homepage=https://github.com/IBIGroupCanWest/CanFlood
 category=Plugins

@@ -438,6 +438,8 @@ class Rsamp(Qcoms):
             #extract and clean results
             finv = res_d['INPUT_VECTOR']
             
+            assert isinstance(finv, QgsVectorLayer)
+            
             #===================================================================
             # update pixel size
             #===================================================================
@@ -625,48 +627,49 @@ if __name__ =="__main__":
     #===========================================================================
     # tutorial 1 (points)
     #===========================================================================
-    #===========================================================================
-    # data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\data'
-    # 
-    # raster_fns = ['haz_1000yr_cT2.tif', 'haz_1000yr_fail_cT2.tif', 'haz_100yr_cT2.tif', 
-    #               'haz_200yr_cT2.tif','haz_50yr_cT2.tif']
-    # 
-    # 
-    # 
-    # finv_fp = os.path.join(data_dir, 'finv_cT2b.gpkg')
-    # 
-    # cf_fp = os.path.join(data_dir, 'CanFlood_control_01.txt')
-    # 
-    # 
-    # cid='xid'
-    # tag='tut1'
-    #===========================================================================
-    
-    #==========================================================================
-    # tutorial 3 (polygons)
-    #==========================================================================
-    data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\3\data'
+    data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\data'
      
-    raster_fns = ['haz_1000yr_cT2.tif', 
-                  #'haz_1000yr_fail_cT2.tif', 
-                  #'haz_100yr_cT2.tif', 
-                  #'haz_200yr_cT2.tif',
-                  'haz_50yr_cT2.tif',
-                  ]
-    
-    
-      
-    finv_fp = os.path.join(data_dir, 'finv_polys_t3.gpkg')
+    raster_fns = ['haz_1000yr_cT2.tif', 'haz_1000yr_fail_cT2.tif', 'haz_100yr_cT2.tif', 
+                  'haz_200yr_cT2.tif','haz_50yr_cT2.tif']
+     
+     
+     
+    finv_fp = os.path.join(data_dir, 'finv_cT2b.gpkg')
      
     cf_fp = os.path.join(data_dir, 'CanFlood_control_01.txt')
-    
-    #inundation sampling
-    dtm_fp = os.path.join(data_dir, 'dtm_cT1.tif')
-    as_inun=True
-    dthresh = 0.5
-    
-    cid='zid'
-    tag='tut3'
+     
+     
+    cid='xid'
+    tag='tut1'
+    as_inun=False
+    dtm_fp, dthresh = None, None
+    #==========================================================================
+    # tutorial 3 (polygons as inundation)
+    #==========================================================================
+    #===========================================================================
+    # data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\3\data'
+    #  
+    # raster_fns = ['haz_1000yr_cT2.tif', 
+    #               #'haz_1000yr_fail_cT2.tif', 
+    #               #'haz_100yr_cT2.tif', 
+    #               #'haz_200yr_cT2.tif',
+    #               'haz_50yr_cT2.tif',
+    #               ]
+    # 
+    # 
+    #   
+    # finv_fp = os.path.join(data_dir, 'finv_polys_t3.gpkg')
+    #  
+    # cf_fp = os.path.join(data_dir, 'CanFlood_control_01.txt')
+    # 
+    # #inundation sampling
+    # dtm_fp = os.path.join(data_dir, 'dtm_cT1.tif')
+    # as_inun=True
+    # dthresh = 0.5
+    # 
+    # cid='zid'
+    # tag='tut3'
+    #===========================================================================
     
     
     out_dir = os.path.join(os.getcwd(), 'wsamp', tag)

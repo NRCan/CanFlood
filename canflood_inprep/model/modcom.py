@@ -1311,14 +1311,17 @@ class Model(ComWrkr):
                        aep_ser,
                        logger):
         """
-        we accept multiple exposure sets for a single event likelihood (
-        e.g. 'failure' raster and 'no fail')
+        selecting maximum expected value for repeat events
         
-        these are assigned secondary liklihoods in the edf
-        
-        the resolve_multis function takes the maximum expected value of the asset
-        considering severity and conditional probability 
+        CanFlood selects the maximum expected value of impacts per asset from the duplicated events.
         e.g. resolved damage = max(damage w/o fail, damage w/ fail * fail prob)
+        
+        
+        we accept multiple exposure sets for a single event likelihood (
+        e.g. 'failure' raster and 'no fail').
+        Each event can be assigned conditional probabilities in the edf
+        
+
         """
         #======================================================================
         # setup

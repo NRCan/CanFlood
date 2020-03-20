@@ -9,22 +9,24 @@ TODO: better dependency check
 
 """
 #==============================================================================
-# pandas depdendency check
+# dependency check
 #==============================================================================
-msg = 'requires pandas version >=0.25.3 and < 1.0.0'
-try:
-    import pandas as pd
-except:
-    from qgis.core import *
-    import qgis.utils
-    qgis.utils.iface.messageBar().pushMessage('CanFlood', msg, level=Qgis.Critical)
-    raise ImportError(msg)
+# Let users know if they're missing any of our hard dependencies
+hard_dependencies = ("pandas", "xlsxwriter")
+missing_dependencies = []
+
+for dependency in hard_dependencies:
+    try:
+        __import__(dependency)
+    except ImportError as e:
+        missing_dependencies.append("{0}: {1}".format(dependency, str(e)))
+
+if missing_dependencies:
+    raise ImportError(
+        "Unable to import required dependencies:\n" + "\n".join(missing_dependencies)
+    )
     
-if not pd.__version__ >= '0.25.3' and pd.__version__<='1.0.0':
-    from qgis.core import *
-    import qgis.utils
-    qgis.utils.iface.messageBar().pushMessage('CanFlood', msg, level=Qgis.Critical)
-    raise ImportError(msg)
+del hard_dependencies, dependency, missing_dependencies
 
 
 #===============================================================================

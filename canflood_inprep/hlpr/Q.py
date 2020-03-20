@@ -78,7 +78,7 @@ type_qvar_py_d = {10:str, 2:int, 135:float, 6:float, 4:int, 1:bool, 16:datetime.
 
 class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native console
     
-    crs_id = 4326
+    crs_id = 'EPSG:4326'
     
     driverName = 'SpatiaLite' #default data creation driver type
     
@@ -105,7 +105,9 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
 
         
         #crs
-        if crs is None: crs = QgsCoordinateReferenceSystem(self.crs_id)
+        if crs is None: 
+            crs = QgsCoordinateReferenceSystem(self.crs_id)
+            
         self.crs = crs
         
         #=======================================================================
@@ -169,8 +171,9 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
             #app.setPrefixPath(r"C:\OSGeo4W64\apps\qgis", True)
             app.initQgis()
             #logging.debug(QgsApplication.showSettings())
-            log.info(' QgsApplication.initQgis. version: %s, release: %s'%
-                        (Qgis.QGIS_VERSION, Qgis.QGIS_RELEASE_NAME))
+            """ was throwing unicode error"""
+            log.info(u' QgsApplication.initQgis. version: %s, release: %s'%(
+                Qgis.QGIS_VERSION.encode('utf-8'), Qgis.QGIS_RELEASE_NAME.encode('utf-8')))
             return app
         
         except:
@@ -1237,18 +1240,35 @@ def load_vlay( #load a layer from a file
 
 def vlay_write( #write  a layer to file
         vlay, out_fp, 
-        destCRS=None,
+
         driverName='GPKG',
         fileEncoding = "CP1250", 
+        opts = QgsVectorFileWriter.SaveVectorOptions(), #empty options object
         overwrite=False,
         logger=mod_logger):
+    """
+    help(QgsVectorFileWriter.SaveVectorOptions)
+    QgsVectorFileWriter.SaveVectorOptions.driverName='GPKG'
+    
+    
+    opt2 = QgsVectorFileWriter.BoolOption(QgsVectorFileWriter.CreateOrOverwriteFile)
+    
+    help(QgsVectorFileWriter)
+    
+    """
     
     #==========================================================================
     # defaults
     #==========================================================================
     log = logger.getChild('vlay_write')
     
-    if destCRS is None: destCRS = vlay.dataProvider().crs()
+
+    
+    #===========================================================================
+    # assemble options
+    #===========================================================================
+    opts.driverName = driverName
+    opts.fileEncoding = fileEncoding
     
     
     #===========================================================================
@@ -1265,6 +1285,7 @@ def vlay_write( #write  a layer to file
             overwrite, out_fp)
         if overwrite:
             log.warning(msg)
+            os.remove(out_fp) #workaround... should be away to overwrite with the QgsVectorFileWriter
         else:
             raise Error(msg)
         
@@ -1276,15 +1297,12 @@ def vlay_write( #write  a layer to file
     if not vlay.isValid():
         Error('passed invalid layer')
         
-    if not destCRS.isValid(): 
-        raise Error('invalid destCrs')
-        
+
     
-    error = QgsVectorFileWriter.writeAsVectorFormat(
-            vlay, out_fp, fileEncoding, destCRS,
-            driverName=driverName,
-            #layerOptions = layerOptions,
-            #datasourceOptions = datasourceOptions,
+    error = QgsVectorFileWriter.writeAsVectorFormatV2(
+            vlay, out_fp, 
+            QgsCoordinateTransformContext(),
+            opts,
             )
     
     

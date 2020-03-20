@@ -15,7 +15,7 @@ curves =
 finv = 
 expos = C:\Users\cefect\CanFlood\wsamp\tut1\expos_tut1_5_32.csv
 gels = 
-#'expos' file path set from wsamp.py at 2020-03-16 10.16.15
+#'expos' file path set from wsamp.py at 2020-03-19 21.18.49
 
 [risk_fps]
 dmgs = 

@@ -2,7 +2,7 @@
 """
 called somewhere
 """
-
+raise IOError('test')
 import os
 
 from qgis.PyQt import uic

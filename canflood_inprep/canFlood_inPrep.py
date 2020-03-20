@@ -13,7 +13,7 @@ from qgis.PyQt.QtWidgets import QAction, QFileDialog, QListWidget
 from .resources import *
 # Import the code for the dialog
 
-from .canFlood_inPrep_dialog import CanFlood_inPrepDialog
+#from .canFlood_inPrep_dialog import CanFlood_inPrepDialog
 import os.path
 from qgis.core import QgsProject, Qgis, QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest
 
@@ -42,10 +42,10 @@ there has to be a better way"""
 
 
 #from canFlood_model import CanFlood_Model
-from .hp import Error
+from .hlpr.exceptions import QError as Error
 from shutil import copyfile
 
-from .ProjectDataPrep.ProjectDataPrepDialog import DataPrep_Dialog
+from .build.BuildDialog import DataPrep_Dialog
 from .ProjectModelling.ProjectModellingDialog import Modelling_Dialog
 from .ProjectResults.ProjectResultsDialog import Results_Dialog
 
@@ -61,11 +61,13 @@ class CanFlood:
         :type iface: QgsInterface
         """
         # Save reference to the QGIS interface
-        self.ras = []
-        self.ras_dict = {}
-        self.vec = None
-        self.wd = None
-        self.cf = None
+        #=======================================================================
+        # self.ras = []
+        # self.ras_dict = {}
+        # self.vec = None
+        # self.wd = None
+        # self.cf = None
+        #=======================================================================
         
         self.iface = iface
         # initialize plugin directory
@@ -187,39 +189,46 @@ class CanFlood:
 
     def initGui(self):
         
-        icon_path = ':/plugins/canflood_inprep/icons/CanFlood_Icon.png'
+        #icon_path = ':/plugins/canflood_inprep/icons/CanFlood_Icon.png'
         """Create the menu entries and toolbar icons inside the QGIS GUI."""  
         self.toolbar = self.iface.addToolBar('CanFlood')
         self.toolbar.setObjectName('CanFloodToolBar')
         
         # 1----first button---------------------------------
-        self.toolbarProjectDataPrep = QAction(QIcon(':/plugins/canflood_inprep/icons/icon1.png'), \
-            'ProjectDataPrep', self.iface.mainWindow())
-        self.toolbarProjectDataPrep.setObjectName('toolbarProjectDataPrep')
+        self.toolbarProjectDataPrep = QAction(QIcon(
+            ':/plugins/canflood_inprep/icons/Andy_Tools_Hammer_Spanner_23x23.png'), 
+            'Build', self.iface.mainWindow())
+        
+        self.toolbarProjectDataPrep.setObjectName('Build')
         self.toolbarProjectDataPrep.setCheckable(False)
         self.toolbarProjectDataPrep.triggered.connect(self.showToolbarDataPrep)
         self.toolbar.addAction(self.toolbarProjectDataPrep)
 
         # 2----second button---------------------------------
-        self.toolbarProjectModelling = QAction(QIcon(':/plugins/canflood_inprep/icons/icon2.png'), \
-            'ProjectModelling', self.iface.mainWindow())
-        self.toolbarProjectModelling.setObjectName('toolbarProjectModelling')
+        self.toolbarProjectModelling = QAction(
+            QIcon(':/plugins/canflood_inprep/icons/house_flood.png'),
+            'Model', self.iface.mainWindow())
+        
+        self.toolbarProjectModelling.setObjectName('Model')
         self.toolbarProjectModelling.setCheckable(False)
         self.toolbarProjectModelling.triggered.connect(self.showToolbarProjectModelling)
         self.toolbar.addAction(self.toolbarProjectModelling)
 
         # 3----third button---------------------------------
-        self.toolbarProjectResults = QAction(QIcon(':/plugins/canflood_inprep/icons/icon3.png'), \
-            'ProjectResults', self.iface.mainWindow())
+        self.toolbarProjectResults = QAction(
+            QIcon(':/plugins/canflood_inprep/icons/eye_23x23.png'), 
+            'Results', self.iface.mainWindow())
+        
         self.toolbarProjectResults.setObjectName('toolbarProjectResults')
         self.toolbarProjectResults.setCheckable(False)
         self.toolbarProjectResults.triggered.connect(self.showToolbarProjectResults)
         self.toolbar.addAction(self.toolbarProjectResults)
         
+        """
         # add buttons to menu
         self.iface.addPluginToMenu("CanFlood", self.toolbarProjectDataPrep)
         self.iface.addPluginToMenu("CanFlood", self.toolbarProjectModelling)
-        self.iface.addPluginToMenu("CanFlood", self.toolbarProjectResults)
+        self.iface.addPluginToMenu("CanFlood", self.toolbarProjectResults)"""
         
 
     def showToolbarDataPrep(self):
