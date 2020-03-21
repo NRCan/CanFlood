@@ -110,6 +110,7 @@ class Rsamp(Qcoms):
         # load finv vector layer
         #======================================================================
         fp = finv_fp
+        assert os.path.exists(fp)
         basefn = os.path.splitext(os.path.split(fp)[1])[0]
         vlay_raw = QgsVectorLayer(fp,basefn,providerLib)
         
@@ -122,13 +123,11 @@ class Rsamp(Qcoms):
         
         #check if this is valid
         if not vlay_raw.isValid():
-            log.error('loaded vlay \'%s\' is not valid. \n \n did you initilize?'%vlay_raw.name())
-            raise Error('vlay loading produced an invalid layer')
+            raise Error('loaded vlay \'%s\' is not valid. \n \n did you initilize?'%vlay_raw.name())
         
         #check if it has geometry
         if vlay_raw.wkbType() == 100:
-            log.error('loaded vlay has NoGeometry')
-            raise Error('no geo')
+            raise Error('loaded vlay has NoGeometry')
         
         
         self.mstore.addMapLayer(vlay_raw)
@@ -627,22 +626,39 @@ if __name__ =="__main__":
     #===========================================================================
     # tutorial 1 (points)
     #===========================================================================
-    data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\data'
+    #===========================================================================
+    # data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\data'
+    #  
+    # raster_fns = ['haz_1000yr_cT2.tif', 'haz_1000yr_fail_cT2.tif', 'haz_100yr_cT2.tif', 
+    #               'haz_200yr_cT2.tif','haz_50yr_cT2.tif']
+    #  
+    #  
+    #  
+    # finv_fp = os.path.join(data_dir, 'finv_cT2b.gpkg')
+    #  
+    # cf_fp = os.path.join(data_dir, 'CanFlood_control_01.txt')
+    #  
+    #  
+    # cid='xid'
+    # tag='tut1'
+    # as_inun=False
+    # dtm_fp, dthresh = None, None
+    #===========================================================================
+    
+    #===========================================================================
+    # tutorial 2  (dtm)
+    #===========================================================================
+    data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\data'
+    raster_fns= ['dtm_cT1.tif']
+    finv_fp = os.path.join(data_dir, 'finv_cT2.gpkg')
      
-    raster_fns = ['haz_1000yr_cT2.tif', 'haz_1000yr_fail_cT2.tif', 'haz_100yr_cT2.tif', 
-                  'haz_200yr_cT2.tif','haz_50yr_cT2.tif']
-     
-     
-     
-    finv_fp = os.path.join(data_dir, 'finv_cT2b.gpkg')
-     
-    cf_fp = os.path.join(data_dir, 'CanFlood_control_01.txt')
-     
-     
+    cf_fp = os.path.join(data_dir, 'CanFlood_tutorial2.txt')
+    
     cid='xid'
-    tag='tut1'
+    tag='tut2_dtm'
     as_inun=False
     dtm_fp, dthresh = None, None
+    
     #==========================================================================
     # tutorial 3 (polygons as inundation)
     #==========================================================================

@@ -471,7 +471,7 @@ class Model(ComWrkr):
         cid = self.cid
         
         assert 'finv' in self.data_d, 'call load_finv first'
-        assert 'aeps' in self.data_d, 'call load_aep first'
+        assert 'evals' in self.data_d, 'call load_aep first'
         assert isinstance(self.expcols, pd.Index), 'bad expcols'
         assert isinstance(self.cindex, pd.Index), 'bad cindex'
         assert os.path.exists(fp), '%s got invalid filepath \n    %s'%(dtag, fp)
@@ -541,7 +541,7 @@ class Model(ComWrkr):
         
         
         if check_monot:
-            self.check_monot(df, aep_ser = self.data_d['aeps'])
+            self.check_monot(df, aep_ser = self.data_d['evals'])
 
 
         #======================================================================
@@ -559,7 +559,7 @@ class Model(ComWrkr):
         
         log = self.logger.getChild('load_exlikes')
         
-        aep_ser = self.data_d['aeps']
+        aep_ser = self.data_d['evals']
         #======================================================================
         # load the data
         #======================================================================
@@ -760,7 +760,7 @@ class Model(ComWrkr):
         # postcheck2
         #======================================================================
         if check_monot:
-            self.check_monot(df, aep_ser = self.data_d['aeps'])
+            self.check_monot(df, aep_ser = self.data_d['evals'])
 
 
         #======================================================================
@@ -771,152 +771,7 @@ class Model(ComWrkr):
         
         log.info('finished loading %s as %s'%(dtag, str(df.shape)))
     
-    def xxxload_risk_data(self, 
-                       ddf, #dmaage or exposure data to compare against
-                       ): #data setups and checks
-        #======================================================================
-        # defaults
-        #======================================================================
-        log = self.logger.getChild('setup_data')
-        cid = self.cid
-        
-        
-
-        
-        #======================================================================
-        # aeps
-        #======================================================================
-        #======================================================================
-        # adf = pd.read_csv(self.aeps) 
-        # assert len(adf) ==1, 'expected only 1 row on aeps'
-        # 
-        # #column names
-        # miss_l = set(ddf.columns).difference(adf.columns)
-        # assert len(miss_l) == 0, '%i column mismatch between aeps and damages: %s'%(
-        #     len(miss_l), miss_l)
-        # 
-        # #convert to a series
-        # aep_ser = adf.iloc[0, adf.columns.isin(ddf.columns)].astype(int).sort_values()
-        # 
-        # #convert to aep
-        # if self.event_probs == 'ari':
-        #     aep_ser = 1/aep_ser
-        #     log.info('converted %i aris to aeps'%len(aep_ser))
-        # elif self.event_probs == 'aep': pass
-        # else: raise Error('unepxected event_probs key %s'%self.event_probs)
-        # 
-        # #check all aeps are below 1
-        # boolar = np.logical_and(
-        #     aep_ser < 1,
-        #     aep_ser > 0)
-        # 
-        # assert np.all(boolar), 'passed aeps out of range'
-        # 
-        # #wrap
-        # log.debug('prepared aep_ser w/ %i'%len(aep_ser))
-        # #self.aep_ser = aep_ser.sort_values()
-        # self.data_d['aeps'] = aep_ser.sort_values().copy() #setting for consistency. 
-        #======================================================================
-        
-        
-        
-        #======================================================================
-        # exlikes
-        #======================================================================
-        #check against ddf
-        #if not self.exlikes == '':
-#==============================================================================
-#             edf = pd.read_csv(self.exlikes)
-#             
-#             assert cid in edf.columns, 'exlikes missing %s'%cid
-#             
-#             #==================================================================
-#             # clean
-#             #==================================================================
-#             #slice it
-#             edf = edf.set_index(cid).sort_index(axis=1).sort_index(axis=0)
-#             
-#             #replace nulls w/ 1
-#             """better not to pass any nulls.. but if so.. should treat them as ZERO!!
-#             Null = no failure polygon = no failure
-#             also best not to apply precision to these values
-#             """
-#             edf = edf.fillna(0.0)
-#             
-#             #==================================================================
-#             # check
-#             #==================================================================
-#             #check event name membership
-#             miss_l = set(edf.columns).difference(ddf.columns)
-#             if len(miss_l) >0:
-#                 raise Error('passed exlikes columns dont match ddf: %s'%miss_l)
-#             
-#             #check logic against aeps
-#             """todo: add this to the validator tool somehow"""
-#             if len(aep_ser.unique()) == len(aep_ser):
-#                 raise Error('passed exlikes, but there are no duplicated event: \n    %s'%aep_ser)
-#             
-#             #check monotoncity
-#             if not self.check_monot(edf, aep_ser=aep_ser,event_probs='aep'):
-#                 raise Error('exlikes data non-monotonic')
-#             
-#             #==================================================================
-#             # #add missing likelihoods
-#             #==================================================================
-#             """
-#             missing column = no secondary likelihoods at all for this event.
-#             all = 1
-#             """
-#             
-#             miss_l = set(ddf.columns).difference(edf.columns)
-#             if len(miss_l) > 0:
-#                 
-#                 log.info('passed exlikes missing %i secondary exposure likelihoods... treating these as 1\n    %s'%(
-#                     len(miss_l), miss_l))
-#                 
-#                 for coln in miss_l:
-#                     edf[coln] = 1.0
-#                 
-#                 #column names
-#                 miss_l = set(ddf.columns).difference(edf.columns)
-#                 assert len(miss_l) == 0, '%i column mismatch between exlikes and ddf: %s'%(
-#                     len(miss_l), miss_l)
-#             
-#             #xids
-#             miss_l = set(ddf.index).difference(edf.index)
-#             assert len(miss_l) == 0, '%i column mismatch between exlikes and damages: %s'%(
-#                 len(miss_l), miss_l)
-#             
-#             #slice down to those in teh damages
-#             """not sure if we'll ever have to deal w/ more data in the edf than in the damages"""
-#             edf = edf.loc[edf.index.isin(ddf.index), edf.columns.isin(ddf.columns)]
-#         
-#             log.info('prepared edf w/ %s'%str(edf.shape))
-#             
-#             #==================================================================
-#             # check it
-#             #==================================================================
-# 
-#             
-#             #set it
-#             self.data_d['exlikes'] = edf
-#==============================================================================
-        
-        #======================================================================
-        # post checks
-        #======================================================================
-        #check if we have duplicate events and require exposure likelihoods
-        if not aep_ser.is_unique:
-            assert 'exlikes' in self.data_d, 'duplicate aeps passed but no exlikes data provdied'
-            
-            log.info('duplicated aeps provided... maximum expected values will be calculated')
-
-
-        #======================================================================
-        # wrap
-        #======================================================================
-        self.logger.debug('finished')
-        
+   
     def add_gels(self): #add gels to finv (that's heights)
         log = self.logger.getChild('add_gels')
         
@@ -949,85 +804,6 @@ class Model(ComWrkr):
         self.data_d['finv'] = fdf
             
         
-    
-    def xxxsetup_finv(self): #check and consolidate inventory like data sets
-        
-        log = self.logger.getChild('setup_finv')
-        cid = self.cid
-        fdf = self.data_d['finv']
-
-        #======================================================================
-        # set indexes on data sets
-        #======================================================================
-#==============================================================================
-#         #get list of data sets
-#         if self.felv == 'datum':
-#             l = ['finv', 'expos']
-#         elif self.felv == 'ground':
-#             l = ['finv', 'expos', 'gels']            
-#         else:
-#             raise Error('unexpected \'felv\' key %s'%self.felv)
-#         
-#         #loop and set
-#         first = True
-#         for dname, df in {dname:self.data_d[dname] for dname in l}.items():
-#             
-#             #check the indexer is there
-#             assert cid in df.columns, '%s is missing the special index column \'%s\''%(
-#                 dname, cid)
-#             
-#             #set the indexer
-#             df = df.set_index(cid, drop=True).sort_index(axis=0)
-#             
-#             #check the indexes match
-#             if first:
-#                 fdf = df.copy() #set again
-#                 first = False
-#             else:
-# 
-#                 assert np.array_equal(fdf.index, df.index), \
-#                     '\"%s\' index does not match the finv'%dname
-#                     
-#             #update the dict
-#             self.data_d[dname] = df
-#         log.debug('finished index check on %i'%len(l))
-#==============================================================================
-        
-        #======================================================================
-        # add gel to the fdf
-        #======================================================================
-#==============================================================================
-#         if self.felv == 'ground':
-#             
-#             
-#             gdf = self.data_d['gels']
-#     
-#             #==================================================================
-#             # checks
-#             #==================================================================
-#             #check length expectation
-#             assert 'gels' not in fdf.columns, 'gels already on fdf'
-#             assert len(gdf.columns)==1, 'expected 1 column on gels, got %i'%len(gdf.columns)
-#             boolidx = gdf.iloc[:,0].isna()
-#             if boolidx.any():
-#                 raise Error('got %i (of %i) null ground elevation values'%(boolidx.sum(), len(boolidx)))
-#             
-#             boolidx = gdf.iloc[:,0] < 0
-#             if boolidx.any():
-#                 log.warning('got %i ground elevations below zero'%boolidx.sum())
-#     
-#             
-#             #rename the column
-#             gdf = gdf.rename(columns={gdf.columns[0]:'gels'}).round(self.prec)
-#             
-#             #do the join join
-#             fdf = fdf.join(gdf)
-#             
-# 
-#         
-#         #update
-#         self.data_d['finv'] = fdf
-#==============================================================================
         
     def build_exp_finv(self, #assemble the expanded finv
                     group_cnt = None, #number of groups to epxect per prefix

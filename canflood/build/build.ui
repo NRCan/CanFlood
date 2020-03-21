@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>700</width>
-    <height>852</height>
+    <height>847</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -52,7 +52,7 @@
         <x>0</x>
         <y>0</y>
         <width>680</width>
-        <height>746</height>
+        <height>741</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -2985,7 +2985,6 @@ p, li { white-space: pre-wrap; }
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../resources.qrc"/>
  </resources>
  <connections/>
  <buttongroups>

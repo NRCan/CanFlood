@@ -142,7 +142,7 @@ class Risk1(Model):
         #======================================================================
         log = self.logger.getChild('run')
         #ddf_raw, finv,  = self.data_d['expos'],self.data_d['finv'] 
-        aep_ser = self.data_d['aeps']
+        aep_ser = self.data_d['evals']
         cid, bid = self.cid, self.bid        
         bdf ,ddf = self.bdf, self.ddf
         
@@ -225,6 +225,8 @@ class Risk1(Model):
         else:
             bres_df = cdf.rename(columns = aep_ser.to_dict()).sort_index(axis=1)
             
+            assert bres_df.columns.is_unique, 'duplicate aeps require exlikes'
+            
         log.info('got damages for %i events and %i assets'%(
             len(bres_df), len(bres_df.columns)))
         
@@ -259,7 +261,7 @@ class Risk1(Model):
         #format resul series
         res = res_ser.to_frame()
         res.index.name = 'aep'
-        res.columns = ['$']
+        res.columns = ['impacts']
         
         #remove tails
         if self.drop_tails:
@@ -290,12 +292,12 @@ if __name__ =="__main__":
     #==========================================================================
     
     #==========================================================================
-    # tutorial 2
+    # tutorial 1
     #==========================================================================
     runpars_d={
-        'Tut2':{
-            'out_dir':os.path.join(os.getcwd(), 'risk1', 'Tut2'),
-            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200305\CanFlood_Tut2.txt',
+        'Tut1':{
+            'out_dir':os.path.join(os.getcwd(), 'risk1', 'Tut1'),
+            'cf_fp':r'C:\Users\cefect\CanFlood\build\1\CanFlood_tutorial1.txt',
              
             }
         }

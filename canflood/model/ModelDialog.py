@@ -46,8 +46,9 @@ from hlpr.basic import *
 
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
-FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'ProjectModellingDialog_Base.ui'))
+ui_fp = os.path.join(os.path.dirname(__file__), 'model.ui')
+assert os.path.exists(ui_fp)
+FORM_CLASS, _ = uic.loadUiType(ui_fp)
 
 
 class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,  
@@ -71,22 +72,11 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         self.connect_slots()
         
     def connect_slots(self):
-        
-        """remapped everything
-        self.pushButton_wd.clicked.connect(self.select_output_folder) #risk
-        self.pushButton_br_2.clicked.connect(self.select_output_file)
-        self.pushButton_cf.clicked.connect(self.select_output_folder)
-        self.pushButton_br_4.clicked.connect(self.select_output_file)
-        self.pushButton_run_1.clicked.connect(self.run_risk) #r1. run
-        self.pushButton_run_2.clicked.connect(self.run_dmg)"""
+
         
         #======================================================================
-        # setup
+        # setup-----------
         #======================================================================
-        """
-        lineEdit_wd
-        pushButton_wd
-        """
         #control file
         def cf_browse():
             return self.browse_button(self.lineEdit_cf_fp, 
@@ -95,7 +85,10 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
             
         self.pushButton_cf.clicked.connect(cf_browse)
         
-        #working directory
+        #=======================================================================
+        # #working directory
+        #=======================================================================
+        #browse button
         def wd_browse():
             return self.browse_button(self.lineEdit_wd, 
                                       prompt='Select Working Directory',
@@ -103,14 +96,14 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
             
         self.pushButton_wd.clicked.connect(wd_browse)
         
-        """
-        development
-        """
-        #======================================================================
-        # self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200223d\CanFlood_scenario1.txt')
-        # self.lineEdit_wd.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200223d')
-        #======================================================================
+        #open button
+        def open_wd():
+            force_open_dir(self.lineEdit_wd.text())
         
+        self.pushButton_wd_open.clicked.connect(open_wd)
+        
+        
+
         
         #overwrite control
         self.checkBox_SSoverwrite.stateChanged.connect(self.set_overwrite)
@@ -159,8 +152,11 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         to speed up testing.. manually configure the project
         """
         
-        self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\CanFlood_tutorial2.txt')
-        self.lineEdit_wd.setText(r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\model')
+        debug_dir =os.path.join(os.path.expanduser('~'), 'CanFlood', 'model')
+        self.lineEdit_cf_fp.setText(os.path.join(debug_dir, 'CanFlood_scenario1.txt'))
+        self.lineEdit_wd.setText(debug_dir)
+        
+
         
         
         

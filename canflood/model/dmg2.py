@@ -64,7 +64,7 @@ class Dmg2(Model):
              'expos':{'ext':('.csv',)},
                     },
         'risk_fps':{
-             'aeps':{'ext':('.csv',)}, #only required for checks
+             'evals':{'ext':('.csv',)}, #only required for checks
                     },
              
         'validation':{

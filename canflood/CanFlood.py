@@ -46,7 +46,7 @@ from .hlpr.exceptions import QError as Error
 from shutil import copyfile
 
 from .build.BuildDialog import DataPrep_Dialog
-from .ProjectModelling.ProjectModellingDialog import Modelling_Dialog
+from .model.ModelDialog import Modelling_Dialog
 from .ProjectResults.ProjectResultsDialog import Results_Dialog
 
 class CanFlood:
@@ -198,7 +198,7 @@ class CanFlood:
         self.toolbarProjectDataPrep = QAction(QIcon(
             ':/plugins/canflood_inprep/icons/Andy_Tools_Hammer_Spanner_23x23.png'), 
             'Build', self.iface.mainWindow())
-        
+         
         self.toolbarProjectDataPrep.setObjectName('Build')
         self.toolbarProjectDataPrep.setCheckable(False)
         self.toolbarProjectDataPrep.triggered.connect(self.showToolbarDataPrep)

@@ -46,5 +46,6 @@ def classFactory(iface):  # pylint: disable=invalid-name
     :type iface: QgsInterface
     """
     #
+
     from .CanFlood import CanFlood
     return CanFlood(iface)

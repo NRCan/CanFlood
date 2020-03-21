@@ -24,7 +24,7 @@ import processing
 from processing.core.Processing import Processing
 
 
-
+import resources
 
 import pandas as pd
 import numpy as np #Im assuming if pandas is fine, numpy will be fine
@@ -46,8 +46,9 @@ from hlpr.Q import *
 from hlpr.basic import *
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
-FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'build.ui'))
+ui_fp = os.path.join(os.path.dirname(__file__), 'build.ui')
+assert os.path.exists(ui_fp)
+FORM_CLASS, _ = uic.loadUiType(ui_fp)
 
 
 class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
@@ -412,14 +413,15 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         assert os.path.exists(finv_fp)
         
         #called by build_scenario()
-        dirname = os.path.dirname(os.path.abspath(__file__))
+        dirname = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         
         #get the default template from the program files
-        cf_src = os.path.join(dirname, '_documents/CanFlood_control_01.txt')
+        cf_src = os.path.join(dirname, '_pars/CanFlood_control_01.txt')
+        assert os.path.exists(cf_src)
         #cf_src = os.path.join(dirname, '_documents/CanFlood_control_01.txt')
         
         #start the scratch file
-        scratch_src = os.path.join(dirname, '_documents/scratch.txt')
+        #scratch_src = os.path.join(dirname, '_documents/scratch.txt')
         
         #get control file name from user provided tag
         cf_fn = 'CanFlood_%s.txt'%self.tag
@@ -439,8 +441,10 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #copy over the default template
         copyfile(cf_src, cf_path)
             
-        if not os.path.exists(scratch_src):
-            open(scratch_src, 'w').close()
+        #=======================================================================
+        # if not os.path.exists(scratch_src):
+        #     open(scratch_src, 'w').close()
+        #=======================================================================
         
         #======================================================================
         # update the control file
@@ -740,10 +744,11 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         wrkr = Rsamp(logger=self.logger, 
                           tag=self.tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
-                          cid=cid,
+                          cid=cid,crs=crs,
+                          out_dir = out_dir, fname='gels'
                           )
         
-        res_vlay = wrkr.run([rlay], finv, cid=cid, crs=crs, fname='gels')
+        res_vlay = wrkr.run([rlay], finv)
         
         #check it
         wrkr.dtm_check(res_vlay)
