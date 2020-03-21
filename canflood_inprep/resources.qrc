@@ -1,8 +1,0 @@
-<RCC>
-    <qresource prefix="/plugins/canflood_inprep" >
-        <file>icons/CanFlood_Icon.png</file>
-		<file>icons/icon1.png</file>
-		<file>icons/icon2.png</file>
-		<file>icons/icon3.png</file>
-    </qresource>
-</RCC>

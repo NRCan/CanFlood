@@ -1,5 +1,0 @@
-<RCC>
-  <qresource prefix="newPrefix">
-    <file>Canada.png</file>
-  </qresource>
-</RCC>

@@ -1,0 +1,32 @@
+[parameters]
+name = scenario1
+cid = xid
+prec = 2
+ground_water = False
+felv = datum
+event_probs = ari
+ltail = extrapolate
+rtail = 0.5
+drop_tails = True
+integrate = trapz
+ead_plot = True
+res_per_asset = True
+
+[dmg_fps]
+curves = C
+finv = C:\LS\03_TOOLS\CanFlood\_wdirs\20200302\finv_scenario1_finv_cT2.csv
+expos = C:\LS\03_TOOLS\CanFlood\_wdirs\20200302\expos_scenario1_4_32.csv
+gels = 
+
+[risk_fps]
+dmgs = 
+exlikes = C:\Users\cefect\CanFlood\lisamp\exlikes_dev.csv
+aeps = 
+#'exlikes' file path set from lisamp.py at 2020-03-19 21.19.52
+
+[validation]
+risk1 = False
+imp2 = False
+risk2 = False
+risk3 = False
+
