@@ -12,7 +12,7 @@ TODO: better dependency check
 # dependency check
 #==============================================================================
 # Let users know if they're missing any of our hard dependencies
-hard_dependencies = ("pandas", "xlsxwriter")
+hard_dependencies = ("pandas")
 missing_dependencies = []
 
 for dependency in hard_dependencies:
