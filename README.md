@@ -31,7 +31,7 @@ Happy flood modelling!
 
 ### Troubleshooting Installation.
 
-Some installations of QGIS may not come pre-installed with all required packages and dependencies. If you get a ModuleNotFound error regarding 'pandas', see the following [solution](https://github.com/IBIGroupCanWest/CanFlood/issues/6) with screenshots.
+Some installations of QGIS may not come pre-installed with all required packages and dependencies. If you get a ModuleNotFound error regarding 'pandas', see the following [solution](https://github.com/IBIGroupCanWest/CanFlood/issues/6#issuecomment-592091488) with screenshots.
 
 ## Getting Started
 
