@@ -385,6 +385,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
     #==========================================================================
     # tool commands------------                   
     #==========================================================================
+    def slice_aoi(self, finv):
+        return finv
 
     def build_scenario(self): #'Generate' on the setup tab
         """

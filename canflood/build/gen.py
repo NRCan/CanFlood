@@ -147,7 +147,7 @@ if __name__ =="__main__":
     
     
     out_dir = os.path.join(os.getcwd(), 'wsamp', tag)
-    raster_fps = [os.path.join(data_dir, fn) for fn in raster_fns]
+
     #==========================================================================
     # load the data
     #==========================================================================
@@ -157,37 +157,14 @@ if __name__ =="__main__":
     
 
     
-    wrkr.ini_standalone()
-    
-    
-    rlay_l, finv_vlay = wrkr.load_layers(raster_fps, finv_fp)
-    
-    if not dtm_fp is None:
-        dtm_rlay = wrkr.load_rlay(dtm_fp)
-    else:
-        dtm_rlay = None
-    
-    #==========================================================================
-    # execute
-    #==========================================================================
-    res_vlay = wrkr.run(rlay_l, finv_vlay, 
-             crs = finv_vlay.crs(), 
-             as_inun=as_inun, dtm_rlay=dtm_rlay,dthresh=dthresh,
-             
-             )
-       
-    wrkr.check()
 
     
     #==========================================================================
     # save results
     #==========================================================================
-    outfp = wrkr.write_res(res_vlay)
-    if write_vlay:
-        ofp = os.path.join(out_dir, res_vlay.name()+'.gpkg')
-        vlay_write(res_vlay,ofp, overwrite=True)
+
      
-    wrkr.upd_cf(cf_fp)
+
  
     force_open_dir(out_dir)
  
