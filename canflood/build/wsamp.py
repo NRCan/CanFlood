@@ -708,11 +708,7 @@ if __name__ =="__main__":
 
     wrkr = Rsamp(logger=mod_logger, tag=tag, out_dir=out_dir, cid=cid,
                  )
-    
-    def prog(progress):
-        print('!!!progress: %s'%progress)
-    
-    wrkr.feedback.progressChanged.connect(prog)
+
     
     wrkr.ini_standalone()
     

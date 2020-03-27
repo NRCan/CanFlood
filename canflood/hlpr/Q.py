@@ -146,6 +146,13 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
         
         self.mstore = QgsMapLayerStore() #build a new map store
         
+        #synthetic progress tracker
+        def prog(progress):
+            print('    QcomsProgress: %s'%progress)
+    
+        self.feedback.progressChanged.connect(prog)
+        
+        
         if not self.proj_checks():
             raise Error('failed checks')
         

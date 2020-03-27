@@ -54,8 +54,6 @@ class Gen(Qcoms):
     """
 
 
-    
-    
     def __init__(self,
                  fname='expos', #prefix for file name
                   *args, **kwargs):
@@ -65,6 +63,20 @@ class Gen(Qcoms):
 
         
         self.logger.info('Rsamp.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
+        
+    
+    def slice_aoi(self, vlay):
+        
+        aoi_vlay = self.comboBox_aoi.currentLayer()
+        
+        if aoi_vlay is None:
+            self.logger.info('no aoi selected... not slicing')
+            return vlay
+        else:
+            self.logger.warning('aoi slicing not impelemented')
+            return vlay
+            
+            #raise Error('aoi slicing not implemented')
 
                 
 
@@ -75,38 +87,35 @@ if __name__ =="__main__":
     #===========================================================================
     # tutorial 1 (points)
     #===========================================================================
-    #===========================================================================
-    # data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\data'
-    #  
-    # raster_fns = ['haz_1000yr_cT2.tif', 'haz_1000yr_fail_cT2.tif', 'haz_100yr_cT2.tif', 
-    #               'haz_200yr_cT2.tif','haz_50yr_cT2.tif']
-    #  
-    #  
-    #  
-    # finv_fp = os.path.join(data_dir, 'finv_cT2b.gpkg')
-    #  
-    # cf_fp = os.path.join(data_dir, 'CanFlood_control_01.txt')
-    #  
-    #  
-    # cid='xid'
-    # tag='tut1'
-    # as_inun=False
-    # dtm_fp, dthresh = None, None
-    #===========================================================================
+    data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\data'
+      
+      
+      
+      
+    finv_fp = os.path.join(data_dir, 'finv_cT2b.gpkg')
+      
+    cf_fp = os.path.join(data_dir, 'CanFlood_control_01.txt')
+      
+      
+    cid='xid'
+    tag='tut1'
+
     
     #===========================================================================
     # tutorial 2  (dtm)
     #===========================================================================
-    data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\data'
-    raster_fns= ['dtm_cT1.tif']
-    finv_fp = os.path.join(data_dir, 'finv_cT2.gpkg')
-     
-    cf_fp = os.path.join(data_dir, 'CanFlood_tutorial2.txt')
-    
-    cid='xid'
-    tag='tut2_dtm'
-    as_inun=False
-    dtm_fp, dthresh = None, None
+    #===========================================================================
+    # data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\data'
+    # raster_fns= ['dtm_cT1.tif']
+    # finv_fp = os.path.join(data_dir, 'finv_cT2.gpkg')
+    #  
+    # cf_fp = os.path.join(data_dir, 'CanFlood_tutorial2.txt')
+    # 
+    # cid='xid'
+    # tag='tut2_dtm'
+    # as_inun=False
+    # dtm_fp, dthresh = None, None
+    #===========================================================================
     
     #==========================================================================
     # tutorial 3 (polygons as inundation)
@@ -143,13 +152,10 @@ if __name__ =="__main__":
     # load the data
     #==========================================================================
 
-    wrkr = Rsamp(logger=mod_logger, tag=tag, out_dir=out_dir, cid=cid,
+    wrkr = Gen(logger=mod_logger, tag=tag, out_dir=out_dir, cid=cid,
                  )
     
-    def prog(progress):
-        print('!!!progress: %s'%progress)
-    
-    wrkr.feedback.progressChanged.connect(prog)
+
     
     wrkr.ini_standalone()
     

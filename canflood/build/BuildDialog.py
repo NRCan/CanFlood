@@ -386,23 +386,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
     # tool commands------------                   
     #==========================================================================
 
-    
-    
-    def slice_aoi(self, vlay):
-        
-        aoi_vlay = self.comboBox_aoi.currentLayer()
-        
-        if aoi_vlay is None:
-            self.logger.info('no aoi selected... not slicing')
-            return vlay
-        else:
-            self.logger.warning('aoi slicing not impelemented')
-            return vlay
-            
-            #raise Error('aoi slicing not implemented')
-        
-        
-    
     def build_scenario(self): #'Generate' on the setup tab
         """
         Generate a CanFlood project from scratch
