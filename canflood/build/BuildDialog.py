@@ -105,6 +105,20 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # general----------------
         #=======================================================================
+        #=======================================================================
+        # def test():
+        #     self.logger.push('test button pushed')
+        #     
+        #     for i in range(10):
+        #         time.sleep(.5)
+        #         self.progressBar.setValue(i + 1)
+        #         
+        #     self.logger.push('finished')
+        #=======================================================================
+        #ok/cancel buttons
+        self.buttonBox.accepted.connect(self.reject)
+        self.buttonBox.rejected.connect(self.reject)
+        
                 
         #======================================================================
         # scenario setup tab----------
@@ -305,24 +319,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         self.pushButton_OthRfda.clicked.connect(self.run_rfda)
 
-        #======================================================================
-        # general
-        #======================================================================
-        #=======================================================================
-        # def test():
-        #     self.logger.push('test button pushed')
-        #     
-        #     for i in range(10):
-        #         time.sleep(.5)
-        #         self.progressBar.setValue(i + 1)
-        #         
-        #     self.logger.push('finished')
-        #=======================================================================
-        
-        self.buttonBox.accepted.connect(self.reject)
-        
-        
-        self.buttonBox.rejected.connect(self.reject)
+
 
         self.logger.info('DataPrep ui initilized')
         #======================================================================
@@ -338,7 +335,12 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         
         
-    
+    def upd_prog(self, progress): #Dialog level progress bar updating
+        """
+        connect each tool to this function
+        """
+        
+        self.progressBar.setValue(progress)
 
     #==========================================================================
     # Layer Loading---------------
@@ -620,14 +622,15 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #build the sample
         wrkr = Rsamp(logger=self.logger, 
                           tag = self.tag, #set by build_scenario() 
-                          feedback = self.feedback, #needs to be connected to progress bar
+                          feedback = None, #let the instance build its own feedback worker
                           cid=cid,crs = crs,
                           out_dir = out_dir
                           )
-        """
-        wrkr.tag
-        """
         
+        #connect the status bar
+        wrkr.feedback.progressChanged.connect(self.upd_prog)
+        
+        #execute the tool
         res_vlay = wrkr.run(rlay_l, finv,
                             psmp_stat=psmp_stat,
                             as_inun=as_inun, dtm_rlay=dtm_rlay, dthresh=dthresh)

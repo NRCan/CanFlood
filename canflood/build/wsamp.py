@@ -703,11 +703,6 @@ if __name__ =="__main__":
     # load the data
     #==========================================================================
 
-
-    
-
-        
-    
     wrkr = Rsamp(logger=mod_logger, tag=tag, out_dir=out_dir, cid=cid,
                  )
     
@@ -729,9 +724,6 @@ if __name__ =="__main__":
     #==========================================================================
     # execute
     #==========================================================================
-
-    
-    
     res_vlay = wrkr.run(rlay_l, finv_vlay, 
              crs = finv_vlay.crs(), 
              as_inun=as_inun, dtm_rlay=dtm_rlay,dthresh=dthresh,
