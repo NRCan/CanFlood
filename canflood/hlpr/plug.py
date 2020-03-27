@@ -57,6 +57,7 @@ class QprojPlug(ComWrkr): #baseclass for plugins
     tag='scenario1'
     overwrite=True
     wd = ''
+    progress = 0
     
     """not a great way to init this one
     def __init__(self):
@@ -70,6 +71,11 @@ class QprojPlug(ComWrkr): #baseclass for plugins
 
         
         self.crs = self.qproj.crs()
+        
+        """todo: 
+        dont house feedback on the dialogs... use separate workers for this
+        """
+        self.feedback = QgsProcessingFeedback()
         
 
     def get_cf_fp(self):
@@ -142,24 +148,7 @@ class QprojPlug(ComWrkr): #baseclass for plugins
             
         return 
     
-    """
-                #self.logger.info('user changed finv layer to %s'%self.comboBox_vec.currentLayer().name())
-            self.mFieldComboBox_cid.setLayer(self.comboBox_vec.currentLayer()) #field selector
-            
-            #try and find a good match
-            for field in self.comboBox_vec.currentLayer().fields():
-                if 'id' in field.name():
-                    self.logger.debug('matched on field %s'%field.name())
-                    break
-                
-            self.mFieldComboBox_cid.setField(field.name())
-            
-        except Exception as e:
-            self.logger.info('failed set current layer w/ \n    %s'%e)
-    """
-        
-    
-        
+
     def set_overwrite(self): #action for checkBox_SSoverwrite state change
         if self.checkBox_SSoverwrite.isChecked():
             self.overwrite= True
@@ -168,20 +157,43 @@ class QprojPlug(ComWrkr): #baseclass for plugins
             
         self.logger.push('overwrite set to %s'%self.overwrite)
         
-
     
+    def setProgress(self, #Dialog level progress bar updating
+                 prog_raw, #pass None to reset
+                 method='raw', #whether to append value to the progress
+                 ): 
+        """
+        method to update progress bar (and track progress)
+        
+        connect each tool to this function
+        
+        if your QProgressBar is not named 'progressBar', you'll need to set this attribute somewhere
+        """
+        #=======================================================================
+        # reseting
+        #=======================================================================
+        if prog_raw is None:
+            self.progessBar.reset()
+            return
+        
+        #=======================================================================
+        # setting
+        #=======================================================================
+        if method=='append':
+            prog = min(self.progress + prog_raw, 100)
+        elif method=='raw':
+            prog = prog_raw
+        elif method == 'portion':
+            rem_prog = 100-self.progress
+            prog = self.progress + rem_prog*(prog_raw/100)
+            
+        assert prog<=100
+        self.progressBar.setValue(prog)
+        
+        self.progress=prog #set for later
+        
 
-        
- 
-    def testit2(self, *args, **kwargs): #for testing the ui
-        self.iface.messageBar().pushMessage("CanFlood", "youre doing a test", level=Qgis.Info)
-        
-        self.logger.info('test the logger')
-        self.logger.error('erro rtest')
-        
-        log = self.logger.getChild('testit')
-        
-        log.info('testing the child')
+
         
         
 class logger(object): #workaround for qgis logging pythonic

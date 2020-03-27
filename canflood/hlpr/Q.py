@@ -18,6 +18,7 @@ from qgis.core import *
     
 from qgis.analysis import QgsNativeAlgorithms
 from PyQt5.QtCore import QVariant, QMetaType 
+from PyQt5.QtWidgets import QProgressBar
 
 """throws depceciationWarning"""
 import processing  
@@ -1058,6 +1059,10 @@ class MyFeedBack(QgsProcessingFeedback):
 
     def reportError(self, error, fatalError=False):
         self.logger.push(error)
+
+
+        
+        
 
 #==============================================================================
 # FUNCTIONS----------
