@@ -118,7 +118,7 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
         # attach inputs
         #=======================================================================
         if feedback is None: 
-            feedback = MyFeedBack(logger=self.logger)
+            feedback = MyFeedBackQ(logger=self.logger)
         else:
             
             self.logger.info('feedback set as \'%s\''%type(feedback).__name__)
@@ -1033,7 +1033,7 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
         return
     
 
-class MyFeedBack(QgsProcessingFeedback):
+class MyFeedBackQ(QgsProcessingFeedback):
     
     def __init__(self,
                  logger=mod_logger):

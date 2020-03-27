@@ -34,7 +34,7 @@ import numpy as np #Im assuming if pandas is fine, numpy will be fine
 # custom imports
 #==============================================================================
 
-from build.wsamp import Rsamp
+from build.rsamp import Rsamp
 from build.lisamp import LikeSampler
 from build.oth_rfda import RFDAconv
 
@@ -242,7 +242,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # #execute
         #=======================================================================
-        self.pushButton_HSgenerate.clicked.connect(self.run_wsamp)
+        self.pushButton_HSgenerate.clicked.connect(self.run_rsamp)
         
         #======================================================================
         # event likelihoods
@@ -537,8 +537,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
 
     
-    def run_wsamp(self): #execute wsamp
-        log = self.logger.getChild('run_wsamp')
+    def run_rsamp(self): #execute rsamp
+        log = self.logger.getChild('run_rsamp')
 
         log.info('user pressed \'pushButton_HSgenerate\'')
         
@@ -602,8 +602,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         # execute
         #======================================================================
-        """
-        finv = self.wsampRun(rlay_l, finv, control_fp=cf_fp1, cid=cid, crs=crs)"""
+
         #build the sample
         wrkr = Rsamp(logger=self.logger, 
                           tag = self.tag, #set by build_scenario() 
@@ -612,7 +611,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                           out_dir = out_dir
                           )
         
-        #connect the status bar
+        #connect the status bar to the worker's feedback
         wrkr.feedback.progressChanged.connect(self.setProgress)
         
         #execute the tool
@@ -691,7 +690,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         self.setProgress(None) #set the progress bar back down to zero
 
-        log.push('wsamp finished')
+        log.push('Rsamp finished')
         
         return
     
@@ -774,7 +773,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         wrkr.update_cf({
             'dmg_fps':(
                 {'gels':wrkr.out_fp},
-                '#\'gels\' file path set from wsamp.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                '#\'gels\' file path set from rsamp.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
                     ),
             'parameters':(
                 {'felv':'ground'},                

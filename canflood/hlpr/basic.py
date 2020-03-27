@@ -210,7 +210,12 @@ class ComWrkr(object): #common methods for all classes
         
         return out_fp
     
-    
+class MyFeedBack(object): #simple custom feedback object
+    def __init__(self):
+        self.prog = 0
+    def setProgress(self, prog):
+        assert prog + self.prog < 100
+        self.prog +=prog
 
 
 def view(df):

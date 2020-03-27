@@ -626,7 +626,7 @@ class Rsamp(Qcoms):
         return self.update_cf(
             {'dmg_fps':(
                 {'expos':self.out_fp}, 
-                '#\'expos\' file path set from wsamp.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                '#\'expos\' file path set from rsamp.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
                 )
              },
             cf_fp = cf_fp
@@ -700,7 +700,7 @@ if __name__ =="__main__":
     #===========================================================================
     
     
-    out_dir = os.path.join(os.getcwd(), 'wsamp', tag)
+    out_dir = os.path.join(os.getcwd(), 'rsamp', tag)
     raster_fps = [os.path.join(data_dir, fn) for fn in raster_fns]
     #==========================================================================
     # load the data

@@ -72,7 +72,16 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         self.connect_slots()
         
     def connect_slots(self):
-
+        """connect ui slots to functions"""
+        #======================================================================
+        # general----------------
+        #======================================================================
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+        
+        #connect to status label
+        self.logger.statusQlab=self.progressText
+        self.logger.statusQlab.setText('BuildDialog initialized')
         
         #======================================================================
         # setup-----------
@@ -137,11 +146,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         
         self.pushButton_r3.clicked.connect(r3_browse)
         
-        #======================================================================
-        # commons
-        #======================================================================
-        self.buttonBox.accepted.connect(self.accept)
-        self.buttonBox.rejected.connect(self.reject)
+
         
         self.logger.info('Model ui connected')
         
@@ -183,13 +188,21 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
     # run commands
     #==========================================================================
     def run_risk1(self):
+        """
+        risk T1 runner
+        """
+        #=======================================================================
+        # variables
+        #=======================================================================
         log = self.logger.getChild('run_risk1')
         cf_fp = self.get_cf_fp()
         out_dir = self.get_wd()
         tag = self.linEdit_Stag.text()
         res_per_asset = self.checkBox_r2rpa_2.isChecked()
 
-        
+        #=======================================================================
+        # setup/execute
+        #=======================================================================
         model = Risk1(cf_fp, out_dir=out_dir, logger=self.logger, tag=tag).setup()
         
         res, res_df = model.run(res_per_asset=res_per_asset)

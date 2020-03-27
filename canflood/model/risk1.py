@@ -4,6 +4,8 @@ Created on Feb. 27, 2020
 @author: cefect
 
 impact lvl 1 model
+
+this should run w/o any qgis bindings.
 '''
     
 #==============================================================================
