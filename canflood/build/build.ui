@@ -1669,7 +1669,7 @@ p, li { white-space: pre-wrap; }
              </item>
             </layout>
            </item>
-           <item row="2" column="0">
+           <item row="2" column="0" alignment="Qt::AlignLeft">
             <widget class="QGroupBox" name="groupBox_3">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
@@ -1686,41 +1686,31 @@ p, li { white-space: pre-wrap; }
              <property name="title">
               <string>Likelihood values format:</string>
              </property>
-             <widget class="QRadioButton" name="radioButton_ELari">
-              <property name="geometry">
-               <rect>
-                <x>20</x>
-                <y>30</y>
-                <width>82</width>
-                <height>17</height>
-               </rect>
-              </property>
-              <property name="text">
-               <string>ARI</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-              <attribute name="buttonGroup">
-               <string notr="true">buttonGroup_ELfmt</string>
-              </attribute>
-             </widget>
-             <widget class="QRadioButton" name="radioButton_ELaep">
-              <property name="geometry">
-               <rect>
-                <x>110</x>
-                <y>30</y>
-                <width>82</width>
-                <height>17</height>
-               </rect>
-              </property>
-              <property name="text">
-               <string>AEP</string>
-              </property>
-              <attribute name="buttonGroup">
-               <string notr="true">buttonGroup_ELfmt</string>
-              </attribute>
-             </widget>
+             <layout class="QHBoxLayout" name="horizontalLayout_30">
+              <item>
+               <widget class="QRadioButton" name="radioButton_ELari">
+                <property name="text">
+                 <string>ARI</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+                <attribute name="buttonGroup">
+                 <string notr="true">buttonGroup_ELfmt</string>
+                </attribute>
+               </widget>
+              </item>
+              <item>
+               <widget class="QRadioButton" name="radioButton_ELaep">
+                <property name="text">
+                 <string>AEP</string>
+                </property>
+                <attribute name="buttonGroup">
+                 <string notr="true">buttonGroup_ELfmt</string>
+                </attribute>
+               </widget>
+              </item>
+             </layout>
             </widget>
            </item>
            <item row="4" column="0">
@@ -2189,63 +2179,6 @@ p, li { white-space: pre-wrap; }
              <layout class="QVBoxLayout" name="_16">
               <item>
                <widget class="QgsMapLayerComboBox" name="comboBox_dtm"/>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item>
-            <widget class="QGroupBox" name="groupBox_31">
-             <property name="title">
-              <string>Complex Geometry Sampler</string>
-             </property>
-             <layout class="QHBoxLayout" name="horizontalLayout_29">
-              <item>
-               <widget class="QLabel" name="label_17">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>finv gtype:</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_HS_finvgtype_2">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>100</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>????</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_18">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Sample Stat:</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QComboBox" name="comboBox_HS_stat_2"/>
               </item>
              </layout>
             </widget>
