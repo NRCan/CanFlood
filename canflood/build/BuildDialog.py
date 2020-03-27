@@ -5,7 +5,7 @@ ui class for the BUILD toolset
 #==============================================================================
 # imports
 #==============================================================================
-import sys, os, warnings, tempfile, logging, configparser, datetime
+import sys, os, warnings, tempfile, logging, configparser, datetime, time
 import os.path
 from shutil import copyfile
 
@@ -79,6 +79,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         self.qproj_setup()
         
+        """todo: connect this with status bar?"""
+        self.feedback = QgsProcessingFeedback()
+        
         self.connect_slots()
         
 
@@ -98,6 +101,11 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                 rlays_d[layname] = layer
             else:
                 self.logger.debug('%s not filtered'%layname)
+                
+        #=======================================================================
+        # general----------------
+        #=======================================================================
+                
         #======================================================================
         # scenario setup tab----------
         #======================================================================
@@ -300,7 +308,20 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         # general
         #======================================================================
+        #=======================================================================
+        # def test():
+        #     self.logger.push('test button pushed')
+        #     
+        #     for i in range(10):
+        #         time.sleep(.5)
+        #         self.progressBar.setValue(i + 1)
+        #         
+        #     self.logger.push('finished')
+        #=======================================================================
+        
         self.buttonBox.accepted.connect(self.reject)
+        
+        
         self.buttonBox.rejected.connect(self.reject)
 
         self.logger.info('DataPrep ui initilized')

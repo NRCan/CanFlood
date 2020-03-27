@@ -90,10 +90,13 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
     
     qap = None
     
+    feedback=None
+    
     
     
     def __init__(self,
-                 feedback=None, crs = None,
+                 feedback=None, 
+                 crs = None,
                  **kwargs
                  ):
         
@@ -113,8 +116,11 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
         #=======================================================================
         # attach inputs
         #=======================================================================
+        if feedback is None: 
+            feedback = MyFeedBack(logger=self.logger)
+        else:
             
-        if feedback is None: feedback = QgsProcessingFeedback()
+            self.logger.info('feedback set as \'%s\''%type(feedback).__name__)
 
         self.feedback = feedback
 
@@ -134,22 +140,16 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
         self.qap = self.init_qgis()
         self.qproj = QgsProject.instance()
         
-
-
         self.algo_init = self.init_algos()
-        
         
         self.set_vdrivers()
         
         self.mstore = QgsMapLayerStore() #build a new map store
         
-        
-        
         if not self.proj_checks():
             raise Error('failed checks')
         
-        
-        mod_logger.info('Qproj __INIT__ finished')
+        mod_logger.info('Qproj.ini_standalone finished')
         
         
         return
@@ -196,9 +196,10 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
     
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
         
-        log.info('processing initilzied')
+        assert not self.feedback is None
         
-        self.feedback = QgsProcessingFeedback()
+        log.info('processing initilzied w/ feedback: \'%s\''%(type(self.feedback).__name__))
+        
 
         return True
 
@@ -1022,6 +1023,34 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
 
             
         return
+    
+
+class MyFeedBack(QgsProcessingFeedback):
+    
+    def __init__(self,
+                 logger=mod_logger):
+        
+        self.logger=logger.getChild('FeedBack')
+        
+        super().__init__()
+
+    def setProgressText(self, text):
+        self.logger.debug(text)
+
+    def pushInfo(self, info):
+        self.logger.info(info)
+
+    def pushCommandInfo(self, info):
+        self.logger.info(info)
+
+    def pushDebugInfo(self, info):
+        self.logger.info(info)
+
+    def pushConsoleInfo(self, info):
+        self.logger.info(info)
+
+    def reportError(self, error, fatalError=False):
+        self.logger.push(error)
 
 #==============================================================================
 # FUNCTIONS----------

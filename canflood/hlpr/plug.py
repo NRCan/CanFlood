@@ -62,61 +62,16 @@ class QprojPlug(ComWrkr): #baseclass for plugins
     def __init__(self):
         self.logger = logger()"""
     
-    def qproj_setup(self): #workaround to setup the project
+    def qproj_setup(self): #project inits for Dialog Classes
         
         self.logger = logger(self) #init the logger
         self.qproj = QgsProject.instance()
         
-        """todo: connect this with status bar?"""
-        self.feedback = QgsProcessingFeedback()
+
         
         self.crs = self.qproj.crs()
         
-        
-    
-    def xxxoutput_df(self, #dump some outputs
-                      df, 
-                      out_fn,
-                      out_dir = None,
-                      overwrite=None,
-                      write_index=True, 
-            ):
-        #======================================================================
-        # defaults
-        #======================================================================
-        if out_dir is None: out_dir = self.wd
-        if overwrite is None: overwrite = self.overwrite
-        log = self.logger.getChild('output_df')
-        
-        assert isinstance(out_dir, str), 'unexpected type on out_dir: %s'%type(out_dir)
-        assert os.path.exists(out_dir), 'requested output directory doesnot exist: \n    %s'%out_dir
-        
-        
-        #extension check
-        if not out_fn.endswith('.csv'):
-            out_fn = out_fn+'.csv'
-        
-        #output file path
-        out_fp = os.path.join(out_dir, out_fn)
-        
-        #======================================================================
-        # checeks
-        #======================================================================
-        if os.path.exists(out_fp):
-            log.warning('file exists \n    %s'%out_fp)
-            if not overwrite:
-                raise Error('file already exists')
-            
 
-        #======================================================================
-        # writ eit
-        #======================================================================
-        df.to_csv(out_fp, index=write_index)
-        
-        log.info('wrote to %s to file: \n    %s'%(str(df.shape), out_fp))
-        
-        return out_fp
-    
     def get_cf_fp(self):
         cf_fp = self.lineEdit_cf_fp.text()
         

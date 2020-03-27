@@ -78,11 +78,14 @@ class Rsamp(Qcoms):
     def __init__(self,
                  fname='expos', #prefix for file name
                   *args, **kwargs):
+        
         super().__init__(*args, **kwargs)
         
         self.fname=fname
         #flip the codes
         self.psmp_codes = dict(zip(self.psmp_codes.values(), self.psmp_codes.keys()))
+        
+        self.logger.info('Rsamp.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
 
                 
     def load_layers(self, #load data to project (for console runs)
@@ -177,10 +180,11 @@ class Rsamp(Qcoms):
         if crs is None: crs = self.crs
 
         
-        log.info('executing on %i rasters'%len(raster_l))
+        log.info('executing on %i rasters w/ feedback \'%s\''%(len(raster_l), type(self.feedback).__name__))
         #======================================================================
         # #check the data
         #======================================================================
+        
         assert isinstance(crs, QgsCoordinateReferenceSystem)
         
         #check the finv_raw
@@ -198,6 +202,7 @@ class Rsamp(Qcoms):
             rname_l.append(rlay.name())
         
         self.rname_l = rname_l
+        
         #======================================================================
         # build the finv_raw
         #======================================================================
@@ -211,6 +216,7 @@ class Rsamp(Qcoms):
         assert self.finv_fcnt== 1, 'failed to drop all the fields'
         
         self.gtype = QgsWkbTypes().displayString(finv.wkbType())
+        
         #=======================================================================
         # exercute
         #=======================================================================
@@ -271,6 +277,8 @@ class Rsamp(Qcoms):
                             'RASTER_BAND':1, 
                             'STATS':[psmp_code]}
                 
+                
+                
                 #execute the algo
                 res_d = processing.run(algo_nm, params_d, feedback=self.feedback)
                 #extract and clean results
@@ -291,6 +299,7 @@ class Rsamp(Qcoms):
             # sample.Points----------------
             #======================================================================
             elif 'Point' in gtype: 
+                
                 
                 #build the algo params
                 params_d = { 'COLUMN_PREFIX' : rlay.name(),
@@ -693,7 +702,20 @@ if __name__ =="__main__":
     #==========================================================================
     # load the data
     #==========================================================================
-    wrkr = Rsamp(logger=mod_logger, tag=tag, out_dir=out_dir, cid=cid)
+
+
+    
+
+        
+    
+    wrkr = Rsamp(logger=mod_logger, tag=tag, out_dir=out_dir, cid=cid,
+                 )
+    
+    def prog(progress):
+        print('!!!progress: %s'%progress)
+    
+    wrkr.feedback.progressChanged.connect(prog)
+    
     wrkr.ini_standalone()
     
     
@@ -707,9 +729,13 @@ if __name__ =="__main__":
     #==========================================================================
     # execute
     #==========================================================================
+
+    
+    
     res_vlay = wrkr.run(rlay_l, finv_vlay, 
              crs = finv_vlay.crs(), 
              as_inun=as_inun, dtm_rlay=dtm_rlay,dthresh=dthresh,
+             
              )
        
     wrkr.check()
