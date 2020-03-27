@@ -233,7 +233,7 @@ class logger(object): #workaround for qgis logging pythonic
                 push=False,
                 status=False):
         
-        msg = '%s: %s  t'%(self.log_nm, msg_raw)
+        msg = '%s: %s'%(self.log_nm, msg_raw)
         
         QgsMessageLog.logMessage(msg, self.log_tabnm, level=qlevel)
         

@@ -761,14 +761,14 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         wrkr = Rsamp(logger=self.logger, 
                           tag=self.tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
-                          cid=cid,crs=crs, psmp_stat=psmp_stat,
+                          cid=cid,crs=crs, 
                           out_dir = out_dir, fname='gels'
                           )
         
         #connect the status bar
         wrkr.feedback.progressChanged.connect(self.upd_prog)
         
-        res_vlay = wrkr.run([rlay], finv)
+        res_vlay = wrkr.run([rlay], finv, psmp_stat=psmp_stat)
         
         #check it
         wrkr.dtm_check(res_vlay)
