@@ -390,6 +390,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         """
         log = self.logger.getChild('build_scenario')
+        log.info('build_scenario started')
         self.tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
         
         self.cid = self.mFieldComboBox_cid.currentField() #user selected field
@@ -410,11 +411,15 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             log.info('built working directory: %s'%self.wd)
             
         
-        
+        #=======================================================================
+        # convert finv
+        #=======================================================================
+        self.setProgress(10)
+        finv_fp = self.convert_finv() #convert the finv to csv and write to file
         #======================================================================
         # build the control file
         #======================================================================
-        finv_fp = self.convert_finv() #convert the finv to csv and write to file
+        
         assert os.path.exists(finv_fp)
         self.setProgress(50)
         
@@ -508,7 +513,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #store the vecotr layer
         finv_vlay = self.comboBox_vec.currentLayer()
         
-        log.debug('on %s'%finv_vlay.name())
+        log.info('on \'%s\' w/ %i feats'%(
+            finv_vlay.name(), finv_vlay.dataProvider().featureCount()))
         
         #extract data
         df = vlay_get_fdf(finv_vlay)
@@ -683,7 +689,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         # wrap
         #======================================================================
-        self.setProgress(0) #set the progress bar back down to zero
+        self.setProgress(None) #set the progress bar back down to zero
 
         log.push('wsamp finished')
         

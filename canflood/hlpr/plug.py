@@ -173,7 +173,7 @@ class QprojPlug(ComWrkr): #baseclass for plugins
         # reseting
         #=======================================================================
         if prog_raw is None:
-            self.progessBar.reset()
+            self.progressBar.reset()
             return
         
         #=======================================================================
