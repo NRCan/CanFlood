@@ -189,16 +189,21 @@ class logger(object): #workaround for qgis logging pythonic
     
     log_nm = '' #logger name
     
-    def __init__(self, parent):
+    def __init__(self, parent,
+                 statusQlab = None, #Qlabel widget to duplicate push messages
+                 ):
         #attach
         self.parent = parent
         
         self.iface = parent.iface
         
+        self.statusQlab = statusQlab
+        
     def getChild(self, new_childnm):
         
         #build a new logger
-        child_log = logger(self.parent)
+        child_log = logger(self.parent, 
+                           statusQlab=self.statusQlab)
         
         #nest the name
         child_log.log_nm = '%s.%s'%(self.log_nm, new_childnm)
@@ -206,7 +211,7 @@ class logger(object): #workaround for qgis logging pythonic
         return child_log
         
     def info(self, msg):
-        self._loghlp(msg, Qgis.Info, push=False)
+        self._loghlp(msg, Qgis.Info, push=False, status=True)
 
 
     def debug(self, msg_raw):
@@ -224,14 +229,27 @@ class logger(object): #workaround for qgis logging pythonic
         self._loghlp(msg, Qgis.Critical, push=True)
         
     def _loghlp(self, #helper function for generalized logging
-                msg_raw, qlevel, push=False):
+                msg_raw, qlevel, 
+                push=False,
+                status=False):
         
-        msg = '%s: %s'%(self.log_nm, msg_raw)
+        msg = '%s: %s  t'%(self.log_nm, msg_raw)
         
         QgsMessageLog.logMessage(msg, self.log_tabnm, level=qlevel)
         
+        #Qgis bar
         if push:
             self.iface.messageBar().pushMessage(self.log_tabnm, msg, level=qlevel)
+        
+        #Optional widget
+        if status or push:
+            if not self.statusQlab is None:
+                self.statusQlab.setText(msg_raw)
+                
+            
+            
+            
+            
 #==============================================================================
 # functions-----------
 #==============================================================================

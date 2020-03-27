@@ -180,7 +180,7 @@ class Rsamp(Qcoms):
         if crs is None: crs = self.crs
 
         
-        log.info('executing on %i rasters w/ feedback \'%s\''%(len(raster_l), type(self.feedback).__name__))
+        log.info('executing on %i rasters'%(len(raster_l)))
         #======================================================================
         # #check the data
         #======================================================================
@@ -228,6 +228,8 @@ class Rsamp(Qcoms):
         #=======================================================================
         # wrap
         #=======================================================================
+        #max out the progress bar
+        self.feedback.setProgress(100)
         log.info('sampling finished')
         
         res_name = '%s_%s_%i_%i'%(self.fname, self.tag, len(raster_l), res_vlay.dataProvider().featureCount())
@@ -263,7 +265,7 @@ class Rsamp(Qcoms):
         log.info('sampling %i raster layers w/ algo \'%s\' and gtype: %s'%(len(raster_l), algo_nm, gtype))
         for indxr, rlay in enumerate(raster_l):
             
-            log.info('    %i/%i sampling \'%s\' on \'%s\''%(indxr+1, len(raster_l), finv.name(), rlay.name()))
+            log.info('%i/%i sampling \'%s\' on \'%s\''%(indxr+1, len(raster_l), finv.name(), rlay.name()))
             ofnl =  [field.name() for field in finv.fields()]
             
             #===================================================================
@@ -349,7 +351,8 @@ class Rsamp(Qcoms):
                 finv.dataProvider().featureCount(), rlay.name()))
             
         self.names_d = names_d #needed by write()
-
+        
+        log.info('finished w/ %s'%self.names_d)
         
         return finv
     

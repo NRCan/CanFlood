@@ -79,6 +79,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         self.qproj_setup()
         
+
+        
         """todo: connect this with status bar?"""
         self.feedback = QgsProcessingFeedback()
         
@@ -119,6 +121,10 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.buttonBox.accepted.connect(self.reject)
         self.buttonBox.rejected.connect(self.reject)
         
+        
+        #connect to status label
+        self.logger.statusQlab=self.progressText
+        self.logger.statusQlab.setText('BuildDialog initialized')
                 
         #======================================================================
         # scenario setup tab----------
@@ -556,6 +562,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         log = self.logger.getChild('run_wsamp')
 
         log.info('user pressed \'pushButton_HSgenerate\'')
+        
         #=======================================================================
         # assemble/prepare inputs
         #=======================================================================
@@ -593,7 +600,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         # precheck
         #======================================================================
-
         if finv is None:
             raise Error('got nothing for finv')
         if not isinstance(finv, QgsVectorLayer):
@@ -682,8 +688,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         # populate lisamp
         #======================================================================
         
-                #get the mlcb
-                
+        #get the mlcb
         try:
             rlay_d = {indxr: rlay for indxr, rlay in enumerate(rlay_l)}
             
@@ -705,7 +710,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         # wrap
         #======================================================================
-        self.logger.push('wsamp finished')
+        self.upd_prog(0) #set the progress bar back down to zero
+
+        log.push('wsamp finished')
         
         return
     
@@ -729,6 +736,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
 
         #update some parameters
         cid = self.mFieldComboBox_cid.currentField() #user selected field
+        psmp_stat = self.comboBox_HS_stat.currentText()
         
 
         #======================================================================
@@ -768,9 +776,12 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         wrkr = Rsamp(logger=self.logger, 
                           tag=self.tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
-                          cid=cid,crs=crs,
+                          cid=cid,crs=crs, psmp_stat=psmp_stat,
                           out_dir = out_dir, fname='gels'
                           )
+        
+        #connect the status bar
+        wrkr.feedback.progressChanged.connect(self.upd_prog)
         
         res_vlay = wrkr.run([rlay], finv)
         
@@ -871,6 +882,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                           feedback = self.feedback, #needs to be connected to progress bar
                           crs = crs,
                           )
+        
+        #connect the status bar
+        wrkr.feedback.progressChanged.connect(self.upd_prog)
         
         res_df = wrkr.run(finv, lpol_d, cid=cid, lfield=lfield)
         
