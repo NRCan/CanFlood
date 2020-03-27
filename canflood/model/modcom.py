@@ -96,6 +96,7 @@ class Model(ComWrkr):
     def __init__(self,
                  cf_fp, #control file path """ note: this could also be attached by basic.ComWrkr.__init__()"""
                  split_key=None,#for checking monotonicy on exposure sets with duplicate events
+                 feedback = None, #feed back object
                  **kwargs):
         
         mod_logger.info('Model.__init__ start')
@@ -106,9 +107,17 @@ class Model(ComWrkr):
         self.cf_fp = cf_fp
         self.split_key= split_key
         
+        #feedback setup
+        if feedback is None:
+            feedback = MyFeedBack(logger=self.logger)
+
+        self.logger.info('feedback set as \'%s\''%type(feedback).__name__)
+        self.feedback=feedback
+        
         
         #attachments
         self.data_d = dict() #dictionary for loaded data sets
+        
         
 
 

@@ -211,11 +211,25 @@ class ComWrkr(object): #common methods for all classes
         return out_fp
     
 class MyFeedBack(object): #simple custom feedback object
+    
     def __init__(self):
         self.prog = 0
+        self.slot = None #placeholder
+        
     def setProgress(self, prog):
         assert prog + self.prog < 100
         self.prog +=prog
+        
+        #call the slot function
+        """
+        this is supposed to behave like a QgsFeedback object
+        
+        had to fake it becuase I don't want the model scripts to be Q dependent
+        
+        This will probably cause issues if we try to multi-thread
+        """
+        if not self.slot is None:
+            self.slot(prog)
 
 
 def view(df):
