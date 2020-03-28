@@ -100,8 +100,14 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
 
         mod_logger.info('simple wrapper inits')
         
+        if feedback is None:
+            """by default, building our own feedbacker
+            passed to ComWrkr.setup_feedback()
+            """
+            feedback = MyFeedBackQ()
+        
         super().__init__(
-            feedback = QgsProcessingFeedback(),
+            feedback = feedback, 
             **kwargs) #initilzie teh baseclass
         
 
@@ -124,7 +130,7 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
     # standalone methods-----------
     #==========================================================================
         
-    def ini_standalone(self, ): #initilize calls
+    def ini_standalone(self, ): #initilize calls for standalone runs
 
         #=======================================================================
         # setup qgis

@@ -94,13 +94,20 @@ class ComWrkr(object): #common methods for all classes
         feedback setup for all classes
         
         Dialogs:
-        
             using a separate function so Dialog's can call 
+        Qgis workers
+            MyFeedBackQ built during Qcoms.__init__() 
         """
         
         #progress Bar
         if progressBar is None:
-            #Dialog runs should have this attached already
+            """
+            Dialog runs should have this attached already
+                just pull the attribute
+            
+            other runs we build a dummy progress reporter
+            """
+            #Dialog runs
             if hasattr(self, 'progressBar'):
                 progressBar = self.progressBar
             
@@ -113,7 +120,9 @@ class ComWrkr(object): #common methods for all classes
         # #feedback and progresssetup
         #=======================================================================
         if feedback is None:
-            """Q dependent runs should pass QgsProcessingFeedback()"""
+            """
+            build a basic feedbacker for nonQ runs
+            Q dependent runs should pass MyFeedBackQ()"""
             feedback = MyFeedBack(logger=self.logger)
             
         assert callable(progressBar)
