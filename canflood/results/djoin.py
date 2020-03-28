@@ -51,14 +51,16 @@ from hlpr.basic import *
 # functions-------------------
 #==============================================================================
 class Djoiner(Qcoms):
+    """
+    joining tabular data to vector geometry
+    """
 
     
     def __init__(self,
                  **kwargs
                  ):
         
-        """inherited by the dialog.
-        init is not called during the plugin"""
+
         mod_logger.info('simple wrapper inits')
         
 

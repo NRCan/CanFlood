@@ -86,6 +86,21 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.pushButton_wd_open.clicked.connect(open_wd)
         
         #=======================================================================
+        # Risk PLot-------------
+        #=======================================================================
+
+        #data file browse
+        def browse_pd():
+            return self.fileSelect_button(self.lineEdit_RP_fp, 
+                                          caption='Select Total Results Data File',
+                                          path = self.lineEdit_wd.text(),
+                                          filters="Data Files (*.csv)")
+            
+        self.pushButton_RP_fp.clicked.connect(browse_pd)
+        
+        self.pushButton_RP_plot.clicked.connect(self.run_plotRisk) 
+        
+        #=======================================================================
         # Join Geometry------------
         #=======================================================================
 
@@ -103,11 +118,11 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #data file browse
         def browse_jg():
             return self.fileSelect_button(self.lineEdit_JG_resfp, 
-                                          caption='Select Results Data File',
+                                          caption='Select Asset Results Data File',
                                           path = self.lineEdit_wd.text(),
                                           filters="Data Files (*.csv)")
             
-        self.pushButton_JG_resfp_br.clicked.connect(browse_jg) # SS. Working Dir. Browse
+        self.pushButton_JG_resfp_br.clicked.connect(browse_jg) 
         
         #styles
         def set_style(): #set the style options based on the selecte dlayer
@@ -141,7 +156,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
         
         #execute
-        self.pushButton_JG_join.clicked.connect(self.join_geo)
+        self.pushButton_JG_join.clicked.connect(self.run_joinGeo)
         
         
         #======================================================================
@@ -163,9 +178,67 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         log.info('finished')
         
-    def join_geo(self):
-        log = self.logger.getChild('join_geo')
-        log.info('user pushed \'join_geo\'')
+    def run_plotRisk(self): 
+        log = self.logger.getChild('run_plotRisk')
+        log.info('user pushed \'plotRisk\'')
+        
+        #=======================================================================
+        # collect inputs
+        #=======================================================================
+
+        #general
+        wd = self.lineEdit_wd.text()
+        tag = self.linEdit_Stag.text() #set the secnario tag from user provided name
+        
+        #local
+        data_fp = self.lineEdit_RP_fp.text()
+        
+        #=======================================================================
+        # checks
+        #=======================================================================
+        assert isinstance(wd, str)
+        assert isinstance(tag, str)
+        
+        assert os.path.exists(data_fp), 'invalid data_fp'
+        
+        #=======================================================================
+        # working dir
+        #=======================================================================
+        if not os.path.exists(wd):
+            os.makedirs(wd)
+            log.info('built working directory: %s'%wd)
+            
+        #=======================================================================
+        # execute
+        #=======================================================================
+        self.feedback.setProgress(5)
+        #setup
+        wrkr = results.riskPlot.Plotr(logger=self.logger, 
+                                     tag = tag,
+                                     feedback=self.feedback,
+                                     out_dir=wd)
+        
+        self.feedback.setProgress(10)
+        #load tabular
+        res_ser = wrkr.load_data(data_fp)
+        
+        self.feedback.setProgress(20)
+        #execute
+        fig = wrkr.run(res_ser, dfmt='{0:.0f}', y1lab='impacts')
+        
+        self.feedback.setProgress(80)
+        #save
+        wrkr.output_fig(fig)
+        self.feedback.setProgress(95)
+        
+        log.info('finished')
+        self.feedback.upd_prog(None) #set the progress bar back down to zero
+        
+        
+        
+    def run_joinGeo(self):
+        log = self.logger.getChild('run_joinGeo')
+        log.info('user pushed \'run_joinGeo\'')
         
         #=======================================================================
         # collect inputs
@@ -243,7 +316,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
         
         self.feedback.upd_prog(None)
-        log.push('join_geo finished')
+        log.push('run_joinGeo finished')
     
     
     
