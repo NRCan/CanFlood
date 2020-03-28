@@ -78,6 +78,13 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             
         self.pushButton_wd.clicked.connect(browse_wd) # SS. Working Dir. Browse
         
+        
+                #WD force open
+        def open_wd():
+            force_open_dir(self.lineEdit_wd.text())
+        
+        self.pushButton_wd_open.clicked.connect(open_wd)
+        
         #=======================================================================
         # Join Geometry------------
         #=======================================================================
@@ -101,6 +108,37 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                                           filters="Data Files (*.csv)")
             
         self.pushButton_JG_resfp_br.clicked.connect(browse_jg) # SS. Working Dir. Browse
+        
+        #styles
+        def set_style(): #set the style options based on the selecte dlayer
+            vlay = self.comboBox_JGfinv.currentLayer()
+            gtype = QgsWkbTypes().displayString(vlay.wkbType())
+            
+            #get the directory for thsi type of style
+            subdir = None
+            for foldernm in ['Point']:
+                if foldernm in gtype:
+                    subdir = foldernm
+                    break
+            
+            #set the options
+            if isinstance(subdir, str):
+                srch_dir = os.path.join(self.pars_dir, 'qmls', subdir)
+                assert os.path.exists(srch_dir)
+                
+                #keeping the subdir for easy loading
+                l = [os.path.join(subdir, fn) for fn in os.listdir(srch_dir)]
+            else:
+                l=[]
+        
+            l.append('none')
+            self.setup_comboBox(self.comboBox_JG_style,l)
+            
+        self.comboBox_JGfinv.layerChanged.connect(set_style)
+        
+        
+
+
         
         #execute
         self.pushButton_JG_join.clicked.connect(self.join_geo)
@@ -141,6 +179,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         cid = self.mFieldComboBox_JGfinv.currentField() #user selected field
         geo_vlay = self.comboBox_JGfinv.currentLayer()
         data_fp = self.lineEdit_JG_resfp.text()
+        res_style_fp = self.comboBox_JG_style.currentText()
         
         #=======================================================================
         # check inputs
@@ -161,6 +200,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         assert os.path.exists(data_fp), 'invalid data_fp'
         
+        assert isinstance(res_style_fp, str), 'bad style var'
          
         
         #=======================================================================
@@ -185,13 +225,24 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                  keep_fnl='all', #todo: setup a dialog to allow user to select any of the fields
                  )
         
+        #=======================================================================
+        # styleize
+        #=======================================================================
+        #load the layer into the project
+        self.qproj.addMapLayer(res_vlay)
         
+        if not res_style_fp == 'none':
+            """res_style_fp should contain the subdirectory (e.g. Points/style)"""
+            style_fp = os.path.join(self.pars_dir, 'qmls', res_style_fp)
+            assert os.path.exists(style_fp)
+            res_vlay.loadNamedStyle(style_fp)
+            res_vlay.triggerRepaint()
         #=======================================================================
         # wrap
         #=======================================================================
-        #load the layer into the project
-        self.qproj.addMapALayer(res_vlay)
+
         
+        self.feedback.upd_prog(None)
         log.push('join_geo finished')
     
     

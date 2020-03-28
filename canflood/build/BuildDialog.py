@@ -56,7 +56,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
     
     event_name_set = [] #event names
     
-    invalid_cids = ['fid', 'ogc_fid']
+    
     
     def __init__(self, iface, parent=None):
         """these will only ini tthe first baseclass (QtWidgets.QDialog)

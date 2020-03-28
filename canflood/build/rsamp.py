@@ -230,9 +230,7 @@ class Rsamp(Qcoms):
         #=======================================================================
         #max out the progress bar
         self.feedback.setProgress(100)
-        """
-        self.
-        """
+
         log.info('sampling finished')
         
         res_name = '%s_%s_%i_%i'%(self.fname, self.tag, len(raster_l), res_vlay.dataProvider().featureCount())

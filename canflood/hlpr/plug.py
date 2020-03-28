@@ -26,6 +26,7 @@ from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProj
 
 from PyQt5.QtWidgets import QApplication, QWidget, QInputDialog, QLineEdit, QFileDialog, QPushButton
 from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import Qt 
 
 #==============================================================================
 # custom imports
@@ -58,6 +59,8 @@ class QprojPlug(Qcoms): #baseclass for plugins
     wd = ''
     progress = 0
     
+    invalid_cids = ['fid', 'ogc_fid']
+    
     """not a great way to init this one
     def __init__(self):
         self.logger = logger()"""
@@ -79,6 +82,14 @@ class QprojPlug(Qcoms): #baseclass for plugins
             start feedback instance"""
         self.setup_feedback(progressBar = self.progressBar,
                             feedback = MyFeedBackQ())
+        
+        #=======================================================================
+        # default directories
+        #=======================================================================
+
+        self.pars_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), '_pars')
+        assert os.path.exists(self.pars_dir)
+
         
 
     def get_cf_fp(self):
@@ -217,6 +228,28 @@ class QprojPlug(Qcoms): #baseclass for plugins
                 self.setGeometry(300, 300, 290, 150)
                 self.setWindowTitle('Multiple Selection')
                 self.show()
+                
+    def setup_comboBox(self, #helper for setting up a combo box with a default selection
+                       comboBox,
+                       selection_l, #list of values to set as selectable options
+                       default = 'none', #default selection string ot set
+                       
+                       ):
+        
+        assert isinstance(selection_l, list)
+        
+        assert default in selection_l
+        
+        comboBox.clear()
+        #set the selection
+        comboBox.addItems(selection_l)
+        
+        #set the default
+        index = comboBox.findText(default, Qt.MatchFixedString)
+        if index >= 0:
+            comboBox.setCurrentIndex(index)
+        
+        
             
             
         

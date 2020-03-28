@@ -49,6 +49,15 @@ from .build.BuildDialog import DataPrep_Dialog
 from .model.ModelDialog import Modelling_Dialog
 from .results.ResultsDialog import Results_Dialog
 
+#===============================================================================
+# imports for PluginReloader
+#===============================================================================
+from .build import lisamp, rsamp, oth_rfda
+from .hlpr import basic,  exceptions, logr,  plug, Q
+from .model import dmg2, modcom, risk1, risk2
+from .results import djoin
+
+
 class CanFlood:
 
 
