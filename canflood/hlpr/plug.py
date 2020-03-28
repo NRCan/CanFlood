@@ -24,9 +24,8 @@ import pandas as pd
 from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject
 
 
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QObject 
-from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
+from PyQt5.QtWidgets import QApplication, QWidget, QInputDialog, QLineEdit, QFileDialog
+from PyQt5.QtGui import QIcon
 
 #==============================================================================
 # custom imports
@@ -114,6 +113,39 @@ class QprojPlug(Qcoms): #baseclass for plugins
                       ):
         #ask the user for the path
         fp = qfd(self, prompt)
+        
+        #just take the first
+        if len(fp) == 2:
+            fp = fp[0]
+        
+        #see if they picked something
+        if fp == '':
+            self.logger.error('user failed to make a selection. skipping')
+            return 
+        
+        #update the bar
+        lineEdit.setText(fp)
+        
+        self.logger.info('user selected: \n    %s'%fp)
+        
+    def fileSelect_button(self, #
+                      lineEdit, #text bar where selected directory should be displayed
+                      caption = 'Select File', #title of box
+                      path = None,
+                      filters = "All Files (*)",
+                      qfd = QFileDialog.getOpenFileName, #dialog to launch
+                      ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if path is None:
+            path = os.getcwd()
+            
+        #ask the user for the path
+        """
+        using the Dialog instance as the QWidge parent
+        """
+        fp = qfd(self, caption, path, filters)
         
         #just take the first
         if len(fp) == 2:

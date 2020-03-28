@@ -332,10 +332,10 @@ p, li { white-space: pre-wrap; }
               <item>
                <layout class="QHBoxLayout" name="_7">
                 <item>
-                 <widget class="QLineEdit" name="lineEdit_JGresfp"/>
+                 <widget class="QLineEdit" name="lineEdit_JG_resfp"/>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="pushButton_wd_2">
+                 <widget class="QPushButton" name="pushButton_JG_resfp_br">
                   <property name="text">
                    <string>Browse</string>
                   </property>
@@ -353,7 +353,7 @@ p, li { white-space: pre-wrap; }
              </property>
              <layout class="QGridLayout" name="gridLayout_6">
               <item row="0" column="0">
-               <widget class="QPushButton" name="pushButton_r1Run">
+               <widget class="QPushButton" name="pushButton_JG_join">
                 <property name="maximumSize">
                  <size>
                   <width>100</width>
@@ -782,7 +782,7 @@ p, li { white-space: pre-wrap; }
                  </font>
                 </property>
                 <property name="text">
-                 <string>Map</string>
+                 <string>Join</string>
                 </property>
                </widget>
               </item>

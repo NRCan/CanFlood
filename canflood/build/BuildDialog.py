@@ -9,13 +9,15 @@ import sys, os, warnings, tempfile, logging, configparser, datetime, time
 import os.path
 from shutil import copyfile
 
-#qgis
-from PyQt5 import uic
-from PyQt5 import QtWidgets
+#PyQt
+from PyQt5 import uic, QtWidgets
+from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
 
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QObject 
-from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
+#===============================================================================
+# from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QObject 
+# from qgis.PyQt.QtGui import QIcon
+#===============================================================================
+
 
 from qgis.core import *
 from qgis.analysis import *
@@ -38,8 +40,7 @@ from build.rsamp import Rsamp
 from build.lisamp import LikeSampler
 from build.oth_rfda import RFDAconv
 
-#from canFlood_model import CanFlood_Model
-#import hp
+
 
 from hlpr.plug import *
 from hlpr.Q import *
@@ -130,7 +131,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.logger.statusQlab.setText('BuildDialog initialized')
                 
         #======================================================================
-        # scenario setup tab----------
+        # setup tab----------
         #======================================================================
         #populate guis
         self.comboBox_vec.setFilters(QgsMapLayerProxyModel.VectorLayer) #SS. Inventory Layer: Drop down

@@ -6,12 +6,12 @@ ui class for the MODEL toolset
 import os,  os.path, warnings, tempfile, logging, configparser, sys, time
 from shutil import copyfile
 
-from qgis.PyQt import uic
-from qgis.PyQt import QtWidgets
+from PyQt5 import uic, QtWidgets
 
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QObject
-from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction, QFileDialog, QListWidget
+
+from PyQt5.QtCore import QSettings, QTranslator, QCoreApplication, QObject
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget
 
 # Initialize Qt resources from file resources.py
 #from .resources import *

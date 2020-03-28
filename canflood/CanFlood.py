@@ -5,9 +5,9 @@ second call
 #==============================================================================
 #import------------------------------------------------------------------ 
 #==============================================================================
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QObject
-from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction, QFileDialog, QListWidget
+from PyQt5.QtCore import QSettings, QTranslator, QCoreApplication, QObject
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget
 
 # Initialize Qt resources from file resources.py
 from .resources import *
