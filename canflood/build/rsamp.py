@@ -78,11 +78,14 @@ class Rsamp(Qcoms):
     def __init__(self,
                  fname='expos', #prefix for file name
                   *args, **kwargs):
+        
         super().__init__(*args, **kwargs)
         
         self.fname=fname
         #flip the codes
         self.psmp_codes = dict(zip(self.psmp_codes.values(), self.psmp_codes.keys()))
+        
+        self.logger.info('Rsamp.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
 
                 
     def load_layers(self, #load data to project (for console runs)
@@ -177,10 +180,11 @@ class Rsamp(Qcoms):
         if crs is None: crs = self.crs
 
         
-        log.info('executing on %i rasters'%len(raster_l))
+        log.info('executing on %i rasters'%(len(raster_l)))
         #======================================================================
         # #check the data
         #======================================================================
+        
         assert isinstance(crs, QgsCoordinateReferenceSystem)
         
         #check the finv_raw
@@ -198,6 +202,7 @@ class Rsamp(Qcoms):
             rname_l.append(rlay.name())
         
         self.rname_l = rname_l
+        
         #======================================================================
         # build the finv_raw
         #======================================================================
@@ -211,6 +216,7 @@ class Rsamp(Qcoms):
         assert self.finv_fcnt== 1, 'failed to drop all the fields'
         
         self.gtype = QgsWkbTypes().displayString(finv.wkbType())
+        
         #=======================================================================
         # exercute
         #=======================================================================
@@ -222,6 +228,11 @@ class Rsamp(Qcoms):
         #=======================================================================
         # wrap
         #=======================================================================
+        #max out the progress bar
+        self.feedback.setProgress(100)
+        """
+        self.
+        """
         log.info('sampling finished')
         
         res_name = '%s_%s_%i_%i'%(self.fname, self.tag, len(raster_l), res_vlay.dataProvider().featureCount())
@@ -257,7 +268,7 @@ class Rsamp(Qcoms):
         log.info('sampling %i raster layers w/ algo \'%s\' and gtype: %s'%(len(raster_l), algo_nm, gtype))
         for indxr, rlay in enumerate(raster_l):
             
-            log.info('    %i/%i sampling \'%s\' on \'%s\''%(indxr+1, len(raster_l), finv.name(), rlay.name()))
+            log.info('%i/%i sampling \'%s\' on \'%s\''%(indxr+1, len(raster_l), finv.name(), rlay.name()))
             ofnl =  [field.name() for field in finv.fields()]
             
             #===================================================================
@@ -270,6 +281,8 @@ class Rsamp(Qcoms):
                             'INPUT_VECTOR':finv, 
                             'RASTER_BAND':1, 
                             'STATS':[psmp_code]}
+                
+                
                 
                 #execute the algo
                 res_d = processing.run(algo_nm, params_d, feedback=self.feedback)
@@ -291,6 +304,7 @@ class Rsamp(Qcoms):
             # sample.Points----------------
             #======================================================================
             elif 'Point' in gtype: 
+                
                 
                 #build the algo params
                 params_d = { 'COLUMN_PREFIX' : rlay.name(),
@@ -340,7 +354,8 @@ class Rsamp(Qcoms):
                 finv.dataProvider().featureCount(), rlay.name()))
             
         self.names_d = names_d #needed by write()
-
+        
+        log.info('finished w/ %s'%self.names_d)
         
         return finv
     
@@ -614,7 +629,7 @@ class Rsamp(Qcoms):
         return self.update_cf(
             {'dmg_fps':(
                 {'expos':self.out_fp}, 
-                '#\'expos\' file path set from wsamp.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                '#\'expos\' file path set from rsamp.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
                 )
              },
             cf_fp = cf_fp
@@ -688,12 +703,16 @@ if __name__ =="__main__":
     #===========================================================================
     
     
-    out_dir = os.path.join(os.getcwd(), 'wsamp', tag)
+    out_dir = os.path.join(os.getcwd(), 'rsamp', tag)
     raster_fps = [os.path.join(data_dir, fn) for fn in raster_fns]
     #==========================================================================
     # load the data
     #==========================================================================
-    wrkr = Rsamp(logger=mod_logger, tag=tag, out_dir=out_dir, cid=cid)
+    log = logging.getLogger('rsamp')
+    wrkr = Rsamp(logger=log, tag=tag, out_dir=out_dir, cid=cid,
+                 )
+
+    
     wrkr.ini_standalone()
     
     
@@ -710,6 +729,7 @@ if __name__ =="__main__":
     res_vlay = wrkr.run(rlay_l, finv_vlay, 
              crs = finv_vlay.crs(), 
              as_inun=as_inun, dtm_rlay=dtm_rlay,dthresh=dthresh,
+             
              )
        
     wrkr.check()

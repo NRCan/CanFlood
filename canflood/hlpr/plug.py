@@ -52,71 +52,36 @@ from hlpr.basic import *
 #==============================================================================
 # classes-----------
 #==============================================================================
-class QprojPlug(ComWrkr): #baseclass for plugins
+class QprojPlug(Qcoms): #baseclass for plugins
     
     tag='scenario1'
     overwrite=True
     wd = ''
+    progress = 0
     
     """not a great way to init this one
     def __init__(self):
         self.logger = logger()"""
     
-    def qproj_setup(self): #workaround to setup the project
+    def qproj_setup(self): #project inits for Dialog Classes
+        """
+        todo: change this to an __init__
+        """
         
         self.logger = logger(self) #init the logger
         self.qproj = QgsProject.instance()
         
-        """todo: connect this with status bar?"""
-        self.feedback = QgsProcessingFeedback()
+
         
         self.crs = self.qproj.crs()
         
+        """connect to UI's progress bar
+            expects 'progressBar' as the widget name
+            start feedback instance"""
+        self.setup_feedback(progressBar = self.progressBar,
+                            feedback = MyFeedBackQ())
         
-    
-    def xxxoutput_df(self, #dump some outputs
-                      df, 
-                      out_fn,
-                      out_dir = None,
-                      overwrite=None,
-                      write_index=True, 
-            ):
-        #======================================================================
-        # defaults
-        #======================================================================
-        if out_dir is None: out_dir = self.wd
-        if overwrite is None: overwrite = self.overwrite
-        log = self.logger.getChild('output_df')
-        
-        assert isinstance(out_dir, str), 'unexpected type on out_dir: %s'%type(out_dir)
-        assert os.path.exists(out_dir), 'requested output directory doesnot exist: \n    %s'%out_dir
-        
-        
-        #extension check
-        if not out_fn.endswith('.csv'):
-            out_fn = out_fn+'.csv'
-        
-        #output file path
-        out_fp = os.path.join(out_dir, out_fn)
-        
-        #======================================================================
-        # checeks
-        #======================================================================
-        if os.path.exists(out_fp):
-            log.warning('file exists \n    %s'%out_fp)
-            if not overwrite:
-                raise Error('file already exists')
-            
 
-        #======================================================================
-        # writ eit
-        #======================================================================
-        df.to_csv(out_fp, index=write_index)
-        
-        log.info('wrote to %s to file: \n    %s'%(str(df.shape), out_fp))
-        
-        return out_fp
-    
     def get_cf_fp(self):
         cf_fp = self.lineEdit_cf_fp.text()
         
@@ -187,24 +152,7 @@ class QprojPlug(ComWrkr): #baseclass for plugins
             
         return 
     
-    """
-                #self.logger.info('user changed finv layer to %s'%self.comboBox_vec.currentLayer().name())
-            self.mFieldComboBox_cid.setLayer(self.comboBox_vec.currentLayer()) #field selector
-            
-            #try and find a good match
-            for field in self.comboBox_vec.currentLayer().fields():
-                if 'id' in field.name():
-                    self.logger.debug('matched on field %s'%field.name())
-                    break
-                
-            self.mFieldComboBox_cid.setField(field.name())
-            
-        except Exception as e:
-            self.logger.info('failed set current layer w/ \n    %s'%e)
-    """
-        
-    
-        
+
     def set_overwrite(self): #action for checkBox_SSoverwrite state change
         if self.checkBox_SSoverwrite.isChecked():
             self.overwrite= True
@@ -213,20 +161,11 @@ class QprojPlug(ComWrkr): #baseclass for plugins
             
         self.logger.push('overwrite set to %s'%self.overwrite)
         
-
     
 
         
- 
-    def testit2(self, *args, **kwargs): #for testing the ui
-        self.iface.messageBar().pushMessage("CanFlood", "youre doing a test", level=Qgis.Info)
-        
-        self.logger.info('test the logger')
-        self.logger.error('erro rtest')
-        
-        log = self.logger.getChild('testit')
-        
-        log.info('testing the child')
+
+
         
         
 class logger(object): #workaround for qgis logging pythonic
@@ -234,16 +173,21 @@ class logger(object): #workaround for qgis logging pythonic
     
     log_nm = '' #logger name
     
-    def __init__(self, parent):
+    def __init__(self, parent,
+                 statusQlab = None, #Qlabel widget to duplicate push messages
+                 ):
         #attach
         self.parent = parent
         
         self.iface = parent.iface
         
+        self.statusQlab = statusQlab
+        
     def getChild(self, new_childnm):
         
         #build a new logger
-        child_log = logger(self.parent)
+        child_log = logger(self.parent, 
+                           statusQlab=self.statusQlab)
         
         #nest the name
         child_log.log_nm = '%s.%s'%(self.log_nm, new_childnm)
@@ -251,7 +195,7 @@ class logger(object): #workaround for qgis logging pythonic
         return child_log
         
     def info(self, msg):
-        self._loghlp(msg, Qgis.Info, push=False)
+        self._loghlp(msg, Qgis.Info, push=False, status=True)
 
 
     def debug(self, msg_raw):
@@ -269,14 +213,27 @@ class logger(object): #workaround for qgis logging pythonic
         self._loghlp(msg, Qgis.Critical, push=True)
         
     def _loghlp(self, #helper function for generalized logging
-                msg_raw, qlevel, push=False):
+                msg_raw, qlevel, 
+                push=False,
+                status=False):
         
         msg = '%s: %s'%(self.log_nm, msg_raw)
         
         QgsMessageLog.logMessage(msg, self.log_tabnm, level=qlevel)
         
+        #Qgis bar
         if push:
             self.iface.messageBar().pushMessage(self.log_tabnm, msg, level=qlevel)
+        
+        #Optional widget
+        if status or push:
+            if not self.statusQlab is None:
+                self.statusQlab.setText(msg_raw)
+                
+            
+            
+            
+            
 #==============================================================================
 # functions-----------
 #==============================================================================

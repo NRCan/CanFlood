@@ -6,7 +6,7 @@ Created on May 18, 2019
 custom exceptions and errors
 '''
 
-from qgis.core import QgsMessageLog, Qgis
+
 
 class QError(Exception):
     """Base class for exceptions in this module."""
@@ -15,6 +15,7 @@ class QError(Exception):
         from qgis.utils import iface
         
         try:
+            from qgis.core import QgsMessageLog, Qgis
             iface.messageBar().pushMessage("Error", msg, level=Qgis.Critical)
             QgsMessageLog.logMessage(msg,'CanFlood', level=Qgis.Critical)
         except:

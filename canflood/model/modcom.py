@@ -96,6 +96,8 @@ class Model(ComWrkr):
     def __init__(self,
                  cf_fp, #control file path """ note: this could also be attached by basic.ComWrkr.__init__()"""
                  split_key=None,#for checking monotonicy on exposure sets with duplicate events
+
+
                  **kwargs):
         
         mod_logger.info('Model.__init__ start')
@@ -106,20 +108,18 @@ class Model(ComWrkr):
         self.cf_fp = cf_fp
         self.split_key= split_key
         
-        
+
         #attachments
         self.data_d = dict() #dictionary for loaded data sets
         
-
-
-
-        self.logger.debug('finished __init__ on Model')
+        self.logger.debug('finished Model.__init__')
         
         
     def init_model(self, #common inits for all model classes
                    ):
         """
         should be called by the model's own 'setup()' func
+            during standalones and Dialog runs
         """        
         
         #parameter setup
@@ -369,6 +369,12 @@ class Model(ComWrkr):
                 
                 if hndl=='type':
                     assert np.issubdtype(ser.dtype, cval), '%s.%s bad type: %s'%(dtag, coln, ser.dtype)
+                    
+                    """
+                    throwing  FutureWarning: Conversion of the second argument of issubdtype
+                    
+                    https://stackoverflow.com/questions/48340392/futurewarning-conversion-of-the-second-argument-of-issubdtype-from-float-to
+                    """
                 elif hndl == 'contains':
                     assert cval in ser, '%s.%s should contain %s'%(dtag, coln, cval)
                 else:
@@ -1112,6 +1118,7 @@ class Model(ComWrkr):
         if len(aep_ser.unique()) == len(aep_ser):
             raise Error('resolving multi but there are no duplicated events')
         
+
         #======================================================================
         # get expected values of all damages
         #======================================================================
@@ -1120,13 +1127,15 @@ class Model(ComWrkr):
         but leave this check for the input validator"""
         evdf = ddf*edf
         
-        log.info('calucated expected values for %i damages'%evdf.size)
+        log.info('calculating expected values for %i damages'%evdf.size)
         assert not evdf.isna().any().any()
         #======================================================================
         # loop by unique aep and resolve
         #======================================================================
         res_df = pd.DataFrame(index=evdf.index, columns = aep_ser.unique().tolist())
-        for aep in aep_ser.unique().tolist():
+        
+        for indxr, aep in enumerate(aep_ser.unique().tolist()):
+            self.feedback.setProgress((indxr/len(aep_ser.unique())*80))
             assert isinstance(aep, float)
             #==================================================================
             # get these events
@@ -1866,52 +1875,6 @@ class Model(ComWrkr):
         
         return res_df.rename(columns=rename_d)
         
-
-        
-    def xxxoutput_df(self, #dump some outputs
-                      df, 
-                      out_fn,
-                      out_dir = None,
-                      overwrite=None,
-            ):
-        #======================================================================
-        # defaults
-        #======================================================================
-        if out_dir is None: out_dir = self.out_dir
-        if overwrite is None: overwrite = self.overwrite
-        log = self.logger.getChild('output')
-        
-        assert isinstance(out_dir, str), 'unexpected type on out_dir: %s'%type(out_dir)
-        assert os.path.exists(out_dir), 'requested output directory doesnot exist: \n    %s'%out_dir
-        assert isinstance(df, pd.DataFrame)
-        assert df.size>0
-        
-        #extension check
-        if not out_fn.endswith('.csv'):
-            out_fn = out_fn+'.csv'
-        
-        #output file path
-        out_fp = os.path.join(out_dir, out_fn)
-        
-        #======================================================================
-        # checeks
-        #======================================================================
-        if os.path.exists(out_fp):
-            log.warning('file exists \n    %s'%out_fp)
-            if not overwrite:
-                raise Error('file already exists')
-            
-
-        #======================================================================
-        # writ eit
-        #======================================================================
-        df.to_csv(out_fp, index=True)
-        
-        log.info('wrote to %s to file: \n    %s'%(str(df.shape), out_fp))
-        
-        self.out_fp = out_fp #set for some other methods
-        
-        return out_fp
 
 if __name__ =="__main__":
     
