@@ -324,7 +324,7 @@ p, li { white-space: pre-wrap; }
              </property>
              <layout class="QHBoxLayout" name="horizontalLayout_20">
               <item>
-               <widget class="QCheckBox" name="checkBox">
+               <widget class="QCheckBox" name="checkBox_sels">
                 <property name="text">
                  <string>Selected features only</string>
                 </property>

@@ -52,7 +52,7 @@ from hlpr.basic import *
 #==============================================================================
 # classes-----------
 #==============================================================================
-class QprojPlug(ComWrkr): #baseclass for plugins
+class QprojPlug(Qcoms): #baseclass for plugins
     
     tag='scenario1'
     overwrite=True
