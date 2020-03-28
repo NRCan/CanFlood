@@ -104,7 +104,10 @@ class Risk1(Model):
         self.logger.debug('finished __init__ on Risk1')
         
         
-    def setup(self):
+    def setup(self): 
+        """
+        called by Dialog and standalones
+        """
         
         self.init_model()
         
@@ -160,6 +163,7 @@ class Risk1(Model):
         #dboolcol = ~ddf.columns.isin([cid, bid])
         log.info('running on %i assets and %i events'%(len(bdf), len(ddf.columns)-2))
         
+        self.feedback.setProgress(5)
         
         #======================================================================
         # check monotocity
@@ -197,6 +201,7 @@ class Risk1(Model):
         bidf = ddf1.where(booldf, other=0.0)
         bidf = bidf.where(~booldf, other=1.0)
         
+        self.feedback.setProgress(10)
         #======================================================================
         # scale
         #======================================================================

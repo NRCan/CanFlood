@@ -414,14 +414,14 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # convert finv
         #=======================================================================
-        self.setProgress(10)
+        self.upd_prog(10)
         finv_fp = self.convert_finv() #convert the finv to csv and write to file
         #======================================================================
         # build the control file
         #======================================================================
         
         assert os.path.exists(finv_fp)
-        self.setProgress(50)
+        self.upd_prog(50)
         
         #called by build_scenario()
         dirname = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -452,7 +452,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         copyfile(cf_src, cf_path)
             
 
-        self.setProgress(75)
+        self.upd_prog(75)
         #======================================================================
         # update the control file
         #======================================================================
@@ -487,7 +487,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         """TODO:
         write aoi filepath to scratch file
         """
-        self.setProgress(95)
+        self.upd_prog(95)
         #======================================================================
         # wrap
         #======================================================================
@@ -499,7 +499,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.lineEdit_control_2.setText(os.path.normpath(os.path.join(self.wd, 'CanFlood_control_01.txt')))"""
         
         log.push('control file created for "\'%s\''%self.tag)
-        self.setProgress(None) #set the progress bar back down to zero
+        self.upd_prog(None) #set the progress bar back down to zero
 
         
     def convert_finv(self): #convert the finv vector to csv file
@@ -612,7 +612,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                           )
         
         #connect the status bar to the worker's feedback
-        wrkr.feedback.progressChanged.connect(self.setProgress)
+        wrkr.feedback.progressChanged.connect(self.upd_prog)
         
         #execute the tool
         res_vlay = wrkr.run(rlay_l, finv,
@@ -688,7 +688,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         # wrap
         #======================================================================
-        self.setProgress(None) #set the progress bar back down to zero
+        self.upd_prog(None) #set the progress bar back down to zero
 
         log.push('Rsamp finished')
         
@@ -759,7 +759,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                           )
         
         #connect the status bar
-        wrkr.feedback.progressChanged.connect(self.setProgress)
+        wrkr.feedback.progressChanged.connect(self.upd_prog)
         
         res_vlay = wrkr.run([rlay], finv, psmp_stat=psmp_stat)
         
@@ -788,7 +788,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             self.qproj.addMapLayer(finv)
             self.logger.info('added \'%s\' to canvas'%finv.name())
             
-        self.setProgress(None) #set the progress bar back down to zero
+        self.upd_prog(None) #set the progress bar back down to zero
         self.logger.push('dsamp finished')    
         
     def run_lisamp(self): #sample dtm raster
@@ -863,7 +863,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                           )
         
         #connect the status bar
-        wrkr.feedback.progressChanged.connect(self.setProgress)
+        wrkr.feedback.progressChanged.connect(self.upd_prog)
         
         res_df = wrkr.run(finv, lpol_d, cid=cid, lfield=lfield)
         
@@ -884,7 +884,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             self.qproj.addMapLayer(res_vlay)
             self.logger.info('added \'%s\' to canvas'%finv.name())
             
-        self.setProgress(None) #set the progress bar back down to zero
+        self.upd_prog(None) #set the progress bar back down to zero
         self.logger.push('lisamp finished')    
         
         return
@@ -1005,7 +1005,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         pars = configparser.ConfigParser(inline_comment_prefixes='#', allow_no_value=True)
         _ = pars.read(cf_fp) #read it
         
-        self.setProgress(10)
+        self.upd_prog(10)
         #======================================================================
         # assemble the validation parameters
         #======================================================================
@@ -1045,7 +1045,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         vflag_d = dict()
         for vtag, model in vpars_d.items():
-            self.setProgress(80/len(vpars_d), method='append')
+            self.upd_prog(80/len(vpars_d), method='append')
 
             """needto play with init sequences to get this to work"""
 
@@ -1063,11 +1063,11 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
              },
             cf_fp = cf_fp
             )
-        self.setProgress(100)
+        self.upd_prog(100)
         
         log.push('completed %i validations'%len(vpars_d))
         
-        self.setProgress(None)
+        self.upd_prog(None)
         return
     
     def run_rfda(self): #Other.Rfda tab

@@ -96,7 +96,8 @@ class Model(ComWrkr):
     def __init__(self,
                  cf_fp, #control file path """ note: this could also be attached by basic.ComWrkr.__init__()"""
                  split_key=None,#for checking monotonicy on exposure sets with duplicate events
-                 feedback = None, #feed back object
+
+
                  **kwargs):
         
         mod_logger.info('Model.__init__ start')
@@ -107,12 +108,7 @@ class Model(ComWrkr):
         self.cf_fp = cf_fp
         self.split_key= split_key
         
-        #feedback setup
-        if feedback is None:
-            feedback = MyFeedBack(logger=self.logger)
 
-        self.logger.info('feedback set as \'%s\''%type(feedback).__name__)
-        self.feedback=feedback
         
         
         #attachments
@@ -129,6 +125,7 @@ class Model(ComWrkr):
                    ):
         """
         should be called by the model's own 'setup()' func
+            during standalones and Dialog runs
         """        
         
         #parameter setup
@@ -1875,52 +1872,6 @@ class Model(ComWrkr):
         
         return res_df.rename(columns=rename_d)
         
-
-        
-    def xxxoutput_df(self, #dump some outputs
-                      df, 
-                      out_fn,
-                      out_dir = None,
-                      overwrite=None,
-            ):
-        #======================================================================
-        # defaults
-        #======================================================================
-        if out_dir is None: out_dir = self.out_dir
-        if overwrite is None: overwrite = self.overwrite
-        log = self.logger.getChild('output')
-        
-        assert isinstance(out_dir, str), 'unexpected type on out_dir: %s'%type(out_dir)
-        assert os.path.exists(out_dir), 'requested output directory doesnot exist: \n    %s'%out_dir
-        assert isinstance(df, pd.DataFrame)
-        assert df.size>0
-        
-        #extension check
-        if not out_fn.endswith('.csv'):
-            out_fn = out_fn+'.csv'
-        
-        #output file path
-        out_fp = os.path.join(out_dir, out_fn)
-        
-        #======================================================================
-        # checeks
-        #======================================================================
-        if os.path.exists(out_fp):
-            log.warning('file exists \n    %s'%out_fp)
-            if not overwrite:
-                raise Error('file already exists')
-            
-
-        #======================================================================
-        # writ eit
-        #======================================================================
-        df.to_csv(out_fp, index=True)
-        
-        log.info('wrote to %s to file: \n    %s'%(str(df.shape), out_fp))
-        
-        self.out_fp = out_fp #set for some other methods
-        
-        return out_fp
 
 if __name__ =="__main__":
     

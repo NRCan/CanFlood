@@ -72,10 +72,11 @@ class QprojPlug(ComWrkr): #baseclass for plugins
         
         self.crs = self.qproj.crs()
         
-        """todo: 
-        dont house feedback on the dialogs... use separate workers for this
-        """
-        self.feedback = QgsProcessingFeedback()
+        """connect to UI's progress bar
+            expects 'progressBar' as the widget name
+            start feedback instance"""
+        self.setup_feedback(progressBar = self.progressBar,
+                            feedback = QgsProcessingFeedback())
         
 
     def get_cf_fp(self):
@@ -158,39 +159,7 @@ class QprojPlug(ComWrkr): #baseclass for plugins
         self.logger.push('overwrite set to %s'%self.overwrite)
         
     
-    def setProgress(self, #Dialog level progress bar updating
-                 prog_raw, #pass None to reset
-                 method='raw', #whether to append value to the progress
-                 ): 
-        """
-        method to update progress bar (and track progress)
-        
-        connect each tool to this function
-        
-        if your QProgressBar is not named 'progressBar', you'll need to set this attribute somewhere
-        """
-        #=======================================================================
-        # reseting
-        #=======================================================================
-        if prog_raw is None:
-            self.progressBar.reset()
-            return
-        
-        #=======================================================================
-        # setting
-        #=======================================================================
-        if method=='append':
-            prog = min(self.progress + prog_raw, 100)
-        elif method=='raw':
-            prog = prog_raw
-        elif method == 'portion':
-            rem_prog = 100-self.progress
-            prog = self.progress + rem_prog*(prog_raw/100)
-            
-        assert prog<=100
-        self.progressBar.setValue(prog)
-        
-        self.progress=prog #set for later
+
         
 
 

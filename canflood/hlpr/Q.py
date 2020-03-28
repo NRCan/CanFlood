@@ -91,10 +91,6 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
     
     qap = None
     
-    feedback=None
-    
-    
-    
     def __init__(self,
                  feedback=None, 
                  crs = None,
@@ -104,7 +100,9 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
 
         mod_logger.info('simple wrapper inits')
         
-        super().__init__(**kwargs) #initilzie teh baseclass
+        super().__init__(
+            feedback = QgsProcessingFeedback(),
+            **kwargs) #initilzie teh baseclass
         
 
         
@@ -117,13 +115,6 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
         #=======================================================================
         # attach inputs
         #=======================================================================
-        if feedback is None: 
-            feedback = MyFeedBackQ(logger=self.logger)
-        else:
-            
-            self.logger.info('feedback set as \'%s\''%type(feedback).__name__)
-
-        self.feedback = feedback
 
         self.logger.info('Qcoms.__init__ finished w/ out_dir: \n    %s'%self.out_dir)
         
