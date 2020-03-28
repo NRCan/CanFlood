@@ -134,7 +134,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         #populate guis
         self.comboBox_vec.setFilters(QgsMapLayerProxyModel.VectorLayer) #SS. Inventory Layer: Drop down
-        self.comboBox_aoi.setFilters(QgsMapLayerProxyModel.VectorLayer) #SS. Project AOI
+        self.comboBox_aoi.setFilters(QgsMapLayerProxyModel.PolygonLayer) #SS. Project AOI
         self.comboBox_SSelv.addItems(['datum', 'ground']) #ss elevation type
                
         self.comboBox_aoi.clear() #by default, lets have this be blank
@@ -419,6 +419,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             res_vlay =  self.selectbylocation(vlay, aoi_vlay, result_type='layer', logger=log)
             
             assert isinstance(res_vlay, QgsVectorLayer)
+            
+            vlay.removeSelection()
         
         #=======================================================================
         # wrap
@@ -427,7 +429,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             self.qproj.addMapLayer(res_vlay)
             self.logger.info('added \'%s\' to canvas'%res_vlay.name())
             
-        vlay.removeSelection()
+        
             
         return res_vlay
             
