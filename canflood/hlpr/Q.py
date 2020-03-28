@@ -1620,7 +1620,9 @@ def vlay_get_fdf( #pull all the feature data and place into a df
                     expect_all_real = False, #whether to expect all real results
                     allow_none = False,
                     
-                    db_f = False,logger=mod_logger):
+                    db_f = False,
+                    logger=mod_logger,
+                    feedback=MyFeedBackQ()):
     """
     performance improvement
     
@@ -1639,7 +1641,6 @@ def vlay_get_fdf( #pull all the feature data and place into a df
     #===========================================================================
     # setups and defaults
     #===========================================================================
-    
     log = logger.getChild('vlay_get_fdf')
     
     all_fnl = [fieldn.name() for fieldn in vlay.fields().toList()]
@@ -1673,9 +1674,12 @@ def vlay_get_fdf( #pull all the feature data and place into a df
     if fmt=='dict' and not (len(fieldn_l)==len(all_fnl)):
         raise Error('dict results dont respect field slicing')
     
+    assert hasattr(feedback, 'setProgress')
+    
     #===========================================================================
     # build the request
     #===========================================================================
+    feedback.setProgress(2)
     if request is None:
         """WARNING: this doesnt seem to be slicing the fields.
         see Alg().deletecolumns()
@@ -1694,11 +1698,14 @@ def vlay_get_fdf( #pull all the feature data and place into a df
     #===========================================================================
     
     fid_attvs = dict() #{fid : {fieldn:value}}
+    fcnt = vlay.dataProvider().featureCount()
 
-    for feat in vlay.getFeatures(request):
+    for indxr, feat in enumerate(vlay.getFeatures(request)):
         
         #zip values
         fid_attvs[feat.id()] = feat.attributes()
+        
+        feedback.setProgress((indxr/fcnt)*90)
 
 
     #===========================================================================
@@ -1749,7 +1756,7 @@ def vlay_get_fdf( #pull all the feature data and place into a df
         """if the requester worked... we probably  wouldnt have to do this"""
         df = df_raw.loc[:, tuple(fieldn_l)].replace(NULL, np.nan)
         
-
+        feedback.setProgress(95)
         
         if isinstance(reindex, str):
             """
@@ -1768,16 +1775,10 @@ def vlay_get_fdf( #pull all the feature data and place into a df
             log.debug('reindexed data by \'%s\''%reindex)
             
         return df
-            
-
-
-
-        
-    #===========================================================================
-    # wrap and reuslt
-    #===========================================================================
     
-    return df
+    else:
+        raise Error('unrecognized fmt kwarg')
+
     
     
 def vlay_get_fdata( #get data for a single field from all the features

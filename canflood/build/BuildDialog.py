@@ -444,29 +444,44 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         log.info('build_scenario started')
         self.tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
         
-        self.cid = self.mFieldComboBox_cid.currentField() #user selected field
+        cid = self.mFieldComboBox_cid.currentField() #user selected field
         
         self.wd =  self.lineEdit_wd.text() #pull the wd filepath from the user provided in 'Browse'
         
+        finv_raw = self.comboBox_vec.currentLayer()
         
+
         
         #=======================================================================
         # prechecks
         #=======================================================================
         assert isinstance(self.wd, str)
-        assert isinstance(self.cid, str)
+        
         assert isinstance(self.tag, str)
+        assert isinstance(finv_raw, QgsVectorLayer), 'must select a VectorLayer'
+        
+        #check cid
+        assert isinstance(cid, str)
+        if cid == '' or cid in self.invalid_cids:
+            raise Error('user selected invalid cid \'%s\''%cid)  
+        
+        assert cid in [field.name() for field in finv_raw.fields()]
         
         if not os.path.exists(self.wd):
             os.makedirs(self.wd)
             log.info('built working directory: %s'%self.wd)
+            
+        #=======================================================================
+        # aoi slice
+        #=======================================================================
+        finv = self.slice_aoi(finv_raw)
             
         
         #=======================================================================
         # convert finv
         #=======================================================================
         self.feedback.upd_prog(10)
-        finv_fp = self.convert_finv() #convert the finv to csv and write to file
+        finv_fp = self.convert_finv(finv, cid) #convert the finv to csv and write to file
         #======================================================================
         # build the control file
         #======================================================================
@@ -512,7 +527,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         _ = pars.read(cf_path) #read it from the new location
         
         #parameters
-        pars.set('parameters', 'cid', self.cid) #user selected field
+        pars.set('parameters', 'cid', cid) #user selected field
         pars.set('parameters', 'name', self.tag) #user selected field
         pars.set('parameters', 'felv', self.comboBox_SSelv.currentText()) #user selected field
         
@@ -553,32 +568,31 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.feedback.upd_prog(None) #set the progress bar back down to zero
 
         
-    def convert_finv(self): #convert the finv vector to csv file
+    def convert_finv(self, #convert the finv vector to csv file
+                     vlay, 
+                     cid): 
         log = self.logger.getChild('convert_finv')
         #======================================================================
-        # check the cid
+        # prechecks
         #======================================================================
-        if self.cid == '' or self.cid in self.invalid_cids:
-            raise Error('user selected invalid cid \'%s\''%self.cid)  
-        
-        #store the vecotr layer
-        finv_vlay = self.comboBox_vec.currentLayer()
-        
         log.info('on \'%s\' w/ %i feats'%(
-            finv_vlay.name(), finv_vlay.dataProvider().featureCount()))
+            vlay.name(), vlay.dataProvider().featureCount()))
         
         #extract data
-        df = vlay_get_fdf(finv_vlay)
+        df = vlay_get_fdf(vlay, feedback=self.feedback)
           
         #drop geometery indexes
         for gindx in self.invalid_cids:   
             df = df.drop(gindx, axis=1, errors='ignore')
             
-        if not self.cid in df.columns:
+        if not cid in df.columns:
             raise Error('cid not found in finv_df')
         
+        assert df[cid].is_unique
+        assert 'int' in df[cid].dtypes.name
+        
         #write it as a csv
-        out_fp = os.path.join(self.wd, 'finv_%s_%s.csv'%(self.tag, finv_vlay.name()))
+        out_fp = os.path.join(self.wd, 'finv_%s_%s.csv'%(self.tag, vlay.name()))
         df.to_csv(out_fp, index=False)  
         
         log.info("inventory csv written to file:\n    %s"%out_fp)
