@@ -109,16 +109,10 @@ class Model(ComWrkr):
         self.split_key= split_key
         
 
-        
-        
         #attachments
         self.data_d = dict() #dictionary for loaded data sets
         
-        
-
-
-
-        self.logger.debug('finished __init__ on Model')
+        self.logger.debug('finished Model.__init__')
         
         
     def init_model(self, #common inits for all model classes

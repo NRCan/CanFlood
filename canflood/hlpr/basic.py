@@ -332,16 +332,13 @@ class MyFeedBack(object): #simple custom feedback object
         For Dialog runs, pass a progress bar updating function
         for standalone, this defaults to printing progress
         
+        slots are connected w/ ComWrkr.setup_feedback()
+        
         """
-        
-        if slot is None:
-            slot = MyProgressReporter()
-            
-        assert callable(slot), 'passed bad slot: %s'%slot
-
-        self.logger.debug('connected to slot: %s'%slot.__name__)
-        
-        self.slots = [slot] #placeholder
+        if not slot is None:
+            self.slots = [slot] #placeholder
+        else:
+            self.slots = []
         
 
         

@@ -299,13 +299,16 @@ if __name__ =="__main__":
     #==========================================================================
     
     #==========================================================================
-    # tutorial 1
+    # tutorials
     #==========================================================================
     runpars_d={
-        'Tut1':{
-            'out_dir':os.path.join(os.getcwd(), 'risk1', 'Tut1'),
-            'cf_fp':r'C:\Users\cefect\CanFlood\build\1\CanFlood_tutorial1.txt',
-             
+        'Tut1a':{
+            'out_dir':os.path.join(os.getcwd(), 'Tut1a'),
+            'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1a\built_1a\CanFlood_tut1a.txt',
+            },
+        'Tut1b':{
+            'out_dir':os.path.join(os.getcwd(), 'Tut1b'),
+            'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1a\built_1b\CanFlood_tut1b.txt',
             }
         }
     #==========================================================================
