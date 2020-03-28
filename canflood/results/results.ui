@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>703</width>
-    <height>897</height>
+    <height>844</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -46,7 +46,7 @@
         <x>0</x>
         <y>0</y>
         <width>683</width>
-        <height>809</height>
+        <height>756</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_5">
@@ -65,7 +65,7 @@
           </size>
          </property>
          <property name="currentIndex">
-          <number>2</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="tab">
           <attribute name="title">
