@@ -10,7 +10,7 @@ helper functions for use in plugins
 #==========================================================================
 # logger setup-----------------------
 #==========================================================================
-import logging, configparser, datetime
+import logging, configparser, datetime, sys
 
 #==============================================================================
 # imports------------
@@ -24,7 +24,7 @@ import pandas as pd
 from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject
 
 
-from PyQt5.QtWidgets import QApplication, QWidget, QInputDialog, QLineEdit, QFileDialog
+from PyQt5.QtWidgets import QApplication, QWidget, QInputDialog, QLineEdit, QFileDialog, QPushButton
 from PyQt5.QtGui import QIcon
 
 #==============================================================================
@@ -141,10 +141,13 @@ class QprojPlug(Qcoms): #baseclass for plugins
         if path is None:
             path = os.getcwd()
             
+        assert os.path.exists(path)
         #ask the user for the path
         """
         using the Dialog instance as the QWidge parent
         """
+        self.logger.info(filters)
+        
         fp = qfd(self, caption, path, filters)
         
         #just take the first
@@ -192,6 +195,30 @@ class QprojPlug(Qcoms): #baseclass for plugins
             self.overwrite= False
             
         self.logger.push('overwrite set to %s'%self.overwrite)
+        
+    def field_selectM(self, #select mutliple fields
+                      vlay):
+        """
+        TODO: mimc the Qgis Algo multiple feature selection dialog
+        """
+        
+        class NewDialog(QWidget):
+            def __init__(self):
+                super().__init__()
+                
+                self.initUI()
+                
+            def initUI(self):      
+    
+                
+                self.le = QLineEdit(self)
+                self.le.move(130, 22)
+                
+                self.setGeometry(300, 300, 290, 150)
+                self.setWindowTitle('Multiple Selection')
+                self.show()
+            
+            
         
     
 
@@ -263,9 +290,6 @@ class logger(object): #workaround for qgis logging pythonic
                 self.statusQlab.setText(msg_raw)
                 
             
-            
-            
-            
 #==============================================================================
 # functions-----------
 #==============================================================================
@@ -313,4 +337,44 @@ def qtlb_get_axis_l(table, axis=0): #get axis lables from a qtable
         
     return l
             
+
+if __name__ =="__main__": 
+    
+    class Example(QWidget):
+    
+        def __init__(self):
+            super().__init__()
+            
+            self.initUI()
+            
+            
+        def initUI(self):      
+    
+            self.btn = QPushButton('Dialog', self)
+            self.btn.move(20, 20)
+            self.btn.clicked.connect(self.showDialog)
+            
+            self.le = QLineEdit(self)
+            self.le.move(130, 22)
+            
+            self.setGeometry(300, 300, 290, 150)
+            self.setWindowTitle('Input dialog')
+            self.show()
+            
+            
+        def showDialog(self):
+            
+            text, ok = QInputDialog.getText(self, 'Input Dialog', 
+                'Enter your name:')
+            
+            if ok:
+                self.le.setText(str(text))
+            
+    app = QApplication(sys.argv)
+    ex = Example()
+    sys.exit(app.exec_())
+            
+            
+    
+    print('finisshed')
         

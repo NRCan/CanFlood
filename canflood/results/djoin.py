@@ -88,10 +88,12 @@ class Djoiner(Qcoms):
 
         
         #=======================================================================
-        # get the left data
+        # get the left data from the vlay geomtry
         #=======================================================================
         
-        df_raw = vlay_get_fdf(vlay_raw, logger=log).drop(['ogc_fid', 'fid'],axis=1, errors='ignore' )
+        df_raw = vlay_get_fdf(vlay_raw, logger=log, feedback=self.feedback
+                              ).drop(['ogc_fid', 'fid'],axis=1, errors='ignore' )
+                              
         df_raw['fid'] = df_raw.index
         
         
@@ -235,31 +237,44 @@ if __name__ =="__main__":
     #     }
     #==========================================================================
     
+    #===========================================================================
+    # tutorials
+    #===========================================================================
+    runpars_d={
+        'Tut1a':{
+            'finv_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\data\finv_cT2b.gpkg',
+            'data_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\res_1a\risk1_Tut1_tut1a_passet.csv',
+            'keep_fn':'all',
+            'link_coln':'xid',
+            },
+        
+        }
+    
     #==========================================================================
     # 20200304
     #==========================================================================
-    runpars_d = {
-        'ICIrec':{
-            'finv_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200304\finv\ICI_rec\finv_ICIrec_20200304_aoi05f.gpkg',
-            'data_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\risk1\risk1_ICIrec_scenario1_passet.csv',
-            'keep_fn':'all',
-            'link_coln':'xid',
-            },
-        'TDDres':{
-            'finv_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200304\finv\TDD_res\finv_cconv_20200224_TDDres.gpkg',
-            'data_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDD_res\risk1\risk1_TDDres_TDDres_passet.csv',
-            'keep_fn':'all',
-            'link_coln':'xid',
-            },
-        'TDDnrp':{
-            'finv_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200304\finv\TDD_nrp\finv_cconv_20200224_TDDnrp.gpkg',
-            'data_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDDnrp\risk1\risk1_TDDnrp_scenario1_passet.csv',
-            'keep_fn':'all',
-            'link_coln':'xid',          
-            }
-        
-        
-        }
+    #===========================================================================
+    # runpars_d = {
+    #     'ICIrec':{
+    #         'finv_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200304\finv\ICI_rec\finv_ICIrec_20200304_aoi05f.gpkg',
+    #         'data_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\risk1\risk1_ICIrec_scenario1_passet.csv',
+    #         'keep_fn':'all',
+    #         'link_coln':'xid',
+    #         },
+    #     'TDDres':{
+    #         'finv_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200304\finv\TDD_res\finv_cconv_20200224_TDDres.gpkg',
+    #         'data_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDD_res\risk1\risk1_TDDres_TDDres_passet.csv',
+    #         'keep_fn':'all',
+    #         'link_coln':'xid',
+    #         },
+    #     'TDDnrp':{
+    #         'finv_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200304\finv\TDD_nrp\finv_cconv_20200224_TDDnrp.gpkg',
+    #         'data_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDDnrp\risk1\risk1_TDDnrp_scenario1_passet.csv',
+    #         'keep_fn':'all',
+    #         'link_coln':'xid',          
+    #         }
+    #     }
+    #===========================================================================
     
     #==========================================================================
     # execute
