@@ -186,7 +186,7 @@ class Risk2(Model):
         ddf, aep_ser, cid = self.data_d['dmgs'],self.data_d['evals'], self.cid
         
         assert isinstance(res_per_asset, bool)
-        
+        self.feedback.setProgress(5)
         #======================================================================
         # resolve alternate damages (per evemt)
         #======================================================================
@@ -205,12 +205,8 @@ class Risk2(Model):
         #check the columns
         assert np.array_equal(ddf1.columns.values, aep_ser.unique()), 'column name problem'
         _ = self.check_monot(ddf1)
-            
-        #======================================================================
-        # totals
-        #======================================================================        
-        res_ser = self.calc_ead(ddf1.sum(axis=0).to_frame().T, logger=log).iloc[0]
-        self.res_ser = res_ser.copy() #set for risk_plot()
+        
+        self.feedback.setProgress(40)
         #======================================================================
         # get ead per asset
         #======================================================================
@@ -220,7 +216,15 @@ class Risk2(Model):
         else:
             res_df = None
             
-        
+        #======================================================================
+        # totals
+        #======================================================================    
+        self.feedback.setProgress(80)    
+        res_ser = self.calc_ead(ddf1.sum(axis=0).to_frame().T, logger=log).iloc[0]
+        self.res_ser = res_ser.copy() #set for risk_plot()
+
+            
+        self.feedback.setProgress(95)
 
         log.info('finished on %i assets and %i damage cols'%(len(ddf1), len(res_ser)))
         

@@ -169,7 +169,7 @@ class Dmg2(Model):
             #store it
             self.dfuncs_d[dfunc.tag] = dfunc
             
-        log.info('finishe building %i curves \n    %s'%(
+        log.debug('finishe building %i curves \n    %s'%(
             len(self.dfuncs_d), list(self.dfuncs_d.keys())))
         
     def check_ftags(self):
@@ -674,9 +674,9 @@ if __name__ =="__main__":
     # tutorial 3
     #===========================================================================
     runpars_d={
-        'Tut3':{
-            'out_dir':os.path.join(os.getcwd(), 'dmg2', 'Tut3'),
-            'cf_fp':r'C:\Users\cefect\CanFlood\build\3\CanFlood_test.txt',
+        'Tut2':{
+            'out_dir':os.path.join(os.getcwd(), 'dmg2', 'Tut2'),
+            'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\built\CanFlood_tut2.txt',
              
             }
         }

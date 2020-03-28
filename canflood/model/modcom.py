@@ -369,6 +369,12 @@ class Model(ComWrkr):
                 
                 if hndl=='type':
                     assert np.issubdtype(ser.dtype, cval), '%s.%s bad type: %s'%(dtag, coln, ser.dtype)
+                    
+                    """
+                    throwing  FutureWarning: Conversion of the second argument of issubdtype
+                    
+                    https://stackoverflow.com/questions/48340392/futurewarning-conversion-of-the-second-argument-of-issubdtype-from-float-to
+                    """
                 elif hndl == 'contains':
                     assert cval in ser, '%s.%s should contain %s'%(dtag, coln, cval)
                 else:
@@ -1112,6 +1118,7 @@ class Model(ComWrkr):
         if len(aep_ser.unique()) == len(aep_ser):
             raise Error('resolving multi but there are no duplicated events')
         
+
         #======================================================================
         # get expected values of all damages
         #======================================================================
@@ -1120,13 +1127,15 @@ class Model(ComWrkr):
         but leave this check for the input validator"""
         evdf = ddf*edf
         
-        log.info('calucated expected values for %i damages'%evdf.size)
+        log.info('calculating expected values for %i damages'%evdf.size)
         assert not evdf.isna().any().any()
         #======================================================================
         # loop by unique aep and resolve
         #======================================================================
         res_df = pd.DataFrame(index=evdf.index, columns = aep_ser.unique().tolist())
-        for aep in aep_ser.unique().tolist():
+        
+        for indxr, aep in enumerate(aep_ser.unique().tolist()):
+            self.feedback.setProgress((indxr/len(aep_ser.unique())*80))
             assert isinstance(aep, float)
             #==================================================================
             # get these events

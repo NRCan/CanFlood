@@ -246,19 +246,26 @@ class Risk1(Model):
         
         _ = self.check_monot(bres_df)
         
+        
+        #======================================================================
+        # get ead per asset
+        #======================================================================
+        if res_per_asset:
+            self.feedback.setProgress(50)
+            res_df = self.calc_ead(bres_df, drop_tails=self.drop_tails, logger=log)
+                        
+        else:
+            res_df = None
+        
+        self.feedback.setProgress(90)
         #======================================================================
         # totals
         #======================================================================        
         res_ser = self.calc_ead(bres_df.sum(axis=0).to_frame().T, logger=log).iloc[0]
         self.res_ser = res_ser.copy() #set for risk_plot()
-        #======================================================================
-        # get ead per asset
-        #======================================================================
-        if res_per_asset:
-            res_df = self.calc_ead(bres_df, drop_tails=self.drop_tails, logger=log)
-                        
-        else:
-            res_df = None
+        
+
+        self.feedback.setProgress(95)
             
         
 
@@ -303,12 +310,12 @@ if __name__ =="__main__":
     #==========================================================================
     runpars_d={
         'Tut1a':{
-            'out_dir':os.path.join(os.getcwd(), 'Tut1a'),
-            'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1a\built_1a\CanFlood_tut1a.txt',
+            'out_dir':os.path.join(os.getcwd(),'risk1', 'Tut1a'),
+            'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\built_1a\CanFlood_tut1a.txt',
             },
         'Tut1b':{
             'out_dir':os.path.join(os.getcwd(), 'Tut1b'),
-            'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1a\built_1b\CanFlood_tut1b.txt',
+            'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\built_1b\CanFlood_tut1b.txt',
             }
         }
     #==========================================================================

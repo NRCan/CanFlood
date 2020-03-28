@@ -12,14 +12,14 @@ integrate = trapz       #integration method to apply: trapz, simps
 
 [dmg_fps]
 curves = 
-finv = C:\LS\03_TOOLS\_git\CanFlood\tutorials\1a\built\finv_tut1a_finv_cT2b.csv
-expos = C:\LS\03_TOOLS\_git\CanFlood\tutorials\1a\built\expos_tut1a_4_32.csv
+finv = C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\built_1a\finv_tut1a_finv_cT2b.csv
+expos = C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\built_1a\expos_tut1a_4_32.csv
 gels = #ground elevation data filepath
 
 [risk_fps]
 dmgs = #damage data results filepath
 exlikes = #secondary exposure likelihood data filepath
-evals = C:\LS\03_TOOLS\_git\CanFlood\tutorials\1a\built\evals_4_tut1a.csv
+evals = C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\built_1a\evals_4_tut1a.csv
 
 [validation]
 risk1 = True
