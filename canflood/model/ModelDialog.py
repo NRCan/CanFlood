@@ -3,7 +3,7 @@
 ui class for the MODEL toolset
 """
 
-import os,  os.path, warnings, tempfile, logging, configparser, sys
+import os,  os.path, warnings, tempfile, logging, configparser, sys, time
 from shutil import copyfile
 
 from qgis.PyQt import uic
@@ -72,7 +72,16 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         self.connect_slots()
         
     def connect_slots(self):
-
+        """connect ui slots to functions"""
+        #======================================================================
+        # general----------------
+        #======================================================================
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+        
+        #connect to status label
+        self.logger.statusQlab=self.progressText
+        self.logger.statusQlab.setText('BuildDialog initialized')
         
         #======================================================================
         # setup-----------
@@ -137,11 +146,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         
         self.pushButton_r3.clicked.connect(r3_browse)
         
-        #======================================================================
-        # commons
-        #======================================================================
-        self.buttonBox.accepted.connect(self.accept)
-        self.buttonBox.rejected.connect(self.reject)
+
         
         self.logger.info('Model ui connected')
         
@@ -183,14 +188,23 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
     # run commands
     #==========================================================================
     def run_risk1(self):
+        """
+        risk T1 runner
+        """
+        #=======================================================================
+        # variables
+        #=======================================================================
         log = self.logger.getChild('run_risk1')
         cf_fp = self.get_cf_fp()
         out_dir = self.get_wd()
         tag = self.linEdit_Stag.text()
         res_per_asset = self.checkBox_r2rpa_2.isChecked()
 
-        
-        model = Risk1(cf_fp, out_dir=out_dir, logger=self.logger, tag=tag).setup()
+        #=======================================================================
+        # setup/execute
+        #=======================================================================
+        model = Risk1(cf_fp, out_dir=out_dir, logger=self.logger, tag=tag,
+                      feedback=self.feedback).setup()
         
         res, res_df = model.run(res_per_asset=res_per_asset)
         
@@ -212,6 +226,8 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
             _ = model.output_df(res_df, '%s_%s'%(model.resname, 'passet'))
             
         self.logger.push('Risk1 Complete')
+        self.feedback.upd_prog(None) #set the progress bar back down to zero
+        
         #======================================================================
         # links
         #======================================================================
@@ -229,7 +245,8 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #======================================================================
         # #build/run model
         #======================================================================
-        model = Dmg2(cf_fp, out_dir = out_dir, logger = self.logger, tag=tag).setup()
+        model = Dmg2(cf_fp, out_dir = out_dir, logger = self.logger, tag=tag,
+                     feedback=self.feedback).setup()
         
         #run the model        
         cres_df = model.run()
@@ -244,6 +261,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         model.upd_cf()
 
         self.logger.push('Impacts2 complete')
+        self.feedback.upd_prog(None) #set the progress bar back down to zero
         
         #======================================================================
         # links
@@ -252,12 +270,15 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         if self.checkBox_i2RunRisk.isChecked():
             self.logger.info('linking in Risk 2')
             self.run_risk2()
+            
+        
     
     def run_risk2(self):
         #======================================================================
         # get run vars
         #======================================================================
         log = self.logger.getChild('run_risk2')
+        start = time.time()
         cf_fp = self.get_cf_fp()
         out_dir = self.get_wd()
         tag = self.linEdit_Stag.text()
@@ -267,7 +288,8 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #======================================================================
         # run the model
         #======================================================================
-        model = Risk2(cf_fp, out_dir=out_dir, logger=self.logger, tag=tag)._setup()
+        model = Risk2(cf_fp, out_dir=out_dir, logger=self.logger, tag=tag,
+                      feedback=self.feedback)._setup()
         
         res_ser, res_df = model.run(res_per_asset=res_per_asset)
         
@@ -287,8 +309,9 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
             _ = model.output_df(res_df, '%s_%s'%(model.resname, 'passet'))
         
         
-        
-        self.logger.push('Risk2 complete')
+        tdelta = (time.time()-start)/60.0
+        self.logger.push('Risk2 complete in %.4f mins'%tdelta)
+        self.feedback.upd_prog(None) #set the progress bar back down to zero
         #======================================================================
         # links
         #======================================================================
@@ -304,3 +327,5 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         
     def run_risk3(self):
         raise Error('not implemented')
+    
+        self.feedback.upd_prog(None) #set the progress bar back down to zero

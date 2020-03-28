@@ -1,5 +1,5 @@
 [parameters]
-name = tutorial2
+name = tut2
 cid = xid
 prec = 2                #float precision for calculations
 ground_water = True     #whether to allow wsl < gel
@@ -11,20 +11,20 @@ drop_tails = True       #whether to remove the extrapolated values from the resu
 integrate = trapz       #integration method to apply: trapz, simps
 
 [dmg_fps]
-curves = C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\data\CanFlood_curves_rfda_20200218.xls
-finv = C:\Users\cefect\CanFlood\build\2\finv_tutorial2_finv_cT2.csv
-expos = C:\Users\cefect\CanFlood\rsamp\tut2_dtm\expos_tut2_dtm_1_32.csv
-gels = #ground elevation data filepath
-#'expos' file path set from rsamp.py at 2020-03-28 10.46.10
+curves = C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\built\\CanFlood_curves_rfda_20200218.xls
+finv = C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\built\finv_tut2_finv_cT2.csv
+expos = C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\built\expos_tut2_4_32.csv
+gels = C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\built\gels_tut2_1_32.csv
 
 [risk_fps]
-dmgs = #damage data results filepath
+dmgs = C:\Users\cefect\CanFlood\model\dmgs_tut2_run1.csv
 exlikes = #secondary exposure likelihood data filepath
-evals = C:\Users\cefect\CanFlood\build\2\evals_4_tutorial2.csv
+evals = C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\built\evals_4_tut2.csv
+#'dmgs' file path set from dmg2.py at 2020-03-28 13.54.58
 
 [validation]
 risk1 = False
-dmg2 = False
-risk2 = False
+dmg2 = True
+risk2 = True
 risk3 = False
 
