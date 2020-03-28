@@ -230,6 +230,9 @@ class Rsamp(Qcoms):
         #=======================================================================
         #max out the progress bar
         self.feedback.setProgress(100)
+        """
+        self.
+        """
         log.info('sampling finished')
         
         res_name = '%s_%s_%i_%i'%(self.fname, self.tag, len(raster_l), res_vlay.dataProvider().featureCount())
@@ -705,8 +708,8 @@ if __name__ =="__main__":
     #==========================================================================
     # load the data
     #==========================================================================
-
-    wrkr = Rsamp(logger=mod_logger, tag=tag, out_dir=out_dir, cid=cid,
+    log = logging.getLogger('rsamp')
+    wrkr = Rsamp(logger=log, tag=tag, out_dir=out_dir, cid=cid,
                  )
 
     

@@ -37,7 +37,7 @@ if __name__ =="__main__":
     
 #plugin runs
 else:
-    mod_logger = logging.getLogger('common') #get the root logger
+    mod_logger = logging.getLogger('Q') #get the root logger
     
     
 
@@ -90,6 +90,7 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
     algo_init = False #flag indicating whether the algos have been initialized
     
     qap = None
+
     
     def __init__(self,
                  feedback=None, 
@@ -98,7 +99,7 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
                  ):
         
 
-        mod_logger.info('simple wrapper inits')
+
         
         if feedback is None:
             """by default, building our own feedbacker
@@ -144,20 +145,15 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
         
         self.mstore = QgsMapLayerStore() #build a new map store
         
-        #synthetic progress tracker
-        def prog(progress):
-            print('    QcomsProgress: %s'%progress)
-    
-        self.feedback.progressChanged.connect(prog)
         
         
         if not self.proj_checks():
             raise Error('failed checks')
         
-        mod_logger.info('Qproj.ini_standalone finished')
+        self.logger.info('Qproj.ini_standalone finished')
         
         
-        return
+        return self
     
     def init_qgis(self, #instantiate qgis
                   gui = False): 
@@ -201,7 +197,7 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
     
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
         
-        assert not self.feedback is None
+        assert not self.feedback is None, 'instance needs a feedback method for algos to work'
         
         log.info('processing initilzied w/ feedback: \'%s\''%(type(self.feedback).__name__))
         
@@ -276,6 +272,13 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
         if not self.out_dName in self.vlay_drivers:
             raise Error('unrecognized driver name')
         
+        
+        assert self.algo_init
+        
+        assert not self.feedback is None
+        
+        assert not self.progressBar is None
+        
         log.info('project passed all checks')
         
         return True
@@ -348,9 +351,9 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
         return rlayer
     
     #==========================================================================
-    # helper methods-----------------
+    # generic methods-----------------
     #==========================================================================
-    
+
     
     
 
@@ -875,7 +878,8 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
                       join_style = 0,
                       miter_limit = 2,
                       segments = 5,
-                      logger=None, layname=None,
+                      logger=None, 
+                      layname=None,
                       ):
         #=======================================================================
         # defaults
@@ -932,8 +936,140 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
         return res_vlay
     
     
+    def selectbylocation(self, #select features (from main laye) by geoemtric relation with comp_vlay
+                vlay, #vlay to select features from
+                comp_vlay, #vlay to compare 
+                
+                result_type = 'select',
+                
+                method= 'new',  #Modify current selection by
+                pred_l = ['intersect'],  #list of geometry predicate names
+                
+                #expectations
+                allow_none = False,
+                
+                logger = None,
+
+                ):
+        
+        #=======================================================================
+        # setups and defaults
+        #=======================================================================
+        if logger is None: logger=self.logger    
+        algo_nm = 'native:selectbylocation'   
+        log = logger.getChild('selectbylocation')
+        
+        #===========================================================================
+        # #set parameter translation dictoinaries
+        #===========================================================================
+        meth_d = {'new':0}
+            
+        pred_d = {
+                'are within':6,
+                'intersect':0,
+                'overlap':5,
+                  }
+        
+        #predicate (name to value)
+        pred_l = [pred_d[pred_nm] for pred_nm in pred_l]
+    
+        #=======================================================================
+        # setup
+        #=======================================================================
+        ins_d = { 
+            'INPUT' : vlay, 
+            'INTERSECT' : comp_vlay, 
+            'METHOD' : meth_d[method], 
+            'PREDICATE' : pred_l }
+        
+        log.debug('executing \'%s\' on \'%s\' with: \n     %s'
+            %(algo_nm, vlay.name(), ins_d))
+            
+        #===========================================================================
+        # #execute
+        #===========================================================================
+        _ = processing.run(algo_nm, ins_d,  feedback=self.feedback)
         
         
+        #=======================================================================
+        # check
+        #=======================================================================
+        fcnt = vlay.selectedFeatureCount()
+        
+        if fcnt == 0:
+            msg = 'No features selected!'
+            if allow_none:
+                log.warning(msg)
+            else:
+                raise Error(msg)
+            
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        log.debug('selected %i (of %i) features from %s'
+            %(vlay.selectedFeatureCount(),vlay.dataProvider().featureCount(), vlay.name()))
+        
+        return self._get_sel_res(vlay, result_type=result_type, logger=log, allow_none=allow_none)
+        
+    def saveselectedfeatures(self,#generate a memory layer from the current selection
+                             vlay,
+                             logger=None,
+                             allow_none = False,
+                             layname=None): 
+        
+        
+        
+        #===========================================================================
+        # setups and defaults
+        #===========================================================================
+        if logger is None: logger = self.logger
+        log = logger.getChild('saveselectedfeatures')
+        algo_nm = 'native:saveselectedfeatures'
+        
+        if layname is None: 
+            layname = '%s_sel'%vlay.name()
+              
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        fcnt = vlay.selectedFeatureCount()
+        if fcnt == 0:
+            msg = 'No features selected!'
+            if allow_none:
+                log.warning(msg)
+                return None
+            else:
+                raise Error(msg)
+        
+
+              
+        log.info('on \'%s\' with %i feats selected'%(
+            vlay.name(), vlay.selectedFeatureCount()))
+        #=======================================================================
+        # # build inputs
+        #=======================================================================
+        ins_d = {'INPUT' : vlay,
+                 'OUTPUT' : 'TEMPORARY_OUTPUT'}
+        
+        log.debug('\'native:saveselectedfeatures\' on \'%s\' with: \n   %s'
+            %(vlay.name(), ins_d))
+        
+        #execute
+        res_d = processing.run(algo_nm, ins_d,  feedback=self.feedback)
+
+        
+        res_vlay = res_d['OUTPUT']
+        
+        assert isinstance(res_vlay, QgsVectorLayer)
+        #===========================================================================
+        # wrap
+        #===========================================================================
+
+        res_vlay.setName(layname) #reset the name
+
+        return res_vlay
+    
+    
     
     #==========================================================================
     # privates----------
@@ -1016,6 +1152,58 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
             
         return QgsProcessingFeatureSourceDefinition(vlay.id(), True)
     
+    
+    def _get_sel_res(self, #handler for returning selection like results
+                        vlay, #result layer (with selection on it
+                         result_type='select',
+                         
+                         #expectiions
+                         allow_none = False,
+                         logger=None
+                         ):
+        
+        #=======================================================================
+        # setup
+        #=======================================================================
+        if logger is None: logger = self.logger
+        log = logger.getChild('_get_sel_res')
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        if vlay.selectedFeatureCount() == 0:
+            if not allow_none:
+                raise Error('nothing selected')
+            
+            return None
+
+        
+        #log.debug('user specified \'%s\' for result_type'%result_type)
+        #=======================================================================
+        # by handles
+        #=======================================================================
+        if result_type == 'select':
+            #log.debug('user specified \'select\', doing nothing with %i selected'%vlay.selectedFeatureCount())
+            
+            result = None
+            
+        elif result_type == 'fids':
+            
+            result = vlay.selectedFeatureIds() #get teh selected feature ids
+            
+        elif result_type == 'feats':
+            
+            result =  {feat.id(): feat for feat in vlay.getSelectedFeatures()}
+            
+            
+        elif result_type == 'layer':
+            
+            result = self.saveselectedfeatures(vlay, logger=log)
+            
+        else: 
+            raise Error('unexpected result_type kwarg')
+            
+        return result
+    
     def _in_out_checking(self,res_vlay,
                          ):
         
@@ -1031,6 +1219,16 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
     
 
 class MyFeedBackQ(QgsProcessingFeedback):
+    """
+    wrapper for easier reporting and extended progress
+    
+    Dialogs:
+        built by QprojPlug.qproj_setup()
+    
+    Qworkers:
+        built by Qcoms.__init__()
+    
+    """
     
     def __init__(self,
                  logger=mod_logger):
@@ -1055,7 +1253,55 @@ class MyFeedBackQ(QgsProcessingFeedback):
         self.logger.info(info)
 
     def reportError(self, error, fatalError=False):
-        self.logger.push(error)
+        self.logger.error(error)
+        
+    
+    def upd_prog(self, #advanced progress handling
+             prog_raw, #pass None to reset
+             method='raw', #whether to append value to the progress
+             ): 
+            
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        #get the current progress
+        progress = self.progress() 
+    
+        #===================================================================
+        # prechecks
+        #===================================================================
+        #make sure we have some slots connected
+        """not sure how to do this"""
+        
+        #=======================================================================
+        # reseting
+        #=======================================================================
+        if prog_raw is None:
+            """
+            would be nice to reset the progressBar.. .but that would be complicated
+            """
+            self.setProgress(0)
+            return
+        
+        #=======================================================================
+        # setting
+        #=======================================================================
+        if method=='append':
+            prog = min(progress + prog_raw, 100)
+        elif method=='raw':
+            prog = prog_raw
+        elif method == 'portion':
+            rem_prog = 100-progress
+            prog = progress + rem_prog*(prog_raw/100)
+            
+        assert prog<=100
+        
+        #===================================================================
+        # emit signalling
+        #===================================================================
+        self.setProgress(prog)
+        
+
 
 
         
@@ -2496,8 +2742,35 @@ def df_to_qvlayd( #convert a data frame into the layer data structure (keeyd by 
 
 
 if __name__ == '__main__':
-    print('start')
+    
+    #===========================================================================
+    # selection testing
+    #===========================================================================
+    vlay_fp = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\data\finv_cT2.gpkg'
+    aoi_fp = r'C:\LS\03_TOOLS\LML\_ins\aoi\20191225\chil\aoiT2_chil.gpkg'
+    
+    #===========================================================================
+    # load the layers
+    #===========================================================================
+    log = logging.getLogger('test')
+    vlay = load_vlay(vlay_fp, logger=log)
+    aoi_vlay = load_vlay(aoi_fp, logger=log)
+    
+    #===========================================================================
+    # execute
+    #===========================================================================
+    #build the instance
+    wrkr = Qcoms(logger=log).ini_standalone()
 
+    
+    res_vlay = wrkr.selectbylocation(vlay, aoi_vlay, result_type='layer', logger=log)
+    
+    log.info('finished w/ %s w/ %i feats (of %i)'%(
+        res_vlay.name(), res_vlay.dataProvider().featureCount(),
+        vlay.dataProvider().featureCount()))
+    
+    
+    #force_open_dir(wrkr.out_dir)
     
     print('finished')
 

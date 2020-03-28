@@ -43,6 +43,9 @@ from hlpr.exceptions import QError as Error
 #==============================================================================
 class ComWrkr(object): #common methods for all classes
     
+    progressBar = None
+    feedback = None
+    
     def __init__(self, tag='session', cid='not_set', cf_fp='',
                  overwrite=True, 
                  out_dir=None, 
@@ -60,7 +63,7 @@ class ComWrkr(object): #common methods for all classes
         #======================================================================
         # get defaults
         #======================================================================
-        self.logger = logger.getChild('ComWrkr')
+        self.logger = logger
         #setup output directory
         if out_dir is None: out_dir = os.getcwd()
         
@@ -95,8 +98,18 @@ class ComWrkr(object): #common methods for all classes
         
         Dialogs:
             using a separate function so Dialog's can call 
+            
         Qgis workers
             MyFeedBackQ built during Qcoms.__init__() 
+            
+        Standard workers
+            building dummy MyFeedBack here 
+            
+            
+        Standalone runs
+            building dummy progressBar
+        Qplugin runs
+            expects a QprogressBar widget named progressBar
         """
         
         #progress Bar
@@ -108,7 +121,11 @@ class ComWrkr(object): #common methods for all classes
             other runs we build a dummy progress reporter
             """
             #Dialog runs
-            if hasattr(self, 'progressBar'):
+            #===================================================================
+            # if hasattr(self, 'progressBar'):
+            #     progressBar = self.progressBar
+            #===================================================================
+            if not self.progressBar is None:
                 progressBar = self.progressBar
             
             #standalones create a simple reporter
@@ -123,19 +140,42 @@ class ComWrkr(object): #common methods for all classes
             """
             build a basic feedbacker for nonQ runs
             Q dependent runs should pass MyFeedBackQ()"""
-            feedback = MyFeedBack(logger=self.logger)
+            feedback = MyFeedBack()
             
-        assert callable(progressBar)
-        assert callable(feedback)
+        #set feedback's logger
+        """becuase Q runs have to build the ffeedbacker before ComWrker can set th elogger
+        just forcing it here"""
+        feedback.logger=self.logger
+        #=======================================================================
+        # check the passed objects
+        #=======================================================================
+        #progressBar
+        assert hasattr(progressBar, 'setValue')
+        assert callable(progressBar.setValue)
+        
+        assert hasattr(feedback, 'setProgress')
+        assert callable(feedback.setProgress)
         
         #=======================================================================
         # connect feedback to progress bar
         #=======================================================================
-
+        #QgsFeedback like
+        if hasattr(feedback, 'progressChanged'):
+            feedback.progressChanged.connect(progressBar.setValue)
+            
+        #dummy feedbacker
+        elif hasattr(feedback, 'slots'):
+            feedback.slots = [progressBar.setValue]
+            
+        else:
+            raise Error('unrecognized feedback object: %s'%type(feedback))
         
+        #=======================================================================
+        # attach
+        #=======================================================================
         self.feedback = feedback
         self.progressBar = progressBar
-        self.prog = 0 # progress counter ranges from 0 to 100
+
         
         
         self.logger.info('feedback set as \'%s\' and progressBar: %s'%(
@@ -143,48 +183,7 @@ class ComWrkr(object): #common methods for all classes
         
         
         
-    def upd_prog(self, #feedback handling
-                 prog_raw, #pass None to reset
-                 method='raw', #whether to append value to the progress
-                 ): 
-        """
-        fancy method to push to feedback
-        
-        object's feeedback should be connected to the status bar
-        
-        for children functions, connect their feedback tothe parent's
-        
-        if your QProgressBar is not named 'progressBar', you'll need to set this attribute somewhere
-        """
-        assert callable(self.progressBar)
-        #=======================================================================
-        # reseting
-        #=======================================================================
-        if prog_raw is None:
-            self.progressBar.reset()
-            return
-        
-        #=======================================================================
-        # setting
-        #=======================================================================
-        if method=='append':
-            prog = min(self.progress + prog_raw, 100)
-        elif method=='raw':
-            prog = prog_raw
-        elif method == 'portion':
-            rem_prog = 100-self.progress
-            prog = self.progress + rem_prog*(prog_raw/100)
-            
-        assert prog<=100
-        
-        #update the feedback worker
-        """
-        for standalones, this should be a MyFeedBack object
-        for Dialog, this will just be a QgsFeedback object
-        """
-        self.feedback.setValue(prog)
-        
-        self.progress=prog #set for later
+
         
         
     def update_cf(self, #update one parameter  control file 
@@ -319,7 +318,10 @@ class ComWrkr(object): #common methods for all classes
     
 class MyFeedBack(object): #simple custom feedback object
     
-    def __init__(self, logger=mod_logger, slot=None):
+    def __init__(self, 
+                 logger=mod_logger, 
+                 slot=None, #function to pass to feedback signal (must accept 'prog')
+                 ):
         
         self.logger = logger.getChild('MyFeedBack')
         self.prog = 0
@@ -338,13 +340,16 @@ class MyFeedBack(object): #simple custom feedback object
         assert callable(slot), 'passed bad slot: %s'%slot
 
         self.logger.debug('connected to slot: %s'%slot.__name__)
-        self.slot = slot #placeholder
+        
+        self.slots = [slot] #placeholder
         
 
         
-    def setProgress(self, prog):
-        assert prog + self.prog < 100
-        self.prog +=prog
+    def setProgress(self, prog): #basic progress setter. mimics QgsFeedback
+        
+        assert len(self.slots)>0
+        assert prog < 100
+        self.prog =prog
         
         #call the slot function
         """
@@ -356,26 +361,75 @@ class MyFeedBack(object): #simple custom feedback object
         """
         self.__signal()
         
+    def progress(self): #mimics QgsFeedback 
+        return self.prog
         
+    def upd_prog(self, #advanced progress handling
+             prog_raw, #pass None to reset
+             method='raw', #whether to append value to the progress
+             ): 
+            
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        #get the current progress
+        progress = self.progress() 
+    
+        #===================================================================
+        # prechecks
+        #===================================================================
+        #make sure we have some slots connected
+        assert len(self.slots)>0
         
+        #=======================================================================
+        # reseting
+        #=======================================================================
+        if prog_raw is None:
+            for slot in self.slots:
+                slot.reset()
+            return
         
-    def __signal(self):
-        if not self.slot is None:
-            self.slot(self.prog)
+        #=======================================================================
+        # setting
+        #=======================================================================
+        if method=='append':
+            prog = min(progress + prog_raw, 100)
+        elif method=='raw':
+            prog = prog_raw
+        elif method == 'portion':
+            rem_prog = 100-progress
+            prog = progress + rem_prog*(prog_raw/100)
+            
+        assert prog<=100
+        
+        #===================================================================
+        # emit signalling
+        #===================================================================
+        self.setProgress(prog)
         
 
-def MyProgressReporter(object): #progressBar like basic progress reporter
+        
+
+    def __signal(self): #execut eall the attached slots
+        for func in self.slots:
+            func(self.prog)
+
+        
+
+class MyProgressReporter(object): #progressBar like basic progress reporter
+    """
+    may be an issue for multi-threading
+    """
     
     def __init__(self):
         self.prog = 0
     
     def reset(self):
         self.prog = 0
-        print('    prog=%i'%self.prog)
+        print('    prog reset')
     
     def setValue(self, prog):
         self.prog= prog
-        
         print('    prog=%i'%self.prog)
     
 

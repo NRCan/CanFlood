@@ -51,6 +51,10 @@ class Gen(Qcoms):
     general methods for the Build dialog
     
     broken out for development/testing
+    
+    each time the user performs an action, 
+        a new instance of this should be spawned
+        this way all the user variables can be freshley pulled
     """
 
 
@@ -65,18 +69,7 @@ class Gen(Qcoms):
         self.logger.info('Rsamp.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
         
     
-    def slice_aoi(self, vlay):
-        
-        aoi_vlay = self.comboBox_aoi.currentLayer()
-        
-        if aoi_vlay is None:
-            self.logger.info('no aoi selected... not slicing')
-            return vlay
-        else:
-            self.logger.warning('aoi slicing not impelemented')
-            return vlay
-            
-            #raise Error('aoi slicing not implemented')
+
 
                 
 

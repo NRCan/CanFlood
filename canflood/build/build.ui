@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>700</width>
+    <width>702</width>
     <height>847</height>
    </rect>
   </property>
@@ -51,7 +51,7 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>680</width>
+        <width>682</width>
         <height>741</height>
        </rect>
       </property>
@@ -86,7 +86,7 @@
           </size>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>1</number>
          </property>
          <property name="movable">
           <bool>false</bool>
@@ -324,6 +324,13 @@ p, li { white-space: pre-wrap; }
              </property>
              <layout class="QHBoxLayout" name="horizontalLayout_20">
               <item>
+               <widget class="QCheckBox" name="checkBox">
+                <property name="text">
+                 <string>Selected features only</string>
+                </property>
+               </widget>
+              </item>
+              <item>
                <widget class="QgsMapLayerComboBox" name="comboBox_aoi">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -345,15 +352,21 @@ p, li { white-space: pre-wrap; }
            <item>
             <widget class="QGroupBox" name="groupBox_prog_contrl">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
              <property name="minimumSize">
               <size>
-               <width>400</width>
+               <width>450</width>
                <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>700</width>
+               <height>16777215</height>
               </size>
              </property>
              <property name="title">
@@ -373,7 +386,7 @@ p, li { white-space: pre-wrap; }
               <item>
                <widget class="QCheckBox" name="checkBox_SSoverwrite">
                 <property name="text">
-                 <string>Overwrite data files (if found)</string>
+                 <string>Overwrite files</string>
                 </property>
                 <property name="checked">
                  <bool>true</bool>
@@ -381,9 +394,27 @@ p, li { white-space: pre-wrap; }
                </widget>
               </item>
               <item>
-               <widget class="QCheckBox" name="checkBox">
+               <widget class="QCheckBox" name="checkBox_loadres">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>150</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>638</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
                 <property name="text">
-                 <string>Selected features only</string>
+                 <string>Load Results to canvas</string>
                 </property>
                </widget>
               </item>
@@ -1532,19 +1563,6 @@ p, li { white-space: pre-wrap; }
                    </property>
                   </widget>
                  </item>
-                 <item>
-                  <widget class="QCheckBox" name="checkBox_HSloadres">
-                   <property name="minimumSize">
-                    <size>
-                     <width>300</width>
-                     <height>0</height>
-                    </size>
-                   </property>
-                   <property name="text">
-                    <string>Load Results to canvas</string>
-                   </property>
-                  </widget>
-                 </item>
                 </layout>
                </widget>
               </item>
@@ -1795,7 +1813,7 @@ p, li { white-space: pre-wrap; }
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>599</width>
+                   <width>601</width>
                    <height>660</height>
                   </rect>
                  </property>
@@ -2087,13 +2105,6 @@ p, li { white-space: pre-wrap; }
                </widget>
               </item>
               <item>
-               <widget class="QCheckBox" name="checkBox_LSloadres">
-                <property name="text">
-                 <string>Load Results to canvas</string>
-                </property>
-               </widget>
-              </item>
-              <item>
                <spacer name="horizontalSpacer_2">
                 <property name="orientation">
                  <enum>Qt::Horizontal</enum>
@@ -2211,13 +2222,6 @@ p, li { white-space: pre-wrap; }
                 </property>
                 <property name="text">
                  <string>Sample DTM</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="QCheckBox" name="checkBox_DTMloadres">
-                <property name="text">
-                 <string>Load Results to canvas</string>
                 </property>
                </widget>
               </item>
@@ -2859,7 +2863,7 @@ p, li { white-space: pre-wrap; }
                 </layout>
                </widget>
               </item>
-              <item>
+              <item alignment="Qt::AlignHCenter">
                <widget class="QPushButton" name="pushButton_OthRfda">
                 <property name="maximumSize">
                  <size>

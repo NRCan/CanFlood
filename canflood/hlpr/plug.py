@@ -64,6 +64,9 @@ class QprojPlug(ComWrkr): #baseclass for plugins
         self.logger = logger()"""
     
     def qproj_setup(self): #project inits for Dialog Classes
+        """
+        todo: change this to an __init__
+        """
         
         self.logger = logger(self) #init the logger
         self.qproj = QgsProject.instance()
@@ -76,7 +79,7 @@ class QprojPlug(ComWrkr): #baseclass for plugins
             expects 'progressBar' as the widget name
             start feedback instance"""
         self.setup_feedback(progressBar = self.progressBar,
-                            feedback = QgsProcessingFeedback())
+                            feedback = MyFeedBackQ())
         
 
     def get_cf_fp(self):
