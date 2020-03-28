@@ -47,7 +47,7 @@ from shutil import copyfile
 
 from .build.BuildDialog import DataPrep_Dialog
 from .model.ModelDialog import Modelling_Dialog
-from .ProjectResults.ProjectResultsDialog import Results_Dialog
+from .results.ResultsDialog import Results_Dialog
 
 class CanFlood:
 
@@ -87,7 +87,7 @@ class CanFlood:
         # Create the dialog (after translation) and keep reference
         self.dlg1 = DataPrep_Dialog(self.iface)
         self.dlg2 = Modelling_Dialog(self.iface)
-        self.dlg3 = Results_Dialog()
+        self.dlg3 = Results_Dialog(self.iface)
 
         # Declare instance attributes
         self.actions = []
