@@ -137,6 +137,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.comboBox_aoi.setFilters(QgsMapLayerProxyModel.VectorLayer) #SS. Project AOI
         self.comboBox_SSelv.addItems(['datum', 'ground']) #ss elevation type
                
+        self.comboBox_aoi.clear() #by default, lets have this be blank
         
         #Working Directory browse
         def browse_wd():
@@ -158,7 +159,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         def upd_cid():
             return self.mfcb_connect(
                 self.mFieldComboBox_cid, self.comboBox_vec.currentLayer(),
-                fn_str = 'id' )
+                fn_str = 'xid' )
                 
         self.comboBox_vec.layerChanged.connect(upd_cid) #SS inventory vector layer
         
@@ -411,6 +412,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         # slice
         #=======================================================================
         else:
+            vlay.removeSelection()
             log.info('slicing finv \'%s\' and %i feats w/ aoi \'%s\''%(
                 vlay.name(),vlay.dataProvider().featureCount(), aoi_vlay.name()))
             
@@ -424,6 +426,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         if self.checkBox_loadres.isChecked():
             self.qproj.addMapLayer(res_vlay)
             self.logger.info('added \'%s\' to canvas'%res_vlay.name())
+            
+        vlay.removeSelection()
             
         return res_vlay
             
