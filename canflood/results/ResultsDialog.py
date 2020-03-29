@@ -25,6 +25,7 @@ from hlpr.Q import *
 from hlpr.basic import *
 
 import results.djoin
+import results.riskPlot
 
 
 
@@ -228,10 +229,10 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         self.feedback.setProgress(80)
         #save
-        wrkr.output_fig(fig)
+        out_fp = wrkr.output_fig(fig)
         self.feedback.setProgress(95)
         
-        log.info('finished')
+        log.info('riskPlot saved to file: %s'%out_fp)
         self.feedback.upd_prog(None) #set the progress bar back down to zero
         
         

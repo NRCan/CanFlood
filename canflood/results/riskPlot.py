@@ -74,7 +74,7 @@ class Plotr(ComWrkr):
         
         #precheck
         assert os.path.exists(fp)
-        res_ser = pd.read_csv(res_fp, index_col=0).iloc[:,0]
+        res_ser = pd.read_csv(fp, index_col=0).iloc[:,0]
         
         return res_ser
         

@@ -52,10 +52,7 @@ from .results.ResultsDialog import Results_Dialog
 #===============================================================================
 # imports for PluginReloader
 #===============================================================================
-from .build import lisamp, rsamp, oth_rfda
-from .hlpr import basic,  exceptions, logr,  plug, Q
-from .model import dmg2, modcom, risk1, risk2
-from .results import djoin
+
 
 
 class CanFlood:
@@ -233,11 +230,14 @@ class CanFlood:
         self.toolbarProjectResults.triggered.connect(self.showToolbarProjectResults)
         self.toolbar.addAction(self.toolbarProjectResults)
         
-        """
-        # add buttons to menu
-        self.iface.addPluginToMenu("CanFlood", self.toolbarProjectDataPrep)
-        self.iface.addPluginToMenu("CanFlood", self.toolbarProjectModelling)
-        self.iface.addPluginToMenu("CanFlood", self.toolbarProjectResults)"""
+        #=======================================================================
+        # plugin reloadert
+        #=======================================================================
+        from .build import lisamp, rsamp, oth_rfda
+        from .hlpr import basic,  exceptions, logr,  plug, Q
+        from .model import dmg2, modcom, risk1, risk2
+        from .results import djoin, riskPlot
+
         
 
     def showToolbarDataPrep(self):

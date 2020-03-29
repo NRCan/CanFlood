@@ -196,6 +196,97 @@ p, li { white-space: pre-wrap; }
             </widget>
            </item>
            <item>
+            <widget class="QGroupBox" name="verticalGroupBox_7">
+             <property name="title">
+              <string>Vectory Geometry (optional):</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_12">
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_4">
+                <item>
+                 <widget class="QLabel" name="label_8">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>Layer:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QgsMapLayerComboBox" name="comboBox_JGfinv">
+                  <property name="showCrs">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_5">
+                <item>
+                 <widget class="QLabel" name="label_9">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>100</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>Index FieldName:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QgsFieldComboBox" name="mFieldComboBox_JGfinv">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>200</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>200</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
             <widget class="QGroupBox" name="groupBox_4">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -274,13 +365,6 @@ p, li { white-space: pre-wrap; }
                 </property>
                </widget>
               </item>
-              <item>
-               <widget class="QCheckBox" name="checkBox_r2ep_2">
-                <property name="text">
-                 <string>Generate summary plot of total annualized impacts</string>
-                </property>
-               </widget>
-              </item>
              </layout>
             </widget>
            </item>
@@ -291,9 +375,22 @@ p, li { white-space: pre-wrap; }
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_9">
               <item>
-               <widget class="QCheckBox" name="checkBox_r2ires_2">
+               <widget class="QCheckBox" name="checkBox_r2ep_2">
                 <property name="text">
-                 <string>Run 'Results to Inventory Geometry' upon completion</string>
+                 <string>Generate summary plot of total annualized impacts</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="checkBox_r2ires_2">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="text">
+                 <string>Run 'Results Join Geo' upon completion (set Vector Geometry on the 'Setup' tab)</string>
+                </property>
+                <property name="checkable">
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -1279,13 +1376,6 @@ p, li { white-space: pre-wrap; }
                 </property>
                </widget>
               </item>
-              <item>
-               <widget class="QCheckBox" name="checkBox_r2plot">
-                <property name="text">
-                 <string>Generate summary plot of total expected value</string>
-                </property>
-               </widget>
-              </item>
              </layout>
             </widget>
            </item>
@@ -1296,7 +1386,17 @@ p, li { white-space: pre-wrap; }
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_4">
               <item>
+               <widget class="QCheckBox" name="checkBox_r2plot">
+                <property name="text">
+                 <string>Generate summary plot of total expected value</string>
+                </property>
+               </widget>
+              </item>
+              <item>
                <widget class="QCheckBox" name="checkBox_r2ires">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
                 <property name="text">
                  <string>Run 'Results to Inventory Geometry' upon completion</string>
                 </property>
@@ -2325,6 +2425,18 @@ p, li { white-space: pre-wrap; }
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QgsFieldComboBox</class>
+   <extends>QComboBox</extends>
+   <header>qgsfieldcombobox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>QgsMapLayerComboBox</class>
+   <extends>QComboBox</extends>
+   <header>qgsmaplayercombobox.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
