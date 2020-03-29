@@ -128,6 +128,10 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #styles
         def set_style(): #set the style options based on the selecte dlayer
             vlay = self.comboBox_JGfinv.currentLayer()
+            
+            if not isinstance(vlay, QgsVectorLayer):
+                return
+            
             gtype = QgsWkbTypes().displayString(vlay.wkbType())
             
             #get the directory for thsi type of style

@@ -353,8 +353,9 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         model.output_df(res_ser, '%s_%s'%(model.resname, 'ttl'))
         
+        out_fp2=''
         if not res_df is None:
-            _ = model.output_df(res_df, '%s_%s'%(model.resname, 'passet'))
+            out_fp2= model.output_df(res_df, '%s_%s'%(model.resname, 'passet'))
         
         
         tdelta = (time.time()-start)/60.0
@@ -364,12 +365,10 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         # links
         #======================================================================
         if self.checkBox_r2ires.isChecked():
-            log.error('results to inventory linking not implemented')
-            
-            """
-            TODO: link up  Results to Inventory Geometry
+            assert os.path.exists(out_fp2), 'need to generate results per asset'
+            self.results_joinGeo(out_fp2, out_dir, tag)
 
-            """
+
         return
 
         
@@ -386,6 +385,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         
         passing all values exliclpity to rely on assertion checks in caller
         """
+        log = self.logger.getChild('results_joinGeo')
         #=======================================================================
         # collect inputs
         #=======================================================================
