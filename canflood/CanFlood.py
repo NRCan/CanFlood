@@ -5,9 +5,9 @@ second call
 #==============================================================================
 #import------------------------------------------------------------------ 
 #==============================================================================
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QObject
-from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction, QFileDialog, QListWidget
+from PyQt5.QtCore import QSettings, QTranslator, QCoreApplication, QObject
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -47,7 +47,13 @@ from shutil import copyfile
 
 from .build.BuildDialog import DataPrep_Dialog
 from .model.ModelDialog import Modelling_Dialog
-from .ProjectResults.ProjectResultsDialog import Results_Dialog
+from .results.ResultsDialog import Results_Dialog
+
+#===============================================================================
+# imports for PluginReloader
+#===============================================================================
+
+
 
 class CanFlood:
 
@@ -87,7 +93,7 @@ class CanFlood:
         # Create the dialog (after translation) and keep reference
         self.dlg1 = DataPrep_Dialog(self.iface)
         self.dlg2 = Modelling_Dialog(self.iface)
-        self.dlg3 = Results_Dialog()
+        self.dlg3 = Results_Dialog(self.iface)
 
         # Declare instance attributes
         self.actions = []
@@ -224,11 +230,14 @@ class CanFlood:
         self.toolbarProjectResults.triggered.connect(self.showToolbarProjectResults)
         self.toolbar.addAction(self.toolbarProjectResults)
         
-        """
-        # add buttons to menu
-        self.iface.addPluginToMenu("CanFlood", self.toolbarProjectDataPrep)
-        self.iface.addPluginToMenu("CanFlood", self.toolbarProjectModelling)
-        self.iface.addPluginToMenu("CanFlood", self.toolbarProjectResults)"""
+        #=======================================================================
+        # plugin reloadert
+        #=======================================================================
+        from .build import lisamp, rsamp, oth_rfda
+        from .hlpr import basic,  exceptions, logr,  plug, Q
+        from .model import dmg2, modcom, risk1, risk2
+        from .results import djoin, riskPlot
+
         
 
     def showToolbarDataPrep(self):
