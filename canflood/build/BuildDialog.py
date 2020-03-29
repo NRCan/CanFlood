@@ -9,13 +9,15 @@ import sys, os, warnings, tempfile, logging, configparser, datetime, time
 import os.path
 from shutil import copyfile
 
-#qgis
-from PyQt5 import uic
-from PyQt5 import QtWidgets
+#PyQt
+from PyQt5 import uic, QtWidgets
+from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
 
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QObject 
-from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
+#===============================================================================
+# from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QObject 
+# from qgis.PyQt.QtGui import QIcon
+#===============================================================================
+
 
 from qgis.core import *
 from qgis.analysis import *
@@ -38,8 +40,7 @@ from build.rsamp import Rsamp
 from build.lisamp import LikeSampler
 from build.oth_rfda import RFDAconv
 
-#from canFlood_model import CanFlood_Model
-#import hp
+
 
 from hlpr.plug import *
 from hlpr.Q import *
@@ -55,7 +56,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
     
     event_name_set = [] #event names
     
-    invalid_cids = ['fid', 'ogc_fid']
+    
     
     def __init__(self, iface, parent=None):
         """these will only ini tthe first baseclass (QtWidgets.QDialog)
@@ -82,9 +83,12 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
        
         self.connect_slots()
         
+        
+        self.logger.info('DataPrep_Dialog initilized')
+        
 
     def connect_slots(self):
-        
+        log = self.logger.getChild('connect_slots')
         #self.testit()
         #======================================================================
         # pull project data
@@ -130,7 +134,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.logger.statusQlab.setText('BuildDialog initialized')
                 
         #======================================================================
-        # scenario setup tab----------
+        # setup tab----------
         #======================================================================
         #populate guis
         self.comboBox_vec.setFilters(QgsMapLayerProxyModel.VectorLayer) #SS. Inventory Layer: Drop down
@@ -331,9 +335,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
 
 
 
-        self.logger.info('DataPrep ui initilized')
+        
         #======================================================================
-        # dev
+        # defaults-----------
         #======================================================================
         """"
         to speed up testing.. manually configure the project
@@ -342,6 +346,17 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         debug_dir =os.path.join(os.path.expanduser('~'), 'CanFlood', 'build')
         self.lineEdit_cf_fp.setText(os.path.join(debug_dir, 'CanFlood_scenario1.txt'))
         self.lineEdit_wd.setText(debug_dir)
+        
+        if not os.path.exists(debug_dir):
+            log.info('builg directory: %s'%debug_dir)
+            os.makedirs(debug_dir)
+            
+        #=======================================================================
+        # wrap
+        #=======================================================================
+            
+        
+        
         
         
         
@@ -449,6 +464,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         log = self.logger.getChild('build_scenario')
         log.info('build_scenario started')
         self.tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
+        """
+        todo: make a fresh pull of this for each tool
+        """
         
         cid = self.mFieldComboBox_cid.currentField() #user selected field
         
@@ -465,6 +483,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         assert isinstance(self.tag, str)
         assert isinstance(finv_raw, QgsVectorLayer), 'must select a VectorLayer'
+        
         
         #check cid
         assert isinstance(cid, str)

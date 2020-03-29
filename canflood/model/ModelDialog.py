@@ -6,12 +6,12 @@ ui class for the MODEL toolset
 import os,  os.path, warnings, tempfile, logging, configparser, sys, time
 from shutil import copyfile
 
-from qgis.PyQt import uic
-from qgis.PyQt import QtWidgets
+from PyQt5 import uic, QtWidgets
 
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QObject
-from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction, QFileDialog, QListWidget
+
+from PyQt5.QtCore import QSettings, QTranslator, QCoreApplication, QObject
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget
 
 # Initialize Qt resources from file resources.py
 #from .resources import *
@@ -39,6 +39,8 @@ import pandas as pd
 from model.risk1 import Risk1
 from model.risk2 import Risk2
 from model.dmg2 import Dmg2
+
+import results.djoin
 
 
 import hlpr.plug
@@ -117,10 +119,41 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #overwrite control
         self.checkBox_SSoverwrite.stateChanged.connect(self.set_overwrite)
         
+        
+        #=======================================================================
+        # Join Geometry 
+        #=======================================================================
+
+        #vector geometry layer
+        self.comboBox_JGfinv.setFilters(QgsMapLayerProxyModel.VectorLayer) 
+        
+        def upd_cid(): #change the 'cid' display when the finv selection changes
+            return self.mfcb_connect(
+                self.mFieldComboBox_JGfinv, self.comboBox_JGfinv.currentLayer(),
+                fn_str = 'xid' )
+        
+        self.comboBox_JGfinv.layerChanged.connect(upd_cid)
+        
+        
+
+        
+        
+        
         #======================================================================
-        # risk level 1
+        # risk level 1----------
         #======================================================================
         self.pushButton_r1Run.clicked.connect(self.run_risk1)
+        
+        #conditional check boxes
+        def tog_jg(): #toggle thte join_geo option
+            
+            
+            pstate = self.checkBox_r2rpa_2.isChecked()
+            #if checked, enable the second box
+            self.checkBox_r2ires_2.setDisabled(np.invert(pstate))
+            self.checkBox_r2ires_2.setChecked(False) #clear the check
+            
+        self.checkBox_r2rpa_2.stateChanged.connect(tog_jg)
         
         #======================================================================
         # impacts level 2
@@ -131,6 +164,17 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         # risk level 2
         #======================================================================
         self.pushButton_r2Run.clicked.connect(self.run_risk2)
+        
+        #conditional check boxes
+        def tog_jg2(): #toggle thte join_geo option
+            
+            
+            pstate = self.checkBox_r2rpa.isChecked()
+            #if checked, enable the second box
+            self.checkBox_r2ires.setDisabled(np.invert(pstate))
+            self.checkBox_r2ires.setChecked(False) #clear the check
+            
+        self.checkBox_r2rpa.stateChanged.connect(tog_jg2)
         
         #======================================================================
         # risk level 3
@@ -220,19 +264,23 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #==========================================================================
         # output
         #==========================================================================
-        model.output_df(res, '%s_%s'%(model.resname, 'ttl'))
+        out_fp = model.output_df(res, '%s_%s'%(model.resname, 'ttl'))
         
+        out_fp2 = None
         if not res_df is None:
-            _ = model.output_df(res_df, '%s_%s'%(model.resname, 'passet'))
+            out_fp2 = model.output_df(res_df, '%s_%s'%(model.resname, 'passet'))
             
         self.logger.push('Risk1 Complete')
         self.feedback.upd_prog(None) #set the progress bar back down to zero
         
-        #======================================================================
+        #=======================================================================
         # links
-        #======================================================================
+        #=======================================================================
         if self.checkBox_r2ires_2.isChecked():
-            log.error('results to inventory linking not implemented')
+            assert os.path.exists(out_fp2), 'need to generate results per asset'
+            self.results_joinGeo(out_fp2, out_dir, tag)
+        
+
             
         return
         
@@ -305,8 +353,9 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         model.output_df(res_ser, '%s_%s'%(model.resname, 'ttl'))
         
+        out_fp2=''
         if not res_df is None:
-            _ = model.output_df(res_df, '%s_%s'%(model.resname, 'passet'))
+            out_fp2= model.output_df(res_df, '%s_%s'%(model.resname, 'passet'))
         
         
         tdelta = (time.time()-start)/60.0
@@ -316,12 +365,10 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         # links
         #======================================================================
         if self.checkBox_r2ires.isChecked():
-            log.error('results to inventory linking not implemented')
-            
-            """
-            TODO: link up  Results to Inventory Geometry
+            assert os.path.exists(out_fp2), 'need to generate results per asset'
+            self.results_joinGeo(out_fp2, out_dir, tag)
 
-            """
+
         return
 
         
@@ -329,3 +376,77 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         raise Error('not implemented')
     
         self.feedback.upd_prog(None) #set the progress bar back down to zero
+        
+    def results_joinGeo(self, data_fp, wd, tag):
+        """
+        not a good way to have the user specify the 
+        
+        helper to execute results joiner
+        
+        passing all values exliclpity to rely on assertion checks in caller
+        """
+        log = self.logger.getChild('results_joinGeo')
+        #=======================================================================
+        # collect inputs
+        #=======================================================================
+        geo_vlay = self.comboBox_JGfinv.currentLayer()
+        cid = self.mFieldComboBox_JGfinv.currentField() #user selected field
+        crs = self.qproj.crs()
+        #=======================================================================
+        # check inputs
+        #=======================================================================
+        assert isinstance(geo_vlay, QgsVectorLayer), \
+            'need to specify a geometry layer on the \'Setup\' tab to join results to'
+            
+        assert isinstance(crs, QgsCoordinateReferenceSystem)
+        assert crs.isValid()
+        
+        #check cid
+        assert isinstance(cid, str), 'bad index FieldName passed'
+        if cid == '' or cid in self.invalid_cids:
+            raise Error('user selected index FieldName \'%s\''%cid)
+        
+        assert cid in [field.name() for field in geo_vlay.fields()] 
+        
+        assert os.path.exists(data_fp), 'invalid data_fp'
+        
+        #=======================================================================
+        # execute
+        #=======================================================================
+        #setup
+        wrkr = results.djoin.Djoiner(logger=self.logger, 
+                                     tag = tag,
+                                     feedback=self.feedback,
+                                     cid=cid, crs=crs,
+                                     out_dir=wd)
+        #execute
+        res_vlay = wrkr.run(geo_vlay, data_fp, cid,
+                 keep_fnl='all', #todo: setup a dialog to allow user to select any of the fields
+                 )
+        
+        self.qproj.addMapLayer(res_vlay)
+        
+        #=======================================================================
+        # wrap
+        #=======================================================================
+
+        
+        self.feedback.upd_prog(None)
+        log.push('run_joinGeo finished')
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
