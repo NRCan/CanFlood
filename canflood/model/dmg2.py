@@ -122,14 +122,12 @@ class Dmg2(Model):
             self.load_gels()
             self.add_gels()
         
-        self.setup_dfuncs(self.data_d['curves'])
+
         
-        #self.setup_finv()
-        
-        
-        #self.setup_expo_data()
         self.build_exp_finv() #build the expanded finv
         self.build_depths()
+        
+        self.setup_dfuncs(self.data_d['curves'])
         
         #======================================================================
         # checks
@@ -150,13 +148,29 @@ class Dmg2(Model):
         """
         consider only building curves found in the inventory
         """
-        
+        #=======================================================================
+        # defaults
+        #=======================================================================
         log = self.logger.getChild('setup_dfuncs')
+        minDep_d = dict() #minimum depth container
         
-        #loop through each frame and build the func
+        #=======================================================================
+        # get list of dfuncs in the finv
+        #=======================================================================
+        assert self.bdf['ftag'].dtype.char == 'O'
+        ftags_valid = self.bdf['ftag'].unique().tolist()
+
+        log.info('loading for %i valid ftags in the finv'%len(ftags_valid))
+        #=======================================================================
+        # #loop through each frame and build the func
+        #=======================================================================
         for tabn, df in df_d.items():
             if tabn.startswith('_'):
                 log.warning('skipping dummy tab \'%s\''%tabn)
+                continue
+            
+            #skip those not in the finv
+            if not tabn in ftags_valid:
                 continue
             
             if not isinstance(df, pd.DataFrame):
@@ -170,8 +184,22 @@ class Dmg2(Model):
             #store it
             self.dfuncs_d[dfunc.tag] = dfunc
             
-        log.debug('finishe building %i curves \n    %s'%(
+            #collect stats
+            assert isinstance(dfunc.min_dep, float)
+            minDep_d[tabn] = dfunc.min_dep
+            
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        #check we loaded everything
+        l = set(ftags_valid).difference(self.dfuncs_d.keys())
+        assert len(l)==0,'failed to load: %s'%l
+        
+        self.minDep_d = minDep_d
+        
+        log.info('finishe building %i curves \n    %s'%(
             len(self.dfuncs_d), list(self.dfuncs_d.keys())))
+        
         
     def check_ftags(self):
         fdf = self.data_d['finv']
@@ -518,6 +546,7 @@ class DFunc(object,
     # user pars
     #==========================================================================
     tag = 'dfunc'
+    min_dep = None
     
     def __init__(self,
                  tabn='damage_func', #optional tab name for logging
@@ -598,6 +627,14 @@ class DFunc(object,
         ar = np.sort(np.array([dd_df.iloc[:,0].tolist(), dd_df.iloc[:,1].tolist()]), axis=1)
         self.dd_ar = ar
         
+        #=======================================================================
+        # get stats
+        #=======================================================================
+        self.min_dep = min(ar[0])
+        
+        #=======================================================================
+        # wrap
+        #=======================================================================
         log.debug('\'%s\' built w/ dep min/max %.2f/%.2f and dmg min/max %.2f/%.2f'%(
             self.tag, min(ar[0]), max(ar[0]), min(ar[1]), max(ar[1])
             ))
@@ -652,26 +689,24 @@ if __name__ =="__main__":
     # tutorial 2
     #==========================================================================
 
-    runpars_d={
-        'Tut2':{
-            'out_dir':os.path.join(os.getcwd(), 'dmg2', 'Tut2'),
-            'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\built\CanFlood_tut2.txt',
-               
-            }
-        }
+    #===========================================================================
+    # runpars_d={
+    #     'Tut2':{
+    #         'out_dir':os.path.join(os.getcwd(), 'dmg2', 'Tut2'),
+    #         'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\built\CanFlood_tut2.txt',
+    #         }
+    #     }
+    #===========================================================================
      
     #===========================================================================
     # testing
     #===========================================================================
-    #===========================================================================
-    # runpars_d={
-    #     'test':{
-    #         'out_dir':os.path.join(os.getcwd(), 'dmg2', 'Tut2'),
-    #         'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200330\CanFlood_tut2.txt',
-    #           
-    #         }
-    #     }
-    #===========================================================================
+    runpars_d={
+        'test':{
+            'out_dir':os.path.join(os.getcwd(), 'dmg2', 'Tut2'),
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200330\CanFlood_tut2.txt',
+            }
+        }
     
     #==========================================================================
     # build/execute
