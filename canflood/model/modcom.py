@@ -1045,12 +1045,14 @@ class Model(ComWrkr):
         #======================================================================
         # fill nulls
         #======================================================================
+        """no! dont want to mix these up w/ negatives.
+        filtering nulls in risk1.run() and dmg2.bdmg()
         booldf = ddf.drop([bid, cid], axis=1).isna()
         if booldf.any().any():
             log.warning('setting %i (of %i) null depth values to zero'%(
                 booldf.sum().sum(), booldf.size))
             
-            ddf = ddf.fillna(0.0)
+            ddf = ddf.fillna(0.0)"""
         
         #======================================================================
         # negative depths
