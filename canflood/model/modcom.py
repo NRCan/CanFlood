@@ -82,7 +82,7 @@ class Model(ComWrkr):
     #==========================================================================
     bid = 'bid' #indexer for expanded finv
 
-    #expectations fo rinventory    
+    #minimum inventory expectations
     finv_exp_d = {
         'f0_scale':{'type':np.number},
         'f0_elv':{'type':np.number},
@@ -363,7 +363,8 @@ class Model(ComWrkr):
         #use expectation handles
         for coln, hndl_d in finv_exp_d.items():
             assert isinstance(hndl_d, dict)
-            assert coln in df.columns, '%s missing expected column \'%s\''%(dtag, coln)
+            assert coln in df.columns, \
+                '%s missing expected column \'%s\''%(dtag, coln)
             ser = df[coln]
             for hndl, cval in hndl_d.items():
                 
@@ -375,6 +376,7 @@ class Model(ComWrkr):
                     
                     https://stackoverflow.com/questions/48340392/futurewarning-conversion-of-the-second-argument-of-issubdtype-from-float-to
                     """
+                    
                 elif hndl == 'contains':
                     assert cval in ser, '%s.%s should contain %s'%(dtag, coln, cval)
                 else:
@@ -659,6 +661,16 @@ class Model(ComWrkr):
         
         df = df.rename(columns={df.columns[0]:'gels'}).round(self.prec)
         
+        #slice down to cids in the cindex
+        """requiring dmg and expos inputs to match
+        allowing minor inputs to be sliced"""
+        l = set(self.cindex.values).difference(df.index.values)
+        assert len(l)==0, 'gels missing %i cids: %s'%(len(l), l)
+        
+        boolidx = df.index.isin(self.cindex.values)
+        df = df.loc[boolidx, :]
+        
+        log.debug('sliced from %i to %i'%(len(boolidx), boolidx.sum()))
         
         #======================================================================
         # post checks
@@ -744,8 +756,9 @@ class Model(ComWrkr):
         assert len(enm_l) > 1, 'failed to identify sufficient damage columns'
         
 
-        #check cids
-        assert np.array_equal(self.cindex, df.index), 'cid mismatch'
+        #check cid index match
+        assert np.array_equal(self.cindex, df.index), \
+            'provided \'%s\' index (%i) does not match finv index (%i)'%(dtag, len(df), len(self.cindex))
         
         #check events
         """
@@ -930,6 +943,9 @@ class Model(ComWrkr):
             
             #fix the columns
             bdf.columns = bdf.columns.str.replace('%s_'%prefix, 'f')
+            
+            #reset the index
+            bdf = bdf.reset_index(drop=True)
             
         else:
             raise Error('bad prefix match')

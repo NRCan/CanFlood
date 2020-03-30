@@ -92,11 +92,12 @@ class Dmg2(Model):
        
         self.dfuncs_d = dict() #container for damage functions
         
+        """allowing a single set
         #update the inventory expectations
         self.finv_exp_d = {**self.finv_exp_d,
                                    **{'f1_tag':{'type':np.object},
                                       }
-                           }
+                           }"""
         
         self.logger.debug('finished __init__ on Dmg2')
         
@@ -200,7 +201,7 @@ class Dmg2(Model):
         #======================================================================
         log = self.logger.getChild('run')
         
-
+        self.feedback.setProgress(5)
         #======================================================================
         # get damages
         #======================================================================
@@ -219,7 +220,7 @@ class Dmg2(Model):
         #======================================================================
         # checks
         #======================================================================
-
+        self.feedback.setProgress(95)
         fdf = self.data_d['finv']
         
         miss_l = set(fdf.index.values).symmetric_difference(cres_df.index.values)
@@ -234,7 +235,7 @@ class Dmg2(Model):
         
         return cres_df
         
-    def bdmg(self, #get damages on binv
+    def bdmg(self, #get damages on expanded finv
             ):
         #======================================================================
         # defaults
@@ -242,7 +243,8 @@ class Dmg2(Model):
         log = self.logger.getChild('bdmg')
         
         #set some locals
-        bdf ,ddf = self.bdf, self.ddf
+        bdf = self.bdf  #expanded finv. see modcom.build_exp_finv()
+        ddf = self.ddf
         """ddf is appending _1 to column names"""
         cid, bid = self.cid, self.bid
         
@@ -256,7 +258,7 @@ class Dmg2(Model):
         
         log.info('running on %i assets and %i events'%(len(bdf), len(ddf.columns)-2))
         
-
+        self.feedback.setProgress(10)
         #======================================================================
         # adjust depths by exposure grade
         #======================================================================
@@ -291,7 +293,8 @@ class Dmg2(Model):
             len(valid_tags), len(all_tags), valid_tags))
         
         #start results container
-        res_df = bdf.loc[:, [bid, cid, 'ftag', 'fcap', 'fscale']]
+        res_df = bdf.loc[:, [bid, cid, 'ftag', 'fcap', 'fscale']].copy()
+        """need this for the joiner to work (bid is ambigious)"""
         res_df.index.name = None
         
         #get events name set
@@ -302,21 +305,13 @@ class Dmg2(Model):
             events_df[sufix] = events_df.index + '_%s'%sufix
         
         #======================================================================
-        # RAW: loop and calc raw damage by ftag
+        # RAW: loop and calc raw damage by ftag-------------
         #======================================================================
+        #setup loop pars
         first = True
-        self.progress = 0
-        len_valid_tags = len(valid_tags)
-        valid_tags_count = 0
-        
-        
-        
-        for indxr, ftag in enumerate(valid_tags):
 
-            # update progress variable
-            self.progress = math.ceil((100.0 * valid_tags_count) / len_valid_tags)
-            valid_tags_count += 1
-            
+
+        for indxr, ftag in enumerate(valid_tags):
             log = self.logger.getChild('run.%s'%ftag)
             
             
@@ -330,7 +325,7 @@ class Dmg2(Model):
             log.info('(%i/%i) calculating \'%s\' w/ %i assets (of %i)'%(
                 indxr+1, len(valid_tags), ftag, boolidx.sum(), len(boolidx)))
             
-            log.info('%i progress'%(self.progress))
+
             #==================================================================
             # calc damage by tag.depth
             #==================================================================
@@ -393,12 +388,11 @@ class Dmg2(Model):
             # wrap
             #==================================================================
 
-                
+            # update progress variable
+            self.feedback.upd_prog((indxr+1)/len(valid_tags)*60, method='raw')
             first = False
             log.debug('finished raw_damages for %i events'%dboolcol.sum())
          
-        # finished loop
-        self.progres = 100
            
         log = self.logger.getChild('run')
 
@@ -425,10 +419,8 @@ class Dmg2(Model):
             #calc and set the scalecd values
             res_df[e_ser['scaled']] = res_df.loc[:, boolcol].multiply(res_df['fscale'], axis=0)
                 
-        
-
-
         log.info('scaled damages')
+        self.feedback.setProgress(80)
         #======================================================================
         #CAPPED------------
         #======================================================================
@@ -453,7 +445,7 @@ class Dmg2(Model):
 
         
         log.info('capped damages')
-        
+        self.feedback.setProgress(90)
         #======================================================================
         # DMG-------------
         #======================================================================
@@ -472,15 +464,12 @@ class Dmg2(Model):
         #======================================================================
         # checks
         #======================================================================
-        assert np.array_equal(res_df.index, self.bdf.index), 'index mismatch'
+        assert np.array_equal(res_df.index, bdf.index), 'index mismatch'
                 
         #columns to keep
         boolcol = res_df.columns.isin([cid, bid]+ events_df['dmg'].tolist())
         
         res_df1 = res_df.loc[:, boolcol]
-        
-        #clean up columns
-        
         
         assert res_df1.notna().all().all(), 'got some nulls'
         
@@ -609,7 +598,7 @@ class DFunc(object,
         ar = np.sort(np.array([dd_df.iloc[:,0].tolist(), dd_df.iloc[:,1].tolist()]), axis=1)
         self.dd_ar = ar
         
-        log.info('\'%s\' built w/ dep min/max %.2f/%.2f and dmg min/max %.2f/%.2f'%(
+        log.debug('\'%s\' built w/ dep min/max %.2f/%.2f and dmg min/max %.2f/%.2f'%(
             self.tag, min(ar[0]), max(ar[0]), min(ar[1]), max(ar[1])
             ))
         
@@ -647,6 +636,8 @@ class DFunc(object,
 if __name__ =="__main__": 
     
 
+    
+
     #==========================================================================
     # dev data
     #=========================================================================
@@ -660,26 +651,27 @@ if __name__ =="__main__":
     #==========================================================================
     # tutorial 2
     #==========================================================================
-    #===========================================================================
-    # runpars_d={
-    #     'Tut2':{
-    #         'out_dir':os.path.join(os.getcwd(), 'dmg2', 'Tut2'),
-    #         'cf_fp':r'C:\Users\cefect\CanFlood\build\2\CanFlood_tutorial2.txt',
-    #          
-    #         },
-    #     }
-    #===========================================================================
-    
-    #===========================================================================
-    # tutorial 3
-    #===========================================================================
+
     runpars_d={
         'Tut2':{
             'out_dir':os.path.join(os.getcwd(), 'dmg2', 'Tut2'),
             'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\built\CanFlood_tut2.txt',
-             
+               
             }
         }
+     
+    #===========================================================================
+    # testing
+    #===========================================================================
+    #===========================================================================
+    # runpars_d={
+    #     'test':{
+    #         'out_dir':os.path.join(os.getcwd(), 'dmg2', 'Tut2'),
+    #         'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200330\CanFlood_tut2.txt',
+    #           
+    #         }
+    #     }
+    #===========================================================================
     
     #==========================================================================
     # build/execute
