@@ -40,6 +40,57 @@ from hlpr.basic import *
 class Model(ComWrkr):
     """
     common methods for model classes
+    
+    
+    Control File Parameters:
+        [parameters]
+
+        event_probs -- format of event probabilities (in 'aeps' data file) 
+                        (default 'ari')
+                        
+            'aeps'           event probabilities in aeps file expressed as 
+                            annual exceedance probabilities
+            'aris'           expressed as annual recurrance intervals
+            
+        
+        ltail -- zero probability event extrapolation handle 
+                (default 'extrapolate')
+            'flat'           set the zero probability event equal to the most 
+                            extreme impacts in the passed series
+            'extrapolate'    set the zero probability event by extrapolating from 
+                            the most extreme impact
+            'none'           do not extrapolate (not recommended)
+            float            use the passed value as the zero probability impact value
+             
+        
+        rtail -- zreo impacts event extrapolation handle    (default 0.5)
+            'extrapolate'    set the zero impact event by extrapolating from the 
+                            least extreme impact
+            'none'           do not extrapolate (not recommended) 
+            float           use the passed value as the zero impacts aep value
+        
+        drop_tails -- flag to drop the extrapolated values from the results 
+                            (default True)
+        
+        integrate -- numpy integration method to apply (default 'trapz')
+        
+        res_per_asset -- flag to generate results per asset 
+        
+        ground_water -- flag to include negative depths in the analysis
+        
+        [dmg_fps]
+
+        
+        [risk_fps]
+        dmgs -- damage data results file path (default N/A)
+            
+        exlikes -- secondary exposure likelihood data file path (default N/A)
+        
+        evals -- event probability data file path (default N/A)
+        
+        [validation]
+        risk2 -- Risk2 validation flag (default False)
+    
     """
     
     #==========================================================================
