@@ -5,3 +5,4 @@
 *.pyc
 *tif.aux.xml
 *.cpython-37.pyc
+*.settings
