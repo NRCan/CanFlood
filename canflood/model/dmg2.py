@@ -57,6 +57,7 @@ class Dmg2(Model):
             {'name':{'type':str}, 'cid':{'type':str},
              'felv':{'values':('ground', 'datum')},
              'prec':{'type':int}, 
+             'ground_water':{'type':bool},
              },
         'dmg_fps':{
              'finv':{'ext':('.csv',)},
@@ -188,14 +189,24 @@ class Dmg2(Model):
             assert isinstance(dfunc.min_dep, float)
             minDep_d[tabn] = dfunc.min_dep
             
+
         #=======================================================================
-        # wrap
+        # post checks
         #=======================================================================
         #check we loaded everything
         l = set(ftags_valid).difference(self.dfuncs_d.keys())
         assert len(l)==0,'failed to load: %s'%l
         
-        self.minDep_d = minDep_d
+        #check ground_water condition vs minimum value passed in dfuncs.
+        if not self.ground_water:
+            if min(minDep_d.values())<0:
+                log.warning('ground_water=False but some dfuncs have negative depth values')
+        
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        
+        self.df_minD_d = minDep_d
         
         log.info('finishe building %i curves \n    %s'%(
             len(self.dfuncs_d), list(self.dfuncs_d.keys())))
@@ -300,9 +311,21 @@ class Dmg2(Model):
         #======================================================================
         # calc setup
         #======================================================================
+        #id bids with valid depths
+        if self.ground_water:
+            mdval = min(self.df_minD_d.values())
+        else:
+            mdval = 0
+        
+        dep_boolcol = ddf.loc[:, dboolcol] >= mdval
+        
+        if not dep_boolcol.all().all():
+            log.info('got %i (of %i) entries w/ invalid depths (<= %.2f)'%(
+                np.invert(dep_boolcol).sum().sum(), dep_boolcol.size, mdval))
+        
         #get relvant bids
         vboolidx = pd.DataFrame(np.logical_and(
-            ddf.loc[:, dboolcol] > 0,#get bids w/ positive depths
+            dep_boolcol,
             ddf.loc[:,dboolcol].notna()) #real depths
         ).any(axis=1)  
         

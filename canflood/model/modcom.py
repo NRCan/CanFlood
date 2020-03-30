@@ -494,8 +494,6 @@ class Model(ComWrkr):
         assert cid in df_raw.columns, '%s missing index column \"%s\''%(dtag, cid)
         assert df_raw.columns.dtype.char == 'O','bad event names on %s'%dtag
         
-
-        
         #======================================================================
         # clean it
         #======================================================================
@@ -546,8 +544,7 @@ class Model(ComWrkr):
         
         assert np.array_equal(self.cindex, df.index), 'cid mismatch'
         
-        
-        
+
         if check_monot:
             self.check_monot(df, aep_ser = self.data_d['evals'])
 
@@ -1011,7 +1008,7 @@ class Model(ComWrkr):
         # defaults
         #======================================================================
         log = self.logger.getChild('build_depths')
-        bdf = self.bdf.copy()
+        bdf = self.bdf.copy() #expanded finv
         cid, bid = self.cid, self.bid
 
 
@@ -1036,11 +1033,8 @@ class Model(ComWrkr):
         boolcol = ~ddf.columns.isin([cid, bid]) #columns w/ depth values
         
         for coln in ddf.columns[boolcol]:
-            #boolidx1=  ddf[coln].isna()
             ddf.loc[:, coln] = (ddf[coln] - bdf['felv']).round(self.prec)
-            #boolidx2 = ddf[coln].isna()
-            
-            #assert np.array_equal(boolidx1, boolidx2)
+
             """
             maintains nulls
             """
@@ -1062,15 +1056,24 @@ class Model(ComWrkr):
         # negative depths
         #======================================================================
         booldf = ddf.loc[:,boolcol] < 0 #True=wsl below ground
-
+        
+        
         if booldf.any().any():
             """
             note these are un-nesetd assets, so counts will be larger than expected
             """
-            log.warning('setting %i (of %i) negative depths to zero'%(
-                booldf.sum().sum(), booldf.size))
-            
-            ddf.loc[:, boolcol] = ddf.loc[:,boolcol].where(~booldf, other=0)
+            #user wants to ignore ground_water, set all negatives to zero
+            if not self.ground_water:
+                log.warning('setting %i (of %i) negative depths to zero'%(
+                    booldf.sum().sum(), booldf.size))
+                
+                """NO! filtering negatives during dmg2.bdmg()
+                ddf.loc[:, boolcol] = ddf.loc[:,boolcol].where(~booldf, other=0)"""
+                
+            #user wants to keep negative depths.. leave as is
+            else:
+                log.info('gorund_water=True. preserving %i (of %i) negative depths'%(
+                    booldf.sum().sum(), booldf.size))
             
         #======================================================================
         # post checks
