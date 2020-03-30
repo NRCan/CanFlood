@@ -82,7 +82,7 @@ class Model(ComWrkr):
     #==========================================================================
     bid = 'bid' #indexer for expanded finv
 
-    #expectations fo rinventory    
+    #minimum inventory expectations
     finv_exp_d = {
         'f0_scale':{'type':np.number},
         'f0_elv':{'type':np.number},
@@ -363,7 +363,8 @@ class Model(ComWrkr):
         #use expectation handles
         for coln, hndl_d in finv_exp_d.items():
             assert isinstance(hndl_d, dict)
-            assert coln in df.columns, '%s missing expected column \'%s\''%(dtag, coln)
+            assert coln in df.columns, \
+                '%s missing expected column \'%s\''%(dtag, coln)
             ser = df[coln]
             for hndl, cval in hndl_d.items():
                 
@@ -375,6 +376,7 @@ class Model(ComWrkr):
                     
                     https://stackoverflow.com/questions/48340392/futurewarning-conversion-of-the-second-argument-of-issubdtype-from-float-to
                     """
+                    
                 elif hndl == 'contains':
                     assert cval in ser, '%s.%s should contain %s'%(dtag, coln, cval)
                 else:
@@ -492,8 +494,6 @@ class Model(ComWrkr):
         assert cid in df_raw.columns, '%s missing index column \"%s\''%(dtag, cid)
         assert df_raw.columns.dtype.char == 'O','bad event names on %s'%dtag
         
-
-        
         #======================================================================
         # clean it
         #======================================================================
@@ -544,8 +544,7 @@ class Model(ComWrkr):
         
         assert np.array_equal(self.cindex, df.index), 'cid mismatch'
         
-        
-        
+
         if check_monot:
             self.check_monot(df, aep_ser = self.data_d['evals'])
 
@@ -659,6 +658,16 @@ class Model(ComWrkr):
         
         df = df.rename(columns={df.columns[0]:'gels'}).round(self.prec)
         
+        #slice down to cids in the cindex
+        """requiring dmg and expos inputs to match
+        allowing minor inputs to be sliced"""
+        l = set(self.cindex.values).difference(df.index.values)
+        assert len(l)==0, 'gels missing %i cids: %s'%(len(l), l)
+        
+        boolidx = df.index.isin(self.cindex.values)
+        df = df.loc[boolidx, :]
+        
+        log.debug('sliced from %i to %i'%(len(boolidx), boolidx.sum()))
         
         #======================================================================
         # post checks
@@ -744,8 +753,9 @@ class Model(ComWrkr):
         assert len(enm_l) > 1, 'failed to identify sufficient damage columns'
         
 
-        #check cids
-        assert np.array_equal(self.cindex, df.index), 'cid mismatch'
+        #check cid index match
+        assert np.array_equal(self.cindex, df.index), \
+            'provided \'%s\' index (%i) does not match finv index (%i)'%(dtag, len(df), len(self.cindex))
         
         #check events
         """
@@ -931,6 +941,9 @@ class Model(ComWrkr):
             #fix the columns
             bdf.columns = bdf.columns.str.replace('%s_'%prefix, 'f')
             
+            #reset the index
+            bdf = bdf.reset_index(drop=True)
+            
         else:
             raise Error('bad prefix match')
         
@@ -995,7 +1008,7 @@ class Model(ComWrkr):
         # defaults
         #======================================================================
         log = self.logger.getChild('build_depths')
-        bdf = self.bdf.copy()
+        bdf = self.bdf.copy() #expanded finv
         cid, bid = self.cid, self.bid
 
 
@@ -1020,11 +1033,8 @@ class Model(ComWrkr):
         boolcol = ~ddf.columns.isin([cid, bid]) #columns w/ depth values
         
         for coln in ddf.columns[boolcol]:
-            #boolidx1=  ddf[coln].isna()
             ddf.loc[:, coln] = (ddf[coln] - bdf['felv']).round(self.prec)
-            #boolidx2 = ddf[coln].isna()
-            
-            #assert np.array_equal(boolidx1, boolidx2)
+
             """
             maintains nulls
             """
@@ -1035,26 +1045,37 @@ class Model(ComWrkr):
         #======================================================================
         # fill nulls
         #======================================================================
+        """no! dont want to mix these up w/ negatives.
+        filtering nulls in risk1.run() and dmg2.bdmg()
         booldf = ddf.drop([bid, cid], axis=1).isna()
         if booldf.any().any():
             log.warning('setting %i (of %i) null depth values to zero'%(
                 booldf.sum().sum(), booldf.size))
             
-            ddf = ddf.fillna(0.0)
+            ddf = ddf.fillna(0.0)"""
         
         #======================================================================
         # negative depths
         #======================================================================
         booldf = ddf.loc[:,boolcol] < 0 #True=wsl below ground
-
+        
+        
         if booldf.any().any():
             """
             note these are un-nesetd assets, so counts will be larger than expected
             """
-            log.warning('setting %i (of %i) negative depths to zero'%(
-                booldf.sum().sum(), booldf.size))
-            
-            ddf.loc[:, boolcol] = ddf.loc[:,boolcol].where(~booldf, other=0)
+            #user wants to ignore ground_water, set all negatives to zero
+            if not self.ground_water:
+                log.warning('setting %i (of %i) negative depths to zero'%(
+                    booldf.sum().sum(), booldf.size))
+                
+                """NO! filtering negatives during dmg2.bdmg()
+                ddf.loc[:, boolcol] = ddf.loc[:,boolcol].where(~booldf, other=0)"""
+                
+            #user wants to keep negative depths.. leave as is
+            else:
+                log.info('gorund_water=True. preserving %i (of %i) negative depths'%(
+                    booldf.sum().sum(), booldf.size))
             
         #======================================================================
         # post checks

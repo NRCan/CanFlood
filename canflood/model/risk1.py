@@ -58,6 +58,7 @@ class Risk1(Model):
              'felv':{'values':('ground', 'datum')},
              'prec':{'type':int}, 
              'drop_tails':{'type':bool},
+              #'ground_water':{'type':bool}, #NO! risk1 only accepts positive depths
              },
             
         'dmg_fps':{
@@ -185,6 +186,10 @@ class Risk1(Model):
         ddf1 = ddf.loc[:, ~boolcol]
         
         #get relvant bids
+        """
+        because there are no curves, Risk1 can only use positive depths.
+        ground_water flag is ignored
+        """
         booldf = pd.DataFrame(np.logical_and(
             ddf1 > 0,#get bids w/ positive depths
             ddf1.notna()) #real depths
@@ -296,28 +301,28 @@ if __name__ =="__main__":
     #==========================================================================
     # dev data
     #==========================================================================
-    #==========================================================================
-    # runpars_d = {
-    #     'Dev':{
-    #         'out_dir': os.path.join(os.getcwd(), 'risk1'),
-    #         'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\risk1\wex\CanFlood_risk1.txt',
-    #         }
-    #     }
-    #==========================================================================
+    runpars_d = {
+        'Test':{
+            'out_dir': os.path.join(os.getcwd(), 'dev'),
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200330\1a\CanFlood_tut1a.txt',
+            }
+        }
     
     #==========================================================================
     # tutorials
     #==========================================================================
-    runpars_d={
-        'Tut1a':{
-            'out_dir':os.path.join(os.getcwd(),'risk1', 'Tut1a'),
-            'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\built_1a\CanFlood_tut1a.txt',
-            },
-        'Tut1b':{
-            'out_dir':os.path.join(os.getcwd(), 'Tut1b'),
-            'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\built_1b\CanFlood_tut1b.txt',
-            }
-        }
+    #===========================================================================
+    # runpars_d={
+    #     'Tut1a':{
+    #         'out_dir':os.path.join(os.getcwd(), 'Tut1a'),
+    #         'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\built_1a\CanFlood_tut1a.txt',
+    #         },
+    #     'Tut1b':{
+    #         'out_dir':os.path.join(os.getcwd(), 'Tut1b'),
+    #         'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\built_1b\CanFlood_tut1b.txt',
+    #         }
+    #     }
+    #===========================================================================
     #==========================================================================
     # 20200304
     #==========================================================================

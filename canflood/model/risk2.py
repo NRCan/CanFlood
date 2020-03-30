@@ -273,7 +273,7 @@ if __name__ =="__main__":
     runpars_d={
         'Tut2':{
             'out_dir':os.path.join(os.getcwd(), 'risk2', 'Tut2'),
-            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200305\CanFlood_Tut2.txt',
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200330\CanFlood_tut2.txt',
             }
         }
     
