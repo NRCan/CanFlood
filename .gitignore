@@ -124,3 +124,9 @@ dmypy.json
 # Pyre type checker
 .pyre/
 Qda4/.project
+
+
+#pydev
+.pydevproject
+.project
+.settings
