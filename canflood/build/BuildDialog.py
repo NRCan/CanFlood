@@ -242,7 +242,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             vlay = self.comboBox_vec.currentLayer()
             if isinstance(vlay,QgsVectorLayer):
                 gtype = QgsWkbTypes().displayString(vlay.wkbType())
-                self.comboBox_HS_stat.clear()
+                self.comboBox_HS_stat.setCurrentIndex(-1)
                 
                 if 'Polygon' in gtype:
                     self.comboBox_HS_stat.addItems(
@@ -266,9 +266,13 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         
         #======================================================================
-        # Likelihood Sampler-----------
+        # Conditional Probabilities-----------
         #======================================================================
-        """todo: rename the buttons so they align w/ the set labels"""
+        """todo: rename the buttons so they align w/ the set labels
+        
+        todo: automatically populate the first column of boxes w/ those layers
+        sampled w/ rsamp
+        """
         #list of combo box names on the likelihood sampler tab
         self.ls_cb_d = { #set {hazard raster : lpol}
             1: (self.MLCB_LS1_event_3, self.MLCB_LS1_lpol_3),
@@ -284,18 +288,22 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #loop and set filteres
         first = True
         for sname, (mlcb_haz, mlcb_lpol) in self.ls_cb_d.items():
-            #set drop down filters
+            #set drop down filters on hazard bars
             mlcb_haz.setFilters(QgsMapLayerProxyModel.RasterLayer)
             mlcb_haz.setAllowEmptyLayer(True)
+            mlcb_haz.setCurrentIndex(-1) #set selection to none
+            
+            #on polygon bars
             mlcb_lpol.setFilters(QgsMapLayerProxyModel.PolygonLayer)
             mlcb_lpol.setAllowEmptyLayer(True)
+            mlcb_lpol.setCurrentIndex(-1) #set selection to none
             
             if first:
                 mlcb_lpol_1 = mlcb_lpol
                 first = False
 
             
-        #connect to update the field name box
+        #connect to update the field name box (based on the first layer)
         def upd_lfield(): #updating the field box
             return self.mfcb_connect(
                 self.mFieldComboBox_LSfn, mlcb_lpol_1.currentLayer(),
