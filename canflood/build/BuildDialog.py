@@ -141,7 +141,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.comboBox_aoi.setFilters(QgsMapLayerProxyModel.PolygonLayer) #SS. Project AOI
         self.comboBox_SSelv.addItems(['datum', 'ground']) #ss elevation type
                
-        self.comboBox_aoi.clear() #by default, lets have this be blank
+        self.comboBox_aoi.setCurrentIndex(-1) #by default, lets have this be blank
         
         #Working Directory browse
         def browse_wd():

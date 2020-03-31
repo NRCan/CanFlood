@@ -109,23 +109,25 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         
         #open button
         def open_wd():
-            force_open_dir(self.lineEdit_wd.text())
+            wd = self.lineEdit_wd.text()
+            if not os.path.exists(wd):
+                os.makedirs(wd)
+            force_open_dir(wd)
         
         self.pushButton_wd_open.clicked.connect(open_wd)
         
-        
 
-        
         #overwrite control
         self.checkBox_SSoverwrite.stateChanged.connect(self.set_overwrite)
-        
-        
         #=======================================================================
         # Join Geometry 
         #=======================================================================
 
         #vector geometry layer
         self.comboBox_JGfinv.setFilters(QgsMapLayerProxyModel.VectorLayer) 
+        
+        """not working"""
+        self.comboBox_JGfinv.clear() #by default, lets have this be blank
         
         def upd_cid(): #change the 'cid' display when the finv selection changes
             return self.mfcb_connect(

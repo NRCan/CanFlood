@@ -1,22 +1,22 @@
 <!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
-<qgis simplifyDrawingHints="1" simplifyLocal="1" simplifyDrawingTol="1" readOnly="0" simplifyMaxScale="1" hasScaleBasedVisibilityFlag="0" minScale="1e+08" simplifyAlgorithm="0" version="3.10.3-A Coruña" maxScale="0" styleCategories="AllStyleCategories" labelsEnabled="0">
+<qgis simplifyAlgorithm="0" styleCategories="AllStyleCategories" maxScale="0" labelsEnabled="0" version="3.10.3-A Coruña" hasScaleBasedVisibilityFlag="0" readOnly="0" simplifyMaxScale="1" minScale="1e+08" simplifyDrawingHints="1" simplifyDrawingTol="1" simplifyLocal="1">
   <flags>
     <Identifiable>1</Identifiable>
     <Removable>1</Removable>
     <Searchable>1</Searchable>
   </flags>
-  <renderer-v2 enableorderby="0" forceraster="0" graduatedMethod="GraduatedSize" symbollevels="0" type="graduatedSymbol" attr="ead">
+  <renderer-v2 enableorderby="0" type="graduatedSymbol" forceraster="0" symbollevels="0" graduatedMethod="GraduatedSize" attr="ead">
     <ranges>
-      <range upper="0.000000000000000" lower="0.000000000000000" symbol="0" label="0 - 0 " render="true"/>
-      <range upper="0.000000000000000" lower="0.000000000000000" symbol="1" label="0 - 0 " render="true"/>
-      <range upper="0.020000000000000" lower="0.000000000000000" symbol="2" label="0 - 0.02 " render="true"/>
-      <range upper="0.260000000000000" lower="0.020000000000000" symbol="3" label="0.02 - 0.26 " render="true"/>
-      <range upper="0.260000000000000" lower="0.260000000000000" symbol="4" label="0.26 - 0.26 " render="true"/>
-      <range upper="0.260000000000000" lower="0.260000000000000" symbol="5" label="0.26 - 0.26 " render="true"/>
+      <range lower="0.000000000000000" render="true" label="0 - 113 " upper="112.500000000000000" symbol="0"/>
+      <range lower="112.500000000000000" render="true" label="113 - 5799 " upper="5799.250000000000000" symbol="1"/>
+      <range lower="5799.250000000000000" render="true" label="5799 - 20767 " upper="20766.689999999998690" symbol="2"/>
+      <range lower="20766.689999999998690" render="true" label="20767 - 27063 " upper="27062.540000000000873" symbol="3"/>
+      <range lower="27062.540000000000873" render="true" label="27063 - 40174 " upper="40173.989999999997963" symbol="4"/>
+      <range lower="40173.989999999997963" render="true" label="40174 - 54340 " upper="54340.000000000000000" symbol="5"/>
     </ranges>
     <symbols>
-      <symbol alpha="0.748" force_rhr="0" name="0" clip_to_extent="1" type="marker">
-        <layer locked="0" class="SimpleMarker" enabled="1" pass="0">
+      <symbol clip_to_extent="1" force_rhr="0" alpha="0.748" type="marker" name="0">
+        <layer locked="0" pass="0" enabled="1" class="SimpleMarker">
           <prop v="0" k="angle"/>
           <prop v="255,1,1,255" k="color"/>
           <prop v="1" k="horizontal_anchor_point"/>
@@ -37,15 +37,15 @@
           <prop v="1" k="vertical_anchor_point"/>
           <data_defined_properties>
             <Option type="Map">
-              <Option name="name" value="" type="QString"/>
+              <Option value="" type="QString" name="name"/>
               <Option name="properties"/>
-              <Option name="type" value="collection" type="QString"/>
+              <Option value="collection" type="QString" name="type"/>
             </Option>
           </data_defined_properties>
         </layer>
       </symbol>
-      <symbol alpha="0.748" force_rhr="0" name="1" clip_to_extent="1" type="marker">
-        <layer locked="0" class="SimpleMarker" enabled="1" pass="0">
+      <symbol clip_to_extent="1" force_rhr="0" alpha="0.748" type="marker" name="1">
+        <layer locked="0" pass="0" enabled="1" class="SimpleMarker">
           <prop v="0" k="angle"/>
           <prop v="255,1,1,255" k="color"/>
           <prop v="1" k="horizontal_anchor_point"/>
@@ -66,15 +66,15 @@
           <prop v="1" k="vertical_anchor_point"/>
           <data_defined_properties>
             <Option type="Map">
-              <Option name="name" value="" type="QString"/>
+              <Option value="" type="QString" name="name"/>
               <Option name="properties"/>
-              <Option name="type" value="collection" type="QString"/>
+              <Option value="collection" type="QString" name="type"/>
             </Option>
           </data_defined_properties>
         </layer>
       </symbol>
-      <symbol alpha="0.748" force_rhr="0" name="2" clip_to_extent="1" type="marker">
-        <layer locked="0" class="SimpleMarker" enabled="1" pass="0">
+      <symbol clip_to_extent="1" force_rhr="0" alpha="0.748" type="marker" name="2">
+        <layer locked="0" pass="0" enabled="1" class="SimpleMarker">
           <prop v="0" k="angle"/>
           <prop v="255,1,1,255" k="color"/>
           <prop v="1" k="horizontal_anchor_point"/>
@@ -95,15 +95,15 @@
           <prop v="1" k="vertical_anchor_point"/>
           <data_defined_properties>
             <Option type="Map">
-              <Option name="name" value="" type="QString"/>
+              <Option value="" type="QString" name="name"/>
               <Option name="properties"/>
-              <Option name="type" value="collection" type="QString"/>
+              <Option value="collection" type="QString" name="type"/>
             </Option>
           </data_defined_properties>
         </layer>
       </symbol>
-      <symbol alpha="0.748" force_rhr="0" name="3" clip_to_extent="1" type="marker">
-        <layer locked="0" class="SimpleMarker" enabled="1" pass="0">
+      <symbol clip_to_extent="1" force_rhr="0" alpha="0.748" type="marker" name="3">
+        <layer locked="0" pass="0" enabled="1" class="SimpleMarker">
           <prop v="0" k="angle"/>
           <prop v="255,1,1,255" k="color"/>
           <prop v="1" k="horizontal_anchor_point"/>
@@ -124,15 +124,15 @@
           <prop v="1" k="vertical_anchor_point"/>
           <data_defined_properties>
             <Option type="Map">
-              <Option name="name" value="" type="QString"/>
+              <Option value="" type="QString" name="name"/>
               <Option name="properties"/>
-              <Option name="type" value="collection" type="QString"/>
+              <Option value="collection" type="QString" name="type"/>
             </Option>
           </data_defined_properties>
         </layer>
       </symbol>
-      <symbol alpha="0.748" force_rhr="0" name="4" clip_to_extent="1" type="marker">
-        <layer locked="0" class="SimpleMarker" enabled="1" pass="0">
+      <symbol clip_to_extent="1" force_rhr="0" alpha="0.748" type="marker" name="4">
+        <layer locked="0" pass="0" enabled="1" class="SimpleMarker">
           <prop v="0" k="angle"/>
           <prop v="255,1,1,255" k="color"/>
           <prop v="1" k="horizontal_anchor_point"/>
@@ -153,15 +153,15 @@
           <prop v="1" k="vertical_anchor_point"/>
           <data_defined_properties>
             <Option type="Map">
-              <Option name="name" value="" type="QString"/>
+              <Option value="" type="QString" name="name"/>
               <Option name="properties"/>
-              <Option name="type" value="collection" type="QString"/>
+              <Option value="collection" type="QString" name="type"/>
             </Option>
           </data_defined_properties>
         </layer>
       </symbol>
-      <symbol alpha="0.748" force_rhr="0" name="5" clip_to_extent="1" type="marker">
-        <layer locked="0" class="SimpleMarker" enabled="1" pass="0">
+      <symbol clip_to_extent="1" force_rhr="0" alpha="0.748" type="marker" name="5">
+        <layer locked="0" pass="0" enabled="1" class="SimpleMarker">
           <prop v="0" k="angle"/>
           <prop v="255,1,1,255" k="color"/>
           <prop v="1" k="horizontal_anchor_point"/>
@@ -182,17 +182,17 @@
           <prop v="1" k="vertical_anchor_point"/>
           <data_defined_properties>
             <Option type="Map">
-              <Option name="name" value="" type="QString"/>
+              <Option value="" type="QString" name="name"/>
               <Option name="properties"/>
-              <Option name="type" value="collection" type="QString"/>
+              <Option value="collection" type="QString" name="type"/>
             </Option>
           </data_defined_properties>
         </layer>
       </symbol>
     </symbols>
     <source-symbol>
-      <symbol alpha="0.748" force_rhr="0" name="0" clip_to_extent="1" type="marker">
-        <layer locked="0" class="SimpleMarker" enabled="1" pass="0">
+      <symbol clip_to_extent="1" force_rhr="0" alpha="0.748" type="marker" name="0">
+        <layer locked="0" pass="0" enabled="1" class="SimpleMarker">
           <prop v="0" k="angle"/>
           <prop v="255,1,1,255" k="color"/>
           <prop v="1" k="horizontal_anchor_point"/>
@@ -213,29 +213,29 @@
           <prop v="1" k="vertical_anchor_point"/>
           <data_defined_properties>
             <Option type="Map">
-              <Option name="name" value="" type="QString"/>
+              <Option value="" type="QString" name="name"/>
               <Option name="properties"/>
-              <Option name="type" value="collection" type="QString"/>
+              <Option value="collection" type="QString" name="type"/>
             </Option>
           </data_defined_properties>
         </layer>
       </symbol>
     </source-symbol>
     <classificationMethod id="Jenks">
-      <symmetricMode enabled="0" astride="0" symmetrypoint="0"/>
-      <labelFormat trimtrailingzeroes="1" labelprecision="4" format="%1 - %2 "/>
+      <symmetricMode symmetrypoint="0" enabled="0" astride="0"/>
+      <labelFormat trimtrailingzeroes="1" format="%1 - %2 " labelprecision="4"/>
       <extraInformation/>
     </classificationMethod>
     <rotation/>
     <sizescale/>
   </renderer-v2>
   <customproperties>
-    <property key="dualview/previewExpressions" value="&quot;xid&quot;"/>
+    <property value="&quot;xid&quot;" key="dualview/previewExpressions"/>
   </customproperties>
   <blendMode>0</blendMode>
   <featureBlendMode>0</featureBlendMode>
   <layerOpacity>1</layerOpacity>
-  <geometryOptions removeDuplicateNodes="0" geometryPrecision="0">
+  <geometryOptions geometryPrecision="0" removeDuplicateNodes="0">
     <activeChecks type="StringList">
       <Option value="" type="QString"/>
     </activeChecks>
@@ -360,73 +360,73 @@
   <excludeAttributesWMS/>
   <excludeAttributesWFS/>
   <defaults>
-    <default field="xid" expression="" applyOnUpdate="0"/>
-    <default field="f0_tag" expression="" applyOnUpdate="0"/>
-    <default field="f0_scale" expression="" applyOnUpdate="0"/>
-    <default field="f0_cap" expression="" applyOnUpdate="0"/>
-    <default field="f0_elv" expression="" applyOnUpdate="0"/>
-    <default field="f1_cap" expression="" applyOnUpdate="0"/>
-    <default field="f1_elv" expression="" applyOnUpdate="0"/>
-    <default field="f1_scale" expression="" applyOnUpdate="0"/>
-    <default field="f1_tag" expression="" applyOnUpdate="0"/>
-    <default field="0.001" expression="" applyOnUpdate="0"/>
-    <default field="0.005" expression="" applyOnUpdate="0"/>
-    <default field="0.01" expression="" applyOnUpdate="0"/>
-    <default field="0.02" expression="" applyOnUpdate="0"/>
-    <default field="ead" expression="" applyOnUpdate="0"/>
+    <default applyOnUpdate="0" field="xid" expression=""/>
+    <default applyOnUpdate="0" field="f0_tag" expression=""/>
+    <default applyOnUpdate="0" field="f0_scale" expression=""/>
+    <default applyOnUpdate="0" field="f0_cap" expression=""/>
+    <default applyOnUpdate="0" field="f0_elv" expression=""/>
+    <default applyOnUpdate="0" field="f1_cap" expression=""/>
+    <default applyOnUpdate="0" field="f1_elv" expression=""/>
+    <default applyOnUpdate="0" field="f1_scale" expression=""/>
+    <default applyOnUpdate="0" field="f1_tag" expression=""/>
+    <default applyOnUpdate="0" field="0.001" expression=""/>
+    <default applyOnUpdate="0" field="0.005" expression=""/>
+    <default applyOnUpdate="0" field="0.01" expression=""/>
+    <default applyOnUpdate="0" field="0.02" expression=""/>
+    <default applyOnUpdate="0" field="ead" expression=""/>
   </defaults>
   <constraints>
-    <constraint unique_strength="0" field="xid" exp_strength="0" constraints="0" notnull_strength="0"/>
-    <constraint unique_strength="0" field="f0_tag" exp_strength="0" constraints="0" notnull_strength="0"/>
-    <constraint unique_strength="0" field="f0_scale" exp_strength="0" constraints="0" notnull_strength="0"/>
-    <constraint unique_strength="0" field="f0_cap" exp_strength="0" constraints="0" notnull_strength="0"/>
-    <constraint unique_strength="0" field="f0_elv" exp_strength="0" constraints="0" notnull_strength="0"/>
-    <constraint unique_strength="0" field="f1_cap" exp_strength="0" constraints="0" notnull_strength="0"/>
-    <constraint unique_strength="0" field="f1_elv" exp_strength="0" constraints="0" notnull_strength="0"/>
-    <constraint unique_strength="0" field="f1_scale" exp_strength="0" constraints="0" notnull_strength="0"/>
-    <constraint unique_strength="0" field="f1_tag" exp_strength="0" constraints="0" notnull_strength="0"/>
-    <constraint unique_strength="0" field="0.001" exp_strength="0" constraints="0" notnull_strength="0"/>
-    <constraint unique_strength="0" field="0.005" exp_strength="0" constraints="0" notnull_strength="0"/>
-    <constraint unique_strength="0" field="0.01" exp_strength="0" constraints="0" notnull_strength="0"/>
-    <constraint unique_strength="0" field="0.02" exp_strength="0" constraints="0" notnull_strength="0"/>
-    <constraint unique_strength="0" field="ead" exp_strength="0" constraints="0" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" field="xid" unique_strength="0" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" field="f0_tag" unique_strength="0" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" field="f0_scale" unique_strength="0" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" field="f0_cap" unique_strength="0" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" field="f0_elv" unique_strength="0" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" field="f1_cap" unique_strength="0" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" field="f1_elv" unique_strength="0" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" field="f1_scale" unique_strength="0" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" field="f1_tag" unique_strength="0" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" field="0.001" unique_strength="0" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" field="0.005" unique_strength="0" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" field="0.01" unique_strength="0" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" field="0.02" unique_strength="0" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" field="ead" unique_strength="0" notnull_strength="0"/>
   </constraints>
   <constraintExpressions>
-    <constraint exp="" field="xid" desc=""/>
-    <constraint exp="" field="f0_tag" desc=""/>
-    <constraint exp="" field="f0_scale" desc=""/>
-    <constraint exp="" field="f0_cap" desc=""/>
-    <constraint exp="" field="f0_elv" desc=""/>
-    <constraint exp="" field="f1_cap" desc=""/>
-    <constraint exp="" field="f1_elv" desc=""/>
-    <constraint exp="" field="f1_scale" desc=""/>
-    <constraint exp="" field="f1_tag" desc=""/>
-    <constraint exp="" field="0.001" desc=""/>
-    <constraint exp="" field="0.005" desc=""/>
-    <constraint exp="" field="0.01" desc=""/>
-    <constraint exp="" field="0.02" desc=""/>
-    <constraint exp="" field="ead" desc=""/>
+    <constraint field="xid" exp="" desc=""/>
+    <constraint field="f0_tag" exp="" desc=""/>
+    <constraint field="f0_scale" exp="" desc=""/>
+    <constraint field="f0_cap" exp="" desc=""/>
+    <constraint field="f0_elv" exp="" desc=""/>
+    <constraint field="f1_cap" exp="" desc=""/>
+    <constraint field="f1_elv" exp="" desc=""/>
+    <constraint field="f1_scale" exp="" desc=""/>
+    <constraint field="f1_tag" exp="" desc=""/>
+    <constraint field="0.001" exp="" desc=""/>
+    <constraint field="0.005" exp="" desc=""/>
+    <constraint field="0.01" exp="" desc=""/>
+    <constraint field="0.02" exp="" desc=""/>
+    <constraint field="ead" exp="" desc=""/>
   </constraintExpressions>
   <expressionfields/>
   <attributeactions>
-    <defaultAction key="Canvas" value="{00000000-0000-0000-0000-000000000000}"/>
+    <defaultAction value="{00000000-0000-0000-0000-000000000000}" key="Canvas"/>
   </attributeactions>
-  <attributetableconfig actionWidgetStyle="dropDown" sortExpression="" sortOrder="0">
+  <attributetableconfig actionWidgetStyle="dropDown" sortOrder="0" sortExpression="">
     <columns>
-      <column width="-1" name="xid" hidden="0" type="field"/>
-      <column width="-1" name="f0_tag" hidden="0" type="field"/>
-      <column width="-1" name="f0_scale" hidden="0" type="field"/>
-      <column width="-1" name="f0_cap" hidden="0" type="field"/>
-      <column width="-1" name="f0_elv" hidden="0" type="field"/>
-      <column width="-1" name="f1_cap" hidden="0" type="field"/>
-      <column width="-1" name="f1_elv" hidden="0" type="field"/>
-      <column width="-1" name="f1_scale" hidden="0" type="field"/>
-      <column width="-1" name="f1_tag" hidden="0" type="field"/>
-      <column width="-1" name="0.001" hidden="0" type="field"/>
-      <column width="-1" name="0.005" hidden="0" type="field"/>
-      <column width="-1" name="0.01" hidden="0" type="field"/>
-      <column width="-1" name="0.02" hidden="0" type="field"/>
-      <column width="-1" name="ead" hidden="0" type="field"/>
+      <column width="-1" hidden="0" type="field" name="xid"/>
+      <column width="-1" hidden="0" type="field" name="f0_tag"/>
+      <column width="-1" hidden="0" type="field" name="f0_scale"/>
+      <column width="-1" hidden="0" type="field" name="f0_cap"/>
+      <column width="-1" hidden="0" type="field" name="f0_elv"/>
+      <column width="-1" hidden="0" type="field" name="f1_cap"/>
+      <column width="-1" hidden="0" type="field" name="f1_elv"/>
+      <column width="-1" hidden="0" type="field" name="f1_scale"/>
+      <column width="-1" hidden="0" type="field" name="f1_tag"/>
+      <column width="-1" hidden="0" type="field" name="0.001"/>
+      <column width="-1" hidden="0" type="field" name="0.005"/>
+      <column width="-1" hidden="0" type="field" name="0.01"/>
+      <column width="-1" hidden="0" type="field" name="0.02"/>
+      <column width="-1" hidden="0" type="field" name="ead"/>
       <column width="-1" hidden="1" type="actions"/>
     </columns>
   </attributetableconfig>
