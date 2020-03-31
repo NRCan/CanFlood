@@ -4,6 +4,8 @@ Created on Feb. 27, 2020
 @author: cefect
 
 impact lvl 1 model
+
+this should run w/o any qgis bindings.
 '''
     
 #==============================================================================
@@ -56,6 +58,7 @@ class Risk1(Model):
              'felv':{'values':('ground', 'datum')},
              'prec':{'type':int}, 
              'drop_tails':{'type':bool},
+              #'ground_water':{'type':bool}, #NO! risk1 only accepts positive depths
              },
             
         'dmg_fps':{
@@ -102,7 +105,10 @@ class Risk1(Model):
         self.logger.debug('finished __init__ on Risk1')
         
         
-    def setup(self):
+    def setup(self): 
+        """
+        called by Dialog and standalones
+        """
         
         self.init_model()
         
@@ -158,6 +164,7 @@ class Risk1(Model):
         #dboolcol = ~ddf.columns.isin([cid, bid])
         log.info('running on %i assets and %i events'%(len(bdf), len(ddf.columns)-2))
         
+        self.feedback.setProgress(5)
         
         #======================================================================
         # check monotocity
@@ -179,6 +186,10 @@ class Risk1(Model):
         ddf1 = ddf.loc[:, ~boolcol]
         
         #get relvant bids
+        """
+        because there are no curves, Risk1 can only use positive depths.
+        ground_water flag is ignored
+        """
         booldf = pd.DataFrame(np.logical_and(
             ddf1 > 0,#get bids w/ positive depths
             ddf1.notna()) #real depths
@@ -195,6 +206,7 @@ class Risk1(Model):
         bidf = ddf1.where(booldf, other=0.0)
         bidf = bidf.where(~booldf, other=1.0)
         
+        self.feedback.setProgress(10)
         #======================================================================
         # scale
         #======================================================================
@@ -239,19 +251,26 @@ class Risk1(Model):
         
         _ = self.check_monot(bres_df)
         
+        
+        #======================================================================
+        # get ead per asset
+        #======================================================================
+        if res_per_asset:
+            self.feedback.setProgress(50)
+            res_df = self.calc_ead(bres_df, drop_tails=self.drop_tails, logger=log)
+                        
+        else:
+            res_df = None
+        
+        self.feedback.setProgress(90)
         #======================================================================
         # totals
         #======================================================================        
         res_ser = self.calc_ead(bres_df.sum(axis=0).to_frame().T, logger=log).iloc[0]
         self.res_ser = res_ser.copy() #set for risk_plot()
-        #======================================================================
-        # get ead per asset
-        #======================================================================
-        if res_per_asset:
-            res_df = self.calc_ead(bres_df, drop_tails=self.drop_tails, logger=log)
-                        
-        else:
-            res_df = None
+        
+
+        self.feedback.setProgress(95)
             
         
 
@@ -282,25 +301,28 @@ if __name__ =="__main__":
     #==========================================================================
     # dev data
     #==========================================================================
-    #==========================================================================
-    # runpars_d = {
-    #     'Dev':{
-    #         'out_dir': os.path.join(os.getcwd(), 'risk1'),
-    #         'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\risk1\wex\CanFlood_risk1.txt',
-    #         }
-    #     }
-    #==========================================================================
-    
-    #==========================================================================
-    # tutorial 1
-    #==========================================================================
-    runpars_d={
-        'Tut1':{
-            'out_dir':os.path.join(os.getcwd(), 'risk1', 'Tut1'),
-            'cf_fp':r'C:\Users\cefect\CanFlood\build\1\CanFlood_tutorial1.txt',
-             
+    runpars_d = {
+        'Test':{
+            'out_dir': os.path.join(os.getcwd(), 'dev'),
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200330\1a\CanFlood_tut1a.txt',
             }
         }
+    
+    #==========================================================================
+    # tutorials
+    #==========================================================================
+    #===========================================================================
+    # runpars_d={
+    #     'Tut1a':{
+    #         'out_dir':os.path.join(os.getcwd(), 'Tut1a'),
+    #         'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\built_1a\CanFlood_tut1a.txt',
+    #         },
+    #     'Tut1b':{
+    #         'out_dir':os.path.join(os.getcwd(), 'Tut1b'),
+    #         'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\built_1b\CanFlood_tut1b.txt',
+    #         }
+    #     }
+    #===========================================================================
     #==========================================================================
     # 20200304
     #==========================================================================

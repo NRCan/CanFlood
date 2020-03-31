@@ -40,6 +40,57 @@ from hlpr.basic import *
 class Model(ComWrkr):
     """
     common methods for model classes
+    
+    
+    Control File Parameters:
+        [parameters]
+
+        event_probs -- format of event probabilities (in 'aeps' data file) 
+                        (default 'ari')
+                        
+            'aeps'           event probabilities in aeps file expressed as 
+                            annual exceedance probabilities
+            'aris'           expressed as annual recurrance intervals
+            
+        
+        ltail -- zero probability event extrapolation handle 
+                (default 'extrapolate')
+            'flat'           set the zero probability event equal to the most 
+                            extreme impacts in the passed series
+            'extrapolate'    set the zero probability event by extrapolating from 
+                            the most extreme impact
+            'none'           do not extrapolate (not recommended)
+            float            use the passed value as the zero probability impact value
+             
+        
+        rtail -- zreo impacts event extrapolation handle    (default 0.5)
+            'extrapolate'    set the zero impact event by extrapolating from the 
+                            least extreme impact
+            'none'           do not extrapolate (not recommended) 
+            float           use the passed value as the zero impacts aep value
+        
+        drop_tails -- flag to drop the extrapolated values from the results 
+                            (default True)
+        
+        integrate -- numpy integration method to apply (default 'trapz')
+        
+        res_per_asset -- flag to generate results per asset 
+        
+        ground_water -- flag to include negative depths in the analysis
+        
+        [dmg_fps]
+
+        
+        [risk_fps]
+        dmgs -- damage data results file path (default N/A)
+            
+        exlikes -- secondary exposure likelihood data file path (default N/A)
+        
+        evals -- event probability data file path (default N/A)
+        
+        [validation]
+        risk2 -- Risk2 validation flag (default False)
+    
     """
     
     #==========================================================================
@@ -82,7 +133,7 @@ class Model(ComWrkr):
     #==========================================================================
     bid = 'bid' #indexer for expanded finv
 
-    #expectations fo rinventory    
+    #minimum inventory expectations
     finv_exp_d = {
         'f0_scale':{'type':np.number},
         'f0_elv':{'type':np.number},
@@ -96,6 +147,8 @@ class Model(ComWrkr):
     def __init__(self,
                  cf_fp, #control file path """ note: this could also be attached by basic.ComWrkr.__init__()"""
                  split_key=None,#for checking monotonicy on exposure sets with duplicate events
+
+
                  **kwargs):
         
         mod_logger.info('Model.__init__ start')
@@ -106,20 +159,18 @@ class Model(ComWrkr):
         self.cf_fp = cf_fp
         self.split_key= split_key
         
-        
+
         #attachments
         self.data_d = dict() #dictionary for loaded data sets
         
-
-
-
-        self.logger.debug('finished __init__ on Model')
+        self.logger.debug('finished Model.__init__')
         
         
     def init_model(self, #common inits for all model classes
                    ):
         """
         should be called by the model's own 'setup()' func
+            during standalones and Dialog runs
         """        
         
         #parameter setup
@@ -363,12 +414,20 @@ class Model(ComWrkr):
         #use expectation handles
         for coln, hndl_d in finv_exp_d.items():
             assert isinstance(hndl_d, dict)
-            assert coln in df.columns, '%s missing expected column \'%s\''%(dtag, coln)
+            assert coln in df.columns, \
+                '%s missing expected column \'%s\''%(dtag, coln)
             ser = df[coln]
             for hndl, cval in hndl_d.items():
                 
                 if hndl=='type':
                     assert np.issubdtype(ser.dtype, cval), '%s.%s bad type: %s'%(dtag, coln, ser.dtype)
+                    
+                    """
+                    throwing  FutureWarning: Conversion of the second argument of issubdtype
+                    
+                    https://stackoverflow.com/questions/48340392/futurewarning-conversion-of-the-second-argument-of-issubdtype-from-float-to
+                    """
+                    
                 elif hndl == 'contains':
                     assert cval in ser, '%s.%s should contain %s'%(dtag, coln, cval)
                 else:
@@ -486,8 +545,6 @@ class Model(ComWrkr):
         assert cid in df_raw.columns, '%s missing index column \"%s\''%(dtag, cid)
         assert df_raw.columns.dtype.char == 'O','bad event names on %s'%dtag
         
-
-        
         #======================================================================
         # clean it
         #======================================================================
@@ -538,8 +595,7 @@ class Model(ComWrkr):
         
         assert np.array_equal(self.cindex, df.index), 'cid mismatch'
         
-        
-        
+
         if check_monot:
             self.check_monot(df, aep_ser = self.data_d['evals'])
 
@@ -653,6 +709,16 @@ class Model(ComWrkr):
         
         df = df.rename(columns={df.columns[0]:'gels'}).round(self.prec)
         
+        #slice down to cids in the cindex
+        """requiring dmg and expos inputs to match
+        allowing minor inputs to be sliced"""
+        l = set(self.cindex.values).difference(df.index.values)
+        assert len(l)==0, 'gels missing %i cids: %s'%(len(l), l)
+        
+        boolidx = df.index.isin(self.cindex.values)
+        df = df.loc[boolidx, :]
+        
+        log.debug('sliced from %i to %i'%(len(boolidx), boolidx.sum()))
         
         #======================================================================
         # post checks
@@ -738,8 +804,9 @@ class Model(ComWrkr):
         assert len(enm_l) > 1, 'failed to identify sufficient damage columns'
         
 
-        #check cids
-        assert np.array_equal(self.cindex, df.index), 'cid mismatch'
+        #check cid index match
+        assert np.array_equal(self.cindex, df.index), \
+            'provided \'%s\' index (%i) does not match finv index (%i)'%(dtag, len(df), len(self.cindex))
         
         #check events
         """
@@ -925,6 +992,9 @@ class Model(ComWrkr):
             #fix the columns
             bdf.columns = bdf.columns.str.replace('%s_'%prefix, 'f')
             
+            #reset the index
+            bdf = bdf.reset_index(drop=True)
+            
         else:
             raise Error('bad prefix match')
         
@@ -989,7 +1059,7 @@ class Model(ComWrkr):
         # defaults
         #======================================================================
         log = self.logger.getChild('build_depths')
-        bdf = self.bdf.copy()
+        bdf = self.bdf.copy() #expanded finv
         cid, bid = self.cid, self.bid
 
 
@@ -1014,11 +1084,8 @@ class Model(ComWrkr):
         boolcol = ~ddf.columns.isin([cid, bid]) #columns w/ depth values
         
         for coln in ddf.columns[boolcol]:
-            #boolidx1=  ddf[coln].isna()
             ddf.loc[:, coln] = (ddf[coln] - bdf['felv']).round(self.prec)
-            #boolidx2 = ddf[coln].isna()
-            
-            #assert np.array_equal(boolidx1, boolidx2)
+
             """
             maintains nulls
             """
@@ -1029,26 +1096,37 @@ class Model(ComWrkr):
         #======================================================================
         # fill nulls
         #======================================================================
+        """no! dont want to mix these up w/ negatives.
+        filtering nulls in risk1.run() and dmg2.bdmg()
         booldf = ddf.drop([bid, cid], axis=1).isna()
         if booldf.any().any():
             log.warning('setting %i (of %i) null depth values to zero'%(
                 booldf.sum().sum(), booldf.size))
             
-            ddf = ddf.fillna(0.0)
+            ddf = ddf.fillna(0.0)"""
         
         #======================================================================
         # negative depths
         #======================================================================
         booldf = ddf.loc[:,boolcol] < 0 #True=wsl below ground
-
+        
+        
         if booldf.any().any():
             """
             note these are un-nesetd assets, so counts will be larger than expected
             """
-            log.warning('setting %i (of %i) negative depths to zero'%(
-                booldf.sum().sum(), booldf.size))
-            
-            ddf.loc[:, boolcol] = ddf.loc[:,boolcol].where(~booldf, other=0)
+            #user wants to ignore ground_water, set all negatives to zero
+            if not self.ground_water:
+                log.warning('setting %i (of %i) negative depths to zero'%(
+                    booldf.sum().sum(), booldf.size))
+                
+                """NO! filtering negatives during dmg2.bdmg()
+                ddf.loc[:, boolcol] = ddf.loc[:,boolcol].where(~booldf, other=0)"""
+                
+            #user wants to keep negative depths.. leave as is
+            else:
+                log.info('gorund_water=True. preserving %i (of %i) negative depths'%(
+                    booldf.sum().sum(), booldf.size))
             
         #======================================================================
         # post checks
@@ -1112,6 +1190,7 @@ class Model(ComWrkr):
         if len(aep_ser.unique()) == len(aep_ser):
             raise Error('resolving multi but there are no duplicated events')
         
+
         #======================================================================
         # get expected values of all damages
         #======================================================================
@@ -1120,13 +1199,15 @@ class Model(ComWrkr):
         but leave this check for the input validator"""
         evdf = ddf*edf
         
-        log.info('calucated expected values for %i damages'%evdf.size)
+        log.info('calculating expected values for %i damages'%evdf.size)
         assert not evdf.isna().any().any()
         #======================================================================
         # loop by unique aep and resolve
         #======================================================================
         res_df = pd.DataFrame(index=evdf.index, columns = aep_ser.unique().tolist())
-        for aep in aep_ser.unique().tolist():
+        
+        for indxr, aep in enumerate(aep_ser.unique().tolist()):
+            self.feedback.setProgress((indxr/len(aep_ser.unique())*80))
             assert isinstance(aep, float)
             #==================================================================
             # get these events
@@ -1866,52 +1947,6 @@ class Model(ComWrkr):
         
         return res_df.rename(columns=rename_d)
         
-
-        
-    def xxxoutput_df(self, #dump some outputs
-                      df, 
-                      out_fn,
-                      out_dir = None,
-                      overwrite=None,
-            ):
-        #======================================================================
-        # defaults
-        #======================================================================
-        if out_dir is None: out_dir = self.out_dir
-        if overwrite is None: overwrite = self.overwrite
-        log = self.logger.getChild('output')
-        
-        assert isinstance(out_dir, str), 'unexpected type on out_dir: %s'%type(out_dir)
-        assert os.path.exists(out_dir), 'requested output directory doesnot exist: \n    %s'%out_dir
-        assert isinstance(df, pd.DataFrame)
-        assert df.size>0
-        
-        #extension check
-        if not out_fn.endswith('.csv'):
-            out_fn = out_fn+'.csv'
-        
-        #output file path
-        out_fp = os.path.join(out_dir, out_fn)
-        
-        #======================================================================
-        # checeks
-        #======================================================================
-        if os.path.exists(out_fp):
-            log.warning('file exists \n    %s'%out_fp)
-            if not overwrite:
-                raise Error('file already exists')
-            
-
-        #======================================================================
-        # writ eit
-        #======================================================================
-        df.to_csv(out_fp, index=True)
-        
-        log.info('wrote to %s to file: \n    %s'%(str(df.shape), out_fp))
-        
-        self.out_fp = out_fp #set for some other methods
-        
-        return out_fp
 
 if __name__ =="__main__":
     

@@ -13,9 +13,9 @@ integrate = trapz       #integration method to apply: trapz, simps
 [dmg_fps]
 curves = C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\data\CanFlood_curves_rfda_20200218.xls
 finv = C:\Users\cefect\CanFlood\build\2\finv_tutorial2_finv_cT2.csv
-expos = C:\Users\cefect\CanFlood\wsamp\tut2_dtm\expos_tut2_dtm_1_32.csv
+expos = C:\Users\cefect\CanFlood\rsamp\tut2_dtm\expos_tut2_dtm_1_32.csv
 gels = #ground elevation data filepath
-#'expos' file path set from wsamp.py at 2020-03-20 17.50.07
+#'expos' file path set from rsamp.py at 2020-03-28 10.46.10
 
 [risk_fps]
 dmgs = #damage data results filepath

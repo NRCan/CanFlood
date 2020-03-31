@@ -46,45 +46,7 @@ class Risk2(Model):
     METHODS:
         run(): main model executor
 
-    Control File Parameters:
-        dmgs -- damage data results file path (default N/A)
-            
-        exlikes -- secondary exposure likelihood data file path (default N/A)
-        
-        evals -- event probability data file path (default N/A)
-        
-        event_probs -- format of event probabilities (in 'aeps' data file) 
-                        (default 'ari')
-                        
-            'aeps'           event probabilities in aeps file expressed as 
-                            annual exceedance probabilities
-            'aris'           expressed as annual recurrance intervals
-            
-        
-        ltail -- zero probability event extrapolation handle 
-                (default 'extrapolate')
-            'flat'           set the zero probability event equal to the most 
-                            extreme impacts in the passed series
-            'extrapolate'    set the zero probability event by extrapolating from 
-                            the most extreme impact
-            'none'           do not extrapolate (not recommended)
-            float            use the passed value as the zero probability impact value
-             
-        
-        rtail -- zreo impacts event extrapolation handle    (default 0.5)
-            'extrapolate'    set the zero impact event by extrapolating from the 
-                            least extreme impact
-            'none'           do not extrapolate (not recommended) 
-            float           use the passed value as the zero impacts aep value
-        
-        drop_tails -- flag to drop the extrapolated values from the results 
-                            (default True)
-        
-        integrate -- numpy integration method to apply (default 'trapz')
-        
-        risk2 -- Risk2 validation flag (default False)
-        
-        res_per_asset -- flag to generate results per asset 
+
         
 
 
@@ -186,7 +148,7 @@ class Risk2(Model):
         ddf, aep_ser, cid = self.data_d['dmgs'],self.data_d['evals'], self.cid
         
         assert isinstance(res_per_asset, bool)
-        
+        self.feedback.setProgress(5)
         #======================================================================
         # resolve alternate damages (per evemt)
         #======================================================================
@@ -205,12 +167,8 @@ class Risk2(Model):
         #check the columns
         assert np.array_equal(ddf1.columns.values, aep_ser.unique()), 'column name problem'
         _ = self.check_monot(ddf1)
-            
-        #======================================================================
-        # totals
-        #======================================================================        
-        res_ser = self.calc_ead(ddf1.sum(axis=0).to_frame().T, logger=log).iloc[0]
-        self.res_ser = res_ser.copy() #set for risk_plot()
+        
+        self.feedback.setProgress(40)
         #======================================================================
         # get ead per asset
         #======================================================================
@@ -220,7 +178,15 @@ class Risk2(Model):
         else:
             res_df = None
             
-        
+        #======================================================================
+        # totals
+        #======================================================================    
+        self.feedback.setProgress(80)    
+        res_ser = self.calc_ead(ddf1.sum(axis=0).to_frame().T, logger=log).iloc[0]
+        self.res_ser = res_ser.copy() #set for risk_plot()
+
+            
+        self.feedback.setProgress(95)
 
         log.info('finished on %i assets and %i damage cols'%(len(ddf1), len(res_ser)))
         
@@ -269,7 +235,7 @@ if __name__ =="__main__":
     runpars_d={
         'Tut2':{
             'out_dir':os.path.join(os.getcwd(), 'risk2', 'Tut2'),
-            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200305\CanFlood_Tut2.txt',
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200330\CanFlood_tut2.txt',
             }
         }
     
