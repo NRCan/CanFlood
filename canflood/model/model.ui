@@ -387,7 +387,7 @@ p, li { white-space: pre-wrap; }
                  <bool>false</bool>
                 </property>
                 <property name="text">
-                 <string>Run 'Results Join Geo' upon completion (set Vector Geometry on the 'Setup' tab)</string>
+                 <string>Run 'Results - Join Geo' upon completion (set Vector Geometry on the 'Setup' tab)</string>
                 </property>
                 <property name="checkable">
                  <bool>true</bool>
@@ -1391,7 +1391,7 @@ p, li { white-space: pre-wrap; }
                  <bool>false</bool>
                 </property>
                 <property name="text">
-                 <string>Run 'Results to Inventory Geometry' upon completion</string>
+                 <string>Run 'Results - Join Geo' upon completion (set Vector Geometry on the 'Setup' tab)</string>
                 </property>
                </widget>
               </item>
