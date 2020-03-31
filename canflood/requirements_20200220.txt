@@ -1,5 +1,0 @@
-matplotlib==3.0.0
-numpy==1.17.3
-pandas==0.25.3
-xlrd==1.1.0
-

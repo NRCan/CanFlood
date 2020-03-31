@@ -648,7 +648,12 @@ def force_open_dir(folder_path_raw, logger=mod_logger): #force explorer to open 
         return False
     
     
+if __name__ =="__main__": 
     
+    #===========================================================================
+    # requirements file
+    #===========================================================================
+    import pip
   
         
         
