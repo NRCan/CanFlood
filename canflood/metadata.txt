@@ -6,11 +6,11 @@
 name=CanFlood
 qgisMinimumVersion=3.10
 description=CanFlood is a flood risk modelling toolbox for Canada
-version=0.1.0
+version=0.2.1
 author=Seth Bryant, Tony De Crescenzo
 email=tony.decrescenzo@ibigroup.com
 
-about=This plugin contains 3 toolsets for modelling object-based flood risk: 1) 'Build' for preparing data; 2) 'Model' with 3 tiers of analyiss; and 2) 'Results' for viewing and anyalizing results.
+about=This plugin contains 3 toolsets for modelling object-based flood risk: 1) 'Build' for preparing data; 2) 'Model' with 3 tiers of analyiss; and 3) 'Results' for viewing and anyalizing results.
 
 tracker=https://github.com/IBIGroupCanWest/CanFlood/issues
 repository=https://github.com/IBIGroupCanWest/CanFlood
