@@ -64,7 +64,7 @@ import hp.sel
 import hp.outs
 import hp.dict #wasnt added before for some reason...
 
-from hp_pd import view
+from model.sofda.hp.pd import view
 
 #===============================================================================
 # import in project mods

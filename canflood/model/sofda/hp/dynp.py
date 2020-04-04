@@ -89,6 +89,7 @@ import pandas as pd
 import numpy as np
 import scipy.stats  #need this for exec calls
 
+import model.sofda.hp.pd as hp_pd 
 import hp.basic
 import hp.oop
 import hp.sim

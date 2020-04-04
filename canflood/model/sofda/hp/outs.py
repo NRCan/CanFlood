@@ -19,7 +19,7 @@ import hp.oop
 import hp.sim
 import hp.sel
 
-from hp_pd import view
+from model.sofda.hp.pd import view
 
 mod_logger = logging.getLogger(__name__)
 mod_logger.debug('initilized')

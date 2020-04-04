@@ -30,7 +30,7 @@ from weakref import proxy
 
 from hp.basic import OrderedSet
 
-from hp_pd import view
+from model.sofda.hp.pd import view
 
 idx = pd.IndexSlice
 

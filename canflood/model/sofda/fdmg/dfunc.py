@@ -38,7 +38,7 @@ import hp.oop
 #import hp.data
 
 from hlpr.exceptions import Error
-from hp_pd import view
+from model.sofda.hp.pd import view
 
 # logger setup -----------------------------------------------------------------------
 mod_logger = logging.getLogger(__name__)
