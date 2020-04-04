@@ -37,7 +37,7 @@ idx = pd.IndexSlice
 #import model.sofda.hp.pd as hp_pd
 import model.sofda.hp.oop as hp_oop
 
-import hp.dyno
+import model.sofda.hp.dyno as hp_dyno
 import model.sofda.hp.sim as hp_sim
 
 
@@ -47,7 +47,7 @@ mod_logger.debug('initilized')
 
 
 class Dmg_feat( #single damage feature of a complex damage function
-                hp.dyno.Dyno_wrap,
+                hp_dyno.Dyno_wrap,
                 hp_sim.Sim_o,  
                 hp_oop.Child):
 

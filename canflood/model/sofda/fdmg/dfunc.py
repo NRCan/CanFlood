@@ -37,7 +37,7 @@ import model.sofda.hp.pd as hp_pd
 import model.sofda.hp.oop as hp_oop
 #import hp.data
 
-import hp.dyno
+import model.sofda.hp.dyno as hp_dyno
 import model.sofda.hp.sim as hp_sim
 
 from hlpr.exceptions import Error
@@ -50,7 +50,7 @@ mod_logger.debug('initilized')
 
 class Dfunc(
             #hp.plot.Plot_o,
-            hp.dyno.Dyno_wrap,
+            hp_dyno.Dyno_wrap,
             hp_sim.Sim_o, #damage function of a speciic type. to be attached to a house
             hp_oop.Parent,
             hp_oop.Child): 

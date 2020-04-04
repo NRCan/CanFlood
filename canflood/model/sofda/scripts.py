@@ -59,7 +59,7 @@ import model.sofda.hp.oop as hp_oop
 import model.sofda.hp.sim as hp_sim
 import model.sofda.hp.dynp as hp_dynp
 
-import hp.dyno
+import model.sofda.hp.dyno as hp_dyno
 import hp.sel
 import hp.outs
 import hp.dict #wasnt added before for some reason...
@@ -90,7 +90,7 @@ _mod_dir = os.path.dirname(__file__)
 class Session( #main session handler. runs many simulations for stochastic modelling
                
         hp_sim.Sim_session,
-        hp.dyno.Dyno_controller,
+        hp_dyno.Dyno_controller,
         hp_oop.Session_o,  
         hp.sel.Sel_controller, 
         hp_dynp.Dynp_session,

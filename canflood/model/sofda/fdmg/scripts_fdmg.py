@@ -43,7 +43,7 @@ import model.sofda.hp.pd as hp_pd
 import model.sofda.hp.oop as hp_oop
 import model.sofda.hp.sim as hp_sim
 import hp.data
-import hp.dyno
+import model.sofda.hp.dyno as hp_dyno
 import hp.sel
 
 import fdmg.datos_fdmg as datos
@@ -77,7 +77,7 @@ datafile_types_list = ['.csv', '.xls']
 
 class Fdmg( #flood damage model
            hp.sel.Sel_controller, #no init
-           hp.dyno.Dyno_wrap, #add some empty containers
+           hp_dyno.Dyno_wrap, #add some empty containers
            #hp.plot.Plot_o, #build the label
            hp_sim.Sim_model, #Sim_wrap: attach the reset_d. Sim_model: inherit attributes
            hp_oop.Trunk_o, #no init
@@ -1961,7 +1961,7 @@ class Fdmg( #flood damage model
         return
 
 class Flood( 
-                hp.dyno.Dyno_wrap,
+                hp_dyno.Dyno_wrap,
                 hp_sim.Sim_o, 
                 hp_oop.Parent,  #flood object worker
                 hp_oop.Child): 
