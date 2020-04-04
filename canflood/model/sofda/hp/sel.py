@@ -66,7 +66,7 @@ class Sel_usr_wrap(object): #functions for objects that want to use Selectors
     
     hp_dynp.Dynamic_par
     
-    hp.outs.Outputr
+    hp_outs.Outputr
     
     hp_sel.Selector
         

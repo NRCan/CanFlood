@@ -61,7 +61,7 @@ import model.sofda.hp.dynp as hp_dynp
 
 import model.sofda.hp.dyno as hp_dyno
 import model.sofda.hp.sel as hp_sel
-import hp.outs
+import model.sofda.hp.outs as hp_outs
 import hp.dict #wasnt added before for some reason...
 
 from model.sofda.hp.pd import view
@@ -94,7 +94,7 @@ class Session( #main session handler. runs many simulations for stochastic model
         hp_oop.Session_o,  
         hp_sel.Sel_controller, 
         hp_dynp.Dynp_session,
-        hp.outs.Out_controller,
+        hp_outs.Out_controller,
         hp.data.Data_wrapper,
         #hp.plot.Plot_o,
         hp_oop.Child): 
@@ -958,7 +958,7 @@ class Simulation( #a single simulation within the session
         hp_sim.Sim_simulation, 
         hp_sel.Sel_controller, 
         hp_dynp.Dynp_controller,
-        hp.outs.Out_controller,
+        hp_outs.Out_controller,
         hp_oop.Child):
     
     'todo: move this to hp_sim and make generic'
@@ -1106,7 +1106,7 @@ class Tstep( #a timestep from teh simulation timeline
             hp_oop.Parent,
             hp_sim.Sim_o, 
             hp_sel.Sel_controller, 
-            hp.outs.Out_controller, 
+            hp_outs.Out_controller, 
             hp_dynp.Dynp_controller,
             hp_oop.Child): 
     

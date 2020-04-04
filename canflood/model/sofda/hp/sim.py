@@ -163,7 +163,7 @@ NOTE: This does not trigger a cascade as Recompile does
 #===============================================================================
 # OUTPUTS --------------------------------------------------------------------
 #===============================================================================
-'see hp.outs'
+'see hp_outs'
 #===============================================================================
 # DYNAMIC PARAMETERS --------------------------------------------------------------------
 #===============================================================================
@@ -183,7 +183,7 @@ import hp.basic
 #import model.sofda.hp.pd as hp_pd
 #import model.sofda.hp.dynp as hp_dynp
 import model.sofda.hp.oop as hp_oop
-#import hp.outs
+#import model.sofda.hp.outs as hp_outs
 
 
 mod_logger = logging.getLogger(__name__)
@@ -364,7 +364,7 @@ class Sim_wrap(object): #worker for simulation handing
 
         'disabled outputting here. its now handled by the session'
         
-        'moved outpath updating to the hp.outs.Outputr_base.store_all()'
+        'moved outpath updating to the hp_outs.Outputr_base.store_all()'
         #self.outpath = self.model.outpath 
         return
         
@@ -459,7 +459,7 @@ class Sim_o(Sim_wrap): #standalone sim object
         
         logger.debug("finish __init__ on %s"%self.__class__.__name__)
            
-class Sim_model(Sim_wrap):#, hp.outs.Out_controller):#, hp_dynp.Dynp_basic): #wrapper for model instances3
+class Sim_model(Sim_wrap):#, hp_outs.Out_controller):#, hp_dynp.Dynp_basic): #wrapper for model instances3
     """
     special object for the top level simulation objects
     """
