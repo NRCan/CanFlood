@@ -166,7 +166,7 @@ def run(
     #===============================================================================
     # copy input files
     #===============================================================================
-    import model.sofda.shlp.basic as basic
+    import model.sofda.hp.basic as basic
     #copy pyscripts
     if _write_ins: 
         

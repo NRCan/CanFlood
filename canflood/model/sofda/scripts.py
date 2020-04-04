@@ -7,7 +7,7 @@ Created on Jun 11, 2018
 # HIERARCHY and RUN LOOPS --------------------------------------------------------------
 #===============================================================================
 '''
-see discussion in hp.sim.py
+see discussion in shlp.sim.py
 KEY RUN LOOPS
 *Session.run_all():                10,000x              controls a single scenario
     *Simulation.run_timeline():    50x       controls one simulation of a scenario (a set of stochastic parameters)
@@ -50,18 +50,19 @@ from hlpr.exceptions import Error
 #  IMPORT CUSTOM MODS ---------------------------------------------------------
 #===============================================================================
 #import hp.plot #need to call this first so thet matplotlib backend configures correctly
-import model.sofda.shlp.basic as basic
-import hp.pd
+import model.sofda.hp.basic as basic
+import shlp.pd
 
 import shlp.oop
-import hp.sim
+import shlp.sim
 import hp.dynp
+
 import hp.dyno
 import hp.sel
 import hp.outs
 import hp.dict #wasnt added before for some reason...
 
-from hp.pd import view
+from shlp.pd import view
 
 #===============================================================================
 # import in project mods
@@ -86,15 +87,15 @@ _mod_dir = os.path.dirname(__file__)
 """this is super gross"""
 class Session( #main session handler. runs many simulations for stochastic modelling
                
-        hp.sim.Sim_session,
+        shlp.sim.Sim_session,
         hp.dyno.Dyno_controller,
-        hp.oop.Session_o,  
+        shlp.oop.Session_o,  
         hp.sel.Sel_controller, 
         hp.dynp.Dynp_session,
         hp.outs.Out_controller,
         hp.data.Data_wrapper,
         #hp.plot.Plot_o,
-        hp.oop.Child): 
+        shlp.oop.Child): 
    
     #===========================================================================
     # program parametser
@@ -507,7 +508,7 @@ class Session( #main session handler. runs many simulations for stochastic model
         
         self.sims_od.keys()
         
-        hp.pd.v(df)
+        shlp.pd.v(df)
         """
         #=======================================================================
         # load the sims
@@ -619,12 +620,12 @@ class Session( #main session handler. runs many simulations for stochastic model
             
             #fly writers
             if self.write_fly_f: 
-                hp.pd.write_fly_df(self.fly_res_fpath,res_ser,  lindex=sim_key,
+                shlp.pd.write_fly_df(self.fly_res_fpath,res_ser,  lindex=sim_key,
                                    first = first, tag = self.tag, 
                                    db_f = self.db_f, logger=self.logger) #write results on the fly
                 
                 if self.output_dx_f:
-                    hp.pd.write_fly_df(self.fly_resx_fpath,res_dx,  sim_key,
+                    shlp.pd.write_fly_df(self.fly_resx_fpath,res_dx,  sim_key,
                                    first = first, tag = self.tag,
                                     db_f = self.db_f, logger=self.logger) #write results on the fly
                     
@@ -746,9 +747,9 @@ class Session( #main session handler. runs many simulations for stochastic model
         logger.debug(" on res_df %s"%str(self.res_df.shape))
         
         """
-        hp.pd.v(self.res_df)
-        hp.pd.v(df2)
-        hp.pd.v(self.pars_df_d['gen'].drop('rank',axis=1))
+        shlp.pd.v(self.res_df)
+        shlp.pd.v(df2)
+        shlp.pd.v(self.pars_df_d['gen'].drop('rank',axis=1))
         """
         
         #=======================================================================
@@ -788,7 +789,7 @@ class Session( #main session handler. runs many simulations for stochastic model
         filetail = '%s fancy_res'%(self.tag)
 
         filepath = os.path.join(self.outpath, filetail)
-        hp.pd.write_dfset_excel(res_d, filepath, engine='xlsxwriter', logger=self.logger)
+        shlp.pd.write_dfset_excel(res_d, filepath, engine='xlsxwriter', logger=self.logger)
         
         logger.debug('finished \n')
         
@@ -844,7 +845,7 @@ class Session( #main session handler. runs many simulations for stochastic model
         #=======================================================================
         # #move focus to front
         #=======================================================================
-        df3 = hp.pd.move_col_to_front(df3, 'focus', logger = logger)
+        df3 = shlp.pd.move_col_to_front(df3, 'focus', logger = logger)
         
         res_d['sensi_mat'] = df3
         
@@ -864,7 +865,7 @@ class Session( #main session handler. runs many simulations for stochastic model
                 sort = False,
                 indicator = False)
         
-        if not hp.pd.isdf(merge_df):
+        if not shlp.pd.isdf(merge_df):
             raise IOError
         
         #=======================================================================
@@ -878,13 +879,13 @@ class Session( #main session handler. runs many simulations for stochastic model
         for cmpre_coln in l:
             merge_df1 = self.get_sensi_base_delta(merge_df1, cmpre_coln)
             
-        merge_df2 = hp.pd.move_col_to_front(merge_df1, 'focus', logger = logger)
+        merge_df2 = shlp.pd.move_col_to_front(merge_df1, 'focus', logger = logger)
 
         res_d['sensi_merge'] = merge_df2
         
         """
         res_d.keys()
-        hp.pd.view_web_df(res_d['res_summary'])
+        shlp.pd.view_web_df(res_d['res_summary'])
         """
         
         return res_d
@@ -919,7 +920,7 @@ class Session( #main session handler. runs many simulations for stochastic model
         
         #set these
         df.loc[:,new_coln] = new_ar #sim minus baseline
-        df1 = hp.pd.move_col_to_front(df, new_coln, logger=logger)
+        df1 = shlp.pd.move_col_to_front(df, new_coln, logger=logger)
         logger.debug('for base_ead = %.2f made delta column\'%s\''%(base_ead, new_coln))
         #=======================================================================
         # add a relative change column 
@@ -933,7 +934,7 @@ class Session( #main session handler. runs many simulations for stochastic model
         new_ar2 = new_ar/float(base_ead)
         
         df1.loc[:,new_coln2] =  new_ar2 #delta over baseline
-        df2 = hp.pd.move_col_to_front(df1, new_coln2, logger=logger)
+        df2 = shlp.pd.move_col_to_front(df1, new_coln2, logger=logger)
 
         
         
@@ -947,13 +948,13 @@ class Session( #main session handler. runs many simulations for stochastic model
             
                
 class Simulation( #a single simulation within the session
-        hp.sim.Sim_simulation, 
+        shlp.sim.Sim_simulation, 
         hp.sel.Sel_controller, 
         hp.dynp.Dynp_controller,
         hp.outs.Out_controller,
-        hp.oop.Child):
+        shlp.oop.Child):
     
-    'todo: move this to hp.sim and make generic'
+    'todo: move this to shlp.sim and make generic'
 
     #===========================================================================
     # object handling overrides
@@ -1095,12 +1096,12 @@ class Simulation( #a single simulation within the session
         return res_ser, res_dx
     
 class Tstep( #a timestep from teh simulation timeline
-            hp.oop.Parent,
-            hp.sim.Sim_o, 
+            shlp.oop.Parent,
+            shlp.sim.Sim_o, 
             hp.sel.Sel_controller, 
             hp.outs.Out_controller, 
             hp.dynp.Dynp_controller,
-            hp.oop.Child): 
+            shlp.oop.Child): 
     
     
     #===========================================================================
@@ -1151,7 +1152,7 @@ class Tstep( #a timestep from teh simulation timeline
         'using a string name and a sepearate column for date seems to keep things nice'
         self.dt_cnt = int(self.rank)
         self.year = int(self.date.strftime('%Y'))
-        #hp.oop.clean_l_atts(self, logger = self.logger)
+        #shlp.oop.clean_l_atts(self, logger = self.logger)
         #=======================================================================
         # cleaning/formatting
         #=======================================================================
@@ -1407,9 +1408,9 @@ class Tstep( #a timestep from teh simulation timeline
 
 class Action(    #collection of modifications of the objects in the Fdmg
                 hp.sel.Sel_usr_wrap,
-                hp.sim.Sim_o,
-                hp.oop.Parent,
-                hp.oop.Child): 
+                shlp.sim.Sim_o,
+                shlp.oop.Parent,
+                shlp.oop.Child): 
     '''
     #===========================================================================
     # DEPENDENCIES

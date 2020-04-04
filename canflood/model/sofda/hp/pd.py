@@ -15,7 +15,7 @@ from collections import OrderedDict
 #===============================================================================
 # other helpers
 #===============================================================================
-import hp.basic
+import model.sofda.hp.basic as basic
 
 
 mod_logger = logging.getLogger(__name__) #creates a child logger of the root
@@ -2030,7 +2030,7 @@ def fillna_fancy(left_df_raw, fill_df_raw, #fill the holes in the left_df_raw wi
         
         logger.debug('for index %i. filled %i nulls with %i values'%(index, oldna_bool.sum(), delta))
         
-        if sysout_f: hp.basic.stdout_status(index, len(left_df), sfx = 'fillna_fancy')
+        if sysout_f: basic.stdout_status(index, len(left_df), sfx = 'fillna_fancy')
 
         
     newna_cnt = pd.isnull(left_df).sum().sum()
