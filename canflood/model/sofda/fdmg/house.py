@@ -40,7 +40,7 @@ import model.sofda.hp.oop as hp_oop
 import model.sofda.hp.sim as hp_sim
 
 import model.sofda.hp.dyno as hp_dyno
-#import hp.data
+#import model.sofda.hp.data as hp_data
 
 from fdmg.dfunc import Dfunc
 import model.sofda.udev.scripts as udev_scripts

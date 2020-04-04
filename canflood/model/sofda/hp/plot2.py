@@ -21,7 +21,7 @@ from weakref import proxy
 import model.sofda.hp.pd as hp_pd
 import model.sofda.hp.oop as hp_oop
 import model.sofda.hp.dict as hp_dict
-import hp.data2
+import model.sofda.hp.data as hp_data2
 
 #import da.pscripts2 as pscripts2
 
@@ -290,7 +290,7 @@ class Plotpar_wrap(object): #for single data plotting variables shared between P
             
             
 
-class Variable_wrap(hp.data2.Dataset): #variable methods to be shared between synthetic and raw
+class Variable_wrap(hp_data2.Dataset): #variable methods to be shared between synthetic and raw
     allow_null_f = False
     sceno = None
     syn_eval = None

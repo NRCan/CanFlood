@@ -28,7 +28,7 @@ from hlpr.exceptions import Error
 
 import model.sofda.hp.pd as hp_pd
 import model.sofda.hp.oop as hp_oop
-import hp.data
+import model.sofda.hp.data as hp_data
 
 #===============================================================================
 # IMPORT SPECIFIC FUNCS ------------------------------------------------------
@@ -226,7 +226,7 @@ class Fdmgo_data_wrap(object): #generic methods for Fdmg data objects
 
         
 class Rfda_curve_data(#class object for rfda legacy pars
-            hp.data.Data_wrapper,
+            hp_data.Data_wrapper,
             hp_oop.Child): 
     'made this a class for easy tracking/nesting of parameters'
     
@@ -343,7 +343,7 @@ class Rfda_curve_data(#class object for rfda legacy pars
                         
         
 class Flood_tbl(     #flood table worker
-                     hp.data.Data_wrapper,
+                     hp_data.Data_wrapper,
                      hp_oop.Child,
                      Fdmgo_data_wrap): 
     
@@ -828,7 +828,7 @@ class Flood_tbl(     #flood table worker
     
 class Fhr_tbl( #flood table worker
         Fdmgo_data_wrap,    
-        hp.data.Data_wrapper,
+        hp_data.Data_wrapper,
         hp_oop.Child, #must be at the bottom of the cascade
                      ): 
     

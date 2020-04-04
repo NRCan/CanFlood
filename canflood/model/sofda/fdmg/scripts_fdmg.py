@@ -42,7 +42,7 @@ import hp.basic
 import model.sofda.hp.pd as hp_pd
 import model.sofda.hp.oop as hp_oop
 import model.sofda.hp.sim as hp_sim
-import hp.data
+import model.sofda.hp.data as hp_data
 import model.sofda.hp.dyno as hp_dyno
 import model.sofda.hp.sel as hp_sel
 
@@ -1784,7 +1784,7 @@ class Fdmg( #flood damage model
         """need to run this every time so the data is updated
         TODO: allow some updating here so we dont have to reduibl deach time
         if self.plotter_kids_dict is None:"""
-        self.plotr_d = self.raise_children_df(aad_fmt_df_slice, kid_class = hp.data.Data_o)
+        self.plotr_d = self.raise_children_df(aad_fmt_df_slice, kid_class = hp_data.Data_o)
             
         logger.debug('finisehd \n')
                  
@@ -2938,7 +2938,7 @@ class Flood(
         return pline
     
 class Binv(     #class object for a building inventory
-                hp.data.Data_wrapper,
+                hp_data.Data_wrapper,
                 #hp.plot.Plot_o,
                 hp_sim.Sim_o,
                 hp_oop.Parent,
@@ -3577,7 +3577,7 @@ class Binv(     #class object for a building inventory
         
 
 class Dfeat_tbl( #holder/generator fo all the dmg_feats
-                 hp.data.Data_wrapper,
+                 hp_data.Data_wrapper,
                 hp_sim.Sim_o,
                 hp_oop.Parent,
                 hp_oop.Child): 

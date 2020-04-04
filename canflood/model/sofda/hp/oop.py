@@ -36,7 +36,7 @@ This makes object deleteion/cleanup much simpler
 since there are some embedments of hte Basic_o, the import order now matters
 
 this module must be imported before
-    hp.data
+    hp_data
     hp.plot
 '''
 # IMPORTS ----------------------------------------------------------------------

@@ -25,16 +25,16 @@ import hp.plot2
 import hp.basic
 import hp.np
 import model.sofda.hp.oop as hp_oop
-import hp.data
+import model.sofda.hp.data as hp_data
 
 
 mod_logger = logging.getLogger(__name__)
 
 
-#class Fit_func(hp.data.Data_o): #thin wrapper for regressions
+#class Fit_func(hp_data.Data_o): #thin wrapper for regressions
      
 
-class Data_func(hp.data.Data_wrapper, 
+class Data_func(hp_data.Data_wrapper, 
                 hp.plot2.Plotr,
                 hp_oop.Child): #for analysis by data type
     

@@ -63,7 +63,7 @@ import model.sofda.hp.dyno as hp_dyno
 import model.sofda.hp.sel as hp_sel
 import model.sofda.hp.outs as hp_outs
 import model.sofda.hp.dict as hp_dict #wasnt added before for some reason...
-import hp.data
+import model.sofda.hp.data as hp_data
 
 from model.sofda.hp.pd import view
 
@@ -96,7 +96,7 @@ class Session( #main session handler. runs many simulations for stochastic model
         hp_sel.Sel_controller, 
         hp_dynp.Dynp_session,
         hp_outs.Out_controller,
-        hp.data.Data_wrapper,
+        hp_data.Data_wrapper,
         #hp.plot.Plot_o,
         hp_oop.Child): 
    

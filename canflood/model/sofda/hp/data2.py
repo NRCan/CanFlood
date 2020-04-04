@@ -23,7 +23,7 @@ from weakref import proxy
 import model.sofda.hp.pd as hp_pd
 import model.sofda.hp.oop as hp_oop
 import model.sofda.hp.dict as hp_dict
-import hp.data2
+import model.sofda.hp.data as hp_data2
 
 #===============================================================================
 # mod_logger

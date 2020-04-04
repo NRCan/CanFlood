@@ -25,7 +25,7 @@ from weakref import WeakValueDictionary as wdict
 
 #import hp.basic
 #import model.sofda.hp.dict as hp_dict
-#import hp.data
+#import model.sofda.hp.data as hp_data
 import model.sofda.hp.sel as hp_sel
 import model.sofda.hp.dyno as hp_dyno
 import model.sofda.hp.oop as hp_oop
@@ -135,7 +135,7 @@ class Udev(
         logger.debug('\n \n')
 
         self.udev_d = self.raise_children_df(self.session.pars_df_d['udev'], 
-                                     kid_class = hp.data.Data_o)
+                                     kid_class = hp_data.Data_o)
         
         logger.debug('set_fhr() \n')
         #update hte building inventory with this data
