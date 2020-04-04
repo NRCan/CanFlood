@@ -2024,7 +2024,10 @@ def fillna_fancy(left_df_raw, fill_df_raw, #fill the holes in the left_df_raw wi
         
         logger.debug('for index %i. filled %i nulls with %i values'%(index, oldna_bool.sum(), delta))
         
-        if sysout_f: basic.stdout_status(index, len(left_df), sfx = 'fillna_fancy')
+        #=======================================================================
+        # if sysout_f: 
+        #     basic.stdout_status(index, len(left_df), sfx = 'fillna_fancy')
+        #=======================================================================
 
         
     newna_cnt = pd.isnull(left_df).sum().sum()
@@ -2916,70 +2919,72 @@ def tlike_to_valt_d( #convert a series (or array) of tuple like values into a di
 # PLOTTERS --------------------------------------------------------------------
 #===============================================================================
 
-def Plot_split_on_y(df, ax=None, title = None, savepath = None, x_label = None, logger=mod_logger): #plot the first two columns agains the index
-    
-    #===========================================================================
-    # Set Defaults
-    #===========================================================================
-    
-    if ax == None:
-        fig = plt.figure(5)
-        fig.set_size_inches(6, 4.5)
-        ax = fig.add_subplot(111)
-    else:
-        fig = plt.gcf()
-        
-    #===========================================================================
-    # Get the data
-    #===========================================================================
-    x_list = list(df.index)
-    y1_list = list(df.iloc[:,0])
-    y2_list = list(df.iloc[:,1])
-    
-    
-    y1_lab = df.columns[0]
-    y2_lab = df.columns[1]
-    
-    #===========================================================================
-    # PLot the first axis
-    #===========================================================================
-    color = 'green'
-
-    y1_pline = ax.plot(x_list, y1_list, color = color)
-    
-    y1_pline[0].set_label(y1_lab)
-    
-    #===========================================================================
-    # Plot the second axis
-    #===========================================================================
-    ax2 = ax.twinx()
-    color = 'blue'
-    y2_pline = ax2.plot(x_list, y2_list, color = color)
-    y2_pline[0].set_label(y2_lab)
-           
-    #===========================================================================
-    # Label the plot
-    #===========================================================================
-    type(df.index)
-    ax.set_title(title)
-    ax.set_xlabel(x_label) 
-    ax.set_ylabel(y1_lab)
-    ax2.set_ylabel(y2_lab)
-    
-    #===========================================================================
-    # configure the legend
-    #===========================================================================
-    h1, l1 = ax.get_legend_handles_labels() #pull legend handles from axis 1
-    h2, l2 = ax2.get_legend_handles_labels()
-    ax.legend(h1+h2, l1+l2) #turn legend on with combined handles
-    
-    #===========================================================================
-    # Save teh figure
-    #===========================================================================
-    if not savepath == None: #trigger for saving the fiture
-        fig.savefig(savepath, dpi = 300)
-        
-    return ax, ax2
+#===============================================================================
+# def Plot_split_on_y(df, ax=None, title = None, savepath = None, x_label = None, logger=mod_logger): #plot the first two columns agains the index
+#     
+#     #===========================================================================
+#     # Set Defaults
+#     #===========================================================================
+#     
+#     if ax == None:
+#         fig = plt.figure(5)
+#         fig.set_size_inches(6, 4.5)
+#         ax = fig.add_subplot(111)
+#     else:
+#         fig = plt.gcf()
+#         
+#     #===========================================================================
+#     # Get the data
+#     #===========================================================================
+#     x_list = list(df.index)
+#     y1_list = list(df.iloc[:,0])
+#     y2_list = list(df.iloc[:,1])
+#     
+#     
+#     y1_lab = df.columns[0]
+#     y2_lab = df.columns[1]
+#     
+#     #===========================================================================
+#     # PLot the first axis
+#     #===========================================================================
+#     color = 'green'
+# 
+#     y1_pline = ax.plot(x_list, y1_list, color = color)
+#     
+#     y1_pline[0].set_label(y1_lab)
+#     
+#     #===========================================================================
+#     # Plot the second axis
+#     #===========================================================================
+#     ax2 = ax.twinx()
+#     color = 'blue'
+#     y2_pline = ax2.plot(x_list, y2_list, color = color)
+#     y2_pline[0].set_label(y2_lab)
+#            
+#     #===========================================================================
+#     # Label the plot
+#     #===========================================================================
+#     type(df.index)
+#     ax.set_title(title)
+#     ax.set_xlabel(x_label) 
+#     ax.set_ylabel(y1_lab)
+#     ax2.set_ylabel(y2_lab)
+#     
+#     #===========================================================================
+#     # configure the legend
+#     #===========================================================================
+#     h1, l1 = ax.get_legend_handles_labels() #pull legend handles from axis 1
+#     h2, l2 = ax2.get_legend_handles_labels()
+#     ax.legend(h1+h2, l1+l2) #turn legend on with combined handles
+#     
+#     #===========================================================================
+#     # Save teh figure
+#     #===========================================================================
+#     if not savepath == None: #trigger for saving the fiture
+#         fig.savefig(savepath, dpi = 300)
+#         
+#     return ax, ax2
+#===============================================================================
 
     
 #===============================================================================
@@ -3173,14 +3178,14 @@ def merge_dxcol(left_dxcol, right_dxcol,
                 logger=mod_logger, **kwargs): #merge two dxcols with eh same lvl0 values
     
     
-    import hp.np
+    import model.sofda.hp.np as hp_np
     left_lvl0_vals = left_dxcol.columns.get_level_values(0).unique() 
     right_lvl0_vals = right_dxcol.columns.get_level_values(0).unique()
     
     #===========================================================================
     # prechecks
     #===========================================================================
-    if not np.any(hp.np.np_isin_workaround(left_lvl0_vals, right_lvl0_vals)): raise IOError
+    if not np.any(hp_np.np_isin_workaround(left_lvl0_vals, right_lvl0_vals)): raise IOError
     
     
     

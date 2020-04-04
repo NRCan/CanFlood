@@ -23,7 +23,7 @@ from weakref import proxy
 #===============================================================================
 import hp.plot2
 import model.sofda.hp.basic as hp_basic
-import hp.np
+import model.sofda.hp.np as hp_np
 import model.sofda.hp.oop as hp_oop
 import model.sofda.hp.data as hp_data
 
@@ -133,10 +133,10 @@ class Continuous_1D(Data_func): #set of 1d discrete data
     def clean_data(self, ar_raw): #clean the data
         logger = self.logger.getChild('clean_data')
         
-        if not hp.np.isar(ar_raw):
+        if not hp_np.isar(ar_raw):
             try:
                 ar1 = ar_raw.values
-                if not hp.np.isar(ar1): raise ValueError
+                if not hp_np.isar(ar1): raise ValueError
             except:
                 self.logger.error('failed to convert to array')
                 raise IOError 
@@ -144,9 +144,9 @@ class Continuous_1D(Data_func): #set of 1d discrete data
         else: ar1 = copy.deepcopy(ar_raw) #just get a copy
         
         #dimensional check
-        ar2 = hp.np.make_1D(ar1, logger = self.logger)
+        ar2 = hp_np.make_1D(ar1, logger = self.logger)
         
-        ar3 = hp.np.dropna(ar2, logger = self.logger)
+        ar3 = hp_np.dropna(ar2, logger = self.logger)
         
         ar_clean = ar3
         

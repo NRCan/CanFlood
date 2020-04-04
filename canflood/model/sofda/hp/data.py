@@ -500,7 +500,7 @@ class Data_wrapper(object): #wrapper for data type operations
         # report results
         #=======================================================================
         #true
-        stats_l = hp.np.get_stats_str_l(true_df.values)
+        stats_l = hp_np.get_stats_str_l(true_df.values)
         if not invert:
             logger.info('for the \'%s\' IN slice got these stats: \n    %s'%(slice_name, stats_l))
         else:
