@@ -46,7 +46,7 @@ import model.sofda.hp.data as hp_data
 import model.sofda.hp.dyno as hp_dyno
 import model.sofda.hp.sel as hp_sel
 
-import fdmg.datos_fdmg as datos
+import model.sofda.fdmg.datos_fdmg as datos
 
 #===============================================================================
 # import matplotlib.pyplot as plt
@@ -59,9 +59,9 @@ import fdmg.datos_fdmg as datos
 #===============================================================================
 # custom shortcuts
 #===============================================================================
-from fdmg.house import House
+from model.sofda.fdmg.house import House
 #from model.sofda.fdmg.dfunc import Dfunc
-from fdmg.dmgfeat import Dmg_feat
+from model.sofda.fdmg.dmgfeat import Dmg_feat
 
 
 # logger setup -----------------------------------------------------------------------
