@@ -62,7 +62,7 @@ class Sel_usr_wrap(object): #functions for objects that want to use Selectors
     #===========================================================================
     # classes inheriting this
     #===========================================================================
-    udev.scripts.Action
+    udev_scripts.Action
     
     hp_dynp.Dynamic_par
     

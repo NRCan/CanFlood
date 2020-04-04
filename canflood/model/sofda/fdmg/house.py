@@ -43,7 +43,7 @@ import model.sofda.hp.dyno as hp_dyno
 #import hp.data
 
 from fdmg.dfunc import Dfunc
-import udev.scripts
+import model.sofda.udev.scripts as udev_scripts
 
 # logger setup -----------------------------------------------------------------------
 mod_logger = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ mod_logger.debug('initilized')
 
 
 class House(
-            udev.scripts.House_udev,
+            udev_scripts.House_udev,
             #hp.plot.Plot_o, 
             hp_dyno.Dyno_wrap,
             hp_sim.Sim_o,  

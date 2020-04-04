@@ -63,14 +63,15 @@ import model.sofda.hp.dyno as hp_dyno
 import model.sofda.hp.sel as hp_sel
 import model.sofda.hp.outs as hp_outs
 import model.sofda.hp.dict as hp_dict #wasnt added before for some reason...
+import hp.data
 
 from model.sofda.hp.pd import view
 
 #===============================================================================
 # import in project mods
 #===============================================================================
-import fdmg.scripts_fdmg as fscripts
-import udev.scripts
+import model.sofda.fdmg.scripts_fdmg as fscripts
+import model.sofda.udev.scripts as udev_scripts
 
 #===============================================================================
 # mod_logger
@@ -324,7 +325,7 @@ class Session( #main session handler. runs many simulations for stochastic model
         logger.info('loading udev submodel')
         logger.debug('\n \n')
         
-        self.udev = self.spawn_child(childname = 'udev', kid_class = udev.scripts.Udev)
+        self.udev = self.spawn_child(childname = 'udev', kid_class = udev_scripts.Udev)
         self.prof(state='load.udev')
         self.fdmg.udev = self.udev
         
