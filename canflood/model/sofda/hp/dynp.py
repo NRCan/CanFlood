@@ -980,7 +980,7 @@ class Dynamic_par(hp_sel.Sel_usr_wrap,
         #=======================================================================
         #shortcut for no objects on this dynp
         if len(dynk_d) == 0: 
-            logger.debug('dynk_d = 0. no one to modify')
+
             return container() #shortcut
         
         #=======================================================================
@@ -1106,38 +1106,40 @@ class Dynamic_par(hp_sel.Sel_usr_wrap,
         return upd_s
     
    
-    def plot_valf(self, wtf=True): #plot the distribution
-        
-        logger = self.logger.getChild('plot_valf')
-        
-        import hp.sci
-        import matplotlib.pyplot as plt
-        import hp.plot
-        
-        #=======================================================================
-        # create distrubtion worker
-        #=======================================================================
-        wrkr = hp.sci.Continuous_1D(self, self.session, name = self.name + '_plotr')
-        
-        #pass downa ll attributes
-        wrkr.rv = self.rv #set the random variable parameters
-        wrkr.fit_name = self.rv.dist.name
-        wrkr.color = self.color
-        wrkr.outpath = self.outpath
-        
-        wrkr.label = self.pclass_n + '.' + self.att_name
-        
-        if self.change_type == 'delta': wrkr.label = wrkr.label +  ' delta'
-        
-        title = self.name + ' '+ wrkr.fit_name + '_pdf plot'
-        
-        
-        _ = wrkr.plot_pdf(title=title, wtf=wtf, annot_f=True)
-        
-            
-        del wrkr #delete teh worker
-        
-        return
+    #===========================================================================
+    # def plot_valf(self, wtf=True): #plot the distribution
+    #     
+    #     logger = self.logger.getChild('plot_valf')
+    #     
+    #     import hp.sci
+    #     import matplotlib.pyplot as plt
+    #     import hp.plot
+    #     
+    #     #=======================================================================
+    #     # create distrubtion worker
+    #     #=======================================================================
+    #     wrkr = hp.sci.Continuous_1D(self, self.session, name = self.name + '_plotr')
+    #     
+    #     #pass downa ll attributes
+    #     wrkr.rv = self.rv #set the random variable parameters
+    #     wrkr.fit_name = self.rv.dist.name
+    #     wrkr.color = self.color
+    #     wrkr.outpath = self.outpath
+    #     
+    #     wrkr.label = self.pclass_n + '.' + self.att_name
+    #     
+    #     if self.change_type == 'delta': wrkr.label = wrkr.label +  ' delta'
+    #     
+    #     title = self.name + ' '+ wrkr.fit_name + '_pdf plot'
+    #     
+    #     
+    #     _ = wrkr.plot_pdf(title=title, wtf=wtf, annot_f=True)
+    #     
+    #         
+    #     del wrkr #delete teh worker
+    #     
+    #     return
+    #===========================================================================
     
     def write_hist_df(self):
         

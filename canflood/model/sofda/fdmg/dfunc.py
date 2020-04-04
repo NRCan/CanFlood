@@ -12,9 +12,9 @@ import logging, os,  time, re, math, copy, gc, weakref, random, scipy
 
 import pandas as pd
 import numpy as np
+import scipy.integrate
 
-
-from fdmg.dmgfeat import Dmg_feat
+from model.sofda.fdmg.dmgfeat import Dmg_feat
 
 #===============================================================================
 # shortcuts
@@ -2004,103 +2004,105 @@ class Dfunc(
             
         return
                 
-    def plot_dd_ar(self, #plot the depth damage array
-                   datum = None, ax=None, wtf=None, title=None, annot=None, **kwargs):
-        
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        logger = self.logger.getChild('plot_dd_ar')
-        if wtf == None: wtf = self.session._write_figs
-        if title is None: title = self.parent.name +' ' + self.name + ' depth-damage plot'
-        
-        #=======================================================================
-        # depth data setup 
-        #=======================================================================
-        
-        #plot formatting
-        depth_dato = copy.copy(self) #start with a copy of self
-        
-        
-        #data transforms
-        if datum is None:  #plot raw values
-            delta = 0.0
-            depth_dato.units = 'depth raw(m)'
-            
-        elif datum == 'real': #plot relative to elevation/anchor
-            delta = self.anchor_el
-            depth_dato.units = 'elevation (m)'
-
-        elif datum == 'house': #plot relative to the house anchor
-            delta = self.anchor_el - self.parent.anchor_el
-            depth_dato.units = 'depth (m)'
-            
-        depth_ar = self.dd_ar[0] + delta
-        depth_dato.label = depth_dato.units
-        
-        logger.debug('added %.2f to all depth values for datum: \'%s\''%(delta, datum))
-
-        #=======================================================================
-        # damage data setup 
-        #=======================================================================
-        dmg_ar = self.dd_ar[1] 
-        
-        #scale up for rfda
-        if self.dfunc_type == 'rfda': dmg_ar= dmg_ar * self.parent.gis_area
-        
-        #annotation
-        if not annot is None:
-            if annot == True:
-                annot = 'acode = %s\n'%self.acode +\
-                                'dfunc_type: %s\n'%self.dfunc_type
-                
-                raise IOError
-                'this may be broken'
-                if hasattr(self, 'f_area'):
-                                annot = annot +\
-                                'f_area = %.2f m2\n'%self.f_area +\
-                                'f_per = %.2f m\n'%self.f_per +\
-                                'f_inta = %.2f m2\n'%self.f_inta +\
-                                'base_area = %.2f m2\n'%self.base_area +\
-                                'base_per = %.2f m\n'%self.base_per +\
-                                'base_inta = %.2f m2\n'%self.base_inta 
-                else:
-                    annot = annot +\
-                    'gis_area = %.2f m2\n'%self.parent.gis_area
-
-        #=======================================================================
-        # send for  plotting
-        #=======================================================================
-        """
-        dep_dato: dependent data object (generally y)
-        indp_dato: indepdent data object (generally x)
-        flip: flag to indicate whether to apply plot formatters from the y or the x name list 
-        """
-        ax = self.model.plot(self, indp_dato = depth_dato, dep_ar = dmg_ar, indp_ar = depth_ar,
-                       annot = annot, flip = True, 
-                       ax=ax, wtf=False, title=title, **kwargs)
-        
-        #=======================================================================
-        # post formatting
-        #=======================================================================
-        #add thousands comma
-        ax.get_xaxis().set_major_formatter(
-            matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
-        
-            
-        #=======================================================================
-        # wrap up
-        #=======================================================================
-        if wtf: 
-            fig = ax.figure
-            flag = hp.plot.save_fig(self, fig, dpi = self.dpi)
-            if not flag: raise IOError 
-                            
-        
-        logger.debug('finished as %s'%title)
-        
-        return ax
-        
+#===============================================================================
+#     def plot_dd_ar(self, #plot the depth damage array
+#                    datum = None, ax=None, wtf=None, title=None, annot=None, **kwargs):
+#         
+#         #=======================================================================
+#         # defaults
+#         #=======================================================================
+#         logger = self.logger.getChild('plot_dd_ar')
+#         if wtf == None: wtf = self.session._write_figs
+#         if title is None: title = self.parent.name +' ' + self.name + ' depth-damage plot'
+#         
+#         #=======================================================================
+#         # depth data setup 
+#         #=======================================================================
+#         
+#         #plot formatting
+#         depth_dato = copy.copy(self) #start with a copy of self
+#         
+#         
+#         #data transforms
+#         if datum is None:  #plot raw values
+#             delta = 0.0
+#             depth_dato.units = 'depth raw(m)'
+#             
+#         elif datum == 'real': #plot relative to elevation/anchor
+#             delta = self.anchor_el
+#             depth_dato.units = 'elevation (m)'
+# 
+#         elif datum == 'house': #plot relative to the house anchor
+#             delta = self.anchor_el - self.parent.anchor_el
+#             depth_dato.units = 'depth (m)'
+#             
+#         depth_ar = self.dd_ar[0] + delta
+#         depth_dato.label = depth_dato.units
+#         
+#         logger.debug('added %.2f to all depth values for datum: \'%s\''%(delta, datum))
+# 
+#         #=======================================================================
+#         # damage data setup 
+#         #=======================================================================
+#         dmg_ar = self.dd_ar[1] 
+#         
+#         #scale up for rfda
+#         if self.dfunc_type == 'rfda': dmg_ar= dmg_ar * self.parent.gis_area
+#         
+#         #annotation
+#         if not annot is None:
+#             if annot == True:
+#                 annot = 'acode = %s\n'%self.acode +\
+#                                 'dfunc_type: %s\n'%self.dfunc_type
+#                 
+#                 raise IOError
+#                 'this may be broken'
+#                 if hasattr(self, 'f_area'):
+#                                 annot = annot +\
+#                                 'f_area = %.2f m2\n'%self.f_area +\
+#                                 'f_per = %.2f m\n'%self.f_per +\
+#                                 'f_inta = %.2f m2\n'%self.f_inta +\
+#                                 'base_area = %.2f m2\n'%self.base_area +\
+#                                 'base_per = %.2f m\n'%self.base_per +\
+#                                 'base_inta = %.2f m2\n'%self.base_inta 
+#                 else:
+#                     annot = annot +\
+#                     'gis_area = %.2f m2\n'%self.parent.gis_area
+# 
+#         #=======================================================================
+#         # send for  plotting
+#         #=======================================================================
+#         """
+#         dep_dato: dependent data object (generally y)
+#         indp_dato: indepdent data object (generally x)
+#         flip: flag to indicate whether to apply plot formatters from the y or the x name list 
+#         """
+#         ax = self.model.plot(self, indp_dato = depth_dato, dep_ar = dmg_ar, indp_ar = depth_ar,
+#                        annot = annot, flip = True, 
+#                        ax=ax, wtf=False, title=title, **kwargs)
+#         
+#         #=======================================================================
+#         # post formatting
+#         #=======================================================================
+#         #add thousands comma
+#         ax.get_xaxis().set_major_formatter(
+#             matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+#         
+#             
+#         #=======================================================================
+#         # wrap up
+#         #=======================================================================
+#         if wtf: 
+#             fig = ax.figure
+#             flag = hp.plot.save_fig(self, fig, dpi = self.dpi)
+#             if not flag: raise IOError 
+#                             
+#         
+#         logger.debug('finished as %s'%title)
+#         
+#         return ax
+#         
+#===============================================================================
     def write_dd_ar(self, filepath = None): #save teh dd_ar to file
         logger = self.logger.getChild('write_dd_ar')
         
