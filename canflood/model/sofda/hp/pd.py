@@ -3298,7 +3298,7 @@ def Get_spatial_dxcol(x_values,y_values,time_ser, data_raw, logger=mod_logger): 
     
     #check that the xy values match the number of data entries
     if not int(data_raw.shape[1]) == len(x_values):
-        logger.error('dimension mismatch. data: %s and x_values: %i'%(lvl_data_trim.shape, len(x_values)))
+        #logger.error('dimension mismatch. data: %s and x_values: %i'%(lvl_data_trim.shape, len(x_values)))
         raise IOError
     
 

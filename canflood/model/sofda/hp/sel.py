@@ -49,6 +49,7 @@ import model.sofda.hp.pd as hp_pd
 import model.sofda.hp.oop as hp_oop
 import model.sofda.hp.sim as hp_sim
 import model.sofda.hp.data as hp_data
+import model.sofda.hp.dict as hp_dict
 'because we want our selectors to be sim objects, cant let anything in hp_sim use this mod'
 
 
