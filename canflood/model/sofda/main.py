@@ -34,9 +34,21 @@ start = time.time() #start the clock
 mod_dir = os.path.dirname(__file__)
 
 #===============================================================================
-# #highest level debuggers
+# custom imports
 #===============================================================================
-_prof_time = False
+if __name__ =="__main__": 
+    from hlpr.logr import basic_logger
+    logger = basic_logger()   
+    
+    from hlpr.exceptions import Error
+    
+#plugin runs
+else:
+    logger = logging.getLogger('sofda') #get the root logger
+
+    from hlpr.exceptions import QError as Error
+
+
 
 #===============================================================================
 # define the main function ---------------------------------------------------
@@ -51,14 +63,13 @@ def run(
         #main directory and control file setup
         parspath            = r'C:\LocalStore\03_TOOLS\SOFDA\_ins\_sample\3.0.3\sample_303.xls', 
         #control file name.    'gui' = use gui (default).
-        work_dir            = 'cur', #control for working directory. 'auto'=one directory up from this file.
-        outs_dir             = 'auto', #control for the outs_dir. 'auto': generate outpath in the working directory; 'gui' let user select.
+
+        out_dir             = None, #control for the outs_dir. 'auto': generate outpath in the working directory; 'gui' let user select.
         
-        dynp_hnd_file       = 'auto', #control for locating the dynp handle file
+        dynp_hnd_file       = None, #control for locating the dynp handle file
         
         #logger handling
-        _log_cfg_fn         = 'logger.conf', #filetail of root logging configuration file (relative to mod_dir)
-        lg_lvl              = None, #logging level of the sim logger. None = DEBUG
+
         _lg_stp             = 20, #for key iterations, interval on which to log
         
         #file write handling
@@ -72,7 +83,7 @@ def run(
         #"""this gets really tricky with the selection lists"""
         
         #profiling
-        _prof_time          = _prof_time, #run while profile the program stats
+        _prof_time          = False, #run while profile the program stats
         _prof_mem           = 0, #0, 1, 2, 3 memory profile level
         
         force_open          = True #force open the outputs folder
@@ -80,124 +91,48 @@ def run(
 
     print('Welcome to SOFDA %s !!!'%__version__)
     #===============================================================================
-    # Working directory ------------------------------------------------------
+    # defaults------------------------------------------------------
     #===============================================================================
-    import hp.gui
-    #assign
-    if work_dir == 'pauto': 
-        'for python runs. doesnt work for freezing'
-        work_dir = os.path.dirname(os.path.dirname(__file__)) #default to 1 directories up
-    
-    elif work_dir == 'cur':
-        work_dir = os.getcwd()
         
-    elif work_dir == 'gui':
-        work_dir = hp.gui.get_dir(title='select working directory', indir = os.getcwd())
+    #output directory
+    if out_dir is None: 
+        out_dir = os.path.join(os.getcwd(), 'sofda', 
+                               datetime.datetime.now().strftime('%Y-%m-%d_%H.%M.%S'))
+                
+    if not os.path.exists(out_dir):
+        logger.info('buildilng out_dir: %s'%out_dir)
+        os.makedirs(out_dir)
         
-    elif work_dir == 'home':
-        from os.path import expanduser
-        usr_dir = expanduser("~") #get the users windows folder
-        work_dir = os.path.join(usr_dir, 'SOFDA')
-        if not os.path.exists(work_dir): os.makedirs(work_dir)
-        
-
-    #check it
-    if not os.path.exists(work_dir): 
-        raise IOError('passed work_dir does not exist: \'%s\''%work_dir)
-        
-
-    #===============================================================================
-    # Setup root log file ----------------------------------------------------------
-    #===============================================================================
-    logcfg_file = os.path.join(mod_dir, '_pars',_log_cfg_fn)
+    assert os.path.exists(out_dir)
     
-    if not os.path.exists(logcfg_file):  
-        raise IOError('No logger Config File found at: \n   %s'%logcfg_file)
-    
-    logger = logging.getLogger() #get the root logger
-    logging.config.fileConfig(logcfg_file) #load the configuration file
-    'this should create a logger in the current directory'
-    logger.info('%s root.log configured from file at %s: \n    %s'%(__version__, datetime.datetime.now(), logcfg_file))
-    
-    #move to the working directory
-    os.chdir(work_dir) #set this to the working directory
-    logger.debug('working directory set to \n    \"%s\''%os.getcwd())
-    
-    #load the custom exceptions
-    from exceptions import Error
-
+    inscopy_path = os.path.join(out_dir, '_ins')
+    if not os.path.exists(inscopy_path):
+        os.makedirs(inscopy_path)
     #===========================================================================
-    # Control file -----------------------------------------------------------
+    # contorl file       
     #===========================================================================
-    if parspath == 'gui':
-        parspath = hp.gui.gui_fileopen(title='Select SOFDA your control file.xls', indir = work_dir,
-                                       filetypes = 'xls', logger=logger)
-        
-    if not os.path.exists(parspath):
-        raise Error('passed parfile  does not exist \n    %s'%parspath)
+    assert os.path.exists(parspath), 'passed parfile  does not exist \n    %s'%parspath
     
     _, pars_fn = os.path.split(parspath) #get the conrol file name
 
-    #===========================================================================
-    # outputs folder --------------------------------------------------------
-    #===========================================================================
-    import hp.basic
-    
-    if _write_data:
-        if outs_dir == 'gui':
-            outpath = hp.gui.file_saveas(title='enter output folder name/location', indir = work_dir, logger=logger)
-        else: #from some parent directory
-            
-            if outs_dir == 'auto':
-                'defaulting to a _outs sub directory'
-                outparent_path =  os.path.join(work_dir, '_outs')
-                
-            elif os.path.exists(outs_dir):
-                outparent_path =  outs_dir
-            else:
-                raise Error('unrecognized outs_dir: %s'%outs_dir)
-            
-            if not os.path.exists(outparent_path):
-                logger.warning('default outparent_path does not exist. building \n    %s'%outparent_path)
-                os.makedirs(outparent_path)
-                
-            outpath = hp.basic.setup_workdir(outparent_path, basename = pars_fn[:-4])
-            
-
-        #check and build
-        if os.path.exists(outpath):
-            logger.debug('selected outpath exists\n    %s'%outpath)
-        else:
-            os.makedirs(outpath)
-
-        #setup the ins copy
-        inscopy_path = os.path.join(outpath, '_inscopy')
-        if _write_ins: 
-            os.makedirs(inscopy_path)
-        
-    else:
-        _write_ins = False
-        _write_figs = False
-        outpath, inscopy_path = '_none', '_none'
         
     #===========================================================================
-    # handle files -----------------------------------------------------------
+    # handle files  
     #===========================================================================
-    if dynp_hnd_file == 'auto':
+    if dynp_hnd_file is None:
         dynp_hnd_file = os.path.join(mod_dir, '_pars', 'dynp_handles_20190512.xls')
         
-    if not os.path.exists(dynp_hnd_file):
-        raise Error('')
+    assert os.path.exists(dynp_hnd_file), 'passed invalid \'dynp_hnd_file\': %s'%dynp_hnd_file
        
 
     #===============================================================================
     # INIT -----------------------------------------------------------
     #===============================================================================
-    import scripts
+    import model.sofda.scripts as scripts
     
     session = scripts.Session(parspath = parspath, 
-                              outpath = outpath, 
-                              inscopy_path = inscopy_path,
+                              outpath = out_dir, 
+
                               dynp_hnd_file = dynp_hnd_file,
                               
                               _logstep = _lg_stp, 
@@ -231,22 +166,24 @@ def run(
     #===============================================================================
     # copy input files
     #===============================================================================
+    import model.sofda.shlp.basic as basic
     #copy pyscripts
     if _write_ins: 
+        
         sfx = '_%s'%datetime.datetime.now().strftime('%Y%m%d') #file suffix
         
         session.ins_copy_fps.update([__file__, scripts.__file__, parspath]) #add some to the writer list
         
         for fn in session.ins_copy_fps: #loop and write these
-            _ = hp.basic.copy_file(fn,inscopy_path, sfx=sfx) #copy this script
+            _ = basic.copy_file(fn,inscopy_path, sfx=sfx) #copy this script
 
     
     if force_open: 
-        hp.basic.force_open_dir(outpath)
+        basic.force_open_dir(out_dir)
     
     stop = time.time()
     logger.info('\n \n    in %.4f mins \'%s.%s\' finished at %s on \n    %s\n    %s\n'
-                %((stop-start)/60.0, __name__,__version__, datetime.datetime.now(), pars_fn[:-4], outpath))
+                %((stop-start)/60.0, __name__,__version__, datetime.datetime.now(), pars_fn[:-4], out_dir))
 
 
 
@@ -255,28 +192,13 @@ def run(
 #===============================================================================
 if __name__ =="__main__": 
     
-    if _prof_time: #profile the run
-        import hp.basic
-        
-        #=======================================================================
-        # file setup
-        #=======================================================================
-        work_dir = os.path.dirname(os.path.dirname(__file__)) #default to 1 directories up
-        out_fldr = '_outs'
-
-        outparent_path =  os.path.join(work_dir, out_fldr)
-        master_out, inscopy_path = hp.basic.setup_workdir(outparent_path)
-
-        
-        run_str = 'run(outpath = master_out)'
-        
-
-
-        import hp.prof
-        hp.prof.profile_run_skinny(run_str, outpath = master_out, localz = locals())
-
-    else:
-        run(work_dir='pauto') #for standalone runs
+    #===========================================================================
+    # dev
+    #===========================================================================
+    parspath    = r'C:\LS\03_TOOLS\SOFDA\_ins\201901CoC\303_2014\SOFDA303_2014f.xls'
+    out_dir     = None #use the default
+    
+    run(parspath=parspath, out_dir=out_dir) #for standalone runs
 
 
         

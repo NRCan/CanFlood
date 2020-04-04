@@ -43,17 +43,17 @@ import numpy as np
 
 from collections import OrderedDict as od
 from weakref import WeakValueDictionary as wdict
-from exceptions import Error
+from hlpr.exceptions import Error
 #from weakref import proxy
 
 #===============================================================================
 #  IMPORT CUSTOM MODS ---------------------------------------------------------
 #===============================================================================
 #import hp.plot #need to call this first so thet matplotlib backend configures correctly
-import hp.basic
+import model.sofda.shlp.basic as basic
 import hp.pd
 
-import hp.oop
+import shlp.oop
 import hp.sim
 import hp.dynp
 import hp.dyno
@@ -439,7 +439,7 @@ class Session( #main session handler. runs many simulations for stochastic model
         
         l = []
         for e in df_clean.columns.tolist():
-            if hp.basic.isnum(e[:2]):
+            if basic.isnum(e[:2]):
                 l.append(e)
         
         l.sort()
@@ -1457,9 +1457,9 @@ class Action(    #collection of modifications of the objects in the Fdmg
         #unique setup
         #=======================================================================
         'todo: convert these to sets'
-        self.dynp_n_l = hp.basic.excel_str_to_py(self.dynp_n_l, logger = self.logger)
+        self.dynp_n_l = basic.excel_str_to_py(self.dynp_n_l, logger = self.logger)
         
-        self.act_n_l = hp.basic.excel_str_to_py(self.act_n_l, logger = self.logger)
+        self.act_n_l = basic.excel_str_to_py(self.act_n_l, logger = self.logger)
         
         logger.debug('setup_action() \n')
         self.setup_action()
@@ -1566,7 +1566,7 @@ class Action(    #collection of modifications of the objects in the Fdmg
             
             
             """
-            boolar = hp.basic.bool_list_in_list(self.model.kids_d.keys(), self.act_n_l)
+            boolar = basic.bool_list_in_list(self.model.kids_d.keys(), self.act_n_l)
             
             if not np.all(boolar):
                 logger.error('some chained actions have not been loaded yet. make sure the order is correct')
