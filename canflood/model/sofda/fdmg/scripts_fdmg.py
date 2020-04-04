@@ -14,6 +14,7 @@ significant scripts for calculating damage within the ABMRI framework
 import logging, os,  time, re, math, copy, gc, weakref, random, sys
 
 
+
 import pandas as pd
 import numpy as np
 
@@ -48,10 +49,11 @@ import model.sofda.hp.sel as hp_sel
 
 import model.sofda.fdmg.datos_fdmg as datos
 
-#===============================================================================
-# import matplotlib.pyplot as plt
-# import matplotlib
-#===============================================================================
+
+
+
+#import matplotlib.pyplot as plt
+#import matplotlib
 #import matplotlib.animation as animation #load the animation module (with the new search path)
 
 
