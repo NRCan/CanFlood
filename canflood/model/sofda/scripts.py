@@ -62,7 +62,7 @@ import model.sofda.hp.dynp as hp_dynp
 import model.sofda.hp.dyno as hp_dyno
 import model.sofda.hp.sel as hp_sel
 import model.sofda.hp.outs as hp_outs
-import hp.dict #wasnt added before for some reason...
+import model.sofda.hp.dict as hp_dict #wasnt added before for some reason...
 
 from model.sofda.hp.pd import view
 
@@ -1531,7 +1531,7 @@ class Action(    #collection of modifications of the objects in the Fdmg
             #===================================================================
             try:
                 #extract with some fancy searching
-                self.dynp_wd = hp.dict.subset(self.session.dynp_d, #container to pull values from
+                self.dynp_wd = hp_dict.subset(self.session.dynp_d, #container to pull values from
                                               self.dynp_n_l,#list of keys to search from from the dynp_d
                                              container = container, logger = logger)
             except:
@@ -1559,7 +1559,7 @@ class Action(    #collection of modifications of the objects in the Fdmg
             for actn in self.act_n_l:
                 
                 #upll this action object from teh class_d
-                acto = hp.dict.value_by_ksearch(actn, class_d, logger = logger)
+                acto = hp_dict.value_by_ksearch(actn, class_d, logger = logger)
                 
                 if acto is None: 
                     logger.error('got None for \'%s\'. check the order??'%actn)
@@ -1580,7 +1580,7 @@ class Action(    #collection of modifications of the objects in the Fdmg
                 logger.error('some chained actions have not been loaded yet. make sure the order is correct')
                 raise IOError
             
-            self.acts_d = hp.dict.subset(self.model.kids_d, self.act_n_l, 
+            self.acts_d = hp_dict.subset(self.model.kids_d, self.act_n_l, 
                                          container = container, logger = logger)"""
         'have to use kids_d here because the model.acts_d hasnt finished yet'
 

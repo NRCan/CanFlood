@@ -20,7 +20,7 @@ from weakref import proxy
 
 import model.sofda.hp.pd as hp_pd
 import model.sofda.hp.oop as hp_oop
-import hp.dict
+import model.sofda.hp.dict as hp_dict
 import hp.data2
 
 #import da.pscripts2 as pscripts2
@@ -784,7 +784,7 @@ class Pair( #pair of variables
             # get your scenarios variables
             #=======================================================================
             class_d = self.session.family_d['Scenario']
-            self.sceno = hp.dict.value_by_ksearch(self.scenario, class_d)
+            self.sceno = hp_dict.value_by_ksearch(self.scenario, class_d)
             
             #=======================================================================
             # pre checks
@@ -1095,7 +1095,7 @@ class Plotr( #collection of pairs for plotting
         
         lasto = None
         for onm in self.pairs_nl:
-            obj = hp.dict.value_by_ksearch(onm, class_d) #pull the pair from the family
+            obj = hp_dict.value_by_ksearch(onm, class_d) #pull the pair from the family
             
             
             if obj is None:

@@ -543,7 +543,7 @@ class Sel_usr_wrap(object): #functions for objects that want to use Selectors
         #=======================================================================
         """
         logger.debug('slicing vert_d (%i) of \'%s\' against my original pick (%i)'%(len(vert_d),self.pclass_n, len(d_og)))
-        d2 = hp.dict.merge(d_og, vert_d, set_type = 'intersect', container = container, logger = logger)"""
+        d2 = hp_dict.merge(d_og, vert_d, set_type = 'intersect', container = container, logger = logger)"""
         
         keys_match = self.pick_k_ar[bool_ar].tolist() #get the matching subset
         logger.debug("found %i/%i matching keys. getting intersect: %s"%(len(keys_match), len(self.pick_d), keys_match))
@@ -847,7 +847,7 @@ class Selector( Sel_usr_wrap,
             #check that we can find all of these
             err = []
             for name in objn_l:
-                obj = hp.dict.value_by_ksearch(name, class_d, logger=logger)
+                obj = hp_dict.value_by_ksearch(name, class_d, logger=logger)
                 
                 if obj is None:
                     err.append('unable to find \'%s\' in the binv'%name)
@@ -1012,7 +1012,7 @@ class Selector( Sel_usr_wrap,
             
             #make a slice of the dictionary from this
             """the challenge here is we have a list of names but a dict of gids"""
-            sub_d = hp.dict.subset(class_d, pnames_l, set_type = 'sub', method='search')
+            sub_d = hp_dict.subset(class_d, pnames_l, set_type = 'sub', method='search')
             
             #re key this 
             pick_d.update(hp_oop.convert_keys(sub_d, self.key_att, container=container, logger=logger))
@@ -1248,7 +1248,7 @@ class Selector( Sel_usr_wrap,
             #===================================================================
             # get this object from the class)d
             #===================================================================
-            obj = hp.dict.value_by_ksearch(obj_n, class_d, logger=logger)
+            obj = hp_dict.value_by_ksearch(obj_n, class_d, logger=logger)
             
             if obj is None:
                 logger.error('class_d keys: \n    %s'%list(class_d.keys()))

@@ -24,7 +24,7 @@ from weakref import WeakValueDictionary as wdict
 #===============================================================================
 
 #import hp.basic
-#import hp.dict
+#import model.sofda.hp.dict as hp_dict
 #import hp.data
 import model.sofda.hp.sel as hp_sel
 import model.sofda.hp.dyno as hp_dyno
