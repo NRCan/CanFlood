@@ -167,7 +167,7 @@ NOTE: This does not trigger a cascade as Recompile does
 #===============================================================================
 # DYNAMIC PARAMETERS --------------------------------------------------------------------
 #===============================================================================
-'see hp.dynp'
+'see hp_dynp'
 
 # IMPORTS ----------------------------------------------------------------------
 import logging
@@ -181,7 +181,7 @@ import numpy as np
 
 import hp.basic
 #import model.sofda.hp.pd as hp_pd
-#import hp.dynp
+#import model.sofda.hp.dynp as hp_dynp
 import model.sofda.hp.oop as hp_oop
 #import hp.outs
 
@@ -459,7 +459,7 @@ class Sim_o(Sim_wrap): #standalone sim object
         
         logger.debug("finish __init__ on %s"%self.__class__.__name__)
            
-class Sim_model(Sim_wrap):#, hp.outs.Out_controller):#, hp.dynp.Dynp_basic): #wrapper for model instances3
+class Sim_model(Sim_wrap):#, hp.outs.Out_controller):#, hp_dynp.Dynp_basic): #wrapper for model instances3
     """
     special object for the top level simulation objects
     """

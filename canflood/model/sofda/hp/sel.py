@@ -64,7 +64,7 @@ class Sel_usr_wrap(object): #functions for objects that want to use Selectors
     #===========================================================================
     udev.scripts.Action
     
-    hp.dynp.Dynamic_par
+    hp_dynp.Dynamic_par
     
     hp.outs.Outputr
     
