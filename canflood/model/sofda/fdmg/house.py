@@ -42,7 +42,7 @@ import model.sofda.hp.sim as hp_sim
 import model.sofda.hp.dyno as hp_dyno
 #import model.sofda.hp.data as hp_data
 
-from fdmg.dfunc import Dfunc
+from model.sofda.fdmg.dfunc import Dfunc
 import model.sofda.udev.scripts as udev_scripts
 
 # logger setup -----------------------------------------------------------------------

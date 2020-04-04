@@ -60,7 +60,7 @@ import fdmg.datos_fdmg as datos
 # custom shortcuts
 #===============================================================================
 from fdmg.house import House
-#from fdmg.dfunc import Dfunc
+#from model.sofda.fdmg.dfunc import Dfunc
 from fdmg.dmgfeat import Dmg_feat
 
 
