@@ -68,7 +68,7 @@ class Sel_usr_wrap(object): #functions for objects that want to use Selectors
     
     hp.outs.Outputr
     
-    hp.sel.Selector
+    hp_sel.Selector
         
     """
     #===========================================================================

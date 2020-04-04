@@ -17,7 +17,7 @@ import model.sofda.hp.pd as hp_pd
 #import hp.plot
 import model.sofda.hp.oop as hp_oop
 import model.sofda.hp.sim as hp_sim
-import hp.sel
+import model.sofda.hp.sel as hp_sel
 
 from model.sofda.hp.pd import view
 
@@ -28,7 +28,7 @@ mod_logger.debug('initilized')
 class Outputme_wrap(object): #wrapper for object on which Outputrs are applied
     pass """
 
-class Outputr(hp.sel.Sel_usr_wrap,
+class Outputr(hp_sel.Sel_usr_wrap,
               hp_sim.Sim_o,
               hp_oop.Child): #Standalone outputr worker
     

@@ -93,7 +93,7 @@ import model.sofda.hp.pd as hp_pd
 import hp.basic
 import model.sofda.hp.oop as hp_oop
 import model.sofda.hp.sim as hp_sim
-import hp.sel
+import model.sofda.hp.sel as hp_sel
 
 mod_logger = logging.getLogger(__name__)
 mod_logger.debug('initilized')
@@ -102,7 +102,7 @@ mod_logger.debug('initilized')
  
 
 'this has to be basic because hp_sim needs to inherit the dynps'
-class Dynamic_par(hp.sel.Sel_usr_wrap,
+class Dynamic_par(hp_sel.Sel_usr_wrap,
                   hp_sim.Sim_o,
                   hp_oop.Child): #generic object fo handling stochastic assignemtns on a single parametre
     #===========================================================================

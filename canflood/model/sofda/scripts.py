@@ -60,7 +60,7 @@ import model.sofda.hp.sim as hp_sim
 import model.sofda.hp.dynp as hp_dynp
 
 import model.sofda.hp.dyno as hp_dyno
-import hp.sel
+import model.sofda.hp.sel as hp_sel
 import hp.outs
 import hp.dict #wasnt added before for some reason...
 
@@ -92,7 +92,7 @@ class Session( #main session handler. runs many simulations for stochastic model
         hp_sim.Sim_session,
         hp_dyno.Dyno_controller,
         hp_oop.Session_o,  
-        hp.sel.Sel_controller, 
+        hp_sel.Sel_controller, 
         hp_dynp.Dynp_session,
         hp.outs.Out_controller,
         hp.data.Data_wrapper,
@@ -956,7 +956,7 @@ class Session( #main session handler. runs many simulations for stochastic model
                
 class Simulation( #a single simulation within the session
         hp_sim.Sim_simulation, 
-        hp.sel.Sel_controller, 
+        hp_sel.Sel_controller, 
         hp_dynp.Dynp_controller,
         hp.outs.Out_controller,
         hp_oop.Child):
@@ -1105,7 +1105,7 @@ class Simulation( #a single simulation within the session
 class Tstep( #a timestep from teh simulation timeline
             hp_oop.Parent,
             hp_sim.Sim_o, 
-            hp.sel.Sel_controller, 
+            hp_sel.Sel_controller, 
             hp.outs.Out_controller, 
             hp_dynp.Dynp_controller,
             hp_oop.Child): 
@@ -1414,7 +1414,7 @@ class Tstep( #a timestep from teh simulation timeline
         return
 
 class Action(    #collection of modifications of the objects in the Fdmg
-                hp.sel.Sel_usr_wrap,
+                hp_sel.Sel_usr_wrap,
                 hp_sim.Sim_o,
                 hp_oop.Parent,
                 hp_oop.Child): 
