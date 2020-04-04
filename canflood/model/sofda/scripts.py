@@ -7,7 +7,7 @@ Created on Jun 11, 2018
 # HIERARCHY and RUN LOOPS --------------------------------------------------------------
 #===============================================================================
 '''
-see discussion in hp.sim.py
+see discussion in hp_sim.py
 KEY RUN LOOPS
 *Session.run_all():                10,000x              controls a single scenario
     *Simulation.run_timeline():    50x       controls one simulation of a scenario (a set of stochastic parameters)
@@ -54,9 +54,9 @@ import model.sofda.hp.basic as basic
 
 #from .. import model.sofda.hp.pd as hp_pd
 import model.sofda.hp.pd as hp_pd 
-
 import model.sofda.hp.oop as hp_oop
-import hp.sim
+
+import model.sofda.hp.sim as hp_sim
 import hp.dynp
 
 import hp.dyno
@@ -89,7 +89,7 @@ _mod_dir = os.path.dirname(__file__)
 """this is super gross"""
 class Session( #main session handler. runs many simulations for stochastic modelling
                
-        hp.sim.Sim_session,
+        hp_sim.Sim_session,
         hp.dyno.Dyno_controller,
         hp_oop.Session_o,  
         hp.sel.Sel_controller, 
@@ -955,13 +955,13 @@ class Session( #main session handler. runs many simulations for stochastic model
             
                
 class Simulation( #a single simulation within the session
-        hp.sim.Sim_simulation, 
+        hp_sim.Sim_simulation, 
         hp.sel.Sel_controller, 
         hp.dynp.Dynp_controller,
         hp.outs.Out_controller,
         hp_oop.Child):
     
-    'todo: move this to hp.sim and make generic'
+    'todo: move this to hp_sim and make generic'
 
     #===========================================================================
     # object handling overrides
@@ -1104,7 +1104,7 @@ class Simulation( #a single simulation within the session
     
 class Tstep( #a timestep from teh simulation timeline
             hp_oop.Parent,
-            hp.sim.Sim_o, 
+            hp_sim.Sim_o, 
             hp.sel.Sel_controller, 
             hp.outs.Out_controller, 
             hp.dynp.Dynp_controller,
@@ -1415,7 +1415,7 @@ class Tstep( #a timestep from teh simulation timeline
 
 class Action(    #collection of modifications of the objects in the Fdmg
                 hp.sel.Sel_usr_wrap,
-                hp.sim.Sim_o,
+                hp_sim.Sim_o,
                 hp_oop.Parent,
                 hp_oop.Child): 
     '''

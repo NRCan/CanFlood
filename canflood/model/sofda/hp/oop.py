@@ -2523,7 +2523,7 @@ class Trunk_o(Parent_cmplx): #advanced hierarchy functions
         
         gen:    these are attached to the session directly as attributes
         
-        pars: these are loaded by parent name into the obj_dyn_par_d (see hp.sim.Dyn_par_dato)
+        pars: these are loaded by parent name into the obj_dyn_par_d (see hp_sim.Dyn_par_dato)
         
         '''
         #=======================================================================

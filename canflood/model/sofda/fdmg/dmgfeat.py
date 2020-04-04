@@ -38,7 +38,7 @@ idx = pd.IndexSlice
 import model.sofda.hp.oop as hp_oop
 
 import hp.dyno
-import hp.sim
+import model.sofda.hp.sim as hp_sim
 
 
 # logger setup -----------------------------------------------------------------------
@@ -48,7 +48,7 @@ mod_logger.debug('initilized')
 
 class Dmg_feat( #single damage feature of a complex damage function
                 hp.dyno.Dyno_wrap,
-                hp.sim.Sim_o,  
+                hp_sim.Sim_o,  
                 hp_oop.Child):
 
     #===========================================================================

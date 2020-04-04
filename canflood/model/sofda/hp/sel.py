@@ -47,9 +47,9 @@ import pandas as pd
 #import hp.basic
 import model.sofda.hp.pd as hp_pd
 import model.sofda.hp.oop as hp_oop
-import hp.sim
+import model.sofda.hp.sim as hp_sim
 import hp.data
-'because we want our selectors to be sim objects, cant let anything in hp.sim use this mod'
+'because we want our selectors to be sim objects, cant let anything in hp_sim use this mod'
 
 
 mod_logger = logging.getLogger(__name__)
@@ -640,7 +640,7 @@ class Sel_usr_wrap(object): #functions for objects that want to use Selectors
             
 class Selector( Sel_usr_wrap,
                hp.data.Data_wrapper, 
-               hp.sim.Sim_o,
+               hp_sim.Sim_o,
                hp_oop.Child): #generic object selector #, 
     """
     #===========================================================================

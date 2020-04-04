@@ -24,7 +24,7 @@ import scipy.stats
 
 #import hp.basic
 import model.sofda.hp.oop as hp_oop
-#import hp.sim
+#import model.sofda.hp.sim as hp_sim
 #import hp.sel
 
 mod_logger = logging.getLogger(__name__)

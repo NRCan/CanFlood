@@ -65,7 +65,7 @@ EXPLICIT: upd_sim_lvl = None
 #UPDATES ----------------------------------------------------------------
 # #=============================================================================== 
 """
-storing original values: old values are stored into the reset_d (see hp.sim.Sim_o.reste_genr())
+storing original values: old values are stored into the reset_d (see hp_sim.Sim_o.reste_genr())
 
 update_obj_f = TRUE
     secondary update commands: custom commands are qued on the object based on the handle pars (dynp_hnd_d) 
@@ -92,7 +92,7 @@ import scipy.stats  #need this for exec calls
 import model.sofda.hp.pd as hp_pd 
 import hp.basic
 import model.sofda.hp.oop as hp_oop
-import hp.sim
+import model.sofda.hp.sim as hp_sim
 import hp.sel
 
 mod_logger = logging.getLogger(__name__)
@@ -101,9 +101,9 @@ mod_logger.debug('initilized')
            
  
 
-'this has to be basic because hp.sim needs to inherit the dynps'
+'this has to be basic because hp_sim needs to inherit the dynps'
 class Dynamic_par(hp.sel.Sel_usr_wrap,
-                  hp.sim.Sim_o,
+                  hp_sim.Sim_o,
                   hp_oop.Child): #generic object fo handling stochastic assignemtns on a single parametre
     #===========================================================================
     # program vars

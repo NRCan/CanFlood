@@ -37,6 +37,9 @@ idx = pd.IndexSlice
 import hp.basic
 import model.sofda.hp.pd as hp_pd
 import model.sofda.hp.oop as hp_oop
+import model.sofda.hp.sim as hp_sim
+
+import hp.dyno
 #import hp.data
 
 from fdmg.dfunc import Dfunc
@@ -51,7 +54,7 @@ class House(
             udev.scripts.House_udev,
             #hp.plot.Plot_o, 
             hp.dyno.Dyno_wrap,
-            hp.sim.Sim_o,  
+            hp_sim.Sim_o,  
             hp_oop.Parent, #building/asset objects 
             hp_oop.Child): 
     
