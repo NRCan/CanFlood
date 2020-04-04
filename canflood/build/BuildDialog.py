@@ -496,7 +496,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #check cid
         assert isinstance(cid, str)
         if cid == '' or cid in self.invalid_cids:
-            raise Error('user selected invalid cid \'%s\''%cid)  
+            raise Error('user selected a cid (FieldName Index) with an invalid name \'%s\''%cid)  
         
         assert cid in [field.name() for field in finv_raw.fields()]
         
