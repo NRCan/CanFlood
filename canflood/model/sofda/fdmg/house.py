@@ -21,7 +21,7 @@ import numpy as np
 # shortcuts
 #===============================================================================
 from collections import OrderedDict
-from exceptions import Error
+from hlpr.exceptions import Error
 
 from weakref import WeakValueDictionary as wdict
 from weakref import proxy

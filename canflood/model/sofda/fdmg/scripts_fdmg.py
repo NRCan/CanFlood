@@ -23,7 +23,7 @@ import scipy.integrate
 # shortcuts
 #===============================================================================
 from collections import OrderedDict
-from exceptions import Error
+from hlpr.exceptions import Error
 
 from weakref import WeakValueDictionary as wdict
 from weakref import proxy
@@ -3368,10 +3368,10 @@ class Binv(     #class object for a building inventory
         if not 'anchor_el' in df.columns:
             try:
                 df['anchor_el'] = df['dem_el'] + df['ff_height']
-                df['anchor_el'].astype(np.float, inplace=True)
-            except:
-                raise Error('failed to set anchor_el')
-                log.warning('failed to set anchor_el')
+                df.loc[:, 'anchor_el'] = df['anchor_el'].astype(np.float)
+            except Exception as e:
+                raise Error('failed to set anchor_el w/ \n    %s'%e)
+
                 
         return df
         

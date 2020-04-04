@@ -15,7 +15,7 @@ import logging, re #os, sys, imp, time, re, math, copy, inspect
 import pandas as pd
 import numpy as np
 
-from exceptions import Error
+from hlpr.exceptions import Error
 
 #import scipy.integrate
 

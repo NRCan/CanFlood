@@ -45,7 +45,7 @@ import os, sys, copy, gc, time, weakref, psutil, inspect, random
 from collections import OrderedDict
 
 from weakref import WeakValueDictionary as wdict
-from exceptions import Error
+from hlpr.exceptions import Error
 
 
 from datetime import datetime

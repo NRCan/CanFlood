@@ -685,13 +685,7 @@ def load_xls_df(filepath, logger=mod_logger,
     
     if parse_dates: raise IOError #not impelmented apparently..
     
-    #version check
-    ver_num = int(pd.__version__[2:4])
-    if not ver_num >= 23: 
-        print(('got unexpected pandas version %s'%pd.__version__))
-        raise IOError
-    """older versions dont seem to load the sheetnames properly
-    """
+
         
     #===========================================================================
     # loader

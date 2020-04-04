@@ -37,7 +37,7 @@ import hp.pd
 import hp.oop
 #import hp.data
 
-from exceptions import Error
+from hlpr.exceptions import Error
 from hp.pd import view
 
 # logger setup -----------------------------------------------------------------------

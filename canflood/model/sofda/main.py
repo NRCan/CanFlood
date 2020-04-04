@@ -98,7 +98,7 @@ def run(
     #output directory
     if out_dir is None: 
         out_dir = os.path.join(os.getcwd(), 'sofda', 
-                               datetime.datetime.now().strftime('%Y-%m-%d_%H.%M.%S'))
+                               datetime.datetime.now().strftime('%Y%m%d_%H%M%S'))
                 
     if not os.path.exists(out_dir):
         logger.info('buildilng out_dir: %s'%out_dir)
@@ -194,9 +194,9 @@ def run(
 if __name__ =="__main__": 
     
     #===========================================================================
-    # dev
+    # tutorial 3
     #===========================================================================
-    parspath    = r'C:\LS\03_TOOLS\SOFDA\_ins\201901CoC\303_2014\SOFDA303_2014f.xls'
+    parspath    = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\3\sample_303.xls'
     out_dir     = None #use the default
     
     run(parspath=parspath, out_dir=out_dir) #for standalone runs

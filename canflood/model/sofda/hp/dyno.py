@@ -16,7 +16,7 @@ from collections import OrderedDict
 
 
 from weakref import WeakValueDictionary as wdict
-from exceptions import Error
+from hlpr.exceptions import Error
 
 import pandas as pd
 import numpy as np

@@ -11,11 +11,11 @@ memory profiling
 #import hp.plot #need to call this first so matplotlib handles are set properly
 import os, copy, sys, time, logging, psutil, weakref, gc
 #import cProfile, pstats, 
-import objgraph
+#import objgraph
 
 #from pympler import asizeof
 
-from collections import OrderedDict, Mapping, Container
+from collections import OrderedDict
 
 
 from datetime import datetime
