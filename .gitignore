@@ -130,3 +130,8 @@ Qda4/.project
 .pydevproject
 .project
 .settings
+
+#Qgis 
+*.gpkg
+*.gpkg-wal
+*.gpkg-shm

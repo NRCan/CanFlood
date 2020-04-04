@@ -195,7 +195,7 @@ class Dmg2(Model):
         #=======================================================================
         #check we loaded everything
         l = set(ftags_valid).difference(self.dfuncs_d.keys())
-        assert len(l)==0,'failed to load: %s'%l
+        assert len(l)==0,'missing %i curves requested by the inventory %s'%(len(l), l)
         
         #check ground_water condition vs minimum value passed in dfuncs.
         if not self.ground_water:
