@@ -27,8 +27,8 @@ from collections import OrderedDict
 import hp.basic
 import model.sofda.hp.pd as hp_pd
 
-"""since the workers wrap around the hp.oop.Basic_o, that module must be imported first"""
-import hp.oop
+"""since the workers wrap around the hp_oop.Basic_o, that module must be imported first"""
+import model.sofda.hp.oop as hp_oop
 #import hp.plot
 
 mod_logger = logging.getLogger(__name__)
@@ -538,10 +538,10 @@ class Data_wrapper(object): #wrapper for data type operations
                     
         return filepath
         
-class Data_o(hp.oop.Parent, 
+class Data_o(hp_oop.Parent, 
              #hp.plot.Plot_o, 
              Data_wrapper,
-             hp.oop.Child): #standalone object 
+             hp_oop.Child): #standalone object 
     #===========================================================================
     # program controls
     #===========================================================================

@@ -23,7 +23,7 @@ import numpy as np
 import scipy.stats 
 
 #import hp.basic
-import hp.oop
+import model.sofda.hp.oop as hp_oop
 #import hp.sim
 #import hp.sel
 
@@ -417,7 +417,7 @@ class Dyno_wrap(object): #wraspper for objects which will ahve dynpamic pars app
                 logger.debug('simple parent. grand child request')
 
                 # run condenser to get pick correct level set
-                gk_d = hp.oop.Kid_condenser(self.kids_d, 
+                gk_d = hp_oop.Kid_condenser(self.kids_d, 
                                                dynk_cn, 
                                                db_f = self.db_f, 
                                                key_att = 'gid', #object attribte on which to key the result container

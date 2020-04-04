@@ -2031,7 +2031,7 @@ class Parent(object): #wrapper for raising child
         
         #clone the shadows
         'we want to preserve the shadow copy for future use'
-        clones_d = hp.oop.copy_container_d(shdw_kids_d)
+        clones_d = copy_container_d(shdw_kids_d)
         
         logger.debug('activating %i clones \n'%(len(clones_d)))
         self.activate_kids(clones_d) #reintigrate the clones into the family

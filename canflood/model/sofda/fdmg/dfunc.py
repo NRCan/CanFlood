@@ -34,8 +34,11 @@ idx = pd.IndexSlice
 #import hp.plot
 #import hp.basic
 import model.sofda.hp.pd as hp_pd
-import hp.oop
+import model.sofda.hp.oop as hp_oop
 #import hp.data
+
+import hp.dyno
+import hp.sim
 
 from hlpr.exceptions import Error
 from model.sofda.hp.pd import view
@@ -49,8 +52,8 @@ class Dfunc(
             #hp.plot.Plot_o,
             hp.dyno.Dyno_wrap,
             hp.sim.Sim_o, #damage function of a speciic type. to be attached to a house
-            hp.oop.Parent,
-            hp.oop.Child): 
+            hp_oop.Parent,
+            hp_oop.Child): 
     '''
     #===========================================================================
     # architecture
@@ -1151,7 +1154,7 @@ class Dfunc(
                 print(k, v)
             """
             #make a copy of these guys for yourself
-            dfeat_d = hp.oop.deepcopy_objs(dfeat_d_mstr, container = dict, 
+            dfeat_d = hp_oop.deepcopy_objs(dfeat_d_mstr, container = dict, 
                                            db_f = self.db_f, logger=logger) 
             
             #===================================================================
@@ -1206,7 +1209,7 @@ class Dfunc(
                 
                 #add the shadow kids and their handler
                 logger.debug('deep copying over to shdw_kids_d')
-                self.shdw_kids_d = hp.oop.deepcopy_objs(dfeat_d, container = dict, logger=logger)
+                self.shdw_kids_d = hp_oop.deepcopy_objs(dfeat_d, container = dict, logger=logger)
                 
                 """we use these shadow kids to reset our children at the start of a simulation
                         see reset_dfunc()

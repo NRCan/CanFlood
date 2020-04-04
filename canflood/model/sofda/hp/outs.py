@@ -15,7 +15,7 @@ import numpy as np
 import hp.basic
 import model.sofda.hp.pd as hp_pd
 #import hp.plot
-import hp.oop
+import model.sofda.hp.oop as hp_oop
 import hp.sim
 import hp.sel
 
@@ -30,7 +30,7 @@ class Outputme_wrap(object): #wrapper for object on which Outputrs are applied
 
 class Outputr(hp.sel.Sel_usr_wrap,
               hp.sim.Sim_o,
-              hp.oop.Child): #Standalone outputr worker
+              hp_oop.Child): #Standalone outputr worker
     
     #===========================================================================
     # program pars

@@ -19,7 +19,7 @@ from weakref import proxy
 
 
 import model.sofda.hp.pd as hp_pd
-import hp.oop
+import model.sofda.hp.oop as hp_oop
 import hp.dict
 import hp.data2
 
@@ -689,7 +689,7 @@ class Var_raw( #raw variable object
       
 class Pair( #pair of variables
         Plotpar_wrap,
-           hp.oop.Child, 
+           hp_oop.Child, 
            ): 
     
     var1_nm = None
@@ -971,7 +971,7 @@ class Pair( #pair of variables
                  
 class Plotr( #collection of pairs for plotting
             Plotpar_wrap, 
-            hp.oop.Child,): 
+            hp_oop.Child,): 
     
     #===========================================================================
     # default pars

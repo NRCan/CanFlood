@@ -21,7 +21,7 @@ from weakref import proxy
 
 
 import model.sofda.hp.pd as hp_pd
-import hp.oop
+import model.sofda.hp.oop as hp_oop
 import hp.dict
 import hp.data2
 
@@ -32,7 +32,7 @@ mod_logger = logging.getLogger(__name__)
 mod_logger.debug('initilized')
 
 
-class Dataset(hp.oop.Child):
+class Dataset(hp_oop.Child):
     data = None
     
     def __init__(self, *vars, **kwargs):

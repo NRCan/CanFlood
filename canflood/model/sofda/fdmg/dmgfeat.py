@@ -35,7 +35,11 @@ idx = pd.IndexSlice
 
 #import hp.basic
 #import model.sofda.hp.pd as hp_pd
-import hp.oop
+import model.sofda.hp.oop as hp_oop
+
+import hp.dyno
+import hp.sim
+
 
 # logger setup -----------------------------------------------------------------------
 mod_logger = logging.getLogger(__name__)
@@ -45,7 +49,7 @@ mod_logger.debug('initilized')
 class Dmg_feat( #single damage feature of a complex damage function
                 hp.dyno.Dyno_wrap,
                 hp.sim.Sim_o,  
-                hp.oop.Child):
+                hp_oop.Child):
 
     #===========================================================================
     # program pars
@@ -199,7 +203,7 @@ class Dmg_feat( #single damage feature of a complex damage function
         
         #check acode
         if 'run' in self.session.state:
-            hp.oop.check_match(self, self.hse_o, attn='acode')
+            hp_oop.check_match(self, self.hse_o, attn='acode')
             
             if not self.acode == self.parent.get_acode():
                 raise Error('acode mismiatch with parent')
@@ -371,7 +375,7 @@ class Dmg_feat( #single damage feature of a complex damage function
             self.check_dfeat()
         
         """
-        hp.oop.log_all_attributes(self, logger = logger)
+        hp_oop.log_all_attributes(self, logger = logger)
         """
         #=======================================================================
         # execute hte price calc string

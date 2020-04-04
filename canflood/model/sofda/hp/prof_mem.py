@@ -97,7 +97,7 @@ def profile_obj_mem(obj, logger = mod_logger, outpath = None): #get data on obje
     # get objects attributes
     #===========================================================================
     
-    att_std, att_call, att_def = hp.oop.get_atts(obj, logger = logger)
+    att_std, att_call, att_def = hp_oop.get_atts(obj, logger = logger)
     
     #===========================================================================
     # get data from each

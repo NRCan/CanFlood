@@ -24,7 +24,7 @@ from weakref import proxy
 import hp.plot2
 import hp.basic
 import hp.np
-import hp.oop
+import model.sofda.hp.oop as hp_oop
 import hp.data
 
 
@@ -36,7 +36,7 @@ mod_logger = logging.getLogger(__name__)
 
 class Data_func(hp.data.Data_wrapper, 
                 hp.plot2.Plotr,
-                hp.oop.Child): #for analysis by data type
+                hp_oop.Child): #for analysis by data type
     
     #===========================================================================
     # regressions

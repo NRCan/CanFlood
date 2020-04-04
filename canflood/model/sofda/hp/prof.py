@@ -87,8 +87,8 @@ def profile_run(exe_str, outpath, sort_key = 'ncalls', logger = mod_logger,
     
     """
     stream.name
-    import hp.oop
-    att_std, att_call, att_def  = hp.oop.get_atts(stream)
+    import model.sofda.hp.oop as hp_oop
+    att_std, att_call, att_def  = hp_oop.get_atts(stream)
     
     att_std.keys()
     """
@@ -171,8 +171,8 @@ def profile_run_skinny( #profile run
     
     """
     stream.name
-    import hp.oop
-    att_std, att_call, att_def  = hp.oop.get_atts(stream)
+    import model.sofda.hp.oop as hp_oop
+    att_std, att_call, att_def  = hp_oop.get_atts(stream)
     
     att_std.keys()
     """

@@ -28,6 +28,7 @@ from weakref import WeakValueDictionary as wdict
 #import hp.data
 import hp.sel
 import hp.dyno
+import model.sofda.hp.oop as hp_oop
 
 mod_logger = logging.getLogger(__name__)
 mod_logger.debug('initilized')
@@ -41,8 +42,8 @@ class Udev(
             hp.dyno.Dyno_wrap,
             #hp.plot.Plot_o, #need this so children can inherit properly
             hp.sim.Sim_model, #a timestep from teh simulation timeline
-            hp.oop.Parent_cmplx,
-            hp.oop.Child): 
+            hp_oop.Parent_cmplx,
+            hp_oop.Child): 
     
     #===========================================================================
     # program pars

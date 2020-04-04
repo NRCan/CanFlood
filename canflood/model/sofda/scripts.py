@@ -55,7 +55,7 @@ import model.sofda.hp.basic as basic
 #from .. import model.sofda.hp.pd as hp_pd
 import model.sofda.hp.pd as hp_pd 
 
-import hp.oop
+import model.sofda.hp.oop as hp_oop
 import hp.sim
 import hp.dynp
 
@@ -91,13 +91,13 @@ class Session( #main session handler. runs many simulations for stochastic model
                
         hp.sim.Sim_session,
         hp.dyno.Dyno_controller,
-        hp.oop.Session_o,  
+        hp_oop.Session_o,  
         hp.sel.Sel_controller, 
         hp.dynp.Dynp_session,
         hp.outs.Out_controller,
         hp.data.Data_wrapper,
         #hp.plot.Plot_o,
-        hp.oop.Child): 
+        hp_oop.Child): 
    
     #===========================================================================
     # program parametser
@@ -959,7 +959,7 @@ class Simulation( #a single simulation within the session
         hp.sel.Sel_controller, 
         hp.dynp.Dynp_controller,
         hp.outs.Out_controller,
-        hp.oop.Child):
+        hp_oop.Child):
     
     'todo: move this to hp.sim and make generic'
 
@@ -1103,12 +1103,12 @@ class Simulation( #a single simulation within the session
         return res_ser, res_dx
     
 class Tstep( #a timestep from teh simulation timeline
-            hp.oop.Parent,
+            hp_oop.Parent,
             hp.sim.Sim_o, 
             hp.sel.Sel_controller, 
             hp.outs.Out_controller, 
             hp.dynp.Dynp_controller,
-            hp.oop.Child): 
+            hp_oop.Child): 
     
     
     #===========================================================================
@@ -1159,7 +1159,7 @@ class Tstep( #a timestep from teh simulation timeline
         'using a string name and a sepearate column for date seems to keep things nice'
         self.dt_cnt = int(self.rank)
         self.year = int(self.date.strftime('%Y'))
-        #hp.oop.clean_l_atts(self, logger = self.logger)
+        #hp_oop.clean_l_atts(self, logger = self.logger)
         #=======================================================================
         # cleaning/formatting
         #=======================================================================
@@ -1416,8 +1416,8 @@ class Tstep( #a timestep from teh simulation timeline
 class Action(    #collection of modifications of the objects in the Fdmg
                 hp.sel.Sel_usr_wrap,
                 hp.sim.Sim_o,
-                hp.oop.Parent,
-                hp.oop.Child): 
+                hp_oop.Parent,
+                hp_oop.Child): 
     '''
     #===========================================================================
     # DEPENDENCIES

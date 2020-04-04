@@ -46,6 +46,7 @@ import pandas as pd
 
 #import hp.basic
 import model.sofda.hp.pd as hp_pd
+import model.sofda.hp.oop as hp_oop
 import hp.sim
 import hp.data
 'because we want our selectors to be sim objects, cant let anything in hp.sim use this mod'
@@ -592,7 +593,7 @@ class Sel_usr_wrap(object): #functions for objects that want to use Selectors
         #=======================================================================
         # run condenser to get pick correct level set
         #=======================================================================
-        kcond_o = hp.oop.Kid_condenser(big_d, 
+        kcond_o = hp_oop.Kid_condenser(big_d, 
                                        pclass_n, 
                                        db_f = self.db_f, 
                                        key_att = 'gid', #object attribte on which to key the result container
@@ -640,7 +641,7 @@ class Sel_usr_wrap(object): #functions for objects that want to use Selectors
 class Selector( Sel_usr_wrap,
                hp.data.Data_wrapper, 
                hp.sim.Sim_o,
-               hp.oop.Child): #generic object selector #, 
+               hp_oop.Child): #generic object selector #, 
     """
     #===========================================================================
     # OWNERSHIP
@@ -1014,7 +1015,7 @@ class Selector( Sel_usr_wrap,
             sub_d = hp.dict.subset(class_d, pnames_l, set_type = 'sub', method='search')
             
             #re key this 
-            pick_d.update(hp.oop.convert_keys(sub_d, self.key_att, container=container, logger=logger))
+            pick_d.update(hp_oop.convert_keys(sub_d, self.key_att, container=container, logger=logger))
             
             logger.debug('%s with \'%s\''%(method, exe_str))
                         

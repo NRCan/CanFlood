@@ -27,6 +27,7 @@ from hlpr.exceptions import Error
 #===============================================================================
 
 import model.sofda.hp.pd as hp_pd
+import model.sofda.hp.oop as hp_oop
 import hp.data
 
 #===============================================================================
@@ -226,7 +227,7 @@ class Fdmgo_data_wrap(object): #generic methods for Fdmg data objects
         
 class Rfda_curve_data(#class object for rfda legacy pars
             hp.data.Data_wrapper,
-            hp.oop.Child): 
+            hp_oop.Child): 
     'made this a class for easy tracking/nesting of parameters'
     
     acode_sec_d =  {'AA1': 'sres', 'AA2': 'sres', 'AA3': 'sres', 'AA4': 'sres', 'AD1': 'sres', 'AD2': 'sres', 'AD3': 'sres', 'AD4': 'sres', 
@@ -343,7 +344,7 @@ class Rfda_curve_data(#class object for rfda legacy pars
         
 class Flood_tbl(     #flood table worker
                      hp.data.Data_wrapper,
-                     hp.oop.Child,
+                     hp_oop.Child,
                      Fdmgo_data_wrap): 
     
     #===========================================================================
@@ -828,7 +829,7 @@ class Flood_tbl(     #flood table worker
 class Fhr_tbl( #flood table worker
         Fdmgo_data_wrap,    
         hp.data.Data_wrapper,
-        hp.oop.Child, #must be at the bottom of the cascade
+        hp_oop.Child, #must be at the bottom of the cascade
                      ): 
     
     exp_coltyp_d = {'fhz':int, 'bfe':float}

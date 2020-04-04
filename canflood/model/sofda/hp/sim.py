@@ -182,7 +182,7 @@ import numpy as np
 import hp.basic
 #import model.sofda.hp.pd as hp_pd
 #import hp.dynp
-import hp.oop
+import model.sofda.hp.oop as hp_oop
 #import hp.outs
 
 
@@ -515,7 +515,7 @@ class Sim_model(Sim_wrap):#, hp.outs.Out_controller):#, hp.dynp.Dynp_basic): #wr
                           (self.__class__.__name__, boolar.sum(), atnar[boolar]))
 
         for attn in self.try_inherit_anl:
-            _ = hp.oop.mirror_att(self, attn, logger = logger)
+            _ = hp_oop.mirror_att(self, attn, logger = logger)
         
         logger.debug("finish __init__ \n")
         

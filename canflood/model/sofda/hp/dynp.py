@@ -91,7 +91,7 @@ import scipy.stats  #need this for exec calls
 
 import model.sofda.hp.pd as hp_pd 
 import hp.basic
-import hp.oop
+import model.sofda.hp.oop as hp_oop
 import hp.sim
 import hp.sel
 
@@ -104,7 +104,7 @@ mod_logger.debug('initilized')
 'this has to be basic because hp.sim needs to inherit the dynps'
 class Dynamic_par(hp.sel.Sel_usr_wrap,
                   hp.sim.Sim_o,
-                  hp.oop.Child): #generic object fo handling stochastic assignemtns on a single parametre
+                  hp_oop.Child): #generic object fo handling stochastic assignemtns on a single parametre
     #===========================================================================
     # program vars
     #===========================================================================

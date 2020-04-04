@@ -49,7 +49,7 @@ import matplotlib.pyplot as plt
 # import other helpers ---------------------------------------------------------
 import model.sofda.hp.pd as hp_pd
 import hp.np
-import hp.oop
+import model.sofda.hp.oop as hp_oop
     
 
 def setup_video(logger = mod_logger, basedir = 'G:/My Drive/Programs/ffmpeg/bin'): #setup the ffmpeg codec
@@ -277,7 +277,7 @@ class Plotdatabundler(object): #convenience methdos for gneerating plotdatabundl
         if self.data is None: 
             logger.error('self.data is None')
             """
-            hp.oop.log_all_attributes(self)
+            hp_oop.log_all_attributes(self)
             """
             raise IOError
         

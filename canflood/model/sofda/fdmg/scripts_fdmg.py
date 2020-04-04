@@ -40,7 +40,7 @@ idx = pd.IndexSlice
 #import hp.plot
 import hp.basic
 import model.sofda.hp.pd as hp_pd
-import hp.oop
+import model.sofda.hp.oop as hp_oop
 import hp.data
 
 import fdmg.datos_fdmg as datos
@@ -77,10 +77,10 @@ class Fdmg( #flood damage model
            hp.dyno.Dyno_wrap, #add some empty containers
            #hp.plot.Plot_o, #build the label
            hp.sim.Sim_model, #Sim_wrap: attach the reset_d. Sim_model: inherit attributes
-           hp.oop.Trunk_o, #no init
+           hp_oop.Trunk_o, #no init
                             #Parent_cmplx: attach empty kids_sd
                             #Parent: set some defaults
-           hp.oop.Child): 
+           hp_oop.Child): 
     """
     #===========================================================================
     # INPUTS
@@ -1960,8 +1960,8 @@ class Fdmg( #flood damage model
 class Flood( 
                 hp.dyno.Dyno_wrap,
                 hp.sim.Sim_o, 
-                hp.oop.Parent,  #flood object worker
-                hp.oop.Child): 
+                hp_oop.Parent,  #flood object worker
+                hp_oop.Child): 
     
     #===========================================================================
     # program pars
@@ -2938,8 +2938,8 @@ class Binv(     #class object for a building inventory
                 hp.data.Data_wrapper,
                 #hp.plot.Plot_o,
                 hp.sim.Sim_o,
-                hp.oop.Parent,
-                hp.oop.Child): 
+                hp_oop.Parent,
+                hp_oop.Child): 
     #===========================================================================
     # program pars
     #===========================================================================
@@ -3576,8 +3576,8 @@ class Binv(     #class object for a building inventory
 class Dfeat_tbl( #holder/generator fo all the dmg_feats
                  hp.data.Data_wrapper,
                 hp.sim.Sim_o,
-                hp.oop.Parent,
-                hp.oop.Child): 
+                hp_oop.Parent,
+                hp_oop.Child): 
     """
     holder/generator fo all the dmg_feats
     """
