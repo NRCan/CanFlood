@@ -1790,177 +1790,179 @@ class Fdmg( #flood damage model
             
         logger.debug('finisehd \n')
                  
-    def plot_dmgs(self, wtf=None, right_nm = None, xaxis = 'ari', logx = True,
-                  ylims = None, #tuple of min/max values for the y-axis
-                  ): #plot curve of aad
-        """
-        see tab 'aad_fmt' to control what is plotted and formatting
-        """
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        logger = self.logger.getChild('plot_dmgs')
-        if wtf == None: wtf = self.session._write_figs
-        
-        #=======================================================================
-        # prechecks
-        #=======================================================================
-        if self.db_f:
-            if self.dmgs_df is None:
-                raise IOError
-            
-
-        #=======================================================================
-        # setup
-        #=======================================================================
-        if not ylims is None:
-            try:
-                ylims = eval(ylims)
-            except:
-                pass
-            
-        #get the plot workers
-        if self.plotr_d is None: 
-            self.get_plot_kids()
-            
-        kids_d = self.plotr_d
-        
-        title = '%s-%s-%s EAD-ARI plot on %i objs'%(self.session.tag, self.simu_o.name, self.name, len(self.binv.childmeta_df))
-        logger.debug('with \'%s\''%title)
-        
-        if not self.tstep_o is None:
-            title = title + ' for %s'%self.tstep_o.name
-        
-        #=======================================================================
-        # update plotters
-        #=======================================================================
-        logger.debug('updating plotters with my data')
-
-        #get data
-        data_og = self.data.copy() #store this for later
-        
-        if self.dmgs_df_wtail is None:
-            df = self.dmgs_df.copy()
-        else:
-            df = self.dmgs_df_wtail.copy()
-        
-        df = df.sort_values(xaxis, ascending=True)
-  
-        #reformat data
-        df.set_index(xaxis, inplace = True)
-        
-        #re set
-        self.data = df
-        
-        #tell kids to refresh their data from here
-        for gid, obj in kids_d.items(): obj.data = obj.loadr_vir()
-             
-        self.data = data_og #reset the data
-        
-        #=======================================================================
-        # get annotation
-        #=======================================================================
-        val_str = '$' + "{:,.2f}".format(self.ead_tot/1e6)
-        #val_str = "{:,.2f}".format(self.ead_tot)
-        """
-        txt = 'total aad: $%s \n tail kwargs: \'%s\' and \'%s\' \n'%(val_str, self.ca_ltail, self.ca_rtail) +\
-                'binv.cnt = %i, floods.cnt = %i \n'%(self.binv.cnt, len(self.fld_aep_od))"""
-         
-
-        txt = 'total EAD = %s'%val_str        
-            
-                
-        #=======================================================================
-        #plot the workers
-        #=======================================================================
-        #twinx
-        if not right_nm is None:
-            logger.debug('twinning axis with name \'%s\''%right_nm)
-            title = title + '_twin'
-            # sort children into left/right buckets by name to plot on each axis
-            right_pdb_d, left_pdb_d = self.sort_buckets(kids_d, right_nm)
-            
-            if self.db_f:
-                if len (right_pdb_d) <1: raise IOError
-            
-            #=======================================================================
-            # #send for plotting
-            #=======================================================================
-            'this plots both bundles by their data indexes'
-            ax1, ax2 = self.plot_twinx(left_pdb_d, right_pdb_d, 
-                                       logx=logx, xlab = xaxis, title=title, annot = txt,
-                                       wtf=False)
-            'cant figure out why teh annot is plotting twice'
-            
-            ax2.set_ylim(0, 1) #prob limits
-            legon = False
-        else:
-            logger.debug('single axis')
-            
-            try:
-                del kids_d['prob']
-            except:
-                pass
-            
-            pdb = self.get_pdb_dict(list(kids_d.values()))
-            
-            ax1 = self.plot_bundles(pdb,
-                                   logx=logx, xlab = 'ARI', ylab = 'damage ($ 10^6)', title=title, annot = txt,
-                                   wtf=False)
-            
-            legon=True
-        
-        #hatch
-        #=======================================================================
-        # post formatting
-        #=======================================================================
-        #set axis limits
-        if xaxis == 'ari': ax1.set_xlim(1, 1000) #aep limits
-        elif xaxis == 'prob': ax1.set_xlim(0, .6) 
-        
-        if not ylims is None:
-            ax1.set_ylim(ylims[0], ylims[1])
-        
-
-        #ax1.set_ylim(0, ax1.get_ylim()[1]) #$ limits
-        
-        
-        #=======================================================================
-        # format y axis labels
-        #======================================================= ================
-        old_tick_l = ax1.get_yticks() #get teh old labels
-        
-        # build the new ticks
-        l = []
-        
-        for value in old_tick_l:
-            new_v = '$' + "{:,.0f}".format(value/1e6)
-            l.append(new_v)
-             
-        #apply the new labels
-        ax1.set_yticklabels(l)
-        
-        """
-        #add thousands comma
-        ax1.get_yaxis().set_major_formatter(
-            #matplotlib.ticker.FuncFormatter(lambda x, p: '$' + "{:,.2f}".format(x/1e6)))
-
-            matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))"""
-        
-        if xaxis == 'ari':
-            ax1.get_xaxis().set_major_formatter(
-                matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
-        
-
-        if wtf: 
-            fig = ax1.figure
-            savepath_raw = os.path.join(self.outpath,title)
-            flag = hp.plot.save_fig(self, fig, savepath_raw=savepath_raw, dpi = self.dpi, legon=legon)
-            if not flag: raise IOError 
-            
-
-        #plt.close()
-        return
+#===============================================================================
+#     def plot_dmgs(self, wtf=None, right_nm = None, xaxis = 'ari', logx = True,
+#                   ylims = None, #tuple of min/max values for the y-axis
+#                   ): #plot curve of aad
+#         """
+#         see tab 'aad_fmt' to control what is plotted and formatting
+#         """
+#         #=======================================================================
+#         # defaults
+#         #=======================================================================
+#         logger = self.logger.getChild('plot_dmgs')
+#         if wtf == None: wtf = self.session._write_figs
+#         
+#         #=======================================================================
+#         # prechecks
+#         #=======================================================================
+#         if self.db_f:
+#             if self.dmgs_df is None:
+#                 raise IOError
+#             
+# 
+#         #=======================================================================
+#         # setup
+#         #=======================================================================
+#         if not ylims is None:
+#             try:
+#                 ylims = eval(ylims)
+#             except:
+#                 pass
+#             
+#         #get the plot workers
+#         if self.plotr_d is None: 
+#             self.get_plot_kids()
+#             
+#         kids_d = self.plotr_d
+#         
+#         title = '%s-%s-%s EAD-ARI plot on %i objs'%(self.session.tag, self.simu_o.name, self.name, len(self.binv.childmeta_df))
+#         logger.debug('with \'%s\''%title)
+#         
+#         if not self.tstep_o is None:
+#             title = title + ' for %s'%self.tstep_o.name
+#         
+#         #=======================================================================
+#         # update plotters
+#         #=======================================================================
+#         logger.debug('updating plotters with my data')
+# 
+#         #get data
+#         data_og = self.data.copy() #store this for later
+#         
+#         if self.dmgs_df_wtail is None:
+#             df = self.dmgs_df.copy()
+#         else:
+#             df = self.dmgs_df_wtail.copy()
+#         
+#         df = df.sort_values(xaxis, ascending=True)
+#   
+#         #reformat data
+#         df.set_index(xaxis, inplace = True)
+#         
+#         #re set
+#         self.data = df
+#         
+#         #tell kids to refresh their data from here
+#         for gid, obj in kids_d.items(): obj.data = obj.loadr_vir()
+#              
+#         self.data = data_og #reset the data
+#         
+#         #=======================================================================
+#         # get annotation
+#         #=======================================================================
+#         val_str = '$' + "{:,.2f}".format(self.ead_tot/1e6)
+#         #val_str = "{:,.2f}".format(self.ead_tot)
+#         """
+#         txt = 'total aad: $%s \n tail kwargs: \'%s\' and \'%s\' \n'%(val_str, self.ca_ltail, self.ca_rtail) +\
+#                 'binv.cnt = %i, floods.cnt = %i \n'%(self.binv.cnt, len(self.fld_aep_od))"""
+#          
+# 
+#         txt = 'total EAD = %s'%val_str        
+#             
+#                 
+#         #=======================================================================
+#         #plot the workers
+#         #=======================================================================
+#         #twinx
+#         if not right_nm is None:
+#             logger.debug('twinning axis with name \'%s\''%right_nm)
+#             title = title + '_twin'
+#             # sort children into left/right buckets by name to plot on each axis
+#             right_pdb_d, left_pdb_d = self.sort_buckets(kids_d, right_nm)
+#             
+#             if self.db_f:
+#                 if len (right_pdb_d) <1: raise IOError
+#             
+#             #=======================================================================
+#             # #send for plotting
+#             #=======================================================================
+#             'this plots both bundles by their data indexes'
+#             ax1, ax2 = self.plot_twinx(left_pdb_d, right_pdb_d, 
+#                                        logx=logx, xlab = xaxis, title=title, annot = txt,
+#                                        wtf=False)
+#             'cant figure out why teh annot is plotting twice'
+#             
+#             ax2.set_ylim(0, 1) #prob limits
+#             legon = False
+#         else:
+#             logger.debug('single axis')
+#             
+#             try:
+#                 del kids_d['prob']
+#             except:
+#                 pass
+#             
+#             pdb = self.get_pdb_dict(list(kids_d.values()))
+#             
+#             ax1 = self.plot_bundles(pdb,
+#                                    logx=logx, xlab = 'ARI', ylab = 'damage ($ 10^6)', title=title, annot = txt,
+#                                    wtf=False)
+#             
+#             legon=True
+#         
+#         #hatch
+#         #=======================================================================
+#         # post formatting
+#         #=======================================================================
+#         #set axis limits
+#         if xaxis == 'ari': ax1.set_xlim(1, 1000) #aep limits
+#         elif xaxis == 'prob': ax1.set_xlim(0, .6) 
+#         
+#         if not ylims is None:
+#             ax1.set_ylim(ylims[0], ylims[1])
+#         
+# 
+#         #ax1.set_ylim(0, ax1.get_ylim()[1]) #$ limits
+#         
+#         
+#         #=======================================================================
+#         # format y axis labels
+#         #======================================================= ================
+#         old_tick_l = ax1.get_yticks() #get teh old labels
+#         
+#         # build the new ticks
+#         l = []
+#         
+#         for value in old_tick_l:
+#             new_v = '$' + "{:,.0f}".format(value/1e6)
+#             l.append(new_v)
+#              
+#         #apply the new labels
+#         ax1.set_yticklabels(l)
+#         
+#         """
+#         #add thousands comma
+#         ax1.get_yaxis().set_major_formatter(
+#             #matplotlib.ticker.FuncFormatter(lambda x, p: '$' + "{:,.2f}".format(x/1e6)))
+# 
+#             matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))"""
+#         
+#         if xaxis == 'ari':
+#             ax1.get_xaxis().set_major_formatter(
+#                 matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+#         
+# 
+#         if wtf: 
+#             fig = ax1.figure
+#             savepath_raw = os.path.join(self.outpath,title)
+#             flag = hp.plot.save_fig(self, fig, savepath_raw=savepath_raw, dpi = self.dpi, legon=legon)
+#             if not flag: raise IOError 
+#             
+# 
+#         #plt.close()
+#         return
+#===============================================================================
 
 class Flood( 
                 hp_dyno.Dyno_wrap,
@@ -2735,210 +2737,215 @@ class Flood(
                         
         return
                     
-    def plot_dmg_pie(self, dmg_sum_ser_raw = None, 
-                     exp_str = 1, title = None, wtf=None): #generate a pie chart for the damage
-        """
-        #=======================================================================
-        # INPUTS
-        #=======================================================================
-        dmg_sum_ser:    series of damage values (see calc_summary_ser)
-            index: dmg_types
-            values: fdmg totals for each type for this flood
-            
-        exp_main: amoutn to explote structural damage values by
-        """
-        #=======================================================================
-        # set defaults
-        #=======================================================================
-        logger = self.logger.getChild('plot_dmg_pie')
-        if title == None: title = self.session.tag + ' '+self.name+' ' + 'dmgpie_plot'
-        if wtf is None: wtf = self.session._write_figs
-        
-        if dmg_sum_ser_raw == None:  #just calculate
-            dmg_sum_ser_raw = self.dmg_res_df[self.dmg_types].sum()
-            #dmg_sum_ser_raw = self.calc_summary_ser()
-            
-        logger.debug('with dmg_sum_ser_raw: \n %s'%dmg_sum_ser_raw)
-        #=======================================================================
-        # data cleaning
-        #=======================================================================
-        #drop na
-        dmg_sum_ser1 = dmg_sum_ser_raw.dropna()
-        #drop zero values
-        boolidx = dmg_sum_ser1 == 0
-        dmg_sum_ser2 = dmg_sum_ser1[~boolidx]
-        
-        if np.all(boolidx):
-            logger.warning('got zero damages. not pie plot generated')
-            return
-        
-        if boolidx.sum() > 0:
-            logger.warning('dmg_pie dropped %s zero totals'%dmg_sum_ser1.index[boolidx].tolist())
-        
-        dmg_sum_ser = dmg_sum_ser2
-        #=======================================================================
-        # get data
-        #=======================================================================
-        #shortcuts
-        dmg_types = dmg_sum_ser.index.tolist()
-        
-        labels = dmg_types
-        sizes = dmg_sum_ser.values.tolist()
-
-
-        #=======================================================================
-        # #get properties list from the dfunc tab
-        #=======================================================================
-        colors = []
-        explode_list = []
-        wed_lab_list = []
-        dfunc_df = self.session.pars_df_d['dfunc']
-        
-        for dmg_type in dmg_types:
-            boolidx = dfunc_df['dmg_type'] == dmg_type #id this dmg_type
-            
-            #color
-            color = dfunc_df.loc[boolidx,'color'].values[0]
-            colors.append(color) #add to the list
-            
-            #explode
-            explode = dfunc_df.loc[boolidx,'explode'].values[0]
-            explode_list.append(explode) #add to the list
-            
-            #wedge_lable
-            wed_lab = '$' + "{:,.2f}".format(dmg_sum_ser[dmg_type])
-            wed_lab_list.append(wed_lab)
-            
-            
-        plt.close()
-        fig, ax = plt.subplots()
-        
-        
-        wedges = ax.pie(sizes, explode=explode_list, labels=labels, colors = colors,
-               autopct=hp.plot.autopct_dollars(sizes), 
-               shadow=True, startangle=90)
-        
-        ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
-        
-        ax.set_title(title)
-        
-        if wtf: #write to file
-            filetail = self.session.name + ' '+self.name+' ' + 'dmgpie_plot'
-            filename = os.path.join(self.model.outpath, filetail)
-            hp.plot.save_fig(self, fig, savepath_raw = filename)
-            
-        return ax
-    
-    def plot_dmg_scatter(self, #scatter plot of damage for each house
-                         dmg_df_raw=None, yvar = 'hse_depth', xvar = 'total', plot_zeros=True,
-                         title=None, wtf=None, ax=None, 
-                         linewidth = 0, markersize = 3, marker = 'x',
-                          **kwargs): 
-        
-        """
-        for complex figures, axes should be passed and returned
-        #=======================================================================
-        # INPUTS
-        #=======================================================================
-        should really leave this for post processing
-        plot_zeros: flag to indicate whether entries with x value = 0 should be included
-        
-        #=======================================================================
-        # TODO
-        #=======================================================================
-        redo this with the plot worker
-        """
-        
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        logger = self.logger.getChild('plot_dmg_scatter')
-        if title == None: title = self.session.tag + ' '+self.name + ' dmg_scatter_plot'
-        if wtf is None: wtf = self.session._write_figs
-        
-            
-        if dmg_df_raw == None: 
-            dmg_res_df_raw = self.dmg_res_df #just use the attached one
-            
-            if not hp_pd.isdf(dmg_res_df_raw): raise IOError
-                
-        #=======================================================================
-        # manipulate data for plotting
-        #=======================================================================
-        if plot_zeros:
-            dmg_df = dmg_res_df_raw
-        else:
-            #exclude those entries with zero value on the xvar
-            boolidx = dmg_res_df_raw[xvar] == 0
-            dmg_df = dmg_res_df_raw[~boolidx]
-            self.logger.warning('%s values = zero (%i) excluded from plot'%(xvar, boolidx.sum()))
-            
-        #=======================================================================
-        # setup data plot
-        #=======================================================================
-        x_ar = dmg_df[xvar].values.tolist() #damage
-        xlab = 'damage($)' 
-        'could make this more dynamic'
-        
-        if sum(x_ar) <=0:
-            logger.warning('got no damage. no plot generated')
-            return
-
-        y_ar = dmg_df[yvar].values.tolist() #depth
-        
-
-        #=======================================================================
-        # SEtup defaults
-        #=======================================================================
-        if ax == None:
-            plt.close('all')
-            fig = plt.figure(2)
-            fig.set_size_inches(9, 6)
-            ax = fig.add_subplot(111)
-
-            ax.set_title(title)
-            ax.set_ylabel(yvar + '(m)')
-            ax.set_xlabel(xlab)
-            
-            #set limits
-            #ax.set_xlim(min(x_ar), max(x_ar))
-            #ax.set_ylim(min(y_ar), max(y_ar))
-        else:
-            fig = ax.figure
-            
-        label = self.name + ' ' + xvar
-        #=======================================================================
-        # send teh data for plotting
-        #=======================================================================
-        
-        pline = ax.plot(x_ar,y_ar, 
-                        label = label,
-                        linewidth = linewidth, markersize = markersize, marker = marker,
-                        **kwargs)
-        
-
-        
-        #=======================================================================
-        # post formatting
-        #=======================================================================
-        ax.get_xaxis().set_major_formatter(
-            matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
-        
-        """
-
-        plt.show()
-
-        
-        """
-
-        if wtf: #trigger for saving the fiture
-            filetail = title
-            filename = os.path.join(self.model.outpath, filetail)
-            hp.plot.save_fig(self, fig, savepath_raw = filename, logger=logger)
-
-        
-        return pline
-    
+#===============================================================================
+#     def plot_dmg_pie(self, dmg_sum_ser_raw = None, 
+#                      exp_str = 1, title = None, wtf=None): #generate a pie chart for the damage
+#         """
+#         #=======================================================================
+#         # INPUTS
+#         #=======================================================================
+#         dmg_sum_ser:    series of damage values (see calc_summary_ser)
+#             index: dmg_types
+#             values: fdmg totals for each type for this flood
+#             
+#         exp_main: amoutn to explote structural damage values by
+#         """
+#         #=======================================================================
+#         # set defaults
+#         #=======================================================================
+#         logger = self.logger.getChild('plot_dmg_pie')
+#         if title == None: title = self.session.tag + ' '+self.name+' ' + 'dmgpie_plot'
+#         if wtf is None: wtf = self.session._write_figs
+#         
+#         if dmg_sum_ser_raw == None:  #just calculate
+#             dmg_sum_ser_raw = self.dmg_res_df[self.dmg_types].sum()
+#             #dmg_sum_ser_raw = self.calc_summary_ser()
+#             
+#         logger.debug('with dmg_sum_ser_raw: \n %s'%dmg_sum_ser_raw)
+#         #=======================================================================
+#         # data cleaning
+#         #=======================================================================
+#         #drop na
+#         dmg_sum_ser1 = dmg_sum_ser_raw.dropna()
+#         #drop zero values
+#         boolidx = dmg_sum_ser1 == 0
+#         dmg_sum_ser2 = dmg_sum_ser1[~boolidx]
+#         
+#         if np.all(boolidx):
+#             logger.warning('got zero damages. not pie plot generated')
+#             return
+#         
+#         if boolidx.sum() > 0:
+#             logger.warning('dmg_pie dropped %s zero totals'%dmg_sum_ser1.index[boolidx].tolist())
+#         
+#         dmg_sum_ser = dmg_sum_ser2
+#         #=======================================================================
+#         # get data
+#         #=======================================================================
+#         #shortcuts
+#         dmg_types = dmg_sum_ser.index.tolist()
+#         
+#         labels = dmg_types
+#         sizes = dmg_sum_ser.values.tolist()
+# 
+# 
+#         #=======================================================================
+#         # #get properties list from the dfunc tab
+#         #=======================================================================
+#         colors = []
+#         explode_list = []
+#         wed_lab_list = []
+#         dfunc_df = self.session.pars_df_d['dfunc']
+#         
+#         for dmg_type in dmg_types:
+#             boolidx = dfunc_df['dmg_type'] == dmg_type #id this dmg_type
+#             
+#             #color
+#             color = dfunc_df.loc[boolidx,'color'].values[0]
+#             colors.append(color) #add to the list
+#             
+#             #explode
+#             explode = dfunc_df.loc[boolidx,'explode'].values[0]
+#             explode_list.append(explode) #add to the list
+#             
+#             #wedge_lable
+#             wed_lab = '$' + "{:,.2f}".format(dmg_sum_ser[dmg_type])
+#             wed_lab_list.append(wed_lab)
+#             
+#             
+#         import matplotlib.pyplot as plt
+#         plt.close()
+#         fig, ax = plt.subplots()
+#         
+#         
+#         wedges = ax.pie(sizes, explode=explode_list, labels=labels, colors = colors,
+#                autopct=hp.plot.autopct_dollars(sizes), 
+#                shadow=True, startangle=90)
+#         
+#         ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+#         
+#         ax.set_title(title)
+#         
+#         if wtf: #write to file
+#             filetail = self.session.name + ' '+self.name+' ' + 'dmgpie_plot'
+#             filename = os.path.join(self.model.outpath, filetail)
+#             hp.plot.save_fig(self, fig, savepath_raw = filename)
+#             
+#         return ax
+#     
+#===============================================================================
+#===============================================================================
+#     def plot_dmg_scatter(self, #scatter plot of damage for each house
+#                          dmg_df_raw=None, yvar = 'hse_depth', xvar = 'total', plot_zeros=True,
+#                          title=None, wtf=None, ax=None, 
+#                          linewidth = 0, markersize = 3, marker = 'x',
+#                           **kwargs): 
+#         
+#         """
+#         for complex figures, axes should be passed and returned
+#         #=======================================================================
+#         # INPUTS
+#         #=======================================================================
+#         should really leave this for post processing
+#         plot_zeros: flag to indicate whether entries with x value = 0 should be included
+#         
+#         #=======================================================================
+#         # TODO
+#         #=======================================================================
+#         redo this with the plot worker
+#         """
+#         
+#         #=======================================================================
+#         # defaults
+#         #=======================================================================
+#         logger = self.logger.getChild('plot_dmg_scatter')
+#         if title == None: title = self.session.tag + ' '+self.name + ' dmg_scatter_plot'
+#         if wtf is None: wtf = self.session._write_figs
+#         
+#             
+#         if dmg_df_raw == None: 
+#             dmg_res_df_raw = self.dmg_res_df #just use the attached one
+#             
+#             if not hp_pd.isdf(dmg_res_df_raw): raise IOError
+#                 
+#         #=======================================================================
+#         # manipulate data for plotting
+#         #=======================================================================
+#         if plot_zeros:
+#             dmg_df = dmg_res_df_raw
+#         else:
+#             #exclude those entries with zero value on the xvar
+#             boolidx = dmg_res_df_raw[xvar] == 0
+#             dmg_df = dmg_res_df_raw[~boolidx]
+#             self.logger.warning('%s values = zero (%i) excluded from plot'%(xvar, boolidx.sum()))
+#             
+#         #=======================================================================
+#         # setup data plot
+#         #=======================================================================
+#         x_ar = dmg_df[xvar].values.tolist() #damage
+#         xlab = 'damage($)' 
+#         'could make this more dynamic'
+#         
+#         if sum(x_ar) <=0:
+#             logger.warning('got no damage. no plot generated')
+#             return
+# 
+#         y_ar = dmg_df[yvar].values.tolist() #depth
+#         
+# 
+#         #=======================================================================
+#         # SEtup defaults
+#         #=======================================================================
+#         if ax == None:
+#             plt.close('all')
+#             fig = plt.figure(2)
+#             fig.set_size_inches(9, 6)
+#             ax = fig.add_subplot(111)
+# 
+#             ax.set_title(title)
+#             ax.set_ylabel(yvar + '(m)')
+#             ax.set_xlabel(xlab)
+#             
+#             #set limits
+#             #ax.set_xlim(min(x_ar), max(x_ar))
+#             #ax.set_ylim(min(y_ar), max(y_ar))
+#         else:
+#             fig = ax.figure
+#             
+#         label = self.name + ' ' + xvar
+#         #=======================================================================
+#         # send teh data for plotting
+#         #=======================================================================
+#         
+#         pline = ax.plot(x_ar,y_ar, 
+#                         label = label,
+#                         linewidth = linewidth, markersize = markersize, marker = marker,
+#                         **kwargs)
+#         
+# 
+#         
+#         #=======================================================================
+#         # post formatting
+#         #=======================================================================
+#         ax.get_xaxis().set_major_formatter(
+#             matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+#         
+#         """
+# 
+#         plt.show()
+# 
+#         
+#         """
+# 
+#         if wtf: #trigger for saving the fiture
+#             filetail = title
+#             filename = os.path.join(self.model.outpath, filetail)
+#             hp.plot.save_fig(self, fig, savepath_raw = filename, logger=logger)
+# 
+#         
+#         return pline
+#     
+#===============================================================================
 class Binv(     #class object for a building inventory
                 hp_data.Data_wrapper,
                 #hp.plot.Plot_o,
