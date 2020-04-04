@@ -26,13 +26,13 @@ from hlpr.exceptions import Error
 #  IMPORT CUSTOM MODS ---------------------------------------------------------
 #===============================================================================
 
-import hp.pd
+import model.sofda.hp.pd as hp_pd
 import hp.data
 
 #===============================================================================
 # IMPORT SPECIFIC FUNCS ------------------------------------------------------
 #===============================================================================
-from hp.pd import view
+from hp_pd import view
 
 # LOGGER SETUP -----------------------------------------------------------------
 mod_logger = logging.getLogger(__name__)
@@ -152,7 +152,7 @@ class Fdmgo_data_wrap(object): #generic methods for Fdmg data objects
         binv_df = self.parent.kids_d['binv'].childmeta_df
         
         #null check
-        hp.pd.fancy_null_chk(df, detect='error', dname=self.name, logger=logger)
+        hp_pd.fancy_null_chk(df, detect='error', dname=self.name, logger=logger)
 
         
 
@@ -272,7 +272,7 @@ class Rfda_curve_data(#class object for rfda legacy pars
         self.filepath = self.get_filepath()
         
         #load from file
-        df_raw = hp.pd.load_xls_df(self.filepath, logger=logger, 
+        df_raw = hp_pd.load_xls_df(self.filepath, logger=logger, 
                 header = 0, index_col = None)
                 
         
@@ -490,7 +490,7 @@ class Flood_tbl(     #flood table worker
                            (boolar.sum().sum(), self.na_value))
         
         """not working for some reason
-        hp.pd.cleaner_report(df, df2)"""
+        hp_pd.cleaner_report(df, df2)"""
         
         logger.debug('cleaned to %s'%str(df2.shape))
         
@@ -560,7 +560,7 @@ class Flood_tbl(     #flood table worker
 
         delta = dfwet - dfdry 
         """
-        hp.pd.v(delta)
+        hp_pd.v(delta)
         """
         
         boolar = delta < 0 #identify all inconsistencies
@@ -568,8 +568,8 @@ class Flood_tbl(     #flood table worker
         if not np.any(boolar):
             logger.debug('no inconsistencies found. skipping')
             """
-            hp.pd.v(boolar)
-            hp.pd.v(delta)
+            hp_pd.v(boolar)
+            hp_pd.v(delta)
             """
             return
         
@@ -586,12 +586,12 @@ class Flood_tbl(     #flood table worker
             raise Error('found %i entries out of tolerance = %.2f'%(boolar1.sum().sum(), tol))
         
         """
-        hp.pd.v(abs(delta2))
-        hp.pd.v(delta[boolar])
-        hp.pd.v(boolar)
+        hp_pd.v(abs(delta2))
+        hp_pd.v(delta[boolar])
+        hp_pd.v(boolar)
         
-        hp.pd.v(delta)
-        hp.pd.v(delta2)
+        hp_pd.v(delta)
+        hp_pd.v(delta2)
         """
         #=======================================================================
         # replace bad dry values with the wet values
@@ -722,10 +722,10 @@ class Flood_tbl(     #flood table worker
             logger.error('got %i (of %i) dry depths greater than wet depths'%(boolar.sum(), dfdry.count().sum()))
             """
             delta = dfdry - dfwet
-            hp.pd.v(delta)
-            hp.pd.v(dfdry)
-            hp.pd.v(dfwet)
-            hp.pd.v
+            hp_pd.v(delta)
+            hp_pd.v(dfdry)
+            hp_pd.v(dfwet)
+            hp_pd.v
             """
             raise IOError
         
@@ -751,9 +751,9 @@ class Flood_tbl(     #flood table worker
         if self.damp_build_code == 'average':
             delta = dfwet - dfdry
             """
-            hp.pd.v(delta)
+            hp_pd.v(delta)
             
-            hp.pd.v(delta/0.5)
+            hp_pd.v(delta/0.5)
             """
             
             dfdamp = dfdry + delta/2.0
@@ -799,12 +799,12 @@ class Flood_tbl(     #flood table worker
                 boolar = deltaw<0
                 logger.error('got %i (of %i) damp levels greater than wet levels'%(boolar.sum().sum(), dfwet.count().sum()))
                 """
-                hp.pd.v(deltaw)
-                hp.pd.v(delta)
-                hp.pd.v(dfwet)
-                hp.pd.v(dfdamp)
+                hp_pd.v(deltaw)
+                hp_pd.v(delta)
+                hp_pd.v(dfwet)
+                hp_pd.v(dfdamp)
                 
-                hp.pd.v(dfdry)
+                hp_pd.v(dfdry)
                 """
                 raise IOError
             
@@ -821,7 +821,7 @@ class Flood_tbl(     #flood table worker
     dfpull = self.model.binv.childmeta_df
     dfpull.columns
     binv_df.columns
-    hp.pd.v(df3)
+    hp_pd.v(df3)
     """
     
     
@@ -880,7 +880,7 @@ class Fhr_tbl( #flood table worker
         for k, v in d.items():
             logger.debug('on \'%s\' with %s'%(k, str(v.shape)))
             #clean
-            df = hp.pd.clean_datapars(v, logger=logger)
+            df = hp_pd.clean_datapars(v, logger=logger)
             df1 = self.clean_binv_data(df)#adds the mind, slices to the expected columns, makes sure we have them
             
             #check the data
@@ -891,7 +891,7 @@ class Fhr_tbl( #flood table worker
             # check for nulls
             #===================================================================
             #check the fhz for nulls (allowing nulls on the bfe)
-            hp.pd.fancy_null_chk(df1['fhz'], detect='error', dname=self.name, logger=logger)
+            hp_pd.fancy_null_chk(df1['fhz'], detect='error', dname=self.name, logger=logger)
             
             
             #tyepsetting

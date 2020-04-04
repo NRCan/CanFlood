@@ -74,7 +74,7 @@ def Get_interp_header_dx2ser(df_raw, header_search, value_ask_raw, logger=mod_lo
     #===========================================================================
     # USE
     #===========================================================================
-    interp_ser = hp.pd.Get_interp_header_dx2ser(df_raw, header_search, value_ask_raw)
+    interp_ser = hp_pd.Get_interp_header_dx2ser(df_raw, header_search, value_ask_raw)
     
     interp_value = interp_ser[header_desire]
     #===========================================================================
@@ -598,7 +598,7 @@ def load_csv_df(filepath,
     """
     header = [0,1]
     
-    hp.pd.v(df_raw)
+    hp_pd.v(df_raw)
     """
     
     try: #default engine
@@ -2370,7 +2370,7 @@ def clean_datapars(df_raw,  #typical formatting for cleaning a datapars df
     df3.columns = df3.columns.str.strip()
     
     """
-    hp.pd.v(df3)
+    hp_pd.v(df3)
     I dont want to lose the headers even if the columns are empty
     df2 = clean_dropna(df1)"""
     
@@ -3233,7 +3233,7 @@ def merge_dxcol(left_dxcol, right_dxcol,
         merge_dxcol[lvl0_val] = merge_df
         
         """
-        hp.pd.view_df(merge_df)
+        hp_pd.view_df(merge_df)
         left_df.columns
         right_df2.columns
         """

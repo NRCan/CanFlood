@@ -27,14 +27,14 @@ from weakref import proxy
 
 from hp.basic import OrderedSet
 
-from hp.pd import view
+from hp_pd import view
 idx = pd.IndexSlice
 #===============================================================================
 #  IMPORT CUSTOM MODS ---------------------------------------------------------
 #===============================================================================
 
 #import hp.basic
-#import hp.pd
+#import model.sofda.hp.pd as hp_pd
 import hp.oop
 
 # logger setup -----------------------------------------------------------------------

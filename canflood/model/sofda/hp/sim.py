@@ -180,7 +180,7 @@ import numpy as np
 #import scipy.stats
 
 import hp.basic
-#import hp.pd
+#import model.sofda.hp.pd as hp_pd
 #import hp.dynp
 import hp.oop
 #import hp.outs

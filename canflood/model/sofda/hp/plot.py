@@ -47,7 +47,7 @@ import matplotlib.pyplot as plt
 
     
 # import other helpers ---------------------------------------------------------
-import hp.pd
+import model.sofda.hp.pd as hp_pd
 import hp.np
 import hp.oop
     
@@ -296,7 +296,7 @@ class Plotdatabundler(object): #convenience methdos for gneerating plotdatabundl
                 logger.debug('unidimensional array')
                 data_ar = np.array(data_ar_raw.tolist())
             
-        elif hp.pd.isdf(self.data):
+        elif hp_pd.isdf(self.data):
             'todo: add check that this is pandasd type'
             if use_index: data_ar_raw = self.data.index.values
             else: data_ar_raw = self.data.values
@@ -311,7 +311,7 @@ class Plotdatabundler(object): #convenience methdos for gneerating plotdatabundl
             
             logger.debug('got array from df type')
             
-        elif hp.pd.isser(self.data):
+        elif hp_pd.isser(self.data):
             if use_index: data_ar = self.data.index.values
             
             else: data_ar = self.data.values
@@ -391,8 +391,8 @@ class Plotdatabundler(object): #convenience methdos for gneerating plotdatabundl
         
         df = self.data
         
-        if not hp.pd.isdf(df): 
-            if not hp.pd.isser(df): raise IOError
+        if not hp_pd.isdf(df): 
+            if not hp_pd.isser(df): raise IOError
         
         df_slice = df[boolidx]
         
@@ -406,8 +406,8 @@ class Plotdatabundler(object): #convenience methdos for gneerating plotdatabundl
         # setup
         #=======================================================================
         df = self.data
-        if not hp.pd.isdf(df): 
-            if not hp.pd.isser(df): raise IOError
+        if not hp_pd.isdf(df): 
+            if not hp_pd.isser(df): raise IOError
         
         indp_ar_dict = OrderedDict()
         #=======================================================================
@@ -416,7 +416,7 @@ class Plotdatabundler(object): #convenience methdos for gneerating plotdatabundl
         for index,[dep_name, dep_dato, dep_ar] in dep_ar_dict.items(): #loop through each and build the plot
             
             dep_df = dep_dato.data
-            if not hp.pd.isdf(dep_df): raise IOError
+            if not hp_pd.isdf(dep_df): raise IOError
             
             boolidx = df.index.isin(dep_df.index) #find where they match
             
@@ -787,7 +787,7 @@ class Plot_o(Plotdatabundler): #worker for plotting teh data
                     dep_ar = dep_dato.dfunc(indp_ar)
                     
             #for series type
-            elif hp.pd.isser(dep_dato.data): 
+            elif hp_pd.isser(dep_dato.data): 
                 dep_ar = dep_dato.data.values #just use the series values
                 
             #for array types
@@ -1002,7 +1002,7 @@ class Plot_o(Plotdatabundler): #worker for plotting teh data
         #=======================================================================
         # data cleaning
         #=======================================================================
-        if not hp.pd.isser(data):
+        if not hp_pd.isser(data):
             if hp.np.isar(data):
                 data = pd.Series(data)
             else: raise IOError

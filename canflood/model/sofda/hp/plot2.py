@@ -18,7 +18,7 @@ from weakref import WeakValueDictionary as wdict
 from weakref import proxy
 
 
-import hp.pd
+import model.sofda.hp.pd as hp_pd
 import hp.oop
 import hp.dict
 import hp.data2
@@ -322,7 +322,7 @@ class Variable_wrap(hp.data2.Dataset): #variable methods to be shared between sy
                 logger.error('failed to evaluate \'%s\' on dataset \'%s\''%(self.boolidx_str, self.parent.name))
                 raise IOError
             """
-            hp.pd.v(df)
+            hp_pd.v(df)
             """
             
             self.boolidx = boolidx.values
@@ -350,7 +350,7 @@ class Variable_wrap(hp.data2.Dataset): #variable methods to be shared between sy
         
         """
         self.name
-        hp.pd.v(df)
+        hp_pd.v(df)
         
         df.mean(axis=1)
         
@@ -363,8 +363,8 @@ class Variable_wrap(hp.data2.Dataset): #variable methods to be shared between sy
         """
         df.loc[:,idx['2016','10':'8']].reset_index(drop=True)
         df1 = df.loc[:,idx[:,'10':'8']].reset_index(drop=True)
-        hp.pd.v(df1)
-        hp.pd.v(self.data)
+        hp_pd.v(df1)
+        hp_pd.v(self.data)
         df1
         
         full_df.columns.get_level_values(0).unique()
@@ -473,7 +473,7 @@ class Var_raw( #raw variable object
         
         df.columns
         
-        hp.pd.v(df)
+        hp_pd.v(df)
         
         df.loc[:,
         """
@@ -522,7 +522,7 @@ class Var_raw( #raw variable object
             raise IOError
         
         """
-        hp.pd.v(df)
+        hp_pd.v(df)
         type(data)
         """
         return
@@ -2250,7 +2250,7 @@ class Plot_handler(object): #wrapper for complex data objects to handle plotting
         
         #find your slices
         """
-        hp.pd.v(df_raw)
+        hp_pd.v(df_raw)
         
         self.pairs_d.keys()
         """

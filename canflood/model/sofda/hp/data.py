@@ -5,7 +5,7 @@ Created on Jun 17, 2018
 
 basic commands for data analyis/manipulation
 
-most commands lie in hp.pd
+most commands lie in hp_pd
 here we mostly are housing the worker object
 '''
 
@@ -25,7 +25,7 @@ from collections import OrderedDict
 #===============================================================================
 
 import hp.basic
-import hp.pd
+import model.sofda.hp.pd as hp_pd
 
 """since the workers wrap around the hp.oop.Basic_o, that module must be imported first"""
 import hp.oop
@@ -158,7 +158,7 @@ class Data_wrapper(object): #wrapper for data type operations
         df = self.parent.data.copy()
         
         if self.db_f:
-            if not hp.pd.isdf(df, logger = logger): 
+            if not hp_pd.isdf(df, logger = logger): 
                 logger.error('no filepath and no parent data (%s)'%self.parent.name)
                 raise IOError
             """
@@ -180,7 +180,7 @@ class Data_wrapper(object): #wrapper for data type operations
             elif not self.name in df.columns:
                 logger.error('my name is not in my parents data')
                 """
-                hp.pd.view_web_df(df)
+                hp_pd.view_web_df(df)
                 df = df
                 
                 """
@@ -246,19 +246,19 @@ class Data_wrapper(object): #wrapper for data type operations
         # #load by filetype
         #=======================================================================
         if filepath.endswith('.csv'):  
-            data = hp.pd.load_csv_df(filepath, logger = logger, test_trim_row = test_trim_row, 
+            data = hp_pd.load_csv_df(filepath, logger = logger, test_trim_row = test_trim_row, 
                                          header = header, 
                                          skiprows = self.skiprows,
                                          index_col = self.index_col)
         
         elif filepath.endswith('.xls'):  
             if not multi:
-                data = hp.pd.load_xls_df(filepath, logger = logger, test_trim_row = test_trim_row, 
+                data = hp_pd.load_xls_df(filepath, logger = logger, test_trim_row = test_trim_row, 
                                              header = header, 
                                              skiprows = self.skiprows,
                                              index_col = self.index_col)
             else:
-                data = hp.pd.load_xls_d(filepath, logger = logger, test_trim_row = test_trim_row, 
+                data = hp_pd.load_xls_d(filepath, logger = logger, test_trim_row = test_trim_row, 
                                              header = header, 
                                              skiprows = self.skiprows,
                                              index_col = self.index_col)
@@ -292,13 +292,13 @@ class Data_wrapper(object): #wrapper for data type operations
         if df_clean.columns[0].startswith('?'):
             raise IOError
         
-        hp.pd.cleaner_report(df_raw, df_clean,logger=logger)
+        hp_pd.cleaner_report(df_raw, df_clean,logger=logger)
         
         #=======================================================================
         # #apply data formatting
         #=======================================================================
         if hasattr(self, 'datatplate_path'):
-            df_clean = hp.pd.force_dtype_from_tplate(df_clean, self.datatplate_path, logger=self.logger) #apply dtype
+            df_clean = hp_pd.force_dtype_from_tplate(df_clean, self.datatplate_path, logger=self.logger) #apply dtype
         else: 
             self.logger.debug('no data type template provided')
             df_clean = df_clean.copy(deep=True)
@@ -319,14 +319,14 @@ class Data_wrapper(object): #wrapper for data type operations
             
 
         
-        if not hp.pd.isdf(df_raw):
+        if not hp_pd.isdf(df_raw):
             logger.warning('got unexpected type on passed df (%s). doing nothing'%type(df_raw))
             return df_raw
         
         #=======================================================================
         # load the tr_dict
         #=======================================================================
-        Htrans = hp.pd.Head_translator(tr_dict_path, self)  #initilzie the worker
+        Htrans = hp_pd.Head_translator(tr_dict_path, self)  #initilzie the worker
         df_trans = Htrans.translate(df_raw)
         
         return df_trans
@@ -359,7 +359,7 @@ class Data_wrapper(object): #wrapper for data type operations
             logger.debug('adding data from df %s'%(str(right_df_raw.shape)))
                     
         #do the merging
-        merge_df = hp.pd.merge_left(left_df, right_df_raw, on=on, logger=logger, **kwargs)
+        merge_df = hp_pd.merge_left(left_df, right_df_raw, on=on, logger=logger, **kwargs)
         
         #add this back onto self
         
@@ -397,7 +397,7 @@ class Data_wrapper(object): #wrapper for data type operations
             #===========================================================================
             # check for duplicates in source frames
             #===========================================================================
-            flag, boolidx = hp.pd.are_dupes(df1, colname = on, logger=dato.logger)
+            flag, boolidx = hp_pd.are_dupes(df1, colname = on, logger=dato.logger)
             if flag: 
                 logger.warning('found %i internal duplicates on %s. cleaning these'%(boolidx.sum(), datoname))
                 df = df1.drop_duplicates(subset=on, keep='first') #just keep the first entry
@@ -412,13 +412,13 @@ class Data_wrapper(object): #wrapper for data type operations
                         
             logger.debug('joining left %s with \'%s\' df %s'%(str(merge_df.shape), dato.name, str(df.shape)))
             
-            merge_df = hp.pd.union(merge_df,df, on=on, left_col_keep = left_col_keep, logger=logger)
+            merge_df = hp_pd.union(merge_df,df, on=on, left_col_keep = left_col_keep, logger=logger)
         
         
         #=======================================================================
         # cleanup
         #=======================================================================
-        merge_df1 = hp.pd.move_col_to_front(merge_df, on, logger=logger) #sort columns by search cols
+        merge_df1 = hp_pd.move_col_to_front(merge_df, on, logger=logger) #sort columns by search cols
         merge_df2 = merge_df1.reset_index(drop=True)
         
         #=======================================================================
@@ -438,7 +438,7 @@ class Data_wrapper(object): #wrapper for data type operations
         #=======================================================================
         # prechecks
         #=======================================================================
-        if not hp.pd.isdf(df): raise IOError
+        if not hp_pd.isdf(df): raise IOError
         if not search_head in df.columns: raise IOError
         
         #=======================================================================

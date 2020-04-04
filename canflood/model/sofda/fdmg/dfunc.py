@@ -33,12 +33,12 @@ idx = pd.IndexSlice
 #===============================================================================
 #import hp.plot
 #import hp.basic
-import hp.pd
+import model.sofda.hp.pd as hp_pd
 import hp.oop
 #import hp.data
 
 from hlpr.exceptions import Error
-from hp.pd import view
+from hp_pd import view
 
 # logger setup -----------------------------------------------------------------------
 mod_logger = logging.getLogger(__name__)
@@ -607,7 +607,7 @@ class Dfunc(
         # prechecks
         #=======================================================================
         if self.db_f:
-            if not hp.pd.isdf(raw_dcurve_df):
+            if not hp_pd.isdf(raw_dcurve_df):
                 raise IOError
             
             if acode == '':
@@ -850,7 +850,7 @@ class Dfunc(
         # prechecks
         #=======================================================================
         if self.db_f:
-            if not hp.pd.isdf(dd_df): 
+            if not hp_pd.isdf(dd_df): 
                 raise IOError
             
             if np.any(pd.isnull(dd_df['calc_price'])):
@@ -1649,7 +1649,7 @@ class Dfunc(
                 else:
                     filename = outpath
                     
-                hp.pd.write_to_file(filename, self.dd_df, logger=logger)
+                hp_pd.write_to_file(filename, self.dd_df, logger=logger)
         
         return True
     

@@ -28,14 +28,14 @@ from weakref import proxy
 
 from hp.basic import OrderedSet
 
-from hp.pd import view
+from hp_pd import view
 idx = pd.IndexSlice
 #===============================================================================
 #  IMPORT CUSTOM MODS ---------------------------------------------------------
 #===============================================================================
 #import hp.plot
 import hp.basic
-import hp.pd
+import model.sofda.hp.pd as hp_pd
 import hp.oop
 #import hp.data
 
@@ -1284,7 +1284,7 @@ class House(
         boolidx1 = df_raw['place_code'] == 'total' #identify all the entries except total
         
         #search by dmg_code where all strings in the list are a match
-        boolidx2 = hp.pd.search_str_fr_list(df_raw['dmg_code'], dmg_codes, all_any='any') #find 
+        boolidx2 = hp_pd.search_str_fr_list(df_raw['dmg_code'], dmg_codes, all_any='any') #find 
         
         if boolidx2.sum() <1:
             logger.warning('unable to find a match in the dfunc tab for %s. using default'%tot_name)
@@ -1354,7 +1354,7 @@ class House(
             """the native format of the dmg_ar is cumulative damages
             to sum these, we need to back compute to incremental
             """
-            df_dato['damage_inc'] = hp.pd.get_incremental(df_dato['damage_cum'], logger=logger)
+            df_dato['damage_inc'] = hp_pd.get_incremental(df_dato['damage_cum'], logger=logger)
             df_dato['source'] = datoname
             
             #append these to the full

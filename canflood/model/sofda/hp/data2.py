@@ -20,7 +20,7 @@ from weakref import WeakValueDictionary as wdict
 from weakref import proxy
 
 
-import hp.pd
+import model.sofda.hp.pd as hp_pd
 import hp.oop
 import hp.dict
 import hp.data2

@@ -385,7 +385,7 @@ class Boolean_1D(Data_func): #set of 1d discrete data
             
     def bool_to_num(self): #convert the boolean data to numeric
         
-        if not hp.pd.isser(self.data): raise IOError
+        if not hp_pd.isser(self.data): raise IOError
         
         self.data = self.data.astype(np.bool) #convert the original data to boolean
         

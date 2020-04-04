@@ -147,7 +147,9 @@ def run(
                               _parlo_f = _parlo_f,
 
                               _prof_time = _prof_time, 
-                              _prof_mem = _prof_mem)
+                              _prof_mem = _prof_mem,
+                              
+                              logger=None)
     
     # LOAD ---------------------------------------------------------------------
     session.load_models()

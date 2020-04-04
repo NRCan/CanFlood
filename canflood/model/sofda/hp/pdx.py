@@ -18,7 +18,7 @@ from collections import OrderedDict
 #===============================================================================
 # other helpers
 #===============================================================================
-import hp.pd
+import model.sofda.hp.pd as hp_pd
 import hp.basic
 
 

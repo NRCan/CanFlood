@@ -1205,7 +1205,7 @@ class Dyno_wrap(object): #wraspper for objects which will ahve dynpamic pars app
                 raise IOError"""
             """
             
-            hp.pd.v(df)
+            hp_pd.v(df)
             """
             
             if pd.isnull(new_val):

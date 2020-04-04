@@ -23,7 +23,7 @@ from sys import getsizeof
 
 import pandas as pd
 
-import hp.pd
+import model.sofda.hp.pd as hp_pd
 #import hp.basic
 
 #===============================================================================
@@ -136,12 +136,12 @@ def profile_obj_mem(obj, logger = mod_logger, outpath = None): #get data on obje
         filename = '\'%s\' profile_obj_mem'%(obj.name) 
         filepath = os.path.join(outpath, filename)
                 
-        hp.pd.write_to_file(filepath,df, logger = logger)
+        hp_pd.write_to_file(filepath,df, logger = logger)
         
     return df
 
     """
-    hp.pd.v(df)
+    hp_pd.v(df)
     """
             
             
@@ -340,7 +340,7 @@ class Resource_profiler(object): #worker for profiling resource usage
                 first = False
             
             #write hte data
-            hp.pd.write_fly_df(self.fly_res_fd['run_state'], ser, lindex = ser['state'], 
+            hp_pd.write_fly_df(self.fly_res_fd['run_state'], ser, lindex = ser['state'], 
                                first = first, tag = self.session.tag,
                                logger = self.logger, db_f = self.db_f)
 
@@ -414,7 +414,7 @@ class Resource_profiler(object): #worker for profiling resource usage
         """only writes to file
         objgraph.show_growth(file = logger)
         
-        hp.pd.v(self.osize_df)
+        hp_pd.v(self.osize_df)
         
         obj.__sizeof__()
         
@@ -521,7 +521,7 @@ class Resource_profiler(object): #worker for profiling resource usage
     def write(self): #write all your stats frames to file
         logger = self.logger.getChild('write')
         """
-        hp.pd.v(df)
+        hp_pd.v(df)
         """
         #=======================================================================
         # build the data for each tab
@@ -536,7 +536,7 @@ class Resource_profiler(object): #worker for profiling resource usage
         filename = '%s prof_result'%(self.name) 
         filepath = os.path.join(self.outpath, filename)
                 
-        hp.pd.write_dfset_excel(d,filepath, logger = logger)
+        hp_pd.write_dfset_excel(d,filepath, logger = logger)
         
         return
 

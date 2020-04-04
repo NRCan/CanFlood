@@ -13,13 +13,13 @@ import numpy as np
 
 
 import hp.basic
-import hp.pd
+import model.sofda.hp.pd as hp_pd
 #import hp.plot
 import hp.oop
 import hp.sim
 import hp.sel
 
-from hp.pd import view
+from hp_pd import view
 
 mod_logger = logging.getLogger(__name__)
 mod_logger.debug('initilized')
@@ -381,12 +381,12 @@ class Outputr(hp.sel.Sel_usr_wrap,
         
         logger = self.logger.getChild('time0_space1')
         
-        if not hp.pd.isser(self.data): raise IOError
+        if not hp_pd.isser(self.data): raise IOError
         
         #=======================================================================
         # for data series
         #=======================================================================
-        if hp.pd.isser(att_value):
+        if hp_pd.isser(att_value):
             'just make a reference ot this series'
             self.data = att_value.copy()
             
@@ -416,7 +416,7 @@ class Outputr(hp.sel.Sel_usr_wrap,
         # checsk
         #=======================================================================
         if self.db_f: 
-            if not hp.pd.isser(ser):raise IOError
+            if not hp_pd.isser(ser):raise IOError
             if not time in ser.index: raise IOError
             if hasattr(att_value, 'values'): 
                 """
@@ -450,7 +450,7 @@ class Outputr(hp.sel.Sel_usr_wrap,
         #=======================================================================
         if self.db_f:
             df = self.data
-            if not hp.pd.isdf(df):          raise IOError
+            if not hp_pd.isdf(df):          raise IOError
             
             if not time in df.columns:      raise IOError
             """allowing d ynamic selection
@@ -758,7 +758,7 @@ class Out_controller(object): #thin wrapper of output commands for high level si
                                              dup_sibs_f = False) #this has some issues with blank entries
         
         """
-        hp.pd.v(self.pars_df_d['outputs'])
+        hp_pd.v(self.pars_df_d['outputs'])
         """
         #=======================================================================
         # get codenames list
@@ -782,7 +782,7 @@ class Out_controller(object): #thin wrapper of output commands for high level si
         
         """need to execute this earlier
         self.build_outpars_d()
-        hp.pd.v(dxcol)
+        hp_pd.v(dxcol)
         
         v.desc
         
@@ -1096,7 +1096,7 @@ class Out_controller(object): #thin wrapper of output commands for high level si
         
             filepath = os.path.join(filehead, filetail)
             
-            hp.pd.write_dfset_excel(d, filepath, logger=logger)
+            hp_pd.write_dfset_excel(d, filepath, logger=logger)
                             
         return
     

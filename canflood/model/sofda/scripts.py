@@ -51,7 +51,9 @@ from hlpr.exceptions import Error
 #===============================================================================
 #import hp.plot #need to call this first so thet matplotlib backend configures correctly
 import model.sofda.hp.basic as basic
-import hp.pd
+
+#from .. import model.sofda.hp.pd as hp_pd
+import model.sofda.hp.pd as hp_pd 
 
 import hp.oop
 import hp.sim
@@ -62,7 +64,7 @@ import hp.sel
 import hp.outs
 import hp.dict #wasnt added before for some reason...
 
-from hp.pd import view
+from hp_pd import view
 
 #===============================================================================
 # import in project mods
@@ -137,6 +139,11 @@ class Session( #main session handler. runs many simulations for stochastic model
         #=======================================================================
         # set defaults
         #=======================================================================
+        if dynp_hnd_file is None:
+            dynp_hnd_file = os.path.join(os.path.dirname(__file__), '_pars', 'dynp_handles_20190512.xls')
+            
+        assert os.path.exists(dynp_hnd_file)
+            
         self.dynp_hnd_file = dynp_hnd_file
         
         #initilzie the first baseclass
@@ -508,7 +515,7 @@ class Session( #main session handler. runs many simulations for stochastic model
         
         self.sims_od.keys()
         
-        hp.pd.v(df)
+        hp_pd.v(df)
         """
         #=======================================================================
         # load the sims
@@ -620,12 +627,12 @@ class Session( #main session handler. runs many simulations for stochastic model
             
             #fly writers
             if self.write_fly_f: 
-                hp.pd.write_fly_df(self.fly_res_fpath,res_ser,  lindex=sim_key,
+                hp_pd.write_fly_df(self.fly_res_fpath,res_ser,  lindex=sim_key,
                                    first = first, tag = self.tag, 
                                    db_f = self.db_f, logger=self.logger) #write results on the fly
                 
                 if self.output_dx_f:
-                    hp.pd.write_fly_df(self.fly_resx_fpath,res_dx,  sim_key,
+                    hp_pd.write_fly_df(self.fly_resx_fpath,res_dx,  sim_key,
                                    first = first, tag = self.tag,
                                     db_f = self.db_f, logger=self.logger) #write results on the fly
                     
@@ -747,9 +754,9 @@ class Session( #main session handler. runs many simulations for stochastic model
         logger.debug(" on res_df %s"%str(self.res_df.shape))
         
         """
-        hp.pd.v(self.res_df)
-        hp.pd.v(df2)
-        hp.pd.v(self.pars_df_d['gen'].drop('rank',axis=1))
+        hp_pd.v(self.res_df)
+        hp_pd.v(df2)
+        hp_pd.v(self.pars_df_d['gen'].drop('rank',axis=1))
         """
         
         #=======================================================================
@@ -789,7 +796,7 @@ class Session( #main session handler. runs many simulations for stochastic model
         filetail = '%s fancy_res'%(self.tag)
 
         filepath = os.path.join(self.outpath, filetail)
-        hp.pd.write_dfset_excel(res_d, filepath, engine='xlsxwriter', logger=self.logger)
+        hp_pd.write_dfset_excel(res_d, filepath, engine='xlsxwriter', logger=self.logger)
         
         logger.debug('finished \n')
         
@@ -845,7 +852,7 @@ class Session( #main session handler. runs many simulations for stochastic model
         #=======================================================================
         # #move focus to front
         #=======================================================================
-        df3 = hp.pd.move_col_to_front(df3, 'focus', logger = logger)
+        df3 = hp_pd.move_col_to_front(df3, 'focus', logger = logger)
         
         res_d['sensi_mat'] = df3
         
@@ -865,7 +872,7 @@ class Session( #main session handler. runs many simulations for stochastic model
                 sort = False,
                 indicator = False)
         
-        if not hp.pd.isdf(merge_df):
+        if not hp_pd.isdf(merge_df):
             raise IOError
         
         #=======================================================================
@@ -879,13 +886,13 @@ class Session( #main session handler. runs many simulations for stochastic model
         for cmpre_coln in l:
             merge_df1 = self.get_sensi_base_delta(merge_df1, cmpre_coln)
             
-        merge_df2 = hp.pd.move_col_to_front(merge_df1, 'focus', logger = logger)
+        merge_df2 = hp_pd.move_col_to_front(merge_df1, 'focus', logger = logger)
 
         res_d['sensi_merge'] = merge_df2
         
         """
         res_d.keys()
-        hp.pd.view_web_df(res_d['res_summary'])
+        hp_pd.view_web_df(res_d['res_summary'])
         """
         
         return res_d
@@ -920,7 +927,7 @@ class Session( #main session handler. runs many simulations for stochastic model
         
         #set these
         df.loc[:,new_coln] = new_ar #sim minus baseline
-        df1 = hp.pd.move_col_to_front(df, new_coln, logger=logger)
+        df1 = hp_pd.move_col_to_front(df, new_coln, logger=logger)
         logger.debug('for base_ead = %.2f made delta column\'%s\''%(base_ead, new_coln))
         #=======================================================================
         # add a relative change column 
@@ -934,7 +941,7 @@ class Session( #main session handler. runs many simulations for stochastic model
         new_ar2 = new_ar/float(base_ead)
         
         df1.loc[:,new_coln2] =  new_ar2 #delta over baseline
-        df2 = hp.pd.move_col_to_front(df1, new_coln2, logger=logger)
+        df2 = hp_pd.move_col_to_front(df1, new_coln2, logger=logger)
 
         
         

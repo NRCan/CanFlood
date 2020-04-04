@@ -30,7 +30,7 @@ from weakref import proxy
 
 from hp.basic import OrderedSet
 
-from hp.pd import view
+from hp_pd import view
 
 idx = pd.IndexSlice
 
@@ -39,7 +39,7 @@ idx = pd.IndexSlice
 #===============================================================================
 #import hp.plot
 import hp.basic
-import hp.pd
+import model.sofda.hp.pd as hp_pd
 import hp.oop
 import hp.data
 
@@ -590,7 +590,7 @@ class Fdmg( #flood damage model
         #=======================================================================
         # load and clean the pars
         #=======================================================================
-        df_raw = hp.pd.load_xls_df(self.session.parspath, 
+        df_raw = hp_pd.load_xls_df(self.session.parspath, 
                                sheetname = 'hse_geo', header = [0,1], logger = logger)
         
         df = df_raw.dropna(how='all', axis = 'index') #drop any rows with all nulls
@@ -648,7 +648,7 @@ class Fdmg( #flood damage model
             
             inpath = os.path.join(row['headpath'], row['tailpath'])
             
-            df = hp.pd.load_smart_df(inpath,
+            df = hp_pd.load_smart_df(inpath,
                                      index_col =None, 
                                      logger = logger)
             
@@ -1076,7 +1076,7 @@ class Fdmg( #flood damage model
         if wtf:
             filetail = '%s %s %s %s res_fld'%(self.session.tag, self.simu_o.name, self.tstep_o.name, self.name)
             filepath = os.path.join(self.outpath, filetail)
-            hp.pd.write_to_file(filepath, dmg_dx, overwrite=True, index=True) #send for writing
+            hp_pd.write_to_file(filepath, dmg_dx, overwrite=True, index=True) #send for writing
             
         self.dmg_dx = dmg_dx
         
@@ -1275,7 +1275,7 @@ class Fdmg( #flood damage model
         if wtf:
             filetail = '%s dmg_sumry'%(self.session.state)
             filepath = os.path.join(self.outpath, filetail)
-            hp.pd.write_to_file(filepath, dmgs_df, overwrite=True, index=False) #send for writing
+            hp_pd.write_to_file(filepath, dmgs_df, overwrite=True, index=False) #send for writing
             
         
         logger.debug('set data with %s and cols: %s'%(str(dmgs_df.shape), dmgs_df.columns.tolist()))
@@ -1410,7 +1410,7 @@ class Fdmg( #flood damage model
                 df.loc[loc, 'total'] = 0
                 
                 """
-                hp.pd.view_web_df(self.data)
+                hp_pd.view_web_df(self.data)
                 """
             
         else: raise IOError
@@ -1490,7 +1490,7 @@ class Fdmg( #flood damage model
         df1 =  dmg_dx.loc[:,idx[:, 'bsmt_egrd']] #get a slice by level 2 values
         
         #get occurances by value
-        d = hp.pd.sum_occurances(df1, logger=logger)
+        d = hp_pd.sum_occurances(df1, logger=logger)
         
         #=======================================================================
         # loop and calc
@@ -1677,7 +1677,7 @@ class Fdmg( #flood damage model
         #=======================================================================
         # #get theh dmg_dx decomposed        
         #=======================================================================
-        od.update(hp.pd.dxcol_to_df_set(dmg_dx, logger=self.logger))
+        od.update(hp_pd.dxcol_to_df_set(dmg_dx, logger=self.logger))
                
         
         #=======================================================================
@@ -1691,7 +1691,7 @@ class Fdmg( #flood damage model
         #=======================================================================
         if include_ins:
             for dataname, dato in self.kids_d.items():
-                if hasattr(dato, 'data') & hp.pd.isdf(dato.data):
+                if hasattr(dato, 'data') & hp_pd.isdf(dato.data):
                     od[dataname] = dato.data
                     
                     
@@ -1710,7 +1710,7 @@ class Fdmg( #flood damage model
         filetail = '%s %s %s %s fancy_res'%(self.session.tag, self.simu_o.name, self.tstep_o.name, self.name)
 
         filepath = os.path.join(self.outpath, filetail)
-        hp.pd.write_dfset_excel(od, filepath, engine='xlsxwriter', logger=self.logger)
+        hp_pd.write_dfset_excel(od, filepath, engine='xlsxwriter', logger=self.logger)
 
         return
     
@@ -1746,7 +1746,7 @@ class Fdmg( #flood damage model
         lindex = '%s.%s'%(self.simu_o.name, self.tstep_o.name)
         
         
-        hp.pd.write_fly_df(self.fly_res_fpath,res_ser,  lindex = lindex,
+        hp_pd.write_fly_df(self.fly_res_fpath,res_ser,  lindex = lindex,
                    first = self.write_dmg_fly_first, tag = 'fdmg totals', 
                    db_f = self.db_f, logger=logger) #write results on the fly
     
@@ -1769,9 +1769,9 @@ class Fdmg( #flood damage model
         aad_fmt_df_slice = aad_fmt_df[boolidx] #get this slice3
         
         """
-        hp.pd.view_web_df(self.data)
-        hp.pd.view_web_df(df)
-        hp.pd.view_web_df(aad_fmt_df_slice)
+        hp_pd.view_web_df(self.data)
+        hp_pd.view_web_df(df)
+        hp_pd.view_web_df(aad_fmt_df_slice)
         aad_fmt_df_slice.columns
         """
 
@@ -2368,8 +2368,8 @@ class Flood(
         return True
     
         """
-        hp.pd.v(df)
-        hp.pd.v(self.dmg_df_blank)
+        hp_pd.v(df)
+        hp_pd.v(self.dmg_df_blank)
         """
  
     def run_fld(self, **kwargs): #shortcut to collect all the functions for a simulation ru n
@@ -2692,7 +2692,7 @@ class Flood(
             self.dmg_res_df = df
         
         """
-        hp.pd.v(df)
+        hp_pd.v(df)
         """
         
         return
@@ -2855,7 +2855,7 @@ class Flood(
         if dmg_df_raw == None: 
             dmg_res_df_raw = self.dmg_res_df #just use the attached one
             
-            if not hp.pd.isdf(dmg_res_df_raw): raise IOError
+            if not hp_pd.isdf(dmg_res_df_raw): raise IOError
                 
         #=======================================================================
         # manipulate data for plotting
@@ -3067,7 +3067,7 @@ class Binv(     #class object for a building inventory
         log.debug('from filepath: %s'%self.filepath)
         
         #load from file
-        df_raw = hp.pd.load_xls_df(self.filepath, 
+        df_raw = hp_pd.load_xls_df(self.filepath, 
                                    logger=log, 
                                    test_trim_row = test_trim_row, 
                 header = 0, index_col = None)
@@ -3075,9 +3075,9 @@ class Binv(     #class object for a building inventory
         #=======================================================================
         # send for cleaning
         #=======================================================================
-        df1 = hp.pd.clean_datapars(df_raw, logger = log)
+        df1 = hp_pd.clean_datapars(df_raw, logger = log)
         """
-        hp.pd.v(df3)
+        hp_pd.v(df3)
         """
         
         #=======================================================================
@@ -3215,9 +3215,9 @@ class Binv(     #class object for a building inventory
         
         return df_merge
         """
-        hp.pd.v(df_leg_raw)
-        hp.pd.v(df_merge)
-        hp.pd.v(df_raw)
+        hp_pd.v(df_leg_raw)
+        hp_pd.v(df_merge)
+        hp_pd.v(df_raw)
         """
         
     def clean_inv_df(self, #custom binv cleaning
@@ -3229,7 +3229,7 @@ class Binv(     #class object for a building inventory
         logger = self.logger.getChild('clean_inv_df')
         #clean with kill_flags
         'this makes it easy to trim the data'
-        df1 = hp.pd.clean_kill_flag(df_raw, logger = logger)
+        df1 = hp_pd.clean_kill_flag(df_raw, logger = logger)
         
         #=======================================================================
         # #reindex by a sorted mind (and keep the column)
@@ -3255,7 +3255,7 @@ class Binv(     #class object for a building inventory
         """shouldnt accept any nulls on mandatory data.
         if we do.. why is the data mandatory?
         this isnt data analysis.. this is simulation modeling"""
-        hp.pd.fancy_null_chk(dfm, dname='binv1',detect='error')
+        hp_pd.fancy_null_chk(dfm, dname='binv1',detect='error')
             
         #=======================================================================
         # optional columns
@@ -3266,7 +3266,7 @@ class Binv(     #class object for a building inventory
         df2 = df1.loc[:,alwd_coln_ar] #make the slice
         """this may throw a warning if we are missing some columns"""
         
-        hp.pd.fancy_null_chk(df2, dname='binv2',detect='error')
+        hp_pd.fancy_null_chk(df2, dname='binv2',detect='error')
         """
         Ideally, we should allow nulls on the 'optional' columns.
         but because of the limitation on excel reading booleans with nulls,
@@ -3303,7 +3303,7 @@ class Binv(     #class object for a building inventory
     def check_binv_df(self, df):  
         logger = self.logger.getChild('check_binv_df')
         'todo: add some template check'
-        if not hp.pd.isdf(df):
+        if not hp_pd.isdf(df):
             raise IOError
 
         #=======================================================================
@@ -3388,7 +3388,7 @@ class Binv(     #class object for a building inventory
         'we could probably just passt the data directly'
         
         if self.db_f:
-            if not hp.pd.isdf(df):
+            if not hp_pd.isdf(df):
                 raise IOError
         
         logger.info('executing with data %s'%str(df.shape))
@@ -3473,7 +3473,7 @@ class Binv(     #class object for a building inventory
     """
     df = self.childmeta_df
     df.columns
-    hp.pd.v(df)
+    hp_pd.v(df)
     """
 
      
@@ -3497,7 +3497,7 @@ class Binv(     #class object for a building inventory
         #=======================================================================
         # TESTING
         #=======================================================================
-        hp.pd.v(df)
+        hp_pd.v(df)
 
         df.columns.values.tolist()
         """
@@ -3560,7 +3560,7 @@ class Binv(     #class object for a building inventory
         
         df = self.childmeta_df
         """
-        hp.pd.v(df)
+        hp_pd.v(df)
         """
         
         filename = '%s binv'%(self.session.state)
@@ -3568,7 +3568,7 @@ class Binv(     #class object for a building inventory
         
         filepath = os.path.join(filehead, filename)
         
-        hp.pd.write_to_file(filepath, df, logger=logger)
+        hp_pd.write_to_file(filepath, df, logger=logger)
                 
         return
         
@@ -3632,7 +3632,7 @@ class Dfeat_tbl( #holder/generator fo all the dmg_feats
         self.filepath = self.get_filepath()
         
         #load from file
-        dfeat_df_d = hp.pd.load_xls_df(self.filepath, logger=logger, test_trim_row = test_trim_row,
+        dfeat_df_d = hp_pd.load_xls_df(self.filepath, logger=logger, test_trim_row = test_trim_row,
                                         skiprows = [1],header = 0, index_col = None, sheetname=None)
                 
         
@@ -3683,8 +3683,8 @@ class Dfeat_tbl( #holder/generator fo all the dmg_feats
                 logger.warning('trimmed %i (of %i) dfeats below %.2f '%(boolidx.sum(), len(df3), self.model.dfeat_xclud_price))
                 
                 """
-                hp.pd.v(df4.sort_values('base_price'))
-                hp.pd.v(df3.sort_values('base_price'))
+                hp_pd.v(df4.sort_values('base_price'))
+                hp_pd.v(df3.sort_values('base_price'))
                 """
         else: 
             df4 = df3
@@ -3694,7 +3694,7 @@ class Dfeat_tbl( #holder/generator fo all the dmg_feats
         
         df_clean = df4.copy()
         
-        hp.pd.cleaner_report(df_raw, df_clean, logger = logger)
+        hp_pd.cleaner_report(df_raw, df_clean, logger = logger)
         
         #=======================================================================
         # #post formatters

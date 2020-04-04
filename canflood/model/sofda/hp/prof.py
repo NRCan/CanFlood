@@ -15,7 +15,7 @@ from sys import getsizeof
 
 import pandas as pd
 import hp.plot #need to call this first so matplotlib handles are set properly
-import hp.pd
+import model.sofda.hp.pd as hp_pd
 
 #===============================================================================
 # # module globals -------------------------------------------------------------
@@ -181,13 +181,13 @@ def stats_to_csv(stats_raw_file, outpath = None): #save the stats file in a more
     """
         
     help(StatsViewer)
-    hp.pd.v(df)
+    hp_pd.v(df)
     df.index
     """
     
     #imports
     from pstatsviewer import StatsViewer
-    import hp.pd
+    import model.sofda.hp.pd as hp_pd
 
     
     if not os.path.exists(stats_raw_file):
@@ -203,7 +203,7 @@ def stats_to_csv(stats_raw_file, outpath = None): #save the stats file in a more
     sv.__dict__.keys()
     
     sv.name
-    hp.pd.v(sv.callers)
+    hp_pd.v(sv.callers)
 
     """
     
@@ -213,7 +213,7 @@ def stats_to_csv(stats_raw_file, outpath = None): #save the stats file in a more
     if outpath is None:
         outpath = os.path.join(os.path.dirname(stats_raw_file), '%s_friendly.csv'%sv.name)
         
-    hp.pd.write_to_file(outpath, df, index=True, overwrite=True)
+    hp_pd.write_to_file(outpath, df, index=True, overwrite=True)
     
     print('saved friendly stats to file')
     

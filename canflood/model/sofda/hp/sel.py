@@ -45,7 +45,7 @@ import pandas as pd
 #import scipy.stats 
 
 #import hp.basic
-import hp.pd
+import model.sofda.hp.pd as hp_pd
 import hp.sim
 import hp.data
 'because we want our selectors to be sim objects, cant let anything in hp.sim use this mod'
@@ -798,9 +798,9 @@ class Selector( Sel_usr_wrap,
         #=======================================================================
         """
         we expect a list of object n ames
-        hp.pd.v(df_raw)
+        hp_pd.v(df_raw)
         """
-        df_raw = hp.pd.load_csv_df(filepath, index_col = None, header=None, logger=logger)
+        df_raw = hp_pd.load_csv_df(filepath, index_col = None, header=None, logger=logger)
         
         if not df_raw.shape[1] == 1:
             logger.error('expected shape (x, 1) and got %s'%str(df_raw.shape))
@@ -997,8 +997,8 @@ class Selector( Sel_usr_wrap,
             """
             np.logical_or(df.loc[:,'cat_code']=='M',df.loc[:,'cat_code']=='E')
             
-            hp.pd.view_web_df(df)
-            hp.pd.df_to_logger(df)
+            hp_pd.view_web_df(df)
+            hp_pd.df_to_logger(df)
             """
             
             #get this slice (list of names)

@@ -55,7 +55,7 @@ import numpy as np
 
 
 import hp.basic
-import hp.pd
+import model.sofda.hp.pd as hp_pd
 
 import hp.prof_mem
 
@@ -986,7 +986,7 @@ class Child(hp.prof_mem.Profile_wrapper):#foundational object
                 logger.debug("using name from passed att_ser")
             except:
                 #get from the att_ser
-                if not hp.pd.isser(att_ser): #quick type check
+                if not hp_pd.isser(att_ser): #quick type check
                     logger.error('got unepxected type on att_ser: %s'%type(att_ser))
                     raise IOError
             
@@ -1400,8 +1400,8 @@ class Parent(object): #wrapper for raising child
                          (obj.name, len(ser), str(df.shape)))
             
             """
-            hp.pd.v(df)
-            hp.pd.v(df_raw)
+            hp_pd.v(df)
+            hp_pd.v(df_raw)
             """
         elif method == 'delete':
             self.childmeta_df.drop(index=obj.dfloc, inplace=True)
@@ -1474,7 +1474,7 @@ class Parent(object): #wrapper for raising child
         #=======================================================================
         # load the childmeta data
         #=======================================================================
-        if hp.pd.isdf(self.childmeta_df):
+        if hp_pd.isdf(self.childmeta_df):
             logger.debug('already have childmet_df %s'%str(self.childmeta_df.shape))
             condition.append('using loaded childmeta_df')
         
@@ -1649,7 +1649,7 @@ class Parent(object): #wrapper for raising child
 
             if self.branch_level > 4: raise IOError
             
-            if not hp.pd.isdf(df2):  raise IOError
+            if not hp_pd.isdf(df2):  raise IOError
             
             if not 'name' in df2.columns.values: 
                 raise Error('passed df does not have a \'name\' column: %s'%df2.columns.values)
@@ -2486,7 +2486,7 @@ class Trunk_o(Parent_cmplx): #advanced hierarchy functions
 #         if self.write_outs:
 #             filetail = self.sim_name + ' syn_datapars'
 #             filename = os.path.join(self.out_path, filetail)
-#             hp.pd.write_to_file(filename, new_pars_df, index=False) 
+#             hp_pd.write_to_file(filename, new_pars_df, index=False) 
 #             
 #===============================================================================
     def load_par_tabs(self, #load data from a spreadsheet of parameters
@@ -2539,7 +2539,7 @@ class Trunk_o(Parent_cmplx): #advanced hierarchy functions
         # load all the frames
         #=======================================================================
         'the dtype kwarg with np.object blocks the data converter'
-        df_d_raw = hp.pd.load_xls_d(parspath, header = header, index_col = index_col, skiprows = skiprows,                                    
+        df_d_raw = hp_pd.load_xls_d(parspath, header = header, index_col = index_col, skiprows = skiprows,                                    
                                     logger = logger, 
                                     **kwargs)
         
@@ -2552,7 +2552,7 @@ class Trunk_o(Parent_cmplx): #advanced hierarchy functions
             if sheetname.startswith('~'): continue #skip these
             
             #logger = logger.getChild('load_par_tabs.%s'%sheetname) #so we can tell what sheet the subfunctions are working on 
-            df_clean = hp.pd.clean_datapars(df_raw, logger=logger) #special cleaning for datapars
+            df_clean = hp_pd.clean_datapars(df_raw, logger=logger) #special cleaning for datapars
             
             #===================================================================
             # special tabs
@@ -2635,11 +2635,13 @@ class Session_o(Trunk_o,#generic class for a program session
                  _prof_time = False,
                  _prof_mem = 0,
                  
+                 logger = None,
+                 
                  *vars, **kwargs):
         
 
-        logger = mod_logger.getChild('Session_o') #have to use this as our own logger hasnt loaded yet
-        logger.debug('start __init__')
+        log = mod_logger.getChild('Session_o') #have to use this as our own logger hasnt loaded yet
+        log.debug('start __init__')
 
         #=======================================================================
         # inherit passed attributes
@@ -2681,10 +2683,13 @@ class Session_o(Trunk_o,#generic class for a program session
         #=======================================================================
         # generic loader functions
         #=======================================================================
-        self.build_custom_logger(lg_lvl = lg_lvl, logname = 'S', warn_logr=True)      #build a custom logger
+        if logger is None:
+            self.build_custom_logger(lg_lvl = lg_lvl, logname = 'S', warn_logr=True)      #build a custom logger
+        else:
+            self.logger = logger
         
         #logger = self.logger.getChild('Session_o')
-        logger.debug("loading pars \n")
+        log.debug("loading pars \n")
         self.pars_df_d = self.load_par_tabs(parspath)            #load all the pars from the file
         
         self.set_inspath()
@@ -2704,7 +2709,7 @@ class Session_o(Trunk_o,#generic class for a program session
             if not isinstance(self._prof_mem, int):
                 raise IOError
             
-        logger.debug('__init_ finished \n')
+        log.debug('__init_ finished \n')
 
         return
     

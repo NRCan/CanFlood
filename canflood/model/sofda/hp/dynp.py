@@ -1147,7 +1147,7 @@ class Dynamic_par(hp.sel.Sel_usr_wrap,
         else:
             filepath = os.path.join(self.outpath, filetail)
             
-        hp.pd.write_to_file(filepath, self.hist_df, index=True, overwrite=False, logger=self.logger)
+        hp_pd.write_to_file(filepath, self.hist_df, index=True, overwrite=False, logger=self.logger)
         
         self.hist_df = pd.DataFrame() #clear it
         
@@ -1377,7 +1377,7 @@ class Dynp_session(Dynp_controller): #handling of th edynamic pars
         #=======================================================================
         # load the file
         #=======================================================================
-        #hnd_d = hp.pd.load_xls_d(filepath, logger = logger, index_col = None)
+        #hnd_d = hp_pd.load_xls_d(filepath, logger = logger, index_col = None)
         hnd_d = self.load_par_tabs(filepath)
 
         #=======================================================================
@@ -1412,7 +1412,7 @@ class Dynp_session(Dynp_controller): #handling of th edynamic pars
             for coln in ['self_upd', 'dynk_hndl']:
                 df3.loc[:,coln] = df3[coln].replace(to_replace='none', value=np.nan)
                 """NO! se have dictionayrs on teh dynk_hndl
-                df3.loc[:,coln] = hp.pd.tlike_ser_clean(df3[coln].replace(to_replace='none', value=np.nan), 
+                df3.loc[:,coln] = hp_pd.tlike_ser_clean(df3[coln].replace(to_replace='none', value=np.nan), 
                                                         leave_singletons=False, #make everything a tuple
                                                         sub_dtype=str,
                                                         logger=logger
@@ -1467,7 +1467,7 @@ class Dynp_session(Dynp_controller): #handling of th edynamic pars
             d['lock_anl']= df.loc[df['lock_f'], 'att_name'].values.tolist()
             
             #commands for ourselves
-            d['self_upd'] = hp.pd.tlike_to_valt_d(
+            d['self_upd'] = hp_pd.tlike_to_valt_d(
                                 df.set_index('att_name')['self_upd'].dropna(), 
                                   leave_singletons=False, sub_dtype=str,
                                   leave_nulls=False)
@@ -1634,7 +1634,7 @@ class Dynp_session(Dynp_controller): #handling of th edynamic pars
                     
                 
         """
-        hp.pd.v(df)
+        hp_pd.v(df)
         """
         
         df = df.sort_values('rank').reset_index(drop=True) #sort by rank
@@ -1644,7 +1644,7 @@ class Dynp_session(Dynp_controller): #handling of th edynamic pars
         
         if wtf:
             filepath = os.path.join(self.outpath, 'Session \'%s\' sensi_mat.csv'%self.name)
-            hp.pd.write_to_file(filepath, df, index=True, logger=logger)
+            hp_pd.write_to_file(filepath, df, index=True, logger=logger)
             
         
         self.sensi_df = df
