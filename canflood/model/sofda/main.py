@@ -22,7 +22,7 @@ vars that control debugging
 
 '''
 
-__version__ = '3.0.3'
+__version__ = '3.0.4'
 
 
 import logging, logging.config, os, sys, time, datetime
