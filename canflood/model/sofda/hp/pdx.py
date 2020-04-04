@@ -19,7 +19,7 @@ from collections import OrderedDict
 # other helpers
 #===============================================================================
 import model.sofda.hp.pd as hp_pd
-import hp.basic
+import model.sofda.hp.basic as hp_basic
 
 
 mod_logger = logging.getLogger(__name__) #creates a child logger of the root

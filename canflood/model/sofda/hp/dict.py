@@ -11,7 +11,7 @@ from collections import OrderedDict
 from weakref import WeakValueDictionary as wdict
 
 import numpy as np
-import hp.basic
+import model.sofda.hp.basic as hp_basic
 
 
 
@@ -35,7 +35,7 @@ def key_list(d,  #return the intersection of the dict.keys() and the key_list
     #===========================================================================
     # pre check
     #===========================================================================
-    bool_list = hp.basic.bool_list_in_list(list(d.keys()), key_list)
+    bool_list = hp_basic.bool_list_in_list(list(d.keys()), key_list)
     if not bool_list.any(): raise IOError #check if any are not found
 
     
@@ -76,7 +76,7 @@ def value_by_ksearch(ksearch_str, d, #get the entry that matches the search str
     except:
     
         #find a match for this key
-        k_fnd = hp.basic.list_search(list(d.keys()), ksearch_str, *search_args)
+        k_fnd = hp_basic.list_search(list(d.keys()), ksearch_str, *search_args)
         
         if k_fnd is None: 
             logger = logger.getChild('value_by_ksearch')
@@ -202,7 +202,7 @@ def subset(d_big, l,  #get a dictionary subset using standard user inputs
                 
                 if set_type == 'sub':
                     
-                    boolar = hp.basic.bool_list_in_list(list(d_big.keys()), l)
+                    boolar = hp_basic.bool_list_in_list(list(d_big.keys()), l)
             
                     if not np.all(boolar):
                         logger.error('%i entries in list not found in big_d'%(len(l) - boolar.sum()))

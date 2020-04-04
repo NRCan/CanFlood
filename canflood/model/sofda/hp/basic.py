@@ -36,7 +36,7 @@ see main.py for details
 
  """          
 
-mod_logger.debug('hp.basic initialized')
+mod_logger.debug('hp_basic initialized')
 
 
 

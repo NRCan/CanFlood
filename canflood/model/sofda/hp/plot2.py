@@ -1021,7 +1021,7 @@ class Plotr( #collection of pairs for plotting
         # custom atts
         #=======================================================================
         self.arrow_tips = set()
-        self.pairs_nl = eval(self.pairs_nl)#hp.basic.str_to_list(self.pairs_nl)
+        self.pairs_nl = eval(self.pairs_nl)#hp_basic.str_to_list(self.pairs_nl)
         
         if isinstance(self.figsize, str):
             self.figsize = eval(self.figsize)

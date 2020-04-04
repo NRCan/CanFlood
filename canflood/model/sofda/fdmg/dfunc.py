@@ -32,7 +32,7 @@ idx = pd.IndexSlice
 #  IMPORT CUSTOM MODS ---------------------------------------------------------
 #===============================================================================
 #import hp.plot
-#import hp.basic
+#import model.sofda.hp.basic as hp_basic
 import model.sofda.hp.pd as hp_pd
 import model.sofda.hp.oop as hp_oop
 #import model.sofda.hp.data as hp_data
@@ -766,7 +766,7 @@ class Dfunc(
 #             # # logic for non depth/damage entries
 #             # #===================================================================
 #             # if index <=1:                   continue #skip the first 2
-#             # if not hp.basic.isnum(entry):   continue #skip non number
+#             # if not hp_basic.isnum(entry):   continue #skip non number
 #             #===================================================================
 # 
 #             if indxr%2 == 0:    #evens

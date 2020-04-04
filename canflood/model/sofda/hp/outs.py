@@ -12,7 +12,7 @@ import pandas as pd
 import numpy as np
 
 
-import hp.basic
+import model.sofda.hp.basic as hp_basic
 import model.sofda.hp.pd as hp_pd
 #import hp.plot
 import model.sofda.hp.oop as hp_oop
@@ -671,7 +671,7 @@ class Outputr(hp_sel.Sel_usr_wrap,
             if not hasattr(data, 'values'):
                 
                 'were getting series passing through, so this just pulls the value'
-                if hp.basic.isnum(data):            
+                if hp_basic.isnum(data):            
                     stat = float(data)
                     cond = 'float'
                 elif isinstance(data, str):  
@@ -719,7 +719,7 @@ class Outputr(hp_sel.Sel_usr_wrap,
                 raise IOError
             
             if not exe_str.startswith('*'):
-                if not hp.basic.isnum(stat): 
+                if not hp_basic.isnum(stat): 
                     logger.error("got non numeric stat")
                     raise IOError
         

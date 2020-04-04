@@ -22,7 +22,7 @@ import pandas as pd
 import numpy as np
 import scipy.stats 
 
-#import hp.basic
+#import model.sofda.hp.basic as hp_basic
 import model.sofda.hp.oop as hp_oop
 #import model.sofda.hp.sim as hp_sim
 #import model.sofda.hp.sel as hp_sel
@@ -1932,7 +1932,7 @@ class Dyno_controller(object): #wrapper for controlling dynamic objects
                      
 def is_dated(obj, cmd):
         """
-        match = hp.basic.list_search(obj.upd_cmd_d.keys(), cmd)"""
+        match = hp_basic.list_search(obj.upd_cmd_d.keys(), cmd)"""
         #=======================================================================
         # any updates
         #=======================================================================

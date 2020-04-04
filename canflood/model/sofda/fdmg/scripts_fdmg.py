@@ -28,7 +28,7 @@ from hlpr.exceptions import Error
 from weakref import WeakValueDictionary as wdict
 from weakref import proxy
 
-from hp.basic import OrderedSet
+from model.sofda.hp.basic import OrderedSet
 
 from model.sofda.hp.pd import view
 
@@ -38,7 +38,7 @@ idx = pd.IndexSlice
 #  IMPORT CUSTOM MODS ---------------------------------------------------------
 #===============================================================================
 #import hp.plot
-import hp.basic
+import model.sofda.hp.basic as hp_basic
 import model.sofda.hp.pd as hp_pd
 import model.sofda.hp.oop as hp_oop
 import model.sofda.hp.sim as hp_sim
@@ -1386,7 +1386,7 @@ class Fdmg( #flood damage model
             pass
 
             
-        elif hp.basic.isnum(rtail):
+        elif hp_basic.isnum(rtail):
             
             rtail_yr = float(rtail)
             rtail_p = 1.0 / rtail_yr

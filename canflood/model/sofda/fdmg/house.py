@@ -26,7 +26,7 @@ from hlpr.exceptions import Error
 from weakref import WeakValueDictionary as wdict
 from weakref import proxy
 
-from hp.basic import OrderedSet
+from model.sofda.hp.basic import OrderedSet
 
 from model.sofda.hp.pd import view
 idx = pd.IndexSlice
@@ -34,7 +34,7 @@ idx = pd.IndexSlice
 #  IMPORT CUSTOM MODS ---------------------------------------------------------
 #===============================================================================
 #import hp.plot
-import hp.basic
+import model.sofda.hp.basic as hp_basic
 import model.sofda.hp.pd as hp_pd
 import model.sofda.hp.oop as hp_oop
 import model.sofda.hp.sim as hp_sim
@@ -190,7 +190,7 @@ class House(
         #=======================================================================
         self.bldg_id            = int(getattr(self, self.mind ))
 
-        self.bsmt_f            = hp.basic.str_to_bool(self.bsmt_f, logger=self.logger)
+        self.bsmt_f            = hp_basic.str_to_bool(self.bsmt_f, logger=self.logger)
 
         
         if not 'B' in self.model.place_codes:

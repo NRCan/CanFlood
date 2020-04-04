@@ -54,10 +54,10 @@ import pandas as pd
 import numpy as np
 
 
-import hp.basic
+import model.sofda.hp.basic as hp_basic
 import model.sofda.hp.pd as hp_pd
 
-import hp.prof_mem
+import model.sofda.hp.prof_mem as hp_profMem
 
 
 
@@ -145,7 +145,7 @@ def attach_att_df( #attacha df as attributes to an object
         #=======================================================================
         if match_old:
             oldval = getattr(obj, var_name)
-            value = hp.basic.match_type(oldval, value_raw, logger=logger,  db_f = db_f)
+            value = hp_basic.match_type(oldval, value_raw, logger=logger,  db_f = db_f)
         
         #=======================================================================
         # checks
@@ -282,7 +282,7 @@ def clean_l_atts(obj, search_sfx = '_l', logger=mod_logger): #clean all the attr
         
         if isinstance(att_value, str):
             if att_name.endswith(search_sfx):
-                value_l = hp.basic.str_to_list(att_value, logger=logger) #get the formatted value
+                value_l = hp_basic.str_to_list(att_value, logger=logger) #get the formatted value
                 setattr(obj, att_name, value_l) #reset this value
                 
                 cnt += 1
@@ -711,9 +711,9 @@ import resource
 #===============================================================================
 # starter class objects ------------------------------------------------------
 #===============================================================================
-#hp.prof_mem.Profile_wrapper
+#hp_profMem.Profile_wrapper
     
-class Child(hp.prof_mem.Profile_wrapper):#foundational object 
+class Child(hp_profMem.Profile_wrapper):#foundational object 
     
     
     
@@ -1007,7 +1007,7 @@ class Child(hp.prof_mem.Profile_wrapper):#foundational object
             if name is None: raise IOError
             
             'might be able to move these to Data_o to speed things up'
-            if hp.basic.isnum(name): 
+            if hp_basic.isnum(name): 
                 logger.error('got numeric type for name %s'%att_ser['name'])
                 raise IOError
             
@@ -1654,7 +1654,7 @@ class Parent(object): #wrapper for raising child
             if not 'name' in df2.columns.values: 
                 raise Error('passed df does not have a \'name\' column: %s'%df2.columns.values)
             
-            if not hp.basic.isnum(self.branch_level): raise IOError
+            if not hp_basic.isnum(self.branch_level): raise IOError
         
         #report
         logger.debug('from branch_lvl = %i with df %s \n'%(self.branch_level, str(df2.shape)))
@@ -2576,7 +2576,7 @@ class Trunk_o(Parent_cmplx): #advanced hierarchy functions
         return pars_df_d
      
 class Session_o(Trunk_o,#generic class for a program session
-                hp.prof_mem.Profile_session_wrapper): 
+                hp_profMem.Profile_session_wrapper): 
     """
     This is a special wrapper around Basic_o for the session insstance)
     there should only be one of these per package

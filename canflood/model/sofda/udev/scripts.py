@@ -23,7 +23,7 @@ from weakref import WeakValueDictionary as wdict
 #  IMPORT CUSTOM MODS ---------------------------------------------------------
 #===============================================================================
 
-#import hp.basic
+#import model.sofda.hp.basic as hp_basic
 #import model.sofda.hp.dict as hp_dict
 #import model.sofda.hp.data as hp_data
 import model.sofda.hp.sel as hp_sel

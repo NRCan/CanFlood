@@ -157,8 +157,8 @@ class Session( #main session handler. runs many simulations for stochastic model
         #=======================================================================
         #resource profiler
         if self._prof_mem>0:
-            import hp.prof_mem
-            self.resc_prof = hp.prof_mem.Resource_profiler(logger = self.logger,
+            import model.sofda.hp.prof_mem as hp_profMem
+            self.resc_prof = hp_profMem.Resource_profiler(logger = self.logger,
                                                      _wtf = self.session._write_data,
                                                      name = self.tag,
                                                      session = self)

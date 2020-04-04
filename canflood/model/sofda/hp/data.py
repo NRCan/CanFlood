@@ -24,7 +24,7 @@ from collections import OrderedDict
 #  IMPORT CUSTOM MODS ---------------------------------------------------------
 #===============================================================================
 
-import hp.basic
+import model.sofda.hp.basic as hp_basic
 import model.sofda.hp.pd as hp_pd
 
 """since the workers wrap around the hp_oop.Basic_o, that module must be imported first"""
@@ -511,7 +511,7 @@ class Data_wrapper(object): #wrapper for data type operations
     def select_filepath(self):
         
         title = 'select your datas filepath'
-        self.filepath = hp.basic.gui_fileopen(title = title)
+        self.filepath = hp_basic.gui_fileopen(title = title)
         
         return self.filepath
     

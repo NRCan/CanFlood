@@ -22,7 +22,7 @@ from weakref import proxy
 # import other helpers
 #===============================================================================
 import hp.plot2
-import hp.basic
+import model.sofda.hp.basic as hp_basic
 import hp.np
 import model.sofda.hp.oop as hp_oop
 import model.sofda.hp.data as hp_data

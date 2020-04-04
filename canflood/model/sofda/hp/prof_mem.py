@@ -24,7 +24,7 @@ from sys import getsizeof
 import pandas as pd
 
 import model.sofda.hp.pd as hp_pd
-#import hp.basic
+#import model.sofda.hp.basic as hp_basic
 
 #===============================================================================
 # # module globals -------------------------------------------------------------

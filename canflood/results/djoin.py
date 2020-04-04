@@ -202,7 +202,7 @@ class Djoiner(Qcoms):
             raise Error('bad link')
             #==================================================================
             # log.info('non unique keys (1:m) join... expanding geometry')
-            # rfid_geo_d = hp.basic.expand_dict(geo_d, res_df['fid'].to_dict(),
+            # rfid_geo_d = hp_basic.expand_dict(geo_d, res_df['fid'].to_dict(),
             #                                   constructor=QgsGeometry)
             # res_df= res_df.drop('fid', axis=1)
             #==================================================================

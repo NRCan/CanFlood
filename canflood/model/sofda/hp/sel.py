@@ -44,7 +44,7 @@ import numpy as np
 import pandas as pd
 #import scipy.stats 
 
-#import hp.basic
+#import model.sofda.hp.basic as hp_basic
 import model.sofda.hp.pd as hp_pd
 import model.sofda.hp.oop as hp_oop
 import model.sofda.hp.sim as hp_sim
@@ -823,7 +823,7 @@ class Selector( Sel_usr_wrap,
         
         
         self.session.ins_copy_fps.add(self.filepath)
-        #if self.session._write_ins: _ = hp.basic.copy_file(self.filepath,self.session.inscopy_path)
+        #if self.session._write_ins: _ = hp_basic.copy_file(self.filepath,self.session.inscopy_path)
         
         return 
     
@@ -865,7 +865,7 @@ class Selector( Sel_usr_wrap,
         
         """doesn't work with names vs gid
         #check that all items in the binv are in the list
-        bool_l = hp.basic.bool_list_in_list(class_d.keys(), objn_l , method='search')
+        bool_l = hp_basic.bool_list_in_list(class_d.keys(), objn_l , method='search')
         
         if not bool_l.sum() == len(class_d):
              #==================================================================

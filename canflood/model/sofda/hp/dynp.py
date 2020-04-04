@@ -90,7 +90,7 @@ import numpy as np
 import scipy.stats  #need this for exec calls
 
 import model.sofda.hp.pd as hp_pd 
-import hp.basic
+import model.sofda.hp.basic as hp_basic
 import model.sofda.hp.oop as hp_oop
 import model.sofda.hp.sim as hp_sim
 import model.sofda.hp.sel as hp_sel
@@ -190,7 +190,7 @@ class Dynamic_par(hp_sel.Sel_usr_wrap,
         #=======================================================================
         #list of calibration parametrs for statistical distributions
         if not self.dist_pars_l is None: #format toa  list
-            self.dist_pars_l = hp.basic.str_to_list(self.dist_pars_l, new_type=float,logger=self.logger)
+            self.dist_pars_l = hp_basic.str_to_list(self.dist_pars_l, new_type=float,logger=self.logger)
             
         #strip leading/trailing whitespace
         self.att_name       = self.att_name.strip() 
@@ -274,7 +274,7 @@ class Dynamic_par(hp_sel.Sel_usr_wrap,
         #=======================================================================
         # constant value assignment
         #=======================================================================
-        if hp.basic.isnum(vstr): #numerics
+        if hp_basic.isnum(vstr): #numerics
             'this will pick numbers posing as strings as well'
             
             #check for boolean formatting
@@ -290,7 +290,7 @@ class Dynamic_par(hp_sel.Sel_usr_wrap,
         elif isinstance(vstr, str): #everything else (String type)
             
             vstr_py = vstr.replace(" ", "") #drop all the whitespace
-            vstr_py = hp.basic.excel_str_to_py(vstr_py, logger = logger) #make pythonic
+            vstr_py = hp_basic.excel_str_to_py(vstr_py, logger = logger) #make pythonic
             
             #=======================================================================
             # boolean
@@ -322,7 +322,7 @@ class Dynamic_par(hp_sel.Sel_usr_wrap,
                     msg = 'simple function \'%s\''%vstr_py
                     
                     #get base value
-                    if hp.basic.isnum(self.min): 
+                    if hp_basic.isnum(self.min): 
                         value = self.min
                     else: 
                         value = vstr_py
@@ -432,7 +432,7 @@ class Dynamic_par(hp_sel.Sel_usr_wrap,
         # assign function based on what was provided in the min column 
         #===================================================================
         #simple numerical models. CONSTRAINED
-        if hp.basic.isnum(self.min):
+        if hp_basic.isnum(self.min):
             val_f = self.valf_rsample
             self.contained = True
             
@@ -449,8 +449,8 @@ class Dynamic_par(hp_sel.Sel_usr_wrap,
         #binary label based
         elif isinstance(self.min, str):
         
-            self.binary_low = hp.basic.str_to_bool(self.min)
-            self.binary_high = hp.basic.str_to_bool(self.max)
+            self.binary_low = hp_basic.str_to_bool(self.min)
+            self.binary_high = hp_basic.str_to_bool(self.max)
             
             base_val = self.binary_low
             """pretty arbitrary, but we have to pick sometyhing"""
@@ -596,7 +596,7 @@ class Dynamic_par(hp_sel.Sel_usr_wrap,
         #=======================================================================
         # formater
         #=======================================================================
-        if hp.basic.isnum(new_val):
+        if hp_basic.isnum(new_val):
             new_val1 = float(new_val)
         else: 
             new_val1 = new_val
@@ -744,7 +744,7 @@ class Dynamic_par(hp_sel.Sel_usr_wrap,
             logger.warning('\'%s\' has no \'%s\'. setting thebreakpoint to 50/50'%(obj.name, self.correlate_an))
             break_point = 0.50
         
-        elif hp.basic.isnum(lookup_val):
+        elif hp_basic.isnum(lookup_val):
             break_point = self.rv.cdf(lookup_val)
             
         else: raise IOError
@@ -834,7 +834,7 @@ class Dynamic_par(hp_sel.Sel_usr_wrap,
             
             logger.debug('setting value from \'%s\' passed with \'%s\''%(sensi_an, sv_str))
             #specials
-            if hp.basic.isnum(sv_str):
+            if hp_basic.isnum(sv_str):
                 sensi_l.append(sv_str)
                 logger.debug("appending \'%s\' to sensi_l"%sv_str)
                 continue
@@ -1052,7 +1052,7 @@ class Dynamic_par(hp_sel.Sel_usr_wrap,
             #===================================================================
             # type fixing
             #===================================================================
-            #new_val = hp.basic.match_type(old_val, new_val, db_f = self.db_f)
+            #new_val = hp_basic.match_type(old_val, new_val, db_f = self.db_f)
             
             if not hasattr(old_val, 'shape'):
                 new_val = type(old_val)(new_val)
@@ -1517,7 +1517,7 @@ class Dynp_session(Dynp_controller): #handling of th edynamic pars
             #if row['dynk_hndl'] == 'none': continue #no handles for this att
             
             #convert these handles to a dictionary
-            d1 = hp.basic.str_to_dict(row['dynk_hndl'])
+            d1 = hp_basic.str_to_dict(row['dynk_hndl'])
             
             #convert these all to tuples
             d2 = {key:tuple(vals) for key, vals in d1.items()}

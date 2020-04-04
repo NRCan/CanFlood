@@ -179,7 +179,7 @@ import pandas as pd
 import numpy as np
 #import scipy.stats
 
-import hp.basic
+import model.sofda.hp.basic as hp_basic
 #import model.sofda.hp.pd as hp_pd
 #import model.sofda.hp.dynp as hp_dynp
 import model.sofda.hp.oop as hp_oop
@@ -301,7 +301,7 @@ class Sim_wrap(object): #worker for simulation handing
         # type detection
         #=======================================================================
         #numeric
-        if hp.basic.isnum(self.upd_sim_lvl): 
+        if hp_basic.isnum(self.upd_sim_lvl): 
             self.upd_sim_lvl = int(self.upd_sim_lvl)
             
             if self.upd_sim_lvl == 0:
