@@ -71,6 +71,7 @@ def run(
         #logger handling
 
         _lg_stp             = 20, #for key iterations, interval on which to log
+        lg_lvl              = None, #logging level of the sim logger. None = DEBUG
         
         #file write handling
         _write_data         = True, #write outputs to file
