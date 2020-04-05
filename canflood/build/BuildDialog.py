@@ -223,6 +223,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                 self.label_HS_dtmln.setText(vlay.name())
                 
         self.comboBox_dtm.layerChanged.connect(upd_dtmlayname)
+        
+        
             
 
         #=======================================================================
@@ -708,6 +710,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         if 'Polygon' in gtype:
             if not as_inun:
                 assert psmp_stat in ('Mean','Median','Min','Max'), 'select a valid sample statistic'
+            else:
+                assert psmp_stat == '', 'expects no sample statistic for %Inundation'
         elif 'Point' in gtype:
             assert not as_inun, '%Inundation only valid for polygon type geometries'
         elif 'Line' in gtype:

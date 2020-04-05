@@ -547,7 +547,7 @@ class Rsamp(Qcoms):
         #=======================================================================
         # write working reuslts
         #=======================================================================
-        ofp = os.path.join(self.out_dir, '%s_rsamp_SampInun_%.2f_res.csv'%(self.tag, dthresh))
+        ofp = os.path.join(self.out_dir, 'RAW_rsamp_SampInun_%s_%.2f.csv'%(self.tag, dthresh))
         res_df.to_csv(ofp, index=None)
         log.info('wrote working data to \n    %s'%ofp)
         
