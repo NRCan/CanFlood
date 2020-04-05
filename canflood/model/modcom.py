@@ -139,7 +139,6 @@ class Model(ComWrkr):
     #minimum inventory expectations
     finv_exp_d = {
         'f0_scale':{'type':np.number},
-        'f0_elv':{'type':np.number},
         }
     
     max_depth = 20 #maximum depth for throwing an error in build_depths()

@@ -86,6 +86,12 @@ class Risk1(Model):
     
     group_cnt = 2
     
+    #minimum inventory expectations
+    finv_exp_d = {
+        'f0_scale':{'type':np.number},
+
+        }
+    
 
     
     #==========================================================================
@@ -103,6 +109,7 @@ class Risk1(Model):
         super().__init__(cf_fp, **kwargs) #initilzie Model
         
         
+        
         self.logger.debug('finished __init__ on Risk1')
         
         
@@ -118,6 +125,13 @@ class Risk1(Model):
         #======================================================================
         # load data files
         #======================================================================
+        #update expectations
+        if not self.as_inun:
+            self.finv_exp_d = {
+                **self.finv_exp_d,**{'f0_elv':{'type':np.number}}
+                }
+
+        
         self.load_finv()
         self.load_evals()
         self.load_expos(dtag='expos')
