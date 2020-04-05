@@ -182,6 +182,7 @@ class Rsamp(Qcoms):
 
         
         log.info('executing on %i rasters'%(len(raster_l)))
+        self.as_inun = as_inun
         #======================================================================
         # #check the data
         #======================================================================
@@ -437,7 +438,7 @@ class Rsamp(Qcoms):
             #===================================================================
             #using Qgis raster calculator constructor
             dep_rlay = self.raster_subtract(rlay, dtm_rlay, logger=log,
-                                            out_dir = os.path.join(self.out_dir, 'depth_rlays'))
+                                            out_dir = os.path.join(self.out_dir,'temp', 'depth_rlays'))
             
             #===================================================================
             # get threshold
@@ -547,7 +548,7 @@ class Rsamp(Qcoms):
         #=======================================================================
         # write working reuslts
         #=======================================================================
-        ofp = os.path.join(self.out_dir, 'RAW_rsamp_SampInun_%s_%.2f.csv'%(self.tag, dthresh))
+        ofp = os.path.join(self.out_dir, 'temp','RAW_rsamp_SampInun_%s_%.2f.csv'%(self.tag, dthresh))
         res_df.to_csv(ofp, index=None)
         log.info('wrote working data to \n    %s'%ofp)
         
@@ -735,9 +736,13 @@ class Rsamp(Qcoms):
 
     def upd_cf(self, cf_fp): #configured control file updater
         return self.update_cf(
-            {'dmg_fps':(
+            {
+            'dmg_fps':(
                 {'expos':self.out_fp}, 
                 '#\'expos\' file path set from rsamp.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                ),
+            'parameters':(
+                {'as_inun':str(self.as_inun)},
                 )
              },
             cf_fp = cf_fp
@@ -800,7 +805,7 @@ if __name__ =="__main__":
        
     finv_fp = os.path.join(data_dir, 'finv_tut4.gpkg')
       
-    cf_fp = r'C:\Users\cefect\CanFlood\build\3\CanFlood_scenario1.txt'
+    cf_fp = r'C:\Users\cefect\CanFlood\build\4\CanFlood_tut4.txt'
      
     #inundation sampling
     dtm_fp = os.path.join(data_dir, 'dtm_cT1.tif')

@@ -352,7 +352,7 @@ if __name__ =="__main__":
     runpars_d={
     'Tut4':{
         'out_dir':os.path.join(os.getcwd(),'risk1' 'Tut4'),
-        'cf_fp':r'C:\Users\cefect\CanFlood\build\4\CanFlood_tut4.txt',
+        'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\4\built\CanFlood_tut4.txt',
         }}
         
     #==========================================================================
