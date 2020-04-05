@@ -482,11 +482,9 @@ class Rsamp(Qcoms):
             
             if len(new_fn) > 1:
                 """
-                from qgis.core import Qgis
-                Qgis.QGIS_VERSION
-                
+                possible error with Q3.12
                 """
-                raise Error('bad mismatch: %i \n    %s'%(len(new_fn), new_fn))
+                raise Error('zonalstatistics generated more new fields than expected: %i \n    %s'%(len(new_fn), new_fn))
             elif len(new_fn) == 1:
                 names_d[list(new_fn)[0]] = rlay.name()
             else:
@@ -502,7 +500,6 @@ class Rsamp(Qcoms):
         # area calc-----------
         #=======================================================================
         log = self.logger.getChild('samp_inun')
-        self.out_dir = os.path.join(master_od, 'inun')
         log.info('calculating areas on %i results fields:\n    %s'%(len(names_d), list(names_d.keys())))
         
         #add geometry fields
@@ -570,7 +567,7 @@ class Rsamp(Qcoms):
                                layname='%s_inun'%finv.name())
         
         log.info('finisished w/ %s'%res_vlay.name())
-        self.out_dir = master_od
+
         
         return res_vlay
     
@@ -791,7 +788,7 @@ if __name__ =="__main__":
     data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\4\data'
       
     raster_fns = [
-                    #'haz_1000yr_cT2.tif', 
+                 'haz_1000yr_cT2.tif', 
                   #'haz_100yr_cT2.tif', 
                   #'haz_200yr_cT2.tif',
                   'haz_50yr_cT2.tif',
