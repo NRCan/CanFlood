@@ -219,7 +219,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #connect dtm layer name to display box
         def upd_dtmlayname():
             vlay = self.comboBox_dtm.currentLayer()
-            if isinstance(vlay,QgsVectorLayer):
+            if isinstance(vlay,QgsRasterLayer):
                 log.info('updated \'label_HS_dtmln\' w/ %s'%vlay.name())
                 self.label_HS_dtmln.setText(vlay.name())
                 
