@@ -135,3 +135,4 @@ Qda4/.project
 *.gpkg
 *.gpkg-wal
 *.gpkg-shm
+*.aux.xml

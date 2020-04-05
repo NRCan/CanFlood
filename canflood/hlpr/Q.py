@@ -165,7 +165,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         try:
             
-            QgsApplication.setPrefixPath(r'C:/OSGeo4W64/apps/qgis', True)
+            QgsApplication.setPrefixPath(r'C:/OSGeo4W64/apps/qgis-ltr', True)
             
             app = QgsApplication([], gui)
             #   Update prefix path
