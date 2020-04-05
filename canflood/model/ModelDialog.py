@@ -39,6 +39,7 @@ import pandas as pd
 from model.risk1 import Risk1
 from model.risk2 import Risk2
 from model.dmg2 import Dmg2
+from model.sofda.scripts import Session as Sofda
 
 import results.djoin
 
@@ -375,7 +376,55 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
 
         
     def run_risk3(self):
-        raise Error('not implemented')
+        
+        #======================================================================
+        # get run vars
+        #======================================================================
+        log = self.logger.getChild('run_risk3')
+
+        cf_fp = self.lineEdit_r3cf.text()
+        out_dir = self.get_wd()
+        tag = self.linEdit_Stag.text()
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert os.path.exists(cf_fp), 'passed bad control file path: \n    %s'%cf_fp
+        assert os.path.exists(out_dir)
+        
+        
+        #=======================================================================
+        # run the model
+        #=======================================================================
+        log.info('init SOFDA from cf: %s'%cf_fp)
+        self.feedback.setProgress(3)
+        session = Sofda(parspath = cf_fp, 
+                          outpath = out_dir, 
+                          _dbgmstr = 'none', 
+                          logger=self.logger
+                        )
+        
+
+        self.feedback.setProgress(10)
+        session.load_models()
+        
+        self.feedback.setProgress(20)
+        session.run_session()
+
+        self.feedback.setProgress(90)
+        session.write_results()
+
+        self.feedback.setProgress(95)
+        session.wrap_up()
+
+        log.info('sofda finished')
+        
+
     
         self.feedback.upd_prog(None) #set the progress bar back down to zero
         

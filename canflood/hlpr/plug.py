@@ -285,6 +285,12 @@ class logger(object): #workaround for qgis logging pythonic
         child_log.log_nm = '%s.%s'%(self.log_nm, new_childnm)
         
         return child_log
+    
+    def setLevel(self,*args):
+        """
+        todo: have this behave more like a real python logger
+        """
+        pass 
         
     def info(self, msg):
         self._loghlp(msg, Qgis.Info, push=False, status=True)
