@@ -223,9 +223,15 @@ class Rsamp(Qcoms):
         #=======================================================================
         if as_inun:
             res_vlay = self.samp_inun(finv,raster_l, dtm_rlay, dthresh)
+            
+            res_name = '%s_%s_%i_%i_d%.2f'%(
+                self.fname, self.tag, len(raster_l), res_vlay.dataProvider().featureCount(), dthresh)
+            
         else:
             res_vlay = self.samp_vals(finv,raster_l, psmp_stat)
+            res_name = '%s_%s_%i_%i'%(self.fname, self.tag, len(raster_l), res_vlay.dataProvider().featureCount())
             
+        res_vlay.setName(res_name)
         #=======================================================================
         # wrap
         #=======================================================================
@@ -234,10 +240,6 @@ class Rsamp(Qcoms):
 
         log.info('sampling finished')
         
-        res_name = '%s_%s_%i_%i'%(self.fname, self.tag, len(raster_l), res_vlay.dataProvider().featureCount())
-        
-        res_vlay.setName(res_name)
-            
         return res_vlay
         
     def samp_vals(self, finv, raster_l,psmp_stat):
@@ -545,7 +547,7 @@ class Rsamp(Qcoms):
         #=======================================================================
         # write working reuslts
         #=======================================================================
-        ofp = os.path.join(self.out_dir, 'res_df.csv')
+        ofp = os.path.join(self.out_dir, '%s_rsamp_SampInun_%.2f_res.csv'%(self.tag, dthresh))
         res_df.to_csv(ofp, index=None)
         log.info('wrote working data to \n    %s'%ofp)
         
@@ -564,7 +566,7 @@ class Rsamp(Qcoms):
         #=======================================================================
         geo_d = vlay_get_fdata(finv, geo_obj=True, logger=log)
         res_vlay = vlay_new_df(res_df, finv.crs(), geo_d=geo_d, logger=log,
-                               layname='%s_inun'%finv.name())
+                               layname='%s_%s_inun'%(self.tag, finv.name()))
         
         log.info('finisished w/ %s'%res_vlay.name())
 
@@ -588,7 +590,7 @@ class Rsamp(Qcoms):
             out_dir = os.environ['TEMP']
             
         if layname is None:
-            layname = '%s_subtr'%rlayBig.name()
+            layname = '%s_dep'%rlayBig.name()
         
         #=======================================================================
         # assemble the entries
@@ -789,8 +791,8 @@ if __name__ =="__main__":
       
     raster_fns = [
                  'haz_1000yr_cT2.tif', 
-                  #'haz_100yr_cT2.tif', 
-                  #'haz_200yr_cT2.tif',
+                  'haz_100yr_cT2.tif', 
+                  'haz_200yr_cT2.tif',
                   'haz_50yr_cT2.tif',
                   ]
      
@@ -820,6 +822,7 @@ if __name__ =="__main__":
     # init the run
     #===========================================================================
     log = logging.getLogger('rsamp')
+    
     wrkr = Rsamp(logger=log, tag=tag, out_dir=out_dir, cid=cid, LogLevel=20
                  )
 

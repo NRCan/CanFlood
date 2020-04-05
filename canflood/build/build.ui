@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>702</width>
+    <width>703</width>
     <height>847</height>
    </rect>
   </property>
@@ -51,7 +51,7 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>682</width>
+        <width>683</width>
         <height>741</height>
        </rect>
       </property>
@@ -86,7 +86,7 @@
           </size>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>2</number>
          </property>
          <property name="movable">
           <bool>false</bool>
@@ -1110,7 +1110,7 @@ p, li { white-space: pre-wrap; }
                    <item>
                     <widget class="QLabel" name="label_HS_dtmln">
                      <property name="text">
-                      <string>see 'DTM Sampler' tab</string>
+                      <string>see 'DTM Sampler' tab to select</string>
                      </property>
                     </widget>
                    </item>

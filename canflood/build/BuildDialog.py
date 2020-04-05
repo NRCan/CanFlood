@@ -220,6 +220,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         def upd_dtmlayname():
             vlay = self.comboBox_dtm.currentLayer()
             if isinstance(vlay,QgsVectorLayer):
+                log.info('updated \'label_HS_dtmln\' w/ %s'%vlay.name())
                 self.label_HS_dtmln.setText(vlay.name())
                 
         self.comboBox_dtm.layerChanged.connect(upd_dtmlayname)
@@ -663,8 +664,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             dthresh = self.mQgsDoubleSpinBox_HS.value()
             dtm_rlay=self.comboBox_dtm.currentLayer()
             
-            assert isinstance(dthresh, float)
-            assert isinstance(dtm_rlay, QgsRasterLayer)
+            assert isinstance(dthresh, float), 'must provide a depth threshold'
+            assert isinstance(dtm_rlay, QgsRasterLayer), 'must select a DTM layer'
             
         else:
             dthresh, dtm_rlay = None, None
