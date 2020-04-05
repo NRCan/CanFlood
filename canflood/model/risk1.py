@@ -84,13 +84,18 @@ class Risk1(Model):
         
         }
     
+    #number of groups to epxect per prefix
     group_cnt = 2
     
     #minimum inventory expectations
     finv_exp_d = {
         'f0_scale':{'type':np.number},
-
+        'f0_elv':{'type':np.number}
         }
+    """
+    NOTE: for as_inun=True, we dont need any elevations (should all be zero)
+    but allowing the uesr to NOT pass an elv column would be very difficult
+    """
     
 
     
@@ -125,11 +130,7 @@ class Risk1(Model):
         #======================================================================
         # load data files
         #======================================================================
-        #update expectations
-        if not self.as_inun:
-            self.finv_exp_d = {
-                **self.finv_exp_d,**{'f0_elv':{'type':np.number}}
-                }
+
 
         
         self.load_finv()

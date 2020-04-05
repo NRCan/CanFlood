@@ -139,6 +139,7 @@ class Model(ComWrkr):
     #minimum inventory expectations
     finv_exp_d = {
         'f0_scale':{'type':np.number},
+        'f0_elv':{'type':np.number}
         }
     
     max_depth = 20 #maximum depth for throwing an error in build_depths()
@@ -603,11 +604,12 @@ class Model(ComWrkr):
             
         #for  percent inundation 
         if self.as_inun:
-            booldf = df >=1
+            booldf = df >1
             assert booldf.sum().sum()==0, \
-                'for %inundation got %i exposure values great than 1'%(booldf.sum().sum())
+                'for pct inundation got %i (of %i) exposure values great than 1'%(
+                    booldf.sum().sum(), booldf.size)
                 
-            assert self.felv =='datum', 'felv must equal \'datum\' for %inundation runs'
+            assert self.felv =='datum', 'felv must equal \'datum\' for pct inundation runs'
 
         #======================================================================
         # set it
@@ -1036,6 +1038,7 @@ class Model(ComWrkr):
              self.felv, s.min(), s.mean(), s.max()))
             
         if self.felv == 'ground':
+            assert not self.as_inun
             assert 'gels' in bdf.columns, 'missing gels column'            
             assert bdf['gels'].notna().all()
 
@@ -1072,7 +1075,6 @@ class Model(ComWrkr):
         cid, bid = self.cid, self.bid
 
 
-        
         wdf = self.data_d['expos'] #wsl
 
         #======================================================================
@@ -1085,6 +1087,14 @@ class Model(ComWrkr):
         ddf = edx_df.join(wdf.round(self.prec),  on=cid
                                           ).set_index(bid, drop=False)
                                           
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        if self.as_inun:
+            boolidx = bdf['felv'] !=0
+            if not boolidx.sum().sum() == 0:
+                raise Error('with as_inun=True got %i (of %i) elv values with non-zero depths'%(
+                    boolidx.sum().sum(), boolidx.size))
 
         #======================================================================
         # calc depths
@@ -1119,8 +1129,8 @@ class Model(ComWrkr):
         #======================================================================
         booldf = ddf.loc[:,boolcol] < 0 #True=wsl below ground
         
-        
         if booldf.any().any():
+            assert not self.as_inun
             """
             note these are un-nesetd assets, so counts will be larger than expected
             """
