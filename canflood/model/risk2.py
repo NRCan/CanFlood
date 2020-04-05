@@ -66,6 +66,7 @@ class Risk2(Model):
              'ltail':None, 'rtail':None, 'drop_tails':{'type':bool},
              'integrate':{'values':('trapz',)}, 
              'prec':{'type':int}, 
+             'as_inun':{'type':bool},
              },
             
         'dmg_fps':{
@@ -115,6 +116,9 @@ class Risk2(Model):
         self.init_model()
         
         self.resname = 'risk2_%s_%s'%(self.tag, self.name)
+        
+        if self.as_inun:
+            raise Error('risk2 inundation percentage not implemented')
         
         #self.setup_data()
         self.load_finv()
