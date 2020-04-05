@@ -39,7 +39,7 @@ else:
     
 
 from hlpr.Q import *
-from hlpr.basic import *
+import hlpr.basic as basic
 
 #==============================================================================
 # functions-------------------
@@ -424,19 +424,21 @@ class Rsamp(Qcoms):
             #reduce to all values above depththreshold
             self.out_dir = os.path.join(master_od, 'inun', 'dthresh')
             log.info('calculating %.2f threshold raster'%dthresh) 
-            thr_rlay = self.srastercalculator(
-                                'ifelse(a>%.1f,1,0/0)'%dthresh, #null if not above minval
-                               {'a':dep_rlay},
+            
+            thr_rlay = self.grastercalculator(
+                                'A*(A>%.2f)'%dthresh, #null if not above minval
+                               {'A':dep_rlay},
                                logger=log,
                                layname= '%s_mv'%dep_rlay.name()
                                )
         
-            #get cell size of raster
+
             
             #===================================================================
             # #get cell counts per polygon
             #===================================================================
             log.info('getting pixel counts on %i polys'%finv.dataProvider().featureCount())
+            
             algo_nm = 'qgis:zonalstatistics'
             ins_d = {       'COLUMN_PREFIX':indxr, 
                             'INPUT_RASTER':thr_rlay, 
@@ -447,19 +449,11 @@ class Rsamp(Qcoms):
                 
             #execute the algo
             res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
-            #extract and clean results
-            finv = res_d['INPUT_VECTOR']
+            """this edits the finv in place"""
             
-            assert isinstance(finv, QgsVectorLayer)
-            
+           
             #===================================================================
-            # update pixel size
-            #===================================================================
-            parea_d[rlay.name()] = rlay.rasterUnitsPerPixelX()*rlay.rasterUnitsPerPixelY()
-            
-            
-            #===================================================================
-            # correct field names
+            # check/correct field names
             #===================================================================
             """
             algos don't assign good field names.
@@ -475,6 +469,12 @@ class Rsamp(Qcoms):
                 names_d[list(new_fn)[0]] = rlay.name()
             else:
                 raise Error('bad fn match')
+            
+            
+            #===================================================================
+            # update pixel size
+            #===================================================================
+            parea_d[rlay.name()] = rlay.rasterUnitsPerPixelX()*rlay.rasterUnitsPerPixelY()
             
         #=======================================================================
         # area calc-----------
@@ -661,57 +661,66 @@ if __name__ =="__main__":
     #===========================================================================
     # tutorial 2  (dtm)
     #===========================================================================
-    data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\data'
-    raster_fns= ['dtm_cT1.tif']
-    finv_fp = os.path.join(data_dir, 'finv_cT2.gpkg')
-     
-    cf_fp = os.path.join(data_dir, 'CanFlood_tutorial2.txt')
-    
-    cid='xid'
-    tag='tut2_dtm'
-    as_inun=False
-    dtm_fp, dthresh = None, None
+    #===========================================================================
+    # data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\data'
+    # raster_fns= ['dtm_cT1.tif']
+    # finv_fp = os.path.join(data_dir, 'finv_cT2.gpkg')
+    #  
+    # cf_fp = os.path.join(data_dir, 'CanFlood_tutorial2.txt')
+    # 
+    # cid='xid'
+    # tag='tut2_dtm'
+    # as_inun=False
+    # dtm_fp, dthresh = None, None
+    #===========================================================================
     
     #==========================================================================
     # tutorial 3 (polygons as inundation)
     #==========================================================================
-    #===========================================================================
-    # data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\3\data'
-    #  
-    # raster_fns = ['haz_1000yr_cT2.tif', 
-    #               #'haz_1000yr_fail_cT2.tif', 
-    #               #'haz_100yr_cT2.tif', 
-    #               #'haz_200yr_cT2.tif',
-    #               'haz_50yr_cT2.tif',
-    #               ]
-    # 
-    # 
-    #   
-    # finv_fp = os.path.join(data_dir, 'finv_polys_t3.gpkg')
-    #  
-    # cf_fp = os.path.join(data_dir, 'CanFlood_control_01.txt')
-    # 
-    # #inundation sampling
-    # dtm_fp = os.path.join(data_dir, 'dtm_cT1.tif')
-    # as_inun=True
-    # dthresh = 0.5
-    # 
-    # cid='zid'
-    # tag='tut3'
-    #===========================================================================
+    data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\4\data'
+      
+    raster_fns = [
+                    #'haz_1000yr_cT2.tif', 
+                  #'haz_100yr_cT2.tif', 
+                  #'haz_200yr_cT2.tif',
+                  'haz_50yr_cT2.tif',
+                  ]
+     
+     
+       
+    finv_fp = os.path.join(data_dir, 'finv_tut4.gpkg')
+      
+    cf_fp = r'C:\Users\cefect\CanFlood\build\3\CanFlood_scenario1.txt'
+     
+    #inundation sampling
+    dtm_fp = os.path.join(data_dir, 'dtm_cT1.tif')
+    as_inun=True
+    dthresh = 0.5
+     
+    cid='xid'
+    tag='tut4'
     
-    
-    out_dir = os.path.join(os.getcwd(), 'rsamp', tag)
+    #===========================================================================
+    # build directories
+    #===========================================================================
+    out_dir = os.path.join(os.getcwd(),'build', 'rsamp', tag)
     raster_fps = [os.path.join(data_dir, fn) for fn in raster_fns]
-    #==========================================================================
-    # load the data
-    #==========================================================================
+    
+    
+
+    #===========================================================================
+    # init the run
+    #===========================================================================
     log = logging.getLogger('rsamp')
-    wrkr = Rsamp(logger=log, tag=tag, out_dir=out_dir, cid=cid,
+    wrkr = Rsamp(logger=log, tag=tag, out_dir=out_dir, cid=cid, LogLevel=20
                  )
 
     
     wrkr.ini_standalone()
+    
+    #==========================================================================
+    # load the data
+    #==========================================================================
     
     
     rlay_l, finv_vlay = wrkr.load_layers(raster_fps, finv_fp)
@@ -743,7 +752,7 @@ if __name__ =="__main__":
      
     wrkr.upd_cf(cf_fp)
  
-    force_open_dir(out_dir)
+    basic.force_open_dir(out_dir)
  
     print('finished')
     

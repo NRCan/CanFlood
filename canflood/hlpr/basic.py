@@ -54,7 +54,7 @@ class ComWrkr(object): #common methods for all classes
                  
                 feedback = None, #feed back object
                 progressBar = None, #progressBar like object to report progress onto
-
+                LogLevel = None, #logging level for defualt feedbacker
                  ):
         """
         Dialogs don't call this
@@ -85,14 +85,16 @@ class ComWrkr(object): #common methods for all classes
         #=======================================================================
         # feedback
         #=======================================================================
-        self.setup_feedback(progressBar=progressBar, feedback=feedback)
+        self.setup_feedback(progressBar=progressBar, feedback=feedback, LogLevel=LogLevel)
         
         
         self.logger.info('ComWrkr.__init__ finished')
         
     def setup_feedback(self,
                        progressBar = None,
-                       feedback=None):
+                       feedback=None,
+                       LogLevel = None,
+                       ):
         """
         feedback setup for all classes
         
@@ -130,7 +132,7 @@ class ComWrkr(object): #common methods for all classes
             
             #standalones create a simple reporter
             else:
-                progressBar = MyProgressReporter()
+                progressBar = MyProgressReporter(LogLevel=LogLevel)
         
         
         #=======================================================================
@@ -413,12 +415,24 @@ class MyFeedBack(object): #simple custom feedback object
 
         
 
-class MyProgressReporter(object): #progressBar like basic progress reporter
+class MyProgressReporter(object):   #progressBar like basic progress reporter
+                        
+                         
     """
     may be an issue for multi-threading
     """
     
-    def __init__(self):
+    def __init__(self,
+                  LogLevel=None, #control outputs
+                  ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if LogLevel is None:
+            LogLevel= 10
+        
+        self.level=LogLevel
         self.prog = 0
     
     def reset(self):
@@ -427,13 +441,18 @@ class MyProgressReporter(object): #progressBar like basic progress reporter
     
     def setValue(self, prog):
         self.prog= prog
-        print('    prog=%i'%self.prog)
+        
+        if self.level<=10:
+            print('    prog=%i'%self.prog)
     
 
 
 def view(df):
     if isinstance(df, pd.Series):
         df = pd.DataFrame(df)
+        
+
+    
     import webbrowser
     #import pandas as pd
     from tempfile import NamedTemporaryFile
