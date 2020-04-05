@@ -78,6 +78,8 @@ class Model(ComWrkr):
         
         ground_water -- flag to include negative depths in the analysis
         
+        as_inun    -- flag whether to treat exposures as %inundation
+        
         [dmg_fps]
 
         
@@ -107,6 +109,7 @@ class Model(ComWrkr):
     rtail = 0.5
     drop_tails = True
     integrate = 'trapz'
+    as_inun = False
 
 
     
@@ -689,7 +692,7 @@ class Model(ComWrkr):
         assert 'finv' in self.data_d, 'call load_finv first'
         assert isinstance(self.cindex, pd.Index), 'bad cindex'
         assert os.path.exists(fp), '%s got invalid filepath \n    %s'%(dtag, fp)
-        
+        assert not self.as_inun, 'loading ground els for as_inun =True is invalid'
         #======================================================================
         # load it
         #======================================================================

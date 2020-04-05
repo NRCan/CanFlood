@@ -1112,6 +1112,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         a lot of this is duplicated in  model.scripts_.setup_pars
         
         TODO: consolidate with setup_pars
+        move to separate module
         
         """
         log = self.logger.getChild('valid')

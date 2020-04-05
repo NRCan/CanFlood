@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>703</width>
+    <width>704</width>
     <height>847</height>
    </rect>
   </property>
@@ -51,7 +51,7 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>683</width>
+        <width>684</width>
         <height>741</height>
        </rect>
       </property>
@@ -1063,7 +1063,7 @@ p, li { white-space: pre-wrap; }
                     </size>
                    </property>
                    <property name="text">
-                    <string>????</string>
+                    <string>select a finv</string>
                    </property>
                   </widget>
                  </item>
@@ -1110,7 +1110,7 @@ p, li { white-space: pre-wrap; }
                    <item>
                     <widget class="QLabel" name="label_HS_dtmln">
                      <property name="text">
-                      <string>see 'DTM Sampler' tab to select</string>
+                      <string>select a DTM</string>
                      </property>
                     </widget>
                    </item>
