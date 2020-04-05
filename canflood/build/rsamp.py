@@ -20,7 +20,8 @@ import pandas as pd
 
 
 #Qgis imports
-from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject
+from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject, Qgis
+from qgis.analysis import QgsRasterCalculatorEntry, QgsRasterCalculator
 
 #==============================================================================
 # custom imports
@@ -365,25 +366,29 @@ class Rsamp(Qcoms):
         log = self.logger.getChild('samp_inun')
         gtype=self.gtype
         
-        master_od = self.out_dir
-        self.out_dir = os.path.join(master_od, 'inun')
+        #master_od = self.out_dir
+        #self.out_dir = os.path.join(master_od, 'inun')
         
         #clear the working directory
-        """neded for SAGA algo workaround"""
-        if os.path.exists(self.out_dir):
-            log.warning('specified out_dir exists. clearing contents')
-            try:
-                shutil.rmtree(self.out_dir)
-            except Exception as e:
-                raise Error('failed to clear working directory. remove layers from workspace? \n    %s'%e)
-        os.makedirs(self.out_dir)
+        #=======================================================================
+        # """neded for SAGA algo workaround"""
+        # if os.path.exists(self.out_dir):
+        #     log.warning('specified out_dir exists. clearing contents')
+        #     try:
+        #         shutil.rmtree(self.out_dir)
+        #     except Exception as e:
+        #         raise Error('failed to clear working directory. remove layers from workspace? \n    %s'%e)
+        # os.makedirs(self.out_dir)
+        #=======================================================================
         
         #=======================================================================
         # precheck
         #=======================================================================
+        dp = finv.dataProvider()
         assert 'Polygon' in gtype
         assert isinstance(dtmlay_raw, QgsRasterLayer)
         assert isinstance(dthresh, float)
+        assert 'Memory' in dp.storageType() #zonal stats makes direct edits
         
         #=======================================================================
         # setup the dtm------
@@ -412,17 +417,31 @@ class Rsamp(Qcoms):
             ofnl = [field.name() for field in finv.fields()]
 
 
-            #get depth raster
-            self.out_dir = os.path.join(master_od, 'inun', 'dep')
+            #===================================================================
+            # #get depth raster
+            #===================================================================
             log.info('calculating depth raster')
-            dep_rlay = self.srastercalculator('a-b',
-                               {'a':rlay, 'b':dtm_rlay},
-                               logger=log,
-                               layname= '%s_dep'%rlay.name(),
-                               )
+            #===================================================================
+            # self.out_dir = os.path.join(master_od, 'inun', 'dep')
+            # dep_rlay = self.srastercalculator('a-b',
+            #                    {'a':rlay, 'b':dtm_rlay},
+            #                    logger=log,
+            #                    layname= '%s_dep'%rlay.name(),
+            #                    )
+            #===================================================================
+            #===================================================================
+            # formula = '\"{}@1\"-\"{}@1\"'.format(rlay.name(), dtm_rlay.name())
+            # dep_rlay = self.qrastercalculator(formula, ref_layer=rlay, logger=log)
+            #===================================================================
+            #using Qgis raster calculator constructor
+            dep_rlay = self.raster_subtract(rlay, dtm_rlay, logger=log,
+                                            out_dir = os.path.join(self.out_dir, 'depth_rlays'))
             
+            #===================================================================
+            # get threshold
+            #===================================================================
             #reduce to all values above depththreshold
-            self.out_dir = os.path.join(master_od, 'inun', 'dthresh')
+
             log.info('calculating %.2f threshold raster'%dthresh) 
             
             thr_rlay = self.grastercalculator(
@@ -432,8 +451,6 @@ class Rsamp(Qcoms):
                                layname= '%s_mv'%dep_rlay.name()
                                )
         
-
-            
             #===================================================================
             # #get cell counts per polygon
             #===================================================================
@@ -444,7 +461,7 @@ class Rsamp(Qcoms):
                             'INPUT_RASTER':thr_rlay, 
                             'INPUT_VECTOR':finv, 
                             'RASTER_BAND':1, 
-                            'STATS':[1],#0: pixel counts, 1: sum
+                            'STATS':[0],#0: pixel counts, 1: sum
                             }
                 
             #execute the algo
@@ -464,6 +481,11 @@ class Rsamp(Qcoms):
             new_fn = set(nfnl).difference(ofnl) #new field names not in the old
             
             if len(new_fn) > 1:
+                """
+                from qgis.core import Qgis
+                Qgis.QGIS_VERSION
+                
+                """
                 raise Error('bad mismatch: %i \n    %s'%(len(new_fn), new_fn))
             elif len(new_fn) == 1:
                 names_d[list(new_fn)[0]] = rlay.name()
@@ -551,6 +573,95 @@ class Rsamp(Qcoms):
         self.out_dir = master_od
         
         return res_vlay
+    
+    def raster_subtract(self, #performs raster calculator rlayBig - rlaySmall
+                        rlayBig, rlaySmall,
+                        out_dir = None,
+                        layname = None,
+                        logger = None,
+                        ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger =  self.logger
+        log = self.logger.getChild('raster_subtract')
+        
+        if out_dir is None:
+            out_dir = os.environ['TEMP']
+            
+        if layname is None:
+            layname = '%s_subtr'%rlayBig.name()
+        
+        #=======================================================================
+        # assemble the entries
+        #=======================================================================
+        entries_d = dict() 
+
+        for tag, rlay in {'Big':rlayBig, 'Small':rlaySmall}.items():
+            rcentry = QgsRasterCalculatorEntry()
+            rcentry.raster=rlay
+            rcentry.ref = '%s@1'%tag
+            rcentry.bandNumber=1
+            entries_d[tag] = rcentry
+
+            
+        #=======================================================================
+        # assemble parameters
+        #=======================================================================
+        formula = '%s - %s'%(entries_d['Big'].ref, entries_d['Small'].ref)
+        outputFile = os.path.join(out_dir, '%s.tif'%layname)
+        outputExtent  = rlayBig.extent()
+        outputFormat = 'GTiff'
+        nOutputColumns = rlayBig.width()
+        nOutputRows = rlayBig.height()
+        rasterEntries =list(entries_d.values())
+        
+
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+            
+        if os.path.exists(outputFile):
+            msg = 'requseted outputFile exists: %s'%outputFile
+            if self.overwrite:
+                log.warning(msg)
+                os.remove(outputFile)
+            else:
+                raise Error(msg)
+            
+            
+        assert not os.path.exists(outputFile), 'requested outputFile already exists! \n    %s'%outputFile
+        
+        #=======================================================================
+        # execute
+        #=======================================================================
+        """throwing depreciation warning"""
+        rcalc = QgsRasterCalculator(formula, outputFile, outputFormat, outputExtent,
+                            nOutputColumns, nOutputRows, rasterEntries)
+        
+        result = rcalc.processCalculation(feedback=self.feedback)
+        
+        #=======================================================================
+        # check    
+        #=======================================================================
+        if not result == 0:
+            raise Error(rcalc.lastError())
+        
+        assert os.path.exists(outputFile)
+        
+        
+        log.info('saved result to: %s'%outputFile)
+            
+        #=======================================================================
+        # retrieve result
+        #=======================================================================
+        rlay = QgsRasterLayer(outputFile, layname)
+        
+        return rlay
+        
         
 
     def dtm_check(self, vlay):

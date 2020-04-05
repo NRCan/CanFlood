@@ -919,7 +919,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
           
         return res_rlay
     
-    def grastercalculator(self,
+    def grastercalculator(self, #GDAL raster calculator
                           formula,
                           rlay_d, #container of raster layers to perform calculations on
                           nodata=0,
@@ -932,7 +932,8 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         # defaults
         #=======================================================================
         if logger is None: logger = self.logger
-        log = logger.getChild('srastercalculator')
+        log = logger.getChild('grastercalculator')
+        algo_nm = 'gdal:rastercalculator'
         
         
 
@@ -959,13 +960,12 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             else:
                 assert isinstance(rlay_d[rtag], QgsRasterLayer), 'passed bad %s'%rtag
                 assert rtag in formula, 'formula is missing a reference to \'%s\''%rtag
+                
         #=======================================================================
         # execute
         #=======================================================================
             
-        algo_nm = 'gdal:rastercalculator'
         
-
         
         ins_d = { 'BAND_A' : 1, 'BAND_B' : -1, 'BAND_C' : -1, 'BAND_D' : -1, 'BAND_E' : -1, 'BAND_F' : -1,
                   'EXTRA' : '',
@@ -982,6 +982,73 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         
         log.debug('executing \'%s\' with ins_d: \n    %s'%(algo_nm, ins_d))
+        
+        res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
+        
+        log.debug('finished w/ \n    %s'%res_d)
+        
+        assert os.path.exists(res_d['OUTPUT']), 'failed to get result'
+        
+        res_rlay = QgsRasterLayer(res_d['OUTPUT'], layname)
+        #=======================================================================
+        # #post check
+        #=======================================================================
+        assert isinstance(res_rlay, QgsRasterLayer), 'got bad type: %s'%type(res_rlay)
+        assert res_rlay.isValid()
+           
+   
+        res_rlay.setName(layname) #reset the name
+           
+        log.debug('finished w/ %s'%res_rlay.name())
+          
+        return res_rlay
+    
+    def qrastercalculator(self, #QGIS native raster calculator
+                          formula,
+                          ref_layer = None, #reference layer
+                          logger=None,
+                          layname=None,
+
+                          ):
+        """executes the algorhithim... better to use the constructor directly
+        QgsRasterCalculator"""
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger = self.logger
+        log = logger.getChild('qrastercalculator')
+        algo_nm = 'qgis:rastercalculator'
+        
+        
+
+        
+        if layname is None:
+            if ref_layer is None:
+                layname = 'qrastercalculator'
+            else:
+                layname = '%s_calc'%ref_layer.name()
+            
+
+        #=======================================================================
+        # execute
+        #=======================================================================
+        """
+        formula = '\'haz_100yr_cT2@1\'-\'dtm_cT1@1\''
+        """
+        
+        
+        ins_d = { 'CELLSIZE' : 0,
+                  'CRS' : None,
+                  'EXPRESSION' : formula,
+                   'EXTENT' : None,
+                  'LAYERS' : [ref_layer], #referecnce layer
+                   'OUTPUT' : 'TEMPORARY_OUTPUT' }
+        
+        
+        log.debug('executing \'%s\' with ins_d: \n    %s'%(algo_nm, ins_d))
+        
+        
         
         res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
         
@@ -1006,6 +1073,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         log.debug('finished w/ %s'%res_rlay.name())
           
         return res_rlay
+    
     
     def addgeometrycolumns(self, #add geometry data as columns
                            vlay,
