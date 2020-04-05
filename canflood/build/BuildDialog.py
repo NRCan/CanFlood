@@ -220,7 +220,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         def upd_dtmlayname():
             vlay = self.comboBox_dtm.currentLayer()
             if isinstance(vlay,QgsRasterLayer):
-                log.info('updated \'label_HS_dtmln\' w/ %s'%vlay.name())
                 self.label_HS_dtmln.setText(vlay.name())
                 
         self.comboBox_dtm.layerChanged.connect(upd_dtmlayname)
@@ -247,7 +246,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                 
                 if 'Polygon' in gtype:
                     self.comboBox_HS_stat.addItems(
-                        ['Mean','Median','Min','Max'])
+                        ['','Mean','Median','Min','Max'])
                 
         self.comboBox_vec.layerChanged.connect(upd_stat) #SS inventory vector layer
             
@@ -687,6 +686,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         if not isinstance(finv, QgsVectorLayer):
             raise Error('did not get a vector layer for finv')
         
+        gtype = QgsWkbTypes().displayString(finv.wkbType())
+        
         for rlay in rlay_l:
             if not isinstance(rlay, QgsRasterLayer):
                 raise Error('unexpected type on raster layer')
@@ -702,6 +703,17 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
 
         assert os.path.exists(cf_fp), 'bad control file specified'
+        
+        #geometry specific input checks
+        if 'Polygon' in gtype:
+            if not as_inun:
+                assert psmp_stat in ('Mean','Median','Min','Max'), 'select a valid sample statistic'
+        elif 'Point' in gtype:
+            assert not as_inun, '%Inundation only valid for polygon type geometries'
+        elif 'Line' in gtype:
+            raise Error('line type sampling not implemented')
+        else:
+            raise Error('unrecognized gtype: %s'%gtype)
         #======================================================================
         # execute
         #======================================================================
