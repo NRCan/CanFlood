@@ -46,13 +46,6 @@ class Risk2(Model):
     METHODS:
         run(): main model executor
 
-
-        
-
-
-    
-    
-    
     """
 
 

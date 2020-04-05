@@ -229,8 +229,10 @@ class Risk1(Model):
         #reattach indexers
         bidf1 = bidf.join(ddf.loc[:, boolcol])
         
+        assert not bidf1.isna().any().any()
+        
         cdf = bidf1.groupby(cid).max().drop(bid, axis=1)
-        """what does this do for nulls?"""
+
         
 
         #======================================================================

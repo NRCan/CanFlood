@@ -601,7 +601,14 @@ class Model(ComWrkr):
 
         if check_monot:
             self.check_monot(df, aep_ser = self.data_d['evals'])
-
+            
+        #for  percent inundation 
+        if self.as_inun:
+            booldf = df >=1
+            assert booldf.sum().sum()==0, \
+                'for %inundation got %i exposure values great than 1'%(booldf.sum().sum())
+                
+            assert self.felv =='datum', 'felv must equal \'datum\' for %inundation runs'
 
         #======================================================================
         # set it
