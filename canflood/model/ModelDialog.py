@@ -422,7 +422,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         self.feedback.setProgress(95)
         session.wrap_up()
 
-        
+        log.info('sofda finished')
         
 
     

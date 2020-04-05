@@ -198,7 +198,7 @@ if __name__ =="__main__":
     #===========================================================================
     # tutorial 3
     #===========================================================================
-    parspath    = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\3\sample_303.xls'
+    parspath    = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\3\sample_304.xls'
     out_dir     = None #use the default
     
     run(parspath=parspath, out_dir=out_dir) #for standalone runs
