@@ -885,7 +885,7 @@ p, li { white-space: pre-wrap; }
                  <string>Run Risk Model (L2) upon completion (see 'Risk (L2)' tab for configuration)</string>
                 </property>
                 <property name="checked">
-                 <bool>true</bool>
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>
