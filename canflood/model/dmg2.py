@@ -80,6 +80,13 @@ class Dmg2(Model):
                     }
     
     group_cnt = 4
+    
+    #minimum inventory expectations
+    finv_exp_d = {
+        'f0_tag':{'type':np.object},
+        'f0_scale':{'type':np.number},
+        'f0_elv':{'type':np.number},
+        }
 
 
     
@@ -93,12 +100,7 @@ class Dmg2(Model):
        
         self.dfuncs_d = dict() #container for damage functions
         
-        """allowing a single set
-        #update the inventory expectations
-        self.finv_exp_d = {**self.finv_exp_d,
-                                   **{'f1_tag':{'type':np.object},
-                                      }
-                           }"""
+
         
         self.logger.debug('finished __init__ on Dmg2')
         

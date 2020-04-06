@@ -132,6 +132,7 @@ Qda4/.project
 .settings
 
 #Qgis 
-*.gpkg
+
 *.gpkg-wal
 *.gpkg-shm
+*.aux.xml

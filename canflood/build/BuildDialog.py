@@ -219,10 +219,12 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #connect dtm layer name to display box
         def upd_dtmlayname():
             vlay = self.comboBox_dtm.currentLayer()
-            if isinstance(vlay,QgsVectorLayer):
+            if isinstance(vlay,QgsRasterLayer):
                 self.label_HS_dtmln.setText(vlay.name())
                 
         self.comboBox_dtm.layerChanged.connect(upd_dtmlayname)
+        
+        
             
 
         #=======================================================================
@@ -246,7 +248,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                 
                 if 'Polygon' in gtype:
                     self.comboBox_HS_stat.addItems(
-                        ['Mean','Median','Min','Max'])
+                        ['','Mean','Median','Min','Max'])
                 
         self.comboBox_vec.layerChanged.connect(upd_stat) #SS inventory vector layer
             
@@ -663,8 +665,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             dthresh = self.mQgsDoubleSpinBox_HS.value()
             dtm_rlay=self.comboBox_dtm.currentLayer()
             
-            assert isinstance(dthresh, float)
-            assert isinstance(dtm_rlay, QgsRasterLayer)
+            assert isinstance(dthresh, float), 'must provide a depth threshold'
+            assert isinstance(dtm_rlay, QgsRasterLayer), 'must select a DTM layer'
             
         else:
             dthresh, dtm_rlay = None, None
@@ -686,6 +688,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         if not isinstance(finv, QgsVectorLayer):
             raise Error('did not get a vector layer for finv')
         
+        gtype = QgsWkbTypes().displayString(finv.wkbType())
+        
         for rlay in rlay_l:
             if not isinstance(rlay, QgsRasterLayer):
                 raise Error('unexpected type on raster layer')
@@ -701,6 +705,19 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
 
         assert os.path.exists(cf_fp), 'bad control file specified'
+        
+        #geometry specific input checks
+        if 'Polygon' in gtype:
+            if not as_inun:
+                assert psmp_stat in ('Mean','Median','Min','Max'), 'select a valid sample statistic'
+            else:
+                assert psmp_stat == '', 'expects no sample statistic for %Inundation'
+        elif 'Point' in gtype:
+            assert not as_inun, '%Inundation only valid for polygon type geometries'
+        elif 'Line' in gtype:
+            raise Error('line type sampling not implemented')
+        else:
+            raise Error('unrecognized gtype: %s'%gtype)
         #======================================================================
         # execute
         #======================================================================
@@ -1095,6 +1112,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         a lot of this is duplicated in  model.scripts_.setup_pars
         
         TODO: consolidate with setup_pars
+        move to separate module
         
         """
         log = self.logger.getChild('valid')

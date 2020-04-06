@@ -44,7 +44,7 @@ else:
 from hlpr.exceptions import QError as Error
     
 
-from hlpr.basic import *
+import hlpr.basic as basic
 
 
 #==============================================================================
@@ -77,7 +77,7 @@ type_qvar_py_d = {10:str, 2:int, 135:float, 6:float, 4:int, 1:bool, 16:datetime.
 # classes -------------
 #==============================================================================
 
-class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native console
+class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native console
     
     crs_id = 'EPSG:4326'
     
@@ -90,6 +90,10 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
     algo_init = False #flag indicating whether the algos have been initialized
     
     qap = None
+    
+    
+    #field name character limits
+    fieldn_max_d = {'SpatiaLite':50, 'ESRI Shapefile':10, 'Memory storage':50, 'GPKG':50}
 
     
     def __init__(self,
@@ -165,7 +169,7 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
         
         try:
             
-            QgsApplication.setPrefixPath(r'C:/OSGeo4W64/apps/qgis', True)
+            QgsApplication.setPrefixPath(r'C:/OSGeo4W64/apps/qgis-ltr', True)
             
             app = QgsApplication([], gui)
             #   Update prefix path
@@ -354,6 +358,169 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
     # generic methods-----------------
     #==========================================================================
 
+    def vlay_new_df2(self, #build a vlay from a df
+            df_raw,
+            
+            geo_d = None, #container of geometry objects {fid: QgsGeometry}
+
+            crs=None,
+            gkey = None, #data field linking with geo_d
+            
+            layname='df',
+            
+            logger=None, 
+            db_f = None,
+            ):
+        """
+        performance enhancement over vlay_new_df
+            simpler, clearer
+            although less versatile
+        """
+        #=======================================================================
+        # setup
+        #=======================================================================
+        
+
+        
+        if crs is None: crs = self.crs
+        if logger is None: logger = self.logger
+            
+        log = logger.getChild('vlay_new_df')
+            
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        df = df_raw.copy()
+        
+        #make sure none of hte field names execeed the driver limitations
+        max_len = self.fieldn_max_d[self.driverName]
+        
+        #check lengths
+        boolcol = df_raw.columns.str.len() >= max_len
+        
+        if np.any(boolcol):
+            log.warning('passed %i columns which exeed the max length %i for driver \'%s\'.. truncating: \n    %s'%(
+                boolcol.sum(), max_len, self.driverName, df_raw.columns.values[boolcol]))
+            
+            
+            df.columns = df.columns.str.slice(start=0, stop=max_len-1)
+
+        
+        #make sure the columns are unique
+        assert df.columns.is_unique
+        
+        #check the key
+        if not gkey is None:
+            assert gkey in df_raw.columns
+    
+            #assert 'int' in df_raw[gkey].dtype.name
+            
+            #check gkey match
+            l = set(df_raw[gkey].drop_duplicates()).difference(geo_d.keys())
+            assert len(l)==0, 'missing %i \'%s\' keys in geo_d: %s'%(len(l), gkey, l)
+            
+        #against index
+        else:
+            
+            #check gkey match
+            l = set(df_raw.index).difference(geo_d.keys())
+            assert len(l)==0, 'missing %i (of %i) fid keys in geo_d: %s'%(len(l), len(df_raw), l)
+
+        #===========================================================================
+        # assemble the fields
+        #===========================================================================
+        #column name and python type
+        fields_d = {coln:np_to_pytype(col.dtype) for coln, col in df.items()}
+        
+        #fields container
+        qfields = fields_build_new(fields_d = fields_d, logger=log)
+        
+        #=======================================================================
+        # assemble the features
+        #=======================================================================
+        #convert form of data
+        
+        feats_d = dict()
+        for fid, row in df.iterrows():
+    
+            feat = QgsFeature(qfields, fid) 
+            
+            #loop and add data
+            for fieldn, value in row.items():
+    
+                #skip null values
+                if pd.isnull(value): continue
+                
+                #get the index for this field
+                findx = feat.fieldNameIndex(fieldn) 
+                
+                #get the qfield
+                qfield = feat.fields().at(findx)
+                
+                #make the type match
+                ndata = qtype_to_pytype(value, qfield.type(), logger=log)
+                
+                #set the attribute
+                if not feat.setAttribute(findx, ndata):
+                    raise Error('failed to setAttribute')
+                
+            #setgeometry
+            if gkey is None:
+                gobj = geo_d[fid]
+            else:
+                gobj = geo_d[row[gkey]]
+            
+            feat.setGeometry(gobj)
+            
+            #stor eit
+            feats_d[fid]=feat
+        
+        log.debug('built %i \'%s\'  features'%(
+            len(feats_d),
+            QgsWkbTypes.geometryDisplayString(feat.geometry().type()),
+            ))
+        
+        
+        #=======================================================================
+        # get the geo type
+        #=======================================================================
+        gtype = QgsWkbTypes().displayString(next(iter(geo_d.values())).wkbType())
+
+            
+            
+        #===========================================================================
+        # buidl the new layer
+        #===========================================================================
+        vlay = vlay_new_mlay(gtype, #no geo
+                             crs, 
+                             layname,
+                             qfields,
+                             list(feats_d.values()),
+                             logger=log,
+                             )
+        
+        #=======================================================================
+        # post check
+        #=======================================================================
+
+        if vlay.wkbType() == 100:
+            raise Error('constructed layer has NoGeometry')
+
+
+
+        
+        return vlay
+    
+    #===============================================================================
+    # LAYER WRITING  -------------------------------------------------------------------
+    #===============================================================================
+    
+    
+    
+    #===============================================================================
+    # LAYER WRITING  -------------------------------------------------------------------
+    #===============================================================================
+    
     
     
 
@@ -511,7 +678,7 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
         #=======================================================================
         #make sure none of the joiner fields are already on the layer
         if len(mfnl)>0: #see if there are any fields on the main
-            l = linr(jlay_fieldn_l, mfnl, result_type='matching')
+            l = basic.linr(jlay_fieldn_l, mfnl, result_type='matching')
             
             if len(l) > 0:
                 #w/a prefix
@@ -672,6 +839,87 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
     def cliprasterwithpolygon(self,
                               rlay_raw,
                               poly_vlay,
+                              layname = None,
+                              #output = 'TEMPORARY_OUTPUT',
+                              logger = None,
+                              ):
+        """
+        clipping a raster layer with a polygon mask using gdalwarp
+        """
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger = self.logger
+        log = logger.getChild('cliprasterwithpolygon')
+        
+        if layname is None:
+            layname = '%s_clipd'%rlay_raw.name()
+            
+            
+        algo_nm = 'gdal:cliprasterbymasklayer'
+            
+
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert isinstance(rlay_raw, QgsRasterLayer)
+        assert isinstance(poly_vlay, QgsVectorLayer)
+        assert 'Poly' in QgsWkbTypes().displayString(poly_vlay.wkbType())
+        
+        assert rlay_raw.crs() == poly_vlay.crs()
+            
+            
+        #=======================================================================
+        # run algo        
+        #=======================================================================
+
+        
+        ins_d = {   'ALPHA_BAND' : False,
+                    'CROP_TO_CUTLINE' : True,
+                    'DATA_TYPE' : 0,
+                    'EXTRA' : '',
+                    'INPUT' : rlay_raw,
+                    'KEEP_RESOLUTION' : True, 
+                    'MASK' : poly_vlay,
+                    'MULTITHREADING' : False,
+                    'NODATA' : None,
+                    'OPTIONS' : '',
+                    'OUTPUT' : 'TEMPORARY_OUTPUT',
+                    'SET_RESOLUTION' : False,
+                    'SOURCE_CRS' : None,
+                    'TARGET_CRS' : None,
+                    'X_RESOLUTION' : None,
+                    'Y_RESOLUTION' : None,
+                     }
+        
+        log.debug('executing \'%s\' with ins_d: \n    %s \n\n'%(algo_nm, ins_d))
+        
+        res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
+        
+        log.debug('finished w/ \n    %s'%res_d)
+        
+        if not os.path.exists(res_d['OUTPUT']):
+            """failing intermittently"""
+            raise Error('failed to get a result')
+        
+        res_rlay = QgsRasterLayer(res_d['OUTPUT'], layname)
+
+        #=======================================================================
+        # #post check
+        #=======================================================================
+        assert isinstance(res_rlay, QgsRasterLayer), 'got bad type: %s'%type(res_rlay)
+        assert res_rlay.isValid()
+           
+   
+        res_rlay.setName(layname) #reset the name
+           
+        log.debug('finished w/ %s'%res_rlay.name())
+          
+        return res_rlay
+    
+    def cliprasterwithpolygon2(self,
+                              rlay_raw,
+                              poly_vlay,
                               ofp = None,
                               layname = None,
                               #output = 'TEMPORARY_OUTPUT',
@@ -731,13 +979,15 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
                  'OUTPUT' : ofp, 
                  'POLYGONS' : poly_vlay }
         
-        log.debug('executing \'%s\' with ins_d: \n    %s'%(algo_nm, ins_d))
+        log.debug('executing \'%s\' with ins_d: \n    %s \n\n'%(algo_nm, ins_d))
         
         res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
         
         log.debug('finished w/ \n    %s'%res_d)
         
-        assert os.path.exists(res_d['OUTPUT']), 'failed to get a result'
+        if not os.path.exists(res_d['OUTPUT']):
+            """failing intermittently"""
+            raise Error('failed to get a result')
         
         res_rlay = QgsRasterLayer(res_d['OUTPUT'], layname)
 
@@ -753,6 +1003,7 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
         log.debug('finished w/ %s'%res_rlay.name())
           
         return res_rlay
+    
     
     def srastercalculator(self,
                           formula,
@@ -815,7 +1066,10 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
         
         log.debug('finished w/ \n    %s'%res_d)
         
-        assert os.path.exists(res_d['RESULT']), 'failed to get a result'
+        if not os.path.exists(res_d['RESULT']):
+            raise Error('failed to get a result')
+        
+
         
         res_rlay = QgsRasterLayer(res_d['RESULT'], layname)
 
@@ -831,6 +1085,162 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
         log.debug('finished w/ %s'%res_rlay.name())
           
         return res_rlay
+    
+    def grastercalculator(self, #GDAL raster calculator
+                          formula,
+                          rlay_d, #container of raster layers to perform calculations on
+                          nodata=0,
+                          logger=None,
+                          layname=None,
+
+                          ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger = self.logger
+        log = logger.getChild('grastercalculator')
+        algo_nm = 'gdal:rastercalculator'
+        
+        
+
+        
+        if layname is None:
+            layname = '%s_calc'%rlay_d['a'].name()
+            
+            
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        assert 'A' in rlay_d
+
+            
+        #=======================================================================
+        # populate
+        #=======================================================================
+        for rtag in ('A', 'B', 'C', 'D', 'E', 'F'):
+            #set dummy placeholders for missing rasters
+            if not rtag in rlay_d:
+                rlay_d[rtag] = None
+                
+            #check what the usre pasased
+            else:
+                assert isinstance(rlay_d[rtag], QgsRasterLayer), 'passed bad %s'%rtag
+                assert rtag in formula, 'formula is missing a reference to \'%s\''%rtag
+                
+        #=======================================================================
+        # execute
+        #=======================================================================
+            
+        
+        
+        ins_d = { 'BAND_A' : 1, 'BAND_B' : -1, 'BAND_C' : -1, 'BAND_D' : -1, 'BAND_E' : -1, 'BAND_F' : -1,
+                  'EXTRA' : '',
+                   'FORMULA' : formula,
+                   
+                    'INPUT_A' : rlay_d['A'], 'INPUT_B' : rlay_d['B'], 'INPUT_C' :  rlay_d['C'],
+                     'INPUT_D' :  rlay_d['D'], 'INPUT_E' :  rlay_d['E'], 'INPUT_F' : rlay_d['F'],
+                    
+                  
+                   'NO_DATA' : nodata,
+                    'OPTIONS' : '',
+                    'OUTPUT' : 'TEMPORARY_OUTPUT',
+                     'RTYPE' : 5 }
+        
+        
+        log.debug('executing \'%s\' with ins_d: \n    %s'%(algo_nm, ins_d))
+        
+        res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
+        
+        log.debug('finished w/ \n    %s'%res_d)
+        
+        assert os.path.exists(res_d['OUTPUT']), 'failed to get result'
+        
+        res_rlay = QgsRasterLayer(res_d['OUTPUT'], layname)
+        #=======================================================================
+        # #post check
+        #=======================================================================
+        assert isinstance(res_rlay, QgsRasterLayer), 'got bad type: %s'%type(res_rlay)
+        assert res_rlay.isValid()
+           
+   
+        res_rlay.setName(layname) #reset the name
+           
+        log.debug('finished w/ %s'%res_rlay.name())
+          
+        return res_rlay
+    
+    def qrastercalculator(self, #QGIS native raster calculator
+                          formula,
+                          ref_layer = None, #reference layer
+                          logger=None,
+                          layname=None,
+
+                          ):
+        """executes the algorhithim... better to use the constructor directly
+        QgsRasterCalculator"""
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger = self.logger
+        log = logger.getChild('qrastercalculator')
+        algo_nm = 'qgis:rastercalculator'
+        
+        
+
+        
+        if layname is None:
+            if ref_layer is None:
+                layname = 'qrastercalculator'
+            else:
+                layname = '%s_calc'%ref_layer.name()
+            
+
+        #=======================================================================
+        # execute
+        #=======================================================================
+        """
+        formula = '\'haz_100yr_cT2@1\'-\'dtm_cT1@1\''
+        """
+        
+        
+        ins_d = { 'CELLSIZE' : 0,
+                  'CRS' : None,
+                  'EXPRESSION' : formula,
+                   'EXTENT' : None,
+                  'LAYERS' : [ref_layer], #referecnce layer
+                   'OUTPUT' : 'TEMPORARY_OUTPUT' }
+        
+        
+        log.debug('executing \'%s\' with ins_d: \n    %s'%(algo_nm, ins_d))
+        
+        
+        
+        res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
+        
+        log.debug('finished w/ \n    %s'%res_d)
+        
+        if not os.path.exists(res_d['RESULT']):
+            raise Error('failed to get a result')
+        
+
+        
+        res_rlay = QgsRasterLayer(res_d['RESULT'], layname)
+
+        #=======================================================================
+        # #post check
+        #=======================================================================
+        assert isinstance(res_rlay, QgsRasterLayer), 'got bad type: %s'%type(res_rlay)
+        assert res_rlay.isValid()
+           
+   
+        res_rlay.setName(layname) #reset the name
+           
+        log.debug('finished w/ %s'%res_rlay.name())
+          
+        return res_rlay
+    
     
     def addgeometrycolumns(self, #add geometry data as columns
                            vlay,
@@ -1339,7 +1749,7 @@ def vlay_check( #helper to check various expectations on the layer
     #=======================================================================
     # expected field names
     #=======================================================================
-    if not is_null(exp_fieldns): #robust null checking
+    if not basic.is_null(exp_fieldns): #robust null checking
         skip=False
         if isinstance(exp_fieldns, str):
             if exp_fieldns=='all':
@@ -1348,7 +1758,7 @@ def vlay_check( #helper to check various expectations on the layer
         
         
         if not skip:
-            fnl = linr(exp_fieldns, vlay_fieldnl(vlay),
+            fnl = basic.linr(exp_fieldns, vlay_fieldnl(vlay),
                                       'expected field names', vlay.name(),
                                       result_type='missing', logger=log, fancy_log=db_f)
             
@@ -1362,11 +1772,11 @@ def vlay_check( #helper to check various expectations on the layer
     # unexpected field names
     #=======================================================================
         
-    if not is_null(uexp_fieldns): #robust null checking
+    if not basic.is_null(uexp_fieldns): #robust null checking
         #fields on the layer
         if len(vlay_fieldnl(vlay))>0:
         
-            fnl = linr(uexp_fieldns, vlay_fieldnl(vlay),
+            fnl = basic.linr(uexp_fieldns, vlay_fieldnl(vlay),
                                       'un expected field names', vlay.name(),
                                       result_type='matching', logger=log, fancy_log=db_f)
             
@@ -1961,12 +2371,8 @@ def vlay_new_mlay(#create a new mlay
                       layname,
                       qfields,
                       feats_l,
-                      mstore = True, #whether to add the layer to the store
-                      
 
-                      
-                      logger=mod_logger, db_f = False,
-                      chk_geo = False, #if db_f=True, whether to check the loaded geometry(slow)
+                      logger=mod_logger,
                       ):
         #=======================================================================
         # defaults
@@ -2168,7 +2574,7 @@ def feats_build( #build a set of features from teh passed data
         else:
             raise Error('unexpected type')
         
-        if not linr(dfid_l, list(geo_d.keys()),'feat_data', 'geo_d', 
+        if not basic.linr(dfid_l, list(geo_d.keys()),'feat_data', 'geo_d', 
                             sort_values=True, result_type='exact', logger=log):
             raise Error('passed geo_d and data indexes dont match')
     
@@ -2740,6 +3146,25 @@ def df_to_qvlayd( #convert a data frame into the layer data structure (keeyd by 
     
     
     return d
+
+def view(#view the vector data (or just a df) as a html frame
+        obj, logger=mod_logger,
+        #**gfd_kwargs, #kwaqrgs to pass to vlay_get_fdatas() 'doesnt work well with the requester'
+        ):
+    
+    if isinstance(obj, pd.DataFrame) or isinstance(obj, pd.Series):
+        df = obj
+    elif isinstance(obj, QgsVectorLayer):
+        """this will index the viewed frame by fid"""
+        df = vlay_get_fdf(obj)
+    else:
+        raise Error('got unexpected object type: %s'%type(obj))
+    
+    basic.view(df)
+    
+    logger.info('viewer closed')
+    
+    return
 
 
 if __name__ == '__main__':

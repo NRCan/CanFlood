@@ -20,7 +20,8 @@ import pandas as pd
 
 
 #Qgis imports
-from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject
+from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject, Qgis
+from qgis.analysis import QgsRasterCalculatorEntry, QgsRasterCalculator
 
 #==============================================================================
 # custom imports
@@ -39,7 +40,7 @@ else:
     
 
 from hlpr.Q import *
-from hlpr.basic import *
+import hlpr.basic as basic
 
 #==============================================================================
 # functions-------------------
@@ -181,6 +182,7 @@ class Rsamp(Qcoms):
 
         
         log.info('executing on %i rasters'%(len(raster_l)))
+        self.as_inun = as_inun
         #======================================================================
         # #check the data
         #======================================================================
@@ -222,9 +224,15 @@ class Rsamp(Qcoms):
         #=======================================================================
         if as_inun:
             res_vlay = self.samp_inun(finv,raster_l, dtm_rlay, dthresh)
+            
+            res_name = '%s_%s_%i_%i_d%.2f'%(
+                self.fname, self.tag, len(raster_l), res_vlay.dataProvider().featureCount(), dthresh)
+            
         else:
             res_vlay = self.samp_vals(finv,raster_l, psmp_stat)
+            res_name = '%s_%s_%i_%i'%(self.fname, self.tag, len(raster_l), res_vlay.dataProvider().featureCount())
             
+        res_vlay.setName(res_name)
         #=======================================================================
         # wrap
         #=======================================================================
@@ -233,10 +241,6 @@ class Rsamp(Qcoms):
 
         log.info('sampling finished')
         
-        res_name = '%s_%s_%i_%i'%(self.fname, self.tag, len(raster_l), res_vlay.dataProvider().featureCount())
-        
-        res_vlay.setName(res_name)
-            
         return res_vlay
         
     def samp_vals(self, finv, raster_l,psmp_stat):
@@ -365,25 +369,29 @@ class Rsamp(Qcoms):
         log = self.logger.getChild('samp_inun')
         gtype=self.gtype
         
-        master_od = self.out_dir
-        self.out_dir = os.path.join(master_od, 'inun')
+        #master_od = self.out_dir
+        #self.out_dir = os.path.join(master_od, 'inun')
         
         #clear the working directory
-        """neded for SAGA algo workaround"""
-        if os.path.exists(self.out_dir):
-            log.warning('specified out_dir exists. clearing contents')
-            try:
-                shutil.rmtree(self.out_dir)
-            except Exception as e:
-                raise Error('failed to clear working directory. remove layers from workspace? \n    %s'%e)
-        os.makedirs(self.out_dir)
+        #=======================================================================
+        # """neded for SAGA algo workaround"""
+        # if os.path.exists(self.out_dir):
+        #     log.warning('specified out_dir exists. clearing contents')
+        #     try:
+        #         shutil.rmtree(self.out_dir)
+        #     except Exception as e:
+        #         raise Error('failed to clear working directory. remove layers from workspace? \n    %s'%e)
+        # os.makedirs(self.out_dir)
+        #=======================================================================
         
         #=======================================================================
         # precheck
         #=======================================================================
+        dp = finv.dataProvider()
         assert 'Polygon' in gtype
         assert isinstance(dtmlay_raw, QgsRasterLayer)
         assert isinstance(dthresh, float)
+        assert 'Memory' in dp.storageType() #zonal stats makes direct edits
         
         #=======================================================================
         # setup the dtm------
@@ -412,54 +420,60 @@ class Rsamp(Qcoms):
             ofnl = [field.name() for field in finv.fields()]
 
 
-            #get depth raster
-            self.out_dir = os.path.join(master_od, 'inun', 'dep')
+            #===================================================================
+            # #get depth raster
+            #===================================================================
             log.info('calculating depth raster')
-            dep_rlay = self.srastercalculator('a-b',
-                               {'a':rlay, 'b':dtm_rlay},
-                               logger=log,
-                               layname= '%s_dep'%rlay.name(),
-                               )
+            #===================================================================
+            # self.out_dir = os.path.join(master_od, 'inun', 'dep')
+            # dep_rlay = self.srastercalculator('a-b',
+            #                    {'a':rlay, 'b':dtm_rlay},
+            #                    logger=log,
+            #                    layname= '%s_dep'%rlay.name(),
+            #                    )
+            #===================================================================
+            #===================================================================
+            # formula = '\"{}@1\"-\"{}@1\"'.format(rlay.name(), dtm_rlay.name())
+            # dep_rlay = self.qrastercalculator(formula, ref_layer=rlay, logger=log)
+            #===================================================================
+            #using Qgis raster calculator constructor
+            dep_rlay = self.raster_subtract(rlay, dtm_rlay, logger=log,
+                                            out_dir = os.path.join(self.out_dir,'temp', 'depth_rlays'))
             
+            #===================================================================
+            # get threshold
+            #===================================================================
             #reduce to all values above depththreshold
-            self.out_dir = os.path.join(master_od, 'inun', 'dthresh')
+
             log.info('calculating %.2f threshold raster'%dthresh) 
-            thr_rlay = self.srastercalculator(
-                                'ifelse(a>%.1f,1,0/0)'%dthresh, #null if not above minval
-                               {'a':dep_rlay},
+            
+            thr_rlay = self.grastercalculator(
+                                'A*(A>%.2f)'%dthresh, #null if not above minval
+                               {'A':dep_rlay},
                                logger=log,
                                layname= '%s_mv'%dep_rlay.name()
                                )
         
-            #get cell size of raster
-            
             #===================================================================
             # #get cell counts per polygon
             #===================================================================
             log.info('getting pixel counts on %i polys'%finv.dataProvider().featureCount())
+            
             algo_nm = 'qgis:zonalstatistics'
             ins_d = {       'COLUMN_PREFIX':indxr, 
                             'INPUT_RASTER':thr_rlay, 
                             'INPUT_VECTOR':finv, 
                             'RASTER_BAND':1, 
-                            'STATS':[1],#0: pixel counts, 1: sum
+                            'STATS':[0],#0: pixel counts, 1: sum
                             }
                 
             #execute the algo
             res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
-            #extract and clean results
-            finv = res_d['INPUT_VECTOR']
+            """this edits the finv in place"""
             
-            assert isinstance(finv, QgsVectorLayer)
-            
+           
             #===================================================================
-            # update pixel size
-            #===================================================================
-            parea_d[rlay.name()] = rlay.rasterUnitsPerPixelX()*rlay.rasterUnitsPerPixelY()
-            
-            
-            #===================================================================
-            # correct field names
+            # check/correct field names
             #===================================================================
             """
             algos don't assign good field names.
@@ -470,17 +484,25 @@ class Rsamp(Qcoms):
             new_fn = set(nfnl).difference(ofnl) #new field names not in the old
             
             if len(new_fn) > 1:
-                raise Error('bad mismatch: %i \n    %s'%(len(new_fn), new_fn))
+                """
+                possible error with Q3.12
+                """
+                raise Error('zonalstatistics generated more new fields than expected: %i \n    %s'%(len(new_fn), new_fn))
             elif len(new_fn) == 1:
                 names_d[list(new_fn)[0]] = rlay.name()
             else:
                 raise Error('bad fn match')
             
+            
+            #===================================================================
+            # update pixel size
+            #===================================================================
+            parea_d[rlay.name()] = rlay.rasterUnitsPerPixelX()*rlay.rasterUnitsPerPixelY()
+            
         #=======================================================================
         # area calc-----------
         #=======================================================================
         log = self.logger.getChild('samp_inun')
-        self.out_dir = os.path.join(master_od, 'inun')
         log.info('calculating areas on %i results fields:\n    %s'%(len(names_d), list(names_d.keys())))
         
         #add geometry fields
@@ -526,7 +548,7 @@ class Rsamp(Qcoms):
         #=======================================================================
         # write working reuslts
         #=======================================================================
-        ofp = os.path.join(self.out_dir, 'res_df.csv')
+        ofp = os.path.join(self.out_dir, 'temp','RAW_rsamp_SampInun_%s_%.2f.csv'%(self.tag, dthresh))
         res_df.to_csv(ofp, index=None)
         log.info('wrote working data to \n    %s'%ofp)
         
@@ -545,12 +567,101 @@ class Rsamp(Qcoms):
         #=======================================================================
         geo_d = vlay_get_fdata(finv, geo_obj=True, logger=log)
         res_vlay = vlay_new_df(res_df, finv.crs(), geo_d=geo_d, logger=log,
-                               layname='%s_inun'%finv.name())
+                               layname='%s_%s_inun'%(self.tag, finv.name()))
         
         log.info('finisished w/ %s'%res_vlay.name())
-        self.out_dir = master_od
+
         
         return res_vlay
+    
+    def raster_subtract(self, #performs raster calculator rlayBig - rlaySmall
+                        rlayBig, rlaySmall,
+                        out_dir = None,
+                        layname = None,
+                        logger = None,
+                        ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger =  self.logger
+        log = self.logger.getChild('raster_subtract')
+        
+        if out_dir is None:
+            out_dir = os.environ['TEMP']
+            
+        if layname is None:
+            layname = '%s_dep'%rlayBig.name()
+        
+        #=======================================================================
+        # assemble the entries
+        #=======================================================================
+        entries_d = dict() 
+
+        for tag, rlay in {'Big':rlayBig, 'Small':rlaySmall}.items():
+            rcentry = QgsRasterCalculatorEntry()
+            rcentry.raster=rlay
+            rcentry.ref = '%s@1'%tag
+            rcentry.bandNumber=1
+            entries_d[tag] = rcentry
+
+            
+        #=======================================================================
+        # assemble parameters
+        #=======================================================================
+        formula = '%s - %s'%(entries_d['Big'].ref, entries_d['Small'].ref)
+        outputFile = os.path.join(out_dir, '%s.tif'%layname)
+        outputExtent  = rlayBig.extent()
+        outputFormat = 'GTiff'
+        nOutputColumns = rlayBig.width()
+        nOutputRows = rlayBig.height()
+        rasterEntries =list(entries_d.values())
+        
+
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+            
+        if os.path.exists(outputFile):
+            msg = 'requseted outputFile exists: %s'%outputFile
+            if self.overwrite:
+                log.warning(msg)
+                os.remove(outputFile)
+            else:
+                raise Error(msg)
+            
+            
+        assert not os.path.exists(outputFile), 'requested outputFile already exists! \n    %s'%outputFile
+        
+        #=======================================================================
+        # execute
+        #=======================================================================
+        """throwing depreciation warning"""
+        rcalc = QgsRasterCalculator(formula, outputFile, outputFormat, outputExtent,
+                            nOutputColumns, nOutputRows, rasterEntries)
+        
+        result = rcalc.processCalculation(feedback=self.feedback)
+        
+        #=======================================================================
+        # check    
+        #=======================================================================
+        if not result == 0:
+            raise Error(rcalc.lastError())
+        
+        assert os.path.exists(outputFile)
+        
+        
+        log.info('saved result to: %s'%outputFile)
+            
+        #=======================================================================
+        # retrieve result
+        #=======================================================================
+        rlay = QgsRasterLayer(outputFile, layname)
+        
+        return rlay
+        
         
 
     def dtm_check(self, vlay):
@@ -625,9 +736,13 @@ class Rsamp(Qcoms):
 
     def upd_cf(self, cf_fp): #configured control file updater
         return self.update_cf(
-            {'dmg_fps':(
+            {
+            'dmg_fps':(
                 {'expos':self.out_fp}, 
                 '#\'expos\' file path set from rsamp.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                ),
+            'parameters':(
+                {'as_inun':str(self.as_inun)},
                 )
              },
             cf_fp = cf_fp
@@ -661,57 +776,67 @@ if __name__ =="__main__":
     #===========================================================================
     # tutorial 2  (dtm)
     #===========================================================================
-    data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\data'
-    raster_fns= ['dtm_cT1.tif']
-    finv_fp = os.path.join(data_dir, 'finv_cT2.gpkg')
-     
-    cf_fp = os.path.join(data_dir, 'CanFlood_tutorial2.txt')
-    
-    cid='xid'
-    tag='tut2_dtm'
-    as_inun=False
-    dtm_fp, dthresh = None, None
+    #===========================================================================
+    # data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\data'
+    # raster_fns= ['dtm_cT1.tif']
+    # finv_fp = os.path.join(data_dir, 'finv_cT2.gpkg')
+    #  
+    # cf_fp = os.path.join(data_dir, 'CanFlood_tutorial2.txt')
+    # 
+    # cid='xid'
+    # tag='tut2_dtm'
+    # as_inun=False
+    # dtm_fp, dthresh = None, None
+    #===========================================================================
     
     #==========================================================================
     # tutorial 3 (polygons as inundation)
     #==========================================================================
-    #===========================================================================
-    # data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\3\data'
-    #  
-    # raster_fns = ['haz_1000yr_cT2.tif', 
-    #               #'haz_1000yr_fail_cT2.tif', 
-    #               #'haz_100yr_cT2.tif', 
-    #               #'haz_200yr_cT2.tif',
-    #               'haz_50yr_cT2.tif',
-    #               ]
-    # 
-    # 
-    #   
-    # finv_fp = os.path.join(data_dir, 'finv_polys_t3.gpkg')
-    #  
-    # cf_fp = os.path.join(data_dir, 'CanFlood_control_01.txt')
-    # 
-    # #inundation sampling
-    # dtm_fp = os.path.join(data_dir, 'dtm_cT1.tif')
-    # as_inun=True
-    # dthresh = 0.5
-    # 
-    # cid='zid'
-    # tag='tut3'
-    #===========================================================================
+    data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\4\data'
+      
+    raster_fns = [
+                 'haz_1000yr_cT2.tif', 
+                  'haz_100yr_cT2.tif', 
+                  'haz_200yr_cT2.tif',
+                  'haz_50yr_cT2.tif',
+                  ]
+     
+     
+       
+    finv_fp = os.path.join(data_dir, 'finv_tut4.gpkg')
+      
+    cf_fp = r'C:\Users\cefect\CanFlood\build\4\CanFlood_tut4.txt'
+     
+    #inundation sampling
+    dtm_fp = os.path.join(data_dir, 'dtm_cT1.tif')
+    as_inun=True
+    dthresh = 0.5
+     
+    cid='xid'
+    tag='tut4'
     
-    
-    out_dir = os.path.join(os.getcwd(), 'rsamp', tag)
+    #===========================================================================
+    # build directories
+    #===========================================================================
+    out_dir = os.path.join(os.getcwd(),'build', 'rsamp', tag)
     raster_fps = [os.path.join(data_dir, fn) for fn in raster_fns]
-    #==========================================================================
-    # load the data
-    #==========================================================================
+    
+    
+
+    #===========================================================================
+    # init the run
+    #===========================================================================
     log = logging.getLogger('rsamp')
-    wrkr = Rsamp(logger=log, tag=tag, out_dir=out_dir, cid=cid,
+    
+    wrkr = Rsamp(logger=log, tag=tag, out_dir=out_dir, cid=cid, LogLevel=20
                  )
 
     
     wrkr.ini_standalone()
+    
+    #==========================================================================
+    # load the data
+    #==========================================================================
     
     
     rlay_l, finv_vlay = wrkr.load_layers(raster_fps, finv_fp)
@@ -743,7 +868,7 @@ if __name__ =="__main__":
      
     wrkr.upd_cf(cf_fp)
  
-    force_open_dir(out_dir)
+    basic.force_open_dir(out_dir)
  
     print('finished')
     
