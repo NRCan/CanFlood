@@ -64,9 +64,7 @@ class Dmg2(Model):
              'curves':{'ext':('.xls',)},
              'expos':{'ext':('.csv',)},
                     },
-        'risk_fps':{
-             'evals':{'ext':('.csv',)}, #only required for checks
-                    },
+
              
         'validation':{
             'dmg2':{'type':bool}
@@ -76,7 +74,10 @@ class Dmg2(Model):
     exp_pars_op = {#optional expectations
         'dmg_fps':{
             'gels':{'ext':('.csv',)},
-                    }
+                    },
+        'risk_fps':{
+             'evals':{'ext':('.csv',)}, #only required for checks
+                    },
                     }
     
     group_cnt = 4
@@ -114,9 +115,15 @@ class Dmg2(Model):
         self.init_model()
         self.resname = 'dmgs_%s_%s'%(self.name, self.tag)
         
-        #self.load_data()
+
         self.load_finv()
-        self.load_evals()
+        
+        if not self.evals == '':
+            """evals are optional"""
+            self.load_evals()
+        else:
+            self.expcols = pd.Series(dtype=np.object).index
+            
         self.load_expos()
     
         self.data_d['curves'] = pd.read_excel(self.curves, sheet_name=None, header=None, index_col=None)

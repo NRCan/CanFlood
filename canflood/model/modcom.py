@@ -533,8 +533,8 @@ class Model(ComWrkr):
         cid = self.cid
         
         assert 'finv' in self.data_d, 'call load_finv first'
-        assert 'evals' in self.data_d, 'call load_aep first'
-        assert isinstance(self.expcols, pd.Index), 'bad expcols'
+        #assert 'evals' in self.data_d, 'call load_aep first'
+        #assert isinstance(self.expcols, pd.Index), 'bad expcols'
         assert isinstance(self.cindex, pd.Index), 'bad cindex'
         assert os.path.exists(fp), '%s got invalid filepath \n    %s'%(dtag, fp)
         #======================================================================
@@ -599,7 +599,7 @@ class Model(ComWrkr):
         assert np.array_equal(self.cindex, df.index), 'cid mismatch'
         
 
-        if check_monot:
+        if check_monot and 'evals' in self.data_d:
             self.check_monot(df, aep_ser = self.data_d['evals'])
             
         #for  percent inundation 
@@ -625,7 +625,7 @@ class Model(ComWrkr):
                    ):
         
         log = self.logger.getChild('load_exlikes')
-        
+        assert 'evals' in self.data_d, 'evals data set required with conditional exposure exlikes'
         aep_ser = self.data_d['evals']
         #======================================================================
         # load the data
