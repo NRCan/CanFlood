@@ -90,6 +90,10 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
     algo_init = False #flag indicating whether the algos have been initialized
     
     qap = None
+    
+    
+    #field name character limits
+    fieldn_max_d = {'SpatiaLite':50, 'ESRI Shapefile':10, 'Memory storage':50, 'GPKG':50}
 
     
     def __init__(self,
@@ -354,6 +358,169 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
     # generic methods-----------------
     #==========================================================================
 
+    def vlay_new_df2(self, #build a vlay from a df
+            df_raw,
+            
+            geo_d = None, #container of geometry objects {fid: QgsGeometry}
+
+            crs=None,
+            gkey = None, #data field linking with geo_d
+            
+            layname='df',
+            
+            logger=None, 
+            db_f = None,
+            ):
+        """
+        performance enhancement over vlay_new_df
+            simpler, clearer
+            although less versatile
+        """
+        #=======================================================================
+        # setup
+        #=======================================================================
+        
+
+        
+        if crs is None: crs = self.crs
+        if logger is None: logger = self.logger
+            
+        log = logger.getChild('vlay_new_df')
+            
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        df = df_raw.copy()
+        
+        #make sure none of hte field names execeed the driver limitations
+        max_len = self.fieldn_max_d[self.driverName]
+        
+        #check lengths
+        boolcol = df_raw.columns.str.len() >= max_len
+        
+        if np.any(boolcol):
+            log.warning('passed %i columns which exeed the max length %i for driver \'%s\'.. truncating: \n    %s'%(
+                boolcol.sum(), max_len, self.driverName, df_raw.columns.values[boolcol]))
+            
+            
+            df.columns = df.columns.str.slice(start=0, stop=max_len-1)
+
+        
+        #make sure the columns are unique
+        assert df.columns.is_unique
+        
+        #check the key
+        if not gkey is None:
+            assert gkey in df_raw.columns
+    
+            #assert 'int' in df_raw[gkey].dtype.name
+            
+            #check gkey match
+            l = set(df_raw[gkey].drop_duplicates()).difference(geo_d.keys())
+            assert len(l)==0, 'missing %i \'%s\' keys in geo_d: %s'%(len(l), gkey, l)
+            
+        #against index
+        else:
+            
+            #check gkey match
+            l = set(df_raw.index).difference(geo_d.keys())
+            assert len(l)==0, 'missing %i (of %i) fid keys in geo_d: %s'%(len(l), len(df_raw), l)
+
+        #===========================================================================
+        # assemble the fields
+        #===========================================================================
+        #column name and python type
+        fields_d = {coln:np_to_pytype(col.dtype) for coln, col in df.items()}
+        
+        #fields container
+        qfields = fields_build_new(fields_d = fields_d, logger=log)
+        
+        #=======================================================================
+        # assemble the features
+        #=======================================================================
+        #convert form of data
+        
+        feats_d = dict()
+        for fid, row in df.iterrows():
+    
+            feat = QgsFeature(qfields, fid) 
+            
+            #loop and add data
+            for fieldn, value in row.items():
+    
+                #skip null values
+                if pd.isnull(value): continue
+                
+                #get the index for this field
+                findx = feat.fieldNameIndex(fieldn) 
+                
+                #get the qfield
+                qfield = feat.fields().at(findx)
+                
+                #make the type match
+                ndata = qtype_to_pytype(value, qfield.type(), logger=log)
+                
+                #set the attribute
+                if not feat.setAttribute(findx, ndata):
+                    raise Error('failed to setAttribute')
+                
+            #setgeometry
+            if gkey is None:
+                gobj = geo_d[fid]
+            else:
+                gobj = geo_d[row[gkey]]
+            
+            feat.setGeometry(gobj)
+            
+            #stor eit
+            feats_d[fid]=feat
+        
+        log.debug('built %i \'%s\'  features'%(
+            len(feats_d),
+            QgsWkbTypes.geometryDisplayString(feat.geometry().type()),
+            ))
+        
+        
+        #=======================================================================
+        # get the geo type
+        #=======================================================================
+        gtype = QgsWkbTypes().displayString(next(iter(geo_d.values())).wkbType())
+
+            
+            
+        #===========================================================================
+        # buidl the new layer
+        #===========================================================================
+        vlay = vlay_new_mlay(gtype, #no geo
+                             crs, 
+                             layname,
+                             qfields,
+                             list(feats_d.values()),
+                             logger=log,
+                             )
+        
+        #=======================================================================
+        # post check
+        #=======================================================================
+
+        if vlay.wkbType() == 100:
+            raise Error('constructed layer has NoGeometry')
+
+
+
+        
+        return vlay
+    
+    #===============================================================================
+    # LAYER WRITING  -------------------------------------------------------------------
+    #===============================================================================
+    
+    
+    
+    #===============================================================================
+    # LAYER WRITING  -------------------------------------------------------------------
+    #===============================================================================
+    
     
     
 
@@ -2204,12 +2371,8 @@ def vlay_new_mlay(#create a new mlay
                       layname,
                       qfields,
                       feats_l,
-                      mstore = True, #whether to add the layer to the store
-                      
 
-                      
-                      logger=mod_logger, db_f = False,
-                      chk_geo = False, #if db_f=True, whether to check the loaded geometry(slow)
+                      logger=mod_logger,
                       ):
         #=======================================================================
         # defaults
