@@ -46,6 +46,9 @@ class ComWrkr(object): #common methods for all classes
     progressBar = None
     feedback = None
     
+    #mandatory keys for curves
+    crv_keys = ('tag', 'exposure')
+    
     def __init__(self, tag='session', cid='not_set', cf_fp='',
                  overwrite=True, 
                  out_dir=None, 
@@ -320,6 +323,24 @@ class ComWrkr(object): #common methods for all classes
             raise Error('failed to write figure to file w/ \n    %s'%e)
         
         return out_fp
+    
+    def check_curve(self, #validate the passed curve_d  
+                    crv_d,
+                    logger=None):
+        if logger is None: logger=self.logger
+        log = logger.getChild('check_curve')
+        
+        assert isinstance(crv_d, dict)
+        
+        log.info('on %i'%len(crv_d))
+        
+        #check keys
+        l = set(self.crv_keys).difference(crv_d.keys())
+        assert len(l)==0, 'curve is missing keys: %s'%l
+        
+        
+        
+        return True
     
 class MyFeedBack(object): #simple custom feedback object
     

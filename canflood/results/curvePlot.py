@@ -133,7 +133,8 @@ class CurvePlotr(ComWrkr):
         if hndl_df is None:
             log.info('no handles provided. plotting %i individual curves'%len(curves_d))
             for cName, curve_df in curves_d.items():
-                res_d[cName] = self.plotCurve(curve_df, tag=cName)
+                crv_d = curve_df.set_index(0, drop=True).iloc[:,0].to_dict()
+                res_d[cName] = self.plotCurve(crv_d)
             
         #=======================================================================
         # with handles    
@@ -149,14 +150,22 @@ class CurvePlotr(ComWrkr):
                 
                 
     def plotCurve(self,
-                  curve_df,
+                  crv_d,
                   tag='Curve',
                   logger=None):
         #=======================================================================
         # defaults
         #=======================================================================
         if logger is None: logger=self.logger
-        log = logger.getChild('plot%s'%tag)
+        assert 'tag' in crv_d
+        log = logger.getChild('plot%s'%crv_d['tag'])
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        self.check_curve(crv_d, logger=log)
+        
+        
             
         
         

@@ -18,6 +18,8 @@ import numpy as np
 
 from scipy import interpolate, integrate
 
+
+
 #==============================================================================
 # parametessr
 #==============================================================================
@@ -49,7 +51,7 @@ else:
 from hlpr.Q import *
 from hlpr.basic import *
 
-
+mod_name = 'rfda'
 
 class RFDAconv(Qcoms):
     
@@ -225,11 +227,33 @@ class RFDAconv(Qcoms):
                     nrpParkAD = 215.0, #default $/m2 for NRP uderground parking
                     logger=None,
                     ):
+        """
+        converting rfda style curves into CanFlood
+        """
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
         if logger is None: logger = self.logger
         if bsmt_ht is None: bsmt_ht = self.bsmt_ht
         
         log = logger.getChild('to_curveset')
         assert isinstance(bsmt_ht, float)
+        
+        
+        crve_d = {'tag':None,
+                        'desc':'rfda converted curves',
+                        'source':'CanFlood.%s_%s_%s'%(mod_name, self.tag, datetime.datetime.now().strftime('%Y%m%d')),
+                        'location':'?',
+                        'date':'?',
+                        'vuln_units':'?',
+                        'dep_units':'m',
+                        'scale':'?',
+                        'exposure_var':'depth',
+                        'impact_var':'?',
+                        'exposure':'impact'}
+        
+        
         #==============================================================================
         # load
         #==============================================================================
@@ -285,17 +309,8 @@ class RFDAconv(Qcoms):
             #==========================================================================
             # set meta info
             #==========================================================================
-            
-            dcurve_d = {'tag':cname,
-                        'desc':'rfda converted',
-                        'source':'Alberta (2014)',
-                        'location':'Alberta',
-                        'date':2014,
-                        'vuln_units':'$CAD/m2',
-                        'dep_units':'m',
-                        'scale':'occupied space area',
-                        'ftype':'depth-damage',
-                        'depth':'damage'}
+            dcurve_d = crve_d.copy()
+            dcurve_d['tag']=cname
         
             
             #==========================================================================
@@ -406,16 +421,10 @@ class RFDAconv(Qcoms):
                 # set meta
                 #======================================================================
                 tag = '%s_%s'%(cnp, ctype)
-                dcurve_d = {'tag':tag,
-                        'desc':'rfda converted and combined w/ bsmt_ht = %.2f, M+B '%bsmt_ht,
-                        'source':'Alberta (2014)',
-                        'location':'Alberta',
-                        'date':2014,
-                        'vuln_units':'$CAD/m2',
-                        'dep_units':'m',
-                        'scale':'occupied space area',
-                        'ftype':'depth-damage',
-                        'depth':'damage'}
+                
+                dcurve_d = crve_d.copy()
+                dcurve_d['tag']=tag
+                dcurve_d['desc']=' %s \nrfda converted and combined w/ bsmt_ht = %.2f, M+B '%(dcurve_d['desc'], bsmt_ht)
                 
                 #add it in
                 res_d[tag] = {**dcurve_d, **res_ser.to_dict()}
@@ -443,16 +452,9 @@ class RFDAconv(Qcoms):
             #==================================================================
             res_ser = Cser + Sser
             
-            dcurve_d = {'tag':cnp,
-                        'desc':'rfda converted and combined w/ bsmt_ht = %.2f, BC+BS+MC+MS'%bsmt_ht,
-                        'source':'Alberta (2014)',
-                        'location':'Alberta',
-                        'date':2014,
-                        'vuln_units':'$CAD/m2',
-                        'dep_units':'m',
-                        'scale':'occupied space area',
-                        'ftype':'depth-damage',
-                        'depth':'damage'}
+            dcurve_d = crve_d.copy()
+            dcurve_d['tag']=cnp
+            dcurve_d['desc']=' %s \nrfda converted and combined w/ bsmt_ht = %.2f, BC+BS+MC+MS'%(dcurve_d['desc'], bsmt_ht)
             
             res_d[cnp] = {**dcurve_d, **res_ser.to_dict()}
             
@@ -469,17 +471,11 @@ class RFDAconv(Qcoms):
                 tag = '%s_%s'%(cnp, floor)
                 
                 assert not tag in res_d
+
                 
-                dcurve_d = {'tag':tag,
-                        'desc':'rfda converted and combined w/ bsmt_ht = %.2f, C+S'%bsmt_ht,
-                        'source':'Alberta (2014)',
-                        'location':'Alberta',
-                        'date':2014,
-                        'vuln_units':'$CAD/m2',
-                        'dep_units':'m',
-                        'scale':'occupied space area',
-                        'ftype':'depth-damage',
-                        'depth':'damage'}
+                dcurve_d = crve_d.copy()
+                dcurve_d['tag']=tag
+                dcurve_d['desc']=' %s \nrfda converted and combined w/ bsmt_ht = %.2f, C+S'%(dcurve_d['desc'], bsmt_ht)
                 
                 res_d[tag] = {**dcurve_d, **res_ser.to_dict()}
                 
@@ -490,16 +486,9 @@ class RFDAconv(Qcoms):
         #=======================================================================
         tag = 'nrpUgPark'
         
-        dcurve_d = {'tag':tag,
-                'desc':'rfda underground parking fixed %.2f $/m2'%nrpParkAD,
-                'source':'Alberta (2014)',
-                'location':'Alberta',
-                'date':2014,
-                'vuln_units':'$CAD/m2',
-                'dep_units':'m',
-                'scale':'occupied space area',
-                'ftype':'depth-damage',
-                'depth':'damage'}
+        dcurve_d = crve_d.copy()
+        dcurve_d['tag']=tag
+        dcurve_d['desc']=' %s \nrfda underground parking fixed %.2f $/m2'%(dcurve_d['desc'], nrpParkAD)
         
         
         res_d[tag] = {**dcurve_d,
@@ -514,6 +503,7 @@ class RFDAconv(Qcoms):
         #==============================================================================
         df_d = dict()
         for cname, d in res_d.items():
+            self.check_curve(d)
             df_d[cname] = pd.Series(d).to_frame()
             
         #======================================================================
