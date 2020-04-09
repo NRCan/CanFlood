@@ -38,9 +38,34 @@ else:
     #base_class = object
     from hlpr.exceptions import QError as Error
     
+#===============================================================================
+# setup matplotlib
+#===============================================================================
+
+import matplotlib
+matplotlib.use('Qt5Agg') #sets the backend (case sensitive)
+import matplotlib.pyplot as plt
+
+#set teh styles
+plt.style.use('default')
+
+#font
+matplotlib_font = {
+        'family' : 'serif',
+        'weight' : 'normal',
+        'size'   : 8}
+
+matplotlib.rc('font', **matplotlib_font)
+matplotlib.rcParams['axes.titlesize'] = 10 #set the figure title size
+
+#spacing parameters
+matplotlib.rcParams['figure.autolayout'] = False #use tight layout
+    
 
 from hlpr.basic import ComWrkr
 import hlpr.basic
+
+
 
 
 #==============================================================================
@@ -51,6 +76,17 @@ class CurvePlotr(ComWrkr):
     
     def __init__(self,
                  name='Results',
+                 
+                 
+                 figsize = (6,4), #6,4 seems good for documnets
+                subplot = 111,
+                
+                #writefig
+                fmt = 'svg' ,#format for figure saving
+                dpi = 300,
+                transparent = False,
+
+
                  **kwargs
                  ):
         
@@ -58,11 +94,15 @@ class CurvePlotr(ComWrkr):
         init is not called during the plugin"""
         mod_logger.info('simple wrapper inits')
         
-
-        
         super().__init__(**kwargs) #initilzie teh baseclass
         
+        #=======================================================================
+        # attachments
+        #=======================================================================
+        
         self.name = name
+        
+        self.figsize, self.subplot, self.fmt, self.dpi, self.transparent = figsize, subplot, fmt, dpi, transparent
         
         self.logger.info('init finished')
         
@@ -78,24 +118,28 @@ class CurvePlotr(ComWrkr):
     
     
     def plotGroup(self, #plot a group of figures w/ handles
-                  curves_d,
+                  cLib_d,
+                  pgCn='plot_group',
+                  pfCn='plot_f',
+                  logger=None,
                   ):
         
         
         #======================================================================
         # defaults
         #======================================================================
-        log = self.logger.getChild('plotGroup')
+        if logger is None: logger=self.logger
+        log = logger.getChild('plotGroup')
         
 
         
         #results container
         res_d = dict()
         #=======================================================================
-        # #pull out the handles
+        # #pull out the handles----------
         #=======================================================================
-        if '_smry' in curves_d:
-            hndl_df =curves_d.pop('_smry')
+        if '_smry' in cLib_d:
+            hndl_df =cLib_d.pop('_smry')
             
             #re-tag the columns
             colns = hndl_df.iloc[0,:].values
@@ -108,7 +152,7 @@ class CurvePlotr(ComWrkr):
    
             
             #see if the expected columns are there
-            boolcol = hndl_df.columns.isin(['plot_group', 'plot'])
+            boolcol = hndl_df.columns.isin([pgCn, pfCn])
             
             if not boolcol.any():
                 log.warning('loaded a _smry tab.. but no handle columns provided')
@@ -123,36 +167,124 @@ class CurvePlotr(ComWrkr):
             hndl_df = None
             
         #=======================================================================
-        # precheck
+        # convert clib
         #=======================================================================
-        """dev"""
-        hndl_df = None
-        #=======================================================================
-        # no handles
-        #=======================================================================
-        if hndl_df is None:
-            log.info('no handles provided. plotting %i individual curves'%len(curves_d))
-            for cName, curve_df in curves_d.items():
-                crv_d = curve_df.set_index(0, drop=True).iloc[:,0].to_dict()
-                res_d[cName] = self.plotCurve(crv_d)
+        d = dict()
+        for cName, curve_df in cLib_d.items():
+            d[cName] = curve_df.set_index(0, drop=True).iloc[:,0].to_dict()
+            
+        cLib_d = d
             
         #=======================================================================
-        # with handles    
+        # precheck
+        #=======================================================================
+
+        #=======================================================================
+        # PLOT no handles-----------
+        #=======================================================================
+        if hndl_df is None:
+            log.info('no handles provided. plotting %i individual curves'%len(cLib_d))
+            
+            indxr=0
+            for cName, crv_d in cLib_d.items():
+                ax = self.plotCurve(crv_d, title=crv_d['tag'])
+                
+                res_d[cName] =ax.figure
+                
+                indxr+=1
+                
+                if indxr>50:
+                    log.warning('too many curves.. breaking loop')
+                    break
+                
+
+
+            
+        #=======================================================================
+        # PLOT with handles-----------    
         #=======================================================================
         else:
             log.info('handles %s provided. plotting %i individual curves'%(
-                str(hndl_df.shape), len(curves_d)))
+                str(hndl_df.shape), len(cLib_d)))
+            
+            #check the handles match the lib
+            l = set(hndl_df.index).difference(cLib_d.keys())
+            assert len(l)==0, 'library meta mismatch: %s'%l
+            
+            #add d ummy plot group if missing
+            if not pgCn in hndl_df.columns:
+                hndl_df[pgCn]='group1'
+                
+            if not pfCn in hndl_df.columns:
+                hndl_df[pfCn]=True
+                
+            #===================================================================
+            # preclean
+            #===================================================================
+            hndl_df = hndl_df.loc[hndl_df[pfCn], :]
+                
+            #===================================================================
+            # loop and plot by groups
+            #===================================================================
+            grps = hndl_df[pgCn].unique().tolist()
+            log.info('generating plots on %i groups: \n    %s'%(
+                len(grps), grps))
+            
+            indxr=0
+            for pgroup, pdf in hndl_df.groupby(pgCn):
+                log = logger.getChild('plotGroup.%s'%pgroup)
+                log.info('plotting w/ %s'%str(pdf.shape))
+
+                
+                #===============================================================
+                # loop and plot
+                #===============================================================
+                ax = None
+                
+                for cName, row in pdf.iterrows():
+                    #get this curve
+                    crv_d = cLib_d[cName]
+                    
+                    ax = self.plotCurve(crv_d, ax=ax)
+                    
+                #post format
+                fig = ax.figure
+                fig.suptitle(pgroup)
+                fig.legend()
+                    
+                #===============================================================
+                # group loop
+                #===============================================================
+                if indxr>50: 
+                    log.warning('to omany curves.. breaking')
+                    break
+                indxr +=1
+                
+                #add results
+                res_d[cName] = fig
+                """
+                plt.show()
+                """
+                
+                
+                
             
                 
+        #=======================================================================
+        # wrap--------
+        #=======================================================================
+        
+        log.info('finished generating %i figures'%len(res_d))
+        return res_d
+                
         
                 
-        
                 
-                
-    def plotCurve(self,
+    def plotCurve(self, #plot a single CanFlood curve definition
                   crv_d,
-                  tag='Curve',
-                  logger=None):
+
+                  logger=None,
+                  **lineKwargs):
         #=======================================================================
         # defaults
         #=======================================================================
@@ -180,211 +312,95 @@ class CurvePlotr(ComWrkr):
                 dd_d[k]=v
                 
         log.info('collected %i dd vals: \n    %s'%(len(dd_d), dd_d))
+        dser = pd.Series(dd_d, name=crv_d['tag'])
+        
+        #=======================================================================
+        # assemble parameters
+        #=======================================================================
+        pars_d = dict()
+        for par, cpar in {'ylab':'exposure_var', 
+                          'xlab':'impact_var',
+                          'color':'color'}.items():
+            
+            if cpar in crv_d:
+                pars_d[par]=crv_d[cpar]
+            else:
+                pars_d[par]=None
+                          
+        
+        return self.line(dser.values, dser.index.values,
+                         
+                         ylab=pars_d['ylab'],
+                         xlab=pars_d['xlab'],
+                         color=pars_d['color'],
+                         label=crv_d['tag'],
+                          **lineKwargs)
+        
+    def line(self,
+                #values to plot
+                xvals, yvals,
                 
-            
-            
+                #plot controls
+                ax = None,
+                title = None,
+                ylab=None,
+                xlab=None,
+                **kwargs):
         
-        
-        
-        
-            
-        
-        
-    def run(self, #generate and save a figure that summarizes the damages 
-                  curves_d,
-                  
-                  #labels
-                  xlab='ARI', y1lab=None, y2lab='AEP',
-                  
-                  #format controls
-                  grid = True, logx = False, 
-                  basev = 1, #base value for dividing damage values
-                  dfmt = '{0:.0f}', #formatting of damage values 
-                  
-                  
-                  #figure parametrs
-                figsize     = (6.5, 4), 
-                    
-                #hatch pars
-                    hatch =  None,
-                    h_color = 'blue',
-                    h_alpha = 0.1,
-                  ):
-        
-        """
-        summary risk results plotter
-        
-        This is duplicated on modcom.risk_plot()
-        
-        """
-        
-        #======================================================================
+        #=======================================================================
         # defaults
-        #======================================================================
-        log = self.logger.getChild('run')
+        #=======================================================================
         
+        figsize=self.figsize
+        subplot=self.subplot
+        
+        #=======================================================================
+        # setup axis
+        #=======================================================================
+        if ax is None:
 
-
-
-        if y1lab is None: y1lab = self.y1lab
-        #======================================================================
-        # precheck
-        #======================================================================
-        assert isinstance(dmg_ser, pd.Series)
-        assert 'ead' in dmg_ser.index, 'dmg_ser missing ead index'
-        #======================================================================
-        # setup
-        #======================================================================
-        
-        import matplotlib
-        matplotlib.use('SVG') #sets the backend (case sensitive)
-        import matplotlib.pyplot as plt
-        
-        #set teh styles
-        plt.style.use('default')
-        
-        #font
-        matplotlib_font = {'family' : 'serif',
-                'weight' : 'normal',
-                'size'   : 8}
-        
-        matplotlib.rc('font', **matplotlib_font)
-        matplotlib.rcParams['axes.titlesize'] = 10 #set the figure title size
-        
-        #spacing parameters
-        matplotlib.rcParams['figure.autolayout'] = False #use tight layout
-        
-        #======================================================================
-        # data manipulations
-        #======================================================================
-        #get ead
-        ead_tot = dmg_ser['ead']
-        del dmg_ser['ead'] #remove it from plotter values
-        
-        #typeset index
-        dmg_ser.index = dmg_ser.index.astype(np.float64)
-        
-        
-        #get damage series to plot
-        ar = np.array([dmg_ser.index, dmg_ser.values]) #convert to array
-        
-        #invert aep (w/ zero handling)
-        ar[0] = 1/np.where(ar[0]==0, #replaced based on zero value
-                           sorted(ar[0])[1]/10, #dummy value for zero (take the second smallest value and divide by 10)
-                           ar[0]) 
-        
-        dmg_ser = pd.Series(ar[1], index=ar[0], dtype=float) #back into series
-        dmg_ser.index = dmg_ser.index.astype(int) #format it
+            fig = plt.figure()
+            fig.set_size_inches(figsize)
+            ax = fig.add_subplot(subplot)  
+            
+            #set the suptitle
+            if isinstance(title, str):
+                ftitle=title
+            else:
+                ftitle='figure'
                 
-        
-        #get aep series
-        aep_ser = dmg_ser.copy()
-        aep_ser.loc[:] = 1/dmg_ser.index
-        
-        
-        #======================================================================
-        # labels
-        #======================================================================
-        
-        val_str = 'total Annualized = ' + dfmt.format(ead_tot/basev)
-        
-        title = 'CanFlood \'%s\' Annualized-%s plot on %i events'%(self.tag, xlab, len(dmg_ser))
-        
-        #======================================================================
-        # figure setup
-        #======================================================================
-        plt.close()
-        fig = plt.figure(1)
-        fig.set_size_inches(figsize)
-        
-        #axis setup
-        ax1 = fig.add_subplot(111)
-        ax2 = ax1.twinx()
-        ax1.set_xlim(max(aep_ser.index), 1) #aep limits 
-        
-        # axis label setup
-        fig.suptitle(title)
-        ax1.set_ylabel(y1lab)
-        ax2.set_ylabel(y2lab)
-        ax1.set_xlabel(xlab)
-        
-        #======================================================================
-        # fill the plot
-        #======================================================================
-        #damage plot
-        xar,  yar = dmg_ser.index.values, dmg_ser.values
-        pline1 = ax1.semilogx(xar,yar,
-                            label       = y1lab,
-                            color       = 'black',
-                            linestyle   = 'dashdot',
-                            linewidth   = 2,
-                            alpha       = 0.5,
-                            marker      = 'x',
-                            markersize  = 2,
-                            fillstyle   = 'full', #marker fill style
-                            )
-        #add a hatch
-        polys = ax1.fill_between(xar, yar, y2=0, 
-                                color       = h_color, 
-                                alpha       = h_alpha,
-                                hatch       = hatch)
-        
-        #aep plot
-        xar,  yar = aep_ser.index.values, aep_ser.values
-        pline2 = ax2.semilogx(xar,yar,
-                            label       = y2lab,
-                            color       = 'blue',
-                            linestyle   = 'dashed',
-                            linewidth   = 1,
-                            alpha       = 1,
-                            marker      = 'x',
-                            markersize  = 0,
-                            )
-        
-
-        
-        #=======================================================================
-        # Add text string 'annot' to lower left of plot
-        #=======================================================================
-        xmin, xmax1 = ax1.get_xlim()
-        ymin, ymax1 = ax1.get_ylim()
-        
-        x_text = xmin + (xmax1 - xmin)*.1 # 1/10 to the right of the left ax1is
-        y_text = ymin + (ymax1 - ymin)*.1 #1/10 above the bottom ax1is
-        anno_obj = ax1.text(x_text, y_text, val_str)
-        
-        #=======================================================================
-        # format axis labels
-        #======================================================= ================
-        #damage values (yaxis for ax1)
-        old_tick_l = ax1.get_yticks() #get teh old labels
-         
-        # build the new ticks
-        l = [dfmt.format(value/basev) for value in old_tick_l]
-              
-        #apply the new labels
-        ax1.set_yticklabels(l)
+            fig.suptitle(ftitle)
+            
+        else:
+            fig = plt.gcf()
         
         
+        #set labels
+        if isinstance(ylab,str):
+            _ = ax.set_ylabel(ylab) 
+        if isinstance(xlab, str):
+            _ = ax.set_xlabel(xlab)
+        if isinstance(title, str):
+            _ = ax.set_title(title)
         
-        #ARI (xaxis for ax1)
-        ax1.get_xaxis().set_major_formatter(
-                matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+        """
+        plt.show()
+        """
+                
+        #==========================================================================
+        # plot it
+        #==========================================================================
+        #log.debug('plotting \"%s\' w/ \n    %s \n    %s'%( title, xvals, yvals))
         
-        #=======================================================================
-        # post formatting
-        #=======================================================================
-        if grid: ax1.grid()
+        ax.plot(xvals, yvals, **kwargs)
         
-
-        #legend
-        h1, l1 = ax1.get_legend_handles_labels() #pull legend handles from axis 1
-        h2, l2 = ax2.get_legend_handles_labels()
-        ax1.legend(h1+h2, l1+l2, loc=2) #turn legend on with combined handles
+        """
+        plt.show()
+        """
         
-        return fig
     
-    
+        return ax
+                
 
 if __name__ =="__main__": 
     print('start')
@@ -397,7 +413,7 @@ if __name__ =="__main__":
         'Tut1a':{
             'out_dir':os.path.join(os.getcwd(),'riskPlot', 'Tut1a'),
             'curves_fp':r'C:\LS\03_TOOLS\LML\_keeps\mbc\mbc_20200409130224\curves_mbc.compile_dev_161.xls',
-            'dfmt':'{0:.0f}', 'y1lab':'impacts',
+            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
             },
 
         }
@@ -407,7 +423,7 @@ if __name__ =="__main__":
         # defaults
         #=======================================================================
         log = logging.getLogger(tag)
-        out_dir, curves_fp, dfmt, y1lab = pars['out_dir'], pars['curves_fp'], pars['dfmt'], pars['y1lab']
+        out_dir, curves_fp = pars['out_dir'], pars['curves_fp']
         #=======================================================================
         # precheck
         #=======================================================================
@@ -422,9 +438,9 @@ if __name__ =="__main__":
         #load data
         curves_d = wrkr.load_data(curves_fp)
         
-        wrkr.plotGroup(curves_d)
+        res_d = wrkr.plotGroup(curves_d)
         
-        for fig in wrkr.res_figs:
+        for cname, fig in res_d.items():
             wrkr.output_fig(fig)
 
 

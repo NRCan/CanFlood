@@ -306,7 +306,12 @@ class ComWrkr(object): #common methods for all classes
         # output
         #======================================================================
         #file setup
-        out_fp = os.path.join(out_dir, '%s_smry_plot.%s'%(self.name, fmt))
+        try:
+            fname = fig._suptitle.get_text()
+        except:
+            fname = self.name
+            
+        out_fp = os.path.join(out_dir, '%s.%s'%(fname, fmt))
             
         if os.path.exists(out_fp):
             msg = 'passed output file path already esists :\n    %s'%out_fp
