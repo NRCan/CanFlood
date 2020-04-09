@@ -165,6 +165,27 @@ class CurvePlotr(ComWrkr):
         #=======================================================================
         self.check_curve(crv_d, logger=log)
         
+        #=======================================================================
+        # extract data
+        #=======================================================================
+        dd_f = False
+        dd_d = dict()
+        for k, v in crv_d.items():
+            #set the flag
+            if k == 'exposure':
+                dd_f = True
+                continue
+            
+            if dd_f:
+                dd_d[k]=v
+                
+        log.info('collected %i dd vals: \n    %s'%(len(dd_d), dd_d))
+                
+            
+            
+        
+        
+        
         
             
         

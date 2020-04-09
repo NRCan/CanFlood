@@ -332,7 +332,7 @@ class ComWrkr(object): #common methods for all classes
         
         assert isinstance(crv_d, dict)
         
-        log.info('on %i'%len(crv_d))
+        log.debug('on %i'%len(crv_d))
         
         #check keys
         l = set(self.crv_keys).difference(crv_d.keys())
