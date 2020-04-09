@@ -19,6 +19,10 @@ import numpy as np
 import pandas as pd
 
 
+#Qgis imports
+
+from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject
+
 
 
 #==============================================================================
