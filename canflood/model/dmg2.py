@@ -621,9 +621,10 @@ class DFunc(object,
         df = df_raw.iloc[:, 0:2].dropna(axis=0, how='all')
         
         #locate depth-damage data
-        boolidx = df.iloc[:,0]=='depth' #locate
+        boolidx = df.iloc[:,0]=='exposure' #locate
+        
         assert boolidx.sum()==1, \
-            'got unepxected number of \'depth\' values on %s'%(self.tabn)
+            'got unepxected number of \'exposure\' values on %s'%(self.tabn)
             
         depth_loc = df.index[boolidx].tolist()[0]
         

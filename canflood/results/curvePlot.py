@@ -70,7 +70,7 @@ class CurvePlotr(ComWrkr):
         log = self.logger.getChild('load_data')
         #precheck
         assert os.path.exists(fp)
-        data_d = pd.read_excel(fp, sheet_name=None)
+        data_d = pd.read_excel(fp, sheet_name=None, index=None, header=None)
         
         log.info('loaded %i tabs'%len(data_d))
         
@@ -97,9 +97,15 @@ class CurvePlotr(ComWrkr):
         if '_smry' in curves_d:
             hndl_df =curves_d.pop('_smry')
             
-            #re-tag the index
-            hndl_df = hndl_df.set_index(hndl_df.columns[0], drop=True)
-            hndl_df.index.name = 'cName'
+            #re-tag the columns
+            colns = hndl_df.iloc[0,:].values
+            colns[0] = 'cName'
+            hndl_df.columns = colns
+            
+            hndl_df = hndl_df.set_index('cName', drop=False).drop('cName') 
+
+            
+   
             
             #see if the expected columns are there
             boolcol = hndl_df.columns.isin(['plot_group', 'plot'])
@@ -113,12 +119,14 @@ class CurvePlotr(ComWrkr):
             
             
         else:
+
             hndl_df = None
             
         #=======================================================================
         # precheck
         #=======================================================================
-            
+        """dev"""
+        hndl_df = None
         #=======================================================================
         # no handles
         #=======================================================================
