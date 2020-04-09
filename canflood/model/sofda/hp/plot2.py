@@ -9,7 +9,7 @@ generic plotting functions
 #===============================================================================
 # # IMPORTS --------------------------------------------------------------------
 #===============================================================================
-import os, psutil, time, logging, gc, weakref, copy, sys, re
+import os,  logging, gc, weakref, copy, sys, re
 import pandas as pd
 import numpy as np
 

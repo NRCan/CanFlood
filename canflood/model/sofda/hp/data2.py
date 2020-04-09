@@ -11,7 +11,7 @@ Data analysis
 #===============================================================================
 # # IMPORTS --------------------------------------------------------------------
 #===============================================================================
-import os, psutil, time, logging, gc, weakref, copy, sys, re
+import os, time, logging, gc, weakref, copy, sys, re
 import pandas as pd
 import numpy as np
 

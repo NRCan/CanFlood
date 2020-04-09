@@ -4,7 +4,7 @@ Created on Sep 7, 2018
 @author: cef
 '''
 
-import os, copy, sys, time, logging, psutil, weakref, gc
+import os, copy, sys, time, logging, weakref, gc
 import cProfile, pstats, objgraph
 
 from collections import OrderedDict, Mapping, Container
