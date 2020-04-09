@@ -2,6 +2,8 @@
 Created on Feb. 9, 2020
 
 @author: cefect
+
+plotting damage curves from the library
 '''
 
 #==========================================================================
@@ -17,11 +19,6 @@ import logging, configparser, datetime
 import os
 import numpy as np
 import pandas as pd
-
-
-#Qgis imports
-
-from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject
 
 
 
@@ -41,16 +38,15 @@ else:
     #base_class = object
     from hlpr.exceptions import QError as Error
     
-from hlpr.Q import Qcoms
 
-from hlpr.Q import *
-from hlpr.basic import *
+from hlpr.basic import ComWrkr
+import hlpr.basic
 
 
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Plotr(ComWrkr):
+class CurvePlotr(ComWrkr):
     
     
     def __init__(self,
@@ -71,16 +67,93 @@ class Plotr(ComWrkr):
         self.logger.info('init finished')
         
     def load_data(self, fp):
-        
+        log = self.logger.getChild('load_data')
         #precheck
         assert os.path.exists(fp)
-        res_ser = pd.read_csv(fp, index_col=0).iloc[:,0]
+        data_d = pd.read_excel(fp, sheet_name=None)
         
-        return res_ser
+        log.info('loaded %i tabs'%len(data_d))
+        
+        return data_d
+    
+    
+    def plotGroup(self, #plot a group of figures w/ handles
+                  curves_d,
+                  ):
+        
+        
+        #======================================================================
+        # defaults
+        #======================================================================
+        log = self.logger.getChild('plotGroup')
+        
+
+        
+        #results container
+        res_d = dict()
+        #=======================================================================
+        # #pull out the handles
+        #=======================================================================
+        if '_smry' in curves_d:
+            hndl_df =curves_d.pop('_smry')
+            
+            #re-tag the index
+            hndl_df = hndl_df.set_index(hndl_df.columns[0], drop=True)
+            hndl_df.index.name = 'cName'
+            
+            #see if the expected columns are there
+            boolcol = hndl_df.columns.isin(['plot_group', 'plot'])
+            
+            if not boolcol.any():
+                log.warning('loaded a _smry tab.. but no handle columns provided')
+                hndl_df = None
+                
+            else:
+                hndl_df = hndl_df.loc[:, boolcol]
+            
+            
+        else:
+            hndl_df = None
+            
+        #=======================================================================
+        # precheck
+        #=======================================================================
+            
+        #=======================================================================
+        # no handles
+        #=======================================================================
+        if hndl_df is None:
+            log.info('no handles provided. plotting %i individual curves'%len(curves_d))
+            for cName, curve_df in curves_d.items():
+                res_d[cName] = self.plotCurve(curve_df, tag=cName)
+            
+        #=======================================================================
+        # with handles    
+        #=======================================================================
+        else:
+            log.info('handles %s provided. plotting %i individual curves'%(
+                str(hndl_df.shape), len(curves_d)))
+            
+                
+        
+                
+        
+                
+                
+    def plotCurve(self,
+                  curve_df,
+                  tag='Curve',
+                  logger=None):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('plot%s'%tag)
+            
         
         
     def run(self, #generate and save a figure that summarizes the damages 
-                  dmg_ser,
+                  curves_d,
                   
                   #labels
                   xlab='ARI', y1lab=None, y2lab='AEP',
@@ -111,6 +184,8 @@ class Plotr(ComWrkr):
         # defaults
         #======================================================================
         log = self.logger.getChild('run')
+        
+
 
 
         if y1lab is None: y1lab = self.y1lab
@@ -283,7 +358,7 @@ if __name__ =="__main__":
     runpars_d={
         'Tut1a':{
             'out_dir':os.path.join(os.getcwd(),'riskPlot', 'Tut1a'),
-            'res_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\res_1a\risk1_Tut1_tut1a_ttl.csv',
+            'curves_fp':r'C:\LS\03_TOOLS\LML\_keeps\mbc\mbc_20200409130224\curves_mbc.compile_dev_161.xls',
             'dfmt':'{0:.0f}', 'y1lab':'impacts',
             },
 
@@ -294,27 +369,27 @@ if __name__ =="__main__":
         # defaults
         #=======================================================================
         log = logging.getLogger(tag)
-        out_dir, res_fp, dfmt, y1lab = pars['out_dir'], pars['res_fp'], pars['dfmt'], pars['y1lab']
+        out_dir, curves_fp, dfmt, y1lab = pars['out_dir'], pars['curves_fp'], pars['dfmt'], pars['y1lab']
         #=======================================================================
         # precheck
         #=======================================================================
-        if not os.path.exists(out_dir):
-            os.makedirs(out_dir)
-        
-        assert os.path.exists(out_dir)
+
 
 
         #=======================================================================
         # execute
         #=======================================================================
-        wrkr = Plotr(out_dir=out_dir, logger=log, tag=tag)
+        wrkr = CurvePlotr(out_dir=out_dir, logger=log, tag=tag)
         
         #load data
-        res_ser = wrkr.load_data(res_fp)
+        curves_d = wrkr.load_data(curves_fp)
         
-        fig = wrkr.run(res_ser, dfmt=dfmt, y1lab=y1lab)
+        wrkr.plotGroup(curves_d)
         
-        wrkr.output_fig(fig)
+        for fig in wrkr.res_figs:
+            wrkr.output_fig(fig)
+
+
         
         log.info('finished')
 
@@ -322,7 +397,7 @@ if __name__ =="__main__":
         
         
     
-    force_open_dir(out_dir)
+    hlpr.basic.force_open_dir(out_dir)
     
     print('finished')
     
