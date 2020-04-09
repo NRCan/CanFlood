@@ -11,7 +11,7 @@ drop_tails = True       #whether to remove the extrapolated values from the resu
 integrate = trapz       #integration method to apply: trapz, simps
 
 [dmg_fps]
-curves = C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\built\\CanFlood_curves_rfda_20200218.xls
+curves = C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\data\CanFlood_curves_rfda_20200218.xls
 finv = C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\built\finv_tut2_finv_cT2.csv
 expos = C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\built\expos_tut2_4_32.csv
 gels = C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\built\gels_tut2_1_32.csv
@@ -20,7 +20,7 @@ gels = C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\built\gels_tut2_1_32.csv
 dmgs = C:\Users\cefect\CanFlood\dmg2\Tut2\dmgs_tut2_Tut2.csv
 exlikes = #secondary exposure likelihood data filepath
 evals = C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\built\evals_4_tut2.csv
-#'dmgs' file path set from dmg2.py at 2020-04-06 10.28.09
+#'dmgs' file path set from dmg2.py at 2020-04-09 15.07.53
 
 [validation]
 risk1 = False
