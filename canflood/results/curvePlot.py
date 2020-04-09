@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 
 
-
+mod_name='curvePlot'
 #==============================================================================
 # # custom
 #==============================================================================
@@ -121,6 +121,9 @@ class CurvePlotr(ComWrkr):
                   cLib_d,
                   pgCn='plot_group',
                   pfCn='plot_f',
+                  
+                  marker='o', markersize=3,
+                  
                   logger=None,
                   ):
         
@@ -245,7 +248,8 @@ class CurvePlotr(ComWrkr):
                     #get this curve
                     crv_d = cLib_d[cName]
                     
-                    ax = self.plotCurve(crv_d, ax=ax)
+                    ax = self.plotCurve(crv_d, ax=ax,
+                                        marker=marker, markersize=markersize)
                     
                 #post format
                 fig = ax.figure
@@ -411,8 +415,8 @@ if __name__ =="__main__":
     #===========================================================================
     runpars_d={
         'Tut1a':{
-            'out_dir':os.path.join(os.getcwd(),'riskPlot', 'Tut1a'),
-            'curves_fp':r'C:\LS\03_TOOLS\LML\_keeps\mbc\mbc_20200409130224\curves_mbc.compile_dev_161.xls',
+            'out_dir':os.path.join(os.getcwd(),mod_name, 'Tut1a'),
+            'curves_fp':r'C:\LS\03_TOOLS\LML\_keeps\mbc\mbc_20200409163117\curves_mbc.compile_dev_161.xls',
             #'dfmt':'{0:.0f}', 'y1lab':'impacts',
             },
 
