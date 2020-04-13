@@ -86,7 +86,7 @@ class Djoiner(Qcoms):
         if logger is None: logger = self.logger
         log = logger.getChild('djoin')
         if tag is None: tag = self.tag
-
+        cid = link_coln
 
         
         #=======================================================================
@@ -139,11 +139,7 @@ class Djoiner(Qcoms):
         # cleaning
         lkp_df = lkp_df1.dropna(axis = 'columns', how='all').dropna(axis = 'index', how='all')
         
-        #======================================================================
-        # checks
-        #======================================================================
-        if not len(df1) == len(lkp_df):
-            raise Error('length mismatch')
+
         
         
         #=======================================================================
@@ -175,15 +171,27 @@ class Djoiner(Qcoms):
         if not df1[link_coln].is_unique:
             raise Error('non-unique vlay keys')
         
+        
+            
+        #check key intersect
+        """we allow the results lkp_df to be smaller than the vector layer"""
+        l = set(lkp_df[cid]).difference(df1[link_coln])
+        assert len(l)==0, 'missing %i (of %i) \'%s\' entries in the vlay: \n    %s'%(
+            len(l), len(lkp_df), cid, l)
+        
         #===========================================================================
         # do the lookup
         #===========================================================================
-        res_df = df1.merge(lkp_df, 
+        boolidx = df1[cid].isin(lkp_df[cid].values)
+        
+        res_df = df1.loc[boolidx, :].merge(lkp_df, 
                                 how='inner', #only use intersect keys
                                on = link_coln,
                                validate= '1:1', #check if merge keys are unique in right dataset
                                indicator=False, #flag where the rows came from (_merge)
                                )
+        
+        assert len(res_df) == len(lkp_df)
         
         log.info('merged %s w/ %s to get %s'%(
             str(df1.shape), str(lkp_df.shape), str(res_df.shape)))    
@@ -202,7 +210,7 @@ class Djoiner(Qcoms):
             raise Error('bad link')
             #==================================================================
             # log.info('non unique keys (1:m) join... expanding geometry')
-            # rfid_geo_d = hp.basic.expand_dict(geo_d, res_df['fid'].to_dict(),
+            # rfid_geo_d = hp_basic.expand_dict(geo_d, res_df['fid'].to_dict(),
             #                                   constructor=QgsGeometry)
             # res_df= res_df.drop('fid', axis=1)
             #==================================================================
@@ -212,7 +220,7 @@ class Djoiner(Qcoms):
         
         
         
-        res_vlay = vlay_new_df(res_df, geo_d=rfid_geo_d, crs = vlay_raw.crs(),
+        res_vlay = self.vlay_new_df2(res_df, geo_d=rfid_geo_d, crs = vlay_raw.crs(),
                                     layname=layname, logger=log)
         
         
@@ -251,7 +259,17 @@ if __name__ =="__main__":
             },
         
         }
-    
+
+    runpars_d={
+        'Tut1b':{
+            'finv_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\data\finv_cT2b.gpkg',
+            'data_fp':r'C:\Users\cefect\CanFlood\build\1b\results\risk1_run1_tut2b_passet.csv',
+            'keep_fn':'all',
+            'link_coln':'xid',
+            },
+        
+        }
+        
     #==========================================================================
     # 20200304
     #==========================================================================

@@ -58,6 +58,7 @@ class Risk1(Model):
              'felv':{'values':('ground', 'datum')},
              'prec':{'type':int}, 
              'drop_tails':{'type':bool},
+             'as_inun':{'type':bool},
               #'ground_water':{'type':bool}, #NO! risk1 only accepts positive depths
              },
             
@@ -83,7 +84,18 @@ class Risk1(Model):
         
         }
     
+    #number of groups to epxect per prefix
     group_cnt = 2
+    
+    #minimum inventory expectations
+    finv_exp_d = {
+        'f0_scale':{'type':np.number},
+        'f0_elv':{'type':np.number}
+        }
+    """
+    NOTE: for as_inun=True, we dont need any elevations (should all be zero)
+    but allowing the uesr to NOT pass an elv column would be very difficult
+    """
     
 
     
@@ -102,6 +114,7 @@ class Risk1(Model):
         super().__init__(cf_fp, **kwargs) #initilzie Model
         
         
+        
         self.logger.debug('finished __init__ on Risk1')
         
         
@@ -117,6 +130,9 @@ class Risk1(Model):
         #======================================================================
         # load data files
         #======================================================================
+
+
+        
         self.load_finv()
         self.load_evals()
         self.load_expos(dtag='expos')
@@ -142,7 +158,12 @@ class Risk1(Model):
         return self
 
     def run(self,
-            res_per_asset=False):
+            res_per_asset=False, #whether to generate results per asset
+            
+            ):
+        """
+        main caller for L1 risk model
+        """
         #======================================================================
         # defaults
         #======================================================================
@@ -166,53 +187,55 @@ class Risk1(Model):
         
         self.feedback.setProgress(5)
         
-        #======================================================================
-        # check monotocity
-        #======================================================================
 
-        #======================================================================
-        # adjust depths by exposure grade
-        #======================================================================
-        """
-        resserved for future dev
-        
-        one value per cid?
-        """
-        #======================================================================
-        # convert exposures to binary
-        #======================================================================
+
         boolcol = ddf.columns.isin([bid, cid])
         
         ddf1 = ddf.loc[:, ~boolcol]
         
-        #get relvant bids
-        """
-        because there are no curves, Risk1 can only use positive depths.
-        ground_water flag is ignored
-        """
-        booldf = pd.DataFrame(np.logical_and(
-            ddf1 > 0,#get bids w/ positive depths
-            ddf1.notna()) #real depths
-            )
-
-
-        if booldf.all().all():
-            log.warning('got all %i entries as null... no impacts'%(ddf.size))
-            raise Error('dome')
-            return
+        #======================================================================
+        # convert exposures to binary
+        #======================================================================
+        if not self.as_inun:
+            #get relvant bids
+            """
+            because there are no curves, Risk1 can only use positive depths.
+            ground_water flag is ignored
+            """
+            booldf = pd.DataFrame(np.logical_and(
+                ddf1 > 0,#get bids w/ positive depths
+                ddf1.notna()) #real depths
+                )
+    
+    
+            if booldf.all().all():
+                log.warning('got all %i entries as null... no impacts'%(ddf.size))
+                raise Error('dome')
+                return
+            
+            log.info('got %i (of %i) exposures'%(booldf.sum().sum(), ddf.size))
+            
+            bidf = ddf1.where(booldf, other=0.0)
+            bidf = bidf.where(~booldf, other=1.0)
         
-        log.info('got %i (of %i) exposures'%(booldf.sum().sum(), ddf.size))
-        
-        bidf = ddf1.where(booldf, other=0.0)
-        bidf = bidf.where(~booldf, other=1.0)
+        #=======================================================================
+        # leave as percentages
+        #=======================================================================
+        else:
+            
+            bidf = ddf1.copy()
+            assert bidf.max().max() <=1
+            
+            #fill nulls with zero
+            bidf = bidf.fillna(0)
         
         self.feedback.setProgress(10)
         #======================================================================
         # scale
         #======================================================================
         if 'fscale' in bdf:
-            log.info('scaling binaries values by \'fscale\' column')
-            bidf = bidf.multiply(bdf.set_index(bid)['fscale'], axis=0)
+            log.info('scaling impact values by \'fscale\' column')
+            bidf = bidf.multiply(bdf.set_index(bid)['fscale'], axis=0).round(self.prec)
             
             
         #======================================================================
@@ -221,9 +244,10 @@ class Risk1(Model):
         #reattach indexers
         bidf1 = bidf.join(ddf.loc[:, boolcol])
         
+        assert not bidf1.isna().any().any()
         
         cdf = bidf1.groupby(cid).max().drop(bid, axis=1)
-        """what does this do for nulls?"""
+
         
 
         #======================================================================
@@ -325,6 +349,12 @@ if __name__ =="__main__":
     #         }
     #     }
     #===========================================================================
+    runpars_d={
+    'Tut4':{
+        'out_dir':os.path.join(os.getcwd(),'risk1' 'Tut4'),
+        'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\4\built\CanFlood_tut4.txt',
+        }}
+        
     #==========================================================================
     # 20200304
     #==========================================================================

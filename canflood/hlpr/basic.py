@@ -46,6 +46,9 @@ class ComWrkr(object): #common methods for all classes
     progressBar = None
     feedback = None
     
+    #mandatory keys for curves
+    crv_keys = ('tag', 'exposure')
+    
     def __init__(self, tag='session', cid='not_set', cf_fp='',
                  overwrite=True, 
                  out_dir=None, 
@@ -54,7 +57,7 @@ class ComWrkr(object): #common methods for all classes
                  
                 feedback = None, #feed back object
                 progressBar = None, #progressBar like object to report progress onto
-
+                LogLevel = None, #logging level for defualt feedbacker
                  ):
         """
         Dialogs don't call this
@@ -85,14 +88,16 @@ class ComWrkr(object): #common methods for all classes
         #=======================================================================
         # feedback
         #=======================================================================
-        self.setup_feedback(progressBar=progressBar, feedback=feedback)
+        self.setup_feedback(progressBar=progressBar, feedback=feedback, LogLevel=LogLevel)
         
         
         self.logger.info('ComWrkr.__init__ finished')
         
     def setup_feedback(self,
                        progressBar = None,
-                       feedback=None):
+                       feedback=None,
+                       LogLevel = None,
+                       ):
         """
         feedback setup for all classes
         
@@ -130,7 +135,7 @@ class ComWrkr(object): #common methods for all classes
             
             #standalones create a simple reporter
             else:
-                progressBar = MyProgressReporter()
+                progressBar = MyProgressReporter(LogLevel=LogLevel)
         
         
         #=======================================================================
@@ -210,6 +215,9 @@ class ComWrkr(object): #common methods for all classes
                 #value key pairs
                 if isinstance(subval, dict):
                     for valnm, value in subval.items():
+                        assert isinstance(value, str), \
+                        'got bad type on %s.%s: \'%s\''%(section, valnm, type(value))
+                        
                         pars.set(section, valnm, value)
                         
                 #single values    
@@ -298,7 +306,12 @@ class ComWrkr(object): #common methods for all classes
         # output
         #======================================================================
         #file setup
-        out_fp = os.path.join(out_dir, '%s_smry_plot.%s'%(self.name, fmt))
+        try:
+            fname = fig._suptitle.get_text()
+        except:
+            fname = self.name
+            
+        out_fp = os.path.join(out_dir, '%s.%s'%(fname, fmt))
             
         if os.path.exists(out_fp):
             msg = 'passed output file path already esists :\n    %s'%out_fp
@@ -315,6 +328,24 @@ class ComWrkr(object): #common methods for all classes
             raise Error('failed to write figure to file w/ \n    %s'%e)
         
         return out_fp
+    
+    def check_curve(self, #validate the passed curve_d  
+                    crv_d,
+                    logger=None):
+        if logger is None: logger=self.logger
+        log = logger.getChild('check_curve')
+        
+        assert isinstance(crv_d, dict)
+        
+        log.debug('on %i'%len(crv_d))
+        
+        #check keys
+        l = set(self.crv_keys).difference(crv_d.keys())
+        assert len(l)==0, 'curve is missing keys: %s'%l
+        
+        
+        
+        return True
     
 class MyFeedBack(object): #simple custom feedback object
     
@@ -413,12 +444,24 @@ class MyFeedBack(object): #simple custom feedback object
 
         
 
-class MyProgressReporter(object): #progressBar like basic progress reporter
+class MyProgressReporter(object):   #progressBar like basic progress reporter
+                        
+                         
     """
     may be an issue for multi-threading
     """
     
-    def __init__(self):
+    def __init__(self,
+                  LogLevel=None, #control outputs
+                  ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if LogLevel is None:
+            LogLevel= 10
+        
+        self.level=LogLevel
         self.prog = 0
     
     def reset(self):
@@ -427,13 +470,18 @@ class MyProgressReporter(object): #progressBar like basic progress reporter
     
     def setValue(self, prog):
         self.prog= prog
-        print('    prog=%i'%self.prog)
+        
+        if self.level<=10:
+            print('    prog=%i'%self.prog)
     
 
 
 def view(df):
     if isinstance(df, pd.Series):
         df = pd.DataFrame(df)
+        
+
+    
     import webbrowser
     #import pandas as pd
     from tempfile import NamedTemporaryFile

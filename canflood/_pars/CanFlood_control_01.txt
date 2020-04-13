@@ -1,7 +1,7 @@
 [parameters]
 name = test1            #name of the scenario/model run
 cid = xid               #index column for the 3 inventoried data sets (finv, expos, gels)
-prec = 2                #float precision for calculations
+prec = 3                #float precision for calculations
 ground_water = True     #whether to allow wsl < gel
 felv = ground           #'datum' or 'ground': whether felv values provided in the inventory are heights or elevations
 event_probs = ari       #format of event probabilities (in 'aeps' data file): 'ari' or 'aep'
@@ -9,6 +9,7 @@ ltail = extrapolate     #EAD extrapolation: left tail treatment code (low prob h
 rtail = 0.5             #EAD extrapolation: right trail treatment (high prob low damage)
 drop_tails = True       #whether to remove the extrapolated values from the results
 integrate = trapz       #integration method to apply: trapz, simps 
+as_inun = False         #flag whether to treat exposures as percent inundation
 
 
 [dmg_fps]

@@ -78,6 +78,8 @@ class Model(ComWrkr):
         
         ground_water -- flag to include negative depths in the analysis
         
+        as_inun    -- flag whether to treat exposures as %inundation
+        
         [dmg_fps]
 
         
@@ -107,6 +109,7 @@ class Model(ComWrkr):
     rtail = 0.5
     drop_tails = True
     integrate = 'trapz'
+    as_inun = False
 
 
     
@@ -136,7 +139,7 @@ class Model(ComWrkr):
     #minimum inventory expectations
     finv_exp_d = {
         'f0_scale':{'type':np.number},
-        'f0_elv':{'type':np.number},
+        'f0_elv':{'type':np.number}
         }
     
     max_depth = 20 #maximum depth for throwing an error in build_depths()
@@ -356,7 +359,9 @@ class Model(ComWrkr):
             
             elif chk_hndl == 'ext':
                 assert isinstance(pval, str), '%s.%s expected a filepath '%(sect, varnm)
-                assert os.path.exists(pval), '%s.%s passed bad filepath: \'%s\''%(sect, varnm, pval)
+                if pval == '':
+                    raise Error('must provided a valid \'%s.%s\' filepath'%(sect, varnm))
+                assert os.path.exists(pval), '%s.%s passed invalid filepath: \'%s\''%(sect, varnm, pval)
                 
                 ext = os.path.splitext(os.path.split(pval)[1])[1]
 
@@ -530,8 +535,8 @@ class Model(ComWrkr):
         cid = self.cid
         
         assert 'finv' in self.data_d, 'call load_finv first'
-        assert 'evals' in self.data_d, 'call load_aep first'
-        assert isinstance(self.expcols, pd.Index), 'bad expcols'
+        #assert 'evals' in self.data_d, 'call load_aep first'
+        #assert isinstance(self.expcols, pd.Index), 'bad expcols'
         assert isinstance(self.cindex, pd.Index), 'bad cindex'
         assert os.path.exists(fp), '%s got invalid filepath \n    %s'%(dtag, fp)
         #======================================================================
@@ -596,9 +601,17 @@ class Model(ComWrkr):
         assert np.array_equal(self.cindex, df.index), 'cid mismatch'
         
 
-        if check_monot:
+        if check_monot and 'evals' in self.data_d:
             self.check_monot(df, aep_ser = self.data_d['evals'])
-
+            
+        #for  percent inundation 
+        if self.as_inun:
+            booldf = df >1
+            assert booldf.sum().sum()==0, \
+                'for pct inundation got %i (of %i) exposure values great than 1'%(
+                    booldf.sum().sum(), booldf.size)
+                
+            assert self.felv =='datum', 'felv must equal \'datum\' for pct inundation runs'
 
         #======================================================================
         # set it
@@ -614,7 +627,7 @@ class Model(ComWrkr):
                    ):
         
         log = self.logger.getChild('load_exlikes')
-        
+        assert 'evals' in self.data_d, 'evals data set required with conditional exposure exlikes'
         aep_ser = self.data_d['evals']
         #======================================================================
         # load the data
@@ -689,7 +702,7 @@ class Model(ComWrkr):
         assert 'finv' in self.data_d, 'call load_finv first'
         assert isinstance(self.cindex, pd.Index), 'bad cindex'
         assert os.path.exists(fp), '%s got invalid filepath \n    %s'%(dtag, fp)
-        
+        assert not self.as_inun, 'loading ground els for as_inun =True is invalid'
         #======================================================================
         # load it
         #======================================================================
@@ -1027,6 +1040,7 @@ class Model(ComWrkr):
              self.felv, s.min(), s.mean(), s.max()))
             
         if self.felv == 'ground':
+            assert not self.as_inun
             assert 'gels' in bdf.columns, 'missing gels column'            
             assert bdf['gels'].notna().all()
 
@@ -1063,7 +1077,6 @@ class Model(ComWrkr):
         cid, bid = self.cid, self.bid
 
 
-        
         wdf = self.data_d['expos'] #wsl
 
         #======================================================================
@@ -1076,6 +1089,14 @@ class Model(ComWrkr):
         ddf = edx_df.join(wdf.round(self.prec),  on=cid
                                           ).set_index(bid, drop=False)
                                           
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        if self.as_inun:
+            boolidx = bdf['felv'] !=0
+            if not boolidx.sum().sum() == 0:
+                raise Error('with as_inun=True got %i (of %i) elv values with non-zero depths'%(
+                    boolidx.sum().sum(), boolidx.size))
 
         #======================================================================
         # calc depths
@@ -1110,8 +1131,8 @@ class Model(ComWrkr):
         #======================================================================
         booldf = ddf.loc[:,boolcol] < 0 #True=wsl below ground
         
-        
         if booldf.any().any():
+            assert not self.as_inun
             """
             note these are un-nesetd assets, so counts will be larger than expected
             """

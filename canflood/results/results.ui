@@ -29,7 +29,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>CanFlood_Model</string>
+   <string>CanFlood_Results</string>
   </property>
   <property name="sizeGripEnabled">
    <bool>true</bool>

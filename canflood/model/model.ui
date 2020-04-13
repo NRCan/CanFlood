@@ -198,7 +198,7 @@ p, li { white-space: pre-wrap; }
            <item>
             <widget class="QGroupBox" name="verticalGroupBox_7">
              <property name="title">
-              <string>Vectory Geometry (optional):</string>
+              <string>Vector Geometry (optional):</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_12">
               <item>
@@ -885,7 +885,7 @@ p, li { white-space: pre-wrap; }
                  <string>Run Risk Model (L2) upon completion (see 'Risk (L2)' tab for configuration)</string>
                 </property>
                 <property name="checked">
-                 <bool>true</bool>
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>
@@ -1881,7 +1881,7 @@ p, li { white-space: pre-wrap; }
            <item>
             <widget class="QLabel" name="label_4">
              <property name="text">
-              <string>Execute the SOFDA research model from a SOFDA control file</string>
+              <string>Execute the SOFDA research model from a SOFDA control file (see SOFDA_UsersManual)</string>
              </property>
             </widget>
            </item>

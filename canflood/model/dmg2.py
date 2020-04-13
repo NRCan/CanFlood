@@ -64,9 +64,7 @@ class Dmg2(Model):
              'curves':{'ext':('.xls',)},
              'expos':{'ext':('.csv',)},
                     },
-        'risk_fps':{
-             'evals':{'ext':('.csv',)}, #only required for checks
-                    },
+
              
         'validation':{
             'dmg2':{'type':bool}
@@ -76,10 +74,20 @@ class Dmg2(Model):
     exp_pars_op = {#optional expectations
         'dmg_fps':{
             'gels':{'ext':('.csv',)},
-                    }
+                    },
+        'risk_fps':{
+             'evals':{'ext':('.csv',)}, #only required for checks
+                    },
                     }
     
     group_cnt = 4
+    
+    #minimum inventory expectations
+    finv_exp_d = {
+        'f0_tag':{'type':np.object},
+        'f0_scale':{'type':np.number},
+        'f0_elv':{'type':np.number},
+        }
 
 
     
@@ -93,12 +101,7 @@ class Dmg2(Model):
        
         self.dfuncs_d = dict() #container for damage functions
         
-        """allowing a single set
-        #update the inventory expectations
-        self.finv_exp_d = {**self.finv_exp_d,
-                                   **{'f1_tag':{'type':np.object},
-                                      }
-                           }"""
+
         
         self.logger.debug('finished __init__ on Dmg2')
         
@@ -112,9 +115,15 @@ class Dmg2(Model):
         self.init_model()
         self.resname = 'dmgs_%s_%s'%(self.name, self.tag)
         
-        #self.load_data()
+
         self.load_finv()
-        self.load_evals()
+        
+        if not self.evals == '':
+            """evals are optional"""
+            self.load_evals()
+        else:
+            self.expcols = pd.Series(dtype=np.object).index
+            
         self.load_expos()
     
         self.data_d['curves'] = pd.read_excel(self.curves, sheet_name=None, header=None, index_col=None)
@@ -551,14 +560,13 @@ class Dmg2(Model):
             cf_fp = cf_fp
             )
                    
-class DFunc(object, 
+class DFunc(ComWrkr, 
             ): #damage function
     
     #==========================================================================
     # program pars
     #==========================================================================
-    #required names from file
-    exp_row_nm = ['tag','depth']
+
     
     dd_df = pd.DataFrame() #depth-damage data
     
@@ -573,9 +581,13 @@ class DFunc(object,
     
     def __init__(self,
                  tabn='damage_func', #optional tab name for logging
-                 ):
+                 
+                 **kwargs):
         
         self.tabn= tabn
+        
+        #init the baseclass
+        super().__init__(**kwargs) #initilzie Model
         
     
     def build(self,
@@ -591,19 +603,16 @@ class DFunc(object,
         #======================================================================
         # precheck
         #======================================================================
-        #check all the rows are there
-        miss_l = set(self.exp_row_nm).difference(df_raw.iloc[:, 0])
-        assert len(miss_l) == 0, \
-            'tab \'%s\' missing %i expected row names: %s'%(
-                self.tabn, len(miss_l), miss_l)
+        #=======================================================================
+        # #check all the rows are there
+        # miss_l = set(self.exp_row_nm).difference(df_raw.iloc[:, 0])
+        # assert len(miss_l) == 0, \
+        #     'tab \'%s\' missing %i expected row names: %s'%(
+        #         self.tabn, len(miss_l), miss_l)
+        #=======================================================================
+        
             
-        """
-        import pandas as pd
-        fp = r'C:\LS\03_TOOLS\CanFlood\_ins\build\cT2\CanFlood_curves_rfda_20200218.xls'
-        data.keys()
-        df_raw = data['AA_MC']
-        """
-            
+
         
         #======================================================================
         # identify depth-damage data
@@ -611,10 +620,15 @@ class DFunc(object,
         #slice and clean
         df = df_raw.iloc[:, 0:2].dropna(axis=0, how='all')
         
+        #validate the curve
+        self.check_curve(df.set_index(df.columns[0]).iloc[:,0].to_dict(),
+                         logger=log)
+        
         #locate depth-damage data
-        boolidx = df.iloc[:,0]=='depth' #locate
+        boolidx = df.iloc[:,0]=='exposure' #locate
+        
         assert boolidx.sum()==1, \
-            'got unepxected number of \'depth\' values on %s'%(self.tabn)
+            'got unepxected number of \'exposure\' values on %s'%(self.tabn)
             
         depth_loc = df.index[boolidx].tolist()[0]
         
