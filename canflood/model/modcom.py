@@ -359,7 +359,9 @@ class Model(ComWrkr):
             
             elif chk_hndl == 'ext':
                 assert isinstance(pval, str), '%s.%s expected a filepath '%(sect, varnm)
-                assert os.path.exists(pval), '%s.%s passed bad filepath: \'%s\''%(sect, varnm, pval)
+                if pval == '':
+                    raise Error('must provided a valid \'%s.%s\' filepath'%(sect, varnm))
+                assert os.path.exists(pval), '%s.%s passed invalid filepath: \'%s\''%(sect, varnm, pval)
                 
                 ext = os.path.splitext(os.path.split(pval)[1])[1]
 
