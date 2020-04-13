@@ -39,7 +39,7 @@ import pandas as pd
 from model.risk1 import Risk1
 from model.risk2 import Risk2
 from model.dmg2 import Dmg2
-from model.sofda.scripts import Session as Sofda
+
 
 import results.djoin
 
@@ -401,7 +401,10 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         # run the model
         #=======================================================================
+        
+        
         log.info('init SOFDA from cf: %s'%cf_fp)
+        from model.sofda.scripts import Session as Sofda
         self.feedback.setProgress(3)
         session = Sofda(parspath = cf_fp, 
                           outpath = out_dir, 
