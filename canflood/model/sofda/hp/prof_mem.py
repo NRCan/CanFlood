@@ -9,7 +9,7 @@ memory profiling
 # # IMPORTS ----------------------------------------------------------------------
 #===============================================================================
 #import hp.plot #need to call this first so matplotlib handles are set properly
-import os, copy, sys, time, logging, psutil, weakref, gc
+import os, copy, sys, time, logging, weakref, gc
 #import cProfile, pstats, 
 #import objgraph
 
@@ -282,6 +282,7 @@ class Resource_profiler(object): #worker for profiling resource usage
 
         ctime = time.time()
         
+        import psutil
         process = psutil.Process(os.getpid())
         with process.oneshot():
         
