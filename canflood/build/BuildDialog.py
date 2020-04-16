@@ -249,6 +249,16 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                 
         self.comboBox_vec.layerChanged.connect(upd_stat) #SS inventory vector layer
             
+            
+        #disable sample stats when %inundation is checked
+        def tog_SampStat(): #toggle the sample stat dropdown
+            pstate = self.checkBox_HS_in.isChecked()
+            #if checked, enable the second box
+            self.comboBox_HS_stat.setDisabled(pstate) #disable it
+            self.comboBox_HS_stat.setCurrentIndex(-1) #set selection to none
+            
+        self.checkBox_HS_in.stateChanged.connect(tog_SampStat)
+        
         
         #=======================================================================
         # #execute
