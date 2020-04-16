@@ -504,7 +504,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         #check cid
         assert isinstance(cid, str)
-        if cid == '' or cid in self.invalid_cids:
+        if cid == '':
+            raise Error('must specify a cid') 
+        if cid in self.invalid_cids:
             raise Error('user selected invalid cid \'%s\''%cid)  
         
         assert cid in [field.name() for field in finv_raw.fields()]
@@ -878,8 +880,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         gtype = QgsWkbTypes().displayString(finv.wkbType())
         if not 'Point' in gtype:
             assert not psmp_stat=='', \
-            'for %s type finvs must specifcy a sample statistic on the Hazard Sampler tab'
-        
+            'for %s type finvs must specifcy a sample statistic on the Hazard Sampler tab'%gtype
+            """the module does a more robust check"""
         #======================================================================
         # execute
         #======================================================================
