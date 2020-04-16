@@ -874,6 +874,11 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         if not cid in [field.name() for field in finv.fields()]:
             raise Error('requested cid field \'%s\' not found on the finv_raw'%cid)
             
+        #check if we got a valid sample stat
+        gtype = QgsWkbTypes().displayString(finv.wkbType())
+        if not 'Point' in gtype:
+            assert not psmp_stat=='', \
+            'for %s type finvs must specifcy a sample statistic on the Hazard Sampler tab'
         
         #======================================================================
         # execute
