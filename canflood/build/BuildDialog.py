@@ -197,7 +197,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                            qfd=QFileDialog.getOpenFileName)
             
         self.pushButton_cf.clicked.connect(browse_cf)# SS. Model Control File. Browse
-        
         #======================================================================
         # hazard sampler---------
         #======================================================================
@@ -224,9 +223,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                 
         self.comboBox_dtm.layerChanged.connect(upd_dtmlayname)
         
-        
-            
-
         #=======================================================================
         # #complex
         #=======================================================================
@@ -242,6 +238,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #display sampling stats options to user 
         def upd_stat():
             vlay = self.comboBox_vec.currentLayer()
+            self.comboBox_HS_stat.clear()
             if isinstance(vlay,QgsVectorLayer):
                 gtype = QgsWkbTypes().displayString(vlay.wkbType())
                 self.comboBox_HS_stat.setCurrentIndex(-1)
@@ -280,7 +277,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             1: (self.MLCB_LS1_event_3, self.MLCB_LS1_lpol_3),
             2: (self.MLCB_LS1_event_4, self.MLCB_LS1_lpol_4),
             3: (self.MLCB_LS1_event_5, self.MLCB_LS1_lpol_5),
-            4: (self.MLCB_LS1_event, self.MLCB_LS1_lpol),
+            4: (self.MLCB_LS1_event,   self.MLCB_LS1_lpol),
             5: (self.MLCB_LS1_event_6, self.MLCB_LS1_lpol_6),
             6: (self.MLCB_LS1_event_7, self.MLCB_LS1_lpol_7),
             7: (self.MLCB_LS1_event_2, self.MLCB_LS1_lpol_2),

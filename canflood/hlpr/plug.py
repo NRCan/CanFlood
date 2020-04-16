@@ -180,6 +180,8 @@ class QprojPlug(Qcoms): #baseclass for plugins
                            layer, #layer to set in the combo box
                            fn_str = None, #optional field name for auto setting
                            ):
+        
+        mfcb.clear()
         if isinstance(layer, QgsVectorLayer):
             try:
                 mfcb.setLayer(layer)
