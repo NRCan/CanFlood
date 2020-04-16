@@ -371,14 +371,7 @@ class Rsamp(Qcoms):
         
         #setup temp dir
         import tempfile #todo: move this up top
-        temp_dir = tempfile.mkdtemp()
-        
-        
-        
-        
-        
-
-        
+        temp_dir = tempfile.mkdtemp()        
         #=======================================================================
         # precheck
         #=======================================================================
