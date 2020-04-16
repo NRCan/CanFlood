@@ -197,7 +197,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                            qfd=QFileDialog.getOpenFileName)
             
         self.pushButton_cf.clicked.connect(browse_cf)# SS. Model Control File. Browse
-        
         #======================================================================
         # hazard sampler---------
         #======================================================================
@@ -224,9 +223,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                 
         self.comboBox_dtm.layerChanged.connect(upd_dtmlayname)
         
-        
-            
-
         #=======================================================================
         # #complex
         #=======================================================================
@@ -242,6 +238,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #display sampling stats options to user 
         def upd_stat():
             vlay = self.comboBox_vec.currentLayer()
+            self.comboBox_HS_stat.clear()
             if isinstance(vlay,QgsVectorLayer):
                 gtype = QgsWkbTypes().displayString(vlay.wkbType())
                 self.comboBox_HS_stat.setCurrentIndex(-1)
@@ -252,6 +249,16 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                 
         self.comboBox_vec.layerChanged.connect(upd_stat) #SS inventory vector layer
             
+            
+        #disable sample stats when %inundation is checked
+        def tog_SampStat(): #toggle the sample stat dropdown
+            pstate = self.checkBox_HS_in.isChecked()
+            #if checked, enable the second box
+            self.comboBox_HS_stat.setDisabled(pstate) #disable it
+            self.comboBox_HS_stat.setCurrentIndex(-1) #set selection to none
+            
+        self.checkBox_HS_in.stateChanged.connect(tog_SampStat)
+        
         
         #=======================================================================
         # #execute
@@ -280,7 +287,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             1: (self.MLCB_LS1_event_3, self.MLCB_LS1_lpol_3),
             2: (self.MLCB_LS1_event_4, self.MLCB_LS1_lpol_4),
             3: (self.MLCB_LS1_event_5, self.MLCB_LS1_lpol_5),
-            4: (self.MLCB_LS1_event, self.MLCB_LS1_lpol),
+            4: (self.MLCB_LS1_event,   self.MLCB_LS1_lpol),
             5: (self.MLCB_LS1_event_6, self.MLCB_LS1_lpol_6),
             6: (self.MLCB_LS1_event_7, self.MLCB_LS1_lpol_7),
             7: (self.MLCB_LS1_event_2, self.MLCB_LS1_lpol_2),
@@ -497,7 +504,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         #check cid
         assert isinstance(cid, str)
-        if cid == '' or cid in self.invalid_cids:
+        if cid == '':
+            raise Error('must specify a cid') 
+        if cid in self.invalid_cids:
             raise Error('user selected invalid cid \'%s\''%cid)  
         
         assert cid in [field.name() for field in finv_raw.fields()]
@@ -867,7 +876,12 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         if not cid in [field.name() for field in finv.fields()]:
             raise Error('requested cid field \'%s\' not found on the finv_raw'%cid)
             
-        
+        #check if we got a valid sample stat
+        gtype = QgsWkbTypes().displayString(finv.wkbType())
+        if not 'Point' in gtype:
+            assert not psmp_stat=='', \
+            'for %s type finvs must specifcy a sample statistic on the Hazard Sampler tab'%gtype
+            """the module does a more robust check"""
         #======================================================================
         # execute
         #======================================================================

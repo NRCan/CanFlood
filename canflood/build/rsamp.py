@@ -369,21 +369,9 @@ class Rsamp(Qcoms):
         log = self.logger.getChild('samp_inun')
         gtype=self.gtype
         
-        #master_od = self.out_dir
-        #self.out_dir = os.path.join(master_od, 'inun')
-        
-        #clear the working directory
-        #=======================================================================
-        # """neded for SAGA algo workaround"""
-        # if os.path.exists(self.out_dir):
-        #     log.warning('specified out_dir exists. clearing contents')
-        #     try:
-        #         shutil.rmtree(self.out_dir)
-        #     except Exception as e:
-        #         raise Error('failed to clear working directory. remove layers from workspace? \n    %s'%e)
-        # os.makedirs(self.out_dir)
-        #=======================================================================
-        
+        #setup temp dir
+        import tempfile #todo: move this up top
+        temp_dir = tempfile.mkdtemp()        
         #=======================================================================
         # precheck
         #=======================================================================
@@ -424,21 +412,10 @@ class Rsamp(Qcoms):
             # #get depth raster
             #===================================================================
             log.info('calculating depth raster')
-            #===================================================================
-            # self.out_dir = os.path.join(master_od, 'inun', 'dep')
-            # dep_rlay = self.srastercalculator('a-b',
-            #                    {'a':rlay, 'b':dtm_rlay},
-            #                    logger=log,
-            #                    layname= '%s_dep'%rlay.name(),
-            #                    )
-            #===================================================================
-            #===================================================================
-            # formula = '\"{}@1\"-\"{}@1\"'.format(rlay.name(), dtm_rlay.name())
-            # dep_rlay = self.qrastercalculator(formula, ref_layer=rlay, logger=log)
-            #===================================================================
+
             #using Qgis raster calculator constructor
             dep_rlay = self.raster_subtract(rlay, dtm_rlay, logger=log,
-                                            out_dir = os.path.join(self.out_dir,'temp', 'depth_rlays'))
+                                            out_dir = os.path.join(temp_dir, 'dep'))
             
             #===================================================================
             # get threshold
@@ -460,6 +437,7 @@ class Rsamp(Qcoms):
             log.info('getting pixel counts on %i polys'%finv.dataProvider().featureCount())
             
             algo_nm = 'qgis:zonalstatistics'
+            
             ins_d = {       'COLUMN_PREFIX':indxr, 
                             'INPUT_RASTER':thr_rlay, 
                             'INPUT_VECTOR':finv, 
@@ -548,7 +526,7 @@ class Rsamp(Qcoms):
         #=======================================================================
         # write working reuslts
         #=======================================================================
-        ofp = os.path.join(self.out_dir, 'temp','RAW_rsamp_SampInun_%s_%.2f.csv'%(self.tag, dthresh))
+        ofp = os.path.join(temp_dir, 'RAW_rsamp_SampInun_%s_%.2f.csv'%(self.tag, dthresh))
         res_df.to_csv(ofp, index=None)
         log.info('wrote working data to \n    %s'%ofp)
         
@@ -790,7 +768,7 @@ if __name__ =="__main__":
     #===========================================================================
     
     #==========================================================================
-    # tutorial 3 (polygons as inundation)
+    # tutorial 4 (polygons as inundation)
     #==========================================================================
     data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\4\data'
       
@@ -866,7 +844,7 @@ if __name__ =="__main__":
         ofp = os.path.join(out_dir, res_vlay.name()+'.gpkg')
         vlay_write(res_vlay,ofp, overwrite=True)
      
-    wrkr.upd_cf(cf_fp)
+    #wrkr.upd_cf(cf_fp)
  
     basic.force_open_dir(out_dir)
  
