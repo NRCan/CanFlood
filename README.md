@@ -5,11 +5,11 @@ Flood Risk modelling toolbox for Canada
 
 Here are the working tools:
 
-  Build: Setup, Hazard Sampler (w/ %inundation), Event Variables, Conditional Probabilities, DTM Sampler, Validation, Other
+>Build: Setup, Hazard Sampler (w/ %inundation), Event Variables, Conditional Probabilities, DTM Sampler, Validation, Other
 
-  Model: Setup, Risk (L1), Impacts (L2), Risk (L2), Risk (L3)
+>Model: Setup, Risk (L1), Impacts (L2), Risk (L2), Risk (L3)
 
-  Results: Setup, Risk Plot, Join Geo
+>Results: Setup, Risk Plot, Join Geo
 
 We welcome/encourage any comments, bugs, or issues you have or find. Please create a GitHub 'issue' ticket (on the issue tab) to let us know about these things.
 
