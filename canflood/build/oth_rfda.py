@@ -126,7 +126,7 @@ class RFDAconv(Qcoms):
         res_df = pd.DataFrame(index=df.index)
         res_df[self.cid] = df['id1'].astype(int)
         
-        res_df['f0_elv'] = df['gel'] + df['ff_height']
+        res_df.loc[:, 'f0_elv'] = df['gel'] + df['ff_height']
         res_df.loc[:,'f0_elv'] = res_df['f0_elv'].round(self.prec)
         res_df['f0_scale'] = df['area'].round(self.prec)
         res_df['f0_cap'] = np.nan
