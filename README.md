@@ -5,11 +5,11 @@ Flood Risk modelling toolbox for Canada
 
 Here are the working tools:
 
-  Build: Setup, Hazard Sampler (w/ %inundation), Event Variables, Conditional Probabilities, DTM Sampler, Validation, Other
+>Build: Setup, Hazard Sampler (w/ %inundation), Event Variables, Conditional Probabilities, DTM Sampler, Validation, Other
 
-  Model: Setup, Risk (L1), Impacts (L2), Risk (L2), Risk (L3)
+>Model: Setup, Risk (L1), Impacts (L2), Risk (L2), Risk (L3)
 
-  Results: Setup, Risk Plot, Join Geo
+>Results: Setup, Risk Plot, Join Geo
 
 We welcome/encourage any comments, bugs, or issues you have or find. Please create a GitHub 'issue' ticket (on the issue tab) to let us know about these things.
 
@@ -23,7 +23,7 @@ Happy flood risk modelling!
 
 3) Download the latest Plugin zip from the above [plugin_zips folder](https://github.com/IBIGroupCanWest/CanFlood/tree/master/plugin_zips) to your computer (Right Click...> Save As).
 
-4) In Qgis, install the plugin to your profile from this zip  (Plugins > Manage and Install... > Install from Zip > navigate to the .zip > Install Plugin).
+4) If you're re-installing or upgrading, its safest to uninstall the plugin and restart Qgis.  Then, in Qgis, install the plugin to your profile from this zip  (Plugins > Manage and Install... > Install from Zip > navigate to the .zip > Install Plugin).
 
 5) In Qgis, Turn the plugin on (Plugins > Manage and Install ... > Installed > check 'CanFlood'). If a dependency error is thrown, see 'troubleshooting' below.  If successful, you should see the three CanFlood buttons on your toolbar.
 
