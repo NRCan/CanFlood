@@ -21,7 +21,7 @@ Happy flood risk modelling!
 
 2) In Qgis, install the plugin 'First Aid' from the plugin repository (https://plugins.qgis.org/plugins/firstaid/). This plugin provides additional support for viewing errors in other plugins (essential for communicating your crash reports back to the develpoment team).
 
-3) Download the latest Plugin zip from the above [plugin_zips folder](https://github.com/IBIGroupCanWest/CanFlood/tree/master/plugin_zips) to your computer (Right Click...> Save As).
+3) Download the latest Plugin zip from the above [plugin_zips folder](https://github.com/IBIGroupCanWest/CanFlood/tree/master/plugin_zips) to your computer (click the latest .zip, click the 'download' button. DO NOT right click ... Save As).
 
 4) If you're re-installing or upgrading, its safest to uninstall the plugin and restart Qgis.  Then, in Qgis, install the plugin to your profile from this zip  (Plugins > Manage and Install... > Install from Zip > navigate to the .zip > Install Plugin).
 
