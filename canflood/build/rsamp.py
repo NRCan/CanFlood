@@ -310,75 +310,8 @@ class Rsamp(Qcoms):
             # sample.Line--------------
             #=======================================================================
             elif 'Line' in gtype: 
-                
-                #===============================================================
-                # #convert to points
-                #===============================================================
-                params_d = { 'DISTANCE' : rlay.rasterUnitsPerPixelX(), 
-                            'END_OFFSET' : 0, 
-                            'INPUT' : finv, 
-                            'OUTPUT' : 'TEMPORARY_OUTPUT', 
-                            'START_OFFSET' : 0 }
-                
+                finv = self.line_sample_stats(finv, rlay,[psmp_stat], logger=log)
 
-                res_d = processing.run('native:pointsalonglines', params_d, feedback=self.feedback)
-                fpts_vlay = res_d['OUTPUT']
-                
-                #===============================================================
-                # #sample the raster
-                #===============================================================
-                ofnl2 = [field.name() for field in fpts_vlay.fields()]
-                params_d = { 'COLUMN_PREFIX' : rlay.name(),
-                             'INPUT' : fpts_vlay,
-                              'OUTPUT' : 'TEMPORARY_OUTPUT',
-                               'RASTERCOPY' : rlay}
-                
-
-                res_d = processing.run('qgis:rastersampling', params_d, feedback=self.feedback)
-                fpts_vlay = res_d['OUTPUT']
-                """
-                view(fpts_vlay)
-                """
-                #get new field name
-                new_fn = set([field.name() for field in fpts_vlay.fields()]).difference(ofnl2) #new field names not in the old
-                
-                assert len(new_fn)==1
-                new_fn = list(new_fn)[0]
-                
-                #===============================================================
-                # get stats
-                #===============================================================
-                """note this does not return xid values where everything sampled as null"""
-                params_d = { 'CATEGORIES_FIELD_NAME' : [self.cid], 
-                            'INPUT' : fpts_vlay,
-                            'OUTPUT' : 'TEMPORARY_OUTPUT', 
-                            'VALUES_FIELD_NAME' :new_fn}
-                
-                res_d = processing.run('qgis:statisticsbycategories', params_d, feedback=self.feedback)
-                stat_tbl = res_d['OUTPUT']
-
-                #check that the sample stat is in there
-                assert psmp_stat.lower() in [field.name() for field in stat_tbl.fields()],\
-                    'requested sample statistic \"%s\' failed to generate'%psmp_stat
-                #===============================================================
-                # join stats back to finv
-                #===============================================================
-                params_d = { 'DISCARD_NONMATCHING' : False,
-                             'FIELD' : self.cid, 
-                             'FIELDS_TO_COPY' : [psmp_stat.lower()],
-                             'FIELD_2' : self.cid,
-                              'INPUT' : finv,
-                              'INPUT_2' : stat_tbl,
-                             'METHOD' : 1, #Take attributes of the first matching feature only (one-to-one)
-                              'OUTPUT' : 'TEMPORARY_OUTPUT',
-                               'PREFIX' : indxr }
-                
-                res_d = processing.run('native:joinattributestable', params_d, feedback=self.feedback)
-                finv = res_d['OUTPUT']
-                """
-                view(finv)
-                """
-                
 
             #======================================================================
             # sample.Points----------------
@@ -719,39 +652,68 @@ class Rsamp(Qcoms):
             dep_rlay = self.raster_subtract(rlay, dtm_rlay, logger=log,
                                             out_dir = os.path.join(temp_dir, 'dep'))
             
-            #===================================================================
-            # get threshold
-            #===================================================================
-            #reduce to all values above depththreshold
-
-            log.info('calculating %.2f threshold raster'%dthresh) 
-            
-            thr_rlay = self.grastercalculator(
-                                'A*(A>%.2f)'%dthresh, #null if not above minval
-                               {'A':dep_rlay},
-                               logger=log,
-                               layname= '%s_mv'%dep_rlay.name()
-                               )
         
+            #===============================================================
+            # #convert to points
+            #===============================================================
+            params_d = { 'DISTANCE' : dep_rlay.rasterUnitsPerPixelX(), 
+                        'END_OFFSET' : 0, 
+                        'INPUT' : finv, 
+                        'OUTPUT' : 'TEMPORARY_OUTPUT', 
+                        'START_OFFSET' : 0 }
+            
+    
+            res_d = processing.run('native:pointsalonglines', params_d, feedback=self.feedback)
+            fpts_vlay = res_d['OUTPUT']
+            
+            #===============================================================
+            # #sample the raster
+            #===============================================================
+            ofnl2 = [field.name() for field in fpts_vlay.fields()]
+            params_d = { 'COLUMN_PREFIX' : rlay.name(),
+                         'INPUT' : fpts_vlay,
+                          'OUTPUT' : 'TEMPORARY_OUTPUT',
+                           'RASTERCOPY' : dep_rlay}
+            
+            res_d = processing.run('qgis:rastersampling', params_d, feedback=self.feedback)
+            fpts_vlay = res_d['OUTPUT']
+
+            #get new field name
+            new_fn = set([field.name() for field in fpts_vlay.fields()]).difference(ofnl2) #new field names not in the old
+            
+            assert len(new_fn)==1
+            new_fn = list(new_fn)[0]
+            
             #===================================================================
-            # #get cell counts per polygon
+            # clean/pull data
             #===================================================================
-            log.info('getting pixel counts on %i polys'%finv.dataProvider().featureCount())
+            #drop all the other fields
+            fpts_vlay = self.deletecolumn(fpts_vlay,[new_fn, self.cid], invert=True, logger=log )
             
-            algo_nm = 'qgis:zonalstatistics'
+            #pull data
+            """
+            the builtin statistics algo doesn't do a good job handling nulls
+            """
+            pts_df = vlay_get_fdf(fpts_vlay, logger=log)
             
-            ins_d = {       'COLUMN_PREFIX':indxr, 
-                            'INPUT_RASTER':thr_rlay, 
-                            'INPUT_VECTOR':finv, 
-                            'RASTER_BAND':1, 
-                            'STATS':[0],#0: pixel counts, 1: sum
-                            }
-                
-            #execute the algo
-            res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
-            """this edits the finv in place"""
+            #===================================================================
+            # calc stats
+            #===================================================================
+            """
+            view(pts_df)
+            (pts_df[self.cid]==4).sum()
+            """
+            #get count of REAL values in each xid group
+            pts_df['all']=1 #add dummy column
+            sdf = pts_df.groupby(self.cid).count().reset_index(drop=False)
             
-           
+            #get ratio
+            sdf['inun'] = sdf[new_fn].divide(sdf['all']).round(self.prec)
+            
+
+            
+
+            
             #===================================================================
             # check/correct field names
             #===================================================================
@@ -965,6 +927,96 @@ class Rsamp(Qcoms):
         
         #report on number of nulls
         
+    def line_sample_stats(self, #get raster stats using a line
+                    line_vlay, #line vectorylayer with geometry to sample from
+                    rlay, #raster to sample
+                    sample_stats, #list of stats to sample
+                    logger=None,
+                    ):
+        """
+        sampliung a raster layer with a line and a statistic
+        """
+        if logger is None: logger=self.logger
+        log=logger.getChild('line_sample_stats')
+        log.debug('on %s'%(line_vlay.name()))
+        
+        #drop everythin gto lower case
+        sample_stats = [e.lower() for e in sample_stats]
+        #===============================================================
+        # #convert to points
+        #===============================================================
+        params_d = { 'DISTANCE' : rlay.rasterUnitsPerPixelX(), 
+                    'END_OFFSET' : 0, 
+                    'INPUT' : line_vlay, 
+                    'OUTPUT' : 'TEMPORARY_OUTPUT', 
+                    'START_OFFSET' : 0 }
+        
+
+        res_d = processing.run('native:pointsalonglines', params_d, feedback=self.feedback)
+        fpts_vlay = res_d['OUTPUT']
+        
+        #===============================================================
+        # #sample the raster
+        #===============================================================
+        ofnl2 = [field.name() for field in fpts_vlay.fields()]
+        params_d = { 'COLUMN_PREFIX' : rlay.name(),
+                     'INPUT' : fpts_vlay,
+                      'OUTPUT' : 'TEMPORARY_OUTPUT',
+                       'RASTERCOPY' : rlay}
+        
+
+        res_d = processing.run('qgis:rastersampling', params_d, feedback=self.feedback)
+        fpts_vlay = res_d['OUTPUT']
+        """
+        view(fpts_vlay)
+        """
+        #get new field name
+        new_fn = set([field.name() for field in fpts_vlay.fields()]).difference(ofnl2) #new field names not in the old
+        
+        assert len(new_fn)==1
+        new_fn = list(new_fn)[0]
+        
+        #===============================================================
+        # get stats
+        #===============================================================
+        """note this does not return xid values where everything sampled as null"""
+        params_d = { 'CATEGORIES_FIELD_NAME' : [self.cid], 
+                    'INPUT' : fpts_vlay,
+                    'OUTPUT' : 'TEMPORARY_OUTPUT', 
+                    'VALUES_FIELD_NAME' :new_fn}
+        
+        res_d = processing.run('qgis:statisticsbycategories', params_d, feedback=self.feedback)
+        stat_tbl = res_d['OUTPUT']
+        
+        #===============================================================
+        # join stats back to line_vlay
+        #===============================================================
+        #check that the sample stat is in there
+        s = set(sample_stats).difference([field.name() for field in stat_tbl.fields()])
+        assert len(s)==0, 'requested sample statistics \"%s\' failed to generate'%s 
+        
+        #run algo
+        params_d = { 'DISCARD_NONMATCHING' : False,
+                     'FIELD' : self.cid, 
+                     'FIELDS_TO_COPY' : sample_stats,
+                     'FIELD_2' : self.cid,
+                      'INPUT' : line_vlay,
+                      'INPUT_2' : stat_tbl,
+                     'METHOD' : 1, #Take attributes of the first matching feature only (one-to-one)
+                      'OUTPUT' : 'TEMPORARY_OUTPUT',
+                       'PREFIX' : line_vlay }
+        
+        res_d = processing.run('native:joinattributestable', params_d, feedback=self.feedback)
+        line_vlay = res_d['OUTPUT']
+        
+        """
+        view(line_vlay)
+        """
+                
+                
+
+        return line_vlay
+        
     def check(self):
         pass
         
@@ -1115,7 +1167,7 @@ if __name__ =="__main__":
     
     #inundation sampling
     dtm_fp = os.path.join(data_dir, 'dtm_cT1.tif')
-    as_inun=False
+    as_inun=True
     dthresh = 0.5
      
     cid='xid'
