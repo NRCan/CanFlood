@@ -224,7 +224,13 @@ class Rsamp(Qcoms):
         #=======================================================================
         #inundation runs
         if as_inun:
-            res_vlay = self.samp_inun(finv,raster_l, dtm_rlay, dthresh)
+            #polygons
+            if 'Polygon' in self.gtype:
+                res_vlay = self.samp_inun(finv,raster_l, dtm_rlay, dthresh)
+            elif 'Line' in self.gtype:
+                res_vlay = self.samp_inun_line(finv, raster_l, dtm_rlay, dthresh)
+            else:
+                raise Error('bad gtype')
             
             res_name = '%s_%s_%i_%i_d%.2f'%(
                 self.fname, self.tag, len(raster_l), res_vlay.dataProvider().featureCount(), dthresh)
@@ -360,7 +366,8 @@ class Rsamp(Qcoms):
         
         return finv
     
-    def samp_inun(self,finv, raster_l, dtmlay_raw, dthresh,
+    def samp_inun(self, #inundation percent for polygons
+                  finv, raster_l, dtmlay_raw, dthresh,
                    ):
         #=======================================================================
         # defaults
@@ -379,21 +386,212 @@ class Rsamp(Qcoms):
         assert isinstance(dtmlay_raw, QgsRasterLayer)
         assert isinstance(dthresh, float)
         assert 'Memory' in dp.storageType() #zonal stats makes direct edits
-        
+        assert 'Polygon' in gtype
         #=======================================================================
         # setup the dtm------
         #=======================================================================
         log.info('trimming dtm raster')
         #add a buffer and dissolve
         """makes the raster clipping a bitcleaner and faster"""
-        if 'Line' in gtype:
-            raise Error('not imp[lemented')
-        elif 'Polygon' in gtype:
-            finv_buf = self.buffer(finv,
-                                    dtmlay_raw.rasterUnitsPerPixelX()*3,#buffer by 3x the pixel size
-                                     dissolve=True, logger=log )
+
+        finv_buf = self.buffer(finv,
+                                dtmlay_raw.rasterUnitsPerPixelX()*3,#buffer by 3x the pixel size
+                                 dissolve=True, logger=log )
+
+        
+        #clip to just the polygons
+        dtm_rlay = self.cliprasterwithpolygon(dtmlay_raw,finv_buf, logger=log)
+        
+        #=======================================================================
+        # sample loop---------
+        #=======================================================================
+        """
+        too memory intensive to handle writing of all these.
+        an advanced user could retrive from the working folder if desiered
+        """
+        names_d = dict()
+        parea_d = dict()
+        for indxr, rlay in enumerate(raster_l):
+            log = self.logger.getChild('samp_inun.%s'%rlay.name())
+            ofnl = [field.name() for field in finv.fields()]
+
+
+            #===================================================================
+            # #get depth raster
+            #===================================================================
+            log.info('calculating depth raster')
+
+            #using Qgis raster calculator constructor
+            dep_rlay = self.raster_subtract(rlay, dtm_rlay, logger=log,
+                                            out_dir = os.path.join(temp_dir, 'dep'))
+            
+            #===================================================================
+            # get threshold
+            #===================================================================
+            #reduce to all values above depththreshold
+
+            log.info('calculating %.2f threshold raster'%dthresh) 
+            
+            thr_rlay = self.grastercalculator(
+                                'A*(A>%.2f)'%dthresh, #null if not above minval
+                               {'A':dep_rlay},
+                               logger=log,
+                               layname= '%s_mv'%dep_rlay.name()
+                               )
+        
+            #===================================================================
+            # #get cell counts per polygon
+            #===================================================================
+            log.info('getting pixel counts on %i polys'%finv.dataProvider().featureCount())
+            
+            algo_nm = 'qgis:zonalstatistics'
+            
+            ins_d = {       'COLUMN_PREFIX':indxr, 
+                            'INPUT_RASTER':thr_rlay, 
+                            'INPUT_VECTOR':finv, 
+                            'RASTER_BAND':1, 
+                            'STATS':[0],#0: pixel counts, 1: sum
+                            }
+                
+            #execute the algo
+            res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
+            """this edits the finv in place"""
+            
+           
+            #===================================================================
+            # check/correct field names
+            #===================================================================
+            """
+            algos don't assign good field names.
+            collecting a conversion dictionary then adjusting below
+            """
+            #get/updarte the field names
+            nfnl =  [field.name() for field in finv.fields()]
+            new_fn = set(nfnl).difference(ofnl) #new field names not in the old
+            
+            if len(new_fn) > 1:
+                """
+                possible error with Q3.12
+                """
+                raise Error('zonalstatistics generated more new fields than expected: %i \n    %s'%(len(new_fn), new_fn))
+            elif len(new_fn) == 1:
+                names_d[list(new_fn)[0]] = rlay.name()
+            else:
+                raise Error('bad fn match')
+            
+            
+            #===================================================================
+            # update pixel size
+            #===================================================================
+            parea_d[rlay.name()] = rlay.rasterUnitsPerPixelX()*rlay.rasterUnitsPerPixelY()
+            
+        #=======================================================================
+        # area calc-----------
+        #=======================================================================
+        log = self.logger.getChild('samp_inun')
+        log.info('calculating areas on %i results fields:\n    %s'%(len(names_d), list(names_d.keys())))
+        
+        #add geometry fields
+        finv = self.addgeometrycolumns(finv, logger = log)
+        
+        df_raw  = vlay_get_fdf(finv, logger=log)
+        
+        df = df_raw.rename(columns=names_d)
+
+        self.names_d
+
+        
+        #multiply each column by corresponding raster's cell size
+        res_df = df.loc[:, names_d.values()].multiply(pd.Series(parea_d)).round(self.prec)
+        res_df = res_df.rename(columns={coln:'%s_a'%coln for coln in res_df.columns})
+        
+        #divide by area of each polygon
+        frac_df = res_df.div(df_raw['area'], axis=0).round(self.prec)
+        d = {coln:'%s_pct_raw'%coln for coln in frac_df.columns}
+        frac_df = frac_df.rename(columns=d)
+        res_df = res_df.join(frac_df)#add back in results
+        
+        #adjust for excessive fractions
+        booldf = frac_df>1
+        d1 = {coln:'%s_pct'%ename for ename, coln in d.items()}
+        if booldf.any().any():
+            log.warning('got %i (of %i) pct values >1.00. setting to 1.0 (bad pixel/polygon ratio?)'%(
+                booldf.sum().sum(), booldf.size))
+            
+            fix_df = frac_df.where(~booldf, 1.0)
+            fix_df = fix_df.rename(columns=d1)
+            res_df = res_df.join(fix_df)
+            
         else:
-            raise Error('unrecognized gtype: %s'%gtype)
+            res_df = res_df.rename(columns=d1)
+        
+        #add back in all the raw
+        res_df = res_df.join(df_raw.rename(columns=names_d))
+        
+        #set the reuslts converter
+        self.names_d = {coln:ename for coln, ename in dict(zip(d1.values(), names_d.values())).items()}
+        
+        #=======================================================================
+        # write working reuslts
+        #=======================================================================
+        ofp = os.path.join(temp_dir, 'RAW_rsamp_SampInun_%s_%.2f.csv'%(self.tag, dthresh))
+        res_df.to_csv(ofp, index=None)
+        log.info('wrote working data to \n    %s'%ofp)
+        
+        #slice to results only
+        res_df = res_df.loc[:,[self.cid]+list(d1.values())]
+        
+        log.info('data assembed w/ %s: \n    %s'%(str(res_df.shape), res_df.columns.tolist()))
+        
+        """
+        view(res_df)
+        """
+        
+        
+        #=======================================================================
+        # bundle back into vectorlayer
+        #=======================================================================
+        geo_d = vlay_get_fdata(finv, geo_obj=True, logger=log)
+        res_vlay = vlay_new_df(res_df, finv.crs(), geo_d=geo_d, logger=log,
+                               layname='%s_%s_inun'%(self.tag, finv.name()))
+        
+        log.info('finisished w/ %s'%res_vlay.name())
+
+        
+        return res_vlay
+
+    def samp_inun_line(self, #inundation percent for polygons
+                  finv, raster_l, dtmlay_raw, dthresh,
+                   ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        log = self.logger.getChild('samp_inun_line')
+        gtype=self.gtype
+        
+        #setup temp dir
+        import tempfile #todo: move this up top
+        temp_dir = tempfile.mkdtemp()        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        dp = finv.dataProvider()
+
+        assert isinstance(dtmlay_raw, QgsRasterLayer)
+        assert isinstance(dthresh, float)
+        assert 'Memory' in dp.storageType() #zonal stats makes direct edits
+        assert 'Line' in gtype
+        #=======================================================================
+        # setup the dtm------
+        #=======================================================================
+        log.info('trimming dtm raster')
+        #add a buffer and dissolve
+        """makes the raster clipping a bitcleaner and faster"""
+
+        finv_buf = self.polygonfromlayerextent(finv,
+                                round_to=dtmlay_raw.rasterUnitsPerPixelX()*3,#buffer by 3x the pixel size
+                                 logger=log )
+
         
         #clip to just the polygons
         dtm_rlay = self.cliprasterwithpolygon(dtmlay_raw,finv_buf, logger=log)
