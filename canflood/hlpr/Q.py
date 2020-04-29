@@ -1479,6 +1479,57 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
 
         return res_vlay
     
+    def polygonfromlayerextent(self,
+                             vlay,
+                             round_to=0, #adds a buffer to the result?
+                             logger=None,
+                             layname=None): 
+        """
+        This algorithm takes a map layer and generates a new vector layer with the
+         minimum bounding box (rectangle polygon with N-S orientation) that covers the input layer.
+          Optionally, the extent can be enlarged to a rounded value.
+        """
+        
+        #===========================================================================
+        # setups and defaults
+        #===========================================================================
+        if logger is None: logger = self.logger
+        log = logger.getChild('polygonfromlayerextent')
+        algo_nm = 'qgis:polygonfromlayerextent'
+        
+        if layname is None: 
+            layname = '%s_exts'%vlay.name()
+              
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        
+
+        #=======================================================================
+        # # build inputs
+        #=======================================================================
+        ins_d = {'INPUT' : vlay,
+                 'OUTPUT' : 'TEMPORARY_OUTPUT',
+                 'ROUND_TO':round_to}
+        
+        log.debug('\'%s\' on \'%s\' with: \n   %s'
+            %(algo_nm, vlay.name(), ins_d))
+        
+        #execute
+        res_d = processing.run(algo_nm, ins_d,  feedback=self.feedback)
+
+        
+        res_vlay = res_d['OUTPUT']
+        
+        assert isinstance(res_vlay, QgsVectorLayer)
+        #===========================================================================
+        # wrap
+        #===========================================================================
+
+        res_vlay.setName(layname) #reset the name
+
+        return res_vlay
+    
     
     
     #==========================================================================
