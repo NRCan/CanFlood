@@ -73,7 +73,10 @@ class Rsamp(Qcoms):
                 # 11: Variance
                 # 12: All
                 }
-
+    
+    """
+    ['count', 'unique', 'min', 'max', 'range', 'sum', 'mean', 'median', 'stddev', 'minority', 'majority', 'q1', 'q3', 'iqr']
+    """
     
     
     def __init__(self,
@@ -184,7 +187,7 @@ class Rsamp(Qcoms):
         log.info('executing on %i rasters'%(len(raster_l)))
         self.as_inun = as_inun
         #======================================================================
-        # #check the data
+        # precheck
         #======================================================================
         
         assert isinstance(crs, QgsCoordinateReferenceSystem)
@@ -194,6 +197,8 @@ class Rsamp(Qcoms):
         assert finv_raw.crs() == crs, 'finv_raw crs doesnt match project'
         assert cid in [field.name() for field in finv_raw.fields()], \
             'requested cid field \'%s\' not found on the finv_raw'%cid
+            
+        finv_raw.wkbType()
         
         
         #check the rasters
@@ -219,6 +224,8 @@ class Rsamp(Qcoms):
         
         self.gtype = QgsWkbTypes().displayString(finv.wkbType())
         
+        if self.gtype.endswith('Z'):
+            log.warning('passed finv has Z values... these are not supported')
         #=======================================================================
         # exercute
         #=======================================================================
@@ -267,8 +274,10 @@ class Rsamp(Qcoms):
         elif 'Point' in gtype:
             algo_nm = 'qgis:rastersampling'
             
+        elif 'Line' in gtype:
+            algo_nm = 'native:pointsalonglines'
         else:
-            raise Error('Line sampling not implemented')
+            raise Error('unsupported gtype: %s'%gtype)
 
         #=======================================================================
         # sample loop
@@ -301,11 +310,75 @@ class Rsamp(Qcoms):
             # sample.Line--------------
             #=======================================================================
             elif 'Line' in gtype: 
-                raise Error('not implemented')
-            
-                #ask for sample type (min/max/mean)
                 
-                #sample each raster
+                #===============================================================
+                # #convert to points
+                #===============================================================
+                params_d = { 'DISTANCE' : rlay.rasterUnitsPerPixelX(), 
+                            'END_OFFSET' : 0, 
+                            'INPUT' : finv, 
+                            'OUTPUT' : 'TEMPORARY_OUTPUT', 
+                            'START_OFFSET' : 0 }
+                
+
+                res_d = processing.run('native:pointsalonglines', params_d, feedback=self.feedback)
+                fpts_vlay = res_d['OUTPUT']
+                
+                #===============================================================
+                # #sample the raster
+                #===============================================================
+                ofnl2 = [field.name() for field in fpts_vlay.fields()]
+                params_d = { 'COLUMN_PREFIX' : rlay.name(),
+                             'INPUT' : fpts_vlay,
+                              'OUTPUT' : 'TEMPORARY_OUTPUT',
+                               'RASTERCOPY' : rlay}
+                
+
+                res_d = processing.run('qgis:rastersampling', params_d, feedback=self.feedback)
+                fpts_vlay = res_d['OUTPUT']
+                """
+                view(fpts_vlay)
+                """
+                #get new field name
+                new_fn = set([field.name() for field in fpts_vlay.fields()]).difference(ofnl2) #new field names not in the old
+                
+                assert len(new_fn)==1
+                new_fn = list(new_fn)[0]
+                
+                #===============================================================
+                # get stats
+                #===============================================================
+                """note this does not return xid values where everything sampled as null"""
+                params_d = { 'CATEGORIES_FIELD_NAME' : [self.cid], 
+                            'INPUT' : fpts_vlay,
+                            'OUTPUT' : 'TEMPORARY_OUTPUT', 
+                            'VALUES_FIELD_NAME' :new_fn}
+                
+                res_d = processing.run('qgis:statisticsbycategories', params_d, feedback=self.feedback)
+                stat_tbl = res_d['OUTPUT']
+
+                #check that the sample stat is in there
+                assert psmp_stat.lower() in [field.name() for field in stat_tbl.fields()],\
+                    'requested sample statistic \"%s\' failed to generate'%psmp_stat
+                #===============================================================
+                # join stats back to finv
+                #===============================================================
+                params_d = { 'DISCARD_NONMATCHING' : False,
+                             'FIELD' : self.cid, 
+                             'FIELDS_TO_COPY' : [psmp_stat.lower()],
+                             'FIELD_2' : self.cid,
+                              'INPUT' : finv,
+                              'INPUT_2' : stat_tbl,
+                             'METHOD' : 1, #Take attributes of the first matching feature only (one-to-one)
+                              'OUTPUT' : 'TEMPORARY_OUTPUT',
+                               'PREFIX' : indxr }
+                
+                res_d = processing.run('native:joinattributestable', params_d, feedback=self.feedback)
+                finv = res_d['OUTPUT']
+                """
+                view(finv)
+                """
+                
 
             #======================================================================
             # sample.Points----------------
@@ -344,6 +417,8 @@ class Rsamp(Qcoms):
             """
             algos don't assign good field names.
             collecting a conversion dictionary then adjusting below
+            
+            TODO: propagate these field renames to the loaded result layers
             """
             #get/updarte the field names
             nfnl =  [field.name() for field in finv.fields()]
@@ -563,6 +638,31 @@ class Rsamp(Qcoms):
     def samp_inun_line(self, #inundation percent for polygons
                   finv, raster_l, dtmlay_raw, dthresh,
                    ):
+        
+        """"
+        couldn't find a great pre-made algo
+        
+        option 1:
+            SAGA profile from lines (does not retain line attributes)
+            join attributes by nearest (to retrieve XID)
+            
+        option 2:
+            Generate points (pixel centroids) along line 
+                (does not retain line attributes)
+                generates points on null pixel values
+            sample points
+            join by nearest
+            
+        option 3:
+            add geometry attributes
+            Points along geometry (retains attribute)
+            sample raster
+            count those above threshold
+            divide by total for each line
+            get % above threshold for each line
+            get km inundated for each line
+        
+        """
         #=======================================================================
         # defaults
         #=======================================================================
@@ -1008,13 +1108,14 @@ if __name__ =="__main__":
                   'haz_50yr_cT2.tif',
                   ]
     
-    finv_fp = os.path.join(data_dir, 'finv_tut5_lines.gpkg')
+    #finv_fp = os.path.join(data_dir, 'finv_tut5_lines.gpkg')
+    finv_fp = r'C:\Users\cefect\Downloads\line_test.gpkg'
     
     cf_fp = r'C:\Users\cefect\CanFlood\build\5\CanFlood_tut5.txt'
     
     #inundation sampling
     dtm_fp = os.path.join(data_dir, 'dtm_cT1.tif')
-    as_inun=True
+    as_inun=False
     dthresh = 0.5
      
     cid='xid'
