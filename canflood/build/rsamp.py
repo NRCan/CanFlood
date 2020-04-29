@@ -222,12 +222,14 @@ class Rsamp(Qcoms):
         #=======================================================================
         # exercute
         #=======================================================================
+        #inundation runs
         if as_inun:
             res_vlay = self.samp_inun(finv,raster_l, dtm_rlay, dthresh)
             
             res_name = '%s_%s_%i_%i_d%.2f'%(
                 self.fname, self.tag, len(raster_l), res_vlay.dataProvider().featureCount(), dthresh)
-            
+        
+        #WSL value sampler
         else:
             res_vlay = self.samp_vals(finv,raster_l, psmp_stat)
             res_name = '%s_%s_%i_%i'%(self.fname, self.tag, len(raster_l), res_vlay.dataProvider().featureCount())
@@ -258,13 +260,13 @@ class Rsamp(Qcoms):
             
         elif 'Point' in gtype:
             algo_nm = 'qgis:rastersampling'
+            
+        else:
+            raise Error('Line sampling not implemented')
 
-
-        
         #=======================================================================
         # sample loop
         #=======================================================================
-        
         names_d = dict()
         
         log.info('sampling %i raster layers w/ algo \'%s\' and gtype: %s'%(len(raster_l), algo_nm, gtype))
@@ -272,12 +274,10 @@ class Rsamp(Qcoms):
             
             log.info('%i/%i sampling \'%s\' on \'%s\''%(indxr+1, len(raster_l), finv.name(), rlay.name()))
             ofnl =  [field.name() for field in finv.fields()]
-            
             #===================================================================
             # sample.poly----------
             #===================================================================
             if 'Polygon' in gtype: 
-                
                 params_d = {'COLUMN_PREFIX':indxr, 
                             'INPUT_RASTER':rlay, 
                             'INPUT_VECTOR':finv, 
@@ -300,8 +300,7 @@ class Rsamp(Qcoms):
                 #ask for sample type (min/max/mean)
                 
                 #sample each raster
-        
-                
+
             #======================================================================
             # sample.Points----------------
             #======================================================================
@@ -376,7 +375,7 @@ class Rsamp(Qcoms):
         # precheck
         #=======================================================================
         dp = finv.dataProvider()
-        assert 'Polygon' in gtype
+
         assert isinstance(dtmlay_raw, QgsRasterLayer)
         assert isinstance(dthresh, float)
         assert 'Memory' in dp.storageType() #zonal stats makes direct edits
@@ -387,9 +386,14 @@ class Rsamp(Qcoms):
         log.info('trimming dtm raster')
         #add a buffer and dissolve
         """makes the raster clipping a bitcleaner and faster"""
-        finv_buf = self.buffer(finv,
-                                dtmlay_raw.rasterUnitsPerPixelX()*3,#buffer by 3x the pixel size
-                                 dissolve=True, logger=log )
+        if 'Line' in gtype:
+            raise Error('not imp[lemented')
+        elif 'Polygon' in gtype:
+            finv_buf = self.buffer(finv,
+                                    dtmlay_raw.rasterUnitsPerPixelX()*3,#buffer by 3x the pixel size
+                                     dissolve=True, logger=log )
+        else:
+            raise Error('unrecognized gtype: %s'%gtype)
         
         #clip to just the polygons
         dtm_rlay = self.cliprasterwithpolygon(dtmlay_raw,finv_buf, logger=log)
@@ -770,36 +774,59 @@ if __name__ =="__main__":
     #==========================================================================
     # tutorial 4 (polygons as inundation)
     #==========================================================================
-    data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\4\data'
-      
+    #===========================================================================
+    # data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\4\data'
+    #   
+    # raster_fns = [
+    #              'haz_1000yr_cT2.tif', 
+    #               'haz_100yr_cT2.tif', 
+    #               'haz_200yr_cT2.tif',
+    #               'haz_50yr_cT2.tif',
+    #               ]
+    #  
+    #  
+    #    
+    # finv_fp = os.path.join(data_dir, 'finv_tut4.gpkg')
+    #   
+    # cf_fp = r'C:\Users\cefect\CanFlood\build\4\CanFlood_tut4.txt'
+    #  
+    # #inundation sampling
+    # dtm_fp = os.path.join(data_dir, 'dtm_cT1.tif')
+    # as_inun=True
+    # dthresh = 0.5
+    #  
+    # cid='xid'
+    # tag='tut4'
+    #===========================================================================
+    
+    #===========================================================================
+    # tutorial 5 (inundation of lines)
+    #===========================================================================
+    data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\5\data'
     raster_fns = [
                  'haz_1000yr_cT2.tif', 
                   'haz_100yr_cT2.tif', 
                   'haz_200yr_cT2.tif',
                   'haz_50yr_cT2.tif',
                   ]
-     
-     
-       
-    finv_fp = os.path.join(data_dir, 'finv_tut4.gpkg')
-      
-    cf_fp = r'C:\Users\cefect\CanFlood\build\4\CanFlood_tut4.txt'
-     
+    
+    finv_fp = os.path.join(data_dir, 'finv_tut5_lines.gpkg')
+    
+    cf_fp = r'C:\Users\cefect\CanFlood\build\5\CanFlood_tut5.txt'
+    
     #inundation sampling
     dtm_fp = os.path.join(data_dir, 'dtm_cT1.tif')
     as_inun=True
     dthresh = 0.5
      
     cid='xid'
-    tag='tut4'
+    tag='tut5'
     
     #===========================================================================
     # build directories
     #===========================================================================
     out_dir = os.path.join(os.getcwd(),'build', 'rsamp', tag)
     raster_fps = [os.path.join(data_dir, fn) for fn in raster_fns]
-    
-    
 
     #===========================================================================
     # init the run
