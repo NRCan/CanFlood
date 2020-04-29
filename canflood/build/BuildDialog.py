@@ -243,7 +243,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                 gtype = QgsWkbTypes().displayString(vlay.wkbType())
                 self.comboBox_HS_stat.setCurrentIndex(-1)
                 
-                if 'Polygon' in gtype:
+                if 'Polygon' in gtype or 'Line' in gtype:
                     self.comboBox_HS_stat.addItems(
                         ['','Mean','Median','Min','Max'])
                 
@@ -716,15 +716,13 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         assert os.path.exists(cf_fp), 'bad control file specified'
         
         #geometry specific input checks
-        if 'Polygon' in gtype:
+        if 'Polygon' in gtype or 'Line' in gtype:
             if not as_inun:
                 assert psmp_stat in ('Mean','Median','Min','Max'), 'select a valid sample statistic'
             else:
                 assert psmp_stat == '', 'expects no sample statistic for %Inundation'
         elif 'Point' in gtype:
             assert not as_inun, '%Inundation only valid for polygon type geometries'
-        elif 'Line' in gtype:
-            raise Error('line type sampling not implemented')
         else:
             raise Error('unrecognized gtype: %s'%gtype)
         #======================================================================

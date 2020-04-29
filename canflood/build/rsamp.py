@@ -1108,8 +1108,8 @@ if __name__ =="__main__":
                   'haz_50yr_cT2.tif',
                   ]
     
-    #finv_fp = os.path.join(data_dir, 'finv_tut5_lines.gpkg')
-    finv_fp = r'C:\Users\cefect\Downloads\line_test.gpkg'
+    finv_fp = os.path.join(data_dir, 'finv_tut5_lines.gpkg')
+    #finv_fp = r'C:\Users\cefect\Downloads\line_test.gpkg'
     
     cf_fp = r'C:\Users\cefect\CanFlood\build\5\CanFlood_tut5.txt'
     
