@@ -704,12 +704,16 @@ class Rsamp(Qcoms):
             (pts_df[self.cid]==4).sum()
             """
             #get count of REAL values in each xid group
-            pts_df['all']=1 #add dummy column
+            pts_df['all']=1 #add dummy column for the demoninator
             sdf = pts_df.groupby(self.cid).count().reset_index(drop=False)
             
-            #get ratio
+            #get ratio (non-NAN count / all count)
             sdf['inun'] = sdf[new_fn].divide(sdf['all']).round(self.prec)
             
+            #===================================================================
+            # link in result
+            #===================================================================
+            self.vlay_new_df2(sdf)
 
             
 

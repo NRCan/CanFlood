@@ -379,13 +379,12 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #=======================================================================
         # setup
         #=======================================================================
-        
-
-        
         if crs is None: crs = self.crs
         if logger is None: logger = self.logger
             
         log = logger.getChild('vlay_new_df')
+        
+
             
         #=======================================================================
         # precheck
@@ -409,22 +408,24 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #make sure the columns are unique
         assert df.columns.is_unique
         
-        #check the key
-        if not gkey is None:
-            assert gkey in df_raw.columns
-    
-            #assert 'int' in df_raw[gkey].dtype.name
-            
-            #check gkey match
-            l = set(df_raw[gkey].drop_duplicates()).difference(geo_d.keys())
-            assert len(l)==0, 'missing %i \'%s\' keys in geo_d: %s'%(len(l), gkey, l)
-            
-        #against index
-        else:
-            
-            #check gkey match
-            l = set(df_raw.index).difference(geo_d.keys())
-            assert len(l)==0, 'missing %i (of %i) fid keys in geo_d: %s'%(len(l), len(df_raw), l)
+        #check the geometry
+        if not geo_d is None:
+            assert isinstance(geo_d, dict)
+            if not gkey is None:
+                assert gkey in df_raw.columns
+        
+                #assert 'int' in df_raw[gkey].dtype.name
+                
+                #check gkey match
+                l = set(df_raw[gkey].drop_duplicates()).difference(geo_d.keys())
+                assert len(l)==0, 'missing %i \'%s\' keys in geo_d: %s'%(len(l), gkey, l)
+                
+            #against index
+            else:
+                
+                #check gkey match
+                l = set(df_raw.index).difference(geo_d.keys())
+                assert len(l)==0, 'missing %i (of %i) fid keys in geo_d: %s'%(len(l), len(df_raw), l)
 
         #===========================================================================
         # assemble the fields
@@ -465,12 +466,13 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                     raise Error('failed to setAttribute')
                 
             #setgeometry
-            if gkey is None:
-                gobj = geo_d[fid]
-            else:
-                gobj = geo_d[row[gkey]]
-            
-            feat.setGeometry(gobj)
+            if not geo_d is None:
+                if gkey is None:
+                    gobj = geo_d[fid]
+                else:
+                    gobj = geo_d[row[gkey]]
+                
+                feat.setGeometry(gobj)
             
             #stor eit
             feats_d[fid]=feat
@@ -483,8 +485,11 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         #=======================================================================
         # get the geo type
-        #=======================================================================
-        gtype = QgsWkbTypes().displayString(next(iter(geo_d.values())).wkbType())
+        #=======================================================================\
+        if not geo_d is None:
+            gtype = QgsWkbTypes().displayString(next(iter(geo_d.values())).wkbType())
+        else:
+            print('yay')
 
             
             
@@ -534,13 +539,14 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                      invert=False, #whether to invert selected field names
                      layname = None,
 
-
+                     logger=None,
                      ):
 
         #=======================================================================
         # presets
         #=======================================================================
         algo_nm = 'qgis:deletecolumn'
+        if logger is None: logger=self.logger
         log = self.logger.getChild('deletecolumn')
         self.vlay = in_vlay
 
