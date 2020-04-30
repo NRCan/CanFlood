@@ -635,7 +635,7 @@ class Rsamp(Qcoms):
         an advanced user could retrive from the working folder if desiered
         """
         names_d = dict()
-        parea_d = dict()
+
         for indxr, rlay in enumerate(raster_l):
             log = self.logger.getChild('samp_inun.%s'%rlay.name())
             ofnl = [field.name() for field in finv.fields()]
@@ -650,7 +650,6 @@ class Rsamp(Qcoms):
             dep_rlay = self.raster_subtract(rlay, dtm_rlay, logger=log,
                                             out_dir = os.path.join(temp_dir, 'dep'))
             
-        
             #===============================================================
             # #convert to points
             #===============================================================
@@ -697,6 +696,12 @@ class Rsamp(Qcoms):
             #===================================================================
             # calc stats
             #===================================================================
+            #set those below threshold to null
+            boolidx = pts_df[new_fn]<=dthresh
+            
+            pts_df.loc[boolidx, new_fn] = np.nan
+            log.debug('set %i (of %i) \'%s\' vals <= %.2f to null'%(
+                boolidx.sum(), len(boolidx), new_fn, dthresh))
             """
             view(pts_df)
             (pts_df[self.cid]==4).sum()
