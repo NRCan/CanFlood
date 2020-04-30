@@ -609,7 +609,7 @@ class Rsamp(Qcoms):
         dp = finv.dataProvider()
 
         assert isinstance(dtmlay_raw, QgsRasterLayer)
-        assert isinstance(dthresh, float)
+        assert isinstance(dthresh, float), 'expected float for dthresh. got %s'%type(dthresh)
         assert 'Memory' in dp.storageType() #zonal stats makes direct edits
         assert 'Line' in gtype
         #=======================================================================
@@ -707,8 +707,10 @@ class Rsamp(Qcoms):
                 columns={new_fn:'real'})
             
             #get ratio (non-NAN count / all count)
+            new_fn = rlay.name()
             sdf[new_fn] = sdf['real'].divide(sdf['all']).round(self.prec)
             
+            assert sdf[new_fn].max() <=1
             #===================================================================
             # link in result
             #===================================================================
@@ -749,9 +751,13 @@ class Rsamp(Qcoms):
             else:
                 raise Error('bad fn match')
         #=======================================================================
-        # wrap
+        # wrap-------------
         #=======================================================================
+        self.names_d = dict() #names should be fine
         log.debug('finished')
+        """
+        view(finv)
+        """
 
         return finv
     
@@ -990,8 +996,7 @@ class Rsamp(Qcoms):
             df = df.rename(columns=names_d)
             log.info('renaming columns: %s'%names_d)
             
-        
-        
+
         #check the raster names
         miss_l = set(rname_l).difference(df.columns.to_list())
         if len(miss_l)>0:
@@ -1107,7 +1112,7 @@ if __name__ =="__main__":
     #inundation sampling
     dtm_fp = os.path.join(data_dir, 'dtm_cT1.tif')
     as_inun=True
-    dthresh = 0.5
+    dthresh = 2.0
      
     cid='xid'
     tag='tut5'
