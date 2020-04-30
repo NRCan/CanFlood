@@ -506,8 +506,6 @@ class Rsamp(Qcoms):
         
         df = df_raw.rename(columns=names_d)
 
-        self.names_d
-
         
         #multiply each column by corresponding raster's cell size
         res_df = df.loc[:, names_d.values()].multiply(pd.Series(parea_d)).round(self.prec)
@@ -705,19 +703,34 @@ class Rsamp(Qcoms):
             """
             #get count of REAL values in each xid group
             pts_df['all']=1 #add dummy column for the demoninator
-            sdf = pts_df.groupby(self.cid).count().reset_index(drop=False)
+            sdf = pts_df.groupby(self.cid).count().reset_index(drop=False).rename(
+                columns={new_fn:'real'})
             
             #get ratio (non-NAN count / all count)
-            sdf['inun'] = sdf[new_fn].divide(sdf['all']).round(self.prec)
+            sdf[new_fn] = sdf['real'].divide(sdf['all']).round(self.prec)
             
             #===================================================================
             # link in result
             #===================================================================
-            self.vlay_new_df2(sdf)
+            #convert df back to a mlay
+            pstat_vlay = self.vlay_new_df2(sdf.drop(['all', 'real'], axis=1),
+                                            layname='%s_stats'%(finv.name()), logger=log)
 
             
-
+            #join w/ algo
+            params_d = { 'DISCARD_NONMATCHING' : False,
+                         'FIELD' : self.cid, 
+                         'FIELDS_TO_COPY' : [new_fn],
+                         'FIELD_2' : self.cid,
+                          'INPUT' : finv,
+                          'INPUT_2' : pstat_vlay,
+                         'METHOD' : 1, #Take attributes of the first matching feature only (one-to-one)
+                          'OUTPUT' : 'TEMPORARY_OUTPUT',
+                           'PREFIX' : ''}
             
+            res_d = processing.run('native:joinattributestable', params_d, feedback=self.feedback)
+            finv = res_d['OUTPUT']
+
             #===================================================================
             # check/correct field names
             #===================================================================
@@ -730,95 +743,17 @@ class Rsamp(Qcoms):
             new_fn = set(nfnl).difference(ofnl) #new field names not in the old
             
             if len(new_fn) > 1:
-                """
-                possible error with Q3.12
-                """
-                raise Error('zonalstatistics generated more new fields than expected: %i \n    %s'%(len(new_fn), new_fn))
+                raise Error('unexpected algo behavior... bad new field count: %s'%new_fn)
             elif len(new_fn) == 1:
                 names_d[list(new_fn)[0]] = rlay.name()
             else:
                 raise Error('bad fn match')
-            
-            
-            #===================================================================
-            # update pixel size
-            #===================================================================
-            parea_d[rlay.name()] = rlay.rasterUnitsPerPixelX()*rlay.rasterUnitsPerPixelY()
-            
         #=======================================================================
-        # area calc-----------
+        # wrap
         #=======================================================================
-        log = self.logger.getChild('samp_inun')
-        log.info('calculating areas on %i results fields:\n    %s'%(len(names_d), list(names_d.keys())))
-        
-        #add geometry fields
-        finv = self.addgeometrycolumns(finv, logger = log)
-        
-        df_raw  = vlay_get_fdf(finv, logger=log)
-        
-        df = df_raw.rename(columns=names_d)
+        log.debug('finished')
 
-        self.names_d
-
-        
-        #multiply each column by corresponding raster's cell size
-        res_df = df.loc[:, names_d.values()].multiply(pd.Series(parea_d)).round(self.prec)
-        res_df = res_df.rename(columns={coln:'%s_a'%coln for coln in res_df.columns})
-        
-        #divide by area of each polygon
-        frac_df = res_df.div(df_raw['area'], axis=0).round(self.prec)
-        d = {coln:'%s_pct_raw'%coln for coln in frac_df.columns}
-        frac_df = frac_df.rename(columns=d)
-        res_df = res_df.join(frac_df)#add back in results
-        
-        #adjust for excessive fractions
-        booldf = frac_df>1
-        d1 = {coln:'%s_pct'%ename for ename, coln in d.items()}
-        if booldf.any().any():
-            log.warning('got %i (of %i) pct values >1.00. setting to 1.0 (bad pixel/polygon ratio?)'%(
-                booldf.sum().sum(), booldf.size))
-            
-            fix_df = frac_df.where(~booldf, 1.0)
-            fix_df = fix_df.rename(columns=d1)
-            res_df = res_df.join(fix_df)
-            
-        else:
-            res_df = res_df.rename(columns=d1)
-        
-        #add back in all the raw
-        res_df = res_df.join(df_raw.rename(columns=names_d))
-        
-        #set the reuslts converter
-        self.names_d = {coln:ename for coln, ename in dict(zip(d1.values(), names_d.values())).items()}
-        
-        #=======================================================================
-        # write working reuslts
-        #=======================================================================
-        ofp = os.path.join(temp_dir, 'RAW_rsamp_SampInun_%s_%.2f.csv'%(self.tag, dthresh))
-        res_df.to_csv(ofp, index=None)
-        log.info('wrote working data to \n    %s'%ofp)
-        
-        #slice to results only
-        res_df = res_df.loc[:,[self.cid]+list(d1.values())]
-        
-        log.info('data assembed w/ %s: \n    %s'%(str(res_df.shape), res_df.columns.tolist()))
-        
-        """
-        view(res_df)
-        """
-        
-        
-        #=======================================================================
-        # bundle back into vectorlayer
-        #=======================================================================
-        geo_d = vlay_get_fdata(finv, geo_obj=True, logger=log)
-        res_vlay = vlay_new_df(res_df, finv.crs(), geo_d=geo_d, logger=log,
-                               layname='%s_%s_inun'%(self.tag, finv.name()))
-        
-        log.info('finisished w/ %s'%res_vlay.name())
-
-        
-        return res_vlay
+        return finv
     
     def raster_subtract(self, #performs raster calculator rlayBig - rlaySmall
                         rlayBig, rlaySmall,

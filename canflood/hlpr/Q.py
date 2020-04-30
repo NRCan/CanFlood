@@ -489,14 +489,14 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         if not geo_d is None:
             gtype = QgsWkbTypes().displayString(next(iter(geo_d.values())).wkbType())
         else:
-            print('yay')
+            gtype='None'
 
             
             
         #===========================================================================
         # buidl the new layer
         #===========================================================================
-        vlay = vlay_new_mlay(gtype, #no geo
+        vlay = vlay_new_mlay(gtype,
                              crs, 
                              layname,
                              qfields,
@@ -507,9 +507,9 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #=======================================================================
         # post check
         #=======================================================================
-
-        if vlay.wkbType() == 100:
-            raise Error('constructed layer has NoGeometry')
+        if not geo_d is None:
+            if vlay.wkbType() == 100:
+                raise Error('constructed layer has NoGeometry')
 
 
 
