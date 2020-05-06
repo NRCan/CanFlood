@@ -169,7 +169,7 @@ class Rsamp(Qcoms):
             #inundation sampling controls
             dtm_rlay=None, #dtm raster
             dthresh = 0, #fordepth threshold
-            clip_dtm=True,
+            clip_dtm=False,
             
             ):
         """
@@ -223,10 +223,7 @@ class Rsamp(Qcoms):
         #fix the geometry
         finv = self.fixgeometries(finv, logger=log)
         
-        #drop M/Z values
-        
 
-        
         #check field lengths
         self.finv_fcnt = len(finv.fields())
         assert self.finv_fcnt== 1, 'failed to drop all the fields'
@@ -240,13 +237,17 @@ class Rsamp(Qcoms):
         # #inundation runs--------
         #=======================================================================
         if as_inun:
-            
             #===================================================================
             # #prep DTM
             #===================================================================
             if clip_dtm:
                 
-                """makes the raster clipping a bitcleaner and faster"""
+                """makes the raster clipping a bitcleaner
+                
+                2020-05-06
+                ran 2 tests, and this INCREASED run times by ~20%
+                set default to clip_tim=False
+                """
                 log.info('trimming dtm \'%s\' by finv extents'%(dtm_rlay.name()))
                 finv_buf = self.polygonfromlayerextent(finv,
                                         round_to=dtm_rlay.rasterUnitsPerPixelX()*3,#buffer by 3x the pixel size
@@ -1038,7 +1039,7 @@ class Rsamp(Qcoms):
     
 def run():
     write_vlay=True
-    
+    clip_dtm = False
     #===========================================================================
     # tutorial 1 (points)
     #===========================================================================
@@ -1078,56 +1079,54 @@ def run():
     #===========================================================================
     
     #==========================================================================
-    # tutorial 4 (polygons as inundation)
+    # tutorial 4a (polygons as inundation)--------
     #==========================================================================
-    #===========================================================================
-    # data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\4\data'
-    #   
-    # raster_fns = [
-    #              'haz_1000yr_cT2.tif', 
-    #               'haz_100yr_cT2.tif', 
-    #               'haz_200yr_cT2.tif',
-    #               'haz_50yr_cT2.tif',
-    #               ]
-    #  
-    #  
-    #    
-    # finv_fp = os.path.join(data_dir, 'finv_tut4.gpkg')
-    #   
-    # cf_fp = r'C:\Users\cefect\CanFlood\build\4\CanFlood_tut4.txt'
-    #  
-    # #inundation sampling
-    # dtm_fp = os.path.join(data_dir, 'dtm_cT1.tif')
-    # as_inun=True
-    # dthresh = 0.5
-    #  
-    # cid='xid'
-    # tag='tut4'
-    #===========================================================================
-    
-    #===========================================================================
-    # tutorial 5 (inundation of lines)
-    #===========================================================================
-    data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\5\data'
+    data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\4\data'
+       
     raster_fns = [
                  'haz_1000yr_cT2.tif', 
                   'haz_100yr_cT2.tif', 
                   'haz_200yr_cT2.tif',
                   'haz_50yr_cT2.tif',
                   ]
-     
-    finv_fp = os.path.join(data_dir, 'finv_tut5_lines.gpkg')
-    #finv_fp = r'C:\Users\cefect\Downloads\line_test.gpkg'
-     
-    cf_fp = r'C:\Users\cefect\CanFlood\build\5\CanFlood_tut5.txt'
-     
+      
+      
+        
+    finv_fp = os.path.join(data_dir, 'finv_tut4.gpkg')
+
+      
     #inundation sampling
     dtm_fp = os.path.join(data_dir, 'dtm_cT1.tif')
     as_inun=True
-    dthresh = 2.0
+    dthresh = 0.5
       
     cid='xid'
-    tag='tut5'
+    tag='tut4'
+    
+    #===========================================================================
+    # tutorial 4b (inundation of lines)---------
+    #===========================================================================
+#===============================================================================
+#     data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\4\data'
+#     raster_fns = [
+#                  'haz_1000yr_cT2.tif', 
+#                   'haz_100yr_cT2.tif', 
+#                   'haz_200yr_cT2.tif',
+#                   'haz_50yr_cT2.tif',
+#                   ]
+#      
+#     finv_fp = os.path.join(data_dir, 'finv_tut5_lines.gpkg')
+# 
+# 
+#      
+#     #inundation sampling
+#     dtm_fp = os.path.join(data_dir, 'dtm_cT1.tif')
+#     as_inun=True
+#     dthresh = 2.0
+#       
+#     cid='xid'
+#     tag='tut5'
+#===============================================================================
     #===========================================================================
     # fcl polys
     #===========================================================================
@@ -1189,7 +1188,7 @@ def run():
     res_vlay = wrkr.run(rlay_l, finv_vlay, 
              crs = finv_vlay.crs(), 
              as_inun=as_inun, dtm_rlay=dtm_rlay,dthresh=dthresh,
-             clip_dtm=True,
+             clip_dtm=clip_dtm,
              )
        
     wrkr.check()
@@ -1208,7 +1207,7 @@ def run():
     
 if __name__ =="__main__": 
     
- 
+    run()
     tdelta = datetime.datetime.now() - start
     print('finished in %s'%tdelta)
     
