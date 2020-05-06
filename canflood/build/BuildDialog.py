@@ -643,7 +643,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
     
     def run_rsamp(self): #execute rsamp
         log = self.logger.getChild('run_rsamp')
-
+        start = datetime.datetime.now()
         log.info('user pressed \'pushButton_HSgenerate\'')
         
         #=======================================================================
@@ -814,7 +814,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         self.feedback.upd_prog(None) #set the progress bar back down to zero
 
-        log.push('Rsamp finished')
+        log.push('Rsamp finished in %s'%(datetime.datetime.now() - start))
         
         return
     
