@@ -215,14 +215,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # inundation
         #=======================================================================
-        #connect dtm layer name to display box
-        def upd_dtmlayname():
-            vlay = self.comboBox_dtm.currentLayer()
-            if isinstance(vlay,QgsRasterLayer):
-                self.label_HS_dtmln.setText(vlay.name())
-                
-        self.comboBox_dtm.layerChanged.connect(upd_dtmlayname)
-        
+        self.comboBox_HS_DTM.setFilters(QgsMapLayerProxyModel.RasterLayer)
+        self.comboBox_HS_DTM.setAllowEmptyLayer(True)
+        self.comboBox_HS_DTM.setCurrentIndex(-1) #set selection to none
         #=======================================================================
         # #complex
         #=======================================================================
@@ -648,7 +643,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
     
     def run_rsamp(self): #execute rsamp
         log = self.logger.getChild('run_rsamp')
-
+        start = datetime.datetime.now()
         log.info('user pressed \'pushButton_HSgenerate\'')
         
         #=======================================================================
@@ -672,7 +667,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         if as_inun:
             dthresh = self.mQgsDoubleSpinBox_HS.value()
-            dtm_rlay=self.comboBox_dtm.currentLayer()
+            dtm_rlay=self.comboBox_HS_DTM.currentLayer()
             
             assert isinstance(dthresh, float), 'must provide a depth threshold'
             assert isinstance(dtm_rlay, QgsRasterLayer), 'must select a DTM layer'
@@ -819,7 +814,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         self.feedback.upd_prog(None) #set the progress bar back down to zero
 
-        log.push('Rsamp finished')
+        log.push('Rsamp finished in %s'%(datetime.datetime.now() - start))
         
         return
     

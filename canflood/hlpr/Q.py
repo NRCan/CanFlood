@@ -1536,7 +1536,53 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
 
         return res_vlay
     
-    
+    def fixgeometries(self, vlay,
+
+                      logger=None, 
+                      layname=None,
+                      ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger = self.logger
+        
+        if layname is None: 
+            layname = '%s_fix'%vlay.name()
+        
+        algo_nm = 'native:fixgeometries'
+        log = self.logger.getChild('fixgeometries')
+
+
+
+        
+        
+        #=======================================================================
+        # build ins
+        #=======================================================================
+        """
+        distance = 3.0
+        
+        dcopoy = copy.copy(distance)
+        """
+        
+        ins_d = { 
+            'INPUT': vlay,
+            'OUTPUT' : 'TEMPORARY_OUTPUT',
+            }
+        
+        #=======================================================================
+        # execute
+        #=======================================================================
+        log.debug('executing \'%s\' with ins_d: \n    %s'%(algo_nm, ins_d))
+        
+        res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
+        
+        res_vlay = res_d['OUTPUT']
+
+        res_vlay.setName(layname) #reset the name
+
+        log.debug('finished')
+        return res_vlay
     
     #==========================================================================
     # privates----------
