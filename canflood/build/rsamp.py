@@ -117,7 +117,7 @@ class Rsamp(Qcoms):
         # load finv vector layer
         #======================================================================
         fp = finv_fp
-        assert os.path.exists(fp)
+        assert os.path.exists(fp), fp
         basefn = os.path.splitext(os.path.split(fp)[1])[0]
         vlay_raw = QgsVectorLayer(fp,basefn,providerLib)
         
@@ -169,6 +169,7 @@ class Rsamp(Qcoms):
             #inundation sampling controls
             dtm_rlay=None, #dtm raster
             dthresh = 0, #fordepth threshold
+            clip_dtm=True,
             
             ):
         """
@@ -234,23 +235,45 @@ class Rsamp(Qcoms):
         
         if self.gtype.endswith('Z'):
             log.warning('passed finv has Z values... these are not supported')
+
         #=======================================================================
-        # exercute
+        # #inundation runs--------
         #=======================================================================
-        #inundation runs
         if as_inun:
-            #polygons
+            
+            #===================================================================
+            # #prep DTM
+            #===================================================================
+            if clip_dtm:
+                
+                """makes the raster clipping a bitcleaner and faster"""
+                log.info('trimming dtm \'%s\' by finv extents'%(dtm_rlay.name()))
+                finv_buf = self.polygonfromlayerextent(finv,
+                                        round_to=dtm_rlay.rasterUnitsPerPixelX()*3,#buffer by 3x the pixel size
+                                         logger=log )
+        
+                
+                #clip to just the polygons
+                dtm_rlay1 = self.cliprasterwithpolygon(dtm_rlay,finv_buf, logger=log)
+            else:
+                dtm_rlay1 = dtm_rlay
+        
+            #===================================================================
+            # sample by goetype
+            #===================================================================
             if 'Polygon' in self.gtype:
-                res_vlay = self.samp_inun(finv,raster_l, dtm_rlay, dthresh)
+                res_vlay = self.samp_inun(finv,raster_l, dtm_rlay1, dthresh)
             elif 'Line' in self.gtype:
-                res_vlay = self.samp_inun_line(finv, raster_l, dtm_rlay, dthresh)
+                res_vlay = self.samp_inun_line(finv, raster_l, dtm_rlay1, dthresh)
             else:
                 raise Error('bad gtype')
             
             res_name = '%s_%s_%i_%i_d%.2f'%(
                 self.fname, self.tag, len(raster_l), res_vlay.dataProvider().featureCount(), dthresh)
         
-        #WSL value sampler
+        #=======================================================================
+        # #WSL value sampler------
+        #=======================================================================
         else:
             res_vlay = self.samp_vals(finv,raster_l, psmp_stat)
             res_name = '%s_%s_%i_%i'%(self.fname, self.tag, len(raster_l), res_vlay.dataProvider().featureCount())
@@ -383,7 +406,7 @@ class Rsamp(Qcoms):
         return finv
     
     def samp_inun(self, #inundation percent for polygons
-                  finv, raster_l, dtmlay_raw, dthresh,
+                  finv, raster_l, dtm_rlay, dthresh,
                    ):
         #=======================================================================
         # defaults
@@ -399,24 +422,12 @@ class Rsamp(Qcoms):
         #=======================================================================
         dp = finv.dataProvider()
 
-        assert isinstance(dtmlay_raw, QgsRasterLayer)
+        assert isinstance(dtm_rlay, QgsRasterLayer)
         assert isinstance(dthresh, float)
         assert 'Memory' in dp.storageType() #zonal stats makes direct edits
         assert 'Polygon' in gtype
-        #=======================================================================
-        # setup the dtm------
-        #=======================================================================
-        log.info('trimming dtm raster')
-        #add a buffer and dissolve
-        """makes the raster clipping a bitcleaner and faster"""
-
-        finv_buf = self.buffer(finv,
-                                dtmlay_raw.rasterUnitsPerPixelX()*3,#buffer by 3x the pixel size
-                                 dissolve=True, logger=log )
 
         
-        #clip to just the polygons
-        dtm_rlay = self.cliprasterwithpolygon(dtmlay_raw,finv_buf, logger=log)
         
         #=======================================================================
         # sample loop---------
@@ -575,7 +586,7 @@ class Rsamp(Qcoms):
         return res_vlay
 
     def samp_inun_line(self, #inundation percent for polygons
-                  finv, raster_l, dtmlay_raw, dthresh,
+                  finv, raster_l, dtm_rlay, dthresh,
                    ):
         
         """"
@@ -616,25 +627,11 @@ class Rsamp(Qcoms):
         #=======================================================================
         dp = finv.dataProvider()
 
-        assert isinstance(dtmlay_raw, QgsRasterLayer)
+        assert isinstance(dtm_rlay, QgsRasterLayer)
         assert isinstance(dthresh, float), 'expected float for dthresh. got %s'%type(dthresh)
         assert 'Memory' in dp.storageType() #zonal stats makes direct edits
         assert 'Line' in gtype
-        #=======================================================================
-        # setup the dtm------
-        #=======================================================================
-        log.info('trimming dtm raster')
-        #add a buffer and dissolve
-        """makes the raster clipping a bitcleaner and faster"""
 
-        finv_buf = self.polygonfromlayerextent(finv,
-                                round_to=dtmlay_raw.rasterUnitsPerPixelX()*3,#buffer by 3x the pixel size
-                                 logger=log )
-
-        
-        #clip to just the polygons
-        dtm_rlay = self.cliprasterwithpolygon(dtmlay_raw,finv_buf, logger=log)
-        
         #=======================================================================
         # sample loop---------
         #=======================================================================
@@ -1037,7 +1034,9 @@ class Rsamp(Qcoms):
             cf_fp = cf_fp
             )
 
-if __name__ =="__main__": 
+
+    
+def run():
     write_vlay=True
     
     #===========================================================================
@@ -1109,51 +1108,51 @@ if __name__ =="__main__":
     #===========================================================================
     # tutorial 5 (inundation of lines)
     #===========================================================================
-    #===========================================================================
-    # data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\5\data'
-    # raster_fns = [
-    #              'haz_1000yr_cT2.tif', 
-    #               'haz_100yr_cT2.tif', 
-    #               'haz_200yr_cT2.tif',
-    #               'haz_50yr_cT2.tif',
-    #               ]
-    # 
-    # finv_fp = os.path.join(data_dir, 'finv_tut5_lines.gpkg')
-    # #finv_fp = r'C:\Users\cefect\Downloads\line_test.gpkg'
-    # 
-    # cf_fp = r'C:\Users\cefect\CanFlood\build\5\CanFlood_tut5.txt'
-    # 
-    # #inundation sampling
-    # dtm_fp = os.path.join(data_dir, 'dtm_cT1.tif')
-    # as_inun=True
-    # dthresh = 2.0
-    #  
-    # cid='xid'
-    # tag='tut5'
-    #===========================================================================
+    data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\5\data'
+    raster_fns = [
+                 'haz_1000yr_cT2.tif', 
+                  'haz_100yr_cT2.tif', 
+                  'haz_200yr_cT2.tif',
+                  'haz_50yr_cT2.tif',
+                  ]
+     
+    finv_fp = os.path.join(data_dir, 'finv_tut5_lines.gpkg')
+    #finv_fp = r'C:\Users\cefect\Downloads\line_test.gpkg'
+     
+    cf_fp = r'C:\Users\cefect\CanFlood\build\5\CanFlood_tut5.txt'
+     
+    #inundation sampling
+    dtm_fp = os.path.join(data_dir, 'dtm_cT1.tif')
+    as_inun=True
+    dthresh = 2.0
+      
+    cid='xid'
+    tag='tut5'
     #===========================================================================
     # fcl polys
     #===========================================================================
-    #run pareameteres
-    tag = 'fcl_polys'
-    cid = 'xid'
-    as_inun=True
-    dthresh = 0.5
-    
-    #data files
-    data_dir = r'C:\LS\03_TOOLS\CanFlood\_ins\20200506'
-    
-    finv_fp = os.path.join(data_dir, 'IBI_FCL_Merge_20200428.gpkg')
-    
-    raster_fns = [
-        'IBI_AG3_Wi_10e0_WL_simu_20200415.tif',
-        'IBI_AG3_Wi_10e1_WL_simu_20200415.tif',
-        #'IBI_AG3_Wi_10e2_WL_simu_20200415.tif',        
-        ]
-    
-    dtm_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\20200506\DTM\NHC_2019_dtm_lores_aoi05h.tif'
-    
-    cf_fp = r'C:\Users\cefect\CanFlood\build\5\CanFlood_tut5.txt'
+    #===========================================================================
+    # #run pareameteres
+    # tag = 'fcl_polys'
+    # cid = 'xid'
+    # as_inun=True
+    # dthresh = 0.5
+    # 
+    # #data files
+    # data_dir = r'C:\LS\03_TOOLS\CanFlood\_ins\20200506'
+    # 
+    # finv_fp = os.path.join(data_dir, 'IBI_FCL_Merge_20200428.gpkg')
+    # 
+    # raster_fns = [
+    #     'IBI_AG3_Wi_10e0_WL_simu_20200415.tif',
+    #     'IBI_AG3_Wi_10e1_WL_simu_20200415.tif',
+    #     #'IBI_AG3_Wi_10e2_WL_simu_20200415.tif',        
+    #     ]
+    # 
+    # dtm_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\20200506\DTM\NHC_2019_dtm_lores_aoi05h.tif'
+    # 
+    # cf_fp = r'C:\Users\cefect\CanFlood\build\5\CanFlood_tut5.txt'
+    #===========================================================================
 
     #===========================================================================
     # build directories
@@ -1162,7 +1161,7 @@ if __name__ =="__main__":
     raster_fps = [os.path.join(data_dir, fn) for fn in raster_fns]
 
     #===========================================================================
-    # init the run
+    # init the run--------
     #===========================================================================
     log = logging.getLogger('rsamp')
     
@@ -1173,7 +1172,7 @@ if __name__ =="__main__":
     wrkr.ini_standalone()
     
     #==========================================================================
-    # load the data
+    # load the data----------
     #==========================================================================
     
     
@@ -1185,19 +1184,19 @@ if __name__ =="__main__":
         dtm_rlay = None
     
     #==========================================================================
-    # execute
+    # execute--------
     #==========================================================================
     res_vlay = wrkr.run(rlay_l, finv_vlay, 
              crs = finv_vlay.crs(), 
              as_inun=as_inun, dtm_rlay=dtm_rlay,dthresh=dthresh,
-             
+             clip_dtm=True,
              )
        
     wrkr.check()
 
     
     #==========================================================================
-    # save results
+    # save results---------
     #==========================================================================
     outfp = wrkr.write_res(res_vlay)
     if write_vlay:
@@ -1205,8 +1204,10 @@ if __name__ =="__main__":
         vlay_write(res_vlay,ofp, overwrite=True)
      
     #wrkr.upd_cf(cf_fp)
- 
     basic.force_open_dir(out_dir)
+    
+if __name__ =="__main__": 
+    
  
     tdelta = datetime.datetime.now() - start
     print('finished in %s'%tdelta)
