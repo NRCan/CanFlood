@@ -1101,26 +1101,40 @@ if __name__ =="__main__":
     #===========================================================================
     # tutorial 5 (inundation of lines)
     #===========================================================================
-    data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\5\data'
-    raster_fns = [
-                 'haz_1000yr_cT2.tif', 
-                  'haz_100yr_cT2.tif', 
-                  'haz_200yr_cT2.tif',
-                  'haz_50yr_cT2.tif',
-                  ]
+    #===========================================================================
+    # data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\5\data'
+    # raster_fns = [
+    #              'haz_1000yr_cT2.tif', 
+    #               'haz_100yr_cT2.tif', 
+    #               'haz_200yr_cT2.tif',
+    #               'haz_50yr_cT2.tif',
+    #               ]
+    # 
+    # finv_fp = os.path.join(data_dir, 'finv_tut5_lines.gpkg')
+    # #finv_fp = r'C:\Users\cefect\Downloads\line_test.gpkg'
+    # 
+    # cf_fp = r'C:\Users\cefect\CanFlood\build\5\CanFlood_tut5.txt'
+    # 
+    # #inundation sampling
+    # dtm_fp = os.path.join(data_dir, 'dtm_cT1.tif')
+    # as_inun=True
+    # dthresh = 2.0
+    #  
+    # cid='xid'
+    # tag='tut5'
+    #===========================================================================
+    #===========================================================================
+    # fcl polys
+    #===========================================================================
+    finv_fp = r'C:\LS\02_WORK\IBI\201909_FBC\04_CALC\FHR\FCL\analysis\20200505\IBI_FCL_Merge_20200428.gpkg'
     
-    finv_fp = os.path.join(data_dir, 'finv_tut5_lines.gpkg')
-    #finv_fp = r'C:\Users\cefect\Downloads\line_test.gpkg'
+    raster_fns = [
+        'IBI_AG3_Wi_10e0_WL_simu_20200415.tif',
+        'IBI_AG3_Wi_10e1_WL_simu_20200415.tif',
+        'IBI_AG3_Wi_10e2_WL_simu_20200415.tif',        
+        ]
     
     cf_fp = r'C:\Users\cefect\CanFlood\build\5\CanFlood_tut5.txt'
-    
-    #inundation sampling
-    dtm_fp = os.path.join(data_dir, 'dtm_cT1.tif')
-    as_inun=True
-    dthresh = 2.0
-     
-    cid='xid'
-    tag='tut5'
     
     #===========================================================================
     # build directories
