@@ -8,7 +8,7 @@ Created on Feb. 9, 2020
 # logger setup-----------------------
 #==========================================================================
 import logging, configparser, datetime, shutil
-
+start = datetime.datetime.now()
 
 
 #==============================================================================
@@ -217,6 +217,14 @@ class Rsamp(Qcoms):
         
         #drop all the fields except the cid
         finv = self.deletecolumn(finv_raw, [cid], invert=True)
+        
+        
+        #fix the geometry
+        finv = self.fixgeometries(finv, logger=log)
+        
+        #drop M/Z values
+        
+
         
         #check field lengths
         self.finv_fcnt = len(finv.fields())
@@ -1005,7 +1013,7 @@ class Rsamp(Qcoms):
         #check the raster names
         miss_l = set(rname_l).difference(df.columns.to_list())
         if len(miss_l)>0:
-            raise Error('failed to map %i raster layer names onto results: \n    %s'%(len(miss_l), miss_l))
+            log.warning('failed to map %i raster layer names onto results: \n    %s'%(len(miss_l), miss_l))
         
         
         out_fp = self.output_df(df, '%s.csv'%res_name, out_dir = out_dir, write_index=False)
@@ -1126,16 +1134,27 @@ if __name__ =="__main__":
     #===========================================================================
     # fcl polys
     #===========================================================================
-    finv_fp = r'C:\LS\02_WORK\IBI\201909_FBC\04_CALC\FHR\FCL\analysis\20200505\IBI_FCL_Merge_20200428.gpkg'
+    #run pareameteres
+    tag = 'fcl_polys'
+    cid = 'xid'
+    as_inun=True
+    dthresh = 0.5
+    
+    #data files
+    data_dir = r'C:\LS\03_TOOLS\CanFlood\_ins\20200506'
+    
+    finv_fp = os.path.join(data_dir, 'IBI_FCL_Merge_20200428.gpkg')
     
     raster_fns = [
         'IBI_AG3_Wi_10e0_WL_simu_20200415.tif',
         'IBI_AG3_Wi_10e1_WL_simu_20200415.tif',
-        'IBI_AG3_Wi_10e2_WL_simu_20200415.tif',        
+        #'IBI_AG3_Wi_10e2_WL_simu_20200415.tif',        
         ]
     
-    cf_fp = r'C:\Users\cefect\CanFlood\build\5\CanFlood_tut5.txt'
+    dtm_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\20200506\DTM\NHC_2019_dtm_lores_aoi05h.tif'
     
+    cf_fp = r'C:\Users\cefect\CanFlood\build\5\CanFlood_tut5.txt'
+
     #===========================================================================
     # build directories
     #===========================================================================
@@ -1189,7 +1208,8 @@ if __name__ =="__main__":
  
     basic.force_open_dir(out_dir)
  
-    print('finished')
+    tdelta = datetime.datetime.now() - start
+    print('finished in %s'%tdelta)
     
     
     
