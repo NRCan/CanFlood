@@ -215,7 +215,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # inundation
         #=======================================================================
-
+        self.comboBox_HS_DTM.setFilters(QgsMapLayerProxyModel.RasterLayer)
+        self.comboBox_HS_DTM.setAllowEmptyLayer(True)
+        self.comboBox_HS_DTM.setCurrentIndex(-1) #set selection to none
         #=======================================================================
         # #complex
         #=======================================================================

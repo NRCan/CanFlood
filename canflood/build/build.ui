@@ -738,7 +738,14 @@ p, li { white-space: pre-wrap; }
                     </widget>
                    </item>
                    <item>
-                    <widget class="QgsMapLayerComboBox" name="comboBox_HS_DTM"/>
+                    <widget class="QgsMapLayerComboBox" name="comboBox_HS_DTM">
+                     <property name="allowEmptyLayer">
+                      <bool>true</bool>
+                     </property>
+                     <property name="showCrs">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
                    </item>
                   </layout>
                  </item>
