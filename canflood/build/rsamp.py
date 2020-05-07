@@ -578,7 +578,7 @@ class Rsamp(Qcoms):
         # bundle back into vectorlayer
         #=======================================================================
         geo_d = vlay_get_fdata(finv, geo_obj=True, logger=log)
-        res_vlay = vlay_new_df(res_df, finv.crs(), geo_d=geo_d, logger=log,
+        res_vlay = self.vlay_new_df2(res_df, crs=finv.crs(), geo_d=geo_d, logger=log,
                                layname='%s_%s_inun'%(self.tag, finv.name()))
         
         log.info('finisished w/ %s'%res_vlay.name())
@@ -759,6 +759,7 @@ class Rsamp(Qcoms):
                 raise Error('unexpected algo behavior... bad new field count: %s'%new_fn)
             elif len(new_fn) == 1:
                 names_d[list(new_fn)[0]] = rlay.name()
+                log.debug('updated names_d w/ %s'%rlay.name())
             else:
                 raise Error('bad fn match')
         #=======================================================================
@@ -851,7 +852,7 @@ class Rsamp(Qcoms):
         assert os.path.exists(outputFile)
         
         
-        log.info('saved result to: %s'%outputFile)
+        log.info('saved result to: \n    %s'%outputFile)
             
         #=======================================================================
         # retrieve result
@@ -997,7 +998,7 @@ class Rsamp(Qcoms):
         #======================================================================
         assert os.path.exists(out_dir), 'bad out_dir'
         #======================================================================
-        # write data----------------
+        # write data
         #======================================================================
         #extract data
         df = vlay_get_fdf(vlay)
@@ -1005,7 +1006,8 @@ class Rsamp(Qcoms):
         #rename
         if len(names_d) > 0:
             df = df.rename(columns=names_d)
-            log.info('renaming columns: %s'%names_d)
+            log.info('renaming columns: \n    names_d: %s \n    df.cols:%s'%(
+                names_d, df.columns.tolist()))
             
 
         #check the raster names
@@ -1063,72 +1065,93 @@ def run():
     #===========================================================================
     
     #===========================================================================
-    # tutorial 2  (dtm)
+    # tutorial 2  
     #===========================================================================
-    #===========================================================================
-    # data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\data'
-    # raster_fns= ['dtm_cT1.tif']
-    # finv_fp = os.path.join(data_dir, 'finv_cT2.gpkg')
-    #  
-    # cf_fp = os.path.join(data_dir, 'CanFlood_tutorial2.txt')
-    # 
-    # cid='xid'
-    # tag='tut2_dtm'
-    # as_inun=False
-    # dtm_fp, dthresh = None, None
-    #===========================================================================
+    data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\data'
+
+    finv_fp = os.path.join(data_dir, 'finv_cT3.gpkg')
+    
+    raster_fns = [
+        'haz_1000yr_cT2.tif',
+        'haz_1000yr_fail_cT3.tif',
+        'haz_100yr_cT2.tif',
+        'haz_200yr_cT2.tif',
+        'haz_50yr_cT2.tif',
+        ]
+
+     
+    cid='xid'
+    tag='tut2'
+    as_inun=False
+    dtm_fp, dthresh = None, None
     
     #==========================================================================
     # tutorial 4a (polygons as inundation)--------
     #==========================================================================
-    data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\4\data'
-       
-    raster_fns = [
-                 'haz_1000yr_cT2.tif', 
-                  'haz_100yr_cT2.tif', 
-                  'haz_200yr_cT2.tif',
-                  'haz_50yr_cT2.tif',
-                  ]
-      
-      
-        
-    finv_fp = os.path.join(data_dir, 'finv_tut4.gpkg')
-
-      
-    #inundation sampling
-    dtm_fp = os.path.join(data_dir, 'dtm_cT1.tif')
-    as_inun=True
-    dthresh = 0.5
-      
-    cid='xid'
-    tag='tut4'
+ #==============================================================================
+ #    data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\4\data'
+ #        
+ #    raster_fns = [
+ #                 'haz_1000yr_cT2.tif', 
+ #                  'haz_100yr_cT2.tif', 
+ #                  'haz_200yr_cT2.tif',
+ #                  'haz_50yr_cT2.tif',
+ #                  ]
+ #       
+ #       
+ #         
+ #    finv_fp = os.path.join(data_dir, 'finv_tut4.gpkg')
+ # 
+ #       
+ #    #inundation sampling
+ #    dtm_fp = os.path.join(data_dir, 'dtm_cT1.tif')
+ #    as_inun=True
+ #    dthresh = 0.5
+ #       
+ #    cid='xid'
+ #    tag='tut4a'
+ #==============================================================================
     
     #===========================================================================
     # tutorial 4b (inundation of lines)---------
     #===========================================================================
-#===============================================================================
-#     data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\4\data'
-#     raster_fns = [
-#                  'haz_1000yr_cT2.tif', 
-#                   'haz_100yr_cT2.tif', 
-#                   'haz_200yr_cT2.tif',
-#                   'haz_50yr_cT2.tif',
-#                   ]
-#      
-#     finv_fp = os.path.join(data_dir, 'finv_tut5_lines.gpkg')
-# 
-# 
-#      
-#     #inundation sampling
-#     dtm_fp = os.path.join(data_dir, 'dtm_cT1.tif')
-#     as_inun=True
-#     dthresh = 2.0
-#       
-#     cid='xid'
-#     tag='tut5'
-#===============================================================================
+  #=============================================================================
+  #   data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\4\data'
+  #   raster_fns = [
+  #                'haz_1000yr_cT2.tif', 
+  #                 'haz_100yr_cT2.tif', 
+  #                 'haz_200yr_cT2.tif',
+  #                 'haz_50yr_cT2.tif',
+  #                 ]
+  #      
+  #   finv_fp = os.path.join(data_dir, 'finv_tut5_lines.gpkg')
+  # 
+  # 
+  #      
+  #   #inundation sampling
+  #   dtm_fp = os.path.join(data_dir, 'dtm_cT1.tif')
+  #   as_inun=True
+  #   dthresh = 2.0
+  #       
+  #   cid='xid'
+  #   tag='tut4b'
+  #=============================================================================
+    
     #===========================================================================
-    # fcl polys
+    # test 20200507
+    #===========================================================================
+    #===========================================================================
+    # data_dir = r'C:\LS\03_TOOLS\CanFlood\_ins\20200507'
+    # raster_fns = [
+    #     'haz_1000yr_cT2_12345678901234567890123456789.tif',
+    #     'haz_100yr_cT2_12345678901234567890123456789.tif'
+    #     ]
+    # 
+    # dtm_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\20200507\dtm_cT1.tif'
+    # tag = 'test'
+    #===========================================================================
+    #===========================================================================
+    # fcl polys-----------
     #===========================================================================
     #===========================================================================
     # #run pareameteres
@@ -1136,22 +1159,22 @@ def run():
     # cid = 'xid'
     # as_inun=True
     # dthresh = 0.5
-    # 
+    #   
     # #data files
     # data_dir = r'C:\LS\03_TOOLS\CanFlood\_ins\20200506'
-    # 
-    # finv_fp = os.path.join(data_dir, 'IBI_FCL_Merge_20200428.gpkg')
-    # 
+    #   
+    # #finv_fp = os.path.join(data_dir, 'IBI_FCL_Merge_20200428.gpkg')
+    # finv_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\20200506\IBI_FCL_Merge_20200428_clip.gpkg'
+    #   
     # raster_fns = [
     #     'IBI_AG3_Wi_10e0_WL_simu_20200415.tif',
     #     'IBI_AG3_Wi_10e1_WL_simu_20200415.tif',
     #     #'IBI_AG3_Wi_10e2_WL_simu_20200415.tif',        
     #     ]
-    # 
+    #   
     # dtm_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\20200506\DTM\NHC_2019_dtm_lores_aoi05h.tif'
-    # 
-    # cf_fp = r'C:\Users\cefect\CanFlood\build\5\CanFlood_tut5.txt'
     #===========================================================================
+     
 
     #===========================================================================
     # build directories
@@ -1160,7 +1183,7 @@ def run():
     raster_fps = [os.path.join(data_dir, fn) for fn in raster_fns]
 
     #===========================================================================
-    # init the run--------
+    #run--------
     #===========================================================================
     log = logging.getLogger('rsamp')
     
@@ -1171,7 +1194,7 @@ def run():
     wrkr.ini_standalone()
     
     #==========================================================================
-    # load the data----------
+    # load the data
     #==========================================================================
     
     
@@ -1183,7 +1206,7 @@ def run():
         dtm_rlay = None
     
     #==========================================================================
-    # execute--------
+    # execute
     #==========================================================================
     res_vlay = wrkr.run(rlay_l, finv_vlay, 
              crs = finv_vlay.crs(), 
@@ -1195,7 +1218,7 @@ def run():
 
     
     #==========================================================================
-    # save results---------
+    # save results
     #==========================================================================
     outfp = wrkr.write_res(res_vlay)
     if write_vlay:

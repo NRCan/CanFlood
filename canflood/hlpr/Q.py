@@ -50,7 +50,7 @@ import hlpr.basic as basic
 #==============================================================================
 # globals
 #==============================================================================
-fieldn_max_d = {'SpatiaLite':50, 'ESRI Shapefile':10}
+fieldn_max_d = {'SpatiaLite':50, 'ESRI Shapefile':10, 'Memory storage':50, 'GPKG':50}
 
 npc_pytype_d = {'?':bool,
                 'b':int,
@@ -93,7 +93,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
     
     
     #field name character limits
-    fieldn_max_d = {'SpatiaLite':50, 'ESRI Shapefile':10, 'Memory storage':50, 'GPKG':50}
+    
 
     
     def __init__(self,
@@ -116,7 +116,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             **kwargs) #initilzie teh baseclass
         
 
-        
+        self.fieldn_max_d=fieldn_max_d
         #crs
         if crs is None: 
             crs = QgsCoordinateReferenceSystem(self.crs_id)
@@ -398,8 +398,8 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         boolcol = df_raw.columns.str.len() >= max_len
         
         if np.any(boolcol):
-            log.warning('passed %i columns which exeed the max length %i for driver \'%s\'.. truncating: \n    %s'%(
-                boolcol.sum(), max_len, self.driverName, df_raw.columns.values[boolcol]))
+            log.warning('passed %i columns which exeed the max length=%i for driver \'%s\'.. truncating: \n    %s'%(
+                boolcol.sum(), max_len, self.driverName, df_raw.columns[boolcol].tolist()))
             
             
             df.columns = df.columns.str.slice(start=0, stop=max_len-1)
@@ -2548,10 +2548,15 @@ def vlay_new_df(#build a vlay from a df
 
             logger=mod_logger, db_f = False,
             ):
+        """
+        todo: migrate off this
+        """
+        
         #=======================================================================
         # setup
         #=======================================================================
-        log = logger.getChild('vlay_new_df')    
+        log = logger.getChild('vlay_new_df')
+        log.warning('Depcreciate me')    
 
             
             
@@ -2560,11 +2565,8 @@ def vlay_new_df(#build a vlay from a df
         #=======================================================================
         df = df_raw.copy()
         
-        #======================================================================
-        # #make sure none of hte field names execeed the driver limitations
-        # max_len = self.fieldn_max_d[self.driverName]
-        #======================================================================
-        max_len = 30
+        max_len=50
+
         
         
         #check lengths
