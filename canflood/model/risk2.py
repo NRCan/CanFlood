@@ -204,14 +204,10 @@ class Risk2(Model):
 
         return res, res_df
 
-    
-    
 
 
-            
-        
-if __name__ =="__main__": 
-    
+
+def run():
     #==========================================================================
     # run controls
     #==========================================================================
@@ -236,10 +232,21 @@ if __name__ =="__main__":
             }
         }
     
+    #===========================================================================
+    # GolderHazard test
+    #===========================================================================
+    runpars_d={
+        'run1':{
+            'out_dir':r'C:\LS\03_TOOLS\CanFlood\_ins\IBI_GolderHazard_20200507\results\wi_noFail2',
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\IBI_GolderHazard_20200507\build\CanFlood_GH_wi_noFail.txt',
+            }
+        }
+        
+    
     
     
     #==========================================================================
-    # build/execute
+    # build/execute------------
     #==========================================================================
     for tag, pars in runpars_d.items():
         cf_fp, out_dir = pars['cf_fp'], pars['out_dir']
@@ -269,9 +276,14 @@ if __name__ =="__main__":
         if not res_df is None:
             _ = wrkr.output_df(res_df, '%s_%s'%(wrkr.resname, 'passet'))
     
-
-
+    #===========================================================================
+    # wrap
+    #===========================================================================
     force_open_dir(out_dir)
+        
+if __name__ =="__main__": 
+    run()
+    
 
     print('finished')
     

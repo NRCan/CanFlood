@@ -1285,12 +1285,14 @@ class Model(ComWrkr):
     
     def check_monot(self,
                      df_raw, #event:asset like data. expectes columns as aep 
-                     split_key = False, #optional key to split hazard columns by
+                     split_key = False, #optional key to split hazard columns with (for fail/noFail sets)
                      aep_ser=None, event_probs = 'aep', #optional kwargs for column conversion
                      logger=None
                      ):
         """
         if damages are equal the warning will be thrown
+        
+        todo: store this as an output
         """
         
         
@@ -1371,7 +1373,6 @@ class Model(ComWrkr):
             else:
                 log.debug('all %i passed'%len(df))
                 return True
-        
         
         #======================================================================
         # splitting

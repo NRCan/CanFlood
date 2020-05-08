@@ -707,10 +707,7 @@ class DFunc(ComWrkr,
         return dmg
 
 
-if __name__ =="__main__": 
-    
-
-    
+def run():
 
     #==========================================================================
     # dev data
@@ -732,18 +729,17 @@ if __name__ =="__main__":
             'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\built\CanFlood_tut2.txt',
             }
         }
-     
+    
     #===========================================================================
-    # testing
+    # GolderHazard test
     #===========================================================================
-    #===========================================================================
-    # runpars_d={
-    #     'test':{
-    #         'out_dir':os.path.join(os.getcwd(), 'dmg2', 'Tut2'),
-    #         'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200330\CanFlood_tut2.txt',
-    #         }
-    #     }
-    #===========================================================================
+    runpars_d={
+        'run1':{
+            'out_dir':r'C:\LS\03_TOOLS\CanFlood\_ins\IBI_GolderHazard_20200507\results\wi_noFail2',
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\IBI_GolderHazard_20200507\build\CanFlood_GH_wi_noFail.txt',
+            }
+        }
+
     
     #==========================================================================
     # build/execute
@@ -768,8 +764,15 @@ if __name__ =="__main__":
         
         wrkr.upd_cf()
 
+    #===========================================================================
+    # wrap--------
+    #===========================================================================
     force_open_dir(out_dir)
+    
+if __name__ =="__main__": 
+    
 
+    run()
     print('finished')
     
     
