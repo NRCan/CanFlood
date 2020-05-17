@@ -201,8 +201,6 @@ class CurvePlotr(ComWrkr):
                     break
                 
 
-
-            
         #=======================================================================
         # PLOT with handles-----------    
         #=======================================================================
@@ -266,13 +264,7 @@ class CurvePlotr(ComWrkr):
                 
                 #add results
                 res_d[cName] = fig
-                """
-                plt.show()
-                """
-                
-                
-                
-            
+
                 
         #=======================================================================
         # wrap--------
@@ -415,8 +407,8 @@ if __name__ =="__main__":
     #===========================================================================
     runpars_d={
         'Tut1a':{
-            'out_dir':os.path.join(os.getcwd(),mod_name, 'Tut1a'),
-            'curves_fp':r'C:\LS\03_TOOLS\LML\_keeps\mbc\mbc_20200409163117\curves_mbc.compile_dev_161.xls',
+            'out_dir':r'C:\LS\03_TOOLS\LML\_keeps2\mbc\curving\mbcC_20200516152414\figs',
+            'curves_fp':r'C:\LS\03_TOOLS\LML\_keeps2\mbc\curving\mbcC_20200516152414\curves_mbcCrv_20200516_190.xls',
             #'dfmt':'{0:.0f}', 'y1lab':'impacts',
             },
 
@@ -431,9 +423,7 @@ if __name__ =="__main__":
         #=======================================================================
         # precheck
         #=======================================================================
-
-
-
+        
         #=======================================================================
         # execute
         #=======================================================================
@@ -442,7 +432,8 @@ if __name__ =="__main__":
         #load data
         curves_d = wrkr.load_data(curves_fp)
         
-        res_d = wrkr.plotGroup(curves_d)
+        """expects 'plot_f'  and 'plot_group' columns"""
+        res_d = wrkr.plotGroup(curves_d) 
         
         for cname, fig in res_d.items():
             wrkr.output_fig(fig)
