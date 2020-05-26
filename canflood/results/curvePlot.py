@@ -403,15 +403,77 @@ if __name__ =="__main__":
 
     
     #===========================================================================
-    # tutorials
+    #nrp curves
     #===========================================================================
+    data_dir = r'C:\LS\03_TOOLS\LML\_keeps2\nrp\nrpPer_20200517125446'
+    
     runpars_d={
-        'Tut1a':{
-            'out_dir':r'C:\LS\03_TOOLS\LML\_keeps2\mbc\curving\mbcC_20200516152414\figs',
-            'curves_fp':r'C:\LS\03_TOOLS\LML\_keeps2\mbc\curving\mbcC_20200516152414\curves_mbcCrv_20200516_190.xls',
+        'inEq':{
+            'out_dir':os.path.join(data_dir, 'figs'),
+            'curves_fp':os.path.join(data_dir, 'curves_nrpPer_01_20200517_inEq.xls'),
             #'dfmt':'{0:.0f}', 'y1lab':'impacts',
             },
-
+        'inStk':{
+            'out_dir':os.path.join(data_dir, 'figs'),
+            'curves_fp':os.path.join(data_dir, 'curves_nrpPer_01_20200517_inStk.xls'),
+            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
+            },
+        'outEq':{
+            'out_dir':os.path.join(data_dir, 'figs'),
+            'curves_fp':os.path.join(data_dir, 'curves_nrpPer_01_20200517_outEq.xls'),
+            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
+            },
+        'outStk':{
+            'out_dir':os.path.join(data_dir, 'figs'),
+            'curves_fp':os.path.join(data_dir, 'curves_nrpPer_01_20200517_outStk.xls'),
+            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
+            },
+        }
+    
+    #===========================================================================
+    #mbc curves
+    #===========================================================================
+    data_dir = r'C:\LS\03_TOOLS\LML\_keeps2\curves\mbc\curving\mbcC_20200519145845'
+    
+    runpars_d={
+        'f0':{
+            'out_dir':os.path.join(data_dir,'figs', 'f0'),
+            'curves_fp':os.path.join(data_dir, 'curves_mbcC_03_20200519_f0_29.xls'),
+            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
+            },
+        'f1':{
+            'out_dir':os.path.join(data_dir,'figs', 'f1'),
+            'curves_fp':os.path.join(data_dir, 'curves_mbcC_03_20200519_f1_54.xls'),
+            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
+            },
+        'gar':{
+            'out_dir':os.path.join(data_dir,'figs', 'gar'),
+            'curves_fp':os.path.join(data_dir, 'curves_mbcC_03_20200519_gar_17.xls'),
+            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
+            },
+        'gen':{
+            'out_dir':os.path.join(data_dir, 'figs','gen'),
+            'curves_fp':os.path.join(data_dir, 'curves_mbcC_03_20200519_gen_52.xls'),
+            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
+            },
+        'f1gen':{
+            'out_dir':os.path.join(data_dir, 'figs','f1gen'),
+            'curves_fp':os.path.join(data_dir, 'curves_mbcC_03_20200519_f1gen_54.xls'),
+            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
+            },
+        }
+    
+    #===========================================================================
+    # rfda curves
+    #===========================================================================
+    data_dir = r'C:\LS\02_WORK\IBI\201909_FBC\04_CALC\curves\rfda'
+    
+    runpars_d={
+        'cont':{
+            'out_dir':os.path.join(data_dir,'figs'),
+            'curves_fp':os.path.join(data_dir, 'CanFlood_curves_rfda_20200218.xls'),
+            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
+            },
         }
     
     for tag, pars in runpars_d.items():
