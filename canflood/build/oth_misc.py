@@ -109,21 +109,15 @@ def run2():
     #==========================================================================
     # setup session------
     #==========================================================================
-         
     Wrkr = Misc(logger=mod_logger, out_dir=out_dir, tag=tag)
     log = mod_logger.getChild(tag)
     
     #===========================================================================
-    # load------
+    # load commons------
     #===========================================================================
-    crv_lib_d = dict()
-    for dname, d in runpars_d.items():
-        fp = d['curves_fp']
-        assert os.path.exists(fp), '%s got bad fp: %s'%(dname, fp)
-        
-        crv_lib_d[dname] = pd.read_excel(fp, sheet_name=None, index=None, header=None)
-        
-        log.info('loaded %i tabs from %s'%(len(crv_lib_d[dname]), fp))
+    #load all curves found in the directory
+    assert os.path.exists(cLib_dir)
+
         
     
     #==========================================================================
