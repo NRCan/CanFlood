@@ -87,32 +87,48 @@ def run2():
     # LMRFRA curves
     #===========================================================================
     tag ='%s_LMFRA'%mod_name
-    data_dir = r'C:\LS\03_TOOLS\LML\_keeps2\curves\nrp\nrpPer_20200517125446'
+    out_dir = r'C:\LS\03_TOOLS\CanFlood\_outs\crv_consol\20200529'
+    data_dir = r'C:\LS\03_TOOLS\CanFlood\_ins\20200529'
+    
+    
+    #directory w/ curve librarires
+    cLib_dir=r'C:\LS\03_TOOLS\CanFlood\_ins\20200529\curves'
     
     runpars_d={
-        'inEq':{
-            'out_dir':os.path.join(data_dir, 'figs'),
-            'curves_fp':os.path.join(data_dir, 'curves_nrpPer_01_20200517_inEq.xls'),
-            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
+        'sfd':{
+            'out_dir':os.path.join(out_dir, 'sfd'),
+            'finv_fp':os.path.join(data_dir, 'finv_tagSFD_01_20200522_pts.gpkg'),
             },
-        'inStk':{
-            'out_dir':os.path.join(data_dir, 'figs'),
-            'curves_fp':os.path.join(data_dir, 'curves_nrpPer_01_20200517_inStk.xls'),
-            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
+        'nrp':{
+            'out_dir':os.path.join(out_dir, 'nrp'),
+            'finv_fp':os.path.join(data_dir, 'finv_tagNRP_01_20200521_pts.gpkg'),
             },
-        'outEq':{
-            'out_dir':os.path.join(data_dir, 'figs'),
-            'curves_fp':os.path.join(data_dir, 'curves_nrpPer_01_20200517_outEq.xls'),
-            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
-            },
-        'outStk':{
-            'out_dir':os.path.join(data_dir, 'figs'),
-            'curves_fp':os.path.join(data_dir, 'curves_nrpPer_01_20200517_outStk.xls'),
-            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
-            },
+
         }
     
+    #==========================================================================
+    # setup session------
+    #==========================================================================
+         
+    Wrkr = Misc(logger=mod_logger, out_dir=out_dir, tag=tag)
+    log = mod_logger.getChild(tag)
     
+    #===========================================================================
+    # load------
+    #===========================================================================
+    crv_lib_d = dict()
+    for dname, d in runpars_d.items():
+        fp = d['curves_fp']
+        assert os.path.exists(fp), '%s got bad fp: %s'%(dname, fp)
+        
+        crv_lib_d[dname] = pd.read_excel(fp, sheet_name=None, index=None, header=None)
+        
+        log.info('loaded %i tabs from %s'%(len(crv_lib_d[dname]), fp))
+        
+    
+    #==========================================================================
+    # execute
+    #==========================================================================
     
 
 def run1():
