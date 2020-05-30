@@ -146,12 +146,13 @@ class Misc(hQ.Qcoms):
         s = ctags.difference(ctagL_d.keys())
         if len(s)>0:
             log.warning('%i finv tags not found in passed librarries \n    %s'%(len(s), s))
-        
+            raise Error('dome')
         
         
         res_lib = dict() #results container for curves
                
         #loop through each request and collect thre data
+        mcdf = pd.DataFrame()
         for ctag in ctags:
             
             #===================================================================
@@ -175,9 +176,25 @@ class Misc(hQ.Qcoms):
             assert isinstance(cdf,  pd.DataFrame)
             assert len(cdf.columns)==2
             
-            
+            Dfo = DFunc().build(cdf, log)
             
             res_lib[ctag] = cdf
+            
+            #===================================================================
+            # meta
+            #===================================================================
+            md = Dfo.get_stats()
+            md['cLibName'] = libName
+            
+            mcdf = mcdf.append(pd.Series(md, name=ctag), verify_integrity=True)
+            
+        log.info('collected %i curves'%len(res_lib))
+        
+        s = ctags.symmetric_difference(res_lib.keys())
+        assert len(s)==0
+        
+        return res_lib, mcdf
+        
         
         
         
@@ -190,7 +207,7 @@ def run2():
     #===========================================================================
     # LMRFRA curves
     #===========================================================================
-    tag ='%s_LMFRA'%mod_name
+    tag ='CanFlood_%s_CC_%s'%(mod_name, ymd)
     out_dir = r'C:\LS\03_TOOLS\CanFlood\_outs\crv_consol\20200529'
     data_dir = r'C:\LS\03_TOOLS\CanFlood\_ins\20200529'
     
@@ -199,12 +216,10 @@ def run2():
     cLib_dir=r'C:\LS\03_TOOLS\CanFlood\_ins\20200529\curves'
     
     runpars_d={
-        #=======================================================================
-        # 'sfd':{
-        #     'out_dir':os.path.join(out_dir, 'sfd'),
-        #     'finv_fp':os.path.join(data_dir, 'finv_tagSFD_01_20200522_pts.gpkg'),
-        #     },
-        #=======================================================================
+        'sfd':{
+            'out_dir':os.path.join(out_dir, 'sfd'),
+            'finv_fp':os.path.join(data_dir, 'finv_tagSFD_01_20200522_pts.gpkg'),
+            },
         'nrp':{
             'out_dir':os.path.join(out_dir, 'nrp'),
             'finv_fp':os.path.join(data_dir, 'finv_tagNRP_01_20200521_pts.gpkg'),
@@ -241,10 +256,12 @@ def run2():
     #==========================================================================
     # execute----
     #==========================================================================
+    meta_d = dict()
+    meta_df = pd.DataFrame()
     log.info('executing %i'%len(runpars_d))
     for fclass, pars_d in runpars_d.items():
         log = logger.getChild(fclass)
-        out_dir = pars_d['out_dir']
+        #out_dir = pars_d['out_dir']
         fp = pars_d['finv_fp']
         
         #=======================================================================
@@ -259,7 +276,41 @@ def run2():
         # consolidate
         #=======================================================================
         
-        Wrkr.crv_consol(fdf, cLib_all_d, logger=log)
+        res_lib, mdf = Wrkr.crv_consol(fdf, cLib_all_d, logger=log)
+        
+        #=======================================================================
+        # write
+        #=======================================================================
+        if not os.path.exists(out_dir): os.makedirs(out_dir)
+        out_fp = os.path.join(out_dir, 'curves_%s_%s.xls'%(tag, fclass))
+        d = {**{'_smry':mdf.reset_index(drop=False)}, **res_lib}
+        #write a dictionary of dfs
+        with pd.ExcelWriter(out_fp) as writer:
+            for tabnm, df in d.items():
+                df.to_excel(writer, sheet_name=tabnm, index=False, header='_smry'==tabnm)
+        
+        log.info('wrote %i to file: %s'%(len(d), out_fp))
+                
+        #=======================================================================
+        # meta
+        #=======================================================================
+        meta_d[fclass]= mdf
+        meta_df.loc[fclass, 'curve_cnt'] = len(res_lib)
+    
+    #===========================================================================
+    # wrap
+    #===========================================================================
+    
+    #write a dictionary of dfs
+    out_fp = os.path.join(out_dir, '_smry_%s_%i.xls'%(tag, len(runpars_d)))
+    d = {**{'_smry':meta_df}, **meta_d}
+    with pd.ExcelWriter(out_fp) as writer:
+        for tabnm, df in d.items():
+            df.to_excel(writer, sheet_name=tabnm, index=True, header=True)
+    
+    log.info('wrote %i to file: %s'%(len(d), out_fp))
+    
+    return out_dir
         
     
 
@@ -334,5 +385,7 @@ def run1():
 if __name__ =="__main__": 
     print('start')
     out_dir = run2()
-    #force_open_dir(out_dir)
+    
+    from hlpr.basic import force_open_dir
+    force_open_dir(out_dir)
     print('finished')

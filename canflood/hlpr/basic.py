@@ -91,7 +91,7 @@ class ComWrkr(object): #common methods for all classes
         self.setup_feedback(progressBar=progressBar, feedback=feedback, LogLevel=LogLevel)
         
         
-        self.logger.info('ComWrkr.__init__ finished')
+        self.logger.debug('ComWrkr.__init__ finished')
         
     def setup_feedback(self,
                        progressBar = None,
@@ -183,7 +183,7 @@ class ComWrkr(object): #common methods for all classes
 
         
         
-        self.logger.info('feedback set as \'%s\' and progressBar: %s'%(
+        self.logger.debug('feedback set as \'%s\' and progressBar: %s'%(
             type(feedback).__name__, type(progressBar).__name__))
         
         

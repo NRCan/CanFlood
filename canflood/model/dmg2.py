@@ -578,6 +578,7 @@ class DFunc(ComWrkr,
     #==========================================================================
     tag = 'dfunc'
     min_dep = None
+    pars_d = {}
     
     def __init__(self,
                  tabn='damage_func', #optional tab name for logging
@@ -647,7 +648,7 @@ class DFunc(ComWrkr,
             setattr(self, varnm, val)
             
         log.debug('attached %i parameters to Dfunc: \n    %s'%(len(pars_d), pars_d))
-        
+        self.pars_d = pars_d.copy()
         
         #======================================================================
         # extract depth-dmaage data
@@ -690,6 +691,14 @@ class DFunc(ComWrkr,
                         left=0, #depth below range
                         right=max(ar[1]), #depth above range
                         )
+        
+    def get_stats(self): #get basic stats from the dfunc
+        deps = self.dd_ar[0]
+        dmgs = self.dd_ar[1]
+        return {**{'min_dep':min(deps), 'max_dep':max(deps), 
+                'min_dmg':min(dmgs), 'max_dmg':max(dmgs), 'dcnt':len(deps)},
+                **self.pars_d}
+        
 
 #==============================================================================
 #         #check for depth outside bounds
