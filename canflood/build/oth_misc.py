@@ -48,12 +48,12 @@ else:
 
     from hlpr.exceptions import QError as Error
 
-from hlpr.Q import *
-from hlpr.basic import *
+import hlpr.Q as hQ
+
 
 mod_name = 'misc'
 
-class Misc(Qcoms):
+class Misc(hQ.Qcoms):
     
     # legacy index numbers
     legacy_ind_d = {0:'id1',1:'address',2:'id2',10:'class', 11:'struct_type', 13:'area', 
@@ -109,20 +109,51 @@ def run2():
     #==========================================================================
     # setup session------
     #==========================================================================
-    Wrkr = Misc(logger=mod_logger, out_dir=out_dir, tag=tag)
-    log = mod_logger.getChild(tag)
-    
+    Wrkr = Misc(logger=mod_logger, out_dir=out_dir, tag=tag).ini_standalone()
+    logger = mod_logger.getChild(tag)
+    log = logger
     #===========================================================================
     # load commons------
     #===========================================================================
     #load all curves found in the directory
     assert os.path.exists(cLib_dir)
-
-        
     
+    #get all spreadsheets in the folder
+    cLib_fns = [e for e in os.listdir(cLib_dir) if e.endswith('.xls')]
+    
+    log.info('loading %i curveLibrarires found in %s'%(len(cLib_fns), cLib_dir))
+    cLib_all_d = dict()
+    for fn in cLib_fns:
+        cLib_d = pd.read_excel(os.path.join(cLib_dir, fn), sheet_name=None)
+        
+        basefn = os.path.splitext(os.path.split(fn)[1])[0].replace('curves_', '')
+        log.info('    %s got %i tabs: %s'%(basefn, len(cLib_d), list(cLib_d.keys())))
+        cLib_all_d[basefn] = cLib_d
+        
+        
     #==========================================================================
-    # execute
+    # execute----
     #==========================================================================
+    log.info('executing %i'%len(runpars_d))
+    for fclass, pars_d in runpars_d.items():
+        log = logger.getChild(fclass)
+        out_dir = pars_d['out_dir']
+        fp = pars_d['finv_fp']
+        
+        #=======================================================================
+        # load inventory
+        #=======================================================================
+        fvlay = Wrkr.load_vlay(fp, logger=log)
+        fdf = hQ.vlay_get_fdf(fvlay, logger=log).drop(['fid'], axis=1, errors='ignore')
+        
+        log.info('loaded %s'%str(fdf.shape))
+        
+        #=======================================================================
+        # consolidate
+        #=======================================================================
+        
+        Wrkr.crv_consol(fdf, cLib_all_d, logger=log)
+        
     
 
 def run1():

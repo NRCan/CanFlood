@@ -312,7 +312,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         if vlay_raw.wkbType() == 100:
             raise Error('loaded vlay has NoGeometry')
         
-        
+        assert hasattr(self, 'mstore'), 'did you init_standalone?'
         self.mstore.addMapLayer(vlay_raw)
         
         
