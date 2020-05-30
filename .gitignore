@@ -8,7 +8,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-build/
+#build/ #chose a bad name :(
 develop-eggs/
 dist/
 downloads/
