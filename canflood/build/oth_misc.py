@@ -78,7 +78,42 @@ class Misc(Qcoms):
         
         raise Error('gave up')
         
-
+def run2():
+    """
+    consolidate librarires
+    """
+    
+    #===========================================================================
+    # LMRFRA curves
+    #===========================================================================
+    tag ='%s_LMFRA'%mod_name
+    data_dir = r'C:\LS\03_TOOLS\LML\_keeps2\curves\nrp\nrpPer_20200517125446'
+    
+    runpars_d={
+        'inEq':{
+            'out_dir':os.path.join(data_dir, 'figs'),
+            'curves_fp':os.path.join(data_dir, 'curves_nrpPer_01_20200517_inEq.xls'),
+            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
+            },
+        'inStk':{
+            'out_dir':os.path.join(data_dir, 'figs'),
+            'curves_fp':os.path.join(data_dir, 'curves_nrpPer_01_20200517_inStk.xls'),
+            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
+            },
+        'outEq':{
+            'out_dir':os.path.join(data_dir, 'figs'),
+            'curves_fp':os.path.join(data_dir, 'curves_nrpPer_01_20200517_outEq.xls'),
+            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
+            },
+        'outStk':{
+            'out_dir':os.path.join(data_dir, 'figs'),
+            'curves_fp':os.path.join(data_dir, 'curves_nrpPer_01_20200517_outStk.xls'),
+            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
+            },
+        }
+    
+    
+    
 
 def run1():
 
@@ -150,6 +185,6 @@ def run1():
     
 if __name__ =="__main__": 
     print('start')
-    out_dir = run1()
+    out_dir = run2()
     #force_open_dir(out_dir)
     print('finished')
