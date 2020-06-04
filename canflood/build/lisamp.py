@@ -165,6 +165,7 @@ class LikeSampler(Qcoms):
         #======================================================================
         #clean out finv
         fc_vlay = self.deletecolumn(finv, [cid], invert=True, layname='fclean')
+        self.createspatialindex(fc_vlay, logger=log)
         
         self.fc_vlay = fc_vlay #set this for vectorize()
         #get cid list

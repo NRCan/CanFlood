@@ -471,8 +471,9 @@ class MyProgressReporter(object):   #progressBar like basic progress reporter
     def setValue(self, prog):
         self.prog= prog
         
+        """disabling for console runs???
         if self.level<=10:
-            print('    prog=%i'%self.prog)
+            print('    prog=%i'%self.prog)"""
     
 
 

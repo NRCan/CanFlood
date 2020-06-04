@@ -328,10 +328,19 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         if isinstance(aoi_vlay, QgsVectorLayer):
             log.info('slicing by aoi %s'%aoi_vlay.name())
             vlay = self.selectbylocation(vlay_raw, aoi_vlay, logger=log, result_type='layer')
+            
             self.mstore.addMapLayer(vlay)
+            
+            #add spatial index
+            
+
+            
+            vlay.setName(vlay_raw.name()) #reset the name
+            
         else: 
             vlay = vlay_raw
         
+        self.createspatialindex(vlay, logger=log)
         #=======================================================================
         # wrap
         #=======================================================================
@@ -1602,6 +1611,46 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
 
         log.debug('finished')
         return res_vlay
+    
+    def createspatialindex(self,
+                     in_vlay,
+                     logger=None,
+                     ):
+
+        #=======================================================================
+        # presets
+        #=======================================================================
+        algo_nm = 'qgis:createspatialindex'
+        if logger is None: logger=self.logger
+        log = self.logger.getChild('createspatialindex')
+        in_vlay
+
+ 
+        #=======================================================================
+        # assemble pars
+        #=======================================================================
+        #assemble pars
+        ins_d = { 'INPUT' : in_vlay }
+        
+        log.debug('executing \'%s\' with ins_d: \n    %s'%(algo_nm, ins_d))
+        
+        res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
+        
+        
+        #===========================================================================
+        # post formatting
+        #===========================================================================
+        #=======================================================================
+        # if layname is None: 
+        #     layname = '%s_si'%self.vlay.name()
+        #     
+        # res_vlay.setName(layname) #reset the name
+        #=======================================================================
+
+        
+        return 
+
+    
     
     #==========================================================================
     # privates----------
