@@ -45,6 +45,7 @@ else:
 from hlpr.Q import *
 from hlpr.basic import *
 
+from hlpr.Q import view
 #==============================================================================
 # classes-------------
 #==============================================================================
@@ -172,7 +173,7 @@ class LikeSampler(Qcoms):
         fdf = vlay_get_fdf(fc_vlay, logger=log)
         cid_l = fdf[cid].tolist()
         
-        
+
         #======================================================================
         # sample values
         #======================================================================
@@ -180,16 +181,29 @@ class LikeSampler(Qcoms):
         en_c_sval_d = dict() #container for samples {event name: sample data}
         for ename, lp_vlay in lpol_d.items():
             log = self.logger.getChild('run.%s'%ename)
+            log.debug('sampling %s from %s to %s w/ %i atts'%(
+                lfield, lp_vlay.name(), fc_vlay.name(), len(fdf)))
             
             """
             todo: remove any features w/ zero value
+            view(fc_vlay)
             """
             svlay, new_fns, jcnt = self.joinattributesbylocation(fc_vlay, lp_vlay, [lfield],
                                                   method=0, #one-to-many
+                                                 
+                                                  logger=log,
                                                   expect_j_overlap=True,
+                                                  allow_none=True,
                                                   )
+            
+            if jcnt == 0:
+                log.warning('no assets intersect failure polygons!')
+                #set a dummy entri
+                en_c_sval_d[ename] = {k:[] for k in cid_l}
+                continue
+
             #extract raw sampling data
-            sdf_raw = vlay_get_fdf(svlay, logger=log)
+            sdf_raw = vlay_get_fdf(svlay, logger=log) #df w/ columns = [cid, lfield]
             
             #==================================================================
             # #do some checks
@@ -204,8 +218,9 @@ class LikeSampler(Qcoms):
             #==================================================================
             # clean it
             #==================================================================
+            #log misses
             boolidx = sdf_raw[lfield].isna()
-            log.info('got %i (of %i) misses. dropping these'%(boolidx.sum(), len(boolidx)))
+            log.debug('got %i (of %i) misses. dropping these'%(boolidx.sum(), len(boolidx)))
             
             sdf = sdf_raw.dropna(subset=[lfield], axis=0, how='any')
 
@@ -217,19 +232,28 @@ class LikeSampler(Qcoms):
             lp_vlay.dataProvider().featureCount()
             sdf.pivot(index=cid, columns=lfield, values=lfield)"""
             
-            #loop and build for each cid
-            """not very efficient... but cant think of a better way"""
-            cid_samp_d = dict() #container for sampling results
-            for cval in cid_l:
-                #get this data
-                boolidx = sdf[cid] == cval
-                pvals_l = sdf.drop(cid, axis=1)[boolidx].iloc[:, 0].dropna().tolist()
-                
-                """this will yield an empty list for nulls
-                if len(pvals_l) == 0:
-                    raise Error('got empty result')"""
-                 
-                cid_samp_d[cval] =pvals_l
+            #===================================================================
+            # #loop and build for each cid
+            # """not very efficient... but cant think of a better way"""
+            # cid_samp_d = dict() #container for sampling results
+            # for cval in cid_l:
+            #     #get this data
+            #     boolidx = sdf[cid] == cval
+            #     pvals_l = sdf.drop(cid, axis=1)[boolidx].iloc[:, 0].dropna().tolist()
+            #     
+            #     """this will yield an empty list for nulls
+            #     if len(pvals_l) == 0:
+            #         raise Error('got empty result')"""
+            #      
+            #     cid_samp_d[cval] =pvals_l
+            #===================================================================
+            #drop down to cid groups (pvali values)
+            d = {k:csdf[lfield].to_list() for k,csdf in sdf.groupby(cid)}
+            
+            #add in any we missed
+            """not very elegent... doing this to fit in with previous methods
+            would be better to just use open joins"""
+            cid_samp_d = {**d, **{k:[] for k in cid_l if not k in d}}
                 
             #wrap event loop
             en_c_sval_d[ename] = cid_samp_d #add to reuslts
@@ -252,7 +276,7 @@ class LikeSampler(Qcoms):
         #loop and resolve
         log.debug('resolving %i events'%len(en_c_sval_d))
         for ename, cid_samp_d in en_c_sval_d.items():
-            log.debug('resolving \"%s\''%ename)
+            log.info('resolving \"%s\''%ename)
             
             #loop through each asset and resolve sample values
             cid_res_d = dict() #harmonized likelihood results
@@ -276,13 +300,14 @@ class LikeSampler(Qcoms):
             
                 
             #update results
-            res_ser = pd.Series(cid_res_d, name=ename)
+            res_ser = pd.Series(cid_res_d, name=ename).sort_index()
             if res_df is None:
                 res_df = res_ser.to_frame()
                 res_df.index.name = cid
             else:
-                assert np.array_equal(res_df.index, res_ser.index), 'index mmismatch'
-                res_df = res_df.join(res_ser)
+                if not np.array_equal(res_df.index, res_ser.index):
+                    raise Error('index mmismatch')
+                res_df = res_df.join(res_ser, how='left')
             
         #======================================================================
         # round
@@ -300,13 +325,27 @@ class LikeSampler(Qcoms):
         
         miss_l = set(res_df.index).symmetric_difference(cid_l)
         assert len(miss_l)==0, 'missed some cids'
+        
+        bc = res_df.isna().all(axis=0)
+        if bc.any():
+            log.warning('%i (of %i) events have no intersect!\n    %s'%(
+                bc.sum(), len(bc), res_df.columns[bc].tolist()))
+        
+        bx = res_df.isna().all(axis=1)
+        if bx.any():
+            log.warning('%i (of %i) assets have no intersect!'%(
+                bx.sum(), len(bx)))
+        
         #======================================================================
         # wrap
         #======================================================================
         
-        log.info('finished w/ %s'%str(res_df.shape))
-        
-        return res_df
+        log.info('finished w/ %s'%str(res_df.shape))        
+        return res_df #will have NaNs where there is no intersect
+    
+    """
+    view(res_df)
+    """
     
     def union_probabilities(self,
                             probs,

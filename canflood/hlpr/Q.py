@@ -639,8 +639,12 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                                  expect_all_hits = False, #wheter every main feature intersects a join feature
                                  expect_j_overlap = False, #wheter to expect the join_vlay to beoverlapping
                                  expect_m_overlap = False, #wheter to expect the mainvlay to have overlaps
+                                 
+                                 logger=None,
                      ):
         """        
+        TODO: really need to clean this up...
+        
         discard_nomatch: 
             TRUE: two resulting layers have no features in common
             FALSE: in layer retains all non matchers, out layer only has the non-matchers?
@@ -654,13 +658,15 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #=======================================================================
         # presets
         #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('joinattributesbylocation')
         self.vlay = vlay
         algo_nm = 'qgis:joinattributesbylocation'
         
         predicate_d = {'intersects':0,'contains':1,'equals':2,'touches':3,'overlaps':4,'within':5, 'crosses':6}
         
 
-        log = self.logger.getChild('joinattributesbylocation')
+        
 
         jlay_fieldn_l = self._field_handlr(join_vlay, 
                                            jlay_fieldn_l, 
