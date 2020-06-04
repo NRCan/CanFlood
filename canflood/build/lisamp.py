@@ -310,22 +310,33 @@ class LikeSampler(Qcoms):
                 res_df = res_df.join(res_ser, how='left')
             
         #======================================================================
-        # round
+        # wrap-------
         #======================================================================
+        log = self.logger.getChild('run')
+        
+        if res_df.isna().all().all():
+            log.warning('no intersections with any events!')
+            return res_df
+            
+            
         res_df = res_df.round(self.prec)
         #======================================================================
         # post checks
         #======================================================================
-        log = self.logger.getChild('run')
+
+        
         miss_l = set(lpol_d.keys()).symmetric_difference(res_df.columns)
         assert len(miss_l) == 0, 'failed to match columns to events'
         
-        assert res_df.max().max() <=1.0, 'bad max'
+        #bounds
+        if not res_df.max().max() <=1.0:
+            raise Error('bad max: %.2f'%res_df.max().max())
         assert res_df.min().min() >= 0.0, 'bad min'
         
         miss_l = set(res_df.index).symmetric_difference(cid_l)
         assert len(miss_l)==0, 'missed some cids'
         
+        #all nulls
         bc = res_df.isna().all(axis=0)
         if bc.any():
             log.warning('%i (of %i) events have no intersect!\n    %s'%(
@@ -337,7 +348,7 @@ class LikeSampler(Qcoms):
                 bx.sum(), len(bx)))
         
         #======================================================================
-        # wrap
+        # close
         #======================================================================
         
         log.info('finished w/ %s'%str(res_df.shape))        
