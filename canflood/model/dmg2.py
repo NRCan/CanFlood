@@ -273,7 +273,7 @@ class Dmg2(Model):
         
         miss_l = set(fdf.index.values).symmetric_difference(cres_df.index.values)
         
-        assert len(miss_l) == 0, 'result inventory mismatch'
+        assert len(miss_l) == 0, 'result inventory mismatch: \n    %s'%miss_l
         assert np.array_equal(fdf.index, cres_df.index), 'index mismatch'
         
         log.info('maxes:\n%s'%(
@@ -479,7 +479,8 @@ class Dmg2(Model):
             if not boolcol.sum() == 1:
                 raise Error('\'%s\' got bad match count'%event)
             
-            assert not res_df.loc[:, boolcol].isna().all().iloc[0], '%s got all nulls!'%event
+            if res_df.loc[:, boolcol].isna().all().iloc[0]:
+                log.warning('%s got all nulls!'%event)
 
             #calc and set the scalecd values
             try:

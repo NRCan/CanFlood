@@ -299,6 +299,9 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         log = logger.getChild('load_vlay')
         
         basefn = os.path.splitext(os.path.split(fp)[1])[0]
+        
+        log.debug('loading from %s'%fp)
+        
         vlay_raw = QgsVectorLayer(fp,basefn,providerLib)
         
         
@@ -325,6 +328,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         if isinstance(aoi_vlay, QgsVectorLayer):
             log.info('slicing by aoi %s'%aoi_vlay.name())
             vlay = self.selectbylocation(vlay_raw, aoi_vlay, logger=log, result_type='layer')
+            self.mstore.addMapLayer(vlay)
         else: 
             vlay = vlay_raw
         
