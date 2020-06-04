@@ -287,7 +287,11 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         return True
     
-    def load_vlay(self, fp, logger=None, providerLib='ogr'):
+    def load_vlay(self, 
+                  fp, 
+                  logger=None, 
+                  providerLib='ogr',
+                  aoi_vlay = None):
         
         assert os.path.exists(fp), 'requested file does not exist: %s'%fp
         
@@ -315,13 +319,24 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         assert hasattr(self, 'mstore'), 'did you init_standalone?'
         self.mstore.addMapLayer(vlay_raw)
         
+        #=======================================================================
+        # aoi slice
+        #=======================================================================
+        if isinstance(aoi_vlay, QgsVectorLayer):
+            log.info('slicing by aoi %s'%aoi_vlay.name())
+            vlay = self.selectbylocation(vlay_raw, aoi_vlay, logger=log, result_type='layer')
+        else: 
+            vlay = vlay_raw
         
-        vlay = vlay_raw
+        #=======================================================================
+        # wrap
+        #=======================================================================
         dp = vlay.dataProvider()
 
         log.info('loaded vlay \'%s\' as \'%s\' %s geo  with %i feats from file: \n     %s'
                     %(vlay.name(), dp.storageType(), QgsWkbTypes().displayString(vlay.wkbType()), dp.featureCount(), fp))
         
+
         return vlay
     
     def load_rlay(self, fp, logger=None):
@@ -2001,6 +2016,9 @@ def load_vlay( #load a layer from a file
         fp,
         providerLib='ogr',
         logger=mod_logger):
+    """
+    what are we using this for?
+    """
     log = logger.getChild('load_vlay') 
     
     

@@ -375,7 +375,7 @@ class MyFeedBack(object): #simple custom feedback object
         
     def setProgress(self, prog): #basic progress setter. mimics QgsFeedback
         
-        assert len(self.slots)>0
+        #assert len(self.slots)>0
         assert prog <= 100
         self.prog =prog
         

@@ -64,7 +64,8 @@ class LikeSampler(Qcoms):
         self.resname = 'exlikes_%s'%self.tag
         
     def load_layers(self, #load data to project (for standalone runs)
-                    lpol_fp_d, finv_fp,
+                    lpol_fp_d, #{event name:polygon filepath}
+                    finv_fp,
                     providerLib='ogr'
                     ):
         
@@ -108,6 +109,8 @@ class LikeSampler(Qcoms):
         """
         sample conditional probability polygon 'lfield' values with finv geometry
         
+        todo: inherit cid from self
+        
         """
         
         log = self.logger.getChild('run')
@@ -149,7 +152,7 @@ class LikeSampler(Qcoms):
         #check vlay
         assert isinstance(finv, QgsVectorLayer), 'bad type on finv'
         assert finv.isValid(), 'invalid finv'
-        assert cid in  [field.name() for field in finv.fields()], 'missing cid %s'%cid
+        assert cid in  [field.name() for field in finv.fields()], 'missing cid \'%s\''%cid
         assert finv.crs() == self.crs, 'crs mismatch on %s'%finv.name()
             
         #======================================================================

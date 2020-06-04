@@ -16,8 +16,6 @@ import os, logging, datetime
 import pandas as pd
 import numpy as np
 
-from scipy import interpolate, integrate
-
 start, ymd = datetime.datetime.now(), datetime.datetime.now().strftime('%Y%m%d')
 
 #==============================================================================
@@ -99,7 +97,7 @@ class Misc(hQ.Qcoms):
             fdf.columns.str.contains('_tag'),
             fdf.columns.str.startswith('f'))
             
-        assert boolcol.any()
+        assert boolcol.any(), 'failed to find any tag fields'
         log.info('collecting tags from %i tagcolumns \n    %s'%(
             boolcol.sum(),  fdf.columns[boolcol].tolist()))
         

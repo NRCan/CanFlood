@@ -369,8 +369,6 @@ class Dmg2(Model):
         #======================================================================
         #setup loop pars
         first = True
-
-
         for indxr, ftag in enumerate(valid_tags):
             log = self.logger.getChild('run.%s'%ftag)
             
@@ -417,6 +415,10 @@ class Dmg2(Model):
             #==================================================================
             dep_dmg_df = pd.Series(res_d, name='dmg_raw').to_frame().reset_index(
                 ).rename(columns={'index':'dep'})
+                
+            #checks
+            assert np.array_equal(dep_dmg_df.dtypes.values, np.array([np.dtype('float64'), np.dtype('float64')], dtype=object))
+            assert dep_dmg_df.notna().all().all()
                 
                 
             for event in tddf.columns[dboolcol]:
@@ -466,6 +468,7 @@ class Dmg2(Model):
         #loop and add scaled damages
         """
         view(events_df)
+        view(res_df)
         """
         for event, e_ser in events_df.iterrows():
 
@@ -475,9 +478,14 @@ class Dmg2(Model):
             #check it
             if not boolcol.sum() == 1:
                 raise Error('\'%s\' got bad match count'%event)
+            
+            assert not res_df.loc[:, boolcol].isna().all().iloc[0], '%s got all nulls!'%event
 
             #calc and set the scalecd values
-            res_df[e_ser['scaled']] = res_df.loc[:, boolcol].multiply(res_df['fscale'], axis=0)
+            try:
+                res_df[e_ser['scaled']] = res_df.loc[:, boolcol].multiply(res_df['fscale'], axis=0)
+            except Exception as e:
+                raise Error('failed w/ \n    %s'%e)
                 
         log.info('scaled damages')
         self.feedback.setProgress(80)
@@ -691,15 +699,6 @@ class DFunc(ComWrkr,
                         left=0, #depth below range
                         right=max(ar[1]), #depth above range
                         )
-        
-    def get_stats(self): #get basic stats from the dfunc
-        deps = self.dd_ar[0]
-        dmgs = self.dd_ar[1]
-        return {**{'min_dep':min(deps), 'max_dep':max(deps), 
-                'min_dmg':min(dmgs), 'max_dmg':max(dmgs), 'dcnt':len(deps)},
-                **self.pars_d}
-        
-
 #==============================================================================
 #         #check for depth outside bounds
 #         if depth < min(ar[0]):
@@ -714,8 +713,14 @@ class DFunc(ComWrkr,
 #==============================================================================
             
         return dmg
-
-
+    
+    
+    def get_stats(self): #get basic stats from the dfunc
+        deps = self.dd_ar[0]
+        dmgs = self.dd_ar[1]
+        return {**{'min_dep':min(deps), 'max_dep':max(deps), 
+                'min_dmg':min(dmgs), 'max_dmg':max(dmgs), 'dcnt':len(deps)},
+                **self.pars_d}
 def run():
 
     #==========================================================================

@@ -195,7 +195,8 @@ class Rsamp(Qcoms):
         
         #check the finv_raw
         assert isinstance(finv_raw, QgsVectorLayer), 'bad type on finv_raw'
-        assert finv_raw.crs() == crs, 'finv_raw crs doesnt match project'
+        assert finv_raw.crs() == crs, 'finv_raw crs %s doesnt match projects \'%s\'' \
+            %(finv_raw.crs().authid(), crs.authid())
         assert cid in [field.name() for field in finv_raw.fields()], \
             'requested cid field \'%s\' not found on the finv_raw'%cid
             
@@ -984,7 +985,7 @@ class Rsamp(Qcoms):
               rname_l = None,
               ):
         
-        log = self.logger.getChild('run')
+        log = self.logger.getChild('write_res')
         #======================================================================
         # defaults
         #======================================================================
@@ -992,7 +993,7 @@ class Rsamp(Qcoms):
         if rname_l is None: rname_l = self.rname_l
         if out_dir is None: out_dir = self.out_dir
         res_name = vlay.name()
-        
+        log.debug("on \'%s\'"%res_name)
         #======================================================================
         # prechekss
         #======================================================================
@@ -1024,6 +1025,7 @@ class Rsamp(Qcoms):
 
 
     def upd_cf(self, cf_fp): #configured control file updater
+        """make sure you write the file first"""
         return self.update_cf(
             {
             'dmg_fps':(
