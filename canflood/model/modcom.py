@@ -1674,7 +1674,7 @@ class Model(ComWrkr):
         # defaults
         #======================================================================
         log = self.logger.getChild('risk_plot')
-        if dmg_ser is None: dmg_ser = self.res_ser
+        if dmg_ser is None: dmg_ser = self.res_ser.copy()
         if dfmt is None: dfmt = self.plot_fmt
         if y1lab is None: y1lab = self.y1lab
         #======================================================================
@@ -1828,7 +1828,7 @@ class Model(ComWrkr):
                   dmg_ser = None,
                   
                   #labels
-                  x1lab='AEP', x2lab = 'ARI', ylab=None, 
+                  y1lab='AEP', y2lab = 'ARI', xlab=None, 
                   
                   #format controls
                   grid = True, logx = False, 
@@ -1851,9 +1851,9 @@ class Model(ComWrkr):
         # defaults
         #======================================================================
         log = self.logger.getChild('plot_aep')
-        if dmg_ser is None: dmg_ser = self.res_ser
+        if dmg_ser is None: dmg_ser = self.res_ser.copy()
         if dfmt is None: dfmt = self.plot_fmt
-        if ylab is None: ylab = self.y1lab
+        if xlab is None: xlab = self.y1lab #pull from risk_plot notation
 
         #======================================================================
         # precheck
@@ -1888,14 +1888,9 @@ class Model(ComWrkr):
         #======================================================================
         # data manipulations
         #======================================================================
-        ead_tot, dmg_ser1 = self.fmt_dmg_plot(dmg_ser)
+        aep_ser = dmg_ser.drop('ead')
+        ead_tot = dmg_ser['ead']
                 
-        
-        #get aep series
-        aep_ser = dmg_ser1.copy()
-        aep_ser.index = 1/dmg_ser1.index
-        
-        
         #======================================================================
         # labels
         #======================================================================\
@@ -1903,7 +1898,7 @@ class Model(ComWrkr):
         val_str = 'annualized impacts = %s \nltail=\"%s\',  rtail=\'%s\''%(
             dfmt.format(ead_tot/basev), self.ltail, self.rtail)
         
-        title = '%s.%s Impact-%s plot on %i events'%(self.name,self.tag, x1lab, len(dmg_ser1))
+        title = '%s.%s Impact-%s plot on %i events'%(self.name,self.tag, y1lab, len(aep_ser))
         
         #======================================================================
         # figure setup
@@ -1919,8 +1914,8 @@ class Model(ComWrkr):
         ax1 = fig.add_subplot(111)
         
         #aep units
-        ax1.set_xlim(0, max(aep_ser.index)) #aep limits 
-        ax1.set_ylim(0, max(aep_ser),1.1)
+        ax1.set_xlim(0, max(aep_ser)) #aep limits 
+        ax1.set_ylim(0, max(aep_ser.index)*1.1)
         
         """I think we need to use a label formatter instead
         #ari units
@@ -1930,9 +1925,9 @@ class Model(ComWrkr):
         
         # axis label setup
         fig.suptitle(title)
-        ax1.set_ylabel(ylab)
+        ax1.set_ylabel(y1lab)
 
-        ax1.set_xlabel(x1lab)
+        ax1.set_xlabel(xlab)
         """
         plt.close()
         plt.show()
@@ -1941,9 +1936,9 @@ class Model(ComWrkr):
         # fill the plot
         #======================================================================
         #damage plot
-        xar,  yar = aep_ser.index.values, aep_ser.values
+        xar,  yar = aep_ser.values.astype(np.float), aep_ser.index.values
         pline1 = ax1.plot(xar,yar,
-                            label       = ylab,
+                            label       = y1lab,
                             color       = 'black',
                             linestyle   = 'dashdot',
                             linewidth   = 2,
@@ -1954,7 +1949,8 @@ class Model(ComWrkr):
                             )
         
         #add a hatch
-        polys = ax1.fill_between(xar, yar, y2=0, 
+
+        polys = ax1.fill_betweenx(yar.astype(np.float), x1=xar, x2=0, 
                                 color       = h_color, 
                                 alpha       = h_alpha,
                                 hatch       = hatch)
@@ -1967,21 +1963,21 @@ class Model(ComWrkr):
         xmin, xmax1 = ax1.get_xlim()
         ymin, ymax1 = ax1.get_ylim()
         
-        x_text = xmax1 - (xmax1 - xmin)*.1 # 1/10 to the right of the left ax1is
-        y_text = ymax1 - (ymax1 - ymin)*.2 #1/10 above the bottom ax1is
+        x_text = xmin + (xmax1 - xmin)*.5 # 1/10 to the right of the left ax1is
+        y_text = ymin + (ymax1 - ymin)*.2 #1/10 above the bottom ax1is
         anno_obj = ax1.text(x_text, y_text, val_str)
         
         #=======================================================================
         # format axis labels
         #======================================================= ================
-        #damage values (yaxis for ax1)
-        old_tick_l = ax1.get_yticks() #get teh old labels
+        #damage values (xaxis)
+        old_tick_l = ax1.get_xticks() #get teh old labels
          
         # build the new ticks
         l = [dfmt.format(value/basev) for value in old_tick_l]
               
         #apply the new labels
-        ax1.set_yticklabels(l)
+        ax1.set_xticklabels(l)
 
         #=======================================================================
         # #ARI (xaxis for ax1)
@@ -2007,9 +2003,10 @@ class Model(ComWrkr):
     """
     
     def fmt_dmg_plot(self,#formatting damages for plotting
-                     dmg_ser): 
+                     dmg_ser_raw): 
         
         #get ead
+        dmg_ser = dmg_ser_raw.copy()
         ead_tot = dmg_ser['ead']
         del dmg_ser['ead'] #remove it from plotter values
         
