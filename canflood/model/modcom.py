@@ -105,8 +105,8 @@ class Model(ComWrkr):
     ground_water = False
     felv = ''
     event_probs = 'ari'
-    ltail = 'extrapolate'
-    rtail = 0.5
+    #ltail = 'extrapolate'
+    #rtail = 0.5
     drop_tails = True
     integrate = 'trapz'
     as_inun = False
@@ -247,9 +247,15 @@ class Model(ComWrkr):
                 #special type retrivial
                 if ntype == bool:
                     pval = self.pars[sect].getboolean(varnm)
+                elif ntype is None:
+                    continue #no check
                 else:
                     #set the type
-                    pval = ntype(pval_raw)
+                    try:
+                        pval = ntype(pval_raw)
+                    except Exception as e:
+                        raise Error('failed to set %s.%s  with input \'%s\' (%s) to %s \n %s'%(
+                            sect, varnm, pval_raw, type(pval_raw), ntype, e))
                 
                 #==============================================================
                 # check it
