@@ -1685,7 +1685,7 @@ class Model(ComWrkr):
         #======================================================================
         # setup
         #======================================================================
-        
+        """todo: move this up"""
         import matplotlib
         matplotlib.use('Qt5Agg') #sets the backend (case sensitive)
         import matplotlib.pyplot as plt
@@ -1709,20 +1709,7 @@ class Model(ComWrkr):
         # data manipulations
         #======================================================================
         #get ead
-        ead_tot = dmg_ser['ead']
-        del dmg_ser['ead'] #remove it from plotter values
-        
-        
-        #get damage series to plot
-        ar = np.array([dmg_ser.index, dmg_ser.values]) #convert to array
-        
-        #invert aep (w/ zero handling)
-        ar[0] = 1/np.where(ar[0]==0, #replaced based on zero value
-                           sorted(ar[0])[1]/10, #dummy value for zero (take the second smallest value and divide by 10)
-                           ar[0]) 
-        
-        dmg_ser1 = pd.Series(ar[1], index=ar[0], dtype=float) #back into series
-        dmg_ser1.index = dmg_ser1.index.astype(int) #format it
+        ead_tot, dmg_ser1 = self.fmt_dmg_plot(dmg_ser)
                 
         
         #get aep series
@@ -1841,7 +1828,7 @@ class Model(ComWrkr):
                   dmg_ser = None,
                   
                   #labels
-                  xlab='ARI', y1lab=None, y2lab='AEP',
+                  x1lab='AEP', x2lab = 'ARI', ylab=None, 
                   
                   #format controls
                   grid = True, logx = False, 
@@ -1854,7 +1841,7 @@ class Model(ComWrkr):
                     
                 #hatch pars
                     hatch =  None,
-                    h_color = 'blue',
+                    h_color = 'red',
                     h_alpha = 0.1,
                   ):
         
@@ -1863,15 +1850,18 @@ class Model(ComWrkr):
         #======================================================================
         # defaults
         #======================================================================
-        log = self.logger.getChild('risk_plot')
+        log = self.logger.getChild('plot_aep')
         if dmg_ser is None: dmg_ser = self.res_ser
         if dfmt is None: dfmt = self.plot_fmt
-        if y1lab is None: y1lab = self.y1lab
+        if ylab is None: ylab = self.y1lab
+
         #======================================================================
         # precheck
         #======================================================================
         assert isinstance(dmg_ser, pd.Series)
         assert 'ead' in dmg_ser.index, 'dmg_ser missing ead index'
+        
+        log.info('on %i events \n    %s'%(len(dmg_ser), dmg_ser.to_dict()))
         #======================================================================
         # setup
         #======================================================================
@@ -1898,26 +1888,12 @@ class Model(ComWrkr):
         #======================================================================
         # data manipulations
         #======================================================================
-        #get ead
-        ead_tot = dmg_ser['ead']
-        del dmg_ser['ead'] #remove it from plotter values
-        
-        
-        #get damage series to plot
-        ar = np.array([dmg_ser.index, dmg_ser.values]) #convert to array
-        
-        #invert aep (w/ zero handling)
-        ar[0] = 1/np.where(ar[0]==0, #replaced based on zero value
-                           sorted(ar[0])[1]/10, #dummy value for zero (take the second smallest value and divide by 10)
-                           ar[0]) 
-        
-        dmg_ser1 = pd.Series(ar[1], index=ar[0], dtype=float) #back into series
-        dmg_ser1.index = dmg_ser1.index.astype(int) #format it
+        ead_tot, dmg_ser1 = self.fmt_dmg_plot(dmg_ser)
                 
         
         #get aep series
         aep_ser = dmg_ser1.copy()
-        aep_ser.loc[:] = 1/dmg_ser1.index
+        aep_ser.index = 1/dmg_ser1.index
         
         
         #======================================================================
@@ -1927,7 +1903,7 @@ class Model(ComWrkr):
         val_str = 'annualized impacts = %s \nltail=\"%s\',  rtail=\'%s\''%(
             dfmt.format(ead_tot/basev), self.ltail, self.rtail)
         
-        title = '%s.%s Impact-%s plot on %i events'%(self.name,self.tag, xlab, len(dmg_ser1))
+        title = '%s.%s Impact-%s plot on %i events'%(self.name,self.tag, x1lab, len(dmg_ser1))
         
         #======================================================================
         # figure setup
@@ -1941,22 +1917,33 @@ class Model(ComWrkr):
         
         #axis setup
         ax1 = fig.add_subplot(111)
-        ax2 = ax1.twinx()
-        ax1.set_xlim(max(aep_ser.index), 1) #aep limits 
+        
+        #aep units
+        ax1.set_xlim(0, max(aep_ser.index)) #aep limits 
+        ax1.set_ylim(0, max(aep_ser),1.1)
+        
+        """I think we need to use a label formatter instead
+        #ari units
+        ax2 = ax1.twiny()
+        ax2.set_xlabel(x2lab)
+        ax2.set_xlim(99999999, 1/max(aep_ser.index))"""
         
         # axis label setup
         fig.suptitle(title)
-        ax1.set_ylabel(y1lab)
-        ax2.set_ylabel(y2lab)
-        ax1.set_xlabel(xlab)
-        
+        ax1.set_ylabel(ylab)
+
+        ax1.set_xlabel(x1lab)
+        """
+        plt.close()
+        plt.show()
+        """
         #======================================================================
         # fill the plot
         #======================================================================
         #damage plot
-        xar,  yar = dmg_ser1.index.values, dmg_ser1.values
-        pline1 = ax1.semilogx(xar,yar,
-                            label       = y1lab,
+        xar,  yar = aep_ser.index.values, aep_ser.values
+        pline1 = ax1.plot(xar,yar,
+                            label       = ylab,
                             color       = 'black',
                             linestyle   = 'dashdot',
                             linewidth   = 2,
@@ -1972,17 +1959,7 @@ class Model(ComWrkr):
                                 alpha       = h_alpha,
                                 hatch       = hatch)
         
-        #aep plot
-        xar,  yar = aep_ser.index.values, aep_ser.values
-        pline2 = ax2.semilogx(xar,yar,
-                            label       = y2lab,
-                            color       = 'blue',
-                            linestyle   = 'dashed',
-                            linewidth   = 1,
-                            alpha       = 1,
-                            marker      = 'x',
-                            markersize  = 0,
-                            )
+
 
         #=======================================================================
         # Add text string 'annot' to lower left of plot
@@ -1990,8 +1967,8 @@ class Model(ComWrkr):
         xmin, xmax1 = ax1.get_xlim()
         ymin, ymax1 = ax1.get_ylim()
         
-        x_text = xmin + (xmax1 - xmin)*.1 # 1/10 to the right of the left ax1is
-        y_text = ymin + (ymax1 - ymin)*.2 #1/10 above the bottom ax1is
+        x_text = xmax1 - (xmax1 - xmin)*.1 # 1/10 to the right of the left ax1is
+        y_text = ymax1 - (ymax1 - ymin)*.2 #1/10 above the bottom ax1is
         anno_obj = ax1.text(x_text, y_text, val_str)
         
         #=======================================================================
@@ -2006,9 +1983,11 @@ class Model(ComWrkr):
         #apply the new labels
         ax1.set_yticklabels(l)
 
-        #ARI (xaxis for ax1)
-        ax1.get_xaxis().set_major_formatter(
-                matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+        #=======================================================================
+        # #ARI (xaxis for ax1)
+        # ax1.get_xaxis().set_major_formatter(
+        #         matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+        #=======================================================================
         
         #=======================================================================
         # post formatting
@@ -2019,13 +1998,35 @@ class Model(ComWrkr):
 
         #legend
         h1, l1 = ax1.get_legend_handles_labels() #pull legend handles from axis 1
-        h2, l2 = ax2.get_legend_handles_labels()
-        ax1.legend(h1+h2, l1+l2, loc=2) #turn legend on with combined handles
+
+        ax1.legend(h1, l1, loc=2) #turn legend on with combined handles
         
         return fig
     """
     plt.show()
     """
+    
+    def fmt_dmg_plot(self,#formatting damages for plotting
+                     dmg_ser): 
+        
+        #get ead
+        ead_tot = dmg_ser['ead']
+        del dmg_ser['ead'] #remove it from plotter values
+        
+        
+        #get damage series to plot
+        ar = np.array([dmg_ser.index, dmg_ser.values]) #convert to array
+        
+        #invert aep (w/ zero handling)
+        ar[0] = 1/np.where(ar[0]==0, #replaced based on zero value
+                           sorted(ar[0])[1]/10, #dummy value for zero (take the second smallest value and divide by 10)
+                           ar[0]) 
+        
+        dmg_ser1 = pd.Series(ar[1], index=ar[0], dtype=float) #back into series
+        dmg_ser1.index = dmg_ser1.index.astype(int) #format it
+        
+        return ead_tot, dmg_ser1
+        
     
     def conv_expo_aep(self, #converting exposure data set to aep column values 
                       df, 
