@@ -157,12 +157,13 @@ class Risk2(Model):
         else:
             ddf1 = ddf.rename(columns = aep_ser.to_dict()).sort_index(axis=1)
             
-
+        ddf1 = ddf1.round(self.prec)
         #======================================================================
         # checks
         #======================================================================
         #check the columns
         assert np.array_equal(ddf1.columns.values, aep_ser.unique()), 'column name problem'
+        log.info('checking monotonoticy on %s'%str(ddf1.shape))
         _ = self.check_monot(ddf1)
         
         self.feedback.setProgress(40)
@@ -179,7 +180,7 @@ class Risk2(Model):
         # totals
         #======================================================================    
         self.feedback.setProgress(80)    
-        res_ser = self.calc_ead(ddf1.sum(axis=0).to_frame().T, logger=log).iloc[0]
+        res_ser = self.calc_ead(ddf1.sum(axis=0).to_frame().round(self.prec).T, logger=log).iloc[0]
         self.res_ser = res_ser.copy() #set for risk_plot()
 
             
