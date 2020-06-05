@@ -1699,29 +1699,33 @@ class Model(ComWrkr):
                            sorted(ar[0])[1]/10, #dummy value for zero (take the second smallest value and divide by 10)
                            ar[0]) 
         
-        dmg_ser = pd.Series(ar[1], index=ar[0], dtype=float) #back into series
-        dmg_ser.index = dmg_ser.index.astype(int) #format it
+        dmg_ser1 = pd.Series(ar[1], index=ar[0], dtype=float) #back into series
+        dmg_ser1.index = dmg_ser1.index.astype(int) #format it
                 
         
         #get aep series
-        aep_ser = dmg_ser.copy()
-        aep_ser.loc[:] = 1/dmg_ser.index
+        aep_ser = dmg_ser1.copy()
+        aep_ser.loc[:] = 1/dmg_ser1.index
         
         
         #======================================================================
         # labels
-        #======================================================================
+        #======================================================================\
         
-        val_str = 'total Annualized = ' + dfmt.format(ead_tot/basev)
+        val_str = 'total Annualized = %s \nltail=\"%s\',  rtail=\'%s\''%(
+            dfmt.format(ead_tot/basev), self.ltail, self.rtail)
         
-        title = '%s.%s Annualized-%s plot on %i events'%(self.name,self.tag, xlab, len(dmg_ser))
+        title = '%s.%s Annualized-%s plot on %i events'%(self.name,self.tag, xlab, len(dmg_ser1))
         
         #======================================================================
         # figure setup
         #======================================================================
         plt.close()
-        fig = plt.figure(1)
-        fig.set_size_inches(figsize)
+        fig = plt.figure(figsize=figsize,
+                     tight_layout=False,
+                     constrained_layout = True,
+                     )
+
         
         #axis setup
         ax1 = fig.add_subplot(111)
@@ -1738,7 +1742,7 @@ class Model(ComWrkr):
         # fill the plot
         #======================================================================
         #damage plot
-        xar,  yar = dmg_ser.index.values, dmg_ser.values
+        xar,  yar = dmg_ser1.index.values, dmg_ser1.values
         pline1 = ax1.semilogx(xar,yar,
                             label       = y1lab,
                             color       = 'black',
@@ -1749,6 +1753,7 @@ class Model(ComWrkr):
                             markersize  = 2,
                             fillstyle   = 'full', #marker fill style
                             )
+        
         #add a hatch
         polys = ax1.fill_between(xar, yar, y2=0, 
                                 color       = h_color, 
@@ -1774,7 +1779,7 @@ class Model(ComWrkr):
         ymin, ymax1 = ax1.get_ylim()
         
         x_text = xmin + (xmax1 - xmin)*.1 # 1/10 to the right of the left ax1is
-        y_text = ymin + (ymax1 - ymin)*.1 #1/10 above the bottom ax1is
+        y_text = ymin + (ymax1 - ymin)*.2 #1/10 above the bottom ax1is
         anno_obj = ax1.text(x_text, y_text, val_str)
         
         #=======================================================================
@@ -1796,7 +1801,8 @@ class Model(ComWrkr):
         #=======================================================================
         # post formatting
         #=======================================================================
-        if grid: ax1.grid()
+        if grid: 
+            ax1.grid()
         
 
         #legend
