@@ -67,7 +67,7 @@ class Djoiner(Qcoms):
         
         super().__init__(**kwargs) #initilzie teh baseclass
         
-        self.logger.info('init finished')
+        self.logger.debug('init finished')
         
         
     def run(self,#join a vectorlay to a data frame from a key

@@ -91,7 +91,7 @@ class ComWrkr(object): #common methods for all classes
         self.setup_feedback(progressBar=progressBar, feedback=feedback, LogLevel=LogLevel)
         
         
-        self.logger.info('ComWrkr.__init__ finished')
+        self.logger.debug('ComWrkr.__init__ finished')
         
     def setup_feedback(self,
                        progressBar = None,
@@ -183,7 +183,7 @@ class ComWrkr(object): #common methods for all classes
 
         
         
-        self.logger.info('feedback set as \'%s\' and progressBar: %s'%(
+        self.logger.debug('feedback set as \'%s\' and progressBar: %s'%(
             type(feedback).__name__, type(progressBar).__name__))
         
         
@@ -375,7 +375,7 @@ class MyFeedBack(object): #simple custom feedback object
         
     def setProgress(self, prog): #basic progress setter. mimics QgsFeedback
         
-        assert len(self.slots)>0
+        #assert len(self.slots)>0
         assert prog <= 100
         self.prog =prog
         
@@ -471,8 +471,9 @@ class MyProgressReporter(object):   #progressBar like basic progress reporter
     def setValue(self, prog):
         self.prog= prog
         
+        """disabling for console runs???
         if self.level<=10:
-            print('    prog=%i'%self.prog)
+            print('    prog=%i'%self.prog)"""
     
 
 

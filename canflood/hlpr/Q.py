@@ -127,7 +127,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         # attach inputs
         #=======================================================================
 
-        self.logger.info('Qcoms.__init__ finished w/ out_dir: \n    %s'%self.out_dir)
+        self.logger.debug('Qcoms.__init__ finished w/ out_dir: \n    %s'%self.out_dir)
         
         return
     
@@ -287,7 +287,11 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         return True
     
-    def load_vlay(self, fp, logger=None, providerLib='ogr'):
+    def load_vlay(self, 
+                  fp, 
+                  logger=None, 
+                  providerLib='ogr',
+                  aoi_vlay = None):
         
         assert os.path.exists(fp), 'requested file does not exist: %s'%fp
         
@@ -295,6 +299,9 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         log = logger.getChild('load_vlay')
         
         basefn = os.path.splitext(os.path.split(fp)[1])[0]
+        
+        log.debug('loading from %s'%fp)
+        
         vlay_raw = QgsVectorLayer(fp,basefn,providerLib)
         
         
@@ -312,16 +319,37 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         if vlay_raw.wkbType() == 100:
             raise Error('loaded vlay has NoGeometry')
         
-        
+        assert hasattr(self, 'mstore'), 'did you init_standalone?'
         self.mstore.addMapLayer(vlay_raw)
         
+        #=======================================================================
+        # aoi slice
+        #=======================================================================
+        if isinstance(aoi_vlay, QgsVectorLayer):
+            log.info('slicing by aoi %s'%aoi_vlay.name())
+            vlay = self.selectbylocation(vlay_raw, aoi_vlay, logger=log, result_type='layer')
+            
+            self.mstore.addMapLayer(vlay)
+            
+            #add spatial index
+            
+
+            
+            vlay.setName(vlay_raw.name()) #reset the name
+            
+        else: 
+            vlay = vlay_raw
         
-        vlay = vlay_raw
+        self.createspatialindex(vlay, logger=log)
+        #=======================================================================
+        # wrap
+        #=======================================================================
         dp = vlay.dataProvider()
 
         log.info('loaded vlay \'%s\' as \'%s\' %s geo  with %i feats from file: \n     %s'
                     %(vlay.name(), dp.storageType(), QgsWkbTypes().displayString(vlay.wkbType()), dp.featureCount(), fp))
         
+
         return vlay
     
     def load_rlay(self, fp, logger=None):
@@ -611,8 +639,12 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                                  expect_all_hits = False, #wheter every main feature intersects a join feature
                                  expect_j_overlap = False, #wheter to expect the join_vlay to beoverlapping
                                  expect_m_overlap = False, #wheter to expect the mainvlay to have overlaps
+                                 
+                                 logger=None,
                      ):
         """        
+        TODO: really need to clean this up...
+        
         discard_nomatch: 
             TRUE: two resulting layers have no features in common
             FALSE: in layer retains all non matchers, out layer only has the non-matchers?
@@ -626,13 +658,15 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #=======================================================================
         # presets
         #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('joinattributesbylocation')
         self.vlay = vlay
         algo_nm = 'qgis:joinattributesbylocation'
         
         predicate_d = {'intersects':0,'contains':1,'equals':2,'touches':3,'overlaps':4,'within':5, 'crosses':6}
         
 
-        log = self.logger.getChild('joinattributesbylocation')
+        
 
         jlay_fieldn_l = self._field_handlr(join_vlay, 
                                            jlay_fieldn_l, 
@@ -1584,6 +1618,46 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         log.debug('finished')
         return res_vlay
     
+    def createspatialindex(self,
+                     in_vlay,
+                     logger=None,
+                     ):
+
+        #=======================================================================
+        # presets
+        #=======================================================================
+        algo_nm = 'qgis:createspatialindex'
+        if logger is None: logger=self.logger
+        log = self.logger.getChild('createspatialindex')
+        in_vlay
+
+ 
+        #=======================================================================
+        # assemble pars
+        #=======================================================================
+        #assemble pars
+        ins_d = { 'INPUT' : in_vlay }
+        
+        log.debug('executing \'%s\' with ins_d: \n    %s'%(algo_nm, ins_d))
+        
+        res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
+        
+        
+        #===========================================================================
+        # post formatting
+        #===========================================================================
+        #=======================================================================
+        # if layname is None: 
+        #     layname = '%s_si'%self.vlay.name()
+        #     
+        # res_vlay.setName(layname) #reset the name
+        #=======================================================================
+
+        
+        return 
+
+    
+    
     #==========================================================================
     # privates----------
     #==========================================================================
@@ -2001,6 +2075,9 @@ def load_vlay( #load a layer from a file
         fp,
         providerLib='ogr',
         logger=mod_logger):
+    """
+    what are we using this for?
+    """
     log = logger.getChild('load_vlay') 
     
     
