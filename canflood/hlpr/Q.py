@@ -127,7 +127,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         # attach inputs
         #=======================================================================
 
-        self.logger.info('Qcoms.__init__ finished w/ out_dir: \n    %s'%self.out_dir)
+        self.logger.debug('Qcoms.__init__ finished w/ out_dir: \n    %s'%self.out_dir)
         
         return
     
