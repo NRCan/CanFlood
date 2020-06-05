@@ -105,8 +105,8 @@ class Model(ComWrkr):
     ground_water = False
     felv = ''
     event_probs = 'ari'
-    #ltail = 'extrapolate'
-    #rtail = 0.5
+    ltail = None
+    rtail = None
     drop_tails = True
     integrate = 'trapz'
     as_inun = False
@@ -213,7 +213,7 @@ class Model(ComWrkr):
             raise Error('missing %i expected sections in control file: %s'%(len(miss_l), miss_l))
         
         #======================================================================
-        # mandatory check and collect 
+        # mandatory check and collect -----
         #======================================================================
         cpars_d = dict()
         cnt = 0
@@ -247,8 +247,9 @@ class Model(ComWrkr):
                 #special type retrivial
                 if ntype == bool:
                     pval = self.pars[sect].getboolean(varnm)
-                elif ntype is None:
-                    continue #no check
+                elif getattr(self, varnm) is None:
+                    pval = pval_raw #no check or type conversion
+
                 else:
                     #set the type
                     try:
@@ -273,7 +274,7 @@ class Model(ComWrkr):
         log.info('collected MANDATORY %i variables from %i sections from paramter file'%(
             cnt, len(cpars_d)))
         #======================================================================
-        # optional check and collect
+        # optional check and collect----
         #======================================================================
         cnt2 = 0
         for sect, vchk_d in self.exp_pars_op.items(): 
@@ -1511,8 +1512,8 @@ class Model(ComWrkr):
         #check for damage monoticyt
         cboolidx = df.apply(lambda x: x.is_monotonic_increasing, axis=1)
         if cboolidx.any():
-            log.debug(df.loc[cboolidx, :])
-            raise Error(' %i (of %i)  assets have non-monotonic-increasing damages. see logger'%(
+            log.debug('%s/n'%df.loc[cboolidx, :])
+            log.warning(' %i (of %i)  assets have non-monotonic-increasing damages. see logger'%(
                 cboolidx.sum(), len(cboolidx)))
             
             
@@ -1664,14 +1665,15 @@ class Model(ComWrkr):
         #======================================================================
         
         import matplotlib
-        matplotlib.use('SVG') #sets the backend (case sensitive)
+        matplotlib.use('Qt5Agg') #sets the backend (case sensitive)
         import matplotlib.pyplot as plt
         
         #set teh styles
         plt.style.use('default')
         
         #font
-        matplotlib_font = {'family' : 'serif',
+        matplotlib_font = {
+                'family' : 'serif',
                 'weight' : 'normal',
                 'size'   : 8}
         
@@ -1764,9 +1766,7 @@ class Model(ComWrkr):
                             marker      = 'x',
                             markersize  = 0,
                             )
-        
 
-        
         #=======================================================================
         # Add text string 'annot' to lower left of plot
         #=======================================================================
@@ -1788,9 +1788,7 @@ class Model(ComWrkr):
               
         #apply the new labels
         ax1.set_yticklabels(l)
-        
-        
-        
+
         #ARI (xaxis for ax1)
         ax1.get_xaxis().set_major_formatter(
                 matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
@@ -1807,6 +1805,9 @@ class Model(ComWrkr):
         ax1.legend(h1+h2, l1+l2, loc=2) #turn legend on with combined handles
         
         return fig
+    """
+    plt.show()
+    """
     
     
     def conv_expo_aep(self, #converting exposure data set to aep column values 
