@@ -58,7 +58,7 @@ class Model(ComWrkr):
             'flat'           set the zero probability event equal to the most 
                             extreme impacts in the passed series
             'extrapolate'    set the zero probability event by extrapolating from 
-                            the most extreme impact
+                            the most extreme impact (interp1d)
             'none'           do not extrapolate (not recommended)
             float            use the passed value as the zero probability impact value
              
@@ -1415,7 +1415,7 @@ class Model(ComWrkr):
         #======================================================================
         ltail: left tail treatment code (low prob high damage)
             flat: extend the max damage to the zero probability event
-            extrapolate: extend the fucntion to the zero aep value
+            extrapolate: extend the fucntion to the zero aep value (interp1d)
             float: extend the function to this damage value (must be greater than max)
             none: don't extend the tail (not recommended)
             
@@ -1564,16 +1564,47 @@ class Model(ComWrkr):
             
         return res_df
 
-    def extrap(self, 
+    def extrap(self,  #extraploating EAD curve data
                ser, #row of dmages (y values) from big df
                left=True, #whether to extraploate left or gihtt
                ):
         
+        """
+        
+        #=======================================================================
+        # plot helper
+        #=======================================================================
+        from matplotlib import pyplot as plt
+
+        plt.close()
+        
+        fig = plt.figure()
+        ax = fig.add_subplot()
+        
+        ax.plot(ser.index.values,  ser.values, 
+            linestyle='None', marker="o")
+            
+        ax.plot(0, f(0), marker='x', color='red')
+
+        ax.grid()
+        plt.show()
+        
+
+        """
+        
         #build interpolation function from data
         if left:
-            #xvalues = aep
-            f = interpolate.interp1d(ser.index.values, ser.values, 
-                                     fill_value='extrapolate')
+            """
+            typically this just extends the line from the previous 2 extreme impacts
+            shouldnt effect results much when modeled extremes are 'extreme'
+            
+            probably a better function since we're only using the 'extrapolate' bit
+            """
+            f = interpolate.interp1d(
+                ser.index.values, #xvals: aep
+                ser.values, #yvals: impacts 
+                 fill_value='extrapolate', #all we're using
+                 )
             
         else:
             #xvalues = damages
@@ -1582,7 +1613,7 @@ class Model(ComWrkr):
             
         
         #calculate new y value by applying interpolation function
-        result = f(0)
+        result = f(0) #y value at x=0
         
         return float(result) 
     
