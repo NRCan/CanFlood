@@ -1837,12 +1837,14 @@ class Model(ComWrkr):
                   
                   
                   #figure parametrs
-                figsize     = (6.5, 4), 
+                  figsize     = (6.5, 4), 
                     
-                #hatch pars
+                    #hatch pars
                     hatch =  None,
                     h_color = 'red',
                     h_alpha = 0.1,
+                    
+                    xlrot = 45, #rotration for xlabels
                   ):
         
 
@@ -1977,7 +1979,7 @@ class Model(ComWrkr):
         l = [dfmt.format(value/basev) for value in old_tick_l]
               
         #apply the new labels
-        ax1.set_xticklabels(l)
+        ax1.set_xticklabels(l, rotation=xlrot)
 
         #=======================================================================
         # #ARI (xaxis for ax1)
