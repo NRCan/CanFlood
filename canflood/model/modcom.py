@@ -1789,8 +1789,8 @@ class Model(ComWrkr):
                             linestyle   = 'dashdot',
                             linewidth   = 2,
                             alpha       = 0.5,
-                            marker      = 'x',
-                            markersize  = 2,
+                            marker      = 's',
+                            markersize  = 4,
                             fillstyle   = 'full', #marker fill style
                             )
         
@@ -1862,7 +1862,7 @@ class Model(ComWrkr):
                   y1lab='AEP', y2lab = 'ARI', xlab=None, 
                   
                   #format controls
-                  grid = True, logx = False, 
+                  grid = True, 
                   basev = 1, #base value for dividing damage values
                   dfmt = None, #formatting of damage values 
                   
@@ -1976,8 +1976,8 @@ class Model(ComWrkr):
                             linestyle   = 'dashdot',
                             linewidth   = 2,
                             alpha       = 0.5,
-                            marker      = 'x',
-                            markersize  = 2,
+                            marker      = 's',
+                            markersize  = 4,
                             fillstyle   = 'full', #marker fill style
                             )
         
