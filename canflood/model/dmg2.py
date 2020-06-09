@@ -512,7 +512,7 @@ class Dmg2(Model):
         #======================================================================
         #loop and add scaled damages
         meta_d = dict()
-        cmeta_df =res_df.loc[:[cid, bid, 'ftag', 'fcap', 'fscale']]
+        cmeta_df =res_df.loc[:,[cid, bid, 'ftag', 'fcap', 'fscale']]
         for event, e_ser in events_df.iterrows():
             """add some sort of reporting on what damages are capped?"""
 
@@ -625,6 +625,11 @@ class Dmg2(Model):
             res_d[rtName] = mdf
             
 
+        #=======================================================================
+        # cap counts
+        #=======================================================================
+        df = cmeta_df.drop(['fcap', 'fscale', self.cid, self.bid], axis=1).fillna(False)
+        cm_df1  = df.groupby(gCn).sum().astype(np.int)
         
         #=======================================================================
         # write results
@@ -633,7 +638,7 @@ class Dmg2(Model):
         out_fp = os.path.join(self.out_dir, '_smry_bdmg_%s_%i.xls'%(self.tag, len(res_df)))
         
         d = {**res_d, 
-             'cap_cnts':cmeta_df.fillna(False).sum().rename('cap_cnts').to_frame(), 
+             'cap_cnts':cm_df1, 
              'cap_data':cmeta_df.fillna(False),
              }
    
