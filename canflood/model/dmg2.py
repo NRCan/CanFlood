@@ -305,7 +305,7 @@ class Dmg2(Model):
         cid, bid = self.cid, self.bid
         
 
-        assert isinstance(dmg_smry, bool), dmg_smry
+
         
         
         assert bid in ddf.columns
@@ -672,7 +672,7 @@ class Dmg2(Model):
     
     def bdmg_pies(self, #generate pie charts of the damage summaries
                   df_raw, #generate a pie chart for each column
-                  figsize     = (18, 4), 
+                  figsize     = (18, 6), 
                   maxStr_len = 14, #maximum string length for truncating event names
                   dfmt=None,
                   
@@ -706,7 +706,8 @@ class Dmg2(Model):
                 'size'   : 8}
         
         matplotlib.rc('font', **matplotlib_font)
-        matplotlib.rcParams['axes.titlesize'] = 8 #set the figure title size
+        matplotlib.rcParams['axes.titlesize'] = 10 #set the figure title size
+
         
         #spacing parameters
         matplotlib.rcParams['figure.autolayout'] = False #use tight layout
@@ -734,11 +735,12 @@ class Dmg2(Model):
 
         #build the figure canvas
         fig = plt.figure(figsize=figsize,
-                     tight_layout=False,
-                     constrained_layout = True,
+                     tight_layout=True,
+                     constrained_layout = False,
                      )
         
-        fig.suptitle('%s damage summary'%self.tag)
+        fig.suptitle('%s_%s Damage pies on %i'%(self.name, self.tag, len(df.columns)),
+                     fontsize=12, fontweight='bold')
         
         #populate with subplots
         ax_ar = fig.subplots(nrows=2, ncols=len(tcolns))
@@ -750,12 +752,13 @@ class Dmg2(Model):
         #=======================================================================
         # loop and plot
         #=======================================================================
-        def loop_axd(ax_d):
+        def loop_axd(ax_d, rowLab):
             #===================================================================
             # def func(pct, allvals):
             #     absolute = int(pct/100.*np.sum(allvals)) #convert BACK to the value
             #     return "{:.1f}%\n{:.2f}".format(pct, absolute)
             #===================================================================
+            first = True
             for coln, ax in ax_d.items():
                 
                 #get data
@@ -768,15 +771,29 @@ class Dmg2(Model):
                        #autopct=lambda pct: func(pct, dser),
                        )
                 
-                #trunacte the title string
+                #fix labels
+                for e in texts:
+                    ov = e.get_text()
+                    e.set_text(dfmt.format(float(ov)))
+                
+                #set truncated title
                 titlestr = (coln[:maxStr_len]) if len(coln) > maxStr_len else coln
                 ax.set_title(titlestr)
+                
+                #add text
+                if first:
+                    xmin, xmax1 = ax.get_xlim()
+                    ymin, ymax1 = ax.get_ylim()
+                    x_text = xmin + (xmax1 - xmin)*0 # 1/10 to the right of the left ax1is
+                    y_text = ymin + (ymax1 - ymin)*.5 #1/10 above the bottom ax1is
+                    anno_obj = ax.text(x_text, y_text, rowLab, fontsize=12, color='red', fontweight='bold')
+                    first=False
             
             return wedges, ax #return for legend handles
                 
                 
-        loop_axd(tax_d)
-        wedges, ax = loop_axd(bax_d)
+        loop_axd(tax_d, linkSrch_d['top'])
+        wedges, ax = loop_axd(bax_d, linkSrch_d['bot'])
         
         #turn the legend on 
 
@@ -786,14 +803,8 @@ class Dmg2(Model):
         fig.tight_layout()
         log.info('built pies')
         
-        #=======================================================================
-        # write
-        #=======================================================================
         
-        
-        
-        
-        return
+        return fig
     """
     plt.show()
     """
@@ -1043,9 +1054,7 @@ class DFunc(ComWrkr,
 #     
 #===============================================================================
 if __name__ =="__main__": 
-    
 
-    run()
     print('finished')
     
     
