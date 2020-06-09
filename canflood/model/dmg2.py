@@ -82,6 +82,8 @@ class Dmg2(Model):
     
     group_cnt = 4
     
+    plot_fmt = '${:,.0f}'
+    
     #minimum inventory expectations
     finv_exp_d = {
         'f0_tag':{'type':np.object},
@@ -93,11 +95,11 @@ class Dmg2(Model):
     
     def __init__(self,
                  cf_fp,
-                 dmg_smry=True, #whether to generate damage summary (see bdmg())
+
                  **kwargs
                  ):
         
-        self.dmg_smry=dmg_smry
+
         
         #init the baseclass
         super().__init__(cf_fp, **kwargs) #initilzie Model
@@ -289,7 +291,7 @@ class Dmg2(Model):
     def bdmg(self, #get damages on expanded finv
              
              #run controls
-             dmg_smry = None, #whether to generate the damage summary
+
             ):
         #======================================================================
         # defaults
@@ -302,7 +304,7 @@ class Dmg2(Model):
         """ddf is appending _1 to column names"""
         cid, bid = self.cid, self.bid
         
-        if dmg_smry is None: dmg_smry=self.dmg_smry
+
         assert isinstance(dmg_smry, bool), dmg_smry
         
         
@@ -561,11 +563,11 @@ class Dmg2(Model):
         #=======================================================================
         # meta--------
         #=======================================================================
-        if dmg_smry:
-            try:
-                self.bdmg_smry(res_df, events_df, cmeta_df, logger=log)
-            except Exception as e:
-                log.error('failed to generate bdmg_smry w/\n    %s'%e)
+        #set these for use later
+        self.bdmg_df = res_df
+        self.events_df = events_df.copy()
+        self.cmeta_df = cmeta_df
+
 
         #======================================================================
         # wrap------------
@@ -590,13 +592,22 @@ class Dmg2(Model):
         """
          
     def bdmg_smry(self, #generate summary of damages
-                  res_df,  #built results
-                  events_df,  #event name matrix
-                  cmeta_df, #cap by asset
+                  res_df=None,  #built results
+                  events_df=None,  #event name matrix
+                  cmeta_df=None, #cap by asset
                   gCn = 'ftag', #column name to group on
-                  logger=None):
+                  
+                  
+                  logger=None,
+                  
+                  ):
         
-        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if res_df is None: res_df=self.bdmg_df
+        if events_df is None: events_df=self.events_df
+        if cmeta_df is None: cmeta_df=self.cmeta_df
         if logger is None: logger=self.logger
         log=logger.getChild('bdmg_smry')
         
@@ -631,6 +642,10 @@ class Dmg2(Model):
         df = cmeta_df.drop(['fcap', 'fscale', self.cid, self.bid], axis=1).fillna(False)
         cm_df1  = df.groupby(gCn).sum().astype(np.int)
         
+
+        
+        
+        
         #=======================================================================
         # write results
         #=======================================================================
@@ -653,7 +668,141 @@ class Dmg2(Model):
         log.info('wrote %i tabs to \n    %s'%(len(d), out_fp))
 
         
+        return d
+    
+    def bdmg_pies(self, #generate pie charts of the damage summaries
+                  df_raw, #generate a pie chart for each column
+                  figsize     = (18, 4), 
+                  maxStr_len = 14, #maximum string length for truncating event names
+                  dfmt=None,
+                  
+                  linkSrch_d = {'top':'simu', 'bot':'fail'}, #how to separate data
+                  logger=None,
+                  ):
+        
+        if logger is None: logger=self.logger
+        log=logger.getChild('bdmg_pies')
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if dfmt is None: dfmt = self.plot_fmt
+        
+        #======================================================================
+        # setup
+        #======================================================================
+        
+        import matplotlib
+        matplotlib.use('Qt5Agg') #sets the backend (case sensitive)
+        import matplotlib.pyplot as plt
+        
+        #set teh styles
+        plt.style.use('default')
+        
+        #font
+        matplotlib_font = {
+                'family' : 'serif',
+                'weight' : 'normal',
+                'size'   : 8}
+        
+        matplotlib.rc('font', **matplotlib_font)
+        matplotlib.rcParams['axes.titlesize'] = 8 #set the figure title size
+        
+        #spacing parameters
+        matplotlib.rcParams['figure.autolayout'] = False #use tight layout
+        
+        
+        #=======================================================================
+        # prep data
+        #=======================================================================
+        df = df_raw.sort_index(axis=1)
+        def get_colns(srch):
+            #id the columns
+            bcx = df.columns.str.contains(srch,  case=False)
+            return df.columns[bcx].to_list()
+        
+        tcolns = get_colns(linkSrch_d['top']) 
+        bcolns = get_colns(linkSrch_d['bot'])
+
+        
+
+        #======================================================================
+        # figure setup
+        #======================================================================\
+        
+        plt.close()
+
+        #build the figure canvas
+        fig = plt.figure(figsize=figsize,
+                     tight_layout=False,
+                     constrained_layout = True,
+                     )
+        
+        fig.suptitle('%s damage summary'%self.tag)
+        
+        #populate with subplots
+        ax_ar = fig.subplots(nrows=2, ncols=len(tcolns))
+        
+        #convert axis array into useful dictionary
+        tax_d = dict(zip(tcolns, ax_ar[0].tolist()))
+        bax_d = dict(zip(bcolns, ax_ar[1].tolist()))
+        
+        #=======================================================================
+        # loop and plot
+        #=======================================================================
+        def loop_axd(ax_d):
+            #===================================================================
+            # def func(pct, allvals):
+            #     absolute = int(pct/100.*np.sum(allvals)) #convert BACK to the value
+            #     return "{:.1f}%\n{:.2f}".format(pct, absolute)
+            #===================================================================
+            for coln, ax in ax_d.items():
+                
+                #get data
+                dser = df.loc[:, coln]
+                
+                
+                wedges, texts, autotexts = ax.pie(
+                    dser, labels=dser.values, 
+                       autopct='%1.1f%%',
+                       #autopct=lambda pct: func(pct, dser),
+                       )
+                
+                #trunacte the title string
+                titlestr = (coln[:maxStr_len]) if len(coln) > maxStr_len else coln
+                ax.set_title(titlestr)
+            
+            return wedges, ax #return for legend handles
+                
+                
+        loop_axd(tax_d)
+        wedges, ax = loop_axd(bax_d)
+        
+        #turn the legend on 
+
+        ax.legend(wedges, df.index.values)
+        
+        
+        fig.tight_layout()
+        log.info('built pies')
+        
+        #=======================================================================
+        # write
+        #=======================================================================
+        
+        
+        
+        
         return
+    """
+    plt.show()
+    """
+
+
+
+        
+
+        
         
     def upd_cf(self, #update the control file 
                out_fp = None,cf_fp = None):
