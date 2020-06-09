@@ -281,8 +281,12 @@ class Dmg2(Model):
         assert len(miss_l) == 0, 'result inventory mismatch: \n    %s'%miss_l
         assert np.array_equal(fdf.index, cres_df.index), 'index mismatch'
         
+        #=======================================================================
+        # report
+        #=======================================================================
         log.info('maxes:\n%s'%(
             cres_df.max()))
+        
         log.info('finished w/ %s and TtlDmg = %.2f'%(
             str(cres_df.shape), cres_df.sum().sum()))
         
@@ -325,6 +329,8 @@ class Dmg2(Model):
         resserved for future dev
         
         one value per cid?
+        
+        view(bdf)
         """
 
         
@@ -370,7 +376,7 @@ class Dmg2(Model):
         #=======================================================================
         # #start results container
         #=======================================================================
-        res_df = bdf.loc[:, [bid, cid, 'ftag', 'fcap', 'fscale']].copy()
+        res_df = bdf.loc[:, [bid, cid, 'ftag', 'fcap', 'fscale', 'nestID']].copy()
         """need this for the joiner to work (bid is ambigious)"""
         res_df.index.name = None
         
@@ -514,7 +520,7 @@ class Dmg2(Model):
         #======================================================================
         #loop and add scaled damages
         meta_d = dict()
-        cmeta_df =res_df.loc[:,[cid, bid, 'ftag', 'fcap', 'fscale']]
+        cmeta_df =res_df.loc[:,[cid, bid, 'ftag', 'fcap', 'fscale', 'nestID']]
         for event, e_ser in events_df.iterrows():
             """add some sort of reporting on what damages are capped?"""
 
@@ -650,7 +656,7 @@ class Dmg2(Model):
         # write results
         #=======================================================================
         
-        out_fp = os.path.join(self.out_dir, '_smry_bdmg_%s_%i.xls'%(self.tag, len(res_df)))
+        out_fp = os.path.join(self.out_dir, '_smry_bdmg_%s_%s_%i.xls'%(gCn, self.tag, len(res_df)))
         
         d = {**res_d, 
              'cap_cnts':cm_df1, 
@@ -673,10 +679,11 @@ class Dmg2(Model):
     def bdmg_pies(self, #generate pie charts of the damage summaries
                   df_raw, #generate a pie chart for each column
                   figsize     = (18, 6), 
-                  maxStr_len = 14, #maximum string length for truncating event names
+                  maxStr_len = 11, #maximum string length for truncating event names
                   dfmt=None,
                   
                   linkSrch_d = {'top':'simu', 'bot':'fail'}, #how to separate data
+                  gCn = 'ftag', #group column (for title)
                   logger=None,
                   ):
         
@@ -739,7 +746,7 @@ class Dmg2(Model):
                      constrained_layout = False,
                      )
         
-        fig.suptitle('%s_%s Damage pies on %i'%(self.name, self.tag, len(df.columns)),
+        fig.suptitle('%s_%s_%s Damage pies on %i'%(self.name, self.tag, gCn, len(df.columns)),
                      fontsize=12, fontweight='bold')
         
         #populate with subplots
@@ -766,15 +773,18 @@ class Dmg2(Model):
                 
                 
                 wedges, texts, autotexts = ax.pie(
-                    dser, labels=dser.values, 
+                    dser, 
+                    #labels=dser.values, 
                        autopct='%1.1f%%',
                        #autopct=lambda pct: func(pct, dser),
                        )
                 
-                #fix labels
-                for e in texts:
-                    ov = e.get_text()
-                    e.set_text(dfmt.format(float(ov)))
+                #===============================================================
+                # #fix labels
+                # for e in texts:
+                #     ov = e.get_text()
+                #     e.set_text(dfmt.format(float(ov)))
+                #===============================================================
                 
                 #set truncated title
                 titlestr = (coln[:maxStr_len]) if len(coln) > maxStr_len else coln
@@ -797,7 +807,7 @@ class Dmg2(Model):
         
         #turn the legend on 
 
-        ax.legend(wedges, df.index.values)
+        fig.legend(wedges, df.index.values, loc='center')
         
         
         fig.tight_layout()
