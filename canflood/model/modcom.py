@@ -968,6 +968,8 @@ class Model(ComWrkr):
                 df.columns = df.columns.str.replace('%s_'%prefix, 'f')
                 df = df.reset_index()
                 
+                df['nestID'] = prefix
+                
                 #add to main
                 if bdf is None:
                     bdf = df
@@ -1014,6 +1016,8 @@ class Model(ComWrkr):
             
             #reset the index
             bdf = bdf.reset_index(drop=True)
+            
+            bdf['nestID'] = 'f0'
             
         else:
             raise Error('bad prefix match')
