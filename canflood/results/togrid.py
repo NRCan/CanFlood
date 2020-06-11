@@ -269,7 +269,7 @@ class Gwrkr(Qcoms):
             bdf = rdf1>=rdf
             assert bdf.all().all()
             
-            rdf = rdf1
+            rdf = rdf1.round(self.prec)
             
             #update meta
             mdf = mdf.append(rdf.sum(axis=0).rename(fclass), verify_integrity=True)
