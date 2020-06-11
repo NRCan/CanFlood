@@ -182,7 +182,7 @@ class Gwrkr(Qcoms):
         
         #check the gids
         gid_d = vlay_get_fdata(gvlay, fieldn=gid, logger=log)
-        assert pd.Series(gid_d).is_unique
+        assert pd.Series(gid_d).is_unique, '%s has bad gid=\'%s\''%(gvlay.name(), gid)
         
         #=======================================================================
         # calc
@@ -240,7 +240,7 @@ class Gwrkr(Qcoms):
             assert df.index.is_unique, fclass
             assert 'int' in df.index.dtype.name, fclass
                 
-            res_d[fclass] = df
+            res_d[fclass] = df.round(self.prec)
 
 
 
@@ -281,9 +281,8 @@ class Gwrkr(Qcoms):
         #=======================================================================
         # assemble results
         #=======================================================================
-        
         geo_d = vlay_get_fdata(gvlay, geo_obj=True, logger=log, rekey=gid)
-        rvlay = self.vlay_new_df2(rdf, geo_d=geo_d, logger=log, gkey=gid,
+        rvlay = self.vlay_new_df2(rdf.reset_index(), geo_d=geo_d, logger=log, gkey=gid,
                                   layname='%s_comb_%i'%(gvlay.name(), len(res_d)))
         
         return rvlay, res_d, mdf
