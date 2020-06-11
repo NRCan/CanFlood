@@ -2490,6 +2490,8 @@ def vlay_get_fdata( #get data for a single field from all the features
             fmt = 'dict', #format to return results in
                 #'singleton' expect and aprovide a unitary value
                 
+            rekey = None, #field name to rekey dictionary like results by
+                
             expect_all_real = False, #whether to expect all real results
             dropna = False, #whether to drop nulls from the results
             allow_none = False,
@@ -2559,7 +2561,7 @@ def vlay_get_fdata( #get data for a single field from all the features
     #===========================================================================
     # loop through and collect hte data
     #===========================================================================
-
+    if db_f: req_log(request, logger=log)
     d = dict() #empty container for results
     for feat in vlay.getFeatures(request):
         
@@ -2603,7 +2605,7 @@ def vlay_get_fdata( #get data for a single field from all the features
                 vlay.selectedFeatureCount()))
     
     if expect_all_real:
-        boolar = np.isnan(np.array(list(d.values()))) 
+        boolar = pd.isnull(np.array(list(d.values()))) 
         if np.any(boolar):
             raise Error('got %i nulls'%boolar.sum())
         
@@ -2633,6 +2635,15 @@ def vlay_get_fdata( #get data for a single field from all the features
         view(vlay)
         """
         
+    #===========================================================================
+    # rekey
+    #===========================================================================
+    if isinstance(rekey, str):
+        assert fmt=='dict'
+        
+        d, _ = vlay_key_convert(vlay, d, rekey, id1_type='fid', logger=log)
+        
+        
     
     #===========================================================================
     # results
@@ -2652,9 +2663,7 @@ def vlay_get_fdata( #get data for a single field from all the features
     elif fmt == 'ser': 
         return pd.Series(d, name=fieldn)
     else: 
-        raise IOError
-
-def vlay_new_mlay(#create a new mlay
+        raise IOErrordef vlay_new_mlay(#create a new mlay
                       gtype, #"Point", "LineString", "Polygon", "MultiPoint", "MultiLineString", or "MultiPolygon".
                       crs,
                       layname,

@@ -255,7 +255,7 @@ class Gwrkr(Qcoms):
             index=vlay_get_fdf(gvlay, logger=log).set_index(gid, drop=True).index,
             columns=res_d[fclass].columns).fillna(0)
             
-        mdf = pd.DataFrame(index=res_d.keys(), columns=rdf.columns)
+        mdf = pd.DataFrame()
         
         for fclass, df in res_d.items():
             s = set(df.index).difference(rdf.index)
@@ -272,7 +272,8 @@ class Gwrkr(Qcoms):
             rdf = rdf1
             
             #update meta
-            mdf.loc[fclass,: ] = rdf.sum(axis=0).to_frame().T
+            mdf = mdf.append(rdf.sum(axis=0).rename(fclass), verify_integrity=True)
+
             
         log.info('totaled across %i asset layers on %i grids'%(
             len(res_d), len(rdf)))
