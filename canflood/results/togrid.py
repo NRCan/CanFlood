@@ -41,7 +41,7 @@ from hlpr.Q import Qcoms
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Gwrk(Qcoms):
+class Gwrkr(Qcoms):
     """
     sampling asset geometry up to polygon grids
     """
