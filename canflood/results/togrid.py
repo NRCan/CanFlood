@@ -282,8 +282,8 @@ class Gwrkr(Qcoms):
         # assemble results
         #=======================================================================
         
-        geo_d = vlay_get_fdata(gvlay, geo_obj=True, logger=log)
-        rvlay = self.vlay_new_df2(rdf, geo_d=geo_d, logger=log,
+        geo_d = vlay_get_fdata(gvlay, geo_obj=True, logger=log, rekey=gid)
+        rvlay = self.vlay_new_df2(rdf, geo_d=geo_d, logger=log, gkey=gid,
                                   layname='%s_comb_%i'%(gvlay.name(), len(res_d)))
         
         return rvlay, res_d, mdf

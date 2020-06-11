@@ -2663,7 +2663,9 @@ def vlay_get_fdata( #get data for a single field from all the features
     elif fmt == 'ser': 
         return pd.Series(d, name=fieldn)
     else: 
-        raise IOErrordef vlay_new_mlay(#create a new mlay
+        raise IOError
+    
+def vlay_new_mlay(#create a new mlay
                       gtype, #"Point", "LineString", "Polygon", "MultiPoint", "MultiLineString", or "MultiPolygon".
                       crs,
                       layname,
@@ -3306,6 +3308,114 @@ def vlay_rename_fields(
     log.debug('applied renames to \'%s\' \n    %s'%(vlay.name(), rnm_d))
     
     return vlay
+
+def vlay_key_convert(#convert a list of ids in one form to another
+        vlay,
+        id1_objs, #list of ids (or dict keyed b y ids)  to get conversion of
+        id_fieldn, #field name for field type ids
+        id1_type = 'field', #type of ids passed in the id_l (result will return a dict of th eopposit etype)
+            #'field': keys in id1_objs are values from some field (on the vlay)
+            #'fid': keys in id1_objs are fids (on the vlay)
+        fid_fval_d = None, #optional pre-calced data (for performance improvement)
+        logger=mod_logger,
+        db_f = False, #extra checks
+        ):
+    
+    log = logger.getChild('vlay_key_convert')
+    
+    #===========================================================================
+    # handle variable inputs
+    #===========================================================================
+    if isinstance(id1_objs, dict):
+        id1_l = list(id1_objs.keys())
+    elif isinstance(id1_objs, list):
+        id1_l = id1_objs
+    else:
+        raise Error('unrecognized id1_objs type')
+    
+    #===========================================================================
+    # extract the fid to fval conversion
+    #===========================================================================
+    if fid_fval_d is None:
+        #limit the pull by id1s
+        if id1_type == 'fid':
+            request = QgsFeatureRequest().setFilterFids(id1_l)
+            log.debug('pulling \'fid_fval_d\' from %i fids'%(len(id1_l)))
+            
+        #by field values
+        elif id1_type == 'field': #limit by field value
+            #build an expression so we only query features with values matching the id1_l
+            qexp = exp_vals_in_field(id1_l, id_fieldn, qfields = vlay.fields(),  logger=log)
+            request =  QgsFeatureRequest(qexp)
+            
+            log.debug('pulling \'fid_fval_d\' from %i \'%s\' fvals'%(
+                len(id1_l), id_fieldn))
+        else:
+            raise Error('unrecognized id1_type')
+            
+        
+        fid_fval_d = vlay_get_fdata(vlay, fieldn=id_fieldn, request =request, logger=log,
+                                    expect_all_real=True, fmt='dict')
+    #no need
+    else:
+        log.debug('using passed \'fid_fval_d\' with %i'%len(fid_fval_d))
+        
+    #check them
+    if db_f:
+        
+        #log.debug('\'fid_fval_d\': \n    %s'%fid_fval_d)
+        
+        
+        for dname, l in (
+            ('keys', list(fid_fval_d.keys())),
+            ('values', list(fid_fval_d.values()))
+            ):
+            
+            if not len(np.unique(np.array(l))) == len(l):
+                raise Error('got non unique \'%s\' on fid_fval_d'%dname)
+        
+        
+    
+    #===========================================================================
+    # swap keys
+    #===========================================================================
+    if id1_type == 'fid':
+        id1_id2_d = fid_fval_d #o flip necessary
+
+    elif id1_type == 'field': #limit by field value
+        log.debug('swapping keys')
+        id1_id2_d = dict(zip(
+            fid_fval_d.values(), fid_fval_d.keys()
+            ))
+        
+
+    else:
+        raise Error('unrecognized id1_type')
+        
+    #=======================================================================
+    # #make conversion
+    #=======================================================================
+    #for dictionaries
+    if isinstance(id1_objs, dict):
+        res_objs = dict()
+        for id1, val in id1_objs.items():
+            res_objs[id1_id2_d[id1]] = val
+            
+        log.debug('got converted DICT results with %i'%len(res_objs))
+        
+    #for lists
+    elif isinstance(id1_objs, list):
+        
+        res_objs = [id1_id2_d[id1] for id1 in id1_objs]
+        
+        log.debug('got converted LIST results with %i'%len(res_objs))
+        
+    else:
+        raise Error('unrecognized id1_objs type')
+
+    return res_objs, fid_fval_d #converted objects, conversion dict ONLY FOR THSE OBJECTS!
+            
+  
 
 
 #==============================================================================
