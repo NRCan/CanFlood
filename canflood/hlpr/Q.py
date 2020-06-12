@@ -307,7 +307,9 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         
 
-        # checks
+        #=======================================================================
+        # # checks
+        #=======================================================================
         if not isinstance(vlay_raw, QgsVectorLayer): 
             raise IOError
         
