@@ -203,30 +203,34 @@ class Gwrkr(Qcoms):
     
     def combine_gsamp(self, #combine a set of asset results to a grid
                       avlay_d,
+                      Gw, #grid worker
                       res_fnl = ['ead'], #list of result fields to downsample
-                      gvlay=None,
-                      gid=None,
+
                       rnm_d=dict(), #optional POST field name conversion. {old fieldName:new fieldName}
                       logger=None,
                       ):
+        """
+        also see add_vlays()
+        """
         #=======================================================================
         # defaults
         #=======================================================================
         if logger is None: logger=self.logger
-        log=logger.getChild('cGsamp')
-        if gvlay is None: gvlay=self.gvlay
-        if gid is None: gid=self.gid
+        log=logger.getChild('cGsamp.%s'%Gw.name)
+        gvlay=Gw.vlay
+        gid=Gw.gid
         
         
         
         #=======================================================================
-        # loop and collect grid totals for each inventory
+        # downsample asset results--------
         #=======================================================================
+        
         res_d = dict()
-
-        for fclass, avlay in avlay_d.items():
-
-            log.info('downsampling \'%s\''%fclass)
+        mdf = pd.DataFrame()
+        #loop and collect grid totals for each inventory
+        for aresName, avlay in avlay_d.items():
+            log.info('downsampling \'%s\''%aresName)
             
             #sum on polys
             rvlay, nfn_l = self.gsamp(avlay, res_fnl=res_fnl,
@@ -237,10 +241,13 @@ class Gwrkr(Qcoms):
                 columns=rnm_d).set_index(gid).loc[:, res_fnl]
                 
             #check it
-            assert df.index.is_unique, fclass
-            assert 'int' in df.index.dtype.name, fclass
+            assert df.index.is_unique, aresName
+            assert 'int' in df.index.dtype.name, aresName
                 
-            res_d[fclass] = df.round(self.prec)
+            res_d[aresName] = df.round(self.prec)
+            
+            #meta
+            mdf = mdf.append(df.sum().rename(aresName), verify_integrity=True)
 
 
 
@@ -248,42 +255,53 @@ class Gwrkr(Qcoms):
         
         #=======================================================================
         # combine-----
-        #=======================================================================
-
+        #======================================================================
         #empty results container
         rdf = pd.DataFrame(
             index=vlay_get_fdf(gvlay, logger=log).set_index(gid, drop=True).index,
-            columns=res_d[fclass].columns).fillna(0)
+            columns=res_d[aresName].columns).fillna(0)
             
-        mdf = pd.DataFrame()
+
         
-        for fclass, df in res_d.items():
+        #loop each asset downsample and s um
+        for aresName, df in res_d.items():
+            #check index compatability
             s = set(df.index).difference(rdf.index)
-            assert len(s)==0, fclass
+            assert len(s)==0, aresName
             
+            #sum together
             rdf1 = rdf.add(df, axis=0, fill_value=0)
             
+            #check index again
             assert np.array_equal(rdf1.index, rdf.index)
             assert np.array_equal(rdf1.columns, rdf.columns)
             
+            #check summation logic
             bdf = rdf1>=rdf
             assert bdf.all().all()
             
+            #clean and reset
             rdf = rdf1.round(self.prec)
             
-            #update meta
-            mdf = mdf.append(rdf.sum(axis=0).rename(fclass), verify_integrity=True)
-
-            
+        #wrap
         log.info('totaled across %i asset layers on %i grids'%(
             len(res_d), len(rdf)))
         
         #=======================================================================
-        # assemble results
+        # build combined layer
         #=======================================================================
         geo_d = vlay_get_fdata(gvlay, geo_obj=True, logger=log, rekey=gid)
         rvlay = self.vlay_new_df2(rdf.reset_index(), geo_d=geo_d, logger=log, gkey=gid,
-                                  layname='%s_comb_%i'%(gvlay.name(), len(res_d)))
+                                  layname='%s_comb_%i'%(Gw.name, len(res_d)))
+        
+        #=======================================================================
+        # #meta clean up
+        #=======================================================================
+        mdf['gname'] = Gw.name
+        mdf['gvlay_name'] = Gw.vlay.name()
+        mdf.index.name='aresName'
+        mdf=mdf.reset_index()
+        
         
         return rvlay, res_d, mdf
         """

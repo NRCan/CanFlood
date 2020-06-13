@@ -3278,6 +3278,7 @@ def vlay_rename_fields(
         rnm_d, #field name conversions to apply {old FieldName:newFieldName}
         logger=None,
         feedback=None,
+
         ):
     
     if logger is None: logger=mod_logger
@@ -3308,6 +3309,7 @@ def vlay_rename_fields(
     vlay.setName(vlay_raw.name())
     
     log.debug('applied renames to \'%s\' \n    %s'%(vlay.name(), rnm_d))
+    
     
     return vlay
 

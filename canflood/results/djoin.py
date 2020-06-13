@@ -70,15 +70,18 @@ class Djoiner(Qcoms):
         self.logger.debug('init finished')
         
         
-    def run(self,#join a vectorlay to a data frame from a key
-              vlay_raw, #layer to join csv to (finv)
-              data_fp, #filepath to tabular data
+    def run(self,#join tabular results back to the finv
+              vlay_raw, #finv vlay (to join results to)
+              data_fp, #filepath to res_per asset tabular results data
               link_coln, #linking column/field name
               keep_fnl = 'all', #list of field names to keep from the vlay (or 'all' to keep all)
               layname = None,
               tag = None,
               logger = None,
               ): 
+        """
+        todo: clean this up and switch over to joinattributestable algo
+        """
         
         #=======================================================================
         # defaults
@@ -176,8 +179,8 @@ class Djoiner(Qcoms):
         #check key intersect
         """we allow the results lkp_df to be smaller than the vector layer"""
         l = set(lkp_df[cid]).difference(df1[link_coln])
-        assert len(l)==0, 'missing %i (of %i) \'%s\' entries in the vlay: \n    %s'%(
-            len(l), len(lkp_df), cid, l)
+        assert len(l)==0, '%i (of %i) \'%s\' entries in the results not found in the finv_vlay \'%s\': \n    %s'%(
+            len(l), len(lkp_df), cid, vlay_raw.name(), l)
         
         #===========================================================================
         # do the lookup
