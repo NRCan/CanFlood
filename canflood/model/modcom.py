@@ -1567,11 +1567,13 @@ class Model(ComWrkr):
         # clean results
         #======================================================================
         if drop_tails:
-            res_df = df_raw.join(df['ead'].round(self.prec))
+            """not sure about this"""
+            res_df = df_raw.join(df['ead'])
         else:
             res_df = df
             
-        return res_df
+        return res_df.round(self.prec)
+
 
     def extrap(self,  #extraploating EAD curve data
                ser, #row of dmages (y values) from big df
@@ -1868,7 +1870,7 @@ class Model(ComWrkr):
                   dmg_ser = None,
                   
                   #labels
-                  y1lab='AEP', y2lab = 'ARI', xlab=None, 
+                  y1lab='AEP',   xlab=None, 
                   
                   #format controls
                   grid = True, 

@@ -247,9 +247,7 @@ class Risk1(Model):
         assert not bidf1.isna().any().any()
         
         cdf = bidf1.groupby(cid).max().drop(bid, axis=1)
-
-        
-
+ 
         #======================================================================
         # resolve alternate impacts (per evemt)
         #======================================================================
