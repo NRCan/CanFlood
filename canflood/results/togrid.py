@@ -202,7 +202,7 @@ class Gwrkr(Qcoms):
         return gvlay1, nfn_l
     
     def combine_gsamp(self, #combine a set of asset results to a grid
-                      avlay_d,
+                      avlay_d, #{aresName:AssetResWorker
                       Gw, #grid worker
                       res_fnl = ['ead'], #list of result fields to downsample
 
@@ -229,7 +229,8 @@ class Gwrkr(Qcoms):
         res_d = dict()
         mdf = pd.DataFrame()
         #loop and collect grid totals for each inventory
-        for aresName, avlay in avlay_d.items():
+        for aresName, Av in avlay_d.items():
+            avlay = Av.vlay
             log.info('downsampling \'%s\''%aresName)
             
             #sum on polys

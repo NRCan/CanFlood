@@ -323,7 +323,7 @@ class ComWrkr(object): #common methods for all classes
         #write the file
         try: 
             fig.savefig(out_fp, dpi = dpi, format = fmt, transparent=transparent)
-            log.info('saved figure to file: %s'%out_fp)
+            log.info('saved figure to file: \n    %s'%out_fp)
         except Exception as e:
             raise Error('failed to write figure to file w/ \n    %s'%e)
         
