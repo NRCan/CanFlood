@@ -57,7 +57,7 @@ class Risk1(Model):
              'event_probs':{'values':('ari', 'aep')}, 
              'felv':{'values':('ground', 'datum')},
              'prec':{'type':int}, 
-             'drop_tails':{'type':bool},
+             'ltail':None, 'rtail':None, 'drop_tails':{'type':bool},
              'as_inun':{'type':bool},
               #'ground_water':{'type':bool}, #NO! risk1 only accepts positive depths
              },

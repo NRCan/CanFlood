@@ -1439,9 +1439,14 @@ class Model(ComWrkr):
         if rtail is None: rtail = self.rtail
         
         #format tail values
+        assert not ltail is None
+        assert not rtail is None
         
         if not ltail in ['flat', 'extrapolate', 'none']:
-            ltail  = float(ltail)
+            try:
+                ltail  = float(ltail)
+            except Exception as e:
+                raise Error('failed to convert \'ltail\'=\'%s\' to numeric \n    %s'%(ltail, e))
         if not rtail in ['extrapolate', 'none']:
             rtail = float(rtail)
             
