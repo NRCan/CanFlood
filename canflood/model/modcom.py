@@ -1173,7 +1173,7 @@ class Model(ComWrkr):
         boolidx = ddf.loc[:,boolcol].max(axis=1)>self.max_depth
         if boolidx.any():
             log.debug('\n%s'%ddf[boolidx])
-            raise Error('%i (of %i) nested curves exceed max depth: %.2f. see logger'%(
+            raise Error('%i (of %i) nested assets exceed max depth: %.2f. see logger'%(
                 boolidx.sum(), len(boolidx), self.max_depth))
         
         
@@ -1450,19 +1450,13 @@ class Model(ComWrkr):
         if not rtail in ['extrapolate', 'none']:
             rtail = float(rtail)
             
-        log.info('getting ead on %s w/ ltail=%s and rtail=%s'%(
+        log.info('getting ead on %s w/ ltail=\'%s\' and rtail=\'%s\''%(
             str(df_raw.shape), ltail, rtail))
         
         #identify columns to calc ead for
         bx = (df_raw > 0).any(axis=1) #only want those with some real damages
         
-        
-        """
-        pd.set_option('display.float_format', lambda x: '%.5f' % x)
-        
-        
-        """
-            
+        assert bx.any(), 'no valid results on %s'%str(df_raw.shape)
         #=======================================================================
         # get tail parameters-----
         #=======================================================================
@@ -1475,8 +1469,8 @@ class Model(ComWrkr):
             df.loc[:,0] = df.iloc[:,0] 
             
         elif ltail == 'extrapolate':
-            df.loc[bx,0] = df.loc[bx, :].apply(
-                self.extrap, axis=1, left=True)
+            df.loc[bx,0] = df.loc[bx, :].apply(self.extrap, axis=1, left=True)
+
 
         elif isinstance(ltail, float):
             """this cant be a good idea...."""
@@ -1511,7 +1505,7 @@ class Model(ComWrkr):
             
             df.loc[bx, aep_val] = 0
             
-            log.info('setting ZeroDamage event from user passed \'rtail\' aep=%.7f'%(
+            log.debug('setting ZeroDamage event from user passed \'rtail\' aep=%.7f'%(
                 aep_val))
             
         elif rtail == 'none':
@@ -1524,10 +1518,8 @@ class Model(ComWrkr):
         else:
             raise Error('unexpected rtail %s'%rtail)
             
-        
-        
         df = df.sort_index(axis=1)
-        
+
         #======================================================================
         # check monoticiy again
         #======================================================================
@@ -1537,8 +1529,7 @@ class Model(ComWrkr):
             log.debug('%s/n'%df.loc[cboolidx, :])
             log.warning(' %i (of %i)  assets have non-monotonic-increasing damages. see logger'%(
                 cboolidx.sum(), len(cboolidx)))
-            
-        
+
         #======================================================================
         # calc EAD-----------
         #======================================================================
@@ -1609,7 +1600,7 @@ class Model(ComWrkr):
             typically this just extends the line from the previous 2 extreme impacts
             shouldnt effect results much when modeled extremes are 'extreme'
             
-            probably a better function since we're only using the 'extrapolate' bit
+            theres probably a better function to use since we're only using the 'extrapolate' bit
             """
             f = interpolate.interp1d(
                 ser.index.values, #xvals: aep

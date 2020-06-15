@@ -1480,9 +1480,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             else:
                 raise Error(msg)
         
-
-              
-        log.info('on \'%s\' with %i feats selected'%(
+        log.debug('on \'%s\' with %i feats selected'%(
             vlay.name(), vlay.selectedFeatureCount()))
         #=======================================================================
         # # build inputs
