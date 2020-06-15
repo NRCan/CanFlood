@@ -154,7 +154,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         if not self.proj_checks():
             raise Error('failed checks')
         
-        self.logger.info('Qproj.ini_standalone finished')
+        self.logger.debug('Qproj.ini_standalone finished')
         
         
         return self

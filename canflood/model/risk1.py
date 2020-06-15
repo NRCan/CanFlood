@@ -93,7 +93,9 @@ class Risk1(Model):
         'f0_elv':{'type':np.number}
         }
     """
-    NOTE: for as_inun=True, we dont need any elevations (should all be zero)
+    NOTE: for as_inun=True, 
+    using this flag to skip conversion of exposure to binary
+    we dont need any elevations (should all be zero)
     but allowing the uesr to NOT pass an elv column would be very difficult
     """
     
@@ -122,17 +124,12 @@ class Risk1(Model):
         """
         called by Dialog and standalones
         """
-        
         self.init_model()
-        
         self.resname = 'risk1_%s_%s'%(self.tag, self.name)
         #self.load_data()
         #======================================================================
         # load data files
         #======================================================================
-
-
-        
         self.load_finv()
         self.load_evals()
         self.load_expos(dtag='expos')
@@ -144,10 +141,7 @@ class Risk1(Model):
             self.load_gels()
             self.add_gels()
         
-        #self.setup_finv()
-        
 
-        #self.setup_expo()
         self.build_exp_finv() #build the expanded finv
         self.build_depths()
         
@@ -196,7 +190,7 @@ class Risk1(Model):
         #======================================================================
         # convert exposures to binary
         #======================================================================
-        if not self.as_inun:
+        if not self.as_inun: #standard impact/noimpact analysis
             #get relvant bids
             """
             because there are no curves, Risk1 can only use positive depths.
@@ -222,7 +216,6 @@ class Risk1(Model):
         # leave as percentages
         #=======================================================================
         else:
-            
             bidf = ddf1.copy()
             assert bidf.max().max() <=1
             
@@ -269,11 +262,7 @@ class Risk1(Model):
         #======================================================================
         #check the columns
         assert np.array_equal(bres_df.columns.values, aep_ser.unique()), 'column name problem'
-        
-        
         _ = self.check_monot(bres_df)
-        
-        
         #======================================================================
         # get ead per asset
         #======================================================================
@@ -289,15 +278,15 @@ class Risk1(Model):
         # totals
         #======================================================================        
         res_ser = self.calc_ead(bres_df.sum(axis=0).to_frame().T, logger=log).iloc[0]
-        self.res_ser = res_ser.copy() #set for risk_plot()
         
-
+        self.res_ser = res_ser.copy() #set for risk_plot()
         self.feedback.setProgress(95)
             
         
-
+        #=======================================================================
+        # wrap
+        #=======================================================================
         log.info('finished on %i assets and %i damage cols'%(len(bres_df), len(res_ser)))
-        
 
         #format resul series
         res = res_ser.to_frame()
@@ -313,7 +302,7 @@ class Risk1(Model):
         log.info('finished')
 
 
-        return res, res_df
+        return res.round(self.prec), res_df.round(self.prec)
     
 
 if __name__ =="__main__": 

@@ -617,7 +617,7 @@ class Model(ComWrkr):
             assert booldf.sum().sum()==0, \
                 'for pct inundation got %i (of %i) exposure values great than 1'%(
                     booldf.sum().sum(), booldf.size)
-            """not sure why this is required"""
+            """forcing this becuase %inundation should never add ground elevations"""
             assert self.felv =='datum', 'felv must equal \'datum\' for pct inundation runs'
 
         #======================================================================
