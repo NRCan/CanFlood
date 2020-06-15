@@ -339,12 +339,21 @@ class ComWrkr(object): #common methods for all classes
         
         log.debug('on %i'%len(crv_d))
         
+        #srip hitespace
+        crv_d1 = dict()
+        for k, v in crv_d.items():
+            if isinstance(k, str):
+                newk = k.strip()
+            else:
+                newk = k
+                
+            crv_d1[newk] = v
+            
+        
         #check keys
-        l = set(self.crv_keys).difference(crv_d.keys())
+        l = set(self.crv_keys).difference(crv_d1.keys())
         assert len(l)==0, 'curve is missing keys: %s'%l
-        
-        
-        
+
         return True
     
 class MyFeedBack(object): #simple custom feedback object
