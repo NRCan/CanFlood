@@ -268,7 +268,7 @@ class Risk1(Model):
         #======================================================================
         if res_per_asset:
             self.feedback.setProgress(50)
-            res_df = self.calc_ead(bres_df, drop_tails=self.drop_tails, logger=log)
+            res_df = self.calc_ead(bres_df, drop_tails=self.drop_tails, logger=log).round(self.prec)
                         
         else:
             res_df = None
@@ -302,7 +302,7 @@ class Risk1(Model):
         log.info('finished')
 
 
-        return res.round(self.prec), res_df.round(self.prec)
+        return res.round(self.prec), res_df
     
 
 if __name__ =="__main__": 

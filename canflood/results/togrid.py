@@ -178,7 +178,8 @@ class Gwrkr(Qcoms):
         
         fn_l = [f.name() for f in avlay.fields()]
         s = set(res_fnl).difference(fn_l)
-        assert len(s)==0, 'missing requested results fields: %s'%res_fnl
+        if not len(s)==0:
+            raise Error('\'%s\' missing requested results fields: %s'%(avlay.name(), s))
         
         #check the gids
         gid_d = vlay_get_fdata(gvlay, fieldn=gid, logger=log)
@@ -232,6 +233,10 @@ class Gwrkr(Qcoms):
         for aresName, Av in avlay_d.items():
             avlay = Av.vlay
             log.info('downsampling \'%s\''%aresName)
+            
+            """
+            view(avlay)
+            """
             
             #sum on polys
             rvlay, nfn_l = self.gsamp(avlay, res_fnl=res_fnl,

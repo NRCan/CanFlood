@@ -200,7 +200,7 @@ class ComWrkr(object): #common methods for all classes
         #get defaults
         if cf_fp is None: cf_fp = self.cf_fp
         
-        assert os.path.exists(cf_fp), 'bad cf_fp: %s'%cf_fp
+        assert os.path.exists(cf_fp), 'bad cf_fp: \n    %s'%cf_fp
         
         #initiliae the parser
         pars = configparser.ConfigParser(allow_no_value=True)

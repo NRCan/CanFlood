@@ -391,7 +391,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             geo_d = None, #container of geometry objects {fid: QgsGeometry}
 
             crs=None,
-            gkey = None, #data field linking with geo_d
+            gkey = None, #data field linking with geo_d (if None.. uses df index)
             
             layname='df',
             

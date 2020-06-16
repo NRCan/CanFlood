@@ -179,8 +179,17 @@ class Djoiner(Qcoms):
         #check key intersect
         """we allow the results lkp_df to be smaller than the vector layer"""
         l = set(lkp_df[cid]).difference(df1[link_coln])
-        assert len(l)==0, '%i (of %i) \'%s\' entries in the results not found in the finv_vlay \'%s\': \n    %s'%(
-            len(l), len(lkp_df), cid, vlay_raw.name(), l)
+        if not len(l)==0:
+            
+            bx = ~lkp_df[cid].isin(df1[link_coln])
+            with pd.option_context('display.max_rows', None, 
+                           'display.max_columns', None,
+                           'display.width',1000):
+                log.debug('missing entries %i (of %i)\n%s'%(bx.sum(), len(bx), lkp_df[bx]))
+            
+            
+            raise Error('%i (of %i) \'%s\' entries in the results not found in the finv_vlay \'%s\'.. .see logger: \n    %s'%(
+            len(l), len(lkp_df), cid, vlay_raw.name(), l))
         
         #===========================================================================
         # do the lookup
