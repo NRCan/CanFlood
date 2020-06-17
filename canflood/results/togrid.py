@@ -137,11 +137,6 @@ class Gwrkr(Qcoms):
         view(vlay)
         """
         
-        
-        
-        
-        
-        
     def gsamp(self, #resample results to a grid (from single asset res layer)
               avlay, #asset results layer
               gvlay=None, #new polygon grid to sample
@@ -202,30 +197,27 @@ class Gwrkr(Qcoms):
         
         return gvlay1, nfn_l
     
-    def combine_gsamp(self, #combine a set of asset results to a grid
+    def downsamp_ares(self,#downsample a set of asset results
                       avlay_d, #{aresName:AssetResWorker
                       Gw, #grid worker
-                      res_fnl = ['ead'], #list of result fields to downsample
+                      
+                    res_fnl = ['ead'], #list of result fields to downsample
 
                       rnm_d=dict(), #optional POST field name conversion. {old fieldName:new fieldName}
+                      
                       logger=None,
                       ):
-        """
-        also see add_vlays()
-        """
+        
         #=======================================================================
-        # defaults
+        # deffaults
         #=======================================================================
         if logger is None: logger=self.logger
-        log=logger.getChild('cGsamp.%s'%Gw.name)
+        log=logger.getChild('dGsamp.%s'%Gw.name)
+        
         gvlay=Gw.vlay
         gid=Gw.gid
         
-        
-        
-        #=======================================================================
-        # downsample asset results--------
-        #=======================================================================
+
         
         res_d = dict()
         mdf = pd.DataFrame()
@@ -255,22 +247,53 @@ class Gwrkr(Qcoms):
             #meta
             mdf = mdf.append(df.sum().rename(aresName), verify_integrity=True)
 
-
-
         log.info('collected totals from %i layers'%len(res_d))
         
         #=======================================================================
-        # combine-----
+        # #meta clean up
+        #=======================================================================
+        mdf['gname'] = Gw.name
+        mdf['gvlay_name'] = Gw.vlay.name()
+        mdf.index.name='aresName'
+        mdf=mdf.reset_index()
+        
+        
+        return res_d, mdf
+    
+    def combine_gsamp(self, #combine a set of asset results to a grid
+                      aGres_df_d, #asset tabular results grid indexed {aName:df} see downsamp_ares()
+                      Gw, #grid worker
+
+
+                      
+                      logger=None,
+                      ):
+        """
+        also see add_vlays()
+        """
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log=logger.getChild('cGsamp.%s'%Gw.name)
+        gvlay=Gw.vlay
+        gid=Gw.gid
+        
+ 
+        #=======================================================================
+        # setup
         #======================================================================
+        colns = aGres_df_d[list(aGres_df_d.keys())[0]].columns #just taking from first
         #empty results container
         rdf = pd.DataFrame(
             index=vlay_get_fdf(gvlay, logger=log).set_index(gid, drop=True).index,
-            columns=res_d[aresName].columns).fillna(0)
+            columns=colns).fillna(0)
             
 
-        
-        #loop each asset downsample and s um
-        for aresName, df in res_d.items():
+        #=======================================================================
+        # #loop each asset downsample and s um
+        #=======================================================================
+        for aresName, df in aGres_df_d.items():
             #check index compatability
             s = set(df.index).difference(rdf.index)
             assert len(s)==0, aresName
@@ -283,33 +306,21 @@ class Gwrkr(Qcoms):
             assert np.array_equal(rdf1.columns, rdf.columns)
             
             #check summation logic
-            bdf = rdf1>=rdf
-            assert bdf.all().all()
+            booldf = rdf1>=rdf
+            assert booldf.all().all()
             
-            #clean and reset
-            rdf = rdf1.round(self.prec)
+            rdf = rdf1.round(self.prec) #clean and reset
+            
+            #add meta
             
         #wrap
         log.info('totaled across %i asset layers on %i grids'%(
-            len(res_d), len(rdf)))
+            len(aGres_df_d), len(rdf)))
         
-        #=======================================================================
-        # build combined layer
-        #=======================================================================
-        geo_d = vlay_get_fdata(gvlay, geo_obj=True, logger=log, rekey=gid)
-        rvlay = self.vlay_new_df2(rdf.reset_index(), geo_d=geo_d, logger=log, gkey=gid,
-                                  layname='%s_comb_%i'%(Gw.name, len(res_d)))
-        
-        #=======================================================================
-        # #meta clean up
-        #=======================================================================
-        mdf['gname'] = Gw.name
-        mdf['gvlay_name'] = Gw.vlay.name()
-        mdf.index.name='aresName'
-        mdf=mdf.reset_index()
+
         
         
-        return rvlay, res_d, mdf
+        return rdf
         """
         view(rdf)
         [f.name() for f in avlay.fields()]
