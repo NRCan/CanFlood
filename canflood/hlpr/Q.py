@@ -2342,6 +2342,7 @@ def vlay_get_fdf( #pull all the feature data and place into a df
     #===========================================================================
     log = logger.getChild('vlay_get_fdf')
     
+    assert isinstance(vlay, QgsVectorLayer)
     all_fnl = [fieldn.name() for fieldn in vlay.fields().toList()]
     
     if fieldn_l is None: #use all the fields
