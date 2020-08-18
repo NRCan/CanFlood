@@ -1665,6 +1665,10 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             FALSE: in layer retains all non matchers, out layer only has the non-matchers?
         
         """
+        
+        """
+        view(join_vlay)
+        """
         #=======================================================================
         # presets
         #=======================================================================
@@ -1675,6 +1679,9 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
 
         log = self.logger.getChild('joinbylocationsummary')
         
+        #=======================================================================
+        # defaults
+        #=======================================================================
         if isinstance(jlay_fieldn_l, set):
             jlay_fieldn_l = list(jlay_fieldn_l)
             
@@ -1691,8 +1698,6 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #=======================================================================
         # prechecks
         #=======================================================================
-
-        
         if not isinstance(jlay_fieldn_l, list):
             raise Error('expected a list')
         
@@ -1700,6 +1705,9 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         fn_l = [f.name() for f in join_vlay.fields()]
         s = set(jlay_fieldn_l).difference(fn_l)
         assert len(s)==0, 'requested join fields not on layer: %s'%s
+        
+        #check crs
+        assert join_vlay.crs().authid() == vlay.crs().authid()
                 
         #=======================================================================
         # assemble pars
@@ -1722,17 +1730,11 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                    }
         
         log.debug('executing \'%s\' with ins_d: \n    %s'%(algo_nm, ins_d))
-        
-
+ 
         res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
-
-            
-        
+ 
         res_vlay = res_d['OUTPUT']
-        
-        """
-        res_d.keys()
-        """
+ 
         #===========================================================================
         # post formatting
         #===========================================================================
@@ -1740,6 +1742,18 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         #get new field names
         nfn_l = set([f.name() for f in res_vlay.fields()]).difference([f.name() for f in vlay.fields()])
+        
+        """
+        view(res_vlay)
+        """
+        #=======================================================================
+        # post check
+        #=======================================================================
+        for fn in nfn_l:
+            rser = vlay_get_fdata(res_vlay, fieldn=fn, logger=log, fmt='ser')
+            if rser.isna().all().all():
+                log.warning('%s \'%s\' got all nulls'%(vlay.name(), fn))
+
         
         #=======================================================================
         # rename fields

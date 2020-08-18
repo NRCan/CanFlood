@@ -151,16 +151,16 @@ class Gwrkr(Qcoms):
         """
         resample results 
         """
-        
+        #=======================================================================
+        # defaults
+        #=======================================================================
         if logger is None: logger=self.logger
         log=logger.getChild('gsamp')
         
         
         if gvlay is None: gvlay = self.gvlay
         if gid is None: gid=self.gid
-        
-        
-        
+ 
         log.info('downsampling \'%s\' (%i feats) to \'%s\' (%i)'%(
             avlay.name(), avlay.dataProvider().featureCount(), gvlay.name(),
             gvlay.dataProvider().featureCount()))
@@ -193,11 +193,10 @@ class Gwrkr(Qcoms):
         if not discard_nomatch:
             assert gvlay1.dataProvider().featureCount()==gvlay.dataProvider().featureCount()
         
-        
-        
+ 
         return gvlay1, nfn_l
     
-    def downsamp_ares(self,#downsample a set of asset results
+    def downsamp_ares(self,#downsample a set of asset results to a grid layer
                       avlay_d, #{aresName:AssetResWorker
                       Gw, #grid worker
                       
@@ -216,18 +215,20 @@ class Gwrkr(Qcoms):
         
         gvlay=Gw.vlay
         gid=Gw.gid
-        
-
-        
+ 
         res_d = dict()
         mdf = pd.DataFrame()
-        #loop and collect grid totals for each inventory
+        #=======================================================================
+        # #loop and collect grid totals for each inventory
+        #=======================================================================
         for aresName, Av in avlay_d.items():
             avlay = Av.vlay
             log.info('downsampling \'%s\''%aresName)
             
             """
             view(avlay)
+            view(df)
+            view(rvlay)
             """
             
             #sum on polys
@@ -241,6 +242,8 @@ class Gwrkr(Qcoms):
             #check it
             assert df.index.is_unique, aresName
             assert 'int' in df.index.dtype.name, aresName
+            assert df.notna().any().any(), '%s failed to get any reals'%aresName
+            assert df.max().max()>0
                 
             res_d[aresName] = df.round(self.prec)
             
