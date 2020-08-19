@@ -17,7 +17,7 @@ Happy flood risk modelling!
 
 ## Installation Instructions 
 
-1) Ensure Qgis 3.10.3-A Coruña LTR is installed and working on your system ([Qgis download page](https://qgis.org/en/site/forusers/download.html)) with all the required python packages [requirements](https://github.com/IBIGroupCanWest/CanFlood/tree/master/requirements). We recommend this be done by a user with administrative privileges and using the OSGeo4W installer (using the 'advanced install' option described [here](https://github.com/IBIGroupCanWest/CanFlood/issues/6#issuecomment-592091488)) to better manage versions and dependnecies.  In particular, 'pandas' doesn't seem to be installed by default with some distributions.  But hopefully you get lucky and your install comes with everything!
+1) Ensure Qgis 3.10.3-A Coruña LTR is installed and working on your system ([Qgis download page](https://qgis.org/en/site/forusers/download.html)) with all the required python packages [requirements](https://github.com/IBIGroupCanWest/CanFlood/tree/master/requirements). We recommend this be done by a user with administrative privileges and using the OSGeo4W installer (described [here](https://github.com/IBIGroupCanWest/CanFlood/issues/47)) to better manage versions and dependnecies.  In particular, 'pandas' doesn't seem to be installed by default with some distributions.  But hopefully you get lucky and your install comes with everything!
 
 2) In Qgis, install the plugin 'First Aid' from the plugin repository (https://plugins.qgis.org/plugins/firstaid/). This plugin provides additional support for viewing errors in other plugins (essential for communicating your crash reports back to the develpoment team).
 
