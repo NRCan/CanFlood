@@ -184,14 +184,15 @@ class Dmg2(Model):
                 log.warning('skipping dummy tab \'%s\''%tabn)
                 continue
             
+            tabn = tabn.strip() #remove whitespace
+            
             #skip those not in the finv
             if not tabn in ftags_valid:
+                log.debug('\'%s\' not in valid list'%tabn)
                 continue
             
             if not isinstance(df, pd.DataFrame):
                 raise Error('unexpected type on tab \'%s\': %s'%(tabn, type(df)))
-            
-            
             
             #build it
             dfunc = DFunc(tabn).build(df, log)
@@ -872,6 +873,9 @@ class DFunc(ComWrkr,
                  **kwargs):
         
         self.tabn= tabn
+        """
+        todo: reconcile tabn vs tag
+        """
         
         #init the baseclass
         super().__init__(**kwargs) #initilzie Model
@@ -884,23 +888,6 @@ class DFunc(ComWrkr,
         
         
         log = logger.getChild('%s'%self.tabn)
-        
-        #log.info('on df %s:\n%s'%(str(df_raw.shape), df_raw))
-        
-        #======================================================================
-        # precheck
-        #======================================================================
-        #=======================================================================
-        # #check all the rows are there
-        # miss_l = set(self.exp_row_nm).difference(df_raw.iloc[:, 0])
-        # assert len(miss_l) == 0, \
-        #     'tab \'%s\' missing %i expected row names: %s'%(
-        #         self.tabn, len(miss_l), miss_l)
-        #=======================================================================
-        
-            
-
-        
         #======================================================================
         # identify depth-damage data
         #======================================================================
@@ -926,9 +913,15 @@ class DFunc(ComWrkr,
         # attach other pars
         #======================================================================
         #get remainder of data
-        pars_d = df.loc[~boolidx, :
-                        ].set_index(df.columns[0], drop=True
-                                    ).iloc[:,0].to_dict()
+        mser = df.loc[~boolidx, :].set_index(df.columns[0], drop=True ).iloc[:,0]
+        mser.index =  mser.index.str.strip() #strip the whitespace
+        pars_d = mser.to_dict()
+        
+        #check it
+        assert 'tag' in pars_d, '%s missing tag'%self.tabn
+        
+        assert pars_d['tag']==self.tabn, 'tag/tab mismatch (\'%s\', \'%s\')'%(
+            pars_d['tag'], self.tabn)
         
         for varnm, val in pars_d.items():
             setattr(self, varnm, val)

@@ -78,7 +78,7 @@ class CurvePlotr(ComWrkr):
                  name='Results',
                  
                  
-                 figsize = (6,4), #6,4 seems good for documnets
+                figsize = (6,4), #6,4 seems good for documnets
                 subplot = 111,
                 
                 #writefig
@@ -92,7 +92,7 @@ class CurvePlotr(ComWrkr):
         
         """inherited by the dialog.
         init is not called during the plugin"""
-        mod_logger.info('simple wrapper inits')
+        #mod_logger.info('simple wrapper inits')
         
         super().__init__(**kwargs) #initilzie teh baseclass
         
@@ -122,9 +122,10 @@ class CurvePlotr(ComWrkr):
                   pgCn='plot_group',
                   pfCn='plot_f',
                   
-                  marker='o', markersize=3,
+                
                   
                   logger=None,
+                  **lineKwargs,
                   ):
         
         
@@ -145,11 +146,17 @@ class CurvePlotr(ComWrkr):
             hndl_df =cLib_d.pop('_smry')
             
             #re-tag the columns
+
             colns = hndl_df.iloc[0,:].values
+            assert pd.isnull(colns[0]), 'expect the first _smry column to not have a label'
+            """
+            todo: make this more flexible
+            """
             colns[0] = 'cName'
             hndl_df.columns = colns
             
-            hndl_df = hndl_df.set_index('cName', drop=False).drop('cName') 
+            #drop the old columns
+            hndl_df = hndl_df.set_index('cName', drop=False).iloc[1:,:]
 
             
    
@@ -190,7 +197,7 @@ class CurvePlotr(ComWrkr):
             
             indxr=0
             for cName, crv_d in cLib_d.items():
-                ax = self.plotCurve(crv_d, title=crv_d['tag'])
+                ax = self.plotCurve(crv_d, title=crv_d['tag'], **lineKwargs)
                 
                 res_d[cName] =ax.figure
                 
@@ -199,7 +206,7 @@ class CurvePlotr(ComWrkr):
                 if indxr>50:
                     log.warning('too many curves.. breaking loop')
                     break
-                
+
 
         #=======================================================================
         # PLOT with handles-----------    
@@ -246,24 +253,30 @@ class CurvePlotr(ComWrkr):
                     #get this curve
                     crv_d = cLib_d[cName]
                     
-                    ax = self.plotCurve(crv_d, ax=ax,
-                                        marker=marker, markersize=markersize)
+                    ax = self.plotCurve(crv_d, ax=ax,**lineKwargs)
                     
                 #post format
                 fig = ax.figure
                 fig.suptitle(pgroup)
-                fig.legend()
+                ax.legend()
                     
                 #===============================================================
                 # group loop
                 #===============================================================
-                if indxr>50: 
+                if indxr>20: 
                     log.warning('to omany curves.. breaking')
                     break
+                
                 indxr +=1
                 
                 #add results
-                res_d[cName] = fig
+
+
+
+                res_d[pgroup] = fig
+                """
+                plt.show()
+                """
 
                 
         #=======================================================================
@@ -355,8 +368,11 @@ class CurvePlotr(ComWrkr):
         #=======================================================================
         if ax is None:
 
-            fig = plt.figure()
-            fig.set_size_inches(figsize)
+            fig = plt.figure(figsize=figsize,
+                     tight_layout=False,
+                     constrained_layout = True,
+                     )
+
             ax = fig.add_subplot(subplot)  
             
             #set the suptitle

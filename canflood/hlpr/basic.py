@@ -200,7 +200,7 @@ class ComWrkr(object): #common methods for all classes
         #get defaults
         if cf_fp is None: cf_fp = self.cf_fp
         
-        assert os.path.exists(cf_fp), 'bad cf_fp: %s'%cf_fp
+        assert os.path.exists(cf_fp), 'bad cf_fp: \n    %s'%cf_fp
         
         #initiliae the parser
         pars = configparser.ConfigParser(allow_no_value=True)
@@ -294,7 +294,9 @@ class ComWrkr(object): #common methods for all classes
                    #figure file controls
                  fmt='svg', 
                   transparent=True, 
-                  dpi = 150,):
+                  dpi = 150,
+                  fname = None, #filename
+                  ):
         #======================================================================
         # defaults
         #======================================================================
@@ -306,10 +308,11 @@ class ComWrkr(object): #common methods for all classes
         # output
         #======================================================================
         #file setup
-        try:
-            fname = fig._suptitle.get_text()
-        except:
-            fname = self.name
+        if fname is None:
+            try:
+                fname = fig._suptitle.get_text()
+            except:
+                fname = self.name
             
         out_fp = os.path.join(out_dir, '%s.%s'%(fname, fmt))
             
@@ -323,7 +326,7 @@ class ComWrkr(object): #common methods for all classes
         #write the file
         try: 
             fig.savefig(out_fp, dpi = dpi, format = fmt, transparent=transparent)
-            log.info('saved figure to file: %s'%out_fp)
+            log.info('saved figure to file: \n    %s'%out_fp)
         except Exception as e:
             raise Error('failed to write figure to file w/ \n    %s'%e)
         
@@ -339,12 +342,21 @@ class ComWrkr(object): #common methods for all classes
         
         log.debug('on %i'%len(crv_d))
         
+        #srip hitespace
+        crv_d1 = dict()
+        for k, v in crv_d.items():
+            if isinstance(k, str):
+                newk = k.strip()
+            else:
+                newk = k
+                
+            crv_d1[newk] = v
+            
+        
         #check keys
-        l = set(self.crv_keys).difference(crv_d.keys())
+        l = set(self.crv_keys).difference(crv_d1.keys())
         assert len(l)==0, 'curve is missing keys: %s'%l
-        
-        
-        
+
         return True
     
 class MyFeedBack(object): #simple custom feedback object
