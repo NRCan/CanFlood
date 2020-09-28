@@ -294,7 +294,9 @@ class ComWrkr(object): #common methods for all classes
                    #figure file controls
                  fmt='svg', 
                   transparent=True, 
-                  dpi = 150,):
+                  dpi = 150,
+                  fname = None, #filename
+                  ):
         #======================================================================
         # defaults
         #======================================================================
@@ -306,10 +308,11 @@ class ComWrkr(object): #common methods for all classes
         # output
         #======================================================================
         #file setup
-        try:
-            fname = fig._suptitle.get_text()
-        except:
-            fname = self.name
+        if fname is None:
+            try:
+                fname = fig._suptitle.get_text()
+            except:
+                fname = self.name
             
         out_fp = os.path.join(out_dir, '%s.%s'%(fname, fmt))
             
