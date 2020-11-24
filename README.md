@@ -38,13 +38,13 @@ As QGIS is a very active open source project, getting your installation configur
 
 ## Getting Started
 
-To get started with CanFlood, we recommend reading the latest users manual from the '[manuals folder](https://github.com/IBIGroupCanWest/CanFlood/tree/master/manual)' and work through the tutorials.
+To get started with CanFlood, we recommend reading the latest users manual from the [manuals folder](https://github.com/IBIGroupCanWest/CanFlood/tree/master/manual) and work through the tutorials.
 
 
 ## I'm getting Errors!
 As CanFlood is an active open-sourced project, users will often encounter errors which can be frustrating.  To work through these errors, we recommend first checking to see if there is a similar issue on the above '[Issues](https://github.com/IBIGroupCanWest/CanFlood/issues)' tab.  If so, hopefully the thread will resolve the problem, if not, reply to the thread with more details on your problem and why the posted solution did not work.
 
-If there is no issue ticket yet, follow the instructions '[here](https://github.com/IBIGroupCanWest/CanFlood/issues/49)'.
+If there is no issue ticket yet, follow the instructions [here](https://github.com/IBIGroupCanWest/CanFlood/issues/49).
 
 
 
