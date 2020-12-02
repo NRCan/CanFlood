@@ -126,10 +126,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         # setup tab----------
         #======================================================================
         #populate guis
-        self.comboBox_ivlay.setFilters(QgsMapLayerProxyModel.VectorLayer) #SS. Inventory Layer: Drop down
         self.comboBox_aoi.setFilters(QgsMapLayerProxyModel.PolygonLayer) #SS. Project AOI
-        self.comboBox_SSelv.addItems(['datum', 'ground']) #ss elevation type
-               
         self.comboBox_aoi.setCurrentIndex(-1) #by default, lets have this be blank
         
         #Working Directory browse
@@ -145,27 +142,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         self.pushButton_wd_open.clicked.connect(open_wd)
         
-        #======================================================================
-        # #Inventory Vector Layer
-        #======================================================================
-        #change the 'cid' display when the finv selection changes
-        def upd_cid():
-            return self.mfcb_connect(
-                self.mFieldComboBox_cid, self.comboBox_ivlay.currentLayer(),
-                fn_str = 'xid' )
-                
-        self.comboBox_ivlay.layerChanged.connect(upd_cid) #SS inventory vector layer
-        
-        #find a good layer
-        try:
-            for layname, vlay in vlays_d.items():
-                if layname.startswith('finv'):
-                    break
-            
-            self.logger.info('setting comboBox_vec = %s'%vlay.name())
-            self.comboBox_ivlay.setLayer(vlay)
-        except Exception as e:
-            self.logger.warning('failed to set inventory layer w: \n    %s'%e)
         
         #Vulnerability Curve Set
         def browse_curves():
@@ -186,6 +162,42 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                            qfd=QFileDialog.getOpenFileName)
             
         self.pushButton_cf.clicked.connect(browse_cf)# SS. Model Control File. Browse
+        
+        #=======================================================================
+        # inventory------------
+        #=======================================================================
+        #=======================================================================
+        # #populate guis
+        #=======================================================================
+        #inventory vector layer box
+        self.comboBox_ivlay.setFilters(QgsMapLayerProxyModel.VectorLayer) #SS. Inventory Layer: Drop down
+
+
+        #find a good layer
+        try:
+            for layname, vlay in vlays_d.items():
+                if layname.startswith('finv'):
+                    break
+            
+            self.logger.info('setting comboBox_vec = %s'%vlay.name())
+            self.comboBox_ivlay.setLayer(vlay)
+        except Exception as e:
+            self.logger.debug('failed to set inventory layer w: \n    %s'%e)
+            
+            
+        #elevation t ype
+        self.comboBox_SSelv.addItems(['datum', 'ground']) #ss elevation type
+        
+        
+        #index field name
+        #change the 'cid' display when the finv selection changes
+        def upd_cid():
+            return self.mfcb_connect(
+                self.mFieldComboBox_cid, self.comboBox_ivlay.currentLayer(),
+                fn_str = 'xid' )
+                
+        self.comboBox_ivlay.layerChanged.connect(upd_cid) #SS inventory vector layer
+        
         #======================================================================
         # hazard sampler---------
         #======================================================================
