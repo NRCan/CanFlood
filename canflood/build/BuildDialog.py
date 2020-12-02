@@ -126,7 +126,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         # setup tab----------
         #======================================================================
         #populate guis
-        self.comboBox_vec.setFilters(QgsMapLayerProxyModel.VectorLayer) #SS. Inventory Layer: Drop down
+        self.comboBox_ivlay.setFilters(QgsMapLayerProxyModel.VectorLayer) #SS. Inventory Layer: Drop down
         self.comboBox_aoi.setFilters(QgsMapLayerProxyModel.PolygonLayer) #SS. Project AOI
         self.comboBox_SSelv.addItems(['datum', 'ground']) #ss elevation type
                
@@ -151,10 +151,10 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #change the 'cid' display when the finv selection changes
         def upd_cid():
             return self.mfcb_connect(
-                self.mFieldComboBox_cid, self.comboBox_vec.currentLayer(),
+                self.mFieldComboBox_cid, self.comboBox_ivlay.currentLayer(),
                 fn_str = 'xid' )
                 
-        self.comboBox_vec.layerChanged.connect(upd_cid) #SS inventory vector layer
+        self.comboBox_ivlay.layerChanged.connect(upd_cid) #SS inventory vector layer
         
         #find a good layer
         try:
@@ -163,7 +163,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                     break
             
             self.logger.info('setting comboBox_vec = %s'%vlay.name())
-            self.comboBox_vec.setLayer(vlay)
+            self.comboBox_ivlay.setLayer(vlay)
         except Exception as e:
             self.logger.warning('failed to set inventory layer w: \n    %s'%e)
         
@@ -212,16 +212,16 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         #display the gtype when the finv changes
         def upd_gtype():
-            vlay = self.comboBox_vec.currentLayer()
+            vlay = self.comboBox_ivlay.currentLayer()
             if isinstance(vlay,QgsVectorLayer):
                 gtype = QgsWkbTypes().displayString(vlay.wkbType())
                 self.label_HS_finvgtype.setText(gtype)
             
-        self.comboBox_vec.layerChanged.connect(upd_gtype) #SS inventory vector layer
+        self.comboBox_ivlay.layerChanged.connect(upd_gtype) #SS inventory vector layer
         
         #display sampling stats options to user 
         def upd_stat():
-            vlay = self.comboBox_vec.currentLayer()
+            vlay = self.comboBox_ivlay.currentLayer()
             self.comboBox_HS_stat.clear()
             if isinstance(vlay,QgsVectorLayer):
                 gtype = QgsWkbTypes().displayString(vlay.wkbType())
@@ -231,7 +231,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                     self.comboBox_HS_stat.addItems(
                         ['','Mean','Median','Min','Max'])
                 
-        self.comboBox_vec.layerChanged.connect(upd_stat) #SS inventory vector layer
+        self.comboBox_ivlay.layerChanged.connect(upd_stat) #SS inventory vector layer
             
             
         #disable sample stats when %inundation is checked
@@ -473,7 +473,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         self.wd =  self.lineEdit_wd.text() #pull the wd filepath from the user provided in 'Browse'
         
-        finv_raw = self.comboBox_vec.currentLayer()
+        finv_raw = self.comboBox_ivlay.currentLayer()
         
 
         
@@ -638,7 +638,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # assemble/prepare inputs
         #=======================================================================
-        finv_raw = self.comboBox_vec.currentLayer()
+        finv_raw = self.comboBox_ivlay.currentLayer()
         rlay_l = list(self.ras_dict.values())
         
         crs = self.qproj.crs()
@@ -816,7 +816,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         # assemble/prepare inputs
         #=======================================================================
         
-        finv_raw = self.comboBox_vec.currentLayer()
+        finv_raw = self.comboBox_ivlay.currentLayer()
         rlay = self.comboBox_dtm.currentLayer()
         
         crs = self.qproj.crs()
@@ -918,7 +918,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # assemble/prepare inputs
         #=======================================================================
-        finv_raw = self.comboBox_vec.currentLayer()
+        finv_raw = self.comboBox_ivlay.currentLayer()
         crs = self.qproj.crs()
         cf_fp = self.get_cf_fp()
         out_dir = self.lineEdit_wd.text()

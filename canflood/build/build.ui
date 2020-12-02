@@ -86,7 +86,7 @@
           </size>
          </property>
          <property name="currentIndex">
-          <number>1</number>
+          <number>2</number>
          </property>
          <property name="movable">
           <bool>false</bool>
@@ -436,7 +436,7 @@ p, li { white-space: pre-wrap; }
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_13">
               <item>
-               <widget class="QgsMapLayerComboBox" name="comboBox_vec">
+               <widget class="QgsMapLayerComboBox" name="comboBox_ivlay">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
