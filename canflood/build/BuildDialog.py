@@ -559,7 +559,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #damage curves
         dmg_fps = self.lineEdit_curve.text()
         if dmg_fps == '':
-            continue
+            pass
         else:
             assert os.path.exists(dmg_fps), 'bad dmg_fps: %s'%dmg_fps
             pars.set('dmg_fps', 'curves', dmg_fps)

@@ -86,7 +86,7 @@
           </size>
          </property>
          <property name="currentIndex">
-          <number>2</number>
+          <number>1</number>
          </property>
          <property name="movable">
           <bool>false</bool>
@@ -169,203 +169,187 @@ p, li { white-space: pre-wrap; }
            <item>
             <widget class="QLabel" name="label_5">
              <property name="text">
-              <string>Specify the parameters for this session. Generate a new Control File, or select an existing one.</string>
+              <string>Specify the parameters for this Build session and start a new Control File</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QGroupBox" name="groupBox_01wd">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
+            <widget class="QGroupBox" name="groupBox_21">
              <property name="title">
-              <string>Working Directory:</string>
+              <string>Build Session Controls:</string>
              </property>
-             <layout class="QHBoxLayout" name="horizontalLayout_16">
+             <layout class="QVBoxLayout" name="verticalLayout_24">
               <item>
-               <widget class="QLineEdit" name="lineEdit_wd"/>
-              </item>
-              <item>
-               <widget class="QPushButton" name="pushButton_wd">
-                <property name="text">
-                 <string>Browse</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="pushButton_wd_open">
-                <property name="text">
-                 <string>Open</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item>
-            <widget class="QGroupBox" name="groupBox_03curves">
-             <property name="title">
-              <string>Vulnerability Curve Set (optional):</string>
-             </property>
-             <layout class="QHBoxLayout" name="horizontalLayout_19">
-              <item>
-               <widget class="QLineEdit" name="lineEdit_curve"/>
-              </item>
-              <item>
-               <widget class="QPushButton" name="pushButton_SScurves">
-                <property name="text">
-                 <string>Browse</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item>
-            <widget class="QGroupBox" name="groupBox_04aoi">
-             <property name="title">
-              <string>Project AOI (optional):</string>
-             </property>
-             <layout class="QHBoxLayout" name="horizontalLayout_20">
-              <item>
-               <widget class="QCheckBox" name="checkBox_sels">
-                <property name="text">
-                 <string>Selected features only</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QgsMapLayerComboBox" name="comboBox_aoi">
+               <widget class="QGroupBox" name="groupBox_01wd">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
-                <property name="allowEmptyLayer">
-                 <bool>true</bool>
+                <property name="title">
+                 <string>Working Directory:</string>
                 </property>
-                <property name="showCrs">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item>
-            <widget class="QGroupBox" name="groupBox_prog_contrl">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>450</width>
-               <height>0</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>700</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="title">
-              <string>Program Controls:</string>
-             </property>
-             <layout class="QHBoxLayout" name="horizontalLayout_7">
-              <item>
-               <widget class="QCheckBox" name="checkBox_SSabsfp">
-                <property name="text">
-                 <string>Absolute filepaths</string>
-                </property>
-                <property name="checked">
-                 <bool>true</bool>
-                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_16">
+                 <item>
+                  <widget class="QLineEdit" name="lineEdit_wd"/>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="pushButton_wd">
+                   <property name="text">
+                    <string>Browse</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="pushButton_wd_open">
+                   <property name="text">
+                    <string>Open</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
                </widget>
               </item>
               <item>
-               <widget class="QCheckBox" name="checkBox_SSoverwrite">
-                <property name="text">
-                 <string>Overwrite files</string>
+               <widget class="QGroupBox" name="groupBox_04aoi">
+                <property name="title">
+                 <string>Project AOI (optional):</string>
                 </property>
-                <property name="checked">
-                 <bool>true</bool>
-                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_20">
+                 <item>
+                  <widget class="QCheckBox" name="checkBox_sels">
+                   <property name="text">
+                    <string>Selected features only</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QgsMapLayerComboBox" name="comboBox_aoi">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="allowEmptyLayer">
+                    <bool>true</bool>
+                   </property>
+                   <property name="showCrs">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
                </widget>
               </item>
               <item>
-               <widget class="QCheckBox" name="checkBox_loadres">
+               <widget class="QGroupBox" name="groupBox_prog_contrl">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
                 <property name="minimumSize">
                  <size>
-                  <width>150</width>
+                  <width>450</width>
                   <height>0</height>
                  </size>
                 </property>
                 <property name="maximumSize">
                  <size>
-                  <width>638</width>
+                  <width>700</width>
                   <height>16777215</height>
                  </size>
                 </property>
-                <property name="text">
-                 <string>Load Results to canvas</string>
+                <property name="title">
+                 <string>Build Controls:</string>
                 </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_7">
+                 <item>
+                  <widget class="QCheckBox" name="checkBox_SSabsfp">
+                   <property name="text">
+                    <string>Absolute filepaths</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QCheckBox" name="checkBox_SSoverwrite">
+                   <property name="text">
+                    <string>Overwrite files</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QCheckBox" name="checkBox_loadres">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>638</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string>Load Build results to canvas</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QGroupBox" name="groupBox_11">
+                <property name="title">
+                 <string>Control File Path:</string>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_25">
+                 <item>
+                  <widget class="QLabel" name="label_19">
+                   <property name="text">
+                    <string>(See below to assemble a new control file)</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <layout class="QHBoxLayout" name="horizontalLayout_22">
+                   <item>
+                    <widget class="QLineEdit" name="lineEdit_cf_fp"/>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="pushButton_cf">
+                     <property name="text">
+                      <string>Browse</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
                </widget>
               </item>
              </layout>
             </widget>
            </item>
            <item>
-            <widget class="QGroupBox" name="groupBox_12">
-             <property name="title">
-              <string>Generate New Control File:</string>
-             </property>
-             <layout class="QHBoxLayout" name="horizontalLayout_21">
-              <item>
-               <widget class="QLabel" name="label">
-                <property name="text">
-                 <string>Scenario Name: </string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLineEdit" name="linEdit_ScenTag">
-                <property name="text">
-                 <string>scenario1</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="pushButton_generate">
-                <property name="font">
-                 <font>
-                  <weight>75</weight>
-                  <bold>true</bold>
-                 </font>
-                </property>
-                <property name="text">
-                 <string>Build Scenario</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item>
-            <spacer name="verticalSpacer_7">
+            <spacer name="verticalSpacer_5">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
              </property>
@@ -378,26 +362,132 @@ p, li { white-space: pre-wrap; }
             </spacer>
            </item>
            <item>
-            <widget class="QGroupBox" name="groupBox_11">
+            <widget class="QGroupBox" name="groupBox_10">
              <property name="title">
-              <string>Specify Control File:</string>
+              <string>Assemble Control File:</string>
              </property>
-             <layout class="QHBoxLayout" name="horizontalLayout_22">
+             <layout class="QVBoxLayout" name="verticalLayout_23">
               <item>
-               <widget class="QLineEdit" name="lineEdit_cf_fp"/>
+               <widget class="QGroupBox" name="groupBox_7">
+                <property name="title">
+                 <string>Control File Parameters:</string>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_28">
+                 <item>
+                  <layout class="QHBoxLayout" name="horizontalLayout_26">
+                   <item>
+                    <widget class="QLabel" name="label_8">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="minimumSize">
+                      <size>
+                       <width>115</width>
+                       <height>0</height>
+                      </size>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>125</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>Elevation type (felv):</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QComboBox" name="comboBox_SSelv">
+                     <property name="minimumSize">
+                      <size>
+                       <width>200</width>
+                       <height>0</height>
+                      </size>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <spacer name="horizontalSpacer_4">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>40</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </widget>
               </item>
               <item>
-               <widget class="QPushButton" name="pushButton_cf">
-                <property name="text">
-                 <string>Browse</string>
+               <widget class="QGroupBox" name="groupBox_03curves">
+                <property name="title">
+                 <string>Vulnerability Curve Set (optional):</string>
                 </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_19">
+                 <item>
+                  <widget class="QLineEdit" name="lineEdit_curve"/>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="pushButton_SScurves">
+                   <property name="text">
+                    <string>Browse</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QGroupBox" name="groupBox_12">
+                <property name="title">
+                 <string>Generate New Control File:</string>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_21">
+                 <item>
+                  <widget class="QLabel" name="label">
+                   <property name="text">
+                    <string>Scenario Name: </string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLineEdit" name="linEdit_ScenTag">
+                   <property name="text">
+                    <string>scenario1</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="pushButton_generate">
+                   <property name="font">
+                    <font>
+                     <weight>75</weight>
+                     <bold>true</bold>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Build</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
                </widget>
               </item>
              </layout>
             </widget>
            </item>
            <item>
-            <spacer name="verticalSpacer_5">
+            <spacer name="verticalSpacer_7">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
              </property>
@@ -486,58 +576,6 @@ p, li { white-space: pre-wrap; }
                   </item>
                   <item>
                    <spacer name="horizontalSpacer_3">
-                    <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
-                    </property>
-                    <property name="sizeHint" stdset="0">
-                     <size>
-                      <width>40</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                   </spacer>
-                  </item>
-                 </layout>
-                </item>
-                <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_26">
-                  <item>
-                   <widget class="QLabel" name="label_8">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>115</width>
-                      <height>0</height>
-                     </size>
-                    </property>
-                    <property name="maximumSize">
-                     <size>
-                      <width>125</width>
-                      <height>16777215</height>
-                     </size>
-                    </property>
-                    <property name="text">
-                     <string>Elevation type (felv):</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QComboBox" name="comboBox_SSelv">
-                    <property name="minimumSize">
-                     <size>
-                      <width>200</width>
-                      <height>0</height>
-                     </size>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <spacer name="horizontalSpacer_4">
                     <property name="orientation">
                      <enum>Qt::Horizontal</enum>
                     </property>
@@ -1939,8 +1977,6 @@ p, li { white-space: pre-wrap; }
   <tabstop>checkBox_loadres</tabstop>
   <tabstop>linEdit_ScenTag</tabstop>
   <tabstop>pushButton_generate</tabstop>
-  <tabstop>lineEdit_cf_fp</tabstop>
-  <tabstop>pushButton_cf</tabstop>
   <tabstop>pushButton_clear</tabstop>
   <tabstop>pushButton_remove</tabstop>
   <tabstop>pushButton_add_all</tabstop>
