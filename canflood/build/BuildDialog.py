@@ -642,11 +642,11 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         if self.checkBox_loadres.isChecked():
             self.qproj.addMapLayer(vlay)
-            self.logger.info('added \'%s\' to canvas'%res_vlay.name())
+            self.logger.info('added \'%s\' to canvas'%vlay.name())
         
         
 
-        
+        self.feedback.upd_prog(30)
         #=======================================================================
         # #extract data
         #=======================================================================
@@ -667,6 +667,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         assert df[cid].is_unique
         assert 'int' in df[cid].dtypes.name
         
+        self.feedback.upd_prog(50)
         #=======================================================================
         # #write to file
         #=======================================================================
@@ -686,6 +687,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         log.info("inventory csv written to file:\n    %s"%out_fp)
         
+        self.feedback.upd_prog(80)
         #=======================================================================
         # write to control file
         #=======================================================================
@@ -710,6 +712,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             cf_fp = cf_fp
             )
         
+        self.feedback.upd_prog(99)
         #=======================================================================
         # wrap
         #=======================================================================
