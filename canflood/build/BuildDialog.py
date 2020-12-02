@@ -640,12 +640,20 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         vlay = self.slice_aoi(vlay_raw)
         
         
-        log.info('on \'%s\' w/ %i feats'%(
-            vlay.name(), vlay.dataProvider().featureCount()))
+        if self.checkBox_loadres.isChecked():
+            self.qproj.addMapLayer(vlay)
+            self.logger.info('added \'%s\' to canvas'%res_vlay.name())
+        
+        
+
         
         #=======================================================================
         # #extract data
         #=======================================================================
+        
+        log.info('extracting data on \'%s\' w/ %i feats'%(
+            vlay.name(), vlay.dataProvider().featureCount()))
+                
         df = vlay_get_fdf(vlay, feedback=self.feedback)
           
         #drop geometery indexes
