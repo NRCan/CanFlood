@@ -130,6 +130,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.comboBox_aoi.setCurrentIndex(-1) #by default, lets have this be blank
         
         #Working Directory browse
+        """default is set below.
+        doesn't seem to open the displayed directory on first click"""
         def browse_wd():
             return self.browse_button(self.lineEdit_wd, prompt='Select Working Directory',
                                       qfd = QFileDialog.getExistingDirectory)
@@ -554,8 +556,13 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         pars.set('parameters', 'name', self.tag) #user selected field
         pars.set('parameters', 'felv', self.comboBox_SSelv.currentText()) #user selected field
         
-        #filepaths
-        pars.set('dmg_fps', 'curves',  self.lineEdit_curve.text())
+        #damage curves
+        dmg_fps = self.lineEdit_curve.text()
+        if dmg_fps == '':
+            continue
+        else:
+            assert os.path.exists(dmg_fps), 'bad dmg_fps: %s'%dmg_fps
+            pars.set('dmg_fps', 'curves', dmg_fps)
         
         
         
@@ -694,6 +701,12 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
              },
             cf_fp = cf_fp
             )
+        
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        log.push('inventory vector layer stored "\'%s\''%vlay.name())
+        self.feedback.upd_prog(None) #set the progress bar back down to zero
         
         return out_fp
                 

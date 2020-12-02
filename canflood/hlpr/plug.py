@@ -120,6 +120,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
                       prompt = 'Select Directory', #title of box
                       qfd = QFileDialog.getExistingDirectory, #dialog to launch
                       ):
+        
         #ask the user for the path
         fp = qfd(self, prompt)
         
