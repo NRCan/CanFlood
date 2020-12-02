@@ -105,18 +105,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # general----------------
         #=======================================================================
-        #=======================================================================
-        # def test():
-        #     self.logger.push('test button pushed')
-        #     
-        #     for i in range(10):
-        #         time.sleep(.5)
-        #         self.progressBar.setValue(i + 1)
-        #         
-        #     self.logger.push('finished')
-        #=======================================================================
+
         #ok/cancel buttons
-        self.buttonBox.accepted.connect(self.reject)
+        self.buttonBox.accepted.connect(self.reject) #back out of the dialog
         self.buttonBox.rejected.connect(self.reject)
         
         
@@ -128,8 +119,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             
             see hlpr.plug.logger._loghlp()
         """
-        self.logger.statusQlab=self.progressText
-        self.logger.statusQlab.setText('BuildDialog initialized')
+        self.logger.statusQlab=self.progressText #connect to the progress text above the bar
+        #self.logger.statusQlab.setText('BuildDialog initialized')
                 
         #======================================================================
         # setup tab----------

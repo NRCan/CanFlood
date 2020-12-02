@@ -250,16 +250,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
             comboBox.setCurrentIndex(index)
         
         
-            
-            
-        
-    
 
-        
-
-
-        
-        
 class logger(object): #workaround for qgis logging pythonic
     log_tabnm = 'CanFlood' # qgis logging panel tab name
     
