@@ -48,7 +48,7 @@ from hlpr.basic import *
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 ui_fp = os.path.join(os.path.dirname(__file__), 'build.ui')
-assert os.path.exists(ui_fp)
+assert os.path.exists(ui_fp), 'failed to find the ui file: \n    %s'%ui_fp
 FORM_CLASS, _ = uic.loadUiType(ui_fp)
 
 
@@ -56,8 +56,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
     
     event_name_set = [] #event names
     
-    
-    
+
     def __init__(self, iface, parent=None):
         """these will only ini tthe first baseclass (QtWidgets.QDialog)
         
@@ -78,9 +77,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
 
         self.iface = iface
         
-        self.qproj_setup()
+        self.qproj_setup() #basic dialog worker setup
         
-       
         self.connect_slots()
         
         
@@ -89,7 +87,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
 
     def connect_slots(self):
         log = self.logger.getChild('connect_slots')
-        #self.testit()
+
         #======================================================================
         # pull project data
         #======================================================================

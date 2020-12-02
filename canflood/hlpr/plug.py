@@ -73,8 +73,6 @@ class QprojPlug(Qcoms): #baseclass for plugins
         self.logger = logger(self) #init the logger
         self.qproj = QgsProject.instance()
         
-
-        
         self.crs = self.qproj.crs()
         
         """connect to UI's progress bar
