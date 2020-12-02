@@ -198,6 +198,11 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                 
         self.comboBox_ivlay.layerChanged.connect(upd_cid) #SS inventory vector layer
         
+        #=======================================================================
+        # connect buttons
+        #=======================================================================
+        self.pushButton_Inv_store.clicked.connect(self.convert_finv)
+        
         #======================================================================
         # hazard sampler---------
         #======================================================================
@@ -481,11 +486,11 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         todo: make a fresh pull of this for each tool
         """
         
-        cid = self.mFieldComboBox_cid.currentField() #user selected field
+        
         
         self.wd =  self.lineEdit_wd.text() #pull the wd filepath from the user provided in 'Browse'
         
-        finv_raw = self.comboBox_ivlay.currentLayer()
+        
         
 
         
@@ -495,38 +500,18 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         assert isinstance(self.wd, str)
         
         assert isinstance(self.tag, str)
-        assert isinstance(finv_raw, QgsVectorLayer), 'must select a VectorLayer'
-        
-        
-        #check cid
-        assert isinstance(cid, str)
-        if cid == '':
-            raise Error('must specify a cid') 
-        if cid in self.invalid_cids:
-            raise Error('user selected invalid cid \'%s\''%cid)  
-        
-        assert cid in [field.name() for field in finv_raw.fields()]
+
         
         if not os.path.exists(self.wd):
             os.makedirs(self.wd)
             log.info('built working directory: %s'%self.wd)
             
-        #=======================================================================
-        # aoi slice
-        #=======================================================================
-        finv = self.slice_aoi(finv_raw)
-            
         
-        #=======================================================================
-        # convert finv
-        #=======================================================================
-        self.feedback.upd_prog(10)
-        finv_fp = self.convert_finv(finv, cid) #convert the finv to csv and write to file
         #======================================================================
         # build the control file
         #======================================================================
         
-        assert os.path.exists(finv_fp)
+        
         self.feedback.upd_prog(50)
         
         #called by build_scenario()
@@ -535,8 +520,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #get the default template from the program files
         cf_src = os.path.join(dirname, '_pars/CanFlood_control_01.txt')
         assert os.path.exists(cf_src)
-
-        
 
         
         #get control file name from user provided tag
@@ -567,13 +550,13 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         _ = pars.read(cf_path) #read it from the new location
         
         #parameters
-        pars.set('parameters', 'cid', cid) #user selected field
+        
         pars.set('parameters', 'name', self.tag) #user selected field
         pars.set('parameters', 'felv', self.comboBox_SSelv.currentText()) #user selected field
         
         #filepaths
         pars.set('dmg_fps', 'curves',  self.lineEdit_curve.text())
-        pars.set('dmg_fps', 'finv', finv_fp)
+        
         
         
         #set note
@@ -608,34 +591,109 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.feedback.upd_prog(None) #set the progress bar back down to zero
 
         
-    def convert_finv(self, #convert the finv vector to csv file
-                     vlay, 
-                     cid): 
+    def convert_finv(self): #aoi slice and convert the finv vector to csv file
+        
+        
         log = self.logger.getChild('convert_finv')
+        log.info('started')
+        self.feedback.upd_prog(10)
+        
+        
+        #=======================================================================
+        # retrieve data
+        #=======================================================================
+        cid = self.mFieldComboBox_cid.currentField() #user selected field
+        
+        vlay_raw = self.comboBox_ivlay.currentLayer()
+        
+        cf_fp = self.get_cf_fp()
+        
+
         #======================================================================
         # prechecks
         #======================================================================
+        assert isinstance(vlay_raw, QgsVectorLayer), 'must select a VectorLayer'
+        assert os.path.exists(cf_fp), 'bad cf_fp: %s'%cf_fp
+        
+        
+        #check cid
+        assert isinstance(cid, str)
+        if cid == '':
+            raise Error('must specify a cid') 
+        if cid in self.invalid_cids:
+            raise Error('user selected invalid cid \'%s\''%cid)  
+        
+        assert cid in [field.name() for field in vlay_raw.fields()]
+        
+        
+        
+        #=======================================================================
+        # aoi slice
+        #=======================================================================
+        vlay = self.slice_aoi(vlay_raw)
+        
+        
         log.info('on \'%s\' w/ %i feats'%(
             vlay.name(), vlay.dataProvider().featureCount()))
         
-        #extract data
+        #=======================================================================
+        # #extract data
+        #=======================================================================
         df = vlay_get_fdf(vlay, feedback=self.feedback)
           
         #drop geometery indexes
         for gindx in self.invalid_cids:   
             df = df.drop(gindx, axis=1, errors='ignore')
             
+        #more cid checks
         if not cid in df.columns:
             raise Error('cid not found in finv_df')
         
         assert df[cid].is_unique
         assert 'int' in df[cid].dtypes.name
         
-        #write it as a csv
+        #=======================================================================
+        # #write to file
+        #=======================================================================
         out_fp = os.path.join(self.wd, 'finv_%s_%s.csv'%(self.tag, vlay.name()))
+        
+        #see if this exists
+        if os.path.exists(out_fp):
+            msg = 'generated finv.csv already exists. overwrite=%s \n     %s'%(
+                self.overwrite, out_fp)
+            if self.overwrite:
+                log.warning(msg)
+            else:
+                raise Error(msg)
+            
+            
         df.to_csv(out_fp, index=False)  
         
         log.info("inventory csv written to file:\n    %s"%out_fp)
+        
+        #=======================================================================
+        # write to control file
+        #=======================================================================
+        assert os.path.exists(out_fp)
+        
+        """old
+        pars.set('dmg_fps', 'finv', finv_fp)
+        pars.set('parameters', 'cid', cid) #user selected field
+        """
+        
+        
+        self.update_cf(
+            {
+            'dmg_fps':(
+                {'finv':out_fp}, 
+                '#\'finv\' file path set from BuildDialog.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                ),
+            'parameters':(
+                {'cid':str(cid)},
+                )
+             },
+            cf_fp = cf_fp
+            )
         
         return out_fp
                 
@@ -681,9 +739,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         # slice aoi
         #=======================================================================
         finv = self.slice_aoi(finv_raw)
-
-        
-        
 
         #======================================================================
         # precheck
