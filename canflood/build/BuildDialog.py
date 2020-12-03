@@ -692,12 +692,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         # write to control file
         #=======================================================================
         assert os.path.exists(out_fp)
-        
-        """old
-        pars.set('dmg_fps', 'finv', finv_fp)
-        pars.set('parameters', 'cid', cid) #user selected field
-        """
-        
+
         
         self.update_cf(
             {
