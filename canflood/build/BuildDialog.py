@@ -168,6 +168,29 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # inventory------------
         #=======================================================================
+        """
+        loading web services
+        see 'canadian_web_services.py' for some decent examples.
+        
+        
+        need a config file with urls (easy for the user to update)
+        
+        popup window for web loading?
+        
+        consider using https://geopython.github.io/OWSLib/ to query the info
+            easier to use and more robust than builtin Qgis functions?
+            
+        load layer from server using QgisVectorLayer(uri)
+            bounding box it
+            
+        then need some post-download manipulation scripts to get into CanFlood format
+            aoi slice
+            rename some fields
+            validate
+        
+        """
+        
+        
         #=======================================================================
         # #populate guis
         #=======================================================================
