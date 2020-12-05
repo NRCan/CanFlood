@@ -196,12 +196,17 @@ class CanFlood:
 
     def initGui(self):
         
-        #icon_path = ':/plugins/canflood_inprep/icons/CanFlood_Icon.png'
+
+        #=======================================================================
+        # add toolbar
+        #=======================================================================
         """Create the menu entries and toolbar icons inside the QGIS GUI."""  
         self.toolbar = self.iface.addToolBar('CanFlood')
         self.toolbar.setObjectName('CanFloodToolBar')
         
-        # 1----first button---------------------------------
+        #=======================================================================
+        # button 1: Build
+        #=======================================================================
         self.toolbarProjectDataPrep = QAction(QIcon(
             ':/plugins/canflood_inprep/icons/Andy_Tools_Hammer_Spanner_23x23.png'), 
             'Build', self.iface.mainWindow())
@@ -211,7 +216,9 @@ class CanFlood:
         self.toolbarProjectDataPrep.triggered.connect(self.showToolbarDataPrep)
         self.toolbar.addAction(self.toolbarProjectDataPrep)
 
-        # 2----second button---------------------------------
+        #=======================================================================
+        # button 2: Model
+        #=======================================================================
         self.toolbarProjectModelling = QAction(
             QIcon(':/plugins/canflood_inprep/icons/house_flood.png'),
             'Model', self.iface.mainWindow())
@@ -221,7 +228,9 @@ class CanFlood:
         self.toolbarProjectModelling.triggered.connect(self.showToolbarProjectModelling)
         self.toolbar.addAction(self.toolbarProjectModelling)
 
-        # 3----third button---------------------------------
+        #=======================================================================
+        # button 3: Results
+        #=======================================================================
         self.toolbarProjectResults = QAction(
             QIcon(':/plugins/canflood_inprep/icons/eye_23x23.png'), 
             'Results', self.iface.mainWindow())
@@ -234,10 +243,12 @@ class CanFlood:
         #=======================================================================
         # plugin reloadert
         #=======================================================================
-        from .build import lisamp, rsamp, oth_rfda
-        from .hlpr import basic,  exceptions, logr,  plug, Q
-        from .model import dmg2, modcom, risk1, risk2
-        from .results import djoin, riskPlot
+        #=======================================================================
+        # from .build import lisamp, rsamp, oth_rfda
+        # from .hlpr import basic,  exceptions, logr,  plug, Q
+        # from .model import dmg2, modcom, risk1, risk2
+        # from .results import djoin, riskPlot
+        #=======================================================================
 
         
 
