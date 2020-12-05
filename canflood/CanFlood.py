@@ -117,7 +117,7 @@ class CanFlood:
         :rtype: QString
         """
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
-        return QCoreApplication.translate('CanFlood_inPrep', message)
+        return QCoreApplication.translate('CanFlood', message)
 
 
 #===============================================================================
@@ -271,11 +271,17 @@ class CanFlood:
         self.dlg3.show()
     
     def unload(self):
-        """Removes the plugin menu item and icon from QGIS GUI."""
-        for action in self.actions:
-            self.iface.removePluginMenu(
-                self.tr(u'&CanFlood_inPrep'),
-                action)
+        """Removes the plugin menu item and icon from QGIS GUI.
+        called when user unchecks the plugin?
+        """
+        for action in self.actions: #loop through each action and unload it
+            #try and remove from plugin menu and toolbar
+            #===================================================================
+            # self.iface.removePluginMenu(
+            #     self.tr(u'&CanFlood_inPrep'),
+            #     action)
+            #===================================================================
+            
             self.iface.removeToolBarIcon(action)
 
     def run(self):
