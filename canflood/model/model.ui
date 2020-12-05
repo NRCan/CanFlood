@@ -1413,7 +1413,7 @@ p, li { white-space: pre-wrap; }
               <item>
                <widget class="QLabel" name="label_7">
                 <property name="text">
-                 <string>WARNING: Ensure 'Impacts (L2)' is executed first</string>
+                 <string>WARNING: Ensure 'Impacts (L2)' has been executed first</string>
                 </property>
                </widget>
               </item>
