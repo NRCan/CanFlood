@@ -48,7 +48,7 @@ from hlpr.basic import *
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 ui_fp = os.path.join(os.path.dirname(__file__), 'build.ui')
-assert os.path.exists(ui_fp)
+assert os.path.exists(ui_fp), 'failed to find the ui file: \n    %s'%ui_fp
 FORM_CLASS, _ = uic.loadUiType(ui_fp)
 
 
@@ -56,8 +56,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
     
     event_name_set = [] #event names
     
-    
-    
+
     def __init__(self, iface, parent=None):
         """these will only ini tthe first baseclass (QtWidgets.QDialog)
         
@@ -78,9 +77,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
 
         self.iface = iface
         
-        self.qproj_setup()
+        self.qproj_setup() #basic dialog worker setup
         
-       
         self.connect_slots()
         
         
@@ -89,7 +87,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
 
     def connect_slots(self):
         log = self.logger.getChild('connect_slots')
-        #self.testit()
+
         #======================================================================
         # pull project data
         #======================================================================
@@ -107,18 +105,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # general----------------
         #=======================================================================
-        #=======================================================================
-        # def test():
-        #     self.logger.push('test button pushed')
-        #     
-        #     for i in range(10):
-        #         time.sleep(.5)
-        #         self.progressBar.setValue(i + 1)
-        #         
-        #     self.logger.push('finished')
-        #=======================================================================
+
         #ok/cancel buttons
-        self.buttonBox.accepted.connect(self.reject)
+        self.buttonBox.accepted.connect(self.reject) #back out of the dialog
         self.buttonBox.rejected.connect(self.reject)
         
         
@@ -130,20 +119,19 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             
             see hlpr.plug.logger._loghlp()
         """
-        self.logger.statusQlab=self.progressText
-        self.logger.statusQlab.setText('BuildDialog initialized')
+        self.logger.statusQlab=self.progressText #connect to the progress text above the bar
+        #self.logger.statusQlab.setText('BuildDialog initialized')
                 
         #======================================================================
         # setup tab----------
         #======================================================================
         #populate guis
-        self.comboBox_vec.setFilters(QgsMapLayerProxyModel.VectorLayer) #SS. Inventory Layer: Drop down
         self.comboBox_aoi.setFilters(QgsMapLayerProxyModel.PolygonLayer) #SS. Project AOI
-        self.comboBox_SSelv.addItems(['datum', 'ground']) #ss elevation type
-               
         self.comboBox_aoi.setCurrentIndex(-1) #by default, lets have this be blank
         
         #Working Directory browse
+        """default is set below.
+        doesn't seem to open the displayed directory on first click"""
         def browse_wd():
             return self.browse_button(self.lineEdit_wd, prompt='Select Working Directory',
                                       qfd = QFileDialog.getExistingDirectory)
@@ -156,27 +144,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         self.pushButton_wd_open.clicked.connect(open_wd)
         
-        #======================================================================
-        # #Inventory Vector Layer
-        #======================================================================
-        #change the 'cid' display when the finv selection changes
-        def upd_cid():
-            return self.mfcb_connect(
-                self.mFieldComboBox_cid, self.comboBox_vec.currentLayer(),
-                fn_str = 'xid' )
-                
-        self.comboBox_vec.layerChanged.connect(upd_cid) #SS inventory vector layer
-        
-        #find a good layer
-        try:
-            for layname, vlay in vlays_d.items():
-                if layname.startswith('finv'):
-                    break
-            
-            self.logger.info('setting comboBox_vec = %s'%vlay.name())
-            self.comboBox_vec.setLayer(vlay)
-        except Exception as e:
-            self.logger.warning('failed to set inventory layer w: \n    %s'%e)
         
         #Vulnerability Curve Set
         def browse_curves():
@@ -197,6 +164,70 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                            qfd=QFileDialog.getOpenFileName)
             
         self.pushButton_cf.clicked.connect(browse_cf)# SS. Model Control File. Browse
+        
+        #=======================================================================
+        # inventory------------
+        #=======================================================================
+        """
+        loading web services
+        see 'canadian_web_services.py' for some decent examples.
+        
+        
+        need a config file with urls (easy for the user to update)
+        
+        popup window for web loading?
+        
+        consider using https://geopython.github.io/OWSLib/ to query the info
+            easier to use and more robust than builtin Qgis functions?
+            
+        load layer from server using QgisVectorLayer(uri)
+            bounding box it
+            
+        then need some post-download manipulation scripts to get into CanFlood format
+            aoi slice
+            rename some fields
+            validate
+        
+        """
+        
+        
+        #=======================================================================
+        # #populate guis
+        #=======================================================================
+        #inventory vector layer box
+        self.comboBox_ivlay.setFilters(QgsMapLayerProxyModel.VectorLayer) #SS. Inventory Layer: Drop down
+
+
+        #find a good layer
+        try:
+            for layname, vlay in vlays_d.items():
+                if layname.startswith('finv'):
+                    break
+            
+            self.logger.info('setting comboBox_vec = %s'%vlay.name())
+            self.comboBox_ivlay.setLayer(vlay)
+        except Exception as e:
+            self.logger.debug('failed to set inventory layer w: \n    %s'%e)
+            
+            
+        #elevation t ype
+        self.comboBox_SSelv.addItems(['datum', 'ground']) #ss elevation type
+        
+        
+        #index field name
+        #change the 'cid' display when the finv selection changes
+        def upd_cid():
+            return self.mfcb_connect(
+                self.mFieldComboBox_cid, self.comboBox_ivlay.currentLayer(),
+                fn_str = 'xid' )
+                
+        self.comboBox_ivlay.layerChanged.connect(upd_cid) #SS inventory vector layer
+        
+        #=======================================================================
+        # connect buttons
+        #=======================================================================
+        self.pushButton_Inv_store.clicked.connect(self.convert_finv)
+        
         #======================================================================
         # hazard sampler---------
         #======================================================================
@@ -223,16 +254,16 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         #display the gtype when the finv changes
         def upd_gtype():
-            vlay = self.comboBox_vec.currentLayer()
+            vlay = self.comboBox_ivlay.currentLayer()
             if isinstance(vlay,QgsVectorLayer):
                 gtype = QgsWkbTypes().displayString(vlay.wkbType())
                 self.label_HS_finvgtype.setText(gtype)
             
-        self.comboBox_vec.layerChanged.connect(upd_gtype) #SS inventory vector layer
+        self.comboBox_ivlay.layerChanged.connect(upd_gtype) #SS inventory vector layer
         
         #display sampling stats options to user 
         def upd_stat():
-            vlay = self.comboBox_vec.currentLayer()
+            vlay = self.comboBox_ivlay.currentLayer()
             self.comboBox_HS_stat.clear()
             if isinstance(vlay,QgsVectorLayer):
                 gtype = QgsWkbTypes().displayString(vlay.wkbType())
@@ -242,7 +273,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                     self.comboBox_HS_stat.addItems(
                         ['','Mean','Median','Min','Max'])
                 
-        self.comboBox_vec.layerChanged.connect(upd_stat) #SS inventory vector layer
+        self.comboBox_ivlay.layerChanged.connect(upd_stat) #SS inventory vector layer
             
             
         #disable sample stats when %inundation is checked
@@ -480,11 +511,11 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         todo: make a fresh pull of this for each tool
         """
         
-        cid = self.mFieldComboBox_cid.currentField() #user selected field
+        
         
         self.wd =  self.lineEdit_wd.text() #pull the wd filepath from the user provided in 'Browse'
         
-        finv_raw = self.comboBox_vec.currentLayer()
+        
         
 
         
@@ -494,38 +525,18 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         assert isinstance(self.wd, str)
         
         assert isinstance(self.tag, str)
-        assert isinstance(finv_raw, QgsVectorLayer), 'must select a VectorLayer'
-        
-        
-        #check cid
-        assert isinstance(cid, str)
-        if cid == '':
-            raise Error('must specify a cid') 
-        if cid in self.invalid_cids:
-            raise Error('user selected invalid cid \'%s\''%cid)  
-        
-        assert cid in [field.name() for field in finv_raw.fields()]
+
         
         if not os.path.exists(self.wd):
             os.makedirs(self.wd)
             log.info('built working directory: %s'%self.wd)
             
-        #=======================================================================
-        # aoi slice
-        #=======================================================================
-        finv = self.slice_aoi(finv_raw)
-            
         
-        #=======================================================================
-        # convert finv
-        #=======================================================================
-        self.feedback.upd_prog(10)
-        finv_fp = self.convert_finv(finv, cid) #convert the finv to csv and write to file
         #======================================================================
         # build the control file
         #======================================================================
         
-        assert os.path.exists(finv_fp)
+        
         self.feedback.upd_prog(50)
         
         #called by build_scenario()
@@ -534,8 +545,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #get the default template from the program files
         cf_src = os.path.join(dirname, '_pars/CanFlood_control_01.txt')
         assert os.path.exists(cf_src)
-
-        
 
         
         #get control file name from user provided tag
@@ -566,13 +575,18 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         _ = pars.read(cf_path) #read it from the new location
         
         #parameters
-        pars.set('parameters', 'cid', cid) #user selected field
+        
         pars.set('parameters', 'name', self.tag) #user selected field
         pars.set('parameters', 'felv', self.comboBox_SSelv.currentText()) #user selected field
         
-        #filepaths
-        pars.set('dmg_fps', 'curves',  self.lineEdit_curve.text())
-        pars.set('dmg_fps', 'finv', finv_fp)
+        #damage curves
+        dmg_fps = self.lineEdit_curve.text()
+        if dmg_fps == '':
+            pass
+        else:
+            assert os.path.exists(dmg_fps), 'bad dmg_fps: %s'%dmg_fps
+            pars.set('dmg_fps', 'curves', dmg_fps)
+        
         
         
         #set note
@@ -607,34 +621,121 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.feedback.upd_prog(None) #set the progress bar back down to zero
 
         
-    def convert_finv(self, #convert the finv vector to csv file
-                     vlay, 
-                     cid): 
+    def convert_finv(self): #aoi slice and convert the finv vector to csv file
+        
+        
         log = self.logger.getChild('convert_finv')
+        log.info('started')
+        self.feedback.upd_prog(10)
+        
+        
+        #=======================================================================
+        # retrieve data
+        #=======================================================================
+        cid = self.mFieldComboBox_cid.currentField() #user selected field
+        
+        vlay_raw = self.comboBox_ivlay.currentLayer()
+        
+        cf_fp = self.get_cf_fp()
+        
+
         #======================================================================
         # prechecks
         #======================================================================
-        log.info('on \'%s\' w/ %i feats'%(
-            vlay.name(), vlay.dataProvider().featureCount()))
+        assert isinstance(vlay_raw, QgsVectorLayer), 'must select a VectorLayer'
+        assert os.path.exists(cf_fp), 'bad cf_fp: %s'%cf_fp
         
-        #extract data
+        
+        #check cid
+        assert isinstance(cid, str)
+        if cid == '':
+            raise Error('must specify a cid') 
+        if cid in self.invalid_cids:
+            raise Error('user selected invalid cid \'%s\''%cid)  
+        
+        assert cid in [field.name() for field in vlay_raw.fields()]
+        
+        
+        
+        #=======================================================================
+        # aoi slice
+        #=======================================================================
+        vlay = self.slice_aoi(vlay_raw)
+        
+        
+        if self.checkBox_loadres.isChecked():
+            self.qproj.addMapLayer(vlay)
+            self.logger.info('added \'%s\' to canvas'%vlay.name())
+        
+        
+
+        self.feedback.upd_prog(30)
+        #=======================================================================
+        # #extract data
+        #=======================================================================
+        
+        log.info('extracting data on \'%s\' w/ %i feats'%(
+            vlay.name(), vlay.dataProvider().featureCount()))
+                
         df = vlay_get_fdf(vlay, feedback=self.feedback)
           
         #drop geometery indexes
         for gindx in self.invalid_cids:   
             df = df.drop(gindx, axis=1, errors='ignore')
             
+        #more cid checks
         if not cid in df.columns:
             raise Error('cid not found in finv_df')
         
         assert df[cid].is_unique
         assert 'int' in df[cid].dtypes.name
         
-        #write it as a csv
+        self.feedback.upd_prog(50)
+        #=======================================================================
+        # #write to file
+        #=======================================================================
         out_fp = os.path.join(self.wd, 'finv_%s_%s.csv'%(self.tag, vlay.name()))
+        
+        #see if this exists
+        if os.path.exists(out_fp):
+            msg = 'generated finv.csv already exists. overwrite=%s \n     %s'%(
+                self.overwrite, out_fp)
+            if self.overwrite:
+                log.warning(msg)
+            else:
+                raise Error(msg)
+            
+            
         df.to_csv(out_fp, index=False)  
         
         log.info("inventory csv written to file:\n    %s"%out_fp)
+        
+        self.feedback.upd_prog(80)
+        #=======================================================================
+        # write to control file
+        #=======================================================================
+        assert os.path.exists(out_fp)
+
+        
+        self.update_cf(
+            {
+            'dmg_fps':(
+                {'finv':out_fp}, 
+                '#\'finv\' file path set from BuildDialog.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                ),
+            'parameters':(
+                {'cid':str(cid)},
+                )
+             },
+            cf_fp = cf_fp
+            )
+        
+        self.feedback.upd_prog(99)
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        log.push('inventory vector layer stored "\'%s\''%vlay.name())
+        self.feedback.upd_prog(None) #set the progress bar back down to zero
         
         return out_fp
                 
@@ -649,7 +750,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # assemble/prepare inputs
         #=======================================================================
-        finv_raw = self.comboBox_vec.currentLayer()
+        finv_raw = self.comboBox_ivlay.currentLayer()
         rlay_l = list(self.ras_dict.values())
         
         crs = self.qproj.crs()
@@ -680,9 +781,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         # slice aoi
         #=======================================================================
         finv = self.slice_aoi(finv_raw)
-
-        
-        
 
         #======================================================================
         # precheck
@@ -827,7 +925,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         # assemble/prepare inputs
         #=======================================================================
         
-        finv_raw = self.comboBox_vec.currentLayer()
+        finv_raw = self.comboBox_ivlay.currentLayer()
         rlay = self.comboBox_dtm.currentLayer()
         
         crs = self.qproj.crs()
@@ -929,7 +1027,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # assemble/prepare inputs
         #=======================================================================
-        finv_raw = self.comboBox_vec.currentLayer()
+        finv_raw = self.comboBox_ivlay.currentLayer()
         crs = self.qproj.crs()
         cf_fp = self.get_cf_fp()
         out_dir = self.lineEdit_wd.text()

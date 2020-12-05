@@ -73,8 +73,6 @@ class QprojPlug(Qcoms): #baseclass for plugins
         self.logger = logger(self) #init the logger
         self.qproj = QgsProject.instance()
         
-
-        
         self.crs = self.qproj.crs()
         
         """connect to UI's progress bar
@@ -122,8 +120,16 @@ class QprojPlug(Qcoms): #baseclass for plugins
                       prompt = 'Select Directory', #title of box
                       qfd = QFileDialog.getExistingDirectory, #dialog to launch
                       ):
-        #ask the user for the path
-        fp = qfd(self, prompt)
+        
+        #get the currently displayed filepath
+        fp_old = lineEdit.text()
+        
+        #change to default if nothing useful is there
+        if not os.path.exists(fp_old):
+            fp_old = os.getcwd()
+        
+        #launch the dialog and get the new fp from the user
+        fp = qfd(self, prompt, fp_old)
         
         #just take the first
         if len(fp) == 2:
@@ -137,7 +143,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
         #update the bar
         lineEdit.setText(fp)
         
-        self.logger.info('user selected: \n    %s'%fp)
+        self.logger.info('user selected: %s'%fp)
         
     def fileSelect_button(self, #
                       lineEdit, #text bar where selected directory should be displayed
@@ -252,16 +258,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
             comboBox.setCurrentIndex(index)
         
         
-            
-            
-        
-    
 
-        
-
-
-        
-        
 class logger(object): #workaround for qgis logging pythonic
     log_tabnm = 'CanFlood' # qgis logging panel tab name
     

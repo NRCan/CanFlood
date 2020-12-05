@@ -1,6 +1,6 @@
 [parameters]
 name = test1            #name of the scenario/model run
-cid = xid               #index column for the 3 inventoried data sets (finv, expos, gels)
+cid =                   #index column for the 3 inventoried data sets (finv, expos, gels)
 prec = 6                #float precision for calculations
 ground_water = True     #whether to allow wsl < gel
 felv = ground           #'datum' or 'ground': whether felv values provided in the inventory are heights or elevations

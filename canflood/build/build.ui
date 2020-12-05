@@ -51,8 +51,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>680</width>
-        <height>736</height>
+        <width>684</width>
+        <height>741</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -91,7 +91,7 @@
          <property name="movable">
           <bool>false</bool>
          </property>
-         <widget class="QWidget" name="tab">
+         <widget class="QWidget" name="tab_welcome">
           <attribute name="title">
            <string>Welcome!</string>
           </attribute>
@@ -120,17 +120,17 @@
               <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:7.8pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Welcome to CanFlood 0.3.5&lt;/span&gt;&lt;/p&gt;
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Welcome to CanFlood 0.3.6&lt;/span&gt;&lt;/p&gt;
 &lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;img src=&quot;:/plugins/canflood_inprep/icons/logo_100x100.png&quot; /&gt;&lt;/p&gt;
 &lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;This collection is the 'Build' toolset. These tools help build/configure a CanFlood model.&lt;/span&gt;&lt;/p&gt;
 &lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8.25pt;&quot;&gt;For instructions and guidance see the Users's Manual&lt;/span&gt;&lt;/p&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;For instructions and guidance see the Users's Manual&lt;/p&gt;
 &lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8.25pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a href=&quot;https://github.com/IBIGroupCanWest/CanFlood&quot;&gt;&lt;span style=&quot; font-size:8pt; text-decoration: underline; color:#0000ff;&quot;&gt;CanFlood project page&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;
@@ -138,8 +138,8 @@ p, li { white-space: pre-wrap; }
 &lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;And remember, it CanFlood anywhere...&lt;/span&gt;&lt;/p&gt;
 &lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8.25pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:7.8pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="openExternalLinks">
               <bool>true</bool>
@@ -169,41 +169,365 @@ p, li { white-space: pre-wrap; }
            <item>
             <widget class="QLabel" name="label_5">
              <property name="text">
-              <string>Specify the parameters for this session. Generate a new Control File, or select an existing one.</string>
+              <string>Specify the parameters for this Build session and start a new Control File</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QGroupBox" name="groupBox_01wd">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
+            <widget class="QGroupBox" name="groupBox_21">
+             <property name="toolTip">
+              <string extracomment="here is a toolTip"/>
              </property>
              <property name="title">
-              <string>Working Directory:</string>
+              <string>Build Session Controls:</string>
              </property>
-             <layout class="QHBoxLayout" name="horizontalLayout_16">
+             <layout class="QVBoxLayout" name="verticalLayout_24">
               <item>
-               <widget class="QLineEdit" name="lineEdit_wd"/>
-              </item>
-              <item>
-               <widget class="QPushButton" name="pushButton_wd">
-                <property name="text">
-                 <string>Browse</string>
+               <widget class="QGroupBox" name="groupBox_01wd">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
                 </property>
+                <property name="title">
+                 <string>Working Directory:</string>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_16">
+                 <item>
+                  <widget class="QLineEdit" name="lineEdit_wd"/>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="pushButton_wd">
+                   <property name="text">
+                    <string>Browse</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="pushButton_wd_open">
+                   <property name="text">
+                    <string>Open</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
                </widget>
               </item>
               <item>
-               <widget class="QPushButton" name="pushButton_wd_open">
-                <property name="text">
-                 <string>Open</string>
+               <widget class="QGroupBox" name="groupBox_04aoi">
+                <property name="title">
+                 <string>Project AOI (optional):</string>
                 </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_20">
+                 <item>
+                  <widget class="QCheckBox" name="checkBox_sels">
+                   <property name="text">
+                    <string>Selected features only</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QgsMapLayerComboBox" name="comboBox_aoi">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="allowEmptyLayer">
+                    <bool>true</bool>
+                   </property>
+                   <property name="showCrs">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QGroupBox" name="groupBox_prog_contrl">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>450</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>700</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="title">
+                 <string>Build Controls:</string>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_7">
+                 <item>
+                  <widget class="QCheckBox" name="checkBox_SSabsfp">
+                   <property name="text">
+                    <string>Absolute filepaths</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QCheckBox" name="checkBox_SSoverwrite">
+                   <property name="text">
+                    <string>Overwrite files</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QCheckBox" name="checkBox_loadres">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>638</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string>Load session results to canvas</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QGroupBox" name="groupBox_11">
+                <property name="title">
+                 <string>Control File Path:</string>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_25">
+                 <item>
+                  <widget class="QLabel" name="label_19">
+                   <property name="text">
+                    <string>(See below to assemble a new control file)</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <layout class="QHBoxLayout" name="horizontalLayout_22">
+                   <item>
+                    <widget class="QLineEdit" name="lineEdit_cf_fp"/>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="pushButton_cf">
+                     <property name="text">
+                      <string>Browse</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
                </widget>
               </item>
              </layout>
             </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_5">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_10">
+             <property name="title">
+              <string>Assemble Control File:</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_23">
+              <item>
+               <widget class="QGroupBox" name="groupBox_7">
+                <property name="title">
+                 <string>Control File Parameters:</string>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_28">
+                 <item>
+                  <layout class="QHBoxLayout" name="horizontalLayout_26">
+                   <item>
+                    <widget class="QLabel" name="label_8">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="minimumSize">
+                      <size>
+                       <width>115</width>
+                       <height>0</height>
+                      </size>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>125</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>Elevation type (felv):</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QComboBox" name="comboBox_SSelv">
+                     <property name="minimumSize">
+                      <size>
+                       <width>200</width>
+                       <height>0</height>
+                      </size>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <spacer name="horizontalSpacer_4">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>40</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QGroupBox" name="groupBox_03curves">
+                <property name="title">
+                 <string>Vulnerability Curve Set:</string>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_19">
+                 <item>
+                  <widget class="QLineEdit" name="lineEdit_curve"/>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="pushButton_SScurves">
+                   <property name="text">
+                    <string>Browse</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QGroupBox" name="groupBox_12">
+                <property name="title">
+                 <string>Generate New Control File:</string>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_21">
+                 <item>
+                  <widget class="QLabel" name="label">
+                   <property name="text">
+                    <string>Scenario Name: </string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLineEdit" name="linEdit_ScenTag">
+                   <property name="text">
+                    <string>scenario1</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="pushButton_generate">
+                   <property name="font">
+                    <font>
+                     <weight>75</weight>
+                     <bold>true</bold>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Build</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_7">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="tab_inventory">
+          <attribute name="title">
+           <string>Inventory</string>
+          </attribute>
+          <layout class="QVBoxLayout" name="verticalLayout_22">
+           <item>
+            <widget class="QLabel" name="label_15">
+             <property name="text">
+              <string>Construct or specify your inventory layer</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_8">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
            </item>
            <item>
             <widget class="QGroupBox" name="groupBox_02finv">
@@ -214,11 +538,11 @@ p, li { white-space: pre-wrap; }
               </sizepolicy>
              </property>
              <property name="title">
-              <string>Inventory Vector Layer:</string>
+              <string>Store Inventory Vector Layer:</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_13">
               <item>
-               <widget class="QgsMapLayerComboBox" name="comboBox_vec">
+               <widget class="QgsMapLayerComboBox" name="comboBox_ivlay">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -281,208 +605,22 @@ p, li { white-space: pre-wrap; }
                   </item>
                  </layout>
                 </item>
-                <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_26">
-                  <item>
-                   <widget class="QLabel" name="label_8">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>115</width>
-                      <height>0</height>
-                     </size>
-                    </property>
-                    <property name="maximumSize">
-                     <size>
-                      <width>125</width>
-                      <height>16777215</height>
-                     </size>
-                    </property>
-                    <property name="text">
-                     <string>Elevation type (felv):</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QComboBox" name="comboBox_SSelv">
-                    <property name="minimumSize">
-                     <size>
-                      <width>200</width>
-                      <height>0</height>
-                     </size>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <spacer name="horizontalSpacer_4">
-                    <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
-                    </property>
-                    <property name="sizeHint" stdset="0">
-                     <size>
-                      <width>40</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                   </spacer>
-                  </item>
-                 </layout>
-                </item>
                </layout>
               </item>
-             </layout>
-            </widget>
-           </item>
-           <item>
-            <widget class="QGroupBox" name="groupBox_03curves">
-             <property name="title">
-              <string>Vulnerability Curve Set (optional):</string>
-             </property>
-             <layout class="QHBoxLayout" name="horizontalLayout_19">
-              <item>
-               <widget class="QLineEdit" name="lineEdit_curve"/>
-              </item>
-              <item>
-               <widget class="QPushButton" name="pushButton_SScurves">
-                <property name="text">
-                 <string>Browse</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item>
-            <widget class="QGroupBox" name="groupBox_04aoi">
-             <property name="title">
-              <string>Project AOI (optional):</string>
-             </property>
-             <layout class="QHBoxLayout" name="horizontalLayout_20">
-              <item>
-               <widget class="QCheckBox" name="checkBox_sels">
-                <property name="text">
-                 <string>Selected features only</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QgsMapLayerComboBox" name="comboBox_aoi">
+              <item alignment="Qt::AlignHCenter">
+               <widget class="QPushButton" name="pushButton_Inv_store">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
-                </property>
-                <property name="allowEmptyLayer">
-                 <bool>true</bool>
-                </property>
-                <property name="showCrs">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item>
-            <widget class="QGroupBox" name="groupBox_prog_contrl">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>450</width>
-               <height>0</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>700</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="title">
-              <string>Program Controls:</string>
-             </property>
-             <layout class="QHBoxLayout" name="horizontalLayout_7">
-              <item>
-               <widget class="QCheckBox" name="checkBox_SSabsfp">
-                <property name="text">
-                 <string>Absolute filepaths</string>
-                </property>
-                <property name="checked">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="checkBox_SSoverwrite">
-                <property name="text">
-                 <string>Overwrite files</string>
-                </property>
-                <property name="checked">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="checkBox_loadres">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>150</width>
-                  <height>0</height>
-                 </size>
                 </property>
                 <property name="maximumSize">
                  <size>
-                  <width>638</width>
+                  <width>50</width>
                   <height>16777215</height>
                  </size>
                 </property>
-                <property name="text">
-                 <string>Load Results to canvas</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item>
-            <widget class="QGroupBox" name="groupBox_12">
-             <property name="title">
-              <string>Generate New Control File:</string>
-             </property>
-             <layout class="QHBoxLayout" name="horizontalLayout_21">
-              <item>
-               <widget class="QLabel" name="label">
-                <property name="text">
-                 <string>Scenario Name: </string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLineEdit" name="linEdit_ScenTag">
-                <property name="text">
-                 <string>scenario1</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="pushButton_generate">
                 <property name="font">
                  <font>
                   <weight>75</weight>
@@ -490,7 +628,7 @@ p, li { white-space: pre-wrap; }
                  </font>
                 </property>
                 <property name="text">
-                 <string>Build Scenario</string>
+                 <string>Store</string>
                 </property>
                </widget>
               </item>
@@ -498,39 +636,7 @@ p, li { white-space: pre-wrap; }
             </widget>
            </item>
            <item>
-            <spacer name="verticalSpacer_7">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>20</width>
-               <height>40</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <widget class="QGroupBox" name="groupBox_11">
-             <property name="title">
-              <string>CanFlood Control File:</string>
-             </property>
-             <layout class="QHBoxLayout" name="horizontalLayout_22">
-              <item>
-               <widget class="QLineEdit" name="lineEdit_cf_fp"/>
-              </item>
-              <item>
-               <widget class="QPushButton" name="pushButton_cf">
-                <property name="text">
-                 <string>Browse</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item>
-            <spacer name="verticalSpacer_5">
+            <spacer name="verticalSpacer_9">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
              </property>
@@ -755,7 +861,7 @@ p, li { white-space: pre-wrap; }
               <item>
                <widget class="QGroupBox" name="groupBox_15">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -767,7 +873,7 @@ p, li { white-space: pre-wrap; }
                  </size>
                 </property>
                 <property name="title">
-                 <string>Execute:</string>
+                 <string>Sample Selected Rasters:</string>
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout">
                  <item>
@@ -780,8 +886,8 @@ p, li { white-space: pre-wrap; }
                    </property>
                    <property name="minimumSize">
                     <size>
-                     <width>100</width>
-                     <height>30</height>
+                     <width>0</width>
+                     <height>0</height>
                     </size>
                    </property>
                    <property name="font">
@@ -1051,8 +1157,8 @@ p, li { white-space: pre-wrap; }
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>113</width>
-                   <height>671</height>
+                   <width>98</width>
+                   <height>660</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -1850,6 +1956,68 @@ p, li { white-space: pre-wrap; }
    <header>qgsmaplayercombobox.h</header>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>scrollArea</tabstop>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>textBrowser</tabstop>
+  <tabstop>pushButton_wd_open</tabstop>
+  <tabstop>pushButton_SScurves</tabstop>
+  <tabstop>lineEdit_curve</tabstop>
+  <tabstop>pushButton_wd</tabstop>
+  <tabstop>checkBox_sels</tabstop>
+  <tabstop>comboBox_aoi</tabstop>
+  <tabstop>lineEdit_wd</tabstop>
+  <tabstop>checkBox_SSabsfp</tabstop>
+  <tabstop>checkBox_SSoverwrite</tabstop>
+  <tabstop>checkBox_loadres</tabstop>
+  <tabstop>linEdit_ScenTag</tabstop>
+  <tabstop>pushButton_generate</tabstop>
+  <tabstop>pushButton_clear</tabstop>
+  <tabstop>pushButton_remove</tabstop>
+  <tabstop>pushButton_add_all</tabstop>
+  <tabstop>comboBox_ras</tabstop>
+  <tabstop>listWidget_ras</tabstop>
+  <tabstop>comboBox_HS_stat</tabstop>
+  <tabstop>checkBox_HS_in</tabstop>
+  <tabstop>mQgsDoubleSpinBox_HS</tabstop>
+  <tabstop>comboBox_HS_DTM</tabstop>
+  <tabstop>pushButton_HSgenerate</tabstop>
+  <tabstop>fieldsTable_EL</tabstop>
+  <tabstop>radioButton_ELari</tabstop>
+  <tabstop>radioButton_ELaep</tabstop>
+  <tabstop>pushButton_ELstore</tabstop>
+  <tabstop>scrollArea_2</tabstop>
+  <tabstop>MLCB_LS1_event_3</tabstop>
+  <tabstop>MLCB_LS1_lpol_3</tabstop>
+  <tabstop>MLCB_LS1_event_4</tabstop>
+  <tabstop>MLCB_LS1_lpol_4</tabstop>
+  <tabstop>MLCB_LS1_event_5</tabstop>
+  <tabstop>MLCB_LS1_lpol_5</tabstop>
+  <tabstop>MLCB_LS1_event</tabstop>
+  <tabstop>MLCB_LS1_lpol</tabstop>
+  <tabstop>MLCB_LS1_event_6</tabstop>
+  <tabstop>MLCB_LS1_lpol_6</tabstop>
+  <tabstop>MLCB_LS1_event_7</tabstop>
+  <tabstop>MLCB_LS1_lpol_7</tabstop>
+  <tabstop>MLCB_LS1_event_2</tabstop>
+  <tabstop>MLCB_LS1_lpol_2</tabstop>
+  <tabstop>MLCB_LS1_event_8</tabstop>
+  <tabstop>MLCB_LS1_lpol_8</tabstop>
+  <tabstop>pushButton_LSsample</tabstop>
+  <tabstop>mFieldComboBox_LSfn</tabstop>
+  <tabstop>comboBox_dtm</tabstop>
+  <tabstop>pushButton_DTMsamp</tabstop>
+  <tabstop>checkBox_Vr1</tabstop>
+  <tabstop>checkBox_Vi2</tabstop>
+  <tabstop>checkBox_Vr2</tabstop>
+  <tabstop>checkBox_Vr3</tabstop>
+  <tabstop>pushButton_Validate</tabstop>
+  <tabstop>mMapLayerComboBox_OthR_rinv</tabstop>
+  <tabstop>lineEdit_wd_OthRf_cv</tabstop>
+  <tabstop>pushButton_wd_OthRf_cv</tabstop>
+  <tabstop>lineEdit_OthRf_bht</tabstop>
+  <tabstop>pushButton_OthRfda</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
  <buttongroups>
