@@ -79,6 +79,8 @@ class CanFlood:
         self.iface = iface
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
+        
+        """ some unused initilization stuff Tony needed?
         # initialize locale
         locale = QSettings().value('locale/userLocale')[0:2]
         locale_path = os.path.join(
@@ -89,7 +91,7 @@ class CanFlood:
         if os.path.exists(locale_path):
             self.translator = QTranslator()
             self.translator.load(locale_path)
-            QCoreApplication.installTranslator(self.translator)
+            QCoreApplication.installTranslator(self.translator)"""
 
         # Create the dialog (after translation) and keep reference
         self.dlg1 = DataPrep_Dialog(self.iface)
@@ -98,26 +100,30 @@ class CanFlood:
 
         # Declare instance attributes
         self.actions = []
-        self.menu = self.tr(u'&CanFlood_inPrep')
+        
+        """old menu pointer?
+        self.menu = self.tr(u'&CanFlood_inPrep')"""
 
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
         self.first_start = None
 
     # noinspection PyMethodMayBeStatic
-    def tr(self, message):
-        """Get the translation for a string using Qt translation API.
-
-        We implement this ourselves since we do not inherit QObject.
-
-        :param message: String for translation.
-        :type message: str, QString
-
-        :returns: Translated version of message.
-        :rtype: QString
-        """
-        # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
-        return QCoreApplication.translate('CanFlood', message)
+#===============================================================================
+#     def tr(self, message):
+#         """Get the translation for a string using Qt translation API.
+# 
+#         We implement this ourselves since we do not inherit QObject.
+# 
+#         :param message: String for translation.
+#         :type message: str, QString
+# 
+#         :returns: Translated version of message.
+#         :rtype: QString
+#         """
+#         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
+#         return QCoreApplication.translate('CanFlood', message)
+#===============================================================================
 
 
 #===============================================================================
