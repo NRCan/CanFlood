@@ -18,6 +18,7 @@ import configparser, os, logging
 
 from hlpr.Q import *
 from hlpr.basic import *
+from hlpr.plug import logger as plogger
 
 
 
@@ -28,6 +29,7 @@ class WebConnect(ComWrkr):
                  **kwargs):
         
         self.iface=iface
+        self.logger=plogger(self)
         super().__init__(**kwargs) #initilzie teh baseclass
     
     

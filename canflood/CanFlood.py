@@ -178,11 +178,11 @@ class CanFlood:
         #=======================================================================
         #build the action
         icon = QIcon(os.path.dirname(__file__) + "/icons/download-cloud.png")
-        action_dl = QAction(QIcon(icon), 'Add Connections', self.iface.mainWindow())
-        action_dl.triggered.connect(self.addConnections) #connect it
+        self.action_dl = QAction(QIcon(icon), 'Add Connections', self.iface.mainWindow())
+        self.action_dl.triggered.connect(self.addConnections) #connect it
         
         #use helper method to add to the PLugins menu
-        self.iface.addPluginToMenu("&CanFlood", action_dl)
+        self.iface.addPluginToMenu("&CanFlood", self.action_dl)
         
 
     def showToolbarDataPrep(self):
@@ -210,13 +210,13 @@ class CanFlood:
         """
         for action in self.actions: #loop through each action and unload it
             #try and remove from plugin menu and toolbar
-            #===================================================================
-            # self.iface.removePluginMenu(
-            #     self.tr(u'&CanFlood_inPrep'),
-            #     action)
-            #===================================================================
+            self.iface.removePluginMenu(
+                "&CanFlood",
+                action)
             
             self.iface.removeToolBarIcon(action)
+            
+
             
         self.logger('unloaded CanFlood')
             
