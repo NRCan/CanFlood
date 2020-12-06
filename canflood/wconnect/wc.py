@@ -43,26 +43,66 @@ class WebConnect(ComWrkr):
         self.config_fp = config_fp
         
         self.logger.info('found config file: %s'%config_fp)
+        
+        #=======================================================================
+        # load connection info file
+        #=======================================================================
+        #get filepath
+        dirname = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        con_fp = os.path.join(dirname, '_pars/WebConnections.ini')
+        
+        self.conn_d = self.retrieve_fromFile(con_fp)
+        
+        
+    def retrieve_fromFile(self,
+                          con_fp):
+        
+        log = self.logger.getChild('retrieve_fromFile')
+        assert os.path.exists(con_fp)
+        
+        log.info('reading connection info fron \n    %s'%con_fp)
+        pars = configparser.ConfigParser(allow_no_value=True)
+        _ = pars.read(con_fp) #read it from the new location
+
+        #=======================================================================
+        # loop through each seciton and load
+        #=======================================================================
+        log.info('got %i sections'%len(pars.sections()))
+        serv_d = dict()
+        for name, sect_d in pars.items():
+            serv_d[name] = sect_d
+            
+            #check it
+            for ele in ('serverType', 'url'):
+                assert ele in sect_d.keys(), '%s missing \'%s\''%(name, ele)
+
+    
+        log.info('finished loading %i connections'%len(serv_d))
+        
+        return serv_D
     
     
     def addAll(self): #add all connections
         log = self.logger.getChild('addAll')
         
-        log.push('addAll executed')
+        log.debug('addAll executed')
         
         
         serv_d =  {#title: {serverType, url}}
-            'NRPI':('arcgismapserver','https://maps-cartes.ec.gc.ca/arcgis/rest/services/NPRI_INRP/NPRI_INRP/MapServer')
+            'NRPI':('arcgisfeatureserver','https://maps-cartes.ec.gc.ca/arcgis/rest/services/NPRI_INRP/NPRI_INRP/MapServer')
             }
     
         #=======================================================================
         # loop and add
         #=======================================================================
+        cnt = 0
         for title, (serverType, url) in serv_d.items():
-            self.saveLayer(title, url, serverType)
+            result = self.saveLayer(title, url, serverType)
+            
+            if result: cnt+=1
             
             
-        log.info('added %i connections'%len(serv_d))
+        log.push('added %i (of %i) connections'%(cnt, len(serv_d)))
             
     
     def get_settings(self, serverType, title, url):
@@ -95,6 +135,14 @@ class WebConnect(ComWrkr):
             
             settings_ans = [url,"","",""]
             
+        elif (serverType == "arcgisfeatureserver"):
+            base_settings = "connections-arcgisfeatureserver\\"+title+"\\"
+            base_security_settings = "arcgisfeatureserver\\"+title+"\\"
+            settings = [base_settings+"url",base_security_settings+"username",base_security_settings+"password",
+            base_security_settings+"authcfg"]
+            
+            settings_ans = [url,"","",""]
+            
         else:
             raise Error('unrecognized serverType: %s'%serverType)
             
@@ -118,7 +166,7 @@ class WebConnect(ComWrkr):
         
         log = self.logger.getChild('saveLayer')
         
-        log.info('on %s'%title)
+        log.debug('on %s'%title)
         filepath =  self.config_fp
         #=======================================================================
         # open up the ini file
@@ -139,21 +187,27 @@ class WebConnect(ComWrkr):
         #=======================================================================
         # see if its been written
         #=======================================================================
+
         try: # try block checks if the service has been added
             """bad way to do this...."""
             check = config["qgis"][base_settings+"url"] # Checks if the service has already been added
             already_added = config["qgis"][base_settings+"url"] == url # checks to see if the urls match (Used since we might encounter services with the same name but different urls)
             
+            log.info('failed to add \"%s\''%title)
+            
         except: # If it hasn't add it 
             for i in range (len(settings)):
                 config["qgis"][settings[i]] = settings_ans[i]
+
             
             with open(filepath,"w") as configfile:
                 config.write(configfile)
                 
             already_added = True
             
-            log.info('added \'%s\' with type: %s and url: %s'%(title, url, serverType))
+            log.info('added \'%s\' with type: \'%s\' and url: \n    %s'%(title, serverType, url))
+            
+            return True
             
             
         
@@ -161,7 +215,7 @@ class WebConnect(ComWrkr):
         if not already_added: # If the service has still not been added (most common reason to be here is if there are multiple services with the same name (title))
             already_added,title = self.name_finder(title,config,serverType,url,0)
             if(not(already_added)): # If the service has not already been added 
-                return # Do nothing
+                return False# Do nothing
             
             else: # Otherwise add it to the configuration file
                 
@@ -171,10 +225,11 @@ class WebConnect(ComWrkr):
                     config["qgis"][settings[i]] = settings_ans[i]
                 
                 with open(filepath,"w") as configfile: # writes into file 
-                    config.write(configfile)    
+                    config.write(configfile)
+                    
+                return True    
               
-        log.info('finished')      
-        return
+
     
     
     def name_finder(self,
