@@ -35,9 +35,14 @@ class WebConnect(ComWrkr):
         super().__init__(logger=self.logger, **kwargs) #initilzie teh baseclass
         
         #setup
-        config_fp = os.path.abspath(__file__)[:-59]+"QGIS\QGIS3.ini" # The path to the configuration file for QGIS
+        
+        #config_fp = os.path.abspath(__file__)[:-59]+"QGIS\QGIS3.ini" # The path to the configuration file for QGIS
+        
+        config_fp = os.path.join(QgsApplication.qgisSettingsDirPath(), r'QGIS\QGIS3.ini')
         assert os.path.exists(config_fp), 'bad config_fp: %s'%config_fp
         self.config_fp = config_fp
+        
+        self.logger.info('found config file: %s'%config_fp)
     
     
     def addAll(self): #add all connections
@@ -148,8 +153,10 @@ class WebConnect(ComWrkr):
                 
             already_added = True
             
+            log.info('added \'%s\' with type: %s and url: %s'%(title, url, serverType))
             
-        log.info('already_added: %s'%already_added)
+            
+        
         
         if not already_added: # If the service has still not been added (most common reason to be here is if there are multiple services with the same name (title))
             already_added,title = self.name_finder(title,config,serverType,url,0)
