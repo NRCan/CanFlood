@@ -511,14 +511,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         todo: make a fresh pull of this for each tool
         """
         
-        
-        
         self.wd =  self.lineEdit_wd.text() #pull the wd filepath from the user provided in 'Browse'
         
-        
-        
 
-        
         #=======================================================================
         # prechecks
         #=======================================================================

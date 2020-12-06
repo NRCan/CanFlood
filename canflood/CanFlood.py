@@ -100,6 +100,8 @@ class CanFlood:
         self.dlg1 = DataPrep_Dialog(self.iface)
         self.dlg2 = Modelling_Dialog(self.iface)
         self.dlg3 = Results_Dialog(self.iface)
+        
+        self.wc1 = WebConnect(self.iface)
 
         # Declare instance attributes
         """not sure how this gets populated"""
@@ -199,7 +201,7 @@ class CanFlood:
     def addConnections(self):
         self.logger('pushed AddConnections')
         
-        WebConnect(self.iface).addAll()
+        self.wc1.addAll()
         
         
         

@@ -49,9 +49,9 @@ class WebConnect(ComWrkr):
         #=======================================================================
         #get filepath
         dirname = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        con_fp = os.path.join(dirname, '_pars/WebConnections.ini')
+        con_fp = os.path.join(dirname, '_pars','WebConnections.ini')
         
-        self.conn_d = self.retrieve_fromFile(con_fp)
+        self.serv_d = self.retrieve_fromFile(con_fp)
         
         
     def retrieve_fromFile(self,
@@ -67,9 +67,10 @@ class WebConnect(ComWrkr):
         #=======================================================================
         # loop through each seciton and load
         #=======================================================================
-        log.info('got %i sections'%len(pars.sections()))
+        log.debug('got %i sections'%len(pars.sections()))
         serv_d = dict()
         for name, sect_d in pars.items():
+            if  'DEFAULT' in name: continue #skip the default section
             serv_d[name] = sect_d
             
             #check it
@@ -77,27 +78,33 @@ class WebConnect(ComWrkr):
                 assert ele in sect_d.keys(), '%s missing \'%s\''%(name, ele)
 
     
-        log.info('finished loading %i connections'%len(serv_d))
+        log.info('finished loading %i connections \n    %s'%(len(serv_d), list(serv_d.keys())))
         
-        return serv_D
+        return serv_d
     
     
-    def addAll(self): #add all connections
+    def addAll(self, #add all connections
+               serv_d = None, #connections to load
+               ): 
         log = self.logger.getChild('addAll')
+        if serv_d is None:
+            serv_d = self.serv_d
         
         log.debug('addAll executed')
         
         
-        serv_d =  {#title: {serverType, url}}
-            'NRPI':('arcgisfeatureserver','https://maps-cartes.ec.gc.ca/arcgis/rest/services/NPRI_INRP/NPRI_INRP/MapServer')
-            }
-    
+        #=======================================================================
+        # serv_d =  {#title: {serverType, url}}
+        #     'NRPI':('arcgisfeatureserver','https://maps-cartes.ec.gc.ca/arcgis/rest/services/NPRI_INRP/NPRI_INRP/MapServer')
+        #     }
+        #=======================================================================
+        
         #=======================================================================
         # loop and add
         #=======================================================================
         cnt = 0
-        for title, (serverType, url) in serv_d.items():
-            result = self.saveLayer(title, url, serverType)
+        for title, sect_d in serv_d.items():
+            result = self.saveLayer(title, sect_d['url'], sect_d['serverType'])
             
             if result: cnt+=1
             
@@ -254,8 +261,10 @@ class WebConnect(ComWrkr):
                 check = config["qgis"]["connections-wms\\"+title+"\\url"] == url
             elif (serverType == "WFS"):
                 check = config["qgis"]["connections-wfs\\"+title+"\\url"] == url
-            elif (serverType == "ESRI MapServer"):
+            elif (serverType == "arcgismapserver"):
                 check = config["qgis"]["connections-arcgismapserver\\"+title+"\\url"] == url
+            elif (serverType == "arcgisfeatureserver"):
+                check = config["qgis"]["connections-arcgisfeatureserver\\"+title+"\\url"] == url
             
             if(check): # If we found the service 
                 return False,title 
