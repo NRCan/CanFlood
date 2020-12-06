@@ -49,6 +49,7 @@ from shutil import copyfile
 from .build.BuildDialog import DataPrep_Dialog
 from .model.ModelDialog import Modelling_Dialog
 from .results.ResultsDialog import Results_Dialog
+from .wconnect.wc import WebConnect
 
 #===============================================================================
 # imports for PluginReloader
@@ -296,6 +297,11 @@ class CanFlood:
         
     def addConnections(self):
         self.logger('pushed AddConnections')
+        
+        WebConnect.addAll()
+        
+        
+        
     
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI.
