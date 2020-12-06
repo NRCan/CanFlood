@@ -228,6 +228,25 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         self.pushButton_Inv_store.clicked.connect(self.convert_finv)
         
+        
+        #======================================================================
+        # RFDA
+        #======================================================================
+        #Vulnerability Curve Set
+        def browse_rfda_crv():
+            return self.browse_button(self.lineEdit_wd_OthRf_cv, prompt='Select RFDA curve .xls',
+                                      qfd = QFileDialog.getOpenFileName)
+            
+        self.pushButton_wd_OthRf_cv.clicked.connect(browse_rfda_crv)
+            
+        self.mMapLayerComboBox_OthR_rinv.setFilters(QgsMapLayerProxyModel.PointLayer)
+        
+        self.pushButton_OthRfda.clicked.connect(self.run_rfda)
+        
+        #=======================================================================
+        # NRPI
+        #=======================================================================
+        
         #======================================================================
         # hazard sampler---------
         #======================================================================
@@ -362,19 +381,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         self.pushButton_Validate.clicked.connect(self.run_validate)
         
-        #======================================================================
-        # other------------
-        #======================================================================
-        #Vulnerability Curve Set
-        def browse_rfda_crv():
-            return self.browse_button(self.lineEdit_wd_OthRf_cv, prompt='Select RFDA curve .xls',
-                                      qfd = QFileDialog.getOpenFileName)
-            
-        self.pushButton_wd_OthRf_cv.clicked.connect(browse_rfda_crv)
-            
-        self.mMapLayerComboBox_OthR_rinv.setFilters(QgsMapLayerProxyModel.PointLayer)
-        
-        self.pushButton_OthRfda.clicked.connect(self.run_rfda)
+
 
 
 
