@@ -210,12 +210,14 @@ class CanFlood:
         """
         for action in self.actions: #loop through each action and unload it
             #try and remove from plugin menu and toolbar
-            self.iface.removePluginMenu(
-                "&CanFlood",
-                action)
+
             
             self.iface.removeToolBarIcon(action)
             
+        
+        self.iface.removePluginMenu(
+                "&CanFlood",
+                self.action_dl)
 
             
         self.logger('unloaded CanFlood')

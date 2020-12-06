@@ -30,7 +30,7 @@ class WebConnect(ComWrkr):
         
         self.iface=iface
         self.logger=plogger(self)
-        super().__init__(**kwargs) #initilzie teh baseclass
+        super().__init__(logger=self.logger, **kwargs) #initilzie teh baseclass
     
     
     def addAll(self): #add all connections
