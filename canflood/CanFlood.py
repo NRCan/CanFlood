@@ -8,7 +8,7 @@ test
 #==============================================================================
 from PyQt5.QtCore import QSettings, QTranslator, QCoreApplication, QObject
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget
+from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QMenu
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -77,10 +77,12 @@ class CanFlood:
         #=======================================================================
         
         self.iface = iface
+        
+        """ some unused initilization stuff Tony needed?
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
         
-        """ some unused initilization stuff Tony needed?
+        
         # initialize locale
         locale = QSettings().value('locale/userLocale')[0:2]
         locale_path = os.path.join(
@@ -99,6 +101,7 @@ class CanFlood:
         self.dlg3 = Results_Dialog(self.iface)
 
         # Declare instance attributes
+        """not sure how this gets populated"""
         self.actions = []
         
         """old menu pointer?
@@ -107,6 +110,10 @@ class CanFlood:
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
         self.first_start = None
+        
+        
+        #start with an empty ref
+        self.canflood_menu = None
 
     # noinspection PyMethodMayBeStatic
 #===============================================================================
@@ -223,6 +230,7 @@ class CanFlood:
         # button 1: Build
         #=======================================================================
         #build the button
+        """not sure how this icon is working...."""
         self.button_build = QAction(QIcon(
             ':/plugins/canflood_inprep/icons/Andy_Tools_Hammer_Spanner_23x23.png'), 
             'Build', self.iface.mainWindow())
@@ -259,8 +267,18 @@ class CanFlood:
         self.toolbar.addAction(self.button_results)
         
         #=======================================================================
-        # add menu
+        # add menus---------
         #=======================================================================
+        #build the action
+        icon = QIcon(os.path.dirname(__file__) + "/icons/download-cloud.png")
+        action_dl = QAction(QIcon(icon), 'Add Connections', self.iface.mainWindow())
+        action_dl.triggered.connect(self.addConnections) #connect it
+        
+        #use helper method to add to the PLugins menu
+        self.iface.addPluginToMenu("&CanFlood", action_dl)
+        
+        
+
         
 
         
@@ -275,6 +293,9 @@ class CanFlood:
     
     def showToolbarProjectResults(self):
         self.dlg3.show()
+        
+    def addConnections(self):
+        self.logger('pushed AddConnections')
     
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI.
@@ -289,6 +310,14 @@ class CanFlood:
             #===================================================================
             
             self.iface.removeToolBarIcon(action)
+            
+        self.logger('unloaded CanFlood')
+            
+            
+    def logger(self, msg):
+        QgsMessageLog.logMessage(msg, 'Plugins', level=Qgis.Info)
+            
+        
 
     def run(self):
         """Run method that performs all the real work"""
@@ -299,3 +328,4 @@ class CanFlood:
         # See if OK was pressed
         if result:
             pass
+        
