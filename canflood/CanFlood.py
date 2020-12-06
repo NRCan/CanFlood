@@ -298,7 +298,7 @@ class CanFlood:
     def addConnections(self):
         self.logger('pushed AddConnections')
         
-        WebConnect.addAll()
+        WebConnect().addAll()
         
         
         
@@ -321,7 +321,7 @@ class CanFlood:
             
             
     def logger(self, msg):
-        QgsMessageLog.logMessage(msg, 'Plugins', level=Qgis.Info)
+        QgsMessageLog.logMessage(msg, 'CanFlood', level=Qgis.Info)
             
         
 
