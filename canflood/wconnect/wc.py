@@ -24,16 +24,17 @@ from hlpr.basic import *
 class WebConnect(ComWrkr):
     
     
-    def __init__(self,
+    def __init__(self,iface,
                  **kwargs):
         
+        self.iface=iface
         super().__init__(**kwargs) #initilzie teh baseclass
     
     
     def addAll(self): #add all connections
         log = self.logger.getChild('addAll')
         
-        log.info('pushed')
+        log.push('addAll executed')
         
         
         
