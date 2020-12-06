@@ -387,7 +387,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         """
 
         debug_dir =os.path.join(os.path.expanduser('~'), 'CanFlood', 'build')
-        self.lineEdit_cf_fp.setText(os.path.join(debug_dir, 'CanFlood_scenario1.txt'))
+        #self.lineEdit_cf_fp.setText(os.path.join(debug_dir, 'CanFlood_scenario1.txt'))
         self.lineEdit_wd.setText(debug_dir)
         
         if not os.path.exists(debug_dir):
