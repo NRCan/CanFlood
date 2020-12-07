@@ -747,7 +747,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         bsmt_ht = self.lineEdit_OthRf_bht.text()
         #cid = self.mFieldComboBox_cid.currentField() #user selected field
         
-        crs = self.qproj.crs()
+        #crs = self.qproj.crs()
         out_dir = self.lineEdit_wd.text()
         
         try:

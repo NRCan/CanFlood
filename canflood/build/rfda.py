@@ -210,7 +210,7 @@ class RFDAconv(Qcoms):
         geo_d = vlay_get_fdata(rinv_vlay, geo_obj=True, logger=log)
         finv_vlay = vlay_new_df(res_df, rinv_vlay.crs(), geo_d=geo_d,
                                 logger=log,
-                                layname = '%s_finv.gpkg'%rinv_vlay.name())
+                                layname = '%s_finv'%rinv_vlay.name())
         
         
         

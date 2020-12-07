@@ -49,7 +49,9 @@ class ComWrkr(object): #common methods for all classes
     #mandatory keys for curves
     crv_keys = ('tag', 'exposure')
     
-    def __init__(self, tag='session', cid='not_set', cf_fp='',
+    def __init__(self, tag='session', 
+                 cid='xid', #default used by inventory constructors
+                 cf_fp='',
                  overwrite=True, 
                  out_dir=None, 
                  logger=mod_logger,
