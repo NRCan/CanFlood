@@ -78,6 +78,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
         """connect to UI's progress bar
             expects 'progressBar' as the widget name
             start feedback instance"""
+            
         self.setup_feedback(progressBar = self.progressBar,
                             feedback = MyFeedBackQ())
         

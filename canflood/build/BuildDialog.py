@@ -38,7 +38,8 @@ import numpy as np #Im assuming if pandas is fine, numpy will be fine
 
 from build.rsamp import Rsamp
 from build.lisamp import LikeSampler
-from build.oth_rfda import RFDAconv
+from build.rfda import RFDAconv
+from build.nrpi import Nrpi
 
 
 
@@ -82,7 +83,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.connect_slots()
         
         
-        self.logger.info('DataPrep_Dialog initilized')
+        self.logger.debug('DataPrep_Dialog initilized')
         
 
     def connect_slots(self):
@@ -123,13 +124,12 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #self.logger.statusQlab.setText('BuildDialog initialized')
                 
         #======================================================================
-        # setup tab----------
+        #TAB: SETUP----------
         #======================================================================
-        #populate guis
-        self.comboBox_aoi.setFilters(QgsMapLayerProxyModel.PolygonLayer) #SS. Project AOI
-        self.comboBox_aoi.setCurrentIndex(-1) #by default, lets have this be blank
-        
-        #Working Directory browse
+        #=======================================================================
+        # session controls
+        #=======================================================================
+        #Working Directory 
         """default is set below.
         doesn't seem to open the displayed directory on first click"""
         def browse_wd():
@@ -144,19 +144,13 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         self.pushButton_wd_open.clicked.connect(open_wd)
         
+        #AOI
+        self.comboBox_aoi.setFilters(QgsMapLayerProxyModel.PolygonLayer) #SS. Project AOI
+        self.comboBox_aoi.setCurrentIndex(-1) #by default, lets have this be blank
         
-        #Vulnerability Curve Set
-        def browse_curves():
-            return self.browse_button(self.lineEdit_curve, prompt='Select Curve Set',
-                                      qfd = QFileDialog.getOpenFileName)
-            
-        self.pushButton_SScurves.clicked.connect(browse_curves)# SS. Vuln Curve Set. Browse
-        
-        #program controls
+        #Controls
         self.checkBox_SSoverwrite.stateChanged.connect(self.set_overwrite) #SS overwrite data files
-        
-        #generate new control file      
-        self.pushButton_generate.clicked.connect(self.build_scenario) #SS. generate
+
         
         #CanFlood Control File
         def browse_cf():
@@ -165,37 +159,37 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             
         self.pushButton_cf.clicked.connect(browse_cf)# SS. Model Control File. Browse
         
+
+        
+        
         #=======================================================================
-        # inventory------------
+        # Control File Assembly
         #=======================================================================
-        """
-        loading web services
-        see 'canadian_web_services.py' for some decent examples.
+        #elevation t ype
+        self.comboBox_SSelv.addItems(['datum', 'ground']) #ss elevation type
         
-        
-        need a config file with urls (easy for the user to update)
-        
-        popup window for web loading?
-        
-        consider using https://geopython.github.io/OWSLib/ to query the info
-            easier to use and more robust than builtin Qgis functions?
+                
+        #Vulnerability Curve Set
+        def browse_curves():
+            return self.browse_button(self.lineEdit_curve, prompt='Select Curve Set',
+                                      qfd = QFileDialog.getOpenFileName)
             
-        load layer from server using QgisVectorLayer(uri)
-            bounding box it
-            
-        then need some post-download manipulation scripts to get into CanFlood format
-            aoi slice
-            rename some fields
-            validate
+        self.pushButton_SScurves.clicked.connect(browse_curves)# SS. Vuln Curve Set. Browse
         
-        """
+        #generate new control file      
+        self.pushButton_generate.clicked.connect(self.build_scenario) #SS. generate
         
+
         
         #=======================================================================
-        # #populate guis
+        # TAB: INVENTORY------------
+        #=======================================================================
+        #=======================================================================
+        # Store IVlayer
         #=======================================================================
         #inventory vector layer box
         self.comboBox_ivlay.setFilters(QgsMapLayerProxyModel.VectorLayer) #SS. Inventory Layer: Drop down
+        
 
 
         #find a good layer
@@ -204,16 +198,12 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                 if layname.startswith('finv'):
                     break
             
-            self.logger.info('setting comboBox_vec = %s'%vlay.name())
+            self.logger.debug('setting comboBox_vec = %s'%vlay.name())
             self.comboBox_ivlay.setLayer(vlay)
         except Exception as e:
             self.logger.debug('failed to set inventory layer w: \n    %s'%e)
             
-            
-        #elevation t ype
-        self.comboBox_SSelv.addItems(['datum', 'ground']) #ss elevation type
-        
-        
+
         #index field name
         #change the 'cid' display when the finv selection changes
         def upd_cid():
@@ -223,13 +213,39 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                 
         self.comboBox_ivlay.layerChanged.connect(upd_cid) #SS inventory vector layer
         
-        #=======================================================================
-        # connect buttons
-        #=======================================================================
+        #connect button
         self.pushButton_Inv_store.clicked.connect(self.convert_finv)
         
+        
         #======================================================================
-        # hazard sampler---------
+        # RFDA
+        #======================================================================
+        #Vulnerability Curve Set
+        def browse_rfda_crv():
+            return self.browse_button(self.lineEdit_wd_OthRf_cv, prompt='Select RFDA curve .xls',
+                                      qfd = QFileDialog.getOpenFileName)
+            
+        self.pushButton_wd_OthRf_cv.clicked.connect(browse_rfda_crv)
+            
+        self.mMapLayerComboBox_OthR_rinv.setFilters(QgsMapLayerProxyModel.PointLayer)
+        self.mMapLayerComboBox_OthR_rinv.setCurrentIndex(-1) #clear the selection
+        
+        self.pushButton_OthRfda.clicked.connect(self.convert_rfda)
+        
+        #=======================================================================
+        # NRPI
+        #=======================================================================
+        #filter the vector layer
+        self.mMapLayerComboBox_inv_nrpi.setFilters(QgsMapLayerProxyModel.VectorLayer) 
+        self.mMapLayerComboBox_inv_nrpi.setCurrentIndex(-1) #clear the selection
+        
+        #connect the push button
+        self.pushButton_inv_nrpi.clicked.connect(self.convert_nrpi)
+
+
+
+        #======================================================================
+        # TAB: HAZARD SAMPLER---------
         #======================================================================
         # Set GUI elements
         self.comboBox_ras.setFilters(QgsMapLayerProxyModel.RasterLayer)
@@ -362,19 +378,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         self.pushButton_Validate.clicked.connect(self.run_validate)
         
-        #======================================================================
-        # other------------
-        #======================================================================
-        #Vulnerability Curve Set
-        def browse_rfda_crv():
-            return self.browse_button(self.lineEdit_wd_OthRf_cv, prompt='Select RFDA curve .xls',
-                                      qfd = QFileDialog.getOpenFileName)
-            
-        self.pushButton_wd_OthRf_cv.clicked.connect(browse_rfda_crv)
-            
-        self.mMapLayerComboBox_OthR_rinv.setFilters(QgsMapLayerProxyModel.PointLayer)
-        
-        self.pushButton_OthRfda.clicked.connect(self.run_rfda)
+
 
 
 
@@ -387,11 +391,11 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         """
 
         debug_dir =os.path.join(os.path.expanduser('~'), 'CanFlood', 'build')
-        self.lineEdit_cf_fp.setText(os.path.join(debug_dir, 'CanFlood_scenario1.txt'))
+        #self.lineEdit_cf_fp.setText(os.path.join(debug_dir, 'CanFlood_scenario1.txt'))
         self.lineEdit_wd.setText(debug_dir)
         
         if not os.path.exists(debug_dir):
-            log.info('builg directory: %s'%debug_dir)
+            log.info('building directory: %s'%debug_dir)
             os.makedirs(debug_dir)
             
         #=======================================================================
@@ -511,14 +515,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         todo: make a fresh pull of this for each tool
         """
         
-        
-        
         self.wd =  self.lineEdit_wd.text() #pull the wd filepath from the user provided in 'Browse'
         
-        
-        
 
-        
         #=======================================================================
         # prechecks
         #=======================================================================
@@ -738,8 +737,101 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.feedback.upd_prog(None) #set the progress bar back down to zero
         
         return out_fp
-                
+    
+    
+    def convert_rfda(self): #Other.Rfda tab
+        log = self.logger.getChild('convert_rfda')
         
+        #======================================================================
+        # collect from  ui
+        #======================================================================
+        rinv_vlay = self.mMapLayerComboBox_OthR_rinv.currentLayer()
+        crv_fp = self.lineEdit_wd_OthRf_cv.text()
+        bsmt_ht = self.lineEdit_OthRf_bht.text()
+        #cid = self.mFieldComboBox_cid.currentField() #user selected field
+        
+        #crs = self.qproj.crs()
+        out_dir = self.lineEdit_wd.text()
+        
+        try:
+            bsmt_ht = float(bsmt_ht)
+        except Exception as e:
+            raise Error('failed to convert bsmt_ht to float w/ \n    %s'%e)
+        
+        
+        #======================================================================
+        # input checks
+        #======================================================================
+        
+        wrkr = RFDAconv(logger=self.logger, out_dir=out_dir, tag=self.tag, bsmt_ht = bsmt_ht)
+        #======================================================================
+        # invnentory convert
+        #======================================================================
+        if isinstance(rinv_vlay, QgsVectorLayer):
+            
+            
+            finv_vlay = wrkr.to_finv(rinv_vlay)
+            
+            self.qproj.addMapLayer(finv_vlay)
+            log.info('added \'%s\' to canvas'%finv_vlay.name())
+            
+        #======================================================================
+        # curve convert
+        #======================================================================
+        if os.path.exists(crv_fp):
+            df_raw = pd.read_excel(crv_fp, header=None)
+            
+            df_d = wrkr.to_curveset(df_raw, logger=log)
+            
+            basefn = os.path.splitext(os.path.split(crv_fp)[1])[0]
+            
+            ofp = wrkr.output(df_d, basefn=basefn)
+            
+        else:
+            log.info('no valid crv_fp provided')
+            
+        #======================================================================
+        # wrap
+        #======================================================================
+        self.logger.push('finished')
+            
+
+    def convert_nrpi(self):
+        log = self.logger.getChild('convert_nrpi')
+        
+        #=======================================================================
+        # collect from UI
+        #=======================================================================
+        in_vlay = self.mMapLayerComboBox_inv_nrpi.currentLayer()
+        out_dir = self.lineEdit_wd.text()
+        
+        #=======================================================================
+        # input checks
+        #=======================================================================
+        wrkr = Nrpi(logger=self.logger,  out_dir=out_dir, tag=self.tag)
+        assert isinstance(in_vlay, QgsVectorLayer), 'no VectorLayer selected!'
+        
+        #=======================================================================
+        # aoi slice
+        #=======================================================================
+        in_vlay_aoi = self.slice_aoi(in_vlay)
+        
+                
+        #=======================================================================
+        # run converter
+        #=======================================================================
+        
+        
+        finv_vlay = wrkr.to_finv(in_vlay_aoi)
+        
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        self.qproj.addMapLayer(finv_vlay)
+        log.info('added \'%s\' to canvas'%finv_vlay.name())
+        
+        log.push('finished NRPI conversion')
+        self.feedback.upd_prog(None) #set the progress bar back down to zero
 
     
     def run_rsamp(self): #execute rsamp
@@ -1299,66 +1391,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.feedback.upd_prog(None)
         return
     
-    def run_rfda(self): #Other.Rfda tab
-        log = self.logger.getChild('run_rfda')
-        
-        #======================================================================
-        # collect from  ui
-        #======================================================================
-        rinv_vlay = self.mMapLayerComboBox_OthR_rinv.currentLayer()
-        crv_fp = self.lineEdit_wd_OthRf_cv.text()
-        bsmt_ht = self.lineEdit_OthRf_bht.text()
-        #cid = self.mFieldComboBox_cid.currentField() #user selected field
-        
-        crs = self.qproj.crs()
-        out_dir = self.lineEdit_wd.text()
-        
-        try:
-            bsmt_ht = float(bsmt_ht)
-        except Exception as e:
-            raise Error('failed to convert bsmt_ht to float w/ \n    %s'%e)
-        
-        
-        #======================================================================
-        # input checks
-        #======================================================================
-        #======================================================================
-        # if cid is None or cid=='':
-        #     raise Error('need to select a cid')
-        #======================================================================
-        
-        wrkr = RFDAconv(logger=self.logger, out_dir=out_dir, tag=self.tag, bsmt_ht = bsmt_ht)
-        #======================================================================
-        # invnentory convert
-        #======================================================================
-        if isinstance(rinv_vlay, QgsVectorLayer):
-            
-            
-            finv_vlay = wrkr.to_finv(rinv_vlay)
-            
-            self.qproj.addMapLayer(finv_vlay)
-            log.info('added \'%s\' to canvas'%finv_vlay.name())
-            
-        #======================================================================
-        # curve convert
-        #======================================================================
-        if os.path.exists(crv_fp):
-            df_raw = pd.read_excel(crv_fp, header=None)
-            
-            df_d = wrkr.to_curveset(df_raw, logger=log)
-            
-            basefn = os.path.splitext(os.path.split(crv_fp)[1])[0]
-            
-            ofp = wrkr.output(df_d, basefn=basefn)
-            
-        else:
-            log.info('no valid crv_fp provided')
-            
-        #======================================================================
-        # wrap
-        #======================================================================
-        self.logger.push('finished')
-            
 
             
             

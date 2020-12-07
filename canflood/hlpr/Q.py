@@ -381,6 +381,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         return rlayer
     
+    
     #==========================================================================
     # generic methods-----------------
     #==========================================================================
