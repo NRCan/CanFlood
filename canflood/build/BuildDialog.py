@@ -124,7 +124,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #self.logger.statusQlab.setText('BuildDialog initialized')
                 
         #======================================================================
-        # setup tab----------
+        #TAB: SETUP----------
         #======================================================================
         #=======================================================================
         # session controls
@@ -182,13 +182,14 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
 
         
         #=======================================================================
-        # INVENTORY------------
+        # TAB: INVENTORY------------
         #=======================================================================
         #=======================================================================
         # Store IVlayer
         #=======================================================================
         #inventory vector layer box
         self.comboBox_ivlay.setFilters(QgsMapLayerProxyModel.VectorLayer) #SS. Inventory Layer: Drop down
+        
 
 
         #find a good layer
@@ -227,6 +228,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.pushButton_wd_OthRf_cv.clicked.connect(browse_rfda_crv)
             
         self.mMapLayerComboBox_OthR_rinv.setFilters(QgsMapLayerProxyModel.PointLayer)
+        self.mMapLayerComboBox_OthR_rinv.setCurrentIndex(-1) #clear the selection
         
         self.pushButton_OthRfda.clicked.connect(self.convert_rfda)
         
@@ -235,6 +237,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         #filter the vector layer
         self.mMapLayerComboBox_inv_nrpi.setFilters(QgsMapLayerProxyModel.VectorLayer) 
+        self.mMapLayerComboBox_inv_nrpi.setCurrentIndex(-1) #clear the selection
         
         #connect the push button
         self.pushButton_inv_nrpi.clicked.connect(self.convert_nrpi)
@@ -242,7 +245,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
 
 
         #======================================================================
-        # hazard sampler---------
+        # TAB: HAZARD SAMPLER---------
         #======================================================================
         # Set GUI elements
         self.comboBox_ras.setFilters(QgsMapLayerProxyModel.RasterLayer)

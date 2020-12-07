@@ -92,27 +92,42 @@ class Nrpi(Qcoms):
         # extract data
         #=======================================================================
         df_raw = vlay_get_fdf(in_vlay, logger=log)
-        df = df_raw.drop(drop_colns,axis=1, errors='ignore')
-        
         geo_d = vlay_get_fdata(in_vlay, geo_obj=True, logger=log)
         
         self.feedback.upd_prog(50)
+        
+        #=======================================================================
+        # clean
+        #=======================================================================
+        #drop specified columns
+        df0 = df_raw.drop(drop_colns,axis=1, errors='ignore')
+        
+        #convert empty strings to null
+        df1 = df0.replace(to_replace='', value=np.nan)
+        log.info('replaced %i (of %i) null values'%(df1.isna().sum().sum(), df1.size))
+
+        #drop empty fields
+
+        df2 = df1.dropna(axis=1, how='all')
+        log.info('dropped %i empty columns'%(len(df1.columns) - len(df2.columns)))
+        
+        self.feedback.upd_prog(60)
         #=======================================================================
         # add fields
         #=======================================================================
         #build the new data
         log.info('adding field data:\n    %s'%new_data)
-        new_df = pd.DataFrame(index=df.index, data=new_data)
+        new_df = pd.DataFrame(index=df_raw.index, data=new_data)
         
         #join the two
-        df1 = new_df.join(df)
+        res_df = new_df.join(df2)
 
 
         self.feedback.upd_prog(70)
         #=======================================================================
         # reconstruct layer
         #=======================================================================
-        finv_vlay = self.vlay_new_df2(df1,  geo_d=geo_d, crs=in_vlay.crs(),
+        finv_vlay = self.vlay_new_df2(res_df,  geo_d=geo_d, crs=in_vlay.crs(),
                                 logger=log,
                                 layname = '%s_finv'%in_vlay.name())
         
