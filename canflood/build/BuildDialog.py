@@ -828,6 +828,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         log.info('added \'%s\' to canvas'%finv_vlay.name())
         
         log.push('finished NRPI conversion')
+        self.feedback.upd_prog(None) #set the progress bar back down to zero
 
     
     def run_rsamp(self): #execute rsamp

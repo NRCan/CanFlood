@@ -66,7 +66,7 @@ class Nrpi(Qcoms):
         
 
         
-        self.logger.info('Nrpi.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
+        self.logger.debug('Nrpi.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
         
         
     
@@ -87,7 +87,7 @@ class Nrpi(Qcoms):
         
         log.info('on %s w/ %i feats'%(in_vlay.name(), dp.featureCount()))
         
-        
+        self.feedback.upd_prog(10)
         #=======================================================================
         # extract data
         #=======================================================================
@@ -96,19 +96,19 @@ class Nrpi(Qcoms):
         
         geo_d = vlay_get_fdata(in_vlay, geo_obj=True, logger=log)
         
-        
+        self.feedback.upd_prog(50)
         #=======================================================================
         # add fields
         #=======================================================================
         #build the new data
-        log.info('adding\n    %s'%new_data)
+        log.info('adding field data:\n    %s'%new_data)
         new_df = pd.DataFrame(index=df.index, data=new_data)
         
         #join the two
         df1 = new_df.join(df)
 
 
-        
+        self.feedback.upd_prog(70)
         #=======================================================================
         # reconstruct layer
         #=======================================================================
@@ -124,7 +124,7 @@ class Nrpi(Qcoms):
         
         log.info('finished w/ \'%s\' w/ %i feats'%(finv_vlay.name(), fcnt))
         
-        
+        self.feedback.upd_prog(99)
         return  finv_vlay
     
 
