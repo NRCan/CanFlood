@@ -806,14 +806,20 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         # input checks
         #=======================================================================
         wrkr = Nrpi(logger=self.logger,  out_dir=out_dir, tag=self.tag)
+        assert isinstance(in_vlay, QgsVectorLayer), 'no VectorLayer selected!'
+        
+        #=======================================================================
+        # aoi slice
+        #=======================================================================
+        in_vlay_aoi = self.slice_aoi(in_vlay)
         
                 
         #=======================================================================
         # run converter
         #=======================================================================
-        assert isinstance(in_vlay, QgsVectorLayer), 'no VectorLayer selected!'
         
-        finv_vlay = wrkr.to_finv(in_vlay)
+        
+        finv_vlay = wrkr.to_finv(in_vlay_aoi)
         
         #=======================================================================
         # wrap

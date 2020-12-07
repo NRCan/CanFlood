@@ -558,6 +558,7 @@ if __name__ =="__main__":
     df_raw = pd.read_excel(crv_fp, header=None)
          
     wrkr = RFDAconv(logger=mod_logger, out_dir=out_dir, tag=tag)
+    """ini_standalone?"""
     #==========================================================================
     # execute
     #==========================================================================

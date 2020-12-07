@@ -71,7 +71,10 @@ class Nrpi(Qcoms):
         
     
     def to_finv(self,
-                in_vlay):
+                in_vlay,
+                drop_colns=['ogc_fid', 'fid'], #optional columns to drop from df
+                new_data = {'f0_scale':1.0, 'f0_elv':0.0},
+                ):
         
         log = self.logger.getChild('to_finv')
         
@@ -79,9 +82,50 @@ class Nrpi(Qcoms):
         # precheck
         #=======================================================================
         assert isinstance(in_vlay, QgsVectorLayer)
+        assert 'Point' in QgsWkbTypes().displayString(in_vlay.wkbType())
         dp = in_vlay.dataProvider()
         
         log.info('on %s w/ %i feats'%(in_vlay.name(), dp.featureCount()))
+        
+        
+        #=======================================================================
+        # extract data
+        #=======================================================================
+        df_raw = vlay_get_fdf(in_vlay, logger=log)
+        df = df_raw.drop(drop_colns,axis=1, errors='ignore')
+        
+        geo_d = vlay_get_fdata(in_vlay, geo_obj=True, logger=log)
+        
+        
+        #=======================================================================
+        # add fields
+        #=======================================================================
+        #build the new data
+        log.info('adding\n    %s'%new_data)
+        new_df = pd.DataFrame(index=df.index, data=new_data)
+        
+        #join the two
+        df1 = new_df.join(df)
+
+
+        
+        #=======================================================================
+        # reconstruct layer
+        #=======================================================================
+        finv_vlay = self.vlay_new_df2(df1,  geo_d=geo_d, crs=in_vlay.crs(),
+                                logger=log,
+                                layname = '%s_finv'%in_vlay.name())
+        
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        fcnt = finv_vlay.dataProvider().featureCount()
+        assert fcnt == dp.featureCount()
+        
+        log.info('finished w/ \'%s\' w/ %i feats'%(finv_vlay.name(), fcnt))
+        
+        
+        return  finv_vlay
     
 
 
@@ -106,83 +150,53 @@ if __name__ =="__main__":
     write_vlay=True
     
     #===========================================================================
-    # tutorial 1 (points)
+    # tutorial 5
     #===========================================================================
-    data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\data'
-      
-      
-      
-      
-    finv_fp = os.path.join(data_dir, 'finv_cT2b.gpkg')
-      
-    cf_fp = os.path.join(data_dir, 'CanFlood_control_01.txt')
-      
-      
-    cid='xid'
-    tag='tut1'
-
-    
-    #===========================================================================
-    # tutorial 2  (dtm)
-    #===========================================================================
-    #===========================================================================
-    # data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\data'
-    # raster_fns= ['dtm_cT1.tif']
-    # finv_fp = os.path.join(data_dir, 'finv_cT2.gpkg')
-    #  
-    # cf_fp = os.path.join(data_dir, 'CanFlood_tutorial2.txt')
-    # 
-    # cid='xid'
-    # tag='tut2_dtm'
-    # as_inun=False
-    # dtm_fp, dthresh = None, None
-    #===========================================================================
-    
-    #==========================================================================
-    # tutorial 3 (polygons as inundation)
-    #==========================================================================
-    #===========================================================================
-    # data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\3\data'
-    #  
-    # raster_fns = ['haz_1000yr_cT2.tif', 
-    #               #'haz_1000yr_fail_cT2.tif', 
-    #               #'haz_100yr_cT2.tif', 
-    #               #'haz_200yr_cT2.tif',
-    #               'haz_50yr_cT2.tif',
-    #               ]
-    # 
-    # 
-    #   
-    # finv_fp = os.path.join(data_dir, 'finv_polys_t3.gpkg')
-    #  
-    # cf_fp = os.path.join(data_dir, 'CanFlood_control_01.txt')
-    # 
-    # #inundation sampling
-    # dtm_fp = os.path.join(data_dir, 'dtm_cT1.tif')
-    # as_inun=True
-    # dthresh = 0.5
-    # 
-    # cid='zid'
-    # tag='tut3'
-    #===========================================================================
-    
-    
-    out_dir = os.path.join(os.getcwd(), 'wsamp', tag)
-
-    #==========================================================================
-    # load the data
-    #==========================================================================
-
-    wrkr = Gen(logger=mod_logger, tag=tag, out_dir=out_dir, cid=cid,
-                 )
+    tag = 'tut5'
     
 
+    
+
+    
+    out_dir = os.path.join(r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\5\built')
+    
+    #===========================================================================
+    # setup project
+    #===========================================================================
+
+    
+
+    wrkr = Nrpi(logger=mod_logger, tag=tag, out_dir=out_dir)
+    wrkr.ini_standalone()
+    
+    
+    #===========================================================================
+    # #w/ connect to vectorlayer
+    #===========================================================================
+    uriW = QgsDataSourceUri()
+    uriW.setParam('crs','EPSG:3978')
+    uriW.setParam('bbox','-2103574.4,343903.6,-1715268.4,576272.7')
+    uriW.setParam('url', r'https://maps-cartes.ec.gc.ca/arcgis/rest/services/NPRI_INRP/NPRI_INRP/MapServer/0')
+    
+    in_vlay = QgsVectorLayer(uriW.uri(), 'NRPI_raw', 'arcgisfeatureserver')
+    
+    er_l = in_vlay.error().messageList()
+    assert len(er_l)==0, er_l
+    assert in_vlay.error().isEmpty()
+    
+    #===========================================================================
+    # run converter
+    #===========================================================================
+    
+    finv_vlay = wrkr.to_finv(in_vlay)
     
 
     
     #==========================================================================
     # save results
     #==========================================================================
+    ofp = os.path.join(out_dir, finv_vlay.name()+'.gpkg')
+    vlay_write(finv_vlay, ofp)
 
      
 
