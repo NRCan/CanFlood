@@ -39,6 +39,7 @@ import numpy as np #Im assuming if pandas is fine, numpy will be fine
 from build.rsamp import Rsamp
 from build.lisamp import LikeSampler
 from build.rfda import RFDAconv
+from build.nrpi import Nrpi
 
 
 
@@ -181,11 +182,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
 
         
         #=======================================================================
-        # inventory------------
+        # INVENTORY------------
         #=======================================================================
-
-        
-        
         #=======================================================================
         # Store IVlayer
         #=======================================================================
@@ -204,10 +202,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         except Exception as e:
             self.logger.debug('failed to set inventory layer w: \n    %s'%e)
             
-            
 
-        
-        
         #index field name
         #change the 'cid' display when the finv selection changes
         def upd_cid():
@@ -233,12 +228,19 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             
         self.mMapLayerComboBox_OthR_rinv.setFilters(QgsMapLayerProxyModel.PointLayer)
         
-        self.pushButton_OthRfda.clicked.connect(self.run_rfda)
+        self.pushButton_OthRfda.clicked.connect(self.convert_rfda)
         
         #=======================================================================
         # NRPI
         #=======================================================================
+        #filter the vector layer
+        self.mMapLayerComboBox_inv_nrpi.setFilters(QgsMapLayerProxyModel.VectorLayer) 
         
+        #connect the push button
+        self.pushButton_inv_nrpi.clicked.connect(self.convert_nrpi)
+
+
+
         #======================================================================
         # hazard sampler---------
         #======================================================================
@@ -732,8 +734,94 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.feedback.upd_prog(None) #set the progress bar back down to zero
         
         return out_fp
-                
+    
+    
+    def convert_rfda(self): #Other.Rfda tab
+        log = self.logger.getChild('convert_rfda')
         
+        #======================================================================
+        # collect from  ui
+        #======================================================================
+        rinv_vlay = self.mMapLayerComboBox_OthR_rinv.currentLayer()
+        crv_fp = self.lineEdit_wd_OthRf_cv.text()
+        bsmt_ht = self.lineEdit_OthRf_bht.text()
+        #cid = self.mFieldComboBox_cid.currentField() #user selected field
+        
+        crs = self.qproj.crs()
+        out_dir = self.lineEdit_wd.text()
+        
+        try:
+            bsmt_ht = float(bsmt_ht)
+        except Exception as e:
+            raise Error('failed to convert bsmt_ht to float w/ \n    %s'%e)
+        
+        
+        #======================================================================
+        # input checks
+        #======================================================================
+        
+        wrkr = RFDAconv(logger=self.logger, out_dir=out_dir, tag=self.tag, bsmt_ht = bsmt_ht)
+        #======================================================================
+        # invnentory convert
+        #======================================================================
+        if isinstance(rinv_vlay, QgsVectorLayer):
+            
+            
+            finv_vlay = wrkr.to_finv(rinv_vlay)
+            
+            self.qproj.addMapLayer(finv_vlay)
+            log.info('added \'%s\' to canvas'%finv_vlay.name())
+            
+        #======================================================================
+        # curve convert
+        #======================================================================
+        if os.path.exists(crv_fp):
+            df_raw = pd.read_excel(crv_fp, header=None)
+            
+            df_d = wrkr.to_curveset(df_raw, logger=log)
+            
+            basefn = os.path.splitext(os.path.split(crv_fp)[1])[0]
+            
+            ofp = wrkr.output(df_d, basefn=basefn)
+            
+        else:
+            log.info('no valid crv_fp provided')
+            
+        #======================================================================
+        # wrap
+        #======================================================================
+        self.logger.push('finished')
+            
+
+    def convert_nrpi(self):
+        log = self.logger.getChild('convert_nrpi')
+        
+        #=======================================================================
+        # collect from UI
+        #=======================================================================
+        in_vlay = self.mMapLayerComboBox_inv_nrpi.currentLayer()
+        out_dir = self.lineEdit_wd.text()
+        
+        #=======================================================================
+        # input checks
+        #=======================================================================
+        wrkr = Nrpi(logger=self.logger,  out_dir=out_dir, tag=self.tag)
+        
+                
+        #=======================================================================
+        # run converter
+        #=======================================================================
+        assert isinstance(in_vlay, QgsVectorLayer), 'no VectorLayer selected!'
+        
+        finv_vlay = wrkr.to_finv(in_vlay)
+        
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        self.qproj.addMapLayer(finv_vlay)
+        log.info('added \'%s\' to canvas'%finv_vlay.name())
+        
+        log.push('finished NRPI conversion')
 
     
     def run_rsamp(self): #execute rsamp
@@ -1293,62 +1381,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.feedback.upd_prog(None)
         return
     
-    def run_rfda(self): #Other.Rfda tab
-        log = self.logger.getChild('run_rfda')
-        
-        #======================================================================
-        # collect from  ui
-        #======================================================================
-        rinv_vlay = self.mMapLayerComboBox_OthR_rinv.currentLayer()
-        crv_fp = self.lineEdit_wd_OthRf_cv.text()
-        bsmt_ht = self.lineEdit_OthRf_bht.text()
-        #cid = self.mFieldComboBox_cid.currentField() #user selected field
-        
-        crs = self.qproj.crs()
-        out_dir = self.lineEdit_wd.text()
-        
-        try:
-            bsmt_ht = float(bsmt_ht)
-        except Exception as e:
-            raise Error('failed to convert bsmt_ht to float w/ \n    %s'%e)
-        
-        
-        #======================================================================
-        # input checks
-        #======================================================================
-        
-        wrkr = RFDAconv(logger=self.logger, out_dir=out_dir, tag=self.tag, bsmt_ht = bsmt_ht)
-        #======================================================================
-        # invnentory convert
-        #======================================================================
-        if isinstance(rinv_vlay, QgsVectorLayer):
-            
-            
-            finv_vlay = wrkr.to_finv(rinv_vlay)
-            
-            self.qproj.addMapLayer(finv_vlay)
-            log.info('added \'%s\' to canvas'%finv_vlay.name())
-            
-        #======================================================================
-        # curve convert
-        #======================================================================
-        if os.path.exists(crv_fp):
-            df_raw = pd.read_excel(crv_fp, header=None)
-            
-            df_d = wrkr.to_curveset(df_raw, logger=log)
-            
-            basefn = os.path.splitext(os.path.split(crv_fp)[1])[0]
-            
-            ofp = wrkr.output(df_d, basefn=basefn)
-            
-        else:
-            log.info('no valid crv_fp provided')
-            
-        #======================================================================
-        # wrap
-        #======================================================================
-        self.logger.push('finished')
-            
 
             
             

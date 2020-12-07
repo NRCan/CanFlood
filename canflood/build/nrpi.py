@@ -46,7 +46,7 @@ from hlpr.basic import *
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Gen(Qcoms):
+class Nrpi(Qcoms):
     """
     general methods for the Build dialog
     
@@ -59,16 +59,44 @@ class Gen(Qcoms):
 
 
     def __init__(self,
-                 fname='expos', #prefix for file name
+
                   *args, **kwargs):
         
         super().__init__(*args, **kwargs)
         
 
         
-        self.logger.info('Rsamp.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
+        self.logger.info('Nrpi.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
+        
         
     
+    def to_finv(self,
+                in_vlay):
+        
+        log = self.logger.getChild('to_finv')
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert isinstance(in_vlay, QgsVectorLayer)
+        dp = in_vlay.dataProvider()
+        
+        log.info('on %s w/ %i feats'%(in_vlay.name(), dp.featureCount()))
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
                 
