@@ -532,7 +532,7 @@ p, li { white-space: pre-wrap; }
            <item>
             <widget class="QGroupBox" name="groupBox_26">
              <property name="title">
-              <string>RFDA Conversion</string>
+              <string>RFDA Converter</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_6">
               <item>
@@ -657,13 +657,13 @@ p, li { white-space: pre-wrap; }
            <item>
             <widget class="QGroupBox" name="groupBox_9">
              <property name="title">
-              <string>Construct Inventory from NRPI data</string>
+              <string>NPRI Inventory Constructor</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_5">
               <item>
                <widget class="QGroupBox" name="groupBox_31">
                 <property name="title">
-                 <string>NRPI Vector Layer:</string>
+                 <string>NPRI Vector Layer:</string>
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_31">
                  <item>
@@ -694,7 +694,7 @@ p, li { white-space: pre-wrap; }
                  </font>
                 </property>
                 <property name="text">
-                 <string>Construct NRPI</string>
+                 <string>Construct NPRI</string>
                 </property>
                </widget>
               </item>
@@ -723,7 +723,7 @@ p, li { white-space: pre-wrap; }
               </sizepolicy>
              </property>
              <property name="title">
-              <string>Store Inventory Vector Layer:</string>
+              <string>Inventory Vector Layer Compiler</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_13">
               <item>
