@@ -83,7 +83,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.connect_slots()
         
         
-        self.logger.info('DataPrep_Dialog initilized')
+        self.logger.debug('DataPrep_Dialog initilized')
         
 
     def connect_slots(self):
@@ -198,7 +198,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                 if layname.startswith('finv'):
                     break
             
-            self.logger.info('setting comboBox_vec = %s'%vlay.name())
+            self.logger.debug('setting comboBox_vec = %s'%vlay.name())
             self.comboBox_ivlay.setLayer(vlay)
         except Exception as e:
             self.logger.debug('failed to set inventory layer w: \n    %s'%e)
@@ -395,7 +395,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.lineEdit_wd.setText(debug_dir)
         
         if not os.path.exists(debug_dir):
-            log.info('builg directory: %s'%debug_dir)
+            log.info('building directory: %s'%debug_dir)
             os.makedirs(debug_dir)
             
         #=======================================================================

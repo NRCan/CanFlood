@@ -195,7 +195,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         
 
         
-        self.logger.info('Model ui connected')
+        self.logger.debug('Model ui connected')
         
         #======================================================================
         # dev
