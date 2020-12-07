@@ -125,11 +125,10 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         # setup tab----------
         #======================================================================
-        #populate guis
-        self.comboBox_aoi.setFilters(QgsMapLayerProxyModel.PolygonLayer) #SS. Project AOI
-        self.comboBox_aoi.setCurrentIndex(-1) #by default, lets have this be blank
-        
-        #Working Directory browse
+        #=======================================================================
+        # session controls
+        #=======================================================================
+        #Working Directory 
         """default is set below.
         doesn't seem to open the displayed directory on first click"""
         def browse_wd():
@@ -144,19 +143,13 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         self.pushButton_wd_open.clicked.connect(open_wd)
         
+        #AOI
+        self.comboBox_aoi.setFilters(QgsMapLayerProxyModel.PolygonLayer) #SS. Project AOI
+        self.comboBox_aoi.setCurrentIndex(-1) #by default, lets have this be blank
         
-        #Vulnerability Curve Set
-        def browse_curves():
-            return self.browse_button(self.lineEdit_curve, prompt='Select Curve Set',
-                                      qfd = QFileDialog.getOpenFileName)
-            
-        self.pushButton_SScurves.clicked.connect(browse_curves)# SS. Vuln Curve Set. Browse
-        
-        #program controls
+        #Controls
         self.checkBox_SSoverwrite.stateChanged.connect(self.set_overwrite) #SS overwrite data files
-        
-        #generate new control file      
-        self.pushButton_generate.clicked.connect(self.build_scenario) #SS. generate
+
         
         #CanFlood Control File
         def browse_cf():
@@ -165,6 +158,28 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             
         self.pushButton_cf.clicked.connect(browse_cf)# SS. Model Control File. Browse
         
+
+        
+        
+        #=======================================================================
+        # Control File Assembly
+        #=======================================================================
+        #elevation t ype
+        self.comboBox_SSelv.addItems(['datum', 'ground']) #ss elevation type
+        
+                
+        #Vulnerability Curve Set
+        def browse_curves():
+            return self.browse_button(self.lineEdit_curve, prompt='Select Curve Set',
+                                      qfd = QFileDialog.getOpenFileName)
+            
+        self.pushButton_SScurves.clicked.connect(browse_curves)# SS. Vuln Curve Set. Browse
+        
+        #generate new control file      
+        self.pushButton_generate.clicked.connect(self.build_scenario) #SS. generate
+        
+
+        
         #=======================================================================
         # inventory------------
         #=======================================================================
@@ -172,7 +187,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         
         #=======================================================================
-        # #populate guis
+        # Store IVlayer
         #=======================================================================
         #inventory vector layer box
         self.comboBox_ivlay.setFilters(QgsMapLayerProxyModel.VectorLayer) #SS. Inventory Layer: Drop down
@@ -190,8 +205,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             self.logger.debug('failed to set inventory layer w: \n    %s'%e)
             
             
-        #elevation t ype
-        self.comboBox_SSelv.addItems(['datum', 'ground']) #ss elevation type
+
         
         
         #index field name
@@ -203,9 +217,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                 
         self.comboBox_ivlay.layerChanged.connect(upd_cid) #SS inventory vector layer
         
-        #=======================================================================
-        # connect buttons
-        #=======================================================================
+        #connect button
         self.pushButton_Inv_store.clicked.connect(self.convert_finv)
         
         
