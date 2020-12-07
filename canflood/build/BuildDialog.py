@@ -38,7 +38,7 @@ import numpy as np #Im assuming if pandas is fine, numpy will be fine
 
 from build.rsamp import Rsamp
 from build.lisamp import LikeSampler
-from build.oth_rfda import RFDAconv
+from build.rfda import RFDAconv
 
 
 
@@ -168,27 +168,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # inventory------------
         #=======================================================================
-        """
-        loading web services
-        see 'canadian_web_services.py' for some decent examples.
-        
-        
-        need a config file with urls (easy for the user to update)
-        
-        popup window for web loading?
-        
-        consider using https://geopython.github.io/OWSLib/ to query the info
-            easier to use and more robust than builtin Qgis functions?
-            
-        load layer from server using QgisVectorLayer(uri)
-            bounding box it
-            
-        then need some post-download manipulation scripts to get into CanFlood format
-            aoi slice
-            rename some fields
-            validate
-        
-        """
+
         
         
         #=======================================================================
@@ -1323,10 +1303,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         #======================================================================
         # input checks
-        #======================================================================
-        #======================================================================
-        # if cid is None or cid=='':
-        #     raise Error('need to select a cid')
         #======================================================================
         
         wrkr = RFDAconv(logger=self.logger, out_dir=out_dir, tag=self.tag, bsmt_ht = bsmt_ht)
