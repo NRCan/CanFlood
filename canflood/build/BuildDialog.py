@@ -40,6 +40,7 @@ from build.rsamp import Rsamp
 from build.lisamp import LikeSampler
 from build.rfda import RFDAconv
 from build.npri import Npri
+from build.validator import Vali
 
 
 
@@ -240,7 +241,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.mMapLayerComboBox_inv_nrpi.setCurrentIndex(-1) #clear the selection
         
         #connect the push button
-        self.pushButton_inv_nrpi.clicked.connect(self.convert_nrpi)
+        self.pushButton_inv_nrpi.clicked.connect(self.convert_npri)
 
 
 
@@ -796,8 +797,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.logger.push('finished')
             
 
-    def convert_nrpi(self):
-        log = self.logger.getChild('convert_nrpi')
+    def convert_npri(self):
+        log = self.logger.getChild('convert_npri')
         
         #=======================================================================
         # collect from UI
@@ -830,7 +831,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.qproj.addMapLayer(finv_vlay)
         log.info('added \'%s\' to canvas'%finv_vlay.name())
         
-        log.push('finished NRPI conversion')
+        log.push('finished NPRI conversion')
         self.feedback.upd_prog(None) #set the progress bar back down to zero
 
     
