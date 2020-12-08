@@ -1317,17 +1317,12 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         log.info('user pressed \'pushButton_Validate\'')
         
         #======================================================================
-        # load the control file
+        # collect form ui----
         #======================================================================
         #get the control file path
         cf_fp = self.get_cf_fp()
         
-        #build/run theparser
-        log.info('validating control file: \n    %s'%cf_fp)
-        pars = configparser.ConfigParser(inline_comment_prefixes='#', allow_no_value=True)
-        _ = pars.read(cf_fp) #read it
-        
-        self.feedback.upd_prog(10)
+
         #======================================================================
         # assemble the validation parameters
         #======================================================================
@@ -1337,28 +1332,17 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         from model.risk1 import Risk1
         
         #populate all possible test parameters
-        """
-        todo: finish this
-        """
-        vpars_pos_d = {
+
+        vpars_d = {
                     'risk1':(self.checkBox_Vr1, Risk1),
                    'dmg2':(self.checkBox_Vi2, Dmg2),
                    'risk2':(self.checkBox_Vr2, Risk2),
-                   #'risk3':(self.checkBox_Vr3, (None, None, None)),
+                   'risk3':(False, (None)), #TODO
                                            }
         
-        #select based on user check boxes
-        vpars_d = dict()
+
         
-        for vtag, (checkBox, model) in vpars_pos_d.items():
-            
-            if checkBox.isChecked():
-                vpars_d[vtag] = model
-                
-        if len(vpars_d) == 0:
-            raise Error('no validation options selected!')
-        
-        log.info('user selected %i validation parameter sets'%len(vpars_d))
+        self.feedback.upd_prog(10)
         
         #======================================================================
         # validate
@@ -1366,16 +1350,43 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
 
         
         vflag_d = dict()
-        for vtag, model in vpars_d.items():
-            self.feedback.upd_prog(80/len(vpars_d), method='append')
-
-            """needto play with init sequences to get this to work"""
-
+        for vtag, (checkBox, modObj) in vpars_d.items():
+            
+            if not checkBox.isChecked():
+                continue #skip this one
+            
+            #===================================================================
+            # setup validation worker
+            #===================================================================
+            vwrkr = Vali(modObj, cf_fp, logger=self.logger, out_dir=self.out_dir, tag=self.tag)
+            
+            errors = []
+            #===================================================================
+            # parameter value/type check
+            #===================================================================
+            errors = errors + vwrkr.cf_check()
+            
+            
+            
+            #===================================================================
+            # #report on all the errors
+            #===================================================================
+            for indxr, msg in enumerate(errors):
+                log.error('error %i: \n%s'%(indxr+1, msg))
+                        
                     
+            
+            #final trip
+            """lets us loop through all the checks before failing"""
+            if not len(errors)==0:        
+                raise Error('failed to validate ControlFile w/ %i error(s)... see log'%len(errors))
+
+
             #==================================================================
             # set validation flag
             #==================================================================
-            vflag_d[model.valid_par] = 'True'
+            vflag_d[modObj.valid_par] = 'True'
+            self.feedback.upd_prog(80/len(vpars_d), method='append')
             
         #======================================================================
         # update control file

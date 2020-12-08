@@ -48,29 +48,55 @@ from hlpr.basic import *
 #==============================================================================
 class Vali(Qcoms):
     """
-    general methods for the Build dialog
     
-    broken out for development/testing
+    model validator worker
     
-    each time the user performs an action, 
-        a new instance of this should be spawned
-        this way all the user variables can be freshley pulled
+    kept separate from the model workers to keep init sequences clean
+
     """
 
 
     def __init__(self,
-
+                 modObj, #model object to run check against
+                 cf_fp, #control file path
                   *args, **kwargs):
         
         super().__init__(*args, **kwargs)
         
+        self.modObj=modObj
+        
+        #=======================================================================
+        # load the control file
+        #=======================================================================
+        assert os.path.exists(cf_fp), 'provided parameter file path does not exist \n    %s'%cf_fp
 
+        cpars = configparser.ConfigParser(inline_comment_prefixes='#')
+        log.info('validating parameters from \n     %s'%cpars.read(cf_fp))
         
-        self.logger.debug('Gen.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
+        self.cpars = cpars
         
         
+        self.logger.debug('Vali.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
+        
+        
+    def cf_check(self,
 
+                 ):
         
+        modObj = self.modObj        
+        cpars = self.cpars
+        
+        #=======================================================================
+        # check against expectations
+        #=======================================================================
+        errors = []
+        for chk_d, opt_f in ((modObj.exp_pars_md,False), (modObj.exp_pars_op,True)):
+            _, l = modObj.cf_chk_pars(cpars, copy.copy(chk_d), optional=opt_f)
+            errors = errors + l
+            
+            
+        return errors
+
     
 
 
