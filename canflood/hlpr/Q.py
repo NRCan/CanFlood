@@ -23,7 +23,7 @@ from PyQt5.QtWidgets import QProgressBar
 """throws depceciationWarning"""
 import processing  
 
-mod_logger = logging.getLogger('Q') #creates a child logger of the root
+
 
 #==============================================================================
 # customs

@@ -2,7 +2,7 @@
 name = tut2
 cid = xid
 prec = 2                #float precision for calculations
-ground_water = True     #whether to allow wsl < gel
+ground_water = False     #whether to allow wsl < gel
 felv = ground
 event_probs = ari
 ltail = extrapolate     #EAD extrapolation: left tail treatment code (low prob high damage)
@@ -10,6 +10,7 @@ rtail = 0.5             #EAD extrapolation: right trail treatment (high prob low
 drop_tails = True       #whether to remove the extrapolated values from the results
 integrate = trapz       #integration method to apply: trapz, simps
 as_inun = False         #flag whether to treat exposures as percent inundation
+dummy = realdum
 
 [dmg_fps]
 curves = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\data\CanFlood_curves_rfda_20200218.xls

@@ -23,8 +23,8 @@ import numpy as np
 #standalone runs
 if __name__ =="__main__": 
     from hlpr.logr import basic_logger
-    mod_logger = basic_logger()   
-    
+    root_logger = basic_logger()  
+    mod_logger = root_logger.getChild('risk2')
     from hlpr.exceptions import Error
     
 #plugin runs
@@ -33,8 +33,8 @@ else:
 
     from hlpr.exceptions import QError as Error
 
-from hlpr.Q import *
-from hlpr.basic import *
+#from hlpr.Q import *
+from hlpr.basic import force_open_dir
 from model.modcom import Model
 
 #==============================================================================
@@ -50,23 +50,30 @@ class Risk2(Model):
 
 
     #==========================================================================
-    # #program vars
+    #program vars----
     #==========================================================================
     
     valid_par = 'risk2'
 
     
-    #expectations from parameter file
-    exp_pars_md = {#mandataory: section: {variable: handles} 
+    #===========================================================================
+    # #expectations from parameter file
+    #===========================================================================
+    #control file expectation handles: MANDATORY
+    #{section : {variable {check handle type: check values}
+    exp_pars_md = {
         'parameters' :
-            {'name':{'type':str}, 'cid':{'type':str},
-
-             'felv':{'values':('ground', 'datum')},
-             'event_probs':{'values':('aep', 'ari')},
-             'ltail':None, 'rtail':None, 'drop_tails':{'type':bool},
-             'integrate':{'values':('trapz',)}, 
-             'prec':{'type':int}, 
-             'as_inun':{'type':bool},
+            {
+             'name':        {'type':str},
+             'cid':         {'type':str},
+             'felv':        {'values':('ground', 'datum')},
+             'event_probs': {'values':('aep', 'ari')},
+             'ltail':None,
+             'rtail':None,
+             'drop_tails':  {'type':bool},
+             'integrate':   {'values':('trapz',)}, 
+             'prec':        {'type':int}, 
+             'as_inun':     {'type':bool},
              },
             
         'dmg_fps':{
@@ -90,7 +97,7 @@ class Risk2(Model):
                     }
     
     #==========================================================================
-    # plot controls
+    # plot controls----
     #==========================================================================
     plot_fmt = '${:,.0f}'
     y1lab = '$dmg'

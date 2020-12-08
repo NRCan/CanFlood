@@ -68,6 +68,9 @@ class Vali(Qcoms):
         
         self.logger.debug('Gen.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
         
+        
+
+        
     
 
 

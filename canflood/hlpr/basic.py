@@ -21,7 +21,7 @@ import os, configparser, logging
 import pandas as pd
 import numpy as np
 
-mod_logger = logging.getLogger('hp') #creates a child logger of the root
+
 
 #==============================================================================
 # custom
@@ -34,7 +34,7 @@ if __name__ =="__main__":
     
 #plugin runs
 else:
-    mod_logger = logging.getLogger('common') #get the root logger
+    mod_logger = logging.getLogger('basic') #get the root logger
 
 from hlpr.exceptions import QError as Error
 
@@ -55,6 +55,7 @@ class ComWrkr(object): #common methods for all classes
                  overwrite=True, 
                  out_dir=None, 
                  logger=mod_logger,
+
                  prec = 4,
                  
                 feedback = None, #feed back object
@@ -63,6 +64,13 @@ class ComWrkr(object): #common methods for all classes
                  ):
         """
         Dialogs don't call this
+        
+        #=======================================================================
+        # LOGGING
+        #=======================================================================
+        for standalone runs:
+            pass mod_logger=logr.basic_logger() for this in the __main__ init call 
+
         
         """
         #======================================================================
