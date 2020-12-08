@@ -39,7 +39,7 @@ import numpy as np #Im assuming if pandas is fine, numpy will be fine
 from build.rsamp import Rsamp
 from build.lisamp import LikeSampler
 from build.rfda import RFDAconv
-from build.nrpi import Nrpi
+from build.npri import Npri
 
 
 

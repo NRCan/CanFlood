@@ -46,7 +46,7 @@ from hlpr.basic import *
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Nrpi(Qcoms):
+class Npri(Qcoms):
     """
     general methods for the Build dialog
     
@@ -66,7 +66,7 @@ class Nrpi(Qcoms):
         
 
         
-        self.logger.debug('Nrpi.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
+        self.logger.debug('Npri.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
         
         
     
