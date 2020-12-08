@@ -288,7 +288,7 @@ class Model(ComWrkr):
                 #===============================================================
                 # blanks/nulls
                 #===============================================================
-                if pd.isnull(pval):
+                if (pd.isnull(pval) or pval==''):
                     msg = 'no value provided for \'%s.%s\'. optional=%s'%(sectName, varName, optional)
                     if optional:
                         log.debug(msg)
@@ -427,8 +427,9 @@ class Model(ComWrkr):
         #=======================================================================
         # blank set
         #=======================================================================
+        """seems like we're setup for ''.... not sure the value in switching everything over
         if pval == '':
-            pval = np.nan
+            pval = np.nan"""
         
         log.debug('retrieved \'%s.%s\'=\'%s\' w/ type: \'%s\''%(sectName, varName, pval, type(pval)))
         return pval
