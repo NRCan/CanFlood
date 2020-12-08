@@ -1354,11 +1354,11 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             
             if not checkBox.isChecked():
                 continue #skip this one
-            
+            log.debug('checking \"%s\''%vtag)
             #===================================================================
             # setup validation worker
             #===================================================================
-            vwrkr = Vali(modObj, cf_fp, logger=self.logger, out_dir=self.out_dir, tag=self.tag)
+            vwrkr = Vali(modObj, cf_fp, logger=self.logger, out_dir=self.out_dir, tag=vtag)
             
             errors = []
             #===================================================================
@@ -1379,7 +1379,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             #final trip
             """lets us loop through all the checks before failing"""
             if not len(errors)==0:        
-                raise Error('failed to validate ControlFile w/ %i error(s)... see log'%len(errors))
+                raise Error('failed to validate ControlFile for \'%s\' w/ %i error(s)... see log'%(
+                    vtag, len(errors)))
 
 
             #==================================================================
