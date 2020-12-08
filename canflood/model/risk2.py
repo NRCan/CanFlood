@@ -113,7 +113,7 @@ class Risk2(Model):
         #======================================================================
         # setup funcs
         #======================================================================
-        self.init_model()
+        self.init_model() #mostly just attaching and checking parameters from file
         
         self.resname = 'risk2_%s_%s'%(self.tag, self.name)
         
@@ -229,20 +229,10 @@ def run():
     runpars_d={
         'Tut2':{
             'out_dir':os.path.join(os.getcwd(), 'risk2', 'Tut2'),
-            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200330\CanFlood_tut2.txt',
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\built\CanFlood_tut2.txt',
             }
         }
     
-    #===========================================================================
-    # GolderHazard test
-    #===========================================================================
-    runpars_d={
-        'run1':{
-            'out_dir':r'C:\LS\03_TOOLS\CanFlood\_ins\IBI_GolderHazard_20200507\results\wi_noFail2',
-            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\IBI_GolderHazard_20200507\build\CanFlood_GH_wi_noFail.txt',
-            }
-        }
-        
     
     
     
