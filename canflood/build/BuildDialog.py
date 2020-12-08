@@ -808,7 +808,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # input checks
         #=======================================================================
-        wrkr = Nrpi(logger=self.logger,  out_dir=out_dir, tag=self.tag)
+        wrkr = Npri(logger=self.logger,  out_dir=out_dir, tag=self.tag)
         assert isinstance(in_vlay, QgsVectorLayer), 'no VectorLayer selected!'
         
         #=======================================================================

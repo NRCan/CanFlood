@@ -181,7 +181,7 @@ if __name__ =="__main__":
 
     
 
-    wrkr = Nrpi(logger=mod_logger, tag=tag, out_dir=out_dir)
+    wrkr = Npri(logger=mod_logger, tag=tag, out_dir=out_dir)
     wrkr.ini_standalone()
     
     
