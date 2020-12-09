@@ -1319,8 +1319,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         # collect form ui----
         #======================================================================
-        #get the control file path
-        cf_fp = self.get_cf_fp()
+        out_dir = self.lineEdit_wd.text()
+        
+        cf_fp = self.get_cf_fp() #get the control file path
         
 
         #======================================================================
@@ -1358,7 +1359,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             #===================================================================
             # setup validation worker
             #===================================================================
-            vwrkr = Vali(modObj, cf_fp, logger=self.logger, out_dir=self.out_dir, tag=vtag)
+            vwrkr = Vali(modObj, cf_fp, logger=self.logger, out_dir=out_dir, tag=vtag)
             
             errors = []
             #===================================================================
