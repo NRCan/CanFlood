@@ -126,7 +126,7 @@ class RFDAconv(Qcoms):
         res_df = pd.DataFrame(index=df.index)
         res_df[self.cid] = df['id1'].astype(int)
         
-        res_df['f0_elv'] = df['gel'] + df['ff_height']
+        res_df.loc[:, 'f0_elv'] = df['gel'] + df['ff_height']
         res_df.loc[:,'f0_elv'] = res_df['f0_elv'].round(self.prec)
         res_df['f0_scale'] = df['area'].round(self.prec)
         res_df['f0_cap'] = np.nan
@@ -210,7 +210,7 @@ class RFDAconv(Qcoms):
         geo_d = vlay_get_fdata(rinv_vlay, geo_obj=True, logger=log)
         finv_vlay = vlay_new_df(res_df, rinv_vlay.crs(), geo_d=geo_d,
                                 logger=log,
-                                layname = '%s_finv.gpkg'%rinv_vlay.name())
+                                layname = '%s_finv'%rinv_vlay.name())
         
         
         
@@ -558,6 +558,7 @@ if __name__ =="__main__":
     df_raw = pd.read_excel(crv_fp, header=None)
          
     wrkr = RFDAconv(logger=mod_logger, out_dir=out_dir, tag=tag)
+    """ini_standalone?"""
     #==========================================================================
     # execute
     #==========================================================================

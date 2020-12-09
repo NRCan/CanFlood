@@ -157,12 +157,13 @@ class Risk2(Model):
         else:
             ddf1 = ddf.rename(columns = aep_ser.to_dict()).sort_index(axis=1)
             
-
+        ddf1 = ddf1.round(self.prec)
         #======================================================================
         # checks
         #======================================================================
         #check the columns
         assert np.array_equal(ddf1.columns.values, aep_ser.unique()), 'column name problem'
+        log.info('checking monotonoticy on %s'%str(ddf1.shape))
         _ = self.check_monot(ddf1)
         
         self.feedback.setProgress(40)
@@ -179,7 +180,7 @@ class Risk2(Model):
         # totals
         #======================================================================    
         self.feedback.setProgress(80)    
-        res_ser = self.calc_ead(ddf1.sum(axis=0).to_frame().T, logger=log).iloc[0]
+        res_ser = self.calc_ead(ddf1.sum(axis=0).to_frame().round(self.prec).T, logger=log).iloc[0]
         self.res_ser = res_ser.copy() #set for risk_plot()
 
             
@@ -204,14 +205,10 @@ class Risk2(Model):
 
         return res, res_df
 
-    
-    
 
 
-            
-        
-if __name__ =="__main__": 
-    
+
+def run():
     #==========================================================================
     # run controls
     #==========================================================================
@@ -236,10 +233,21 @@ if __name__ =="__main__":
             }
         }
     
+    #===========================================================================
+    # GolderHazard test
+    #===========================================================================
+    runpars_d={
+        'run1':{
+            'out_dir':r'C:\LS\03_TOOLS\CanFlood\_ins\IBI_GolderHazard_20200507\results\wi_noFail2',
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\IBI_GolderHazard_20200507\build\CanFlood_GH_wi_noFail.txt',
+            }
+        }
+        
+    
     
     
     #==========================================================================
-    # build/execute
+    # build/execute------------
     #==========================================================================
     for tag, pars in runpars_d.items():
         cf_fp, out_dir = pars['cf_fp'], pars['out_dir']
@@ -269,9 +277,14 @@ if __name__ =="__main__":
         if not res_df is None:
             _ = wrkr.output_df(res_df, '%s_%s'%(wrkr.resname, 'passet'))
     
-
-
+    #===========================================================================
+    # wrap
+    #===========================================================================
     force_open_dir(out_dir)
+        
+if __name__ =="__main__": 
+    run()
+    
 
     print('finished')
     

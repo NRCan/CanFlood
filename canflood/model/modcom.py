@@ -58,7 +58,7 @@ class Model(ComWrkr):
             'flat'           set the zero probability event equal to the most 
                             extreme impacts in the passed series
             'extrapolate'    set the zero probability event by extrapolating from 
-                            the most extreme impact
+                            the most extreme impact (interp1d)
             'none'           do not extrapolate (not recommended)
             float            use the passed value as the zero probability impact value
              
@@ -105,8 +105,8 @@ class Model(ComWrkr):
     ground_water = False
     felv = ''
     event_probs = 'ari'
-    ltail = 'extrapolate'
-    rtail = 0.5
+    ltail = None
+    rtail = None
     drop_tails = True
     integrate = 'trapz'
     as_inun = False
@@ -213,7 +213,7 @@ class Model(ComWrkr):
             raise Error('missing %i expected sections in control file: %s'%(len(miss_l), miss_l))
         
         #======================================================================
-        # mandatory check and collect 
+        # mandatory check and collect -----
         #======================================================================
         cpars_d = dict()
         cnt = 0
@@ -247,9 +247,16 @@ class Model(ComWrkr):
                 #special type retrivial
                 if ntype == bool:
                     pval = self.pars[sect].getboolean(varnm)
+                elif getattr(self, varnm) is None:
+                    pval = pval_raw #no check or type conversion
+
                 else:
                     #set the type
-                    pval = ntype(pval_raw)
+                    try:
+                        pval = ntype(pval_raw)
+                    except Exception as e:
+                        raise Error('failed to set %s.%s  with input \'%s\' (%s) to %s \n %s'%(
+                            sect, varnm, pval_raw, type(pval_raw), ntype, e))
                 
                 #==============================================================
                 # check it
@@ -267,7 +274,7 @@ class Model(ComWrkr):
         log.info('collected MANDATORY %i variables from %i sections from paramter file'%(
             cnt, len(cpars_d)))
         #======================================================================
-        # optional check and collect
+        # optional check and collect----
         #======================================================================
         cnt2 = 0
         for sect, vchk_d in self.exp_pars_op.items(): 
@@ -610,7 +617,7 @@ class Model(ComWrkr):
             assert booldf.sum().sum()==0, \
                 'for pct inundation got %i (of %i) exposure values great than 1'%(
                     booldf.sum().sum(), booldf.size)
-                
+            """forcing this becuase %inundation should never add ground elevations"""
             assert self.felv =='datum', 'felv must equal \'datum\' for pct inundation runs'
 
         #======================================================================
@@ -961,6 +968,8 @@ class Model(ComWrkr):
                 df.columns = df.columns.str.replace('%s_'%prefix, 'f')
                 df = df.reset_index()
                 
+                df['nestID'] = prefix
+                
                 #add to main
                 if bdf is None:
                     bdf = df
@@ -1007,6 +1016,8 @@ class Model(ComWrkr):
             
             #reset the index
             bdf = bdf.reset_index(drop=True)
+            
+            bdf['nestID'] = 'f0'
             
         else:
             raise Error('bad prefix match')
@@ -1162,7 +1173,7 @@ class Model(ComWrkr):
         boolidx = ddf.loc[:,boolcol].max(axis=1)>self.max_depth
         if boolidx.any():
             log.debug('\n%s'%ddf[boolidx])
-            raise Error('%i (of %i) nested curves exceed max depth: %.2f. see logger'%(
+            raise Error('%i (of %i) nested assets exceed max depth: %.2f. see logger'%(
                 boolidx.sum(), len(boolidx), self.max_depth))
         
         
@@ -1285,12 +1296,14 @@ class Model(ComWrkr):
     
     def check_monot(self,
                      df_raw, #event:asset like data. expectes columns as aep 
-                     split_key = False, #optional key to split hazard columns by
+                     split_key = False, #optional key to split hazard columns with (for fail/noFail sets)
                      aep_ser=None, event_probs = 'aep', #optional kwargs for column conversion
                      logger=None
                      ):
         """
         if damages are equal the warning will be thrown
+        
+        todo: store this as an output
         """
         
         
@@ -1372,7 +1385,6 @@ class Model(ComWrkr):
                 log.debug('all %i passed'%len(df))
                 return True
         
-        
         #======================================================================
         # splitting
         #======================================================================
@@ -1407,7 +1419,7 @@ class Model(ComWrkr):
         #======================================================================
         ltail: left tail treatment code (low prob high damage)
             flat: extend the max damage to the zero probability event
-            extrapolate: extend the fucntion to the zero aep value
+            extrapolate: extend the fucntion to the zero aep value (interp1d)
             float: extend the function to this damage value (must be greater than max)
             none: don't extend the tail (not recommended)
             
@@ -1427,20 +1439,29 @@ class Model(ComWrkr):
         if rtail is None: rtail = self.rtail
         
         #format tail values
+        assert not ltail is None
+        assert not rtail is None
         
         if not ltail in ['flat', 'extrapolate', 'none']:
-            ltail  = float(ltail)
+            try:
+                ltail  = float(ltail)
+            except Exception as e:
+                raise Error('failed to convert \'ltail\'=\'%s\' to numeric \n    %s'%(ltail, e))
         if not rtail in ['extrapolate', 'none']:
             rtail = float(rtail)
             
-        log.info('getting ead on %s w/ ltail=%s and rtail=%s'%(
+        log.info('getting ead on %s w/ ltail=\'%s\' and rtail=\'%s\''%(
             str(df_raw.shape), ltail, rtail))
         
         #identify columns to calc ead for
-        boolidx = (df_raw > 0).any(axis=1) #only want those with some real damages
+        bx = (df_raw > 0).any(axis=1) #only want those with some real damages
         
+        assert bx.any(), 'no valid results on %s'%str(df_raw.shape)
+        #=======================================================================
+        # get tail parameters-----
+        #=======================================================================
         #======================================================================
-        # left tail-------------
+        # left tail
         #======================================================================
         df = df_raw.copy()
         #flat projection
@@ -1448,78 +1469,79 @@ class Model(ComWrkr):
             df.loc[:,0] = df.iloc[:,0] 
             
         elif ltail == 'extrapolate':
-            df.loc[boolidx,0] = df.loc[boolidx, :].apply(
-                self.extrap, axis=1, left=True)
+            df.loc[bx,0] = df.loc[bx, :].apply(self.extrap, axis=1, left=True)
+
 
         elif isinstance(ltail, float):
             """this cant be a good idea...."""
-            df.loc[boolidx,0] = ltail
+            df.loc[bx,0] = ltail
         elif ltail == 'none':
             pass
         else:
             raise Error('unexected ltail key'%ltail)
         
         #======================================================================
-        # right tail------------
+        # right tail
         #======================================================================
         if rtail == 'extrapolate':
             """just using the average for now...
             could extraploate for each asset but need an alternate method"""
-            aep_ser = df.loc[boolidx, :].apply(
+            aep_ser = df.loc[bx, :].apply(
                 self.extrap, axis=1, left=False)
             
             aep_val = round(aep_ser.mean(), 5)
             
             assert aep_val > df.columns.max()
             
-            df.loc[boolidx, aep_val] = 0
+            df.loc[bx, aep_val] = 0
             
             log.info('using right intersection of aep= %.2e from average extraploation'%(
                 aep_val))
         
         elif isinstance(rtail, float):
             aep_val = round(rtail, 5)
-            assert aep_val > df.columns.max()
+            assert aep_val > df.columns.max(), 'passed rtail value (%.2f) not > max aep (%.2f)'%(
+                aep_val, df.columns.max())
             
-            df.loc[boolidx, aep_val] = 0
+            df.loc[bx, aep_val] = 0
             
-            log.info('using right intersection of aep= %.2e from user val'%(
+            log.debug('setting ZeroDamage event from user passed \'rtail\' aep=%.7f'%(
                 aep_val))
             
-            
-            
         elif rtail == 'none':
-            log.warning('passed \'none\' no right tail set!')
+            #set the zero damage year as the lowest year in the model (with a small buffer) 
+            aep_val = max(df.columns.tolist())*(1+10**-(self.prec+2))
+            df.loc[bx, aep_val] = 0
+            
+            log.info('rtail=\'none\' setting ZeroDamage event as aep=%.7f'%aep_val)
         
         else:
             raise Error('unexpected rtail %s'%rtail)
             
-        
-        
         df = df.sort_index(axis=1)
-        
+
         #======================================================================
         # check monoticiy again
         #======================================================================
         #check for damage monoticyt
         cboolidx = df.apply(lambda x: x.is_monotonic_increasing, axis=1)
         if cboolidx.any():
-            log.debug(df.loc[cboolidx, :])
-            raise Error(' %i (of %i)  assets have non-monotonic-increasing damages. see logger'%(
+            log.debug('%s/n'%df.loc[cboolidx, :])
+            log.warning(' %i (of %i)  assets have non-monotonic-increasing damages. see logger'%(
                 cboolidx.sum(), len(cboolidx)))
-            
-            
+
         #======================================================================
-        # get ead per row
+        # calc EAD-----------
         #======================================================================
-        #get reasonable dx (integrating along damage axis)
+        #get reasonable dx (integration step along damage axis)
+        """todo: allow the user to set t his"""
         dx = df.max().max()/100
         
         #re-arrange columns so x is ascending
         df = df.sort_index(ascending=False, axis=1)
         
         #apply the ead func
-        df.loc[boolidx, 'ead'] = df.loc[boolidx, :].apply(
+        df.loc[bx, 'ead'] = df.loc[bx, :].apply(
             self.get_ev, axis=1, dx=dx)
         
         
@@ -1536,25 +1558,55 @@ class Model(ComWrkr):
         # clean results
         #======================================================================
         if drop_tails:
-            res_df = df_raw.join(df['ead'].round(self.prec))
+            """not sure about this"""
+            res_df = df_raw.join(df['ead'])
         else:
             res_df = df
             
+        return res_df.round(self.prec)
 
-        
-        
-        return res_df
 
-    def extrap(self, 
+    def extrap(self,  #extraploating EAD curve data
                ser, #row of dmages (y values) from big df
                left=True, #whether to extraploate left or gihtt
                ):
         
+        """
+        
+        #=======================================================================
+        # plot helper
+        #=======================================================================
+        from matplotlib import pyplot as plt
+
+        plt.close()
+        
+        fig = plt.figure()
+        ax = fig.add_subplot()
+        
+        ax.plot(ser.index.values,  ser.values, 
+            linestyle='None', marker="o")
+            
+        ax.plot(0, f(0), marker='x', color='red')
+
+        ax.grid()
+        plt.show()
+        
+
+        """
+        
         #build interpolation function from data
         if left:
-            #xvalues = aep
-            f = interpolate.interp1d(ser.index.values, ser.values, 
-                                     fill_value='extrapolate')
+            """
+            typically this just extends the line from the previous 2 extreme impacts
+            shouldnt effect results much when modeled extremes are 'extreme'
+            
+            theres probably a better function to use since we're only using the 'extrapolate' bit
+            """
+            f = interpolate.interp1d(
+                ser.index.values, #xvals: aep
+                ser.values, #yvals: impacts 
+                 fill_value='extrapolate', #all we're using
+                 )
             
         else:
             #xvalues = damages
@@ -1563,11 +1615,11 @@ class Model(ComWrkr):
             
         
         #calculate new y value by applying interpolation function
-        result = f(0)
+        result = f(0) #y value at x=0
         
         return float(result) 
     
-    def get_ev(self, 
+    def get_ev(self, #integration caller
                ser, #row from damage results
                dx = 0.1,
                ):
@@ -1578,8 +1630,27 @@ class Model(ComWrkr):
         
         #print('%i.%s    %s'%(self.cnt, ser.name, ser.to_dict()))
         
-        x = ser.tolist()
-        y = ser.index.tolist()
+        x = ser.tolist() #impacts
+        y = ser.index.values.round(self.prec+2).tolist() #AEPs
+        
+        """
+        from matplotlib import pyplot as plt
+        #build plot
+        lines = plt.plot(x, y)
+        #lines = plt.semilogx(x, y)
+        
+        #format
+        ax = plt.gca()
+        ax.grid()
+        ax.set_xlim(1, max(x)) #aep limits
+        ax.set_ylabel('AEP')
+        ax.set_xlabel('impacts')
+        
+        
+        plt.show()
+        
+        self.rtail
+        """
         
         #======================================================================
         # ser_inv = ser.sort_index(ascending=False)
@@ -1606,16 +1677,8 @@ class Model(ComWrkr):
         else:
             raise Error('integration method \'%s\' not recognized'%self.integrate)
             
-        
-        #======================================================================
-        # np.trapz(x, x=y)
-        # 
-        # np.trapz(y, x=x, dx=4000)
-        # 
-        # if ead_tot < 0:
-        #     raise Error('bad ead tot')
-        #======================================================================
-        return ead_tot
+
+        return round(ead_tot, self.prec)
     
     def risk_plot(self, #generate and save a figure that summarizes the damages 
                   dmg_ser = None,
@@ -1638,16 +1701,13 @@ class Model(ComWrkr):
                     h_alpha = 0.1,
                   ):
         
-        """
-        TODO: fix the title
-        
-        """
+
         
         #======================================================================
         # defaults
         #======================================================================
         log = self.logger.getChild('risk_plot')
-        if dmg_ser is None: dmg_ser = self.res_ser
+        if dmg_ser is None: dmg_ser = self.res_ser.copy()
         if dfmt is None: dfmt = self.plot_fmt
         if y1lab is None: y1lab = self.y1lab
         #======================================================================
@@ -1658,16 +1718,17 @@ class Model(ComWrkr):
         #======================================================================
         # setup
         #======================================================================
-        
+        """todo: move this up"""
         import matplotlib
-        matplotlib.use('SVG') #sets the backend (case sensitive)
+        matplotlib.use('Qt5Agg') #sets the backend (case sensitive)
         import matplotlib.pyplot as plt
         
         #set teh styles
         plt.style.use('default')
         
         #font
-        matplotlib_font = {'family' : 'serif',
+        matplotlib_font = {
+                'family' : 'serif',
                 'weight' : 'normal',
                 'size'   : 8}
         
@@ -1681,41 +1742,32 @@ class Model(ComWrkr):
         # data manipulations
         #======================================================================
         #get ead
-        ead_tot = dmg_ser['ead']
-        del dmg_ser['ead'] #remove it from plotter values
-        
-        
-        #get damage series to plot
-        ar = np.array([dmg_ser.index, dmg_ser.values]) #convert to array
-        
-        #invert aep (w/ zero handling)
-        ar[0] = 1/np.where(ar[0]==0, #replaced based on zero value
-                           sorted(ar[0])[1]/10, #dummy value for zero (take the second smallest value and divide by 10)
-                           ar[0]) 
-        
-        dmg_ser = pd.Series(ar[1], index=ar[0], dtype=float) #back into series
-        dmg_ser.index = dmg_ser.index.astype(int) #format it
+        ead_tot, dmg_ser1 = self.fmt_dmg_plot(dmg_ser)
                 
         
         #get aep series
-        aep_ser = dmg_ser.copy()
-        aep_ser.loc[:] = 1/dmg_ser.index
+        aep_ser = dmg_ser1.copy()
+        aep_ser.loc[:] = 1/dmg_ser1.index
         
         
         #======================================================================
         # labels
-        #======================================================================
+        #======================================================================\
         
-        val_str = 'total Annualized = ' + dfmt.format(ead_tot/basev)
+        val_str = 'annualized impacts = %s \nltail=\"%s\',  rtail=\'%s\''%(
+            dfmt.format(ead_tot/basev), self.ltail, self.rtail)
         
-        title = 'CanFlood \'%s.%s\' Annualized-%s plot on %i events'%(self.name,self.tag, xlab, len(dmg_ser))
+        title = '%s.%s Impact-%s plot on %i events'%(self.name,self.tag, xlab, len(dmg_ser1))
         
         #======================================================================
         # figure setup
         #======================================================================
         plt.close()
-        fig = plt.figure(1)
-        fig.set_size_inches(figsize)
+        fig = plt.figure(figsize=figsize,
+                     tight_layout=False,
+                     constrained_layout = True,
+                     )
+
         
         #axis setup
         ax1 = fig.add_subplot(111)
@@ -1732,17 +1784,18 @@ class Model(ComWrkr):
         # fill the plot
         #======================================================================
         #damage plot
-        xar,  yar = dmg_ser.index.values, dmg_ser.values
+        xar,  yar = dmg_ser1.index.values, dmg_ser1.values
         pline1 = ax1.semilogx(xar,yar,
                             label       = y1lab,
                             color       = 'black',
                             linestyle   = 'dashdot',
                             linewidth   = 2,
                             alpha       = 0.5,
-                            marker      = 'x',
-                            markersize  = 2,
+                            marker      = 's',
+                            markersize  = 4,
                             fillstyle   = 'full', #marker fill style
                             )
+        
         #add a hatch
         polys = ax1.fill_between(xar, yar, y2=0, 
                                 color       = h_color, 
@@ -1760,9 +1813,7 @@ class Model(ComWrkr):
                             marker      = 'x',
                             markersize  = 0,
                             )
-        
 
-        
         #=======================================================================
         # Add text string 'annot' to lower left of plot
         #=======================================================================
@@ -1770,7 +1821,7 @@ class Model(ComWrkr):
         ymin, ymax1 = ax1.get_ylim()
         
         x_text = xmin + (xmax1 - xmin)*.1 # 1/10 to the right of the left ax1is
-        y_text = ymin + (ymax1 - ymin)*.1 #1/10 above the bottom ax1is
+        y_text = ymin + (ymax1 - ymin)*.2 #1/10 above the bottom ax1is
         anno_obj = ax1.text(x_text, y_text, val_str)
         
         #=======================================================================
@@ -1784,9 +1835,7 @@ class Model(ComWrkr):
               
         #apply the new labels
         ax1.set_yticklabels(l)
-        
-        
-        
+
         #ARI (xaxis for ax1)
         ax1.get_xaxis().set_major_formatter(
                 matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
@@ -1794,7 +1843,8 @@ class Model(ComWrkr):
         #=======================================================================
         # post formatting
         #=======================================================================
-        if grid: ax1.grid()
+        if grid: 
+            ax1.grid()
         
 
         #legend
@@ -1803,7 +1853,212 @@ class Model(ComWrkr):
         ax1.legend(h1+h2, l1+l2, loc=2) #turn legend on with combined handles
         
         return fig
+    """
+    plt.show()
+    """
     
+    def plot_aep(self, #generate and save a figure that summarizes the damages 
+                  dmg_ser = None,
+                  
+                  #labels
+                  y1lab='AEP',   xlab=None, 
+                  
+                  #format controls
+                  grid = True, 
+                  basev = 1, #base value for dividing damage values
+                  dfmt = None, #formatting of damage values 
+                  
+                  
+                  #figure parametrs
+                  figsize     = (6.5, 4), 
+                    
+                    #hatch pars
+                    hatch =  None,
+                    h_color = 'red',
+                    h_alpha = 0.1,
+                    
+                    xlrot = 45, #rotration for xlabels
+                  ):
+        
+
+        
+        #======================================================================
+        # defaults
+        #======================================================================
+        log = self.logger.getChild('plot_aep')
+        if dmg_ser is None: dmg_ser = self.res_ser.copy()
+        if dfmt is None: dfmt = self.plot_fmt
+        if xlab is None: xlab = self.y1lab #pull from risk_plot notation
+
+        #======================================================================
+        # precheck
+        #======================================================================
+        assert isinstance(dmg_ser, pd.Series)
+        assert 'ead' in dmg_ser.index, 'dmg_ser missing ead index'
+        
+        log.info('on %i events \n    %s'%(len(dmg_ser), dmg_ser.to_dict()))
+        #======================================================================
+        # setup
+        #======================================================================
+        
+        import matplotlib
+        matplotlib.use('Qt5Agg') #sets the backend (case sensitive)
+        import matplotlib.pyplot as plt
+        
+        #set teh styles
+        plt.style.use('default')
+        
+        #font
+        matplotlib_font = {
+                'family' : 'serif',
+                'weight' : 'normal',
+                'size'   : 8}
+        
+        matplotlib.rc('font', **matplotlib_font)
+        matplotlib.rcParams['axes.titlesize'] = 10 #set the figure title size
+        
+        #spacing parameters
+        matplotlib.rcParams['figure.autolayout'] = False #use tight layout
+        
+        #======================================================================
+        # data manipulations
+        #======================================================================
+        aep_ser = dmg_ser.drop('ead')
+        ead_tot = dmg_ser['ead']
+                
+        #======================================================================
+        # labels
+        #======================================================================\
+        
+        val_str = 'annualized impacts = %s \nltail=\"%s\',  rtail=\'%s\''%(
+            dfmt.format(ead_tot/basev), self.ltail, self.rtail)
+        
+        title = '%s.%s Impact-%s plot on %i events'%(self.name,self.tag, y1lab, len(aep_ser))
+        
+        #======================================================================
+        # figure setup
+        #======================================================================
+        plt.close()
+        fig = plt.figure(figsize=figsize,
+                     tight_layout=False,
+                     constrained_layout = True,
+                     )
+
+        
+        #axis setup
+        ax1 = fig.add_subplot(111)
+        
+        #aep units
+        ax1.set_xlim(0, max(aep_ser)) #aep limits 
+        ax1.set_ylim(0, max(aep_ser.index)*1.1)
+        
+        """I think we need to use a label formatter instead
+        #ari units
+        ax2 = ax1.twiny()
+        ax2.set_xlabel(x2lab)
+        ax2.set_xlim(99999999, 1/max(aep_ser.index))"""
+        
+        # axis label setup
+        fig.suptitle(title)
+        ax1.set_ylabel(y1lab)
+
+        ax1.set_xlabel(xlab)
+        """
+        plt.close()
+        plt.show()
+        """
+        #======================================================================
+        # fill the plot
+        #======================================================================
+        #damage plot
+        xar,  yar = aep_ser.values.astype(np.float), aep_ser.index.values
+        pline1 = ax1.plot(xar,yar,
+                            label       = y1lab,
+                            color       = 'black',
+                            linestyle   = 'dashdot',
+                            linewidth   = 2,
+                            alpha       = 0.5,
+                            marker      = 's',
+                            markersize  = 4,
+                            fillstyle   = 'full', #marker fill style
+                            )
+        
+        #add a hatch
+
+        polys = ax1.fill_betweenx(yar.astype(np.float), x1=xar, x2=0, 
+                                color       = h_color, 
+                                alpha       = h_alpha,
+                                hatch       = hatch)
+        
+
+
+        #=======================================================================
+        # Add text string 'annot' to lower left of plot
+        #=======================================================================
+        xmin, xmax1 = ax1.get_xlim()
+        ymin, ymax1 = ax1.get_ylim()
+        
+        x_text = xmin + (xmax1 - xmin)*.5 # 1/10 to the right of the left ax1is
+        y_text = ymin + (ymax1 - ymin)*.2 #1/10 above the bottom ax1is
+        anno_obj = ax1.text(x_text, y_text, val_str)
+        
+        #=======================================================================
+        # format axis labels
+        #======================================================= ================
+        #damage values (xaxis)
+        old_tick_l = ax1.get_xticks() #get teh old labels
+         
+        # build the new ticks
+        l = [dfmt.format(value/basev) for value in old_tick_l]
+              
+        #apply the new labels
+        ax1.set_xticklabels(l, rotation=xlrot)
+
+        #=======================================================================
+        # #ARI (xaxis for ax1)
+        # ax1.get_xaxis().set_major_formatter(
+        #         matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+        #=======================================================================
+        
+        #=======================================================================
+        # post formatting
+        #=======================================================================
+        if grid: 
+            ax1.grid()
+        
+
+        #legend
+        h1, l1 = ax1.get_legend_handles_labels() #pull legend handles from axis 1
+
+        ax1.legend(h1, l1, loc=2) #turn legend on with combined handles
+        
+        return fig
+    """
+    plt.show()
+    """
+    
+    def fmt_dmg_plot(self,#formatting damages for plotting
+                     dmg_ser_raw): 
+        
+        #get ead
+        dmg_ser = dmg_ser_raw.copy()
+        ead_tot = dmg_ser['ead']
+        del dmg_ser['ead'] #remove it from plotter values
+        
+        
+        #get damage series to plot
+        ar = np.array([dmg_ser.index, dmg_ser.values]) #convert to array
+        
+        #invert aep (w/ zero handling)
+        ar[0] = 1/np.where(ar[0]==0, #replaced based on zero value
+                           sorted(ar[0])[1]/10, #dummy value for zero (take the second smallest value and divide by 10)
+                           ar[0]) 
+        
+        dmg_ser1 = pd.Series(ar[1], index=ar[0], dtype=float) #back into series
+        dmg_ser1.index = dmg_ser1.index.astype(int) #format it
+        
+        return ead_tot, dmg_ser1
+        
     
     def conv_expo_aep(self, #converting exposure data set to aep column values 
                       df, 

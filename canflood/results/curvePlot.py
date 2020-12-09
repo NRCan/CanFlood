@@ -78,7 +78,7 @@ class CurvePlotr(ComWrkr):
                  name='Results',
                  
                  
-                 figsize = (6,4), #6,4 seems good for documnets
+                figsize = (6,4), #6,4 seems good for documnets
                 subplot = 111,
                 
                 #writefig
@@ -92,7 +92,7 @@ class CurvePlotr(ComWrkr):
         
         """inherited by the dialog.
         init is not called during the plugin"""
-        mod_logger.info('simple wrapper inits')
+        #mod_logger.info('simple wrapper inits')
         
         super().__init__(**kwargs) #initilzie teh baseclass
         
@@ -122,9 +122,10 @@ class CurvePlotr(ComWrkr):
                   pgCn='plot_group',
                   pfCn='plot_f',
                   
-                  marker='o', markersize=3,
+                
                   
                   logger=None,
+                  **lineKwargs,
                   ):
         
         
@@ -145,11 +146,17 @@ class CurvePlotr(ComWrkr):
             hndl_df =cLib_d.pop('_smry')
             
             #re-tag the columns
+
             colns = hndl_df.iloc[0,:].values
+            assert pd.isnull(colns[0]), 'expect the first _smry column to not have a label'
+            """
+            todo: make this more flexible
+            """
             colns[0] = 'cName'
             hndl_df.columns = colns
             
-            hndl_df = hndl_df.set_index('cName', drop=False).drop('cName') 
+            #drop the old columns
+            hndl_df = hndl_df.set_index('cName', drop=False).iloc[1:,:]
 
             
    
@@ -190,7 +197,7 @@ class CurvePlotr(ComWrkr):
             
             indxr=0
             for cName, crv_d in cLib_d.items():
-                ax = self.plotCurve(crv_d, title=crv_d['tag'])
+                ax = self.plotCurve(crv_d, title=crv_d['tag'], **lineKwargs)
                 
                 res_d[cName] =ax.figure
                 
@@ -199,10 +206,8 @@ class CurvePlotr(ComWrkr):
                 if indxr>50:
                     log.warning('too many curves.. breaking loop')
                     break
-                
 
 
-            
         #=======================================================================
         # PLOT with handles-----------    
         #=======================================================================
@@ -248,31 +253,31 @@ class CurvePlotr(ComWrkr):
                     #get this curve
                     crv_d = cLib_d[cName]
                     
-                    ax = self.plotCurve(crv_d, ax=ax,
-                                        marker=marker, markersize=markersize)
+                    ax = self.plotCurve(crv_d, ax=ax,**lineKwargs)
                     
                 #post format
                 fig = ax.figure
                 fig.suptitle(pgroup)
-                fig.legend()
+                ax.legend()
                     
                 #===============================================================
                 # group loop
                 #===============================================================
-                if indxr>50: 
+                if indxr>20: 
                     log.warning('to omany curves.. breaking')
                     break
+                
                 indxr +=1
                 
                 #add results
-                res_d[cName] = fig
+
+
+
+                res_d[pgroup] = fig
                 """
                 plt.show()
                 """
-                
-                
-                
-            
+
                 
         #=======================================================================
         # wrap--------
@@ -363,8 +368,11 @@ class CurvePlotr(ComWrkr):
         #=======================================================================
         if ax is None:
 
-            fig = plt.figure()
-            fig.set_size_inches(figsize)
+            fig = plt.figure(figsize=figsize,
+                     tight_layout=False,
+                     constrained_layout = True,
+                     )
+
             ax = fig.add_subplot(subplot)  
             
             #set the suptitle
@@ -411,15 +419,77 @@ if __name__ =="__main__":
 
     
     #===========================================================================
-    # tutorials
+    #nrp curves
     #===========================================================================
+    data_dir = r'C:\LS\03_TOOLS\LML\_keeps2\nrp\nrpPer_20200517125446'
+    
     runpars_d={
-        'Tut1a':{
-            'out_dir':os.path.join(os.getcwd(),mod_name, 'Tut1a'),
-            'curves_fp':r'C:\LS\03_TOOLS\LML\_keeps\mbc\mbc_20200409163117\curves_mbc.compile_dev_161.xls',
+        'inEq':{
+            'out_dir':os.path.join(data_dir, 'figs'),
+            'curves_fp':os.path.join(data_dir, 'curves_nrpPer_01_20200517_inEq.xls'),
             #'dfmt':'{0:.0f}', 'y1lab':'impacts',
             },
-
+        'inStk':{
+            'out_dir':os.path.join(data_dir, 'figs'),
+            'curves_fp':os.path.join(data_dir, 'curves_nrpPer_01_20200517_inStk.xls'),
+            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
+            },
+        'outEq':{
+            'out_dir':os.path.join(data_dir, 'figs'),
+            'curves_fp':os.path.join(data_dir, 'curves_nrpPer_01_20200517_outEq.xls'),
+            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
+            },
+        'outStk':{
+            'out_dir':os.path.join(data_dir, 'figs'),
+            'curves_fp':os.path.join(data_dir, 'curves_nrpPer_01_20200517_outStk.xls'),
+            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
+            },
+        }
+    
+    #===========================================================================
+    #mbc curves
+    #===========================================================================
+    data_dir = r'C:\LS\03_TOOLS\LML\_keeps2\curves\mbc\curving\mbcC_20200519145845'
+    
+    runpars_d={
+        'f0':{
+            'out_dir':os.path.join(data_dir,'figs', 'f0'),
+            'curves_fp':os.path.join(data_dir, 'curves_mbcC_03_20200519_f0_29.xls'),
+            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
+            },
+        'f1':{
+            'out_dir':os.path.join(data_dir,'figs', 'f1'),
+            'curves_fp':os.path.join(data_dir, 'curves_mbcC_03_20200519_f1_54.xls'),
+            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
+            },
+        'gar':{
+            'out_dir':os.path.join(data_dir,'figs', 'gar'),
+            'curves_fp':os.path.join(data_dir, 'curves_mbcC_03_20200519_gar_17.xls'),
+            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
+            },
+        'gen':{
+            'out_dir':os.path.join(data_dir, 'figs','gen'),
+            'curves_fp':os.path.join(data_dir, 'curves_mbcC_03_20200519_gen_52.xls'),
+            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
+            },
+        'f1gen':{
+            'out_dir':os.path.join(data_dir, 'figs','f1gen'),
+            'curves_fp':os.path.join(data_dir, 'curves_mbcC_03_20200519_f1gen_54.xls'),
+            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
+            },
+        }
+    
+    #===========================================================================
+    # rfda curves
+    #===========================================================================
+    data_dir = r'C:\LS\02_WORK\IBI\201909_FBC\04_CALC\curves\rfda'
+    
+    runpars_d={
+        'cont':{
+            'out_dir':os.path.join(data_dir,'figs'),
+            'curves_fp':os.path.join(data_dir, 'CanFlood_curves_rfda_20200218.xls'),
+            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
+            },
         }
     
     for tag, pars in runpars_d.items():
@@ -431,9 +501,7 @@ if __name__ =="__main__":
         #=======================================================================
         # precheck
         #=======================================================================
-
-
-
+        
         #=======================================================================
         # execute
         #=======================================================================
@@ -442,7 +510,8 @@ if __name__ =="__main__":
         #load data
         curves_d = wrkr.load_data(curves_fp)
         
-        res_d = wrkr.plotGroup(curves_d)
+        """expects 'plot_f'  and 'plot_group' columns"""
+        res_d = wrkr.plotGroup(curves_d) 
         
         for cname, fig in res_d.items():
             wrkr.output_fig(fig)

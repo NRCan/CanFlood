@@ -82,6 +82,8 @@ class Dmg2(Model):
     
     group_cnt = 4
     
+    plot_fmt = '${:,.0f}'
+    
     #minimum inventory expectations
     finv_exp_d = {
         'f0_tag':{'type':np.object},
@@ -93,8 +95,11 @@ class Dmg2(Model):
     
     def __init__(self,
                  cf_fp,
+
                  **kwargs
                  ):
+        
+
         
         #init the baseclass
         super().__init__(cf_fp, **kwargs) #initilzie Model
@@ -179,14 +184,15 @@ class Dmg2(Model):
                 log.warning('skipping dummy tab \'%s\''%tabn)
                 continue
             
+            tabn = tabn.strip() #remove whitespace
+            
             #skip those not in the finv
             if not tabn in ftags_valid:
+                log.debug('\'%s\' not in valid list'%tabn)
                 continue
             
             if not isinstance(df, pd.DataFrame):
                 raise Error('unexpected type on tab \'%s\': %s'%(tabn, type(df)))
-            
-            
             
             #build it
             dfunc = DFunc(tabn).build(df, log)
@@ -273,17 +279,24 @@ class Dmg2(Model):
         
         miss_l = set(fdf.index.values).symmetric_difference(cres_df.index.values)
         
-        assert len(miss_l) == 0, 'result inventory mismatch'
+        assert len(miss_l) == 0, 'result inventory mismatch: \n    %s'%miss_l
         assert np.array_equal(fdf.index, cres_df.index), 'index mismatch'
         
+        #=======================================================================
+        # report
+        #=======================================================================
         log.info('maxes:\n%s'%(
             cres_df.max()))
+        
         log.info('finished w/ %s and TtlDmg = %.2f'%(
             str(cres_df.shape), cres_df.sum().sum()))
         
         return cres_df
         
     def bdmg(self, #get damages on expanded finv
+             
+             #run controls
+
             ):
         #======================================================================
         # defaults
@@ -291,10 +304,13 @@ class Dmg2(Model):
         log = self.logger.getChild('bdmg')
         
         #set some locals
-        bdf = self.bdf  #expanded finv. see modcom.build_exp_finv()
+        bdf = self.bdf  #expanded finv. see modcom.build_exp_finv(). each row has 1 ftag
         ddf = self.ddf
         """ddf is appending _1 to column names"""
         cid, bid = self.cid, self.bid
+        
+
+
         
         
         assert bid in ddf.columns
@@ -314,13 +330,17 @@ class Dmg2(Model):
         resserved for future dev
         
         one value per cid?
+        
+        view(bdf)
         """
 
         
         #======================================================================
-        # calc setup
+        # setup-----
         #======================================================================
-        #id bids with valid depths
+        #=======================================================================
+        # id valid bids
+        #=======================================================================
         if self.ground_water:
             mdval = min(self.df_minD_d.values())
         else:
@@ -328,39 +348,47 @@ class Dmg2(Model):
         
         dep_boolcol = ddf.loc[:, dboolcol] >= mdval
         
+        #report those faling the check
         if not dep_boolcol.all().all():
-            log.info('got %i (of %i) entries w/ invalid depths (<= %.2f)'%(
+            log.warning('got %i (of %i) entries w/ invalid depths (<= %.2f)'%(
                 np.invert(dep_boolcol).sum().sum(), dep_boolcol.size, mdval))
         
-        #get relvant bids
+        #combine
         vboolidx = pd.DataFrame(np.logical_and(
-            dep_boolcol,
+            dep_boolcol, #those exceeding min depth
             ddf.loc[:,dboolcol].notna()) #real depths
-        ).any(axis=1)  
+            ).any(axis=1)  
         
-        #valid_bids = ddf.loc[boolidx, cid].values
-        
+        #check
         if not vboolidx.any():
             log.warning('no valid depths!')
             return None
         
-        #get tags w/ depths
+        #=======================================================================
+        # #get  valid dfunc tags
+        #=======================================================================
         """indexes shoul dmatchy"""
         all_tags =  bdf.loc[:, 'ftag'].unique().tolist()
-        valid_tags = bdf.loc[vboolidx, 'ftag'].unique().tolist()
+        valid_tags = bdf.loc[vboolidx, 'ftag'].unique().tolist() #all tags w/ valid depths
         
         log.info('calculating for %i (of %i) ftags w/ positive depths: %s'%(
             len(valid_tags), len(all_tags), valid_tags))
         
-        #start results container
-        res_df = bdf.loc[:, [bid, cid, 'ftag', 'fcap', 'fscale']].copy()
+        #=======================================================================
+        # #start results container
+        #=======================================================================
+        res_df = bdf.loc[:, [bid, cid, 'ftag', 'fcap', 'fscale', 'nestID']].copy()
         """need this for the joiner to work (bid is ambigious)"""
         res_df.index.name = None
         
+        #=======================================================================
+        # build the events matrix
+        #=======================================================================
+        """makes it easier to keep track of all the results by event
+        view(events_df)
+        """
         #get events name set
-        """makes it easier to keep track of all the results by event"""
-        events_df = pd.DataFrame(index = ddf.columns[dboolcol])
-        
+        events_df = pd.DataFrame(index = ddf.columns[dboolcol])       
         for sufix in ['raw', 'scaled', 'capped', 'dmg']:
             events_df[sufix] = events_df.index + '_%s'%sufix
         
@@ -369,11 +397,10 @@ class Dmg2(Model):
         #======================================================================
         #setup loop pars
         first = True
-
-
         for indxr, ftag in enumerate(valid_tags):
-            log = self.logger.getChild('run.%s'%ftag)
+            log = self.logger.getChild('bdmg.%s'%ftag)
             
+            dfunc = self.dfuncs_d[ftag] #get this DFunc
             
             #identify these entries
             boolidx = np.logical_and(
@@ -384,39 +411,40 @@ class Dmg2(Model):
             
             log.info('(%i/%i) calculating \'%s\' w/ %i assets (of %i)'%(
                 indxr+1, len(valid_tags), ftag, boolidx.sum(), len(boolidx)))
-            
-
             #==================================================================
             # calc damage by tag.depth
             #==================================================================
-            #get these depths
-            tddf = ddf.loc[boolidx, :]
-            
             """
+            to improve performance,
+                we only calculate each depth once, then join back to the results
+                
             todo: add check for max depth to improve performance
             """
             
+            #get all  depths (per asset)
+            tddf = ddf.loc[boolidx, :]
+            
+            #get just the unique depths that need calculating
             deps_ar = pd.Series(np.unique(np.ravel(tddf.loc[:, dboolcol].values))
                                 ).dropna().values
-            
-            #get this DFunc
-            dfunc = self.dfuncs_d[ftag]
             
             log.debug('calc for %i (of %i) unique depths'%(
                 len(deps_ar), tddf.size))
             
             """multi-threading would nice for this loop"""
             
-            #loop and get 
-            res_d = dict()
-            for dep in deps_ar:
-                res_d[dep] = dfunc.get_dmg(dep)
+            #loop each depth through the damage function to get the result                
+            res_d = {dep:dfunc.get_dmg(dep) for dep in deps_ar}
                 
             #==================================================================
             # link these damages back to the results
             #==================================================================
             dep_dmg_df = pd.Series(res_d, name='dmg_raw').to_frame().reset_index(
                 ).rename(columns={'index':'dep'})
+                
+            #checks
+            assert np.array_equal(dep_dmg_df.dtypes.values, np.array([np.dtype('float64'), np.dtype('float64')], dtype=object))
+            assert dep_dmg_df.notna().all().all()
                 
                 
             for event in tddf.columns[dboolcol]:
@@ -425,7 +453,7 @@ class Dmg2(Model):
                 df = tddf.loc[:, [bid, event]].rename(columns={event: 'dep'}
                                                       ).dropna(subset=['dep'], how='all')
                 
-                #attach damages to this
+                #join damages to this
                 df = df.merge(dep_dmg_df, on='dep', how='left', validate='m:1')
                 
                 #give this column the correct name and slice down
@@ -454,7 +482,7 @@ class Dmg2(Model):
             log.debug('finished raw_damages for %i events'%dboolcol.sum())
          
            
-        log = self.logger.getChild('run')
+        log = self.logger.getChild('bdmg')
 
         
         log.info('finished getting raw damages for %i dfuncs and %i events'%(
@@ -466,6 +494,7 @@ class Dmg2(Model):
         #loop and add scaled damages
         """
         view(events_df)
+        view(res_df)
         """
         for event, e_ser in events_df.iterrows():
 
@@ -475,17 +504,24 @@ class Dmg2(Model):
             #check it
             if not boolcol.sum() == 1:
                 raise Error('\'%s\' got bad match count'%event)
+            
+            if res_df.loc[:, boolcol].isna().all().iloc[0]:
+                log.warning('%s got all nulls!'%event)
 
             #calc and set the scalecd values
-            res_df[e_ser['scaled']] = res_df.loc[:, boolcol].multiply(res_df['fscale'], axis=0)
+            try:
+                res_df[e_ser['scaled']] = res_df.loc[:, boolcol].multiply(res_df['fscale'], axis=0)
+            except Exception as e:
+                raise Error('failed w/ \n    %s'%e)
                 
         log.info('scaled damages')
         self.feedback.setProgress(80)
         #======================================================================
         #CAPPED------------
         #======================================================================
-        
         #loop and add scaled damages
+        meta_d = dict()
+        cmeta_df =res_df.loc[:,[cid, bid, 'ftag', 'fcap', 'fscale', 'nestID']]
         for event, e_ser in events_df.iterrows():
             """add some sort of reporting on what damages are capped?"""
 
@@ -496,13 +532,27 @@ class Dmg2(Model):
 
             assert boolcol.sum() == 2, 'bad column match'
             
+            """
+            boolidx.sum()
+            len(boolidx)
+            """
+             
+            
             
             #identify nulls
             boolidx = res_df[e_ser['scaled']].notna()
             #calc and set the scalecd values
             res_df.loc[boolidx, e_ser['capped']] = res_df.loc[boolidx, boolcol].min(axis=1)
+            
+            
+            #report
+            """written by bdmg_smry"""
+            mser = res_df.loc[boolidx, e_ser['scaled']] >res_df.loc[boolidx, 'fcap']
+            cmeta_df= cmeta_df.join(mser.rename(event), how='left')
+            meta_d[event] = mser.sum()
                 
-
+        log.info('cappd %i events w/ bid cnts maxing out (of %i) \n    %s'%(
+            len(meta_d), len(res_df), meta_d))
         
         log.info('capped damages')
         self.feedback.setProgress(90)
@@ -514,10 +564,18 @@ class Dmg2(Model):
             boolcol = res_df.columns == e_ser['capped']
             res_df[e_ser['dmg']] = res_df.loc[:, boolcol].fillna(0)
             
-
-        
         log.info('got final damages')
+        self.feedback.setProgress(92)
         
+        #=======================================================================
+        # meta--------
+        #=======================================================================
+        #set these for use later
+        self.bdmg_df = res_df
+        self.events_df = events_df.copy()
+        self.cmeta_df = cmeta_df
+
+
         #======================================================================
         # wrap------------
         #======================================================================
@@ -536,8 +594,237 @@ class Dmg2(Model):
         log.info('finished w/ %s'%str(res_df1.shape))
         return res_df1
         """
+        view(res_df)
         view(res_df1)
         """
+         
+    def bdmg_smry(self, #generate summary of damages
+                  res_df=None,  #built results
+                  events_df=None,  #event name matrix
+                  cmeta_df=None, #cap by asset
+                  gCn = 'ftag', #column name to group on
+                  
+                  
+                  logger=None,
+                  
+                  ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if res_df is None: res_df=self.bdmg_df
+        if events_df is None: events_df=self.events_df
+        if cmeta_df is None: cmeta_df=self.cmeta_df
+        if logger is None: logger=self.logger
+        log=logger.getChild('bdmg_smry')
+        
+        """
+        view(events_df)
+        view(res_df)
+        """
+        #rename conversion
+
+        #=======================================================================
+        # impact meta for each result type
+        #=======================================================================
+        res_d = dict() #container for meta
+        for rtName, rser in events_df.items():
+            
+            #slice to results columns of this type
+            rdf = res_df.loc[:, [gCn]+ rser.values.tolist()].dropna(how='all')
+            
+            #group and get totals per dfunc
+            rnm_d= dict(zip(rser.to_dict().values(), rser.to_dict().keys()))
+            mdf =  rdf.groupby(gCn).sum().rename( columns=rnm_d)
+            
+            #add count columns
+            mdf['cnt'] = res_df.loc[:, [gCn, self.cid]].groupby(gCn).count()
+            
+            res_d[rtName] = mdf
+            
+
+        #=======================================================================
+        # cap counts
+        #=======================================================================
+        df = cmeta_df.drop(['fcap', 'fscale', self.cid, self.bid], axis=1).fillna(False)
+        cm_df1  = df.groupby(gCn).sum().astype(np.int)
+        
+
+        
+        
+        
+        #=======================================================================
+        # write results
+        #=======================================================================
+        
+        out_fp = os.path.join(self.out_dir, '_smry_bdmg_%s_%s_%i.xls'%(gCn, self.tag, len(res_df)))
+        
+        d = {**res_d, 
+             'cap_cnts':cm_df1, 
+             'cap_data':cmeta_df.fillna(False),
+             }
+   
+        with pd.ExcelWriter(out_fp) as writer:
+            for tabnm, df in d.items():
+                assert isinstance(df, pd.DataFrame), tabnm
+                try:
+                    df.to_excel(writer, sheet_name=tabnm, index=True, header=True)
+                except Exception as e:
+                    log.error('failed to write tab \'%s\' w/ \n    %s'%(tabnm, e))
+        
+        log.info('wrote %i tabs to \n    %s'%(len(d), out_fp))
+
+        
+        return d
+    
+    def bdmg_pies(self, #generate pie charts of the damage summaries
+                  df_raw, #generate a pie chart for each column
+                  figsize     = (18, 6), 
+                  maxStr_len = 11, #maximum string length for truncating event names
+                  dfmt=None,
+                  
+                  linkSrch_d = {'top':'simu', 'bot':'fail'}, #how to separate data
+                  gCn = 'ftag', #group column (for title)
+                  logger=None,
+                  ):
+        
+        if logger is None: logger=self.logger
+        log=logger.getChild('bdmg_pies')
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if dfmt is None: dfmt = self.plot_fmt
+        
+        #======================================================================
+        # setup
+        #======================================================================
+        
+        import matplotlib
+        matplotlib.use('Qt5Agg') #sets the backend (case sensitive)
+        import matplotlib.pyplot as plt
+        
+        #set teh styles
+        plt.style.use('default')
+        
+        #font
+        matplotlib_font = {
+                'family' : 'serif',
+                'weight' : 'normal',
+                'size'   : 8}
+        
+        matplotlib.rc('font', **matplotlib_font)
+        matplotlib.rcParams['axes.titlesize'] = 10 #set the figure title size
+
+        
+        #spacing parameters
+        matplotlib.rcParams['figure.autolayout'] = False #use tight layout
+        
+        
+        #=======================================================================
+        # prep data
+        #=======================================================================
+        df = df_raw.sort_index(axis=1)
+        def get_colns(srch):
+            #id the columns
+            bcx = df.columns.str.contains(srch,  case=False)
+            return df.columns[bcx].to_list()
+        
+        tcolns = get_colns(linkSrch_d['top']) 
+        bcolns = get_colns(linkSrch_d['bot'])
+
+        
+
+        #======================================================================
+        # figure setup
+        #======================================================================\
+        
+        plt.close()
+
+        #build the figure canvas
+        fig = plt.figure(figsize=figsize,
+                     tight_layout=True,
+                     constrained_layout = False,
+                     )
+        
+        fig.suptitle('%s_%s_%s Damage pies on %i'%(self.name, self.tag, gCn, len(df.columns)),
+                     fontsize=12, fontweight='bold')
+        
+        #populate with subplots
+        ax_ar = fig.subplots(nrows=2, ncols=len(tcolns))
+        
+        #convert axis array into useful dictionary
+        tax_d = dict(zip(tcolns, ax_ar[0].tolist()))
+        bax_d = dict(zip(bcolns, ax_ar[1].tolist()))
+        
+        #=======================================================================
+        # loop and plot
+        #=======================================================================
+        def loop_axd(ax_d, rowLab):
+            #===================================================================
+            # def func(pct, allvals):
+            #     absolute = int(pct/100.*np.sum(allvals)) #convert BACK to the value
+            #     return "{:.1f}%\n{:.2f}".format(pct, absolute)
+            #===================================================================
+            first = True
+            for coln, ax in ax_d.items():
+                
+                #get data
+                dser = df.loc[:, coln]
+                
+                
+                wedges, texts, autotexts = ax.pie(
+                    dser, 
+                    #labels=dser.values, 
+                       autopct='%1.1f%%',
+                       #autopct=lambda pct: func(pct, dser),
+                       )
+                
+                #===============================================================
+                # #fix labels
+                # for e in texts:
+                #     ov = e.get_text()
+                #     e.set_text(dfmt.format(float(ov)))
+                #===============================================================
+                
+                #set truncated title
+                titlestr = (coln[:maxStr_len]) if len(coln) > maxStr_len else coln
+                ax.set_title(titlestr)
+                
+                #add text
+                if first:
+                    xmin, xmax1 = ax.get_xlim()
+                    ymin, ymax1 = ax.get_ylim()
+                    x_text = xmin + (xmax1 - xmin)*0 # 1/10 to the right of the left ax1is
+                    y_text = ymin + (ymax1 - ymin)*.5 #1/10 above the bottom ax1is
+                    anno_obj = ax.text(x_text, y_text, rowLab, fontsize=12, color='red', fontweight='bold')
+                    first=False
+            
+            return wedges, ax #return for legend handles
+                
+                
+        loop_axd(tax_d, linkSrch_d['top'])
+        wedges, ax = loop_axd(bax_d, linkSrch_d['bot'])
+        
+        #turn the legend on 
+
+        fig.legend(wedges, df.index.values, loc='center')
+        
+        
+        fig.tight_layout()
+        log.info('built pies')
+        
+        
+        return fig
+    """
+    plt.show()
+    """
+
+
+
+        
+
+        
         
     def upd_cf(self, #update the control file 
                out_fp = None,cf_fp = None):
@@ -578,6 +865,7 @@ class DFunc(ComWrkr,
     #==========================================================================
     tag = 'dfunc'
     min_dep = None
+    pars_d = {}
     
     def __init__(self,
                  tabn='damage_func', #optional tab name for logging
@@ -585,6 +873,9 @@ class DFunc(ComWrkr,
                  **kwargs):
         
         self.tabn= tabn
+        """
+        todo: reconcile tabn vs tag
+        """
         
         #init the baseclass
         super().__init__(**kwargs) #initilzie Model
@@ -597,23 +888,6 @@ class DFunc(ComWrkr,
         
         
         log = logger.getChild('%s'%self.tabn)
-        
-        #log.info('on df %s:\n%s'%(str(df_raw.shape), df_raw))
-        
-        #======================================================================
-        # precheck
-        #======================================================================
-        #=======================================================================
-        # #check all the rows are there
-        # miss_l = set(self.exp_row_nm).difference(df_raw.iloc[:, 0])
-        # assert len(miss_l) == 0, \
-        #     'tab \'%s\' missing %i expected row names: %s'%(
-        #         self.tabn, len(miss_l), miss_l)
-        #=======================================================================
-        
-            
-
-        
         #======================================================================
         # identify depth-damage data
         #======================================================================
@@ -639,15 +913,21 @@ class DFunc(ComWrkr,
         # attach other pars
         #======================================================================
         #get remainder of data
-        pars_d = df.loc[~boolidx, :
-                        ].set_index(df.columns[0], drop=True
-                                    ).iloc[:,0].to_dict()
+        mser = df.loc[~boolidx, :].set_index(df.columns[0], drop=True ).iloc[:,0]
+        mser.index =  mser.index.str.strip() #strip the whitespace
+        pars_d = mser.to_dict()
+        
+        #check it
+        assert 'tag' in pars_d, '%s missing tag'%self.tabn
+        
+        assert pars_d['tag']==self.tabn, 'tag/tab mismatch (\'%s\', \'%s\')'%(
+            pars_d['tag'], self.tabn)
         
         for varnm, val in pars_d.items():
             setattr(self, varnm, val)
             
         log.debug('attached %i parameters to Dfunc: \n    %s'%(len(pars_d), pars_d))
-        
+        self.pars_d = pars_d.copy()
         
         #======================================================================
         # extract depth-dmaage data
@@ -690,7 +970,6 @@ class DFunc(ComWrkr,
                         left=0, #depth below range
                         right=max(ar[1]), #depth above range
                         )
-
 #==============================================================================
 #         #check for depth outside bounds
 #         if depth < min(ar[0]):
@@ -705,70 +984,79 @@ class DFunc(ComWrkr,
 #==============================================================================
             
         return dmg
-
-
+    
+    
+    def get_stats(self): #get basic stats from the dfunc
+        deps = self.dd_ar[0]
+        dmgs = self.dd_ar[1]
+        return {**{'min_dep':min(deps), 'max_dep':max(deps), 
+                'min_dmg':min(dmgs), 'max_dmg':max(dmgs), 'dcnt':len(deps)},
+                **self.pars_d}
+#===============================================================================
+# def run():
+# 
+#     #==========================================================================
+#     # dev data
+#     #=========================================================================
+#     #==========================================================================
+#     # out_dir = os.path.join(os.getcwd(), 'dmg2')
+#     # tag='dev'
+#     # 
+#     # cf_fp = r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\dmg2\CanFlood_dmg2.txt'
+#     #==========================================================================
+#     
+#     #==========================================================================
+#     # tutorial 2
+#     #==========================================================================
+# 
+#     runpars_d={
+#         'Tut2':{
+#             'out_dir':os.path.join(os.getcwd(), 'dmg2', 'Tut2'),
+#             'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\built\CanFlood_tut2.txt',
+#             }
+#         }
+#     
+#     #===========================================================================
+#     # GolderHazard test
+#     #===========================================================================
+#     runpars_d={
+#         'run1':{
+#             'out_dir':r'C:\LS\03_TOOLS\CanFlood\_ins\IBI_GolderHazard_20200507\results\wi_noFail2',
+#             'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\IBI_GolderHazard_20200507\build\CanFlood_GH_wi_noFail.txt',
+#             }
+#         }
+# 
+#     
+#     #==========================================================================
+#     # build/execute
+#     #==========================================================================
+#     for tag, pars in runpars_d.items():
+#         cf_fp, out_dir = pars['cf_fp'], pars['out_dir']
+#         log = mod_logger.getChild(tag)
+#         assert os.path.exists(cf_fp)
+#         
+#         wrkr = Dmg2(cf_fp, out_dir=out_dir, logger=log, tag=tag).setup()
+#         
+#         res_df = wrkr.run()
+#         
+#         if res_df is None:
+#             log.warning('skipping')
+#             continue
+#         #==========================================================================
+#         # output
+#         #==========================================================================
+#         
+#         out_fp = wrkr.output_df(res_df, wrkr.resname)
+#         
+#         wrkr.upd_cf()
+# 
+#     #===========================================================================
+#     # wrap--------
+#     #===========================================================================
+#     force_open_dir(out_dir)
+#     
+#===============================================================================
 if __name__ =="__main__": 
-    
-
-    
-
-    #==========================================================================
-    # dev data
-    #=========================================================================
-    #==========================================================================
-    # out_dir = os.path.join(os.getcwd(), 'dmg2')
-    # tag='dev'
-    # 
-    # cf_fp = r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\dmg2\CanFlood_dmg2.txt'
-    #==========================================================================
-    
-    #==========================================================================
-    # tutorial 2
-    #==========================================================================
-
-    runpars_d={
-        'Tut2':{
-            'out_dir':os.path.join(os.getcwd(), 'dmg2', 'Tut2'),
-            'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\built\CanFlood_tut2.txt',
-            }
-        }
-     
-    #===========================================================================
-    # testing
-    #===========================================================================
-    #===========================================================================
-    # runpars_d={
-    #     'test':{
-    #         'out_dir':os.path.join(os.getcwd(), 'dmg2', 'Tut2'),
-    #         'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200330\CanFlood_tut2.txt',
-    #         }
-    #     }
-    #===========================================================================
-    
-    #==========================================================================
-    # build/execute
-    #==========================================================================
-    for tag, pars in runpars_d.items():
-        cf_fp, out_dir = pars['cf_fp'], pars['out_dir']
-        log = mod_logger.getChild(tag)
-        assert os.path.exists(cf_fp)
-        
-        wrkr = Dmg2(cf_fp, out_dir=out_dir, logger=log, tag=tag).setup()
-        
-        res_df = wrkr.run()
-        
-        if res_df is None:
-            log.warning('skipping')
-            continue
-        #==========================================================================
-        # output
-        #==========================================================================
-        
-        out_fp = wrkr.output_df(res_df, wrkr.resname)
-        
-        wrkr.upd_cf()
-
-    force_open_dir(out_dir)
 
     print('finished')
     

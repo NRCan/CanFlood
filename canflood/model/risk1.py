@@ -57,7 +57,7 @@ class Risk1(Model):
              'event_probs':{'values':('ari', 'aep')}, 
              'felv':{'values':('ground', 'datum')},
              'prec':{'type':int}, 
-             'drop_tails':{'type':bool},
+             'ltail':None, 'rtail':None, 'drop_tails':{'type':bool},
              'as_inun':{'type':bool},
               #'ground_water':{'type':bool}, #NO! risk1 only accepts positive depths
              },
@@ -93,7 +93,9 @@ class Risk1(Model):
         'f0_elv':{'type':np.number}
         }
     """
-    NOTE: for as_inun=True, we dont need any elevations (should all be zero)
+    NOTE: for as_inun=True, 
+    using this flag to skip conversion of exposure to binary
+    we dont need any elevations (should all be zero)
     but allowing the uesr to NOT pass an elv column would be very difficult
     """
     
@@ -122,17 +124,12 @@ class Risk1(Model):
         """
         called by Dialog and standalones
         """
-        
         self.init_model()
-        
         self.resname = 'risk1_%s_%s'%(self.tag, self.name)
         #self.load_data()
         #======================================================================
         # load data files
         #======================================================================
-
-
-        
         self.load_finv()
         self.load_evals()
         self.load_expos(dtag='expos')
@@ -144,10 +141,7 @@ class Risk1(Model):
             self.load_gels()
             self.add_gels()
         
-        #self.setup_finv()
-        
 
-        #self.setup_expo()
         self.build_exp_finv() #build the expanded finv
         self.build_depths()
         
@@ -196,7 +190,7 @@ class Risk1(Model):
         #======================================================================
         # convert exposures to binary
         #======================================================================
-        if not self.as_inun:
+        if not self.as_inun: #standard impact/noimpact analysis
             #get relvant bids
             """
             because there are no curves, Risk1 can only use positive depths.
@@ -222,7 +216,6 @@ class Risk1(Model):
         # leave as percentages
         #=======================================================================
         else:
-            
             bidf = ddf1.copy()
             assert bidf.max().max() <=1
             
@@ -247,9 +240,7 @@ class Risk1(Model):
         assert not bidf1.isna().any().any()
         
         cdf = bidf1.groupby(cid).max().drop(bid, axis=1)
-
-        
-
+ 
         #======================================================================
         # resolve alternate impacts (per evemt)
         #======================================================================
@@ -271,17 +262,13 @@ class Risk1(Model):
         #======================================================================
         #check the columns
         assert np.array_equal(bres_df.columns.values, aep_ser.unique()), 'column name problem'
-        
-        
         _ = self.check_monot(bres_df)
-        
-        
         #======================================================================
         # get ead per asset
         #======================================================================
         if res_per_asset:
             self.feedback.setProgress(50)
-            res_df = self.calc_ead(bres_df, drop_tails=self.drop_tails, logger=log)
+            res_df = self.calc_ead(bres_df, drop_tails=self.drop_tails, logger=log).round(self.prec)
                         
         else:
             res_df = None
@@ -291,15 +278,15 @@ class Risk1(Model):
         # totals
         #======================================================================        
         res_ser = self.calc_ead(bres_df.sum(axis=0).to_frame().T, logger=log).iloc[0]
-        self.res_ser = res_ser.copy() #set for risk_plot()
         
-
+        self.res_ser = res_ser.copy() #set for risk_plot()
         self.feedback.setProgress(95)
             
         
-
+        #=======================================================================
+        # wrap
+        #=======================================================================
         log.info('finished on %i assets and %i damage cols'%(len(bres_df), len(res_ser)))
-        
 
         #format resul series
         res = res_ser.to_frame()
@@ -315,7 +302,7 @@ class Risk1(Model):
         log.info('finished')
 
 
-        return res, res_df
+        return res.round(self.prec), res_df
     
 
 if __name__ =="__main__": 

@@ -51,7 +51,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.qproj_setup()
         self.connect_slots()
         
-        self.logger.info('Results_Dialoginitilized')
+        self.logger.debug('Results_Dialog init')
         
         
     def connect_slots(self): #connect your slots
@@ -181,7 +181,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         
         
-        log.info('finished')
+        log.debug('connect_slots finished')
         
     def run_plotRisk(self): 
         log = self.logger.getChild('run_plotRisk')
