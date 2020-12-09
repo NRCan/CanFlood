@@ -1,7 +1,7 @@
 # CanFlood
 Flood Risk modelling toolbox for Canada
 
-## Beta 0.3.0 Release
+## Beta 0.4.0 Release
 
 Here are the working tools:
 
@@ -17,7 +17,9 @@ Happy flood risk modelling!
 
 ## Installation Instructions 
 
+
 1) Ensure Qgis 3.10.12 LTR is installed and working on your system ([Qgis download page](https://qgis.org/en/site/forusers/download.html)) with all the required python packages [requirements](https://github.com/IBIGroupCanWest/CanFlood/tree/master/requirements). To better manage versions and dependnecies, we recommend this be done by a user with administrative privileges and using the OSGeo4W installer (using the 'advanced install' option described [here](https://github.com/IBIGroupCanWest/CanFlood/issues/6#issuecomment-592091488)).  In particular, 'pandas' doesn't seem to be installed by default with some distributions.  But hopefully you get lucky and your install comes with everything!
+
 
 2) During development, it's best to install two additional plugins to help with running CanFlood.  These can be installed from QGIS's plugin repository (Plugins > Manage and Install > 'All' > Search for desired plugin > 'Install Plugin'); however, ensure experimental plugins are searchable (from the plugins dialog > Settings > 'Show also experimental plugins'). The first helper plugin is [First Aid](https://plugins.qgis.org/plugins/firstaid/), which provides additional support for viewing errors in other plugins (essential for communicating your crash reports back to the develpoment team).  The second plugin is called 'Processing'. 
 
@@ -49,4 +51,4 @@ If there is no issue ticket yet, follow the instructions [here](https://github.c
 
 
 ## CanFlood needs more features!
-We agree. Consider contacting a CanFlood developer to sponsor new content that suites your needs, or joining the development community. Whether you'd like to integrate CanFlood model building with some existing local data bases, or integrate some other flood risk models into your analysis, or develop new output styles, the CanFlood project wants to hear from you.
+We agree. Consider contacting a CanFlood developer to sponsor new content that suites your needs, or joining the development community. Whether you'd like to integrate CanFlood model building with some existing local data bases, or integrate some other flood risk models into your analysis, or develop new output styles, the CanFlood project wants to hear from you. Please post a new issue [here](https://github.com/IBIGroupCanWest/CanFlood/issues/new) with an 'enhancement' label.
