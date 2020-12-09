@@ -1,7 +1,7 @@
 # CanFlood
 Flood Risk modelling toolbox for Canada
 
-## Beta 0.3.0 Release
+## Beta 0.4.0 Release
 
 Here are the working tools:
 
