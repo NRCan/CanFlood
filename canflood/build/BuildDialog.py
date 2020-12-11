@@ -1332,23 +1332,26 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         from model.risk1 import Risk1
         
         #populate all possible test parameters
-        vpars_d = {
+        vpars_all_d = {
                     'risk1':(self.checkBox_Vr1, Risk1),
                    'dmg2':(self.checkBox_Vi2, Dmg2),
                    'risk2':(self.checkBox_Vr2, Risk2),
                    #'risk3':(self.checkBox_Vr3, None), 
                                            }
         
-
+        #loop and collect based on check boxes
+        vpars_d = dict()
+        for vtag, (checkBox, modObj) in vpars_all_d.items():
+            if not checkBox.isChecked(): continue #skip this one
+            vpars_d[vtag] = modObj
         
         self.feedback.upd_prog(10)
         
         #======================================================================
         # loop through each possibility and validate
         #======================================================================
-        for vtag, (checkBox, modObj) in vpars_d.items():
-            if not checkBox.isChecked():
-                continue #skip this one
+        for vtag, modObj in vpars_d.items():
+
             
             log.debug('checking \"%s\''%vtag)
 
