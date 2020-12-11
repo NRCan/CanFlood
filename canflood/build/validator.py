@@ -117,7 +117,11 @@ class Vali(Qcoms):
         # write result to control file
         #=======================================================================
         self.update_cf(
-            {'validation':({valid_par:str(self.valid)}, )
+            {
+                'validation':({valid_par:str(self.valid)},
+                '# \'%s\' validated by validator.py at %s'%(
+                    valid_par, datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S'))
+                                                                            )
              },
             cf_fp = self.cf_fp
             )

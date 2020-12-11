@@ -1320,7 +1320,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #===================================================================
         # setup validation worker
         #===================================================================
-        vwrkr = Vali(cf_fp, logger=self.logger, out_dir=self.lineEdit_wd.text(), tag=self.tag)
+        wrkr = Vali(cf_fp, logger=self.logger, out_dir=self.lineEdit_wd.text(), tag=self.tag)
         
 
         #======================================================================
@@ -1336,7 +1336,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                     'risk1':(self.checkBox_Vr1, Risk1),
                    'dmg2':(self.checkBox_Vi2, Dmg2),
                    'risk2':(self.checkBox_Vr2, Risk2),
-                   'risk3':(False, (None)), #TODO
+                   #'risk3':(self.checkBox_Vr3, None), 
                                            }
         
 
@@ -1356,7 +1356,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             #===================================================================
             # parameter value/type check
             #===================================================================
-            errors = vwrkr.cf_check(modObj)
+            errors = wrkr.cf_check(modObj)
             
 
             # #report on all the errors
