@@ -262,6 +262,10 @@ class WebConnect(ComWrkr):
         """taken from canadian_web_services
         
         is there an api method to do this?
+        
+        https://gis.stackexchange.com/questions/307325/how-to-open-and-add-sqlite-connection-to-browser-with-pyqgis
+        
+        
         """
         
         '''
