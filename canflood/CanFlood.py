@@ -49,7 +49,7 @@ from shutil import copyfile
 from .build.BuildDialog import DataPrep_Dialog
 from .model.ModelDialog import Modelling_Dialog
 from .results.ResultsDialog import Results_Dialog
-from .wconnect.wc import WebConnect
+from .misc.wc import WebConnect
 
 #===============================================================================
 # imports for PluginReloader
