@@ -1305,23 +1305,22 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.logger.push('generated \'aeps\' and set \'event_probs\' to control file')
         
     def run_validate(self):
-        #raise Error('broken')
-        """
-        a lot of this is duplicated in  model.scripts_.setup_pars
-        
-        TODO: consolidate with setup_pars
-        move to separate module
-        
-        """
-        log = self.logger.getChild('valid')
+
+
+        log = self.logger.getChild('validator')
         log.info('user pressed \'pushButton_Validate\'')
         
         #======================================================================
         # collect form ui----
         #======================================================================
-        out_dir = self.lineEdit_wd.text()
         
         cf_fp = self.get_cf_fp() #get the control file path
+        
+        
+        #===================================================================
+        # setup validation worker
+        #===================================================================
+        vwrkr = Vali(cf_fp, logger=self.logger, out_dir=self.lineEdit_wd.text(), tag=self.tag)
         
 
         #======================================================================
@@ -1333,7 +1332,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         from model.risk1 import Risk1
         
         #populate all possible test parameters
-
         vpars_d = {
                     'risk1':(self.checkBox_Vr1, Risk1),
                    'dmg2':(self.checkBox_Vi2, Dmg2),
@@ -1346,58 +1344,38 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.feedback.upd_prog(10)
         
         #======================================================================
-        # validate
+        # loop through each possibility and validate
         #======================================================================
-
-        
-        vflag_d = dict()
         for vtag, (checkBox, modObj) in vpars_d.items():
-            
             if not checkBox.isChecked():
                 continue #skip this one
-            log.debug('checking \"%s\''%vtag)
-            #===================================================================
-            # setup validation worker
-            #===================================================================
-            vwrkr = Vali(modObj, cf_fp, logger=self.logger, out_dir=out_dir, tag=vtag)
             
-            errors = []
+            log.debug('checking \"%s\''%vtag)
+
+
             #===================================================================
             # parameter value/type check
             #===================================================================
-            errors = errors + vwrkr.cf_check()
+            errors = vwrkr.cf_check(modObj)
             
-            
-            
-            #===================================================================
+
             # #report on all the errors
-            #===================================================================
             for indxr, msg in enumerate(errors):
-                log.error('error %i: \n%s'%(indxr+1, msg))
-                        
-                    
+                log.error('%s error %i: \n%s'%(vtag, indxr+1, msg))
+                
+            #===================================================================
+            # update control file
+            #===================================================================
+            wrkr.cf_mark()
             
-            #final trip
-            """lets us loop through all the checks before failing"""
-            if not len(errors)==0:        
-                raise Error('failed to validate ControlFile for \'%s\' w/ %i error(s)... see log'%(
-                    vtag, len(errors)))
-
-
-            #==================================================================
-            # set validation flag
-            #==================================================================
-            vflag_d[modObj.valid_par] = 'True'
             self.feedback.upd_prog(80/len(vpars_d), method='append')
             
-        #======================================================================
-        # update control file
-        #======================================================================
-        self.update_cf(
-            {'validation':(vflag_d, )
-             },
-            cf_fp = cf_fp
-            )
+        #=======================================================================
+        # wrap
+        #=======================================================================
+            
+
+
         self.feedback.upd_prog(100)
         
         log.push('completed %i validations'%len(vpars_d))
