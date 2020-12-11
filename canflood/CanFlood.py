@@ -51,6 +51,10 @@ from .model.ModelDialog import Modelling_Dialog
 from .results.ResultsDialog import Results_Dialog
 from .misc.wc import WebConnect
 
+
+
+"""QprojPlug classes will call this during init
+may want to connect some simpler objects here though"""
 #===============================================================================
 # imports for PluginReloader
 #===============================================================================
@@ -182,7 +186,7 @@ class CanFlood:
         #build the action
         icon = QIcon(os.path.dirname(__file__) + "/icons/download-cloud.png")
         self.action_dl = QAction(QIcon(icon), 'Add Connections', self.iface.mainWindow())
-        self.action_dl.triggered.connect(self.addConnections) #connect it
+        self.action_dl.triggered.connect(self.webConnect) #connect it
         
         #use helper method to add to the PLugins menu
         self.iface.addPluginToMenu("&CanFlood", self.action_dl)
@@ -199,10 +203,13 @@ class CanFlood:
     def showToolbarProjectResults(self):
         self.dlg3.show()
         
-    def addConnections(self):
-        self.logger('pushed AddConnections')
+    def webConnect(self):
+        self.logger('pushed webConnect')
         
-        wc1 = WebConnect(self.iface)
+        wc1 = WebConnect(
+            iface = self.iface
+            #self.iface
+            )
         
         wc1.addAll()
         
