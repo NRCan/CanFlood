@@ -158,21 +158,31 @@ if __name__ =="__main__":
     from model.dmg2 import Dmg2
     from model.risk2 import Risk2
     
-    errors = []
+    res_d = dict()
     for vtag, modObj in {
         'dmg2':Dmg2,
         'risk2':Risk2
         }.items():
     
         
-        errors = errors + wrkr.cf_check(modObj)
+        errors = wrkr.cf_check(modObj)
         for e in errors:
             print('%s: %s'%(vtag, e))
         wrkr.cf_mark()
+        
+        #store
+        if len(errors) == 0: 
+            res_d[vtag] = True
+        else:
+            res_d[vtag] = False
     
     
-
- 
+    
+    
+    log.push('passed %i validations'%(
+            
+            len(vpars_d))
+    
     print('finished')
     
     

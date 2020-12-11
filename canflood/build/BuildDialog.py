@@ -1350,12 +1350,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         # loop through each possibility and validate
         #======================================================================
+        res_d = dict()
         for vtag, modObj in vpars_d.items():
-
-            
             log.debug('checking \"%s\''%vtag)
-
-
             #===================================================================
             # parameter value/type check
             #===================================================================
@@ -1373,6 +1370,12 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             
             self.feedback.upd_prog(80/len(vpars_d), method='append')
             
+            #store
+            if len(errors) == 0: 
+                res_d[vtag] = True
+            else:
+                res_d[vtag] = False
+            
         #=======================================================================
         # wrap
         #=======================================================================
@@ -1381,7 +1384,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
 
         self.feedback.upd_prog(100)
         
-        log.push('completed %i validations'%len(vpars_d))
+        log.push('passed %i (of %i) validations. see log'%(
+             np.array(list(res_d.values())).sum(), len(vpars_d)
+             ))
         
         self.feedback.upd_prog(None)
         return
