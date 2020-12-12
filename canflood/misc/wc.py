@@ -42,7 +42,7 @@ from hlpr.plug import logger as plogger
 
 
 class WebConnect(ComWrkr):
-    
+    allGroups = None
     
     def __init__(self,
                  iface=None,
@@ -117,7 +117,7 @@ class WebConnect(ComWrkr):
 
 
     
-        log.info('finished loading %i connections \n    %s'%(len(newCons_d), list(newCons_d.keys())))
+        log.info('retrieved %i connection parameters from file \n    %s'%(len(newCons_d), list(newCons_d.keys())))
         
         return newCons_d
     
@@ -150,21 +150,27 @@ class WebConnect(ComWrkr):
         #=======================================================================
         for cname, newPars_d in copy.copy(newCons_d).items():
             #navigate to this group within the settings
-            usets.beginGroup(newPars_d.pop('group'))
+            usets.beginGroup(newPars_d['group'])
             
-            """TODO: add check"""
+            """TODO: add checks:
+            warn if this group already exists
+            check if connection is valid
+            """
             
+            log.debug('setting %i parameters to group \"%s\' \n    %s'%(
+                len(newPars_d), usets.group(), newPars_d))
             #loop and add each setting to this group
             for k, v in newPars_d.items():
+                if k=='group': continue 
                 usets.setValue(k, v)
                 
             #return to the parent group
             usets.endGroup()
 
 
-        usets.sync() #write unsaved changes?
+        usets.sync() #write unsaved changes to file
         
-        
+        log.info('added %i connections: \n    %s'%( len(newCons_d), list(newCons_d.keys())))
         #=======================================================================
         # check result
         #=======================================================================
@@ -172,7 +178,7 @@ class WebConnect(ComWrkr):
         assert result, 'failed to set some values \n    %s'%chk_d
                 
                 
-        log.info('added %i  connections'%( len(newCons_d)))
+        
             
         return newCons_d
     
@@ -181,6 +187,7 @@ class WebConnect(ComWrkr):
                            cons_d,
                            qini_fp = None,
                            logger=None,
+                           parent_group = 'qgis',
                            ):
         """there's probably some builtin functions for this"""
         
@@ -198,16 +205,22 @@ class WebConnect(ComWrkr):
         """
         assert os.path.exists(qini_fp), 'bad settings filepath: %s'%qini_fp
         usets = QgsSettings(qini_fp, QSettings.IniFormat) 
-        
+        #usets.beginGroup(parent_group) #all checks are done within the 1qgis group
+
+        allGroups = self.getAllGroups(usets)
+        log.debug('found %i groups'%len(allGroups))
+            
         #=======================================================================
         # loop and check
         #=======================================================================
+        log.debug('checking %i connectin settings in fp: \n    %s'%(len(cons_d), qini_fp))
         res_d = dict() #macro results contqainer
         for cname, newPars_d in cons_d.items():
             res_d1 = dict()
-            group = 'qgis/%s'%(newPars_d['group']) #group to check
+            group = '/qgis/%s'%newPars_d['group'].replace('\\', '/') #group to check
             for k, v in newPars_d.items():
-                result, msg = self.checkSettings(group, k, v, )
+                if k=='group': continue 
+                result, msg = self.checkSettings(group, k, v, usets, allGroups)
                 log.debug('\"%s\' %s =%s'%(group,result, msg))
                 res_d1[k] = result #add result
                 
@@ -217,12 +230,31 @@ class WebConnect(ComWrkr):
             # #report
             #===================================================================
             ar = np.array(list(res_d1.values()))
-            log.info('\'%s\' %i/%i settings match'%(group, ar.sum(), len(ar)))
+            log.info('group=\'%s\' %i (of %i) settings match'%(group, ar.sum(), len(ar)))
 
             
             res_d[cname] = ar.all()
             
         return np.array(list(res_d.values())).all(), res_d
+    
+    def getAllGroups(self, usets):
+        """couldnt find a nice builtin for this
+        
+        pulls all groups on the QgsSettings"""
+        assert isinstance(usets, QgsSettings)
+        
+        l = list()
+        for k in usets.allKeys():
+            k_all = k.split(r'/') #split all the entries
+            if len(k_all)>1:
+                l.append('/'.join(k_all[:-1]))
+            else:
+                l.append(k_all[0])
+                
+        #add the leading slash
+        l = ['/'+e for e in l]
+        
+        return l
         
     
     def checkSettings(self,
@@ -230,16 +262,23 @@ class WebConnect(ComWrkr):
                       key,
                       value,
                       usets,
+                      allGroups
                       ):
+        
 
+
+                
         
         #=======================================================================
         # run checks
         #=======================================================================
         result, msg = True, 'match'
         
+
+        
+        
         #see if the group exists
-        if not group in usets.childGroups():
+        if not group in allGroups:
             msg = 'group \'%s\' does not exist'%group
             result = False
         
@@ -249,7 +288,7 @@ class WebConnect(ComWrkr):
         if result:
             #move to the group
             usets.beginGroup(group)
-            assert usets.group()==group
+            assert usets.group() in group
             
             if not key in usets.childKeys():
                 msg='group \"%s\' does not have key \'%s\''%(group, key)
@@ -266,7 +305,7 @@ class WebConnect(ComWrkr):
             #revert gruop
             usets.endGroup()
             
-            
+        
         return result, msg
             
 
