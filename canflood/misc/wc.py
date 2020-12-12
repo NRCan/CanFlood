@@ -194,59 +194,69 @@ class WebConnect(ComWrkr):
             settings_ans = [url,"","",""]
             
         elif (serverType=='WCS'):
-            
-            """using pythonic code here"""
-            #===================================================================
-            # #default parmaeters:settings
-            #===================================================================
-            
-            
-            conBase_d = { #ocnnections
-                'url':'???',
-                'ignoreAxisOrientation':'false',
-                'invertAxisOrientation':'false',
-                'ignoreReportedLayerExtents':'false',
-                'ignoreGetMapURI':'false',
-                'smoothPixmapTransform':'false',
-                'dpiMode':'7',
-                'referer':''}
-                
-            secBase_d = { #security settings 
-                'username':'',
-                'password':'',
-                'authcfg':'',
-                }
-                
-               
-            #===================================================================
-            # #populate
-            #===================================================================
-            
-            #add passed parameters
-            conBase_d['url'] = url
-            
-            
-
-            
-            
-            #===================================================================
-            # #add base values
-            #===================================================================
-            con_d, sec_d = copy.copy(conBase_d), copy.copy(secBase_d) #start with defaults
             base_settings = "connections-wcs\\"+title+"\\"
             base_security_settings = "WCS\\"+title+"\\"
             
-            con_d = {base_settings+k:v for k,v in con_d.items()}
-            sec_d = {base_security_settings+k:v for k,v in sec_d.items()}
+            settings = [base_settings+"url",base_settings+"ignoreAxisOrientation",base_settings+"invertAxisOrientation",
+                        base_settings+"ignoreGetMapURI",base_settings+"smoothPixmapTransform",base_settings+"dpimode",base_settings+"referer",
+                        base_settings+"ignoreGetFeatureInfoURI",base_security_settings+"username",base_security_settings+"password",base_security_settings+"authcfg"]
             
-  
+            settings_ans = [url,"false","false","false","false","7","","false","","",""]
             
-            #===================================================================
-            # revert
-            #===================================================================
-            """todo: restructure this whole class to be more pythonic"""
-            settings = list(con_d.keys()) + list(sec_d.keys())
-            settings_ans = list(con_d.values()) + list(sec_d.values())
+#===============================================================================
+#             """using pythonic code here"""
+#             #===================================================================
+#             # #default parmaeters:settings
+#             #===================================================================
+#             
+#             
+#             conBase_d = { #ocnnections
+#                 'url':'???',
+#                 'ignoreAxisOrientation':'false',
+#                 'invertAxisOrientation':'false',
+#                 'ignoreReportedLayerExtents':'false',
+#                 'ignoreGetMapURI':'false',
+#                 'smoothPixmapTransform':'false',
+#                 'dpiMode':'7',
+#                 'referer':''}
+#                 
+#             secBase_d = { #security settings 
+#                 'username':'',
+#                 'password':'',
+#                 'authcfg':'',
+#                 }
+#                 
+#                
+#             #===================================================================
+#             # #populate
+#             #===================================================================
+#             
+#             #add passed parameters
+#             conBase_d['url'] = url
+#             
+#             
+# 
+#             
+#             
+#             #===================================================================
+#             # #add base values
+#             #===================================================================
+#             con_d, sec_d = copy.copy(conBase_d), copy.copy(secBase_d) #start with defaults
+#             base_settings = "connections-wcs\\"+title+"\\"
+#             base_security_settings = "WCS\\"+title+"\\"
+#             
+#             con_d = {base_settings+k:v for k,v in con_d.items()}
+#             sec_d = {base_security_settings+k:v for k,v in sec_d.items()}
+#             
+#   
+#             
+#             #===================================================================
+#             # revert
+#             #===================================================================
+#             """todo: restructure this whole class to be more pythonic"""
+#             settings = list(con_d.keys()) + list(sec_d.keys())
+#             settings_ans = list(con_d.values()) + list(sec_d.values())
+#===============================================================================
                      
             
             
