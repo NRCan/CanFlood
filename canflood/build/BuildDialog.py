@@ -663,6 +663,10 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         vlay = self.slice_aoi(vlay_raw)
         
+        #name check
+        if len(vlay.name()) > 50:
+            vlay.setName(vlay.name()[0:50])
+        
         
         if self.checkBox_loadres.isChecked():
             self.qproj.addMapLayer(vlay)
@@ -689,7 +693,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             raise Error('cid not found in finv_df')
         
         assert df[cid].is_unique
-        assert 'int' in df[cid].dtypes.name
+        assert 'int' in df[cid].dtypes.name, 'cid \'%s\' bad type'%cid
         
         self.feedback.upd_prog(50)
         #=======================================================================

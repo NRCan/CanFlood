@@ -129,7 +129,7 @@ class Npri(Qcoms):
         #=======================================================================
         finv_vlay = self.vlay_new_df2(res_df,  geo_d=geo_d, crs=in_vlay.crs(),
                                 logger=log,
-                                layname = '%s_finv'%in_vlay.name())
+                                layname = 'finv_NPRI')
         
         #=======================================================================
         # wrap
