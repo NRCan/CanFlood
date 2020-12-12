@@ -179,9 +179,7 @@ if __name__ =="__main__":
     
     
     
-    log.push('passed %i validations'%(
-            
-            len(vpars_d))
+    log.push('passed %i validations'%(len(res_d)))
     
     print('finished')
     
