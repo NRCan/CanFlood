@@ -112,7 +112,7 @@ class WebConnect(ComWrkr):
             newCons_d[name] = dict(sect_d)
             
             miss_l = set(expected_keys).difference(newCons_d[name].keys())
-            assert len(miss_l) == 0, miss_l
+            assert len(miss_l) == 0, 'parameter file missing some keys: %s'%miss_l
             
 
 
