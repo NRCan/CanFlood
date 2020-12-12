@@ -23,8 +23,8 @@ import numpy as np
 #standalone runs
 if __name__ =="__main__": 
     from hlpr.logr import basic_logger
-    mod_logger = basic_logger()   
-    
+    root_logger = basic_logger()  
+    mod_logger = root_logger.getChild('risk2')
     from hlpr.exceptions import Error
     
 #plugin runs
@@ -33,8 +33,8 @@ else:
 
     from hlpr.exceptions import QError as Error
 
-from hlpr.Q import *
-from hlpr.basic import *
+#from hlpr.Q import *
+from hlpr.basic import force_open_dir
 from model.modcom import Model
 
 #==============================================================================
@@ -50,23 +50,30 @@ class Risk2(Model):
 
 
     #==========================================================================
-    # #program vars
+    #program vars----
     #==========================================================================
     
     valid_par = 'risk2'
 
     
-    #expectations from parameter file
-    exp_pars_md = {#mandataory: section: {variable: handles} 
+    #===========================================================================
+    # #expectations from parameter file
+    #===========================================================================
+    #control file expectation handles: MANDATORY
+    #{section : {variable {check handle type: check values}
+    exp_pars_md = {
         'parameters' :
-            {'name':{'type':str}, 'cid':{'type':str},
-
-             'felv':{'values':('ground', 'datum')},
-             'event_probs':{'values':('aep', 'ari')},
-             'ltail':None, 'rtail':None, 'drop_tails':{'type':bool},
-             'integrate':{'values':('trapz',)}, 
-             'prec':{'type':int}, 
-             'as_inun':{'type':bool},
+            {
+             'name':        {'type':str},
+             'cid':         {'type':str},
+             'felv':        {'values':('ground', 'datum')},
+             'event_probs': {'values':('aep', 'ari')},
+             'ltail':None,
+             'rtail':None,
+             'drop_tails':  {'type':bool},
+             'integrate':   {'values':('trapz',)}, 
+             'prec':        {'type':int}, 
+             'as_inun':     {'type':bool},
              },
             
         'dmg_fps':{
@@ -90,7 +97,7 @@ class Risk2(Model):
                     }
     
     #==========================================================================
-    # plot controls
+    # plot controls----
     #==========================================================================
     plot_fmt = '${:,.0f}'
     y1lab = '$dmg'
@@ -113,7 +120,7 @@ class Risk2(Model):
         #======================================================================
         # setup funcs
         #======================================================================
-        self.init_model()
+        self.init_model() #mostly just attaching and checking parameters from file
         
         self.resname = 'risk2_%s_%s'%(self.tag, self.name)
         
@@ -229,20 +236,10 @@ def run():
     runpars_d={
         'Tut2':{
             'out_dir':os.path.join(os.getcwd(), 'risk2', 'Tut2'),
-            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200330\CanFlood_tut2.txt',
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\built\CanFlood_tut2.txt',
             }
         }
     
-    #===========================================================================
-    # GolderHazard test
-    #===========================================================================
-    runpars_d={
-        'run1':{
-            'out_dir':r'C:\LS\03_TOOLS\CanFlood\_ins\IBI_GolderHazard_20200507\results\wi_noFail2',
-            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\IBI_GolderHazard_20200507\build\CanFlood_GH_wi_noFail.txt',
-            }
-        }
-        
     
     
     

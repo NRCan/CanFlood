@@ -11,7 +11,7 @@ Created on Feb. 9, 2020
 # imports------------
 #==============================================================================
 
-import configparser, os, inspect, logging
+import configparser, os, inspect, logging, copy, sys
 import pandas as pd
 import numpy as np
 
@@ -24,15 +24,16 @@ from scipy import interpolate, integrate
 if __name__ =="__main__": 
     from hlpr.logr import basic_logger
     mod_logger = basic_logger()   
+    from hlpr.exceptions import Error
 
     
 #plugin runs
 else:
     mod_logger = logging.getLogger('common') #get the root logger
 
-from hlpr.exceptions import QError as Error
+    from hlpr.exceptions import QError as Error
     
-from hlpr.basic import *
+from hlpr.basic import force_open_dir, ComWrkr
 
 #==============================================================================
 # class-----------
@@ -175,12 +176,47 @@ class Model(ComWrkr):
         should be called by the model's own 'setup()' func
             during standalones and Dialog runs
         """        
+        log = self.logger.getChild('init_model')
+        #=======================================================================
+        # #parameter setup-----
+        #=======================================================================
+        #=======================================================================
+        # load the control file
+        #=======================================================================
+        cf_fp = self.cf_fp
+        assert os.path.exists(cf_fp), 'provided parameter file path does not exist \n    %s'%cf_fp
+
+        self.pars = configparser.ConfigParser(inline_comment_prefixes='#')
+        log.info('reading parameters from \n     %s'%self.pars.read(cf_fp))
         
-        #parameter setup
-        self.cf_attach_pars(self.cf_fp)
+        #=======================================================================
+        # check against expectations
+        #=======================================================================
+        errors = []
+        for chk_d, opt_f in ((self.exp_pars_md,False), (self.exp_pars_op,True)):
+            _, l = self.cf_chk_pars(self.pars, copy.copy(chk_d), optional=opt_f)
+            errors = errors + l
+            
+        #report on all the errors
+        for indxr, msg in enumerate(errors):
+            log.error('error %i: \n%s'%(indxr+1, msg))
+                    
+                
+        #final trip
+        """lets us loop through all the checks before failing"""
+        if not len(errors)==0:        
+            raise Error('failed to validate ControlFile w/ %i error(s)... see log'%len(errors))
+            
+        #=======================================================================
+        # attach control file parameter values
+        #=======================================================================
+
+        _ = self.cf_attach_pars(self.pars)
         
         
-        #check our validity tag
+        #=======================================================================
+        # #check our validity tag
+        #=======================================================================
         if not getattr(self, self.valid_par):
             raise Error('control file not validated for \'%s\'. please run InputValidator'%self.valid_par)
         
@@ -188,166 +224,234 @@ class Model(ComWrkr):
         self.logger.debug('finished init_modelon Model')
         
         
+    def cf_chk_pars(self,
+                   cpars,
+                   chk_d,
+                   optional=False, #whether the parameters are optional
+                   ):
+        """
         
-    def cf_attach_pars(self, #load parmaeteres from file, check, and attach
-                    cf_fp):
+        """
         
-        log = self.logger.getChild('cf_attach_pars')
+        log = self.logger.getChild('cf_chk_pars')
         
-        assert os.path.exists(cf_fp), 'provided parameter file path does not exist \n    %s'%cf_fp
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert isinstance(cpars, configparser.ConfigParser)
+        """checks are done on a configparser (rather than a dictionary)
+        to better handle python's type reading from files"""
+        assert isinstance(chk_d, dict)
+        assert len(chk_d)>0
+        assert len(cpars)>0
         
-        #======================================================================
-        # validate the control file for this run
-        #======================================================================
-        #load/build
-        self.pars = configparser.ConfigParser(inline_comment_prefixes='#')
-        log.info('reading parameters from \n     %s'%self.pars.read(cf_fp))
         
-        #======================================================================
-        # check control file against expectations
-        #======================================================================
-        #check sections
-        miss_l = set(self.exp_pars_md.keys()).difference(self.pars.sections())
+        #=======================================================================
+        # #section check
+        #=======================================================================
+        miss_l = set(chk_d.keys()).difference(cpars.sections())
         
         if len(miss_l) > 0:
             raise Error('missing %i expected sections in control file: %s'%(len(miss_l), miss_l))
         
-        #======================================================================
-        # mandatory check and collect -----
-        #======================================================================
-        cpars_d = dict()
-        cnt = 0
-        for sect, vchk_d in self.exp_pars_md.items():
-            cpars_d[sect] = dict()
+        
+        #=======================================================================
+        # variable check
+        #=======================================================================
+        errors = [] #container for errors
+        for sectName, vchk_d in chk_d.items():
+            csectName = cpars[sectName] #get these parameters
             
-            if not sect in self.pars.sections():
-                raise Error('missing section %s'%sect)
+            #===================================================================
+            # #check all the expected keys are there
+            #===================================================================
             
-            #check presence
-            miss_l = set(vchk_d.keys()).difference(self.pars[sect])
+            miss_l = set(vchk_d.keys()).difference(list(csectName))
             if len(miss_l) > 0:
                 raise Error('\'%s\' missing %i (of %i) expected varirables: \n    %s'%(
-                    sect, len(miss_l), len(vchk_d), miss_l))
+                    sectName, len(miss_l), len(vchk_d), miss_l))
                 
-            #check attributes
-            for varnm, achk_d in vchk_d.items():
-                """no! allow None
-                assert isinstance(achk_d, dict), '%s.%s bad type'%(sect, varnm)"""
-                assert hasattr(self, varnm), '\'%s\' does not exist on %s'%(varnm, self)
-
                 
-                #==============================================================
-                # #get value from parameter                
-                #==============================================================
-                pval_raw = self.pars[sect][varnm]
+            #===================================================================
+            # #check attributes with handles
+            #===================================================================
+            log.debug('checking section \'%s\' against %i variables'%(sectName, len(vchk_d)))
+            for varName, achk_d in vchk_d.items(): #loop through the expectations
                 
-                #get native type
-                ntype = type(getattr(self, varnm))
-                
-                #special type retrivial
-                if ntype == bool:
-                    pval = self.pars[sect].getboolean(varnm)
-                elif getattr(self, varnm) is None:
-                    pval = pval_raw #no check or type conversion
-
-                else:
-                    #set the type
-                    try:
-                        pval = ntype(pval_raw)
-                    except Exception as e:
-                        raise Error('failed to set %s.%s  with input \'%s\' (%s) to %s \n %s'%(
-                            sect, varnm, pval_raw, type(pval_raw), ntype, e))
-                
-                #==============================================================
-                # check it
-                #==============================================================
-                self.par_hndl_chk(sect, varnm, pval, achk_d)
-                
-
-                #==============================================================
-                # store value
-                #==============================================================
-                
-                cpars_d[sect][varnm] = pval
-                cnt +=1
-        
-        log.info('collected MANDATORY %i variables from %i sections from paramter file'%(
-            cnt, len(cpars_d)))
-        #======================================================================
-        # optional check and collect----
-        #======================================================================
-        cnt2 = 0
-        for sect, vchk_d in self.exp_pars_op.items(): 
-            #add a page to the container
-            if not sect in cpars_d:
-                cpars_d[sect] = dict()
-                
-            #loop and see if they have been provided
-            for varnm, achk_d in vchk_d.items():
-                #assert isinstance(achk_d, dict), '%s.%s bad type'%(sect, varnm)
-                assert hasattr(self, varnm), '\'%s\' does not exist on %s'%(varnm, self)
-                assert varnm in self.pars[sect], '%s.%s is not a valid parameter'%(sect, varnm)
-                
-                #==============================================================
-                # #get value from parameter                
-                #==============================================================
-                pval_raw = self.pars[sect][varnm]
-                
-                if pval_raw is None or pval_raw == '':
-                    log.debug('%s.%s blank.. skipping'%(sect, varnm))
+                try: #attempt to tpye set, better error reporting/catching
+                    pval = self._get_from_cpar(cpars, sectName, varName, logger=log) #get the typeset variable
+                    
+                except Exception as e: #failed to even typeset... mark as an error and move forward
+                    errors.append(e)
                     continue
                 
-                #get native type
-                ntype = type(getattr(self, varnm))
+                #===============================================================
+                # blanks/nulls
+                #===============================================================
+                if (pd.isnull(pval) or pval==''):
+                    msg = 'no value provided for \'%s.%s\'. optional=%s'%(sectName, varName, optional)
+                    if optional:
+                        log.debug(msg)
+                        continue
+                    else:
+                        errors.append(msg)
+                        
+                else: #expected some value
                 
-                #special type retrivial
-                if ntype == bool:
-                    pval = self.pars[sect].getboolean(varnm)
-                else:
-                    #set the type
-                    pval = ntype(pval_raw)
-                
-                #==============================================================
-                # check it
-                #==============================================================
-                self.par_hndl_chk(sect, varnm, pval, achk_d)
-                
-                #==============================================================
-                # store value
-                #==============================================================
-                log.debug('%s.%s passed %i checks'%(sect, varnm, len(achk_d)))
-                cpars_d[sect][varnm] = pval
-                cnt2+=1
+                    try:
+                        _ = self._par_hndl_chk(sectName, varName, pval, achk_d, logger=log) #check with handles
+                    except Exception as e:
+                        errors.append(e)
+                    
+            
+            
+        log.info('finished checking %i sections w/ %i errors. optional=%s \n'%(len(cpars), len(errors), optional))
         
-        log.info('collected OPTIONAl %i variables from %i sections from paramter file'%(
-            cnt2, len(cpars_d)))
+        return len(errors)==0, errors
         
+        
+        
+    def cf_attach_pars(self, #load parmaeteres from file
+                    cpars,
+                    ):
+        
+        """
+        cf_chk_pars should be run first to make sure parameter membership and type matches expectations
+        
+        here we just update every parameter value found:
+            on the class
+            in the ControlFile
+        """
+        
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        log = self.logger.getChild('cf_attach_pars')
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert isinstance(cpars, configparser.ConfigParser)
+        
+        
+        #=======================================================================
+        # loop and retrieve
+        #=======================================================================
+        cpars_d = dict() #set values
+        no_d = dict() #not set values
+        noCnt = 0
+        for sectName in cpars.sections():
+            cpars_d[sectName], no_d[sectName] = dict(), dict() #add the page
+            log.debug('loading %i parameters from section \'%s\''%(len(cpars[sectName]), sectName))
+            
+            #loop through each variable name/value in this section
+            for varName, valRaw in cpars[sectName].items():
+                
+                #check we care about this
+                if not hasattr(self, varName):
+                    log.debug('passed variable \'%s\' not found on class... skipping'%varName)
+                    no_d[sectName][varName] = valRaw
+                    noCnt+=1
+                    continue
+                
+                
+                #retrieve typset value
+                pval = self._get_from_cpar(cpars, sectName, varName, logger=log) #get the typeset variable
+                
+                #store it
+                cpars_d[sectName][varName] = pval 
+                
         #======================================================================
         # attach all the paramers
         #======================================================================
         cnt = 0
-        for sect, spars_d in cpars_d.items():
+        for sectName, spars_d in cpars_d.items():
             for varnm, val in spars_d.items():
                 setattr(self, varnm, val)
                 log.debug('set %s=%s'%(varnm, val))
                 cnt +=1
                 
-        log.info('attached %i parmaeters to self'%cnt)
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        log.info('attached %i parmaeters to self (skipped %i)'%(cnt, noCnt))
                 
         
         
         return cpars_d
+    
+    def _get_from_cpar(self, #special parameter extraction recognizing object's t ype
+                      cpars,
+                      sectName,
+                      varName,
+                      logger = None):
+        
+        """each parameter should exist on teh class instance.
+                we use this to set the type"""
+        
+        if logger is None: logger=self.logger
+        log = logger.getChild('_get_from_cpar')
+        #=======================================================================
+        # get native type on class
+        #=======================================================================
+        assert hasattr(self, varName), '\'%s\' does not exist on %s'%(varName, self)
+        
+        
+        #get class instance's native type
+        ntype = type(getattr(self, varName))
+        
+        #==============================================================
+        # retrive and typeset  (using native t ype)            
+        #==============================================================
+        assert isinstance(cpars, configparser.ConfigParser)
+        
+        csect = cpars[sectName]
+        pval_raw = csect[varName] #raw value (always a string)
+        
+        #boolean
+        if ntype == bool:
+            pval = csect.getboolean(varName)
+        
+        #no check or type conversion
+        elif getattr(self, varName) is None:
+            pval = pval_raw 
+
+        #other types
+        else:
+            try:
+                pval = ntype(pval_raw)
+            except Exception as e:
+                raise Error('failed to set %s.%s  with input \'%s\' (%s) to %s \n %s'%(
+                    sectName, varName, pval_raw, type(pval_raw), ntype, e))
+        
+        #=======================================================================
+        # blank set
+        #=======================================================================
+        """seems like we're setup for ''.... not sure the value in switching everything over
+        if pval == '':
+            pval = np.nan"""
+        
+        log.debug('retrieved \'%s.%s\'=\'%s\' w/ type: \'%s\''%(sectName, varName, pval, type(pval)))
+        return pval
+
                 
                 
                 
-    def par_hndl_chk(self, #check a parameter aginast provided handles
-                     sect, varnm, pval, achk_d
+    def _par_hndl_chk(self, #check a parameter aginast provided handles
+                     sect, varnm, pval, achk_d,
+                     logger=None
                      ):
         
-        log = self.logger.getChild('par_hndl_chk')
+        if logger is None: logger=self.logger
+        log = logger.getChild('par_hndl_chk')
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
         assert not pval is None or pval == '', '%s.%s got none'%(sect, varnm)
+        
         if achk_d is None:
-            log.warning('no checks provided for %s.%s'%(sect, varnm))
+            log.warning('no checks provided for \'%s.%s\'... skipping'%(sect, varnm))
             return
         #==============================================================
         # #check each handle
@@ -362,7 +466,7 @@ class Model(ComWrkr):
                 
             elif chk_hndl == 'values':
                 assert isinstance(hvals, tuple), '%s.%s got bad type on hvals: %s'%(sect, varnm, type(hvals))
-                assert pval in hvals, '%s.%s unexpected value: %s'%(sect, varnm, type(pval))
+                assert pval in hvals, '%s.%s unexpected value: \'%s\''%(sect, varnm, pval)
             
             elif chk_hndl == 'ext':
                 assert isinstance(pval, str), '%s.%s expected a filepath '%(sect, varnm)
@@ -383,8 +487,9 @@ class Model(ComWrkr):
             
             else:
                 raise Error('unrecognized check handle: %s'%chk_hndl)
-        log.debug('%s.%s passed %i checks'%(sect, varnm, len(achk_d)))
-        return
+            
+        log.debug('    \'%s.%s\' passed %i checks'%(sect, varnm, len(achk_d)))
+        return True
     
 
     def load_finv(self,#loading expo data

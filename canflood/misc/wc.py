@@ -11,38 +11,67 @@ web connections
 # imports---------------------------
 #==============================================================================
 #python standards
-import os, logging
+import os, logging, copy
 
-from configparser import ConfigParser
+from configparser import ConfigParser, RawConfigParser
+import numpy as np
 
 
+from qgis.core import QgsApplication
+#==============================================================================
+# custom imports
+#==============================================================================
+
+#standalone runs
+if __name__ =="__main__": 
+    from hlpr.logr import basic_logger
+    mod_logger = basic_logger()   
+    
+    from hlpr.exceptions import Error
+#plugin runs
+else:
+    #base_class = object
+    from hlpr.exceptions import QError as Error
 
 
-from hlpr.Q import *
-from hlpr.basic import *
+#from hlpr.Q import *
+from hlpr.basic import ComWrkr
+
 from hlpr.plug import logger as plogger
-
 
 
 class WebConnect(ComWrkr):
     
     
-    def __init__(self,iface,
+    def __init__(self,
+                 iface=None,
+                 qini_fp = None, #path to user's QGIS.ini file
+                 
                  **kwargs):
         
         self.iface=iface
-        self.logger=plogger(self)
+        
+        #Qgis run
+        if iface is None:
+            self.logger = mod_logger
+            
+        #Standalone run 
+        else:
+            self.logger= plogger(self)
+        
+        
         super().__init__(logger=self.logger, **kwargs) #initilzie teh baseclass
         
         #setup
         
-        #config_fp = os.path.abspath(__file__)[:-59]+"QGIS\QGIS3.ini" # The path to the configuration file for QGIS
+        #qini_fp = os.path.abspath(__file__)[:-59]+"QGIS\QGIS3.ini" # The path to the configuration file for QGIS
+        if qini_fp is None:
+            qini_fp = os.path.join(QgsApplication.qgisSettingsDirPath(), r'QGIS\QGIS3.ini')
+            
+        assert os.path.exists(qini_fp), 'bad qini_fp: %s'%qini_fp
+        self.qini_fp = qini_fp
         
-        config_fp = os.path.join(QgsApplication.qgisSettingsDirPath(), r'QGIS\QGIS3.ini')
-        assert os.path.exists(config_fp), 'bad config_fp: %s'%config_fp
-        self.config_fp = config_fp
-        
-        self.logger.info('found config file: %s'%config_fp)
+        self.logger.info('found config file: %s'%qini_fp)
         
         #=======================================================================
         # load connection info file
@@ -61,7 +90,8 @@ class WebConnect(ComWrkr):
         assert os.path.exists(con_fp)
         
         log.info('reading connection info fron \n    %s'%con_fp)
-        pars = configparser.ConfigParser(allow_no_value=True)
+        pars = ConfigParser(allow_no_value=True)
+        pars.optionxform=str
         _ = pars.read(con_fp) #read it from the new location
 
         #=======================================================================
@@ -86,6 +116,7 @@ class WebConnect(ComWrkr):
     def addAll(self, #add all connections
                serv_d = None, #connections to load
                ): 
+        
         log = self.logger.getChild('addAll')
         if serv_d is None:
             serv_d = self.serv_d
@@ -102,26 +133,38 @@ class WebConnect(ComWrkr):
         #=======================================================================
         # loop and add
         #=======================================================================
-        cnt = 0
+        res_d = dict() #results container
         for title, sect_d in serv_d.items():
             result = self.saveLayer(title, sect_d['url'], sect_d['serverType'])
+            if not result:
+                log.info('failed to add \'%s\''%title)
+            else:
+                log.info('added \'%s\''%title)
+            res_d[title] = result
+
+        
+        cnt = np.array(list(res_d.values())).sum() #total the TRUEs
+        
+        log.info('added %i (of %i) connections'%(cnt, len(serv_d)))
             
-            if result: cnt+=1
-            
-            
-        log.push('added %i (of %i) connections'%(cnt, len(serv_d)))
+        return cnt, serv_d
+        
             
     
     def get_settings(self, serverType, title, url):
         
+        """check out 'QGIS3.ini' for syntax
         
+        seems like this could be written much cleaner....
+        """
         
         if (serverType == "WMS"): 
             base_settings = "connections-wms\\"+title+"\\"
             base_security_settings = "WMS\\"+title+"\\"
+            
             settings = [base_settings+"url",base_settings+"ignoreAxisOrientation",base_settings+"invertAxisOrientation",
-            base_settings+"ignoreGetMapURI",base_settings+"smoothPixmapTransform",base_settings+"dpimode",base_settings+"referer",
-            base_settings+"ignoreGetFeatureInfoURI",base_security_settings+"username",base_security_settings+"password",base_security_settings+"authcfg"]
+                        base_settings+"ignoreGetMapURI",base_settings+"smoothPixmapTransform",base_settings+"dpimode",base_settings+"referer",
+                        base_settings+"ignoreGetFeatureInfoURI",base_security_settings+"username",base_security_settings+"password",base_security_settings+"authcfg"]
             
             settings_ans = [url,"false","false","false","false","7","","false","","",""]
             
@@ -150,6 +193,63 @@ class WebConnect(ComWrkr):
             
             settings_ans = [url,"","",""]
             
+        elif (serverType=='WCS'):
+            
+            """using pythonic code here"""
+            #===================================================================
+            # #default parmaeters:settings
+            #===================================================================
+            
+            
+            conBase_d = { #ocnnections
+                'url':'???',
+                'ignoreAxisOrientation':'false',
+                'invertAxisOrientation':'false',
+                'ignoreReportedLayerExtents':'false',
+                'ignoreGetMapURI':'false',
+                'smoothPixmapTransform':'false',
+                'dpiMode':'7',
+                'referer':''}
+                
+            secBase_d = { #security settings 
+                'username':'',
+                'password':'',
+                'authcfg':'',
+                }
+                
+               
+            #===================================================================
+            # #populate
+            #===================================================================
+            
+            #add passed parameters
+            conBase_d['url'] = url
+            
+            
+
+            
+            
+            #===================================================================
+            # #add base values
+            #===================================================================
+            con_d, sec_d = copy.copy(conBase_d), copy.copy(secBase_d) #start with defaults
+            base_settings = "connections-wcs\\"+title+"\\"
+            base_security_settings = "WCS\\"+title+"\\"
+            
+            con_d = {base_settings+k:v for k,v in con_d.items()}
+            sec_d = {base_security_settings+k:v for k,v in sec_d.items()}
+            
+  
+            
+            #===================================================================
+            # revert
+            #===================================================================
+            """todo: restructure this whole class to be more pythonic"""
+            settings = list(con_d.keys()) + list(sec_d.keys())
+            settings_ans = list(con_d.values()) + list(sec_d.values())
+                     
+            
+            
         else:
             raise Error('unrecognized serverType: %s'%serverType)
             
@@ -162,6 +262,10 @@ class WebConnect(ComWrkr):
         """taken from canadian_web_services
         
         is there an api method to do this?
+        
+        https://gis.stackexchange.com/questions/307325/how-to-open-and-add-sqlite-connection-to-browser-with-pyqgis
+        
+        
         """
         
         '''
@@ -174,16 +278,14 @@ class WebConnect(ComWrkr):
         log = self.logger.getChild('saveLayer')
         
         log.debug('on %s'%title)
-        filepath =  self.config_fp
+        filepath =  self.qini_fp
         #=======================================================================
         # open up the ini file
         #=======================================================================
-        config = configparser.ConfigParser()
+        config = ConfigParser()
+        config.optionxform =str
+        _ = config.read(self.qini_fp)
 
-        try: # Check to see if we have already opened the configuration file
-            config.read(self.config_fp)
-        except: # Does nothing if we already have opened it
-            pass
         
         #=======================================================================
         # calculate the settings
@@ -200,15 +302,19 @@ class WebConnect(ComWrkr):
             check = config["qgis"][base_settings+"url"] # Checks if the service has already been added
             already_added = config["qgis"][base_settings+"url"] == url # checks to see if the urls match (Used since we might encounter services with the same name but different urls)
             
-            log.info('failed to add \"%s\''%title)
+            
             
         except: # If it hasn't add it 
             for i in range (len(settings)):
+                """loop through setting variables and set values"""
                 config["qgis"][settings[i]] = settings_ans[i]
 
             
             with open(filepath,"w") as configfile:
-                config.write(configfile)
+                """
+                some protocols were not loading when the spaces aroudn the equal signs were included
+                """
+                config.write(EqualsSpaceRemover(configfile))
                 
             already_added = True
             
@@ -218,23 +324,27 @@ class WebConnect(ComWrkr):
             
             
         
-        
-        if not already_added: # If the service has still not been added (most common reason to be here is if there are multiple services with the same name (title))
-            already_added,title = self.name_finder(title,config,serverType,url,0)
-            if(not(already_added)): # If the service has not already been added 
-                return False# Do nothing
-            
-            else: # Otherwise add it to the configuration file
-                
-                settings, settings_ans, base_settings = self.get_settings(serverType, title, url)
-                
-                for i in range (len(settings)): # Sets information into config
-                    config["qgis"][settings[i]] = settings_ans[i]
-                
-                with open(filepath,"w") as configfile: # writes into file 
-                    config.write(configfile)
-                    
-                return True    
+        #=======================================================================
+        # 
+        # if not already_added: # If the service has still not been added (most common reason to be here is if there are multiple services with the same name (title))
+        #     already_added,title = self.name_finder(title,config,serverType,url,0)
+        #     if(not(already_added)): # If the service has not already been added 
+        #         return False# Do nothing
+        #     
+        #     else: # Otherwise add it to the configuration file
+        #         
+        #         settings, settings_ans, base_settings = self.get_settings(serverType, title, url)
+        #         
+        #         for i in range (len(settings)): # Sets information into config
+        #             config["qgis"][settings[i]] = settings_ans[i]
+        #         
+        #         with open(filepath,"w") as configfile: # writes into file 
+        #             config.write(EqualsSpaceRemover(configfile))
+        #             
+        #         return True    
+        # else:
+        #     return False
+        #=======================================================================
               
 
     
@@ -265,6 +375,10 @@ class WebConnect(ComWrkr):
                 check = config["qgis"]["connections-arcgismapserver\\"+title+"\\url"] == url
             elif (serverType == "arcgisfeatureserver"):
                 check = config["qgis"]["connections-arcgisfeatureserver\\"+title+"\\url"] == url
+            elif serverType == 'WCS':
+                check = config["qgis"]["connections-wcs\\"+title+"\\url"] == url
+            else:
+                raise Error('unrecognized serverType: %s'%serverType)
             
             if(check): # If we found the service 
                 return False,title 
@@ -279,5 +393,21 @@ class WebConnect(ComWrkr):
         except: # If the service doesn't exist, that means we can now write to the configuration settings file without error
             return True,title 
         
+class EqualsSpaceRemover:
+    output_file = None
+    def __init__( self, new_output_file ):
+        self.output_file = new_output_file
+
+    def write( self, what ):
+        self.output_file.write( what.replace( " = ", "=", 1 ) )
         
+if __name__ =="__main__":
+    
+    
+    wrkr = WebConnect(
+        qini_fp = r'C:\Users\cefect\AppData\Roaming\QGIS\QGIS3\profiles\dev\QGIS\QGIS3.ini') #setup worker
+    
+    
+    wrkr.addAll() #add everything
+    
         

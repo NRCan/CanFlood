@@ -39,7 +39,8 @@ import numpy as np #Im assuming if pandas is fine, numpy will be fine
 from build.rsamp import Rsamp
 from build.lisamp import LikeSampler
 from build.rfda import RFDAconv
-from build.nrpi import Nrpi
+from build.npri import Npri
+from build.validator import Vali
 
 
 
@@ -240,7 +241,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.mMapLayerComboBox_inv_nrpi.setCurrentIndex(-1) #clear the selection
         
         #connect the push button
-        self.pushButton_inv_nrpi.clicked.connect(self.convert_nrpi)
+        self.pushButton_inv_nrpi.clicked.connect(self.convert_npri)
 
 
 
@@ -796,8 +797,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.logger.push('finished')
             
 
-    def convert_nrpi(self):
-        log = self.logger.getChild('convert_nrpi')
+    def convert_npri(self):
+        log = self.logger.getChild('convert_npri')
         
         #=======================================================================
         # collect from UI
@@ -808,7 +809,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # input checks
         #=======================================================================
-        wrkr = Nrpi(logger=self.logger,  out_dir=out_dir, tag=self.tag)
+        wrkr = Npri(logger=self.logger,  out_dir=out_dir, tag=self.tag)
         assert isinstance(in_vlay, QgsVectorLayer), 'no VectorLayer selected!'
         
         #=======================================================================
@@ -830,7 +831,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.qproj.addMapLayer(finv_vlay)
         log.info('added \'%s\' to canvas'%finv_vlay.name())
         
-        log.push('finished NRPI conversion')
+        log.push('finished NPRI conversion')
         self.feedback.upd_prog(None) #set the progress bar back down to zero
 
     
@@ -1304,29 +1305,24 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.logger.push('generated \'aeps\' and set \'event_probs\' to control file')
         
     def run_validate(self):
-        #raise Error('broken')
-        """
-        a lot of this is duplicated in  model.scripts_.setup_pars
-        
-        TODO: consolidate with setup_pars
-        move to separate module
-        
-        """
-        log = self.logger.getChild('valid')
+
+
+        log = self.logger.getChild('validator')
         log.info('user pressed \'pushButton_Validate\'')
         
         #======================================================================
-        # load the control file
+        # collect form ui----
         #======================================================================
-        #get the control file path
-        cf_fp = self.get_cf_fp()
         
-        #build/run theparser
-        log.info('validating control file: \n    %s'%cf_fp)
-        pars = configparser.ConfigParser(inline_comment_prefixes='#', allow_no_value=True)
-        _ = pars.read(cf_fp) #read it
+        cf_fp = self.get_cf_fp() #get the control file path
         
-        self.feedback.upd_prog(10)
+        
+        #===================================================================
+        # setup validation worker
+        #===================================================================
+        wrkr = Vali(cf_fp, logger=self.logger, out_dir=self.lineEdit_wd.text(), tag=self.tag)
+        
+
         #======================================================================
         # assemble the validation parameters
         #======================================================================
@@ -1336,57 +1332,61 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         from model.risk1 import Risk1
         
         #populate all possible test parameters
-        """
-        todo: finish this
-        """
-        vpars_pos_d = {
+        vpars_all_d = {
                     'risk1':(self.checkBox_Vr1, Risk1),
                    'dmg2':(self.checkBox_Vi2, Dmg2),
                    'risk2':(self.checkBox_Vr2, Risk2),
-                   #'risk3':(self.checkBox_Vr3, (None, None, None)),
+                   #'risk3':(self.checkBox_Vr3, None), 
                                            }
         
-        #select based on user check boxes
+        #loop and collect based on check boxes
         vpars_d = dict()
+        for vtag, (checkBox, modObj) in vpars_all_d.items():
+            if not checkBox.isChecked(): continue #skip this one
+            vpars_d[vtag] = modObj
         
-        for vtag, (checkBox, model) in vpars_pos_d.items():
+        self.feedback.upd_prog(10)
+        
+        #======================================================================
+        # loop through each possibility and validate
+        #======================================================================
+        res_d = dict()
+        for vtag, modObj in vpars_d.items():
+            log.debug('checking \"%s\''%vtag)
+            #===================================================================
+            # parameter value/type check
+            #===================================================================
+            errors = wrkr.cf_check(modObj)
             
-            if checkBox.isChecked():
-                vpars_d[vtag] = model
+
+            # #report on all the errors
+            for indxr, msg in enumerate(errors):
+                log.error('%s error %i: \n%s'%(vtag, indxr+1, msg))
                 
-        if len(vpars_d) == 0:
-            raise Error('no validation options selected!')
-        
-        log.info('user selected %i validation parameter sets'%len(vpars_d))
-        
-        #======================================================================
-        # validate
-        #======================================================================
-
-        
-        vflag_d = dict()
-        for vtag, model in vpars_d.items():
-            self.feedback.upd_prog(80/len(vpars_d), method='append')
-
-            """needto play with init sequences to get this to work"""
-
-                    
-            #==================================================================
-            # set validation flag
-            #==================================================================
-            vflag_d[model.valid_par] = 'True'
+            #===================================================================
+            # update control file
+            #===================================================================
+            wrkr.cf_mark()
             
-        #======================================================================
-        # update control file
-        #======================================================================
-        self.update_cf(
-            {'validation':(vflag_d, )
-             },
-            cf_fp = cf_fp
-            )
+            self.feedback.upd_prog(80/len(vpars_d), method='append')
+            
+            #store
+            if len(errors) == 0: 
+                res_d[vtag] = True
+            else:
+                res_d[vtag] = False
+            
+        #=======================================================================
+        # wrap
+        #=======================================================================
+            
+
+
         self.feedback.upd_prog(100)
         
-        log.push('completed %i validations'%len(vpars_d))
+        log.push('passed %i (of %i) validations. see log'%(
+             np.array(list(res_d.values())).sum(), len(vpars_d)
+             ))
         
         self.feedback.upd_prog(None)
         return
