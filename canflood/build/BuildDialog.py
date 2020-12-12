@@ -577,7 +577,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #parameters
         
         pars.set('parameters', 'name', self.tag) #user selected field
-        pars.set('parameters', 'felv', self.comboBox_SSelv.currentText()) #user selected field
+        """moved to inventory tab
+        pars.set('parameters', 'felv', self.comboBox_SSelv.currentText()) #user selected field"""
         
         #damage curves
         dmg_fps = self.lineEdit_curve.text()
@@ -715,6 +716,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         # write to control file
         #=======================================================================
         assert os.path.exists(out_fp)
+        
+
 
         
         self.update_cf(
@@ -724,7 +727,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                 '#\'finv\' file path set from BuildDialog.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
                 ),
             'parameters':(
-                {'cid':str(cid)},
+                {'cid':str(cid),
+                 'felv':self.comboBox_SSelv.currentText()},
                 )
              },
             cf_fp = cf_fp

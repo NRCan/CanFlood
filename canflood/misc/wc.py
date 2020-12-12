@@ -230,7 +230,7 @@ class WebConnect(ComWrkr):
             # #report
             #===================================================================
             ar = np.array(list(res_d1.values()))
-            log.info('group=\'%s\' %i (of %i) settings match'%(group, ar.sum(), len(ar)))
+            log.debug('group=\'%s\' %i (of %i) settings match'%(group, ar.sum(), len(ar)))
 
             
             res_d[cname] = ar.all()
