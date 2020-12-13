@@ -1586,7 +1586,7 @@ p, li { white-space: pre-wrap; }
                 </size>
                </property>
                <property name="text">
-                <string>Specify the likelihood of each event in the Exposure Values and any secondary likelihood polygons.</string>
+                <string>Specify the likelihood of each event</string>
                </property>
               </widget>
              </item>
@@ -1743,7 +1743,7 @@ p, li { white-space: pre-wrap; }
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>96</width>
+                   <width>603</width>
                    <height>660</height>
                   </rect>
                  </property>
