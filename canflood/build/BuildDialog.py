@@ -843,7 +843,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.feedback.upd_prog(None) #set the progress bar back down to zero
 
     
-    def run_rsamp(self): #execute rsamp
+    def run_rsamp(self): #execute raster sampler
         log = self.logger.getChild('run_rsamp')
         start = datetime.datetime.now()
         log.info('user pressed \'pushButton_HSgenerate\'')
@@ -931,9 +931,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                           out_dir = out_dir
                           )
         
-        """try just passing the Dialog's feedback
-        #connect the status bar to the worker's feedback
-        wrkr.feedback.progressChanged.connect(self.upd_prog)"""
         
         
         

@@ -200,7 +200,6 @@ class Rsamp(Qcoms):
         assert cid in [field.name() for field in finv_raw.fields()], \
             'requested cid field \'%s\' not found on the finv_raw'%cid
             
-        finv_raw.wkbType()
         
         
         #check the rasters
@@ -247,7 +246,7 @@ class Rsamp(Qcoms):
                 
                 2020-05-06
                 ran 2 tests, and this INCREASED run times by ~20%
-                set default to clip_tim=False
+                set default to clip_dtm=False
                 """
                 log.info('trimming dtm \'%s\' by finv extents'%(dtm_rlay.name()))
                 finv_buf = self.polygonfromlayerextent(finv,
@@ -285,13 +284,17 @@ class Rsamp(Qcoms):
         # wrap
         #=======================================================================
         #max out the progress bar
-        self.feedback.setProgress(100)
+        self.feedback.setProgress(90)
 
         log.info('sampling finished')
         
         return res_vlay
         
-    def samp_vals(self, finv, raster_l,psmp_stat):
+    def samp_vals(self, #sample a set of rasters with a vectorlayer
+                  finv, raster_l,psmp_stat):
+        """
+        this is NOT for inundation percent
+        can handle all 3 geometries"""
         
         log = self.logger.getChild('samp_vals')
         #=======================================================================
@@ -317,10 +320,14 @@ class Rsamp(Qcoms):
         #=======================================================================
         names_d = dict()
         
-        log.info('sampling %i raster layers w/ algo \'%s\' and gtype: %s'%(len(raster_l), algo_nm, gtype))
+        log.info('sampling %i raster layers w/ algo \'%s\' and gtype: %s'%(
+            len(raster_l), algo_nm, gtype))
+        
         for indxr, rlay in enumerate(raster_l):
             
-            log.info('%i/%i sampling \'%s\' on \'%s\''%(indxr+1, len(raster_l), finv.name(), rlay.name()))
+            log.info('%i/%i sampling \'%s\' on \'%s\''%(
+                indxr+1, len(raster_l), finv.name(), rlay.name()))
+            
             ofnl =  [field.name() for field in finv.fields()]
             #===================================================================
             # sample.poly----------
@@ -350,8 +357,6 @@ class Rsamp(Qcoms):
             # sample.Points----------------
             #======================================================================
             elif 'Point' in gtype: 
-                
-                
                 #build the algo params
                 params_d = { 'COLUMN_PREFIX' : rlay.name(),
                              'INPUT' : finv,
@@ -363,9 +368,7 @@ class Rsamp(Qcoms):
         
                 #extract and clean results
                 finv = res_d['OUTPUT']
-            
-                
-                    
+
             else:
                 raise Error('unexpected geo type: %s'%gtype)
             
@@ -1139,43 +1142,7 @@ def run():
   #   tag='tut4b'
   #=============================================================================
     
-    #===========================================================================
-    # test 20200507
-    #===========================================================================
-    #===========================================================================
-    # data_dir = r'C:\LS\03_TOOLS\CanFlood\_ins\20200507'
-    # raster_fns = [
-    #     'haz_1000yr_cT2_12345678901234567890123456789.tif',
-    #     'haz_100yr_cT2_12345678901234567890123456789.tif'
-    #     ]
-    # 
-    # dtm_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\20200507\dtm_cT1.tif'
-    # tag = 'test'
-    #===========================================================================
-    #===========================================================================
-    # fcl polys-----------
-    #===========================================================================
-    #===========================================================================
-    # #run pareameteres
-    # tag = 'fcl_polys'
-    # cid = 'xid'
-    # as_inun=True
-    # dthresh = 0.5
-    #   
-    # #data files
-    # data_dir = r'C:\LS\03_TOOLS\CanFlood\_ins\20200506'
-    #   
-    # #finv_fp = os.path.join(data_dir, 'IBI_FCL_Merge_20200428.gpkg')
-    # finv_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\20200506\IBI_FCL_Merge_20200428_clip.gpkg'
-    #   
-    # raster_fns = [
-    #     'IBI_AG3_Wi_10e0_WL_simu_20200415.tif',
-    #     'IBI_AG3_Wi_10e1_WL_simu_20200415.tif',
-    #     #'IBI_AG3_Wi_10e2_WL_simu_20200415.tif',        
-    #     ]
-    #   
-    # dtm_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\20200506\DTM\NHC_2019_dtm_lores_aoi05h.tif'
-    #===========================================================================
+
      
 
     #===========================================================================
