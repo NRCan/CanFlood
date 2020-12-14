@@ -101,6 +101,8 @@ class Rsamp(Qcoms):
         special input loader for standalone runs
         Im assuming for the plugin these layers will be loaded already"""
         log = self.logger.getChild('load_layers')
+        
+        
         #======================================================================
         # load rasters
         #======================================================================
@@ -159,14 +161,19 @@ class Rsamp(Qcoms):
     def run(self, 
             raster_l, #set of rasters to sample 
             finv_raw, #inventory layer
-            as_inun=False, #whether to sample for inundation (rather than wsl values)
+            
             cid = None, #index field name on finv
             crs = None,
+            
+            #raster prep
+            aoi_vlay = None, #for clip_rlays=True, aoi layer
+            clip_rlays = False, #whether to clip raster layers first
             
             #exposure value controls
             psmp_stat='Max', #for polygon finvs, statistic to sample
             
             #inundation sampling controls
+            as_inun=False, #whether to sample for inundation (rather than wsl values)
             dtm_rlay=None, #dtm raster
             dthresh = 0, #fordepth threshold
             clip_dtm=False,
@@ -232,6 +239,16 @@ class Rsamp(Qcoms):
         
         if self.gtype.endswith('Z'):
             log.warning('passed finv has Z values... these are not supported')
+            
+        #=======================================================================
+        # raster prep---
+        #=======================================================================
+        if clip_rlays:
+            """traditionally... no need to pre-clip rasters.
+            but many web-hosted rasters benefit from pre-clipping"""
+            pass
+            
+        
 
         #=======================================================================
         # #inundation runs--------
@@ -981,7 +998,7 @@ class Rsamp(Qcoms):
     def check(self):
         pass
         
-    def write_res(self, 
+    def write_res(self, #save expos dataset to file
                   vlay,
               out_dir = None, #directory for puts
               names_d = None, #names conversion
@@ -1044,9 +1061,13 @@ class Rsamp(Qcoms):
 
 
     
-def run():
+
+    
+if __name__ =="__main__": 
+    
     write_vlay=True
     clip_dtm = False
+    clip_rlays = False
     #===========================================================================
     # tutorial 1 (points)
     #===========================================================================
@@ -1072,23 +1093,25 @@ def run():
     #===========================================================================
     # tutorial 2  
     #===========================================================================
-    data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\data'
-
-    finv_fp = os.path.join(data_dir, 'finv_cT3.gpkg')
-    
-    raster_fns = [
-        'haz_1000yr_cT2.tif',
-        'haz_1000yr_fail_cT3.tif',
-        'haz_100yr_cT2.tif',
-        'haz_200yr_cT2.tif',
-        'haz_50yr_cT2.tif',
-        ]
-
-     
-    cid='xid'
-    tag='tut2'
-    as_inun=False
-    dtm_fp, dthresh = None, None
+#===============================================================================
+#     data_dir = r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\data'
+# 
+#     finv_fp = os.path.join(data_dir, 'finv_cT2.gpkg')
+#     
+#     raster_fns = [
+#         'haz_1000yr_cT2.tif',
+#         'haz_1000yr_fail_cT3.tif',
+#         'haz_100yr_cT2.tif',
+#         'haz_200yr_cT2.tif',
+#         'haz_50yr_cT2.tif',
+#         ]
+# 
+#      
+#     cid='xid'
+#     tag='tut2'
+#     as_inun=False
+#     dtm_fp, dthresh = None, None
+#===============================================================================
     
     #==========================================================================
     # tutorial 4a (polygons as inundation)--------
@@ -1141,6 +1164,27 @@ def run():
   #   cid='xid'
   #   tag='tut4b'
   #=============================================================================
+  
+    #===========================================================================
+    # tutorial 5b: GAR15  
+    #===========================================================================
+    data_dir = r'C:\Users\cefect\CanFlood\GAR15'
+
+    finv_fp = os.path.join(data_dir, 'finv_NPRI_3978.gpkg')
+    
+    raster_fns = [
+        'GAR15_500yr.tif',
+        'GAR15_1000yr.tif',
+
+        ]
+
+    aoi_fp = os.path.join(data_dir, 'tut5_aoi_3978.gpkg')
+    
+    cid='xid'
+    tag='tut5'
+    clip_rlays= True
+    as_inun=False
+    dtm_fp, dthresh = None, None
     
 
      
@@ -1158,8 +1202,6 @@ def run():
     
     wrkr = Rsamp(logger=log, tag=tag, out_dir=out_dir, cid=cid, LogLevel=20
                  )
-
-    
     wrkr.ini_standalone()
     
     #==========================================================================
@@ -1180,26 +1222,21 @@ def run():
     res_vlay = wrkr.run(rlay_l, finv_vlay, 
              crs = finv_vlay.crs(), 
              as_inun=as_inun, dtm_rlay=dtm_rlay,dthresh=dthresh,
-             clip_dtm=clip_dtm,
+             clip_dtm=clip_dtm, clip_rlays=clip_rlays
              )
        
     wrkr.check()
 
-    
     #==========================================================================
     # save results
     #==========================================================================
-    outfp = wrkr.write_res(res_vlay)
+    outfp = wrkr.write_res(res_vlay) #write csv dataset
     if write_vlay:
         ofp = os.path.join(out_dir, res_vlay.name()+'.gpkg')
         vlay_write(res_vlay,ofp, overwrite=True)
      
     #wrkr.upd_cf(cf_fp)
     basic.force_open_dir(out_dir)
-    
-if __name__ =="__main__": 
-    
-    run()
     tdelta = datetime.datetime.now() - start
     print('finished in %s'%tdelta)
     
