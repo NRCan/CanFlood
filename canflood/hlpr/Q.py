@@ -428,6 +428,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #=======================================================================
         # coordinate transformation
         #=======================================================================
+        NO CONVERSION HERE!
         can't get native API to work. use gdal_warp instead
         """
         
@@ -472,13 +473,16 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         projector = QgsRasterProjector()
         #projector.setCrs(provider.crs(), provider.crs())
         
+
         #build and configure pipe
         pipe = QgsRasterPipe()
         if not pipe.set(provider.clone()): #Insert a new known interface in default place
             raise Error("Cannot set pipe provider")
-            
+             
         if not pipe.insert(2, projector): #insert interface at specified index and connect
             raise Error("Cannot set pipe projector")
+
+        #pipe = rlayer.pipe()
             
         
         #coordinate transformation
@@ -511,8 +515,8 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         if resolution == 'raw':
             """this respects the calculated extents"""
             
-            nCols = extent.height()/rlayer.rasterUnitsPerPixelY()
-            nRows = extent.width()/rlayer.rasterUnitsPerPixelX()
+            nRows = int(extent.height()/rlayer.rasterUnitsPerPixelY())
+            nCols = int(extent.width()/rlayer.rasterUnitsPerPixelX())
             
 
             
@@ -530,8 +534,8 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         file_writer = QgsRasterFileWriter(out_fp)
         #file_writer.Mode(1) #???
         
-        
-        file_writer.setCreateOptions(opts)
+        if not opts is None:
+            file_writer.setCreateOptions(opts)
         
         log.debug('writing to file w/ \n    %s'%(
             {'nCols':nCols, 'nRows':nRows, 'extent':extent, 'crs':rlayer.crs()}))
@@ -1951,6 +1955,83 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         return res_vlay, nfn_l
 
 
+    def warpreproject(self, #repojrect a raster
+                              rlay_raw,
+                              
+                              crsOut = None, #crs to re-project to
+                              layname = None,
+                              options = 'COMPRESS=DEFLATE|PREDICTOR=2|ZLEVEL=9',
+                              #output = 'TEMPORARY_OUTPUT',
+                              logger = None,
+                              ):
+
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger = self.logger
+        log = logger.getChild('warpreproject')
+        
+        if layname is None:
+            layname = '%s_rproj'%rlay_raw.name()
+            
+            
+        algo_nm = 'gdal:warpreproject'
+            
+        if crsOut is None: crs = self.crs #just take the project's
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert isinstance(rlay_raw, QgsRasterLayer)
+
+        assert rlay_raw.crs() != crsOut, 'layer already on this CRS!'
+            
+            
+        #=======================================================================
+        # run algo        
+        #=======================================================================
+
+        
+        ins_d =  {
+             'DATA_TYPE' : 0,
+             'EXTRA' : '',
+             'INPUT' : rlay_raw,
+             'MULTITHREADING' : False,
+             'NODATA' : None,
+             'OPTIONS' : options,
+             'OUTPUT' : 'TEMPORARY_OUTPUT',
+             'RESAMPLING' : 0,
+             'SOURCE_CRS' : None,
+             'TARGET_CRS' : crsOut,
+             'TARGET_EXTENT' : None,
+             'TARGET_EXTENT_CRS' : None,
+             'TARGET_RESOLUTION' : None,
+          }
+        
+        log.debug('executing \'%s\' with ins_d: \n    %s \n\n'%(algo_nm, ins_d))
+        
+        res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
+        
+        log.debug('finished w/ \n    %s'%res_d)
+        
+        if not os.path.exists(res_d['OUTPUT']):
+            """failing intermittently"""
+            raise Error('failed to get a result')
+        
+        res_rlay = QgsRasterLayer(res_d['OUTPUT'], layname)
+
+        #=======================================================================
+        # #post check
+        #=======================================================================
+        assert isinstance(res_rlay, QgsRasterLayer), 'got bad type: %s'%type(res_rlay)
+        assert res_rlay.isValid()
+        assert rlay_raw.bandCount()==res_rlay.bandCount(), 'band count mismatch'
+           
+   
+        res_rlay.setName(layname) #reset the name
+           
+        log.debug('finished w/ %s'%res_rlay.name())
+          
+        return res_rlay
     
     
     
