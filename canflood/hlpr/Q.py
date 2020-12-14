@@ -103,6 +103,18 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                  **kwargs
                  ):
         
+        """"
+        #=======================================================================
+        # standAlone use
+        #=======================================================================
+        from hlpr.logr import basic_logger
+        mod_logger = basic_logger() 
+
+        wrkr = Qcoms(logger=mod_logger, tag=tag, out_dir=out_dir).ini_standalone()
+        
+        
+        """
+        
 
 
         
@@ -121,6 +133,8 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #crs
         if crs is None: 
             crs = QgsCoordinateReferenceSystem(self.crs_id)
+        else:
+            self.crs_id = crs.authid() #pull the string from the passed
             
         self.crs = crs
         
@@ -437,9 +451,10 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             msg = 'requested file already exists! and overwrite=%s \n    %s'%(
                 self.overwrite, out_fp)
             if self.overwrite:
-                raise Error(msg)
-            else:
                 log.warning(msg)
+            else:
+                raise Error(msg)
+                
         
         #=======================================================================
         # extract info from layer
@@ -451,7 +466,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         #build projector
         projector = QgsRasterProjector()
-        projector.setCrs(provider.crs(), provider.crs())
+        #projector.setCrs(provider.crs(), provider.crs())
         
         #build and configure pipe
         pipe = QgsRasterPipe()
@@ -464,7 +479,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         #coordinate transformation
         """see note"""
-
+        transformContext = self.qproj.transformContext()
         
         #=======================================================================
         # extents
@@ -479,7 +494,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             extent =  QgsCoordinateTransform(
                 self.qproj.crs(), 
                 rlayer.crs(), 
-                self.qproj.transformContext()
+                transformContext
                     ).transformBoundingBox(self.iface.mapCanvas().extent())
                 
         assert isinstance(extent, QgsRectangle), 'expected extent=QgsRectangle. got \"%s\''%extent

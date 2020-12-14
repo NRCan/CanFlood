@@ -306,6 +306,11 @@ class Rsamp(Qcoms):
         log.info('sampling finished')
         
         return res_vlay
+    
+
+        
+        
+        
         
     def samp_vals(self, #sample a set of rasters with a vectorlayer
                   finv, raster_l,psmp_stat):
