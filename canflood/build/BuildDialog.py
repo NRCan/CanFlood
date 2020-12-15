@@ -248,6 +248,10 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         # TAB: HAZARD SAMPLER---------
         #======================================================================
+        
+        #=======================================================================
+        # raster layer selection box
+        #=======================================================================
         # Set GUI elements
         self.comboBox_ras.setFilters(QgsMapLayerProxyModel.RasterLayer)
         """
@@ -304,21 +308,22 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         
         #=======================================================================
-        # #execute
+        # #execute buttons
         #=======================================================================
         self.pushButton_HSgenerate.clicked.connect(self.run_rsamp)
-        
+        self.pushButton_HS_prep.clicked.connect(self.run_rPrep)
         #======================================================================
-        # event likelihoods
+        # TAB: EVENT VARIABLES---------
         #======================================================================
         self.pushButton_ELstore.clicked.connect(self.set_event_vals)
+        """not much here?
         
-        """dev button
-        self.pushButton_ELdev.clicked.connect(self._pop_el_table)"""
+        table population is done by run_rsamp()
+        """
         
-        
+
         #======================================================================
-        # Conditional Probabilities-----------
+        # TAB: CONDITIONAL PROBABILITIES-----------
         #======================================================================
         """todo: rename the buttons so they align w/ the set labels
         
