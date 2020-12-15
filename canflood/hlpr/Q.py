@@ -160,7 +160,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
     def ini_standalone(self,  #initilize calls for standalone runs
                        crs = None,
                        ):
-        
+        log = self.logger.getChild('ini_standalone')
         #=======================================================================
         # #crs
         #=======================================================================
@@ -172,7 +172,8 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             
         self.crs = crs
         self.qproj.setCrs(crs)
-
+        
+        log.info('crs set to \'%s\''%self.crs.authid())
         #=======================================================================
         # setup qgis
         #=======================================================================
@@ -188,7 +189,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         if not self.proj_checks():
             raise Error('failed checks')
         
-        self.logger.debug('Qproj.ini_standalone finished')
+        log.debug('Qproj.ini_standalone finished')
         
         
         return self
@@ -526,7 +527,9 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                 
         assert isinstance(extent, QgsRectangle), 'expected extent=QgsRectangle. got \"%s\''%extent
         
-        
+        #expect the requested extent to be LESS THAN what we have in the raw raster
+        assert rlayer.extent().width()>=extent.width(), 'passed extents too wide'
+        assert rlayer.extent().height()>=extent.height(), 'passed extents too tall'
         #=======================================================================
         # resolution
         #=======================================================================
@@ -741,7 +744,15 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
     
 
     
-
+    def check_aoi(self, #special c hecks for AOI layers
+                  vlay):
+        
+        assert isinstance(vlay, QgsVectorLayer)
+        assert 'Polygon' in QgsWkbTypes().displayString(vlay.wkbType())
+        assert vlay.dataProvider().featureCount()==1
+        assert vlay.crs() == self.qproj.crs()
+        
+        return 
     
     #==========================================================================
     # ALGOS--------------

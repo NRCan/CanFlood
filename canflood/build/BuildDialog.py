@@ -479,6 +479,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             log.info('slicing finv \'%s\' and %i feats w/ aoi \'%s\''%(
                 vlay.name(),vlay.dataProvider().featureCount(), aoi_vlay.name()))
             
+            self.check_aoi(aoi_vlay)
+            
             res_vlay =  self.selectbylocation(vlay, aoi_vlay, result_type='layer', logger=log)
             
             assert isinstance(res_vlay, QgsVectorLayer)
@@ -878,7 +880,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             
         
         #=======================================================================
-        # slice aoi
+        # slice finv to aoi
         #=======================================================================
         finv = self.slice_aoi(finv_raw)
 
@@ -930,9 +932,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                           out_dir = out_dir
                           )
         
-        
-        
-        
+
         #execute the tool
         res_vlay = wrkr.run(rlay_l, finv,
                             psmp_stat=psmp_stat,

@@ -74,14 +74,15 @@ class Rsamp(Qcoms):
                 # 12: All
                 }
     
-    """
-    ['count', 'unique', 'min', 'max', 'range', 'sum', 'mean', 'median', 'stddev', 'minority', 'majority', 'q1', 'q3', 'iqr']
-    """
+
     
     
     def __init__(self,
                  fname='expos', #prefix for file name
                   *args, **kwargs):
+        """
+        Plugin: called by each button push
+        """
         
         super().__init__(*args, **kwargs)
         
@@ -98,7 +99,7 @@ class Rsamp(Qcoms):
                     ):
         
         """
-        special input loader for standalone runs
+        special input loader for StandAlone runs
         Im assuming for the plugin these layers will be loaded already"""
         log = self.logger.getChild('load_layers')
         
@@ -155,11 +156,8 @@ class Rsamp(Qcoms):
         
         return list(raster_d.values()), vlay
     
-
-            
-
     def run(self, 
-            raster_l, #set of rasters to sample 
+            rlayRaw_l, #set of rasters to sample 
             finv_raw, #inventory layer
             
             cid = None, #index field name on finv
@@ -174,7 +172,7 @@ class Rsamp(Qcoms):
             clip_dtm=False,
             
             #prep controls
-            aoi_vlay = None, #if passed, slice to this AOI
+            aoi_vlay = None, #if passed, slice rasters to this AOI (finv should already be sliced)
             allow_download = True, #whether to allow downloading of non-gdal dataProviders
             allow_rproj = True,
             
@@ -189,37 +187,43 @@ class Rsamp(Qcoms):
         #======================================================================
         log = self.logger.getChild('run')
         if cid is None: cid = self.cid
-        crs = self.crs
+
+        self.as_inun = as_inun
 
         
-        log.info('executing on %i rasters'%(len(raster_l)))
-        self.as_inun = as_inun
+        log.info('executing on %i rasters'%(len(rlayRaw_l)))
+
         #======================================================================
         # precheck
         #======================================================================
+        assert self.crs == self.qproj.crs(), 'crs mismatch!'
         
-        assert isinstance(crs, QgsCoordinateReferenceSystem)
         
         #check the finv_raw
         assert isinstance(finv_raw, QgsVectorLayer), 'bad type on finv_raw'
-        assert finv_raw.crs() == crs, 'finv_raw crs %s doesnt match projects \'%s\'' \
-            %(finv_raw.crs().authid(), crs.authid())
+        """rasteres are checked below"""
+        assert finv_raw.crs() == self.qproj.crs(), 'finv_raw crs %s doesnt match projects \'%s\'' \
+            %(finv_raw.crs().authid(), self.qproj.crs().authid())
         assert cid in [field.name() for field in finv_raw.fields()], \
             'requested cid field \'%s\' not found on the finv_raw'%cid
             
-        
+        #check the aoi
+        if not aoi_vlay is None:
+            self.check_aoi(aoi_vlay)
+
         
         #check the rasters
         rname_l = []
-        for rlay in raster_l:
+        for rlay in rlayRaw_l:
             assert isinstance(rlay, QgsRasterLayer)
-            assert rlay.crs() == crs, 'rlay %s crs doesnt match project'%(rlay.name())
+            """allowing conversion now
+            assert rlay.crs() == crs, 'rlay %s crs doesnt match project'%(rlay.name())"""
             rname_l.append(rlay.name())
         
         self.rname_l = rname_l
         
         #======================================================================
-        # build the finv_raw
+        # prep the finv for sampling
         #======================================================================
         self.finv_name = finv_raw.name()
         
@@ -240,10 +244,53 @@ class Rsamp(Qcoms):
         if self.gtype.endswith('Z'):
             log.warning('passed finv has Z values... these are not supported')
             
+        #=======================================================================
+        # prep the raster layers------
+        #=======================================================================
+        #=======================================================================
+        # dataProvider check/conversion
+        #=======================================================================
+        """necessary for web layers"""
 
+        #loop and check/download each raw raster
+        raster_l = []
+        for rlayRaw in rlayRaw_l:
             
+            if not rlayRaw.providerType() == 'gdalz':
+                msg = 'raster \'%s\' providerType = \'%s\' and allow_download=%s'%(
+                    rlayRaw.name(), rlayRaw.providerType(), allow_download)
+                if not allow_download:
+                    raise Error(msg)
+                log.info(msg)
+                
+                #set extents
+                if not aoi_vlay is None: #aoi extents in correct CRS
+            
+                    extent = QgsCoordinateTransform(
+                        aoi_vlay.crs(), rlayRaw.crs(), self.qproj.transformContext()
+                        ).transformBoundingBox(aoi_vlay.extent())
+                else: #layers extents
+                    extent=rlayRaw.extent()
+            
+            
+                #save a local copy
+                ofp = self.write_rlay(rlayRaw, extent=extent, 
+                                       newLayerName='%s_gdal'%rlayRaw.name(),
+                                       logger=log)
+                
+                #load this file
+                rlay = self.load_rlay(ofp, logger=log)
+                
+                #check
+                assert rlay.bandCount()==rlayRaw.bandCount()
+                assert rlay.providerType()=='gdal'            
+                
+                raster_l.append(rlay)
+            else:
+                raster_l.append(rlayRaw) #just take the raw
+                
         
-
+            
         #=======================================================================
         # #inundation runs--------
         #=======================================================================
