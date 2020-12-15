@@ -194,15 +194,16 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
 
 
         #find a good layer
-        try:
-            for layname, vlay in vlays_d.items():
-                if layname.startswith('finv'):
-                    break
-            
-            self.logger.debug('setting comboBox_vec = %s'%vlay.name())
-            self.comboBox_ivlay.setLayer(vlay)
-        except Exception as e:
-            self.logger.debug('failed to set inventory layer w: \n    %s'%e)
+        if len(vlays_d)>0:
+            try:
+                for layname, vlay in vlays_d.items():
+                    if layname.startswith('finv'):
+                        break
+                
+                self.logger.debug('setting comboBox_vec = %s'%vlay.name())
+                self.comboBox_ivlay.setLayer(vlay)
+            except Exception as e:
+                self.logger.debug('failed to set inventory layer w: \n    %s'%e)
             
 
         #index field name
@@ -384,13 +385,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         self.pushButton_Validate.clicked.connect(self.run_validate)
         
-
-
-
-
-        
         #======================================================================
-        # defaults-----------
+        # project defaults-----------
         #======================================================================
         """"
         to speed up testing.. manually configure the project
@@ -407,14 +403,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # wrap
         #=======================================================================
+        return
             
-        
-        
-        
-        
-        
-
-
 
 
     #===========================================================================
@@ -897,21 +887,21 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         if self.checkBox_loadres.isChecked():
             log.debug('loading %i prepped raster results'%len(rlay_l))
+            self._HS_clearBox() #clear the raster selection box
+            assert len(self.ras_dict)==0
+            
             for rlay in rlay_l:
                 self.qproj.addMapLayer(rlay)
                 log.info('added \'%s\' to canvas'%rlay.name())
+                
+                #update th erasterBox
+                self.ras_dict.update( { rlay.name() : rlay} )
+                self.listWidget_ras.addItem(str(rlay.name()))
+                
         else:
             log.warning('prepped rasters not loaded to canvas!')
             
-        #=======================================================================
-        # rasterBox
-        #=======================================================================
-        log.debug('cleaning up rasterBox')
-        """swap out the original selection with the Prepped layers"""
-        self._HS_clearBox() #clear the raster selection box
-        for layer in rlay_l:
-            self.ras_dict.update( { layer.name() : layer} )
-            self.listWidget_ras.addItem(str(layer.name()))
+
             
         #=======================================================================
         # wrap
