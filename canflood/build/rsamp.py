@@ -318,6 +318,7 @@ class Rsamp(Qcoms):
             res_l.append(rlay)
             
             self.feedback.upd_prog(70/len(rlayRaw_l), method='append')
+            assert isinstance(rlay, QgsRasterLayer)
             
         self.feedback.setProgress(90)
             
@@ -337,6 +338,13 @@ class Rsamp(Qcoms):
              
              
              ):
+        """
+        #=======================================================================
+        # mstore
+        #=======================================================================
+        todo: need to fix this... using the store is currently crashing Qgis
+        
+        """
         #=======================================================================
         # defaults
         #=======================================================================
@@ -347,7 +355,7 @@ class Rsamp(Qcoms):
         res_d = dict() #reporting container
         
         #start a new store for handling  intermediate layers
-        mstore = QgsMapLayerStore()
+        #mstore = QgsMapLayerStore()
         
         newLayerName='%s_prepd' % rlayRaw.name()
         
@@ -378,7 +386,8 @@ class Rsamp(Qcoms):
                 extent = rlayRaw.extent() #layers extents
             #save a local copy
             ofp = self.write_rlay(rlayRaw, extent=extent, 
-                newLayerName='%s_gdal' % rlayRaw.name(), 
+                newLayerName='%s_gdal' % rlayRaw.name(),
+                out_dir =  os.environ['TEMP'], #will write to the working directory at the end
                 logger=log)
             #load this file
             rlayDp = self.load_rlay(ofp, logger=log)
@@ -388,7 +397,7 @@ class Rsamp(Qcoms):
             
             res_d['download'] = 'from \'%s\' to \'gdal\''%rlayRaw.providerType()
             
-            mstore.addMapLayer(rlayRaw)
+            #mstore.addMapLayer(rlayRaw)
 
         else:
             rlayDp = rlayRaw
@@ -417,7 +426,7 @@ class Rsamp(Qcoms):
                 output=output, layname=newName)
             
             res_d['rproj'] = 'from %s to %s'%(rlayDp.crs().authid(), self.qproj.crs().authid())
-            mstore.addMapLayer(rlayDp)
+            #mstore.addMapLayer(rlayDp)
 
         else:
             log.debug('\'%s\' crs matches project crs: %s'%(rlayDp.name(), rlayDp.crs()))
@@ -434,7 +443,7 @@ class Rsamp(Qcoms):
             rlayTrim = self.cliprasterwithpolygon(rlayProj,aoi_vlay, logger=log)
             
             res_d['clip'] = 'with \'%s\''%aoi_vlay.name()
-            mstore.addMapLayer(rlayProj)
+            #mstore.addMapLayer(rlayProj)
         else:
             rlayTrim = rlayProj
             
@@ -445,34 +454,38 @@ class Rsamp(Qcoms):
             rlayScale = self.raster_mult(rlayTrim, scaleFactor, logger=log)
             
             res_d['scale'] = 'by %.4f'%scaleFactor
-            mstore.addMapLayer(rlayTrim)
+            #mstore.addMapLayer(rlayTrim)
         else:
             rlayScale = rlayTrim
             
         #=======================================================================
         # final write
         #=======================================================================
-        resLay = rlayScale
+        resLay1 = rlayScale
         write=False
         
         if len(res_d)>0: #only where we did some operations
             write=True
+            
+        """write it regardless
         if len(res_d)==1 and 'download' in res_d.keys():
-            write=False
+            write=False"""
             
         
         
         if write:
-            resLay.setName(newLayerName)
-            ofp = self.write_rlay(resLay, logger=log)
+            resLay1.setName(newLayerName)
+            ofp = self.write_rlay(resLay1, logger=log)
             
-            mstore.addMapLayer(resLay)
+            #mstore.addMapLayer(resLay1)
             
             #use the filestore layer
             resLay = self.load_rlay(ofp, logger=log)
-            self.qproj.addMapLayer(resLay) #load to canvas
+            """control canvas loading in the plugin"""
+            
         else:
             log.warning('layer \'%s\' not written to file!'%resLay.name())
+            resLay=resLay1
             
 
         #=======================================================================
@@ -485,18 +498,21 @@ class Rsamp(Qcoms):
             len(res_d), resLay.name(), res_d))
         
         #clean up the store
-        _ = mstore.takeMapLayer(rlayRaw) #take out the raw (without deleteing) 
-        try:
-            mstore.takeMapLayer(resLay) #try and pull out the result layer
-        except:pass
+        #=======================================================================
+        # _ = mstore.takeMapLayer(rlayRaw) #take out the raw (without deleteing) 
+        # try:
+        #     _ = mstore.takeMapLayer(resLay) #try and pull out the result layer
+        # except:
+        #     log.warning('failed to remove \'%s\' from store'%resLay.name())
+        #=======================================================================
         
         """
         for k,v in mstore.mapLayers().items():
             print(k,v)
         
         """
-        mstore.removeAllMapLayers() #clear all layers
-        
+        #mstore.removeAllMapLayers() #clear all layers
+        assert isinstance(resLay, QgsRasterLayer)
         
         
         return resLay

@@ -885,32 +885,46 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         # load results
         #=======================================================================
         
+        self._HS_clearBox() #clear the raster selection box
+        assert len(self.ras_dict)==0
+            
+            
+        #=======================================================================
+        # """adding the list of rasters to the canvas is crashing Qgis
+        # spent an hour and couldnt resolve
+        #=======================================================================
+
         if self.checkBox_loadres.isChecked():
             log.debug('loading %i prepped raster results'%len(rlay_l))
-            self._HS_clearBox() #clear the raster selection box
-            assert len(self.ras_dict)==0
-            
+
+             
+
+            self.qproj.addMapLayers(rlay_l)
             for rlay in rlay_l:
-                self.qproj.addMapLayer(rlay)
+                assert isinstance(rlay, QgsRasterLayer)
+                #self.qproj.addMapLayer(rlay)
                 log.info('added \'%s\' to canvas'%rlay.name())
-                
+                 
+
                 #update th erasterBox
                 self.ras_dict.update( { rlay.name() : rlay} )
                 self.listWidget_ras.addItem(str(rlay.name()))
-                
+
+
+                 
         else:
             log.warning('prepped rasters not loaded to canvas!')
-            
-
-            
+             
+ 
+             
         #=======================================================================
         # wrap
         #=======================================================================
-        
+         
         self.feedback.upd_prog(None) #set the progress bar back down to zero
-
+ 
         log.push('run_rPrep finished in %s'%(datetime.datetime.now() - start))
-        
+         
         return
         
 

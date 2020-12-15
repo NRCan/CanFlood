@@ -46,6 +46,7 @@ from hlpr.exceptions import QError as Error
     
 
 import hlpr.basic as basic
+from hlpr.basic import get_valid_filename
 
 
 #==============================================================================
@@ -428,7 +429,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #assert rlayer.crs() == self.crs, 'crs mismatch'
 
         
-        log.info('loaded \'%s\' from \n    %s'%(rlayer.name(), fp))
+        log.debug('loaded \'%s\' from \n    %s'%(rlayer.name(), fp))
         
         return rlayer
     
@@ -468,7 +469,10 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         if out_dir is None: out_dir = self.out_dir
         if newLayerName is None: newLayerName = rlayer.name()
         
-        out_fp = os.path.join(out_dir, '%s.tif'%newLayerName)
+        newFn = get_valid_filename('%s.tif'%newLayerName) #clean it
+        
+        out_fp = os.path.join(out_dir, newFn)
+
         
         log = logger.getChild('write_rlay')
         
@@ -490,6 +494,8 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                 raise Error(msg)
                 
         
+
+            
         #=======================================================================
         # extract info from layer
         #=======================================================================
@@ -580,6 +586,11 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #=======================================================================
         if not error == QgsRasterFileWriter.NoError:
             raise Error(error)
+        
+        assert os.path.exists(out_fp)
+        
+        assert QgsRasterLayer.isValidRasterFileName(out_fp),  \
+            'requested file is not a valid raster file type: %s'%out_fp
         
         
         return out_fp

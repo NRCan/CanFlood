@@ -293,7 +293,8 @@ class logger(object): #workaround for qgis logging pythonic
         
         self.statusQlab = statusQlab
         
-        self.debug('logger initilized for %s at %s'%(parent.__class__.__name__, datetime.datetime.now()))
+        """dont want to call this during getChild
+        self.debug('logger initilized for %s at %s'%(parent.__class__.__name__, datetime.datetime.now()))"""
         
     def getChild(self, new_childnm):
         

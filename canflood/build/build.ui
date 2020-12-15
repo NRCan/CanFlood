@@ -52,7 +52,7 @@
         <x>0</x>
         <y>0</y>
         <width>684</width>
-        <height>741</height>
+        <height>740</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -2516,14 +2516,14 @@ p, li { white-space: pre-wrap; }
      </property>
      <property name="minimumSize">
       <size>
-       <width>500</width>
+       <width>600</width>
        <height>80</height>
       </size>
      </property>
      <property name="maximumSize">
       <size>
        <width>16777215</width>
-       <height>80</height>
+       <height>150</height>
       </size>
      </property>
      <property name="title">
@@ -2536,6 +2536,12 @@ p, li { white-space: pre-wrap; }
          <layout class="QVBoxLayout" name="verticalLayout_20">
           <item>
            <widget class="QLabel" name="progressText">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>30</height>
+             </size>
+            </property>
             <property name="maximumSize">
              <size>
               <width>16777215</width>
@@ -2544,6 +2550,9 @@ p, li { white-space: pre-wrap; }
             </property>
             <property name="text">
              <string>Waiting on User...</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
             </property>
            </widget>
           </item>

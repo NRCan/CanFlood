@@ -17,7 +17,7 @@ helper functions w/o qgis api
 # imports------------
 #==============================================================================
 #python
-import os, configparser, logging
+import os, configparser, logging, re
 import pandas as pd
 import numpy as np
 
@@ -717,6 +717,13 @@ def force_open_dir(folder_path_raw, logger=mod_logger): #force explorer to open 
     except:
         logger.error('unable to open directory: \n %s'%dir)
         return False
+    
+    
+def get_valid_filename(s):
+    s = str(s).strip().replace(' ', '_')
+    s = re.sub(r'(?u)[^-\w.]', '', s)
+    s = re.sub(':','-', s)
+    return s
     
     
 if __name__ =="__main__": 
