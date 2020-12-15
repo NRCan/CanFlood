@@ -1467,12 +1467,25 @@ p, li { white-space: pre-wrap; }
                    <property name="text">
                     <string>Allow re-projection</string>
                    </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
                   </widget>
                  </item>
                  <item>
                   <widget class="QCheckBox" name="checkBox_HS_dpConv">
                    <property name="text">
                     <string>Allow dataProvider conversion</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QCheckBox" name="checkBox_HS_clip">
+                   <property name="text">
+                    <string>clip to AOI</string>
                    </property>
                   </widget>
                  </item>
