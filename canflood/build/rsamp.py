@@ -163,12 +163,7 @@ class Rsamp(Qcoms):
             finv_raw, #inventory layer
             
             cid = None, #index field name on finv
-            crs = None,
-            
-            #raster prep
-            aoi_vlay = None, #for clip_rlays=True, aoi layer
-            clip_rlays = False, #whether to clip raster layers first
-            
+                        
             #exposure value controls
             psmp_stat='Max', #for polygon finvs, statistic to sample
             
@@ -177,6 +172,11 @@ class Rsamp(Qcoms):
             dtm_rlay=None, #dtm raster
             dthresh = 0, #fordepth threshold
             clip_dtm=False,
+            
+            #prep controls
+            aoi_vlay = None, #if passed, slice to this AOI
+            allow_download = True, #whether to allow downloading of non-gdal dataProviders
+            allow_rproj = True,
             
             ):
         """
@@ -189,7 +189,7 @@ class Rsamp(Qcoms):
         #======================================================================
         log = self.logger.getChild('run')
         if cid is None: cid = self.cid
-        if crs is None: crs = self.crs
+        crs = self.crs
 
         
         log.info('executing on %i rasters'%(len(raster_l)))
@@ -240,13 +240,7 @@ class Rsamp(Qcoms):
         if self.gtype.endswith('Z'):
             log.warning('passed finv has Z values... these are not supported')
             
-        #=======================================================================
-        # raster prep---
-        #=======================================================================
-        if clip_rlays:
-            """traditionally... no need to pre-clip rasters.
-            but many web-hosted rasters benefit from pre-clipping"""
-            pass
+
             
         
 

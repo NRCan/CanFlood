@@ -63,8 +63,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         """these will only ini tthe first baseclass (QtWidgets.QDialog)
         
         required"""
-        super(DataPrep_Dialog, self).__init__(parent)
-        #super(DataPrep_Dialog, self).__init__(parent)
+        super(DataPrep_Dialog, self).__init__(parent) #only calls QtWidgets.QDialog
+
         self.setupUi(self)
         
         # Set up the user interface from Designer through FORM_CLASS.
@@ -854,7 +854,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         finv_raw = self.comboBox_ivlay.currentLayer()
         rlay_l = list(self.ras_dict.values())
         
-        crs = self.qproj.crs()
 
         cf_fp = self.get_cf_fp()
         out_dir = self.lineEdit_wd.text()
@@ -927,7 +926,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         wrkr = Rsamp(logger=self.logger, 
                           tag = self.tag, #set by build_scenario() 
                           feedback = self.feedback, #let the instance build its own feedback worker
-                          cid=cid,crs = crs,
+                          cid=cid,
                           out_dir = out_dir
                           )
         
@@ -1026,7 +1025,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         finv_raw = self.comboBox_ivlay.currentLayer()
         rlay = self.comboBox_dtm.currentLayer()
         
-        crs = self.qproj.crs()
 
         cf_fp = self.get_cf_fp()
         out_dir = self.lineEdit_wd.text()
@@ -1079,7 +1077,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         wrkr = Rsamp(logger=self.logger, 
                           tag=self.tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
-                          cid=cid,crs=crs, 
+                          cid=cid,
                           out_dir = out_dir, fname='gels'
                           )
         
@@ -1126,7 +1124,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         # assemble/prepare inputs
         #=======================================================================
         finv_raw = self.comboBox_ivlay.currentLayer()
-        crs = self.qproj.crs()
+
         cf_fp = self.get_cf_fp()
         out_dir = self.lineEdit_wd.text()
         cid = self.mFieldComboBox_cid.currentField() #user selected field
@@ -1185,7 +1183,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         wrkr = LikeSampler(logger=self.logger, 
                           tag=self.tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
-                          crs = crs,
                           )
         
         #connect the status bar

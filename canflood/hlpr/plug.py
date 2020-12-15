@@ -62,13 +62,12 @@ class QprojPlug(Qcoms): #baseclass for plugins
     invalid_cids = ['fid', 'ogc_fid']
     
     """not a great way to init this one
+    Plugin classes are only initilaizing the first baseclass
     def __init__(self):
         self.logger = logger()"""
     
     def qproj_setup(self): #project inits for Dialog Classes
-        """
-        todo: change this to an __init__
-        """
+
         
         self.logger = logger(self) #init the logger
         self.qproj = QgsProject.instance()

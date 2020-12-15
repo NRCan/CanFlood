@@ -80,7 +80,7 @@ type_qvar_py_d = {10:str, 2:int, 135:float, 6:float, 4:int, 1:bool, 16:datetime.
 
 class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native console
     
-    crs_id = 'EPSG:4326'
+    crsid_default = 'EPSG:4326' #default crsID
     
     driverName = 'SpatiaLite' #default data creation driver type
     
@@ -99,11 +99,15 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
     
     def __init__(self,
                  feedback=None, 
-                 crs = None,
                  **kwargs
                  ):
         
         """"
+        #=======================================================================
+        # plugin use
+        #=======================================================================
+        QprojPlugs don't execute super cascade
+        
         #=======================================================================
         # standAlone use
         #=======================================================================
@@ -114,10 +118,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         
         """
-        
 
-
-        
         if feedback is None:
             """by default, building our own feedbacker
             passed to ComWrkr.setup_feedback()
@@ -130,13 +131,19 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
 
         self.fieldn_max_d=fieldn_max_d
-        #crs
-        if crs is None: 
-            crs = QgsCoordinateReferenceSystem(self.crs_id)
-        else:
-            self.crs_id = crs.authid() #pull the string from the passed
-            
-        self.crs = crs
+        
+        #=======================================================================
+        # common Qgis setup
+        #=======================================================================
+        """both Plugin and StandAlone runs should call these"""
+        self.qproj = QgsProject.instance()
+        
+        """see below for setting the crs during StandAlone"""
+        self.crs = self.qproj.crs()
+        
+        if self.crs.authid()=='':
+            self.logger.warning('got empty CRS!') #should only trip on StandAlone runs
+
         
         #=======================================================================
         # attach inputs
@@ -150,14 +157,26 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
     # standalone methods-----------
     #==========================================================================
         
-    def ini_standalone(self, ): #initilize calls for standalone runs
+    def ini_standalone(self,  #initilize calls for standalone runs
+                       crs = None,
+                       ):
+        
+        #=======================================================================
+        # #crs
+        #=======================================================================
+        """for Standalone runs... not relying on crs coming from the qproj"""
+        if crs is None:  #use the default
+            crs = QgsCoordinateReferenceSystem(self.crsid_default)
+            
+        assert isinstance(crs, QgsCoordinateReferenceSystem), 'bad crs type'
+            
+        self.crs = crs
+        self.qproj.setCrs(crs)
 
         #=======================================================================
         # setup qgis
         #=======================================================================
         self.qap = self.init_qgis()
-        self.qproj = QgsProject.instance()
-        
         self.algo_init = self.init_algos()
         
         self.set_vdrivers()
@@ -259,7 +278,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         log = self.logger.getChild('set_crs')
         
         if authid is None: 
-            authid = self.crs_id
+            authid = self.crsid_default
         
         if not isinstance(authid, int):
             raise IOError('expected integer for crs')
