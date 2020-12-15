@@ -470,6 +470,15 @@ class Rsamp(Qcoms):
         
         #clean up the store
         _ = mstore.takeMapLayer(rlayRaw) #take out the raw (without deleteing) 
+        try:
+            mstore.takeMapLayer(resLay) #try and pull out the result layer
+        except:pass
+        
+        """
+        for k,v in mstore.mapLayers().items():
+            print(k,v)
+        
+        """
         mstore.removeAllMapLayers() #clear all layers
         
         return resLay

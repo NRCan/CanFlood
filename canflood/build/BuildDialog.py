@@ -932,6 +932,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         assert isinstance(allow_rproj, bool)
         assert isinstance(scaleFactor, float)
         
+        if clip_rlays:
+            assert isinstance(aoi_vlay, QgsVectorLayer), 'for clip_rlays=True, must provide AOI'
+        
         self.feedback.setProgress(10)
         #======================================================================
         # execute
