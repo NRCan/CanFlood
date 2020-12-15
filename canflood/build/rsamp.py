@@ -171,12 +171,6 @@ class Rsamp(Qcoms):
             dthresh = 0, #fordepth threshold
             clip_dtm=False,
             
-            #prep controls
-            aoi_vlay = None, #aoi for downloading and clipping
-            clip_rlays=False, #whether to clip the rasters by the pased aoi_vlay
-            allow_download = True, #whether to allow downloading of non-gdal dataProviders
-            allow_rproj = True,
-            scaleFactor=1.0, #whether to scale raster values
             
             ):
         """
@@ -209,9 +203,7 @@ class Rsamp(Qcoms):
         assert cid in [field.name() for field in finv_raw.fields()], \
             'requested cid field \'%s\' not found on the finv_raw'%cid
             
-        #check the aoi
-        if not aoi_vlay is None:
-            self.check_aoi(aoi_vlay)
+
 
         
         #check the rasters
@@ -250,20 +242,7 @@ class Rsamp(Qcoms):
         #=======================================================================
         # prep the raster layers------
         #=======================================================================
-        raster_l = []
-        
-        for rlayRaw in rlayRaw_l:
-            rlay =  self.prep(rlayRaw, 
-                              allow_download=allow_download,
-                              aoi_vlay=aoi_vlay,
-                             allow_rproj=allow_rproj, clip_rlays=clip_rlays,
-                             scaleFactor=scaleFactor)
 
-            raster_l.append(rlay)
-        
-
-            
-        gc.collect()
         self.feedback.setProgress(40)
         #=======================================================================
         # #inundation runs--------
@@ -296,21 +275,21 @@ class Rsamp(Qcoms):
             # sample by goetype
             #===================================================================
             if 'Polygon' in self.gtype:
-                res_vlay = self.samp_inun(finv,raster_l, dtm_rlay1, dthresh)
+                res_vlay = self.samp_inun(finv,rlayRaw_l, dtm_rlay1, dthresh)
             elif 'Line' in self.gtype:
-                res_vlay = self.samp_inun_line(finv, raster_l, dtm_rlay1, dthresh)
+                res_vlay = self.samp_inun_line(finv, rlayRaw_l, dtm_rlay1, dthresh)
             else:
                 raise Error('bad gtype')
             
             res_name = '%s_%s_%i_%i_d%.2f'%(
-                self.fname, self.tag, len(raster_l), res_vlay.dataProvider().featureCount(), dthresh)
+                self.fname, self.tag, len(rlayRaw_l), res_vlay.dataProvider().featureCount(), dthresh)
         
         #=======================================================================
         # #WSL value sampler------
         #=======================================================================
         else:
-            res_vlay = self.samp_vals(finv,raster_l, psmp_stat)
-            res_name = '%s_%s_%i_%i'%(self.fname, self.tag, len(raster_l), res_vlay.dataProvider().featureCount())
+            res_vlay = self.samp_vals(finv,rlayRaw_l, psmp_stat)
+            res_name = '%s_%s_%i_%i'%(self.fname, self.tag, len(rlayRaw_l), res_vlay.dataProvider().featureCount())
             
         res_vlay.setName(res_name)
         #=======================================================================
@@ -324,6 +303,26 @@ class Rsamp(Qcoms):
         return res_vlay
     
 
+    def runPrep(self,
+                rlayRaw_l,
+                **kwargs
+                ):
+        
+        #=======================================================================
+        # do the prep
+        #=======================================================================
+        self.feedback.setProgress(20)
+        res_l = []
+        for rlayRaw in rlayRaw_l:
+            rlay = self.prep(rlayRaw, **kwargs)
+            res_l.append(rlay)
+            
+            self.feedback.upd_prog(70/len(rlayRaw_l), method='append')
+            
+        self.feedback.setProgress(90)
+            
+        return res_l
+            
         
     def prep(self,
              rlayRaw, #set of raw raster to apply prep handles to
@@ -335,6 +334,8 @@ class Rsamp(Qcoms):
              clip_rlays=False,
              
              scaleFactor=1.00,
+             
+             
              ):
         
         log = self.logger.getChild('prep')
@@ -345,6 +346,14 @@ class Rsamp(Qcoms):
         
         #start a new store for handling  intermediate layers
         mstore = QgsMapLayerStore()
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        #check the aoi
+        if clip_rlays: assert isinstance(aoi_vlay, QgsVectorLayer)
+        if not aoi_vlay is None:
+            self.check_aoi(aoi_vlay)
         
         #=======================================================================
         # dataProvider check/conversion-----
@@ -454,6 +463,7 @@ class Rsamp(Qcoms):
             
             #use the filestore layer
             resLay = self.load_rlay(ofp, logger=log)
+            self.qproj.addMapLayer(resLay) #load to canvas
             mstore.addMapLayer(resLay)
 
             
@@ -1081,6 +1091,12 @@ class Rsamp(Qcoms):
             
         if layname is None:
             layname = '%s_scaled'%rlayRaw.name()
+            
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert scaleFactor >= 0.01, 'scaleFactor = %.2f is too low'%scaleFactor
+        assert round(scaleFactor, 4)!=round(1.0, 4), 'scaleFactor = 1.0'
         
         #=======================================================================
         # assemble the entries

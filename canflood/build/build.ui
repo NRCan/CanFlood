@@ -313,6 +313,9 @@ p, li { white-space: pre-wrap; }
                    <property name="text">
                     <string>Load session results to canvas</string>
                    </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
                   </widget>
                  </item>
                 </layout>
@@ -1418,13 +1421,16 @@ p, li { white-space: pre-wrap; }
                       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                      </property>
                      <property name="decimals">
-                      <number>4</number>
+                      <number>2</number>
                      </property>
                      <property name="minimum">
-                      <double>-999999.000000000000000</double>
+                      <double>0.010000000000000</double>
                      </property>
                      <property name="maximum">
                       <double>999999.000000000000000</double>
+                     </property>
+                     <property name="singleStep">
+                      <double>0.010000000000000</double>
                      </property>
                      <property name="value">
                       <double>1.000000000000000</double>
@@ -1432,6 +1438,31 @@ p, li { white-space: pre-wrap; }
                     </widget>
                    </item>
                   </layout>
+                 </item>
+                 <item alignment="Qt::AlignHCenter|Qt::AlignVCenter">
+                  <widget class="QPushButton" name="pushButton_HS_prep">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <weight>75</weight>
+                     <bold>true</bold>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Prep</string>
+                   </property>
+                  </widget>
                  </item>
                 </layout>
                </widget>

@@ -486,13 +486,18 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             assert isinstance(res_vlay, QgsVectorLayer)
             
             vlay.removeSelection()
+            
+            res_vlay.setName('%s_aoi'%vlay.name())
         
         #=======================================================================
         # wrap
         #=======================================================================
+        """no... we use this as a backend pre-filter alot
+        only load excplicitly called slice values
         if self.checkBox_loadres.isChecked():
             self.qproj.addMapLayer(res_vlay)
             self.logger.info('added \'%s\' to canvas'%res_vlay.name())
+            """
             
         
             
@@ -843,12 +848,97 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         log.push('finished NPRI conversion')
         self.feedback.upd_prog(None) #set the progress bar back down to zero
+        
+    def run_rPrep(self):
+        log = self.logger.getChild('run_rPrep')
+        start = datetime.datetime.now()
+        log.info('start \'run_rPrep\' at %s'%start)
+        
+        
+        
+        #=======================================================================
+        # assemble/prepare inputs
+        #=======================================================================
+        rlayRaw_l = list(self.ras_dict.values())
+        out_dir = self.lineEdit_wd.text()
+        
+        
+        #raster prep parameters
+        aoi_vlay = self.comboBox_aoi.currentLayer()
+        clip_rlays = self.checkBox_HS_clip.isChecked()
+        allow_download = self.checkBox_HS_dpConv.isChecked()
+        allow_rproj = self.checkBox_HS_rproj.isChecked()
+        scaleFactor = self.doubleSpinBox_HS_sf.value()
+        
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        
+        #check rastsers
+        for rlay in rlayRaw_l:
+            if not isinstance(rlay, QgsRasterLayer):
+                raise Error('unexpected type on raster layer')
+            
+        
+        if not os.path.exists(out_dir):
+            raise Error('working directory does not exist:  %s'%out_dir)
+        
+        
+        #raster prep checks
+        assert isinstance(clip_rlays, bool)
+        assert isinstance(allow_download, bool)
+        assert isinstance(allow_rproj, bool)
+        assert isinstance(scaleFactor, float)
+        
+        if clip_rlays:
+            assert isinstance(aoi_vlay, QgsVectorLayer), 'for clip_rlays=True, must provide AOI'
+            
+        self.feedback.setProgress(10)
+        #=======================================================================
+        # execute
+        #=======================================================================
+        wrkr = Rsamp(logger=self.logger, 
+                          tag = self.tag, #set by build_scenario() 
+                          feedback = self.feedback, #let the instance build its own feedback worker
+                          out_dir = out_dir
+                          )
+        
+
+        #execute the tool
+        rlay_l = wrkr.runPrep(rlayRaw_l, 
+                        aoi_vlay = aoi_vlay,
+                        clip_rlays = clip_rlays,
+                        allow_download = allow_download,
+                        allow_rproj = allow_rproj,
+                        scaleFactor = scaleFactor,
+                            )
+        
+
+        #=======================================================================
+        # load results
+        #=======================================================================
+        
+        if self.checkBox_loadres.isChecked():
+            for rlay in rlay_l:
+                self.qproj.addMapLayer(rlay)
+                self.logger.info('added \'%s\' to canvas'%rlay.name())
+        else:
+            log.warning('prepped rasters not loaded to canvas!')
+            
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        self.feedback.upd_prog(None) #set the progress bar back down to zero
+
+        log.push('run_rPrep finished in %s'%(datetime.datetime.now() - start))
+        
 
     
     def run_rsamp(self): #execute raster sampler
         log = self.logger.getChild('run_rsamp')
         start = datetime.datetime.now()
-        log.info('user pressed \'pushButton_HSgenerate\'')
+        log.info('start \'run_rsamp\' at %s'%start)
         
         #=======================================================================
         # assemble/prepare inputs
@@ -863,12 +953,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         cid = self.mFieldComboBox_cid.currentField() #user selected field
         psmp_stat = self.comboBox_HS_stat.currentText()
         
-        #raster prep parameters
-        aoi_vlay = self.comboBox_aoi.currentLayer()
-        clip_rlays = self.checkBox_HS_clip.isChecked()
-        allow_download = self.checkBox_HS_dpConv.isChecked()
-        allow_rproj = self.checkBox_HS_rproj.isChecked()
-        scaleFactor = self.doubleSpinBox_HS_sf.value()
         
         #inundation
         as_inun = self.checkBox_HS_in.isChecked()
@@ -926,14 +1010,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         else:
             raise Error('unrecognized gtype: %s'%gtype)
         
-        #raster prep checks
-        assert isinstance(clip_rlays, bool)
-        assert isinstance(allow_download, bool)
-        assert isinstance(allow_rproj, bool)
-        assert isinstance(scaleFactor, float)
-        
-        if clip_rlays:
-            assert isinstance(aoi_vlay, QgsVectorLayer), 'for clip_rlays=True, must provide AOI'
+
         
         self.feedback.setProgress(10)
         #======================================================================
@@ -953,11 +1030,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         res_vlay = wrkr.run(rlay_l, finv,
                             psmp_stat=psmp_stat,
                             as_inun=as_inun, dtm_rlay=dtm_rlay, dthresh=dthresh,
-                            aoi_vlay=aoi_vlay,
-                            clip_rlays=clip_rlays,
-                            allow_download=allow_download,
-                            allow_rproj=allow_rproj,
-                            scaleFactor=scaleFactor)
+                            )
         
         self.feedback.setProgress(90)
         #check it
@@ -1032,7 +1105,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         self.feedback.upd_prog(None) #set the progress bar back down to zero
 
-        log.push('Rsamp finished in %s'%(datetime.datetime.now() - start))
+        log.push('run_rsamp finished in %s'%(datetime.datetime.now() - start))
         
         return
     
