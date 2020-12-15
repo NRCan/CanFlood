@@ -159,11 +159,6 @@ class Rsamp(Qcoms):
         return list(raster_d.values()), vlay
     
 
-
-
-
-
-
     def run(self, 
             rlayRaw_l, #set of rasters to sample 
             finv_raw, #inventory layer
@@ -254,6 +249,7 @@ class Rsamp(Qcoms):
         if self.gtype.endswith('Z'):
             log.warning('passed finv has Z values... these are not supported')
             
+        self.feedback.setProgress(20)
         #=======================================================================
         # prep the raster layers------
         #=======================================================================
@@ -271,6 +267,7 @@ class Rsamp(Qcoms):
 
             
         gc.collect()
+        self.feedback.setProgress(40)
         #=======================================================================
         # #inundation runs--------
         #=======================================================================
@@ -296,7 +293,8 @@ class Rsamp(Qcoms):
                 dtm_rlay1 = self.cliprasterwithpolygon(dtm_rlay,finv_buf, logger=log)
             else:
                 dtm_rlay1 = dtm_rlay
-        
+                
+            self.feedback.setProgress(60)
             #===================================================================
             # sample by goetype
             #===================================================================

@@ -859,11 +859,16 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
 
         cf_fp = self.get_cf_fp()
         out_dir = self.lineEdit_wd.text()
-        
 
-        #update some parameters
         cid = self.mFieldComboBox_cid.currentField() #user selected field
         psmp_stat = self.comboBox_HS_stat.currentText()
+        
+        #raster prep parameters
+        aoi_vlay = self.comboBox_aoi.currentLayer()
+        clip_rlays = self.checkBox_HS_clip.isChecked()
+        allow_download = self.checkBox_HS_dpConv.isChecked()
+        allow_rproj = self.checkBox_HS_rproj.isChecked()
+        scaleFactor = self.doubleSpinBox_HS_sf.value()
         
         #inundation
         as_inun = self.checkBox_HS_in.isChecked()
@@ -878,7 +883,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         else:
             dthresh, dtm_rlay = None, None
             
-        raise Error('get prep values from Ui')
+
         #=======================================================================
         # slice finv to aoi
         #=======================================================================
@@ -920,10 +925,18 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             assert not as_inun, '%Inundation only valid for polygon type geometries'
         else:
             raise Error('unrecognized gtype: %s'%gtype)
+        
+        #raster prep checks
+        assert isinstance(clip_rlays, bool)
+        assert isinstance(allow_download, bool)
+        assert isinstance(allow_rproj, bool)
+        assert isinstance(scaleFactor, float)
+        
+        self.feedback.setProgress(10)
         #======================================================================
         # execute
         #======================================================================
-
+        
         #build the sample
         wrkr = Rsamp(logger=self.logger, 
                           tag = self.tag, #set by build_scenario() 
@@ -936,8 +949,14 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #execute the tool
         res_vlay = wrkr.run(rlay_l, finv,
                             psmp_stat=psmp_stat,
-                            as_inun=as_inun, dtm_rlay=dtm_rlay, dthresh=dthresh)
+                            as_inun=as_inun, dtm_rlay=dtm_rlay, dthresh=dthresh,
+                            aoi_vlay=aoi_vlay,
+                            clip_rlays=clip_rlays,
+                            allow_download=allow_download,
+                            allow_rproj=allow_rproj,
+                            scaleFactor=scaleFactor)
         
+        self.feedback.setProgress(90)
         #check it
         wrkr.check()
         
@@ -971,6 +990,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         # populate Event Likelihoods table
         #======================================================================
+        
         l = self.event_name_set
         for tbl in [self.fieldsTable_EL]:
 
@@ -980,7 +1000,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                 tbl.setItem(rindx, 0, QTableWidgetItem(ename))
             
         log.info('populated tables with event names')
-        
+        self.feedback.setProgress(95)
         #======================================================================
         # populate lisamp
         #======================================================================
