@@ -337,7 +337,9 @@ class Rsamp(Qcoms):
              
              
              ):
-        
+        #=======================================================================
+        # defaults
+        #=======================================================================
         log = self.logger.getChild('prep')
         
         log.info('on \'%s\''%rlayRaw.name())
@@ -346,6 +348,8 @@ class Rsamp(Qcoms):
         
         #start a new store for handling  intermediate layers
         mstore = QgsMapLayerStore()
+        
+        newLayerName='%s_prepd' % rlayRaw.name()
         
         #=======================================================================
         # precheck
@@ -456,24 +460,26 @@ class Rsamp(Qcoms):
         if len(res_d)==1 and 'download' in res_d.keys():
             write=False
             
+        
+        
         if write:
-            ofp = self.write_rlay(resLay,  
-                newLayerName='%s_prepd' % rlayRaw.name(), 
-                logger=log)
+            resLay.setName(newLayerName)
+            ofp = self.write_rlay(resLay, logger=log)
+            
+            mstore.addMapLayer(resLay)
             
             #use the filestore layer
             resLay = self.load_rlay(ofp, logger=log)
             self.qproj.addMapLayer(resLay) #load to canvas
-            mstore.addMapLayer(resLay)
-
+        else:
+            log.warning('layer \'%s\' not written to file!'%resLay.name())
             
-        
-        
+
         #=======================================================================
         # wrap
         #=======================================================================
         
-        resLay.setName(rlayRaw.name())
+        
         
         log.info('finished w/ %i prep operations on \'%s\' \n    %s'%(
             len(res_d), resLay.name(), res_d))

@@ -1255,7 +1255,7 @@ p, li { white-space: pre-wrap; }
                 <item>
                  <layout class="QVBoxLayout" name="verticalLayout_buttons">
                   <item>
-                   <widget class="QPushButton" name="pushButton_clear">
+                   <widget class="QPushButton" name="pushButton_HS_clear">
                     <property name="text">
                      <string>Clear</string>
                     </property>
@@ -2624,7 +2624,7 @@ p, li { white-space: pre-wrap; }
   <tabstop>checkBox_loadres</tabstop>
   <tabstop>linEdit_ScenTag</tabstop>
   <tabstop>pushButton_generate</tabstop>
-  <tabstop>pushButton_clear</tabstop>
+  <tabstop>pushButton_HS_clear</tabstop>
   <tabstop>pushButton_remove</tabstop>
   <tabstop>pushButton_add_all</tabstop>
   <tabstop>comboBox_ras</tabstop>

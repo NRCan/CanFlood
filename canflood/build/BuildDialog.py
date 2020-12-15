@@ -258,11 +258,11 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         todo: swap this out with better selection widget
         """
         #selection       
-        self.pushButton_remove.clicked.connect(self.remove_text_edit)
-        self.pushButton_clear.clicked.connect(self.clear_text_edit)
-        self.pushButton_add_all.clicked.connect(self.add_all_text_edit)
+        self.pushButton_remove.clicked.connect(self._HS_remove)
+        self.pushButton_HS_clear.clicked.connect(self._HS_clearBox)
+        self.pushButton_add_all.clicked.connect(self._HS_addAll)
         
-        self.comboBox_ras.currentTextChanged.connect(self.add_ras)
+        self.comboBox_ras.currentTextChanged.connect(self._HS_comboAdd)
         
         #=======================================================================
         # inundation
@@ -415,39 +415,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
 
 
-    #==========================================================================
-    # Layer Loading---------------
-    #==========================================================================
-    def add_ras(self):
-        x = [str(self.listWidget_ras.item(i).text()) for i in range(self.listWidget_ras.count())]
-        self.ras_dict.update({ (self.comboBox_ras.currentText()) : (self.comboBox_ras.currentLayer()) })
-        if (self.comboBox_ras.currentText()) not in x:
-            self.listWidget_ras.addItem(self.comboBox_ras.currentText())
-            self.ras_dict.update({ (self.comboBox_ras.currentText()) : (self.comboBox_ras.currentLayer()) })
-        
-    def clear_text_edit(self):
-        if len(self.ras_dict) > 0:
-            self.listWidget_ras.clear()
-            self.ras_dict = {}
-    
-    def remove_text_edit(self):
-        if (self.listWidget_ras.currentItem()) is not None:
-            value = self.listWidget_ras.currentItem().text()
-            item = self.listWidget_ras.takeItem(self.listWidget_ras.currentRow())
-            item = None
-            for k in list(self.ras_dict):
-                if k == value:
-                    self.ras_dict.pop(value)
 
-    def add_all_text_edit(self):
-        layers = self.iface.mapCanvas().layers()
-        #layers_vec = [layer for layer in layers if layer.type() == QgsMapLayer.VectorLayer]
-        layers_ras = [layer for layer in layers if layer.type() == QgsMapLayer.RasterLayer]
-        x = [str(self.listWidget_ras.item(i).text()) for i in range(self.listWidget_ras.count())]
-        for layer in layers_ras:
-            if (layer.name()) not in x:
-                self.ras_dict.update( { layer.name() : layer} )
-                self.listWidget_ras.addItem(str(layer.name()))
 
     #===========================================================================
     # common methods----------
@@ -509,6 +477,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         return res_vlay
             
             
+    #===========================================================================
+    # Run Actions------
+    #===========================================================================
 
 
     def build_scenario(self): #'Generate' on the setup tab
@@ -932,8 +903,18 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             log.warning('prepped rasters not loaded to canvas!')
             
         #=======================================================================
+        # rasterBox
+        #=======================================================================
+        """swap out the original selection with the Prepped layers"""
+        self._HS_clearBox() #clear the raster selection box
+        for layer in rlay_l:
+            self.ras_dict.update( { layer.name() : layer} )
+            self.listWidget_ras.addItem(str(layer.name()))
+            
+        #=======================================================================
         # wrap
         #=======================================================================
+        
         self.feedback.upd_prog(None) #set the progress bar back down to zero
 
         log.push('run_rPrep finished in %s'%(datetime.datetime.now() - start))
@@ -1493,6 +1474,40 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         self.feedback.upd_prog(None)
         return
+    
+    #==========================================================================
+    # HazardSampler Raster Box---------------
+    #==========================================================================
+    def _HS_comboAdd(self):
+        x = [str(self.listWidget_ras.item(i).text()) for i in range(self.listWidget_ras.count())]
+        self.ras_dict.update({ (self.comboBox_ras.currentText()) : (self.comboBox_ras.currentLayer()) })
+        if (self.comboBox_ras.currentText()) not in x:
+            self.listWidget_ras.addItem(self.comboBox_ras.currentText())
+            self.ras_dict.update({ (self.comboBox_ras.currentText()) : (self.comboBox_ras.currentLayer()) })
+        
+    def _HS_clearBox(self):
+        if len(self.ras_dict) > 0:
+            self.listWidget_ras.clear()
+            self.ras_dict = {}
+    
+    def _HS_remove(self):
+        if (self.listWidget_ras.currentItem()) is not None:
+            value = self.listWidget_ras.currentItem().text()
+            item = self.listWidget_ras.takeItem(self.listWidget_ras.currentRow())
+            item = None
+            for k in list(self.ras_dict):
+                if k == value:
+                    self.ras_dict.pop(value)
+
+    def _HS_addAll(self): #scan the canvas and intelligently add all the rasters
+        layers = self.iface.mapCanvas().layers()
+        #layers_vec = [layer for layer in layers if layer.type() == QgsMapLayer.VectorLayer]
+        layers_ras = [layer for layer in layers if layer.type() == QgsMapLayer.RasterLayer]
+        x = [str(self.listWidget_ras.item(i).text()) for i in range(self.listWidget_ras.count())]
+        for layer in layers_ras:
+            if (layer.name()) not in x:
+                self.ras_dict.update( { layer.name() : layer} )
+                self.listWidget_ras.addItem(str(layer.name()))
     
 
             
