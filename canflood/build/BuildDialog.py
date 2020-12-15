@@ -878,7 +878,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         else:
             dthresh, dtm_rlay = None, None
             
-        
+        raise Error('get prep values from Ui')
         #=======================================================================
         # slice finv to aoi
         #=======================================================================

@@ -260,9 +260,12 @@ class Rsamp(Qcoms):
         raster_l = []
         
         for rlayRaw in rlayRaw_l:
-            rlay =  self.prep(rlayRaw, aoi_vlay, allow_download=allow_download,
+            rlay =  self.prep(rlayRaw, 
+                              allow_download=allow_download,
+                              aoi_vlay=aoi_vlay,
                              allow_rproj=allow_rproj, clip_rlays=clip_rlays,
                              scaleFactor=scaleFactor)
+
             raster_l.append(rlay)
         
 
@@ -345,7 +348,7 @@ class Rsamp(Qcoms):
 
         res_d = dict() #reporting container
         #=======================================================================
-        # dataProvider check/conversion
+        # dataProvider check/conversion-----
         #=======================================================================
         if not rlayRaw.providerType() == 'gdal':
             msg = 'raster \'%s\' providerType = \'%s\' and allow_download=%s' % (
@@ -371,14 +374,14 @@ class Rsamp(Qcoms):
             assert rlayDp.bandCount() == rlayRaw.bandCount()
             assert rlayDp.providerType() == 'gdal'
             
-            res_d['download'] = 'from %s'%rlayRaw.providerType()
+            res_d['download'] = 'from \'%s\' to \'gdal\''%rlayRaw.providerType()
 
         else:
             rlayDp = rlayRaw
             log.debug('%s has expected dataProvider \'gdal\''%rlayRaw.name())
 
         #=======================================================================
-        # re-projection
+        # re-projection--------
         #=======================================================================
         if not rlayDp.crs() == self.qproj.crs():
             msg = 'raster \'%s\' crs = \'%s\' and allow_rproj=%s' % (
@@ -388,22 +391,25 @@ class Rsamp(Qcoms):
             log.info(msg)
             #save a local copy?
             newName = '%s_%s' % (rlayDp.name(), self.qproj.crs().authid()[5:])
+            
+            """just write at the end
             if allow_download:
                 output = os.path.join(self.out_dir, '%s.tif' % newName)
             else:
-                output = 'TEMPORARY_OUTPUT'
+                output = 'TEMPORARY_OUTPUT'"""
+            output = 'TEMPORARY_OUTPUT'
             #change the projection
             rlayProj = self.warpreproject(rlayDp, crsOut=self.qproj.crs(), 
                 output=output, layname=newName)
             
-            res_d['rproj'] = 'from %s'%rlayDp.crs()
+            res_d['rproj'] = 'from %s to %s'%(rlayDp.crs().authid(), self.qproj.crs().authid())
 
         else:
             log.debug('\'%s\' crs matches project crs: %s'%(rlayDp.name(), rlayDp.crs()))
             rlayProj = rlayDp
             
         #=======================================================================
-        # aoi slice
+        # aoi slice----
         #=======================================================================
         if clip_rlays:
             log.debug('trimming raster %s by AOI'%rlayRaw.name())
@@ -412,7 +418,7 @@ class Rsamp(Qcoms):
             #clip to just the polygons
             rlayTrim = self.cliprasterwithpolygon(rlayProj,aoi_vlay, logger=log)
             
-            res_d['clip'] = 'with %s'%aoi_vlay.name()
+            res_d['clip'] = 'with \'%s\''%aoi_vlay.name()
         else:
             rlayTrim = rlayProj
             
@@ -426,12 +432,32 @@ class Rsamp(Qcoms):
         else:
             rlayScale = rlayTrim
             
+        #=======================================================================
+        # final write
+        #=======================================================================
+        resLay = rlayScale
+        write=False
+        if len(res_d)>0: #only where we did some operations
+            write=True
+        if len(res_d)==1 and 'download' in res_d.keys():
+            write=False
+            
+            
+        if write:
+            ofp = self.write_rlay(resLay,  
+                newLayerName='%s_prepd' % rlayRaw.name(), 
+                logger=log)
+            
+            #use the filestore layer
+            resLay = self.load_rlay(ofp, logger=log)
+
+            
         
         
         #=======================================================================
         # wrap
         #=======================================================================
-        resLay = rlayScale
+        
         resLay.setName(rlayRaw.name())
         
         log.info('finished w/ %i prep operations on \'%s\' \n    %s'%(
