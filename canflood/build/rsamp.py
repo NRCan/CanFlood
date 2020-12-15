@@ -374,6 +374,7 @@ class Rsamp(Qcoms):
             assert rlayDp.providerType() == 'gdal'
             
             res_d['download'] = 'from \'%s\' to \'gdal\''%rlayRaw.providerType()
+            
             mstore.addMapLayer(rlayRaw)
 
         else:
@@ -467,9 +468,11 @@ class Rsamp(Qcoms):
         log.info('finished w/ %i prep operations on \'%s\' \n    %s'%(
             len(res_d), resLay.name(), res_d))
         
+        #clean up the store
+        _ = mstore.takeMapLayer(rlayRaw) #take out the raw (without deleteing) 
         mstore.removeAllMapLayers() #clear all layers
         
-        return rlayScale
+        return resLay
     
 
 
