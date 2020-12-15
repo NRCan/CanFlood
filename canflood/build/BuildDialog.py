@@ -647,7 +647,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         assert isinstance(vlay_raw, QgsVectorLayer), 'must select a VectorLayer'
         assert os.path.exists(cf_fp), 'bad cf_fp: %s'%cf_fp
-        
+        assert vlay_raw.crs()==self.qproj.crs(), 'finv CRS (%s) does not match projects (%s)'%(vlay_raw.crs(), self.qproj.crs())
         
         #check cid
         assert isinstance(cid, str)

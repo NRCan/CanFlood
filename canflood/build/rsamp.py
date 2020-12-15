@@ -140,10 +140,7 @@ class Rsamp(Qcoms):
         #check if it has geometry
         if vlay_raw.wkbType() == 100:
             raise Error('loaded vlay has NoGeometry')
-        
-        
-        self.mstore.addMapLayer(vlay_raw)
-        
+               
         
         vlay = vlay_raw
         dp = vlay.dataProvider()
@@ -345,6 +342,10 @@ class Rsamp(Qcoms):
         log.info('on \'%s\''%rlayRaw.name())
 
         res_d = dict() #reporting container
+        
+        #start a new store for handling  intermediate layers
+        mstore = QgsMapLayerStore()
+        
         #=======================================================================
         # dataProvider check/conversion-----
         #=======================================================================
@@ -373,6 +374,7 @@ class Rsamp(Qcoms):
             assert rlayDp.providerType() == 'gdal'
             
             res_d['download'] = 'from \'%s\' to \'gdal\''%rlayRaw.providerType()
+            mstore.addMapLayer(rlayRaw)
 
         else:
             rlayDp = rlayRaw
@@ -401,6 +403,7 @@ class Rsamp(Qcoms):
                 output=output, layname=newName)
             
             res_d['rproj'] = 'from %s to %s'%(rlayDp.crs().authid(), self.qproj.crs().authid())
+            mstore.addMapLayer(rlayDp)
 
         else:
             log.debug('\'%s\' crs matches project crs: %s'%(rlayDp.name(), rlayDp.crs()))
@@ -417,6 +420,7 @@ class Rsamp(Qcoms):
             rlayTrim = self.cliprasterwithpolygon(rlayProj,aoi_vlay, logger=log)
             
             res_d['clip'] = 'with \'%s\''%aoi_vlay.name()
+            mstore.addMapLayer(rlayProj)
         else:
             rlayTrim = rlayProj
             
@@ -427,6 +431,7 @@ class Rsamp(Qcoms):
             rlayScale = self.raster_mult(rlayTrim, scaleFactor, logger=log)
             
             res_d['scale'] = 'by %.4f'%scaleFactor
+            mstore.addMapLayer(rlayTrim)
         else:
             rlayScale = rlayTrim
             
@@ -435,11 +440,11 @@ class Rsamp(Qcoms):
         #=======================================================================
         resLay = rlayScale
         write=False
+        
         if len(res_d)>0: #only where we did some operations
             write=True
         if len(res_d)==1 and 'download' in res_d.keys():
             write=False
-            
             
         if write:
             ofp = self.write_rlay(resLay,  
@@ -448,6 +453,7 @@ class Rsamp(Qcoms):
             
             #use the filestore layer
             resLay = self.load_rlay(ofp, logger=log)
+            mstore.addMapLayer(resLay)
 
             
         
@@ -460,6 +466,8 @@ class Rsamp(Qcoms):
         
         log.info('finished w/ %i prep operations on \'%s\' \n    %s'%(
             len(res_d), resLay.name(), res_d))
+        
+        mstore.removeAllMapLayers() #clear all layers
         
         return rlayScale
     

@@ -92,6 +92,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
     
     qap = None
     
+    mstore = None
     
     #field name character limits
     
@@ -144,6 +145,12 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         if self.crs.authid()=='':
             self.logger.warning('got empty CRS!') #should only trip on StandAlone runs
 
+        #layer store
+        """
+        each worker will have their own store
+        used to wipe any intermediate layers
+        """
+        self.mstore = QgsMapLayerStore() #build a new map store
         
         #=======================================================================
         # attach inputs
@@ -182,7 +189,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         self.set_vdrivers()
         
-        self.mstore = QgsMapLayerStore() #build a new map store
+        
         
         
         
@@ -360,20 +367,24 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         if vlay_raw.wkbType() == 100:
             raise Error('loaded vlay has NoGeometry')
         
-        assert hasattr(self, 'mstore'), 'did you init_standalone?'
-        self.mstore.addMapLayer(vlay_raw)
+        assert isinstance(self.mstore, QgsMapLayerStore)
+        
+        """only add intermediate layers to store
+        self.mstore.addMapLayer(vlay_raw)"""
         
         #=======================================================================
         # aoi slice
         #=======================================================================
         if isinstance(aoi_vlay, QgsVectorLayer):
             log.info('slicing by aoi %s'%aoi_vlay.name())
+            
             vlay = self.selectbylocation(vlay_raw, aoi_vlay, logger=log, result_type='layer')
             
-            self.mstore.addMapLayer(vlay)
-            
-
             vlay.setName(vlay_raw.name()) #reset the name
+            
+            #clear original from memory
+            self.mstore.addMapLayer(vlay_raw)
+            self.mstore.removeMapLayers([vlay_raw])
             
         else: 
             vlay = vlay_raw
@@ -416,8 +427,6 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             log.warning('loaded layer \'%s\' crs mismatch!'%rlayer.name())
         #assert rlayer.crs() == self.crs, 'crs mismatch'
 
-        #add it to the store
-        self.mstore.addMapLayer(rlayer)
         
         log.info('loaded \'%s\' from \n    %s'%(rlayer.name(), fp))
         
@@ -750,7 +759,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         assert isinstance(vlay, QgsVectorLayer)
         assert 'Polygon' in QgsWkbTypes().displayString(vlay.wkbType())
         assert vlay.dataProvider().featureCount()==1
-        assert vlay.crs() == self.qproj.crs()
+        assert vlay.crs() == self.qproj.crs(), 'aoi CRS (%s) does not match project (%s)'%(vlay.crs(), self.qproj.crs())
         
         return 
     
