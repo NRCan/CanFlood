@@ -7,7 +7,7 @@ Created on Feb. 9, 2020
 #==========================================================================
 # logger setup-----------------------
 #==========================================================================
-import logging, configparser, datetime, shutil
+import logging, configparser, datetime, shutil, gc
 start = datetime.datetime.now()
 
 
@@ -20,9 +20,10 @@ import pandas as pd
 
 
 #Qgis imports
-from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject, Qgis
+from qgis.core import *
+    
 from qgis.analysis import QgsRasterCalculatorEntry, QgsRasterCalculator
-
+import processing
 #==============================================================================
 # custom imports
 #==============================================================================
@@ -39,7 +40,8 @@ else:
     from hlpr.exceptions import QError as Error
     
 
-from hlpr.Q import *
+#from hlpr.Q import *
+from hlpr.Q import Qcoms,vlay_get_fdf, vlay_get_fdata
 import hlpr.basic as basic
 
 #==============================================================================
@@ -156,6 +158,76 @@ class Rsamp(Qcoms):
         
         return list(raster_d.values()), vlay
     
+
+    def rprep_dl(self, #download a set of rasters
+                 rlayRaw_l, 
+                 aoi_vlay, 
+                 allow_download=False,
+                logger=None):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('rprep_dl')
+        
+        
+        rlay_l = []
+        for rlayRaw in rlayRaw_l:
+            if not rlayRaw.providerType() == 'gdal':
+                msg = 'raster \'%s\' providerType = \'%s\' and allow_download=%s' % (
+                    rlayRaw.name(), rlayRaw.providerType(), allow_download)
+                #check if we're allowed to fix
+                if not allow_download:
+                    raise Error(msg)
+                log.info(msg)
+                #set extents
+                if not aoi_vlay is None: #aoi extents in correct CRS
+                    extent = QgsCoordinateTransform(aoi_vlay.crs(), rlayRaw.crs(), self.qproj.transformContext()).transformBoundingBox(aoi_vlay.extent())
+                else:
+                    extent = rlayRaw.extent() #layers extents
+                #save a local copy
+                ofp = self.write_rlay(rlayRaw, extent=extent, 
+                    newLayerName='%s_gdal' % rlayRaw.name(), 
+                    logger=log)
+                #load this file
+                rlay = self.load_rlay(ofp, logger=log)
+                #check
+                assert rlay.bandCount() == rlayRaw.bandCount()
+                assert rlay.providerType() == 'gdal'
+                rlay_l.append(rlay)
+            else:
+                rlay_l.append(rlayRaw) #just take the raw
+        
+        return rlay_l
+
+
+    def rprep_rproj(self, 
+                    allow_download, allow_rproj, log, rlay, rlay_dp_l):
+        rlay_l = []
+        for rlayRaw in rlay_dp_l:
+            
+            if not rlayRaw.crs() == self.qproj.crs():
+                msg = 'raster \'%s\' crs = \'%s\' and allow_rproj=%s' % (
+                    rlayRaw.name(), rlayRaw.crs(), allow_rproj)
+                if not allow_rproj:
+                    raise Error(msg)
+                log.info(msg)
+                #save a local copy?
+                newName = '%s_%s' % (rlayRaw.name(), self.qproj.crs().authid()[5:])
+                if allow_download:
+                    output = os.path.join(self.out_dir, '%s.tif' % newName)
+                else:
+                    output = 'TEMPORARY_OUTPUT'
+                #change the projection
+                rlay = self.warpreproject(rlayRaw, crsOut=self.qproj.crs(), 
+                    output=output, layname=newName)
+                
+                rlay_l.append(rlay)
+            else:
+                rlay_l.append(rlayRaw) #do nothing
+                
+        return rlay_l
+
     def run(self, 
             rlayRaw_l, #set of rasters to sample 
             finv_raw, #inventory layer
@@ -172,7 +244,8 @@ class Rsamp(Qcoms):
             clip_dtm=False,
             
             #prep controls
-            aoi_vlay = None, #if passed, slice rasters to this AOI (finv should already be sliced)
+            aoi_vlay = None, #aoi for downloading and clipping
+            clip_rlays=False, #whether to clip the rasters by the pased aoi_vlay
             allow_download = True, #whether to allow downloading of non-gdal dataProviders
             allow_rproj = True,
             
@@ -253,44 +326,27 @@ class Rsamp(Qcoms):
         """necessary for web layers"""
 
         #loop and check/download each raw raster
-        raster_l = []
-        for rlayRaw in rlayRaw_l:
-            
-            if not rlayRaw.providerType() == 'gdalz':
-                msg = 'raster \'%s\' providerType = \'%s\' and allow_download=%s'%(
-                    rlayRaw.name(), rlayRaw.providerType(), allow_download)
-                if not allow_download:
-                    raise Error(msg)
-                log.info(msg)
+        rlay_dp_l = self.rprep_dl(rlayRaw_l, aoi_vlay, 
+                                  allow_download=allow_download, logger=log)
                 
-                #set extents
-                if not aoi_vlay is None: #aoi extents in correct CRS
-            
-                    extent = QgsCoordinateTransform(
-                        aoi_vlay.crs(), rlayRaw.crs(), self.qproj.transformContext()
-                        ).transformBoundingBox(aoi_vlay.extent())
-                else: #layers extents
-                    extent=rlayRaw.extent()
-            
-            
-                #save a local copy
-                ofp = self.write_rlay(rlayRaw, extent=extent, 
-                                       newLayerName='%s_gdal'%rlayRaw.name(),
-                                       logger=log)
-                
-                #load this file
-                rlay = self.load_rlay(ofp, logger=log)
-                
-                #check
-                assert rlay.bandCount()==rlayRaw.bandCount()
-                assert rlay.providerType()=='gdal'            
-                
-                raster_l.append(rlay)
-            else:
-                raster_l.append(rlayRaw) #just take the raw
-                
+        #=======================================================================
+        # re-projection
+        #=======================================================================
+        rlay_rpj_l = self.rprep_rproj(rlay_dp_l, 
+                         allow_download=allow_download, 
+                         allow_rproj=allow_rproj,logger=log)
         
-            
+        del rlay_dp_l #clear the memory
+        #=======================================================================
+        # aoi slice
+        #=======================================================================
+        if clip_rlays:
+            raise Error('not implemented')
+        else:
+            raster_l = rlay_rpj_l
+
+        del rlay_rpj_l
+        gc.collect()
         #=======================================================================
         # #inundation runs--------
         #=======================================================================

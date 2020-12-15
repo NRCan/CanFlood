@@ -1991,7 +1991,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                               crsOut = None, #crs to re-project to
                               layname = None,
                               options = 'COMPRESS=DEFLATE|PREDICTOR=2|ZLEVEL=9',
-                              #output = 'TEMPORARY_OUTPUT',
+                              output = 'TEMPORARY_OUTPUT',
                               logger = None,
                               ):
 
@@ -2028,7 +2028,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
              'MULTITHREADING' : False,
              'NODATA' : None,
              'OPTIONS' : options,
-             'OUTPUT' : 'TEMPORARY_OUTPUT',
+             'OUTPUT' : output,
              'RESAMPLING' : 0,
              'SOURCE_CRS' : None,
              'TARGET_CRS' : crsOut,
