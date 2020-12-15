@@ -497,6 +497,8 @@ class Rsamp(Qcoms):
         """
         mstore.removeAllMapLayers() #clear all layers
         
+        
+        
         return resLay
     
 

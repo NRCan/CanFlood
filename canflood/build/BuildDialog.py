@@ -896,15 +896,17 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         
         if self.checkBox_loadres.isChecked():
+            log.debug('loading %i prepped raster results'%len(rlay_l))
             for rlay in rlay_l:
                 self.qproj.addMapLayer(rlay)
-                self.logger.info('added \'%s\' to canvas'%rlay.name())
+                log.info('added \'%s\' to canvas'%rlay.name())
         else:
             log.warning('prepped rasters not loaded to canvas!')
             
         #=======================================================================
         # rasterBox
         #=======================================================================
+        log.debug('cleaning up rasterBox')
         """swap out the original selection with the Prepped layers"""
         self._HS_clearBox() #clear the raster selection box
         for layer in rlay_l:
@@ -918,6 +920,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.feedback.upd_prog(None) #set the progress bar back down to zero
 
         log.push('run_rPrep finished in %s'%(datetime.datetime.now() - start))
+        
+        return
         
 
     

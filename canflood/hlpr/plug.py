@@ -262,7 +262,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
 class logger(object): #workaround for qgis logging pythonic
     log_tabnm = 'CanFlood' # qgis logging panel tab name
     
-    log_nm = '' #logger name
+    log_nm = 'rt' #logger name
     
     def __init__(self, parent,
                  statusQlab = None, #Qlabel widget to duplicate push messages
@@ -273,6 +273,8 @@ class logger(object): #workaround for qgis logging pythonic
         self.iface = parent.iface
         
         self.statusQlab = statusQlab
+        
+        self.info('logger initilized for %s at %s'%(parent.__class__.__name__, datetime.datetime.now()))
         
     def getChild(self, new_childnm):
         
@@ -314,7 +316,8 @@ class logger(object): #workaround for qgis logging pythonic
                 push=False,
                 status=False):
         
-        msg = '%s: %s'%(self.log_nm, msg_raw)
+        msg = '%s.%s: %s'%(
+            datetime.datetime.now().strftime('%d-%H.%M.%S'), self.log_nm, msg_raw)
         
         QgsMessageLog.logMessage(msg, self.log_tabnm, level=qlevel)
         
