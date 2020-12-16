@@ -192,7 +192,7 @@ class Rsamp(Qcoms):
         #======================================================================
         # precheck
         #======================================================================
-        assert self.crs == self.qproj.crs(), 'crs mismatch!'
+        #assert self.crs == self.qproj.crs(), 'crs mismatch!'
         
         
         #check the finv_raw
@@ -211,7 +211,7 @@ class Rsamp(Qcoms):
         for rlay in rlayRaw_l:
             assert isinstance(rlay, QgsRasterLayer)
 
-            assert rlay.crs() == crs, 'rlay %s crs doesnt match project'%(rlay.name())
+            assert rlay.crs() == self.qproj.crs(), 'rlay %s crs doesnt match project'%(rlay.name())
             rname_l.append(rlay.name())
         
         self.rname_l = rname_l
