@@ -13,19 +13,19 @@ as_inun = False
 
 [dmg_fps]
 curves = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\data\CanFlood_curves_rfda_20200218.xls #damage curve library filepath
-finv = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\built_2a\finv_tut2a_finv_cT2.csv
-expos = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\built_2a\expos_tut2a_4_32.csv
-gels = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\built_2a\gels_tut2a_1_32.csv
+finv = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\a\finv_tut2a_finv_cT2.csv
+expos = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\a\expos_tut2a_4_32.csv
+gels = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\a\gels_tut2a_1_32.csv
 
 [risk_fps]
-dmgs = #damage data results filepath
+dmgs = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\a\results\dmgs_tut2a_run1.csv
 exlikes = #secondary exposure likelihood data filepath
-evals = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\built_2a\evals_4_tut2a.csv
+evals = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\a\evals_4_tut2a.csv
+#'dmgs' file path set from dmg2.py at 2020-12-16 09.27.53
 
 [validation]
 risk1 = False
 dmg2 = True
-risk2 = False
+risk2 = True
 risk3 = False
-# 'risk2' validated by validator.py at 2020-12-16 08.52.54
 
