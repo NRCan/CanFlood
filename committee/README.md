@@ -9,7 +9,7 @@ Here is a link to the recording
 
 Here is a [link to the presentation](https://github.com/IBIGroupCanWest/CanFlood/blob/master/committee/tasks/01/CanFlood%20-%20commitee%20meet%201%20(2020%2012%2016).pdf)
 
-###During this meeting, we presented Task 1: 
+### During this meeting, we presented Task 1: 
   
   Install CanFlood
   
