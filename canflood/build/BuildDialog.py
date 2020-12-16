@@ -46,7 +46,8 @@ from build.validator import Vali
 
 from hlpr.plug import *
 from hlpr.Q import *
-from hlpr.basic import *
+#from hlpr.basic import *
+from hlpr.basic import get_valid_filename
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 ui_fp = os.path.join(os.path.dirname(__file__), 'build.ui')
@@ -644,6 +645,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         if self.checkBox_loadres.isChecked():
             self.qproj.addMapLayer(vlay)
             self.logger.info('added \'%s\' to canvas'%vlay.name())
+            self.comboBox_ivlay.setLayer(vlay) #set this as the new finv
         
         
 
@@ -672,7 +674,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # #write to file
         #=======================================================================
-        out_fp = os.path.join(self.wd, 'finv_%s_%s.csv'%(self.tag, vlay.name()))
+
+        out_fp = os.path.join(self.wd, get_valid_filename('finv_%s_%s.csv'%(self.tag, vlay.name())))
         
         #see if this exists
         if os.path.exists(out_fp):
@@ -809,8 +812,12 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # wrap
         #=======================================================================
-        self.qproj.addMapLayer(finv_vlay)
-        log.info('added \'%s\' to canvas'%finv_vlay.name())
+        if self.checkBox_loadres.isChecked():
+            self.qproj.addMapLayer(finv_vlay)
+            self.comboBox_ivlay.setLayer(finv_vlay) #set this to the inventory selection
+            log.info('added \'%s\' to canvas'%finv_vlay.name())
+        else:
+            raise Error('ensure load results is checked!')
         
         log.push('finished NPRI conversion')
         self.feedback.upd_prog(None) #set the progress bar back down to zero
@@ -980,6 +987,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         for rlay in rlay_l:
             if not isinstance(rlay, QgsRasterLayer):
                 raise Error('unexpected type on raster layer')
+            assert rlay.crs()==self.qproj.crs(), 'layer CRS does not match project'
             
         if not os.path.exists(out_dir):
             raise Error('working directory does not exist:  %s'%out_dir)

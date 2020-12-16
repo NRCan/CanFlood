@@ -210,8 +210,8 @@ class Rsamp(Qcoms):
         rname_l = []
         for rlay in rlayRaw_l:
             assert isinstance(rlay, QgsRasterLayer)
-            """allowing conversion now
-            assert rlay.crs() == crs, 'rlay %s crs doesnt match project'%(rlay.name())"""
+
+            assert rlay.crs() == crs, 'rlay %s crs doesnt match project'%(rlay.name())
             rname_l.append(rlay.name())
         
         self.rname_l = rname_l
