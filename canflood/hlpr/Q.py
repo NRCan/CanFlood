@@ -17,6 +17,7 @@ import numpy as np
 from qgis.core import *
     
 from qgis.analysis import QgsNativeAlgorithms
+from qgis.gui import QgisInterface
 from PyQt5.QtCore import QVariant, QMetaType 
 from PyQt5.QtWidgets import QProgressBar
 
@@ -45,6 +46,7 @@ from hlpr.exceptions import QError as Error
     
 
 import hlpr.basic as basic
+from hlpr.basic import get_valid_filename
 
 
 #==============================================================================
@@ -79,7 +81,7 @@ type_qvar_py_d = {10:str, 2:int, 135:float, 6:float, 4:int, 1:bool, 16:datetime.
 
 class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native console
     
-    crs_id = 'EPSG:4326'
+    crsid_default = 'EPSG:4326' #default crsID
     
     driverName = 'SpatiaLite' #default data creation driver type
     
@@ -91,6 +93,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
     
     qap = None
     
+    mstore = None
     
     #field name character limits
     
@@ -98,13 +101,26 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
     
     def __init__(self,
                  feedback=None, 
-                 crs = None,
                  **kwargs
                  ):
         
-
-
+        """"
+        #=======================================================================
+        # plugin use
+        #=======================================================================
+        QprojPlugs don't execute super cascade
         
+        #=======================================================================
+        # standAlone use
+        #=======================================================================
+        from hlpr.logr import basic_logger
+        mod_logger = basic_logger() 
+
+        wrkr = Qcoms(logger=mod_logger, tag=tag, out_dir=out_dir).ini_standalone()
+        
+        
+        """
+
         if feedback is None:
             """by default, building our own feedbacker
             passed to ComWrkr.setup_feedback()
@@ -117,11 +133,25 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
 
         self.fieldn_max_d=fieldn_max_d
-        #crs
-        if crs is None: 
-            crs = QgsCoordinateReferenceSystem(self.crs_id)
-            
-        self.crs = crs
+        
+        #=======================================================================
+        # common Qgis setup
+        #=======================================================================
+        """both Plugin and StandAlone runs should call these"""
+        self.qproj = QgsProject.instance()
+        
+        """see below for setting the crs during StandAlone"""
+        self.crs = self.qproj.crs()
+        
+        if self.crs.authid()=='':
+            self.logger.warning('got empty CRS!') #should only trip on StandAlone runs
+
+        #layer store
+        """
+        each worker will have their own store
+        used to wipe any intermediate layers
+        """
+        self.mstore = QgsMapLayerStore() #build a new map store
         
         #=======================================================================
         # attach inputs
@@ -135,26 +165,39 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
     # standalone methods-----------
     #==========================================================================
         
-    def ini_standalone(self, ): #initilize calls for standalone runs
-
+    def ini_standalone(self,  #initilize calls for standalone runs
+                       crs = None,
+                       ):
+        log = self.logger.getChild('ini_standalone')
+        #=======================================================================
+        # #crs
+        #=======================================================================
+        """for Standalone runs... not relying on crs coming from the qproj"""
+        if crs is None:  #use the default
+            crs = QgsCoordinateReferenceSystem(self.crsid_default)
+            
+        assert isinstance(crs, QgsCoordinateReferenceSystem), 'bad crs type'
+            
+        self.crs = crs
+        self.qproj.setCrs(crs)
+        
+        log.info('crs set to \'%s\''%self.crs.authid())
         #=======================================================================
         # setup qgis
         #=======================================================================
         self.qap = self.init_qgis()
-        self.qproj = QgsProject.instance()
-        
         self.algo_init = self.init_algos()
         
         self.set_vdrivers()
         
-        self.mstore = QgsMapLayerStore() #build a new map store
+        
         
         
         
         if not self.proj_checks():
             raise Error('failed checks')
         
-        self.logger.debug('Qproj.ini_standalone finished')
+        log.debug('Qproj.ini_standalone finished')
         
         
         return self
@@ -244,7 +287,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         log = self.logger.getChild('set_crs')
         
         if authid is None: 
-            authid = self.crs_id
+            authid = self.crsid_default
         
         if not isinstance(authid, int):
             raise IOError('expected integer for crs')
@@ -287,6 +330,10 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         return True
     
+    #===========================================================================
+    # LOAD/WRITE LAYERS-----------
+    #===========================================================================
+    
     def load_vlay(self, 
                   fp, 
                   logger=None, 
@@ -321,20 +368,24 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         if vlay_raw.wkbType() == 100:
             raise Error('loaded vlay has NoGeometry')
         
-        assert hasattr(self, 'mstore'), 'did you init_standalone?'
-        self.mstore.addMapLayer(vlay_raw)
+        assert isinstance(self.mstore, QgsMapLayerStore)
+        
+        """only add intermediate layers to store
+        self.mstore.addMapLayer(vlay_raw)"""
         
         #=======================================================================
         # aoi slice
         #=======================================================================
         if isinstance(aoi_vlay, QgsVectorLayer):
             log.info('slicing by aoi %s'%aoi_vlay.name())
+            
             vlay = self.selectbylocation(vlay_raw, aoi_vlay, logger=log, result_type='layer')
             
-            self.mstore.addMapLayer(vlay)
-            
-
             vlay.setName(vlay_raw.name()) #reset the name
+            
+            #clear original from memory
+            self.mstore.addMapLayer(vlay_raw)
+            self.mstore.removeMapLayers([vlay_raw])
             
         else: 
             vlay = vlay_raw
@@ -373,17 +424,184 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         assert rlayer.isValid(), "Layer failed to load!"
         assert isinstance(rlayer, QgsRasterLayer), 'failed to get a QgsRasterLayer'
         
+        if not rlayer.crs() == self.crs:
+            log.warning('loaded layer \'%s\' crs mismatch!'%rlayer.name())
+        #assert rlayer.crs() == self.crs, 'crs mismatch'
 
-        #add it to the store
-        self.mstore.addMapLayer(rlayer)
         
-        log.info('loaded \'%s\' from \n    %s'%(rlayer.name(), fp))
+        log.debug('loaded \'%s\' from \n    %s'%(rlayer.name(), fp))
         
         return rlayer
     
     
+    def write_rlay(self, #make a local copy of the passed raster layer
+                   rlayer, #raster layer to make a local copy of
+                   extent = 'layer', #write extent control
+                        #'layer': use the current extent (default)
+                        #'mapCanvas': use the current map Canvas
+                        #QgsRectangle: use passed extents
+                   
+                   
+                   resolution = 'raw', #resolution for output
+                   
+                   
+                   opts = ["COMPRESS=LZW"], #QgsRasterFileWriter.setCreateOptions
+                   
+                   out_dir = None, #directory for puts
+                   newLayerName = None,
+                   
+                   logger=None,
+                   ):
+        """
+        because  processing tools only work on local copies
+        
+        #=======================================================================
+        # coordinate transformation
+        #=======================================================================
+        NO CONVERSION HERE!
+        can't get native API to work. use gdal_warp instead
+        """
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        if out_dir is None: out_dir = self.out_dir
+        if newLayerName is None: newLayerName = rlayer.name()
+        
+        newFn = get_valid_filename('%s.tif'%newLayerName) #clean it
+        
+        out_fp = os.path.join(out_dir, newFn)
+
+        
+        log = logger.getChild('write_rlay')
+        
+        log.debug('on \'%s\' w/ \n    crs:%s \n    extents:%s\n    xUnits:%.4f'%(
+            rlayer.name(), rlayer.crs(), rlayer.extent(), rlayer.rasterUnitsPerPixelX()))
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert isinstance(rlayer, QgsRasterLayer)
+        assert os.path.exists(out_dir)
+        
+        if os.path.exists(out_fp):
+            msg = 'requested file already exists! and overwrite=%s \n    %s'%(
+                self.overwrite, out_fp)
+            if self.overwrite:
+                log.warning(msg)
+            else:
+                raise Error(msg)
+                
+        
+
+            
+        #=======================================================================
+        # extract info from layer
+        #=======================================================================
+        """consider loading the layer and duplicating the renderer?
+        renderer = rlayer.renderer()"""
+        provider = rlayer.dataProvider()
+        
+        
+        #build projector
+        projector = QgsRasterProjector()
+        #projector.setCrs(provider.crs(), provider.crs())
+        
+
+        #build and configure pipe
+        pipe = QgsRasterPipe()
+        if not pipe.set(provider.clone()): #Insert a new known interface in default place
+            raise Error("Cannot set pipe provider")
+             
+        if not pipe.insert(2, projector): #insert interface at specified index and connect
+            raise Error("Cannot set pipe projector")
+
+        #pipe = rlayer.pipe()
+            
+        
+        #coordinate transformation
+        """see note"""
+        transformContext = self.qproj.transformContext()
+        
+        #=======================================================================
+        # extents
+        #=======================================================================
+        if extent == 'layer':
+            extent = rlayer.extent()
+            
+        elif extent=='mapCanvas':
+            assert isinstance(self.iface, QgisInterface), 'bad key for StandAlone?'
+            
+            #get the extent, transformed to the current CRS
+            extent =  QgsCoordinateTransform(
+                self.qproj.crs(), 
+                rlayer.crs(), 
+                transformContext
+                    ).transformBoundingBox(self.iface.mapCanvas().extent())
+                
+        assert isinstance(extent, QgsRectangle), 'expected extent=QgsRectangle. got \"%s\''%extent
+        
+        #expect the requested extent to be LESS THAN what we have in the raw raster
+        assert rlayer.extent().width()>=extent.width(), 'passed extents too wide'
+        assert rlayer.extent().height()>=extent.height(), 'passed extents too tall'
+        #=======================================================================
+        # resolution
+        #=======================================================================
+        #use the resolution of the raw file
+        if resolution == 'raw':
+            """this respects the calculated extents"""
+            
+            nRows = int(extent.height()/rlayer.rasterUnitsPerPixelY())
+            nCols = int(extent.width()/rlayer.rasterUnitsPerPixelX())
+            
+
+            
+        else:
+            """dont think theres any decent API support for the GUI behavior"""
+            raise Error('not implemented')
+
+        
+
+        
+        #=======================================================================
+        # #build file writer
+        #=======================================================================
+
+        file_writer = QgsRasterFileWriter(out_fp)
+        #file_writer.Mode(1) #???
+        
+        if not opts is None:
+            file_writer.setCreateOptions(opts)
+        
+        log.debug('writing to file w/ \n    %s'%(
+            {'nCols':nCols, 'nRows':nRows, 'extent':extent, 'crs':rlayer.crs()}))
+        
+        #execute write
+        error = file_writer.writeRaster( pipe, nCols, nRows, extent, rlayer.crs(), transformContext)
+        
+        log.info('wrote to file \n    %s'%out_fp)
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        if not error == QgsRasterFileWriter.NoError:
+            raise Error(error)
+        
+        assert os.path.exists(out_fp)
+        
+        assert QgsRasterLayer.isValidRasterFileName(out_fp),  \
+            'requested file is not a valid raster file type: %s'%out_fp
+        
+        
+        return out_fp
+
+        
+        
+        
+    
+    
     #==========================================================================
-    # generic methods-----------------
+    # GENERIC METHODS-----------------
     #==========================================================================
 
     def vlay_new_df2(self, #build a vlay from a df
@@ -546,10 +764,18 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
     
 
     
-
+    def check_aoi(self, #special c hecks for AOI layers
+                  vlay):
+        
+        assert isinstance(vlay, QgsVectorLayer)
+        assert 'Polygon' in QgsWkbTypes().displayString(vlay.wkbType())
+        assert vlay.dataProvider().featureCount()==1
+        assert vlay.crs() == self.qproj.crs(), 'aoi CRS (%s) does not match project (%s)'%(vlay.crs(), self.qproj.crs())
+        
+        return 
     
     #==========================================================================
-    # algos--------------
+    # ALGOS--------------
     #==========================================================================
     def deletecolumn(self,
                      in_vlay,
@@ -1779,6 +2005,83 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         return res_vlay, nfn_l
 
 
+    def warpreproject(self, #repojrect a raster
+                              rlay_raw,
+                              
+                              crsOut = None, #crs to re-project to
+                              layname = None,
+                              options = 'COMPRESS=DEFLATE|PREDICTOR=2|ZLEVEL=9',
+                              output = 'TEMPORARY_OUTPUT',
+                              logger = None,
+                              ):
+
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger = self.logger
+        log = logger.getChild('warpreproject')
+        
+        if layname is None:
+            layname = '%s_rproj'%rlay_raw.name()
+            
+            
+        algo_nm = 'gdal:warpreproject'
+            
+        if crsOut is None: crs = self.crs #just take the project's
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert isinstance(rlay_raw, QgsRasterLayer)
+
+        assert rlay_raw.crs() != crsOut, 'layer already on this CRS!'
+            
+            
+        #=======================================================================
+        # run algo        
+        #=======================================================================
+
+        
+        ins_d =  {
+             'DATA_TYPE' : 0,
+             'EXTRA' : '',
+             'INPUT' : rlay_raw,
+             'MULTITHREADING' : False,
+             'NODATA' : None,
+             'OPTIONS' : options,
+             'OUTPUT' : output,
+             'RESAMPLING' : 0,
+             'SOURCE_CRS' : None,
+             'TARGET_CRS' : crsOut,
+             'TARGET_EXTENT' : None,
+             'TARGET_EXTENT_CRS' : None,
+             'TARGET_RESOLUTION' : None,
+          }
+        
+        log.debug('executing \'%s\' with ins_d: \n    %s \n\n'%(algo_nm, ins_d))
+        
+        res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
+        
+        log.debug('finished w/ \n    %s'%res_d)
+        
+        if not os.path.exists(res_d['OUTPUT']):
+            """failing intermittently"""
+            raise Error('failed to get a result')
+        
+        res_rlay = QgsRasterLayer(res_d['OUTPUT'], layname)
+
+        #=======================================================================
+        # #post check
+        #=======================================================================
+        assert isinstance(res_rlay, QgsRasterLayer), 'got bad type: %s'%type(res_rlay)
+        assert res_rlay.isValid()
+        assert rlay_raw.bandCount()==res_rlay.bandCount(), 'band count mismatch'
+           
+   
+        res_rlay.setName(layname) #reset the name
+           
+        log.debug('finished w/ %s'%res_rlay.name())
+          
+        return res_rlay
     
     
     
@@ -2201,6 +2504,8 @@ def load_vlay( #load a layer from a file
         logger=mod_logger):
     """
     what are we using this for?
+    
+    see instanc emethod
     """
     log = logger.getChild('load_vlay') 
     
@@ -2236,7 +2541,7 @@ def load_vlay( #load a layer from a file
     return vlay
 
 
-def vlay_write( #write  a layer to file
+def vlay_write( #write  a VectorLayer
         vlay, out_fp, 
 
         driverName='GPKG',
@@ -2252,6 +2557,8 @@ def vlay_write( #write  a layer to file
     opt2 = QgsVectorFileWriter.BoolOption(QgsVectorFileWriter.CreateOrOverwriteFile)
     
     help(QgsVectorFileWriter)
+    
+    TODO: Move this back onto Qcoms
     
     """
     

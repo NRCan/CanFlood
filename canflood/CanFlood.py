@@ -211,9 +211,11 @@ class CanFlood:
             #self.iface
             )
         
-        cnt, serv_d = wc1.addAll()
+        newCons_d = wc1.addAll()
         
-        wc1.logger.push('added %i (of %i) connections'%(cnt, len(serv_d)))
+        self.iface.reloadConnections()
+        
+        wc1.logger.push('added %i connections'%(len(newCons_d)))
         
     
     def unload(self):

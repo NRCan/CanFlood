@@ -46,7 +46,8 @@ from build.validator import Vali
 
 from hlpr.plug import *
 from hlpr.Q import *
-from hlpr.basic import *
+#from hlpr.basic import *
+from hlpr.basic import get_valid_filename
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 ui_fp = os.path.join(os.path.dirname(__file__), 'build.ui')
@@ -63,8 +64,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         """these will only ini tthe first baseclass (QtWidgets.QDialog)
         
         required"""
-        super(DataPrep_Dialog, self).__init__(parent)
-        #super(DataPrep_Dialog, self).__init__(parent)
+        super(DataPrep_Dialog, self).__init__(parent) #only calls QtWidgets.QDialog
+
         self.setupUi(self)
         
         # Set up the user interface from Designer through FORM_CLASS.
@@ -194,15 +195,16 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
 
 
         #find a good layer
-        try:
-            for layname, vlay in vlays_d.items():
-                if layname.startswith('finv'):
-                    break
-            
-            self.logger.debug('setting comboBox_vec = %s'%vlay.name())
-            self.comboBox_ivlay.setLayer(vlay)
-        except Exception as e:
-            self.logger.debug('failed to set inventory layer w: \n    %s'%e)
+        if len(vlays_d)>0:
+            try:
+                for layname, vlay in vlays_d.items():
+                    if layname.startswith('finv'):
+                        break
+                
+                self.logger.debug('setting comboBox_vec = %s'%vlay.name())
+                self.comboBox_ivlay.setLayer(vlay)
+            except Exception as e:
+                self.logger.debug('failed to set inventory layer w: \n    %s'%e)
             
 
         #index field name
@@ -248,17 +250,21 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         # TAB: HAZARD SAMPLER---------
         #======================================================================
+        
+        #=======================================================================
+        # raster layer selection box
+        #=======================================================================
         # Set GUI elements
         self.comboBox_ras.setFilters(QgsMapLayerProxyModel.RasterLayer)
         """
         todo: swap this out with better selection widget
         """
         #selection       
-        self.pushButton_remove.clicked.connect(self.remove_text_edit)
-        self.pushButton_clear.clicked.connect(self.clear_text_edit)
-        self.pushButton_add_all.clicked.connect(self.add_all_text_edit)
+        self.pushButton_remove.clicked.connect(self._HS_remove)
+        self.pushButton_HS_clear.clicked.connect(self._HS_clearBox)
+        self.pushButton_add_all.clicked.connect(self._HS_addAll)
         
-        self.comboBox_ras.currentTextChanged.connect(self.add_ras)
+        self.comboBox_ras.currentTextChanged.connect(self._HS_comboAdd)
         
         #=======================================================================
         # inundation
@@ -304,21 +310,22 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         
         #=======================================================================
-        # #execute
+        # #execute buttons
         #=======================================================================
         self.pushButton_HSgenerate.clicked.connect(self.run_rsamp)
-        
+        self.pushButton_HS_prep.clicked.connect(self.run_rPrep)
         #======================================================================
-        # event likelihoods
+        # TAB: EVENT VARIABLES---------
         #======================================================================
         self.pushButton_ELstore.clicked.connect(self.set_event_vals)
+        """not much here?
         
-        """dev button
-        self.pushButton_ELdev.clicked.connect(self._pop_el_table)"""
+        table population is done by run_rsamp()
+        """
         
-        
+
         #======================================================================
-        # Conditional Probabilities-----------
+        # TAB: CONDITIONAL PROBABILITIES-----------
         #======================================================================
         """todo: rename the buttons so they align w/ the set labels
         
@@ -379,13 +386,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         self.pushButton_Validate.clicked.connect(self.run_validate)
         
-
-
-
-
-        
         #======================================================================
-        # defaults-----------
+        # project defaults-----------
         #======================================================================
         """"
         to speed up testing.. manually configure the project
@@ -402,47 +404,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # wrap
         #=======================================================================
+        return
             
-        
-        
-        
-        
-        
 
-
-    #==========================================================================
-    # Layer Loading---------------
-    #==========================================================================
-    def add_ras(self):
-        x = [str(self.listWidget_ras.item(i).text()) for i in range(self.listWidget_ras.count())]
-        self.ras_dict.update({ (self.comboBox_ras.currentText()) : (self.comboBox_ras.currentLayer()) })
-        if (self.comboBox_ras.currentText()) not in x:
-            self.listWidget_ras.addItem(self.comboBox_ras.currentText())
-            self.ras_dict.update({ (self.comboBox_ras.currentText()) : (self.comboBox_ras.currentLayer()) })
-        
-    def clear_text_edit(self):
-        if len(self.ras_dict) > 0:
-            self.listWidget_ras.clear()
-            self.ras_dict = {}
-    
-    def remove_text_edit(self):
-        if (self.listWidget_ras.currentItem()) is not None:
-            value = self.listWidget_ras.currentItem().text()
-            item = self.listWidget_ras.takeItem(self.listWidget_ras.currentRow())
-            item = None
-            for k in list(self.ras_dict):
-                if k == value:
-                    self.ras_dict.pop(value)
-
-    def add_all_text_edit(self):
-        layers = self.iface.mapCanvas().layers()
-        #layers_vec = [layer for layer in layers if layer.type() == QgsMapLayer.VectorLayer]
-        layers_ras = [layer for layer in layers if layer.type() == QgsMapLayer.RasterLayer]
-        x = [str(self.listWidget_ras.item(i).text()) for i in range(self.listWidget_ras.count())]
-        for layer in layers_ras:
-            if (layer.name()) not in x:
-                self.ras_dict.update( { layer.name() : layer} )
-                self.listWidget_ras.addItem(str(layer.name()))
 
     #===========================================================================
     # common methods----------
@@ -479,24 +443,34 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             log.info('slicing finv \'%s\' and %i feats w/ aoi \'%s\''%(
                 vlay.name(),vlay.dataProvider().featureCount(), aoi_vlay.name()))
             
+            self.check_aoi(aoi_vlay)
+            
             res_vlay =  self.selectbylocation(vlay, aoi_vlay, result_type='layer', logger=log)
             
             assert isinstance(res_vlay, QgsVectorLayer)
             
             vlay.removeSelection()
+            
+            res_vlay.setName('%s_aoi'%vlay.name())
         
         #=======================================================================
         # wrap
         #=======================================================================
+        """no... we use this as a backend pre-filter alot
+        only load excplicitly called slice values
         if self.checkBox_loadres.isChecked():
             self.qproj.addMapLayer(res_vlay)
             self.logger.info('added \'%s\' to canvas'%res_vlay.name())
+            """
             
         
             
         return res_vlay
             
             
+    #===========================================================================
+    # Run Actions------
+    #===========================================================================
 
 
     def build_scenario(self): #'Generate' on the setup tab
@@ -577,7 +551,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #parameters
         
         pars.set('parameters', 'name', self.tag) #user selected field
-        pars.set('parameters', 'felv', self.comboBox_SSelv.currentText()) #user selected field
+        """moved to inventory tab
+        pars.set('parameters', 'felv', self.comboBox_SSelv.currentText()) #user selected field"""
         
         #damage curves
         dmg_fps = self.lineEdit_curve.text()
@@ -644,7 +619,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         assert isinstance(vlay_raw, QgsVectorLayer), 'must select a VectorLayer'
         assert os.path.exists(cf_fp), 'bad cf_fp: %s'%cf_fp
-        
+        assert vlay_raw.crs()==self.qproj.crs(), 'finv CRS (%s) does not match projects (%s)'%(vlay_raw.crs(), self.qproj.crs())
         
         #check cid
         assert isinstance(cid, str)
@@ -662,10 +637,15 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         vlay = self.slice_aoi(vlay_raw)
         
+        #name check
+        if len(vlay.name()) > 50:
+            vlay.setName(vlay.name()[0:50])
+        
         
         if self.checkBox_loadres.isChecked():
             self.qproj.addMapLayer(vlay)
             self.logger.info('added \'%s\' to canvas'%vlay.name())
+            self.comboBox_ivlay.setLayer(vlay) #set this as the new finv
         
         
 
@@ -688,13 +668,14 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             raise Error('cid not found in finv_df')
         
         assert df[cid].is_unique
-        assert 'int' in df[cid].dtypes.name
+        assert 'int' in df[cid].dtypes.name, 'cid \'%s\' bad type'%cid
         
         self.feedback.upd_prog(50)
         #=======================================================================
         # #write to file
         #=======================================================================
-        out_fp = os.path.join(self.wd, 'finv_%s_%s.csv'%(self.tag, vlay.name()))
+
+        out_fp = os.path.join(self.wd, get_valid_filename('finv_%s_%s.csv'%(self.tag, vlay.name())))
         
         #see if this exists
         if os.path.exists(out_fp):
@@ -715,6 +696,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         # write to control file
         #=======================================================================
         assert os.path.exists(out_fp)
+        
+
 
         
         self.update_cf(
@@ -724,7 +707,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                 '#\'finv\' file path set from BuildDialog.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
                 ),
             'parameters':(
-                {'cid':str(cid)},
+                {'cid':str(cid),
+                 'felv':self.comboBox_SSelv.currentText()},
                 )
              },
             cf_fp = cf_fp
@@ -828,17 +812,134 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # wrap
         #=======================================================================
-        self.qproj.addMapLayer(finv_vlay)
-        log.info('added \'%s\' to canvas'%finv_vlay.name())
+        if self.checkBox_loadres.isChecked():
+            self.qproj.addMapLayer(finv_vlay)
+            self.comboBox_ivlay.setLayer(finv_vlay) #set this to the inventory selection
+            log.info('added \'%s\' to canvas'%finv_vlay.name())
+        else:
+            raise Error('ensure load results is checked!')
         
         log.push('finished NPRI conversion')
         self.feedback.upd_prog(None) #set the progress bar back down to zero
+        
+    def run_rPrep(self):
+        log = self.logger.getChild('run_rPrep')
+        start = datetime.datetime.now()
+        log.info('start \'run_rPrep\' at %s'%start)
+        
+        
+        
+        #=======================================================================
+        # assemble/prepare inputs
+        #=======================================================================
+        rlayRaw_l = list(self.ras_dict.values())
+        out_dir = self.lineEdit_wd.text()
+        
+        
+        #raster prep parameters
+        aoi_vlay = self.comboBox_aoi.currentLayer()
+        clip_rlays = self.checkBox_HS_clip.isChecked()
+        allow_download = self.checkBox_HS_dpConv.isChecked()
+        allow_rproj = self.checkBox_HS_rproj.isChecked()
+        scaleFactor = self.doubleSpinBox_HS_sf.value()
+        
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        
+        #check rastsers
+        for rlay in rlayRaw_l:
+            if not isinstance(rlay, QgsRasterLayer):
+                raise Error('unexpected type on raster layer')
+            
+        
+        if not os.path.exists(out_dir):
+            raise Error('working directory does not exist:  %s'%out_dir)
+        
+        
+        #raster prep checks
+        assert isinstance(clip_rlays, bool)
+        assert isinstance(allow_download, bool)
+        assert isinstance(allow_rproj, bool)
+        assert isinstance(scaleFactor, float)
+        
+        if clip_rlays:
+            assert isinstance(aoi_vlay, QgsVectorLayer), 'for clip_rlays=True, must provide AOI'
+            
+        self.feedback.setProgress(10)
+        #=======================================================================
+        # execute
+        #=======================================================================
+        wrkr = Rsamp(logger=self.logger, 
+                          tag = self.tag, #set by build_scenario() 
+                          feedback = self.feedback, #let the instance build its own feedback worker
+                          out_dir = out_dir
+                          )
+        
+
+        #execute the tool
+        rlay_l = wrkr.runPrep(rlayRaw_l, 
+                        aoi_vlay = aoi_vlay,
+                        clip_rlays = clip_rlays,
+                        allow_download = allow_download,
+                        allow_rproj = allow_rproj,
+                        scaleFactor = scaleFactor,
+                            )
+        
+
+        #=======================================================================
+        # load results
+        #=======================================================================
+        
+        self._HS_clearBox() #clear the raster selection box
+        assert len(self.ras_dict)==0
+            
+            
+        #=======================================================================
+        # """adding the list of rasters to the canvas is crashing Qgis
+        # spent an hour and couldnt resolve
+        #=======================================================================
+
+        if self.checkBox_loadres.isChecked():
+            log.debug('loading %i prepped raster results'%len(rlay_l))
+
+             
+
+            self.qproj.addMapLayers(rlay_l)
+            for rlay in rlay_l:
+                assert isinstance(rlay, QgsRasterLayer)
+                #self.qproj.addMapLayer(rlay)
+                log.info('added \'%s\' to canvas'%rlay.name())
+                 
+
+                #update th erasterBox
+                self.ras_dict.update( { rlay.name() : rlay} )
+                self.listWidget_ras.addItem(str(rlay.name()))
+
+
+                 
+        else:
+            log.warning('prepped rasters not loaded to canvas!')
+             
+ 
+             
+        #=======================================================================
+        # wrap
+        #=======================================================================
+         
+        self.feedback.upd_prog(None) #set the progress bar back down to zero
+ 
+        log.push('run_rPrep finished in %s'%(datetime.datetime.now() - start))
+         
+        return
+        
 
     
-    def run_rsamp(self): #execute rsamp
+    def run_rsamp(self): #execute raster sampler
         log = self.logger.getChild('run_rsamp')
         start = datetime.datetime.now()
-        log.info('user pressed \'pushButton_HSgenerate\'')
+        log.info('start \'run_rsamp\' at %s'%start)
         
         #=======================================================================
         # assemble/prepare inputs
@@ -846,15 +947,13 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         finv_raw = self.comboBox_ivlay.currentLayer()
         rlay_l = list(self.ras_dict.values())
         
-        crs = self.qproj.crs()
 
         cf_fp = self.get_cf_fp()
         out_dir = self.lineEdit_wd.text()
-        
 
-        #update some parameters
         cid = self.mFieldComboBox_cid.currentField() #user selected field
         psmp_stat = self.comboBox_HS_stat.currentText()
+        
         
         #inundation
         as_inun = self.checkBox_HS_in.isChecked()
@@ -869,9 +968,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         else:
             dthresh, dtm_rlay = None, None
             
-        
+
         #=======================================================================
-        # slice aoi
+        # slice finv to aoi
         #=======================================================================
         finv = self.slice_aoi(finv_raw)
 
@@ -888,6 +987,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         for rlay in rlay_l:
             if not isinstance(rlay, QgsRasterLayer):
                 raise Error('unexpected type on raster layer')
+            assert rlay.crs()==self.qproj.crs(), 'layer CRS does not match project'
             
         if not os.path.exists(out_dir):
             raise Error('working directory does not exist:  %s'%out_dir)
@@ -911,29 +1011,30 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             assert not as_inun, '%Inundation only valid for polygon type geometries'
         else:
             raise Error('unrecognized gtype: %s'%gtype)
+        
+
+        
+        self.feedback.setProgress(10)
         #======================================================================
         # execute
         #======================================================================
-
+        
         #build the sample
         wrkr = Rsamp(logger=self.logger, 
                           tag = self.tag, #set by build_scenario() 
                           feedback = self.feedback, #let the instance build its own feedback worker
-                          cid=cid,crs = crs,
+                          cid=cid,
                           out_dir = out_dir
                           )
         
-        """try just passing the Dialog's feedback
-        #connect the status bar to the worker's feedback
-        wrkr.feedback.progressChanged.connect(self.upd_prog)"""
-        
-        
-        
+
         #execute the tool
         res_vlay = wrkr.run(rlay_l, finv,
                             psmp_stat=psmp_stat,
-                            as_inun=as_inun, dtm_rlay=dtm_rlay, dthresh=dthresh)
+                            as_inun=as_inun, dtm_rlay=dtm_rlay, dthresh=dthresh,
+                            )
         
+        self.feedback.setProgress(90)
         #check it
         wrkr.check()
         
@@ -967,6 +1068,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         # populate Event Likelihoods table
         #======================================================================
+        
         l = self.event_name_set
         for tbl in [self.fieldsTable_EL]:
 
@@ -976,7 +1078,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                 tbl.setItem(rindx, 0, QTableWidgetItem(ename))
             
         log.info('populated tables with event names')
-        
+        self.feedback.setProgress(95)
         #======================================================================
         # populate lisamp
         #======================================================================
@@ -1005,7 +1107,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #======================================================================
         self.feedback.upd_prog(None) #set the progress bar back down to zero
 
-        log.push('Rsamp finished in %s'%(datetime.datetime.now() - start))
+        log.push('run_rsamp finished in %s'%(datetime.datetime.now() - start))
         
         return
     
@@ -1021,7 +1123,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         finv_raw = self.comboBox_ivlay.currentLayer()
         rlay = self.comboBox_dtm.currentLayer()
         
-        crs = self.qproj.crs()
 
         cf_fp = self.get_cf_fp()
         out_dir = self.lineEdit_wd.text()
@@ -1074,7 +1175,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         wrkr = Rsamp(logger=self.logger, 
                           tag=self.tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
-                          cid=cid,crs=crs, 
+                          cid=cid,
                           out_dir = out_dir, fname='gels'
                           )
         
@@ -1121,7 +1222,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         # assemble/prepare inputs
         #=======================================================================
         finv_raw = self.comboBox_ivlay.currentLayer()
-        crs = self.qproj.crs()
+
         cf_fp = self.get_cf_fp()
         out_dir = self.lineEdit_wd.text()
         cid = self.mFieldComboBox_cid.currentField() #user selected field
@@ -1180,7 +1281,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         wrkr = LikeSampler(logger=self.logger, 
                           tag=self.tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
-                          crs = crs,
                           )
         
         #connect the status bar
@@ -1390,6 +1490,40 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         self.feedback.upd_prog(None)
         return
+    
+    #==========================================================================
+    # HazardSampler Raster Box---------------
+    #==========================================================================
+    def _HS_comboAdd(self):
+        x = [str(self.listWidget_ras.item(i).text()) for i in range(self.listWidget_ras.count())]
+        self.ras_dict.update({ (self.comboBox_ras.currentText()) : (self.comboBox_ras.currentLayer()) })
+        if (self.comboBox_ras.currentText()) not in x:
+            self.listWidget_ras.addItem(self.comboBox_ras.currentText())
+            self.ras_dict.update({ (self.comboBox_ras.currentText()) : (self.comboBox_ras.currentLayer()) })
+        
+    def _HS_clearBox(self):
+        if len(self.ras_dict) > 0:
+            self.listWidget_ras.clear()
+            self.ras_dict = {}
+    
+    def _HS_remove(self):
+        if (self.listWidget_ras.currentItem()) is not None:
+            value = self.listWidget_ras.currentItem().text()
+            item = self.listWidget_ras.takeItem(self.listWidget_ras.currentRow())
+            item = None
+            for k in list(self.ras_dict):
+                if k == value:
+                    self.ras_dict.pop(value)
+
+    def _HS_addAll(self): #scan the canvas and intelligently add all the rasters
+        layers = self.iface.mapCanvas().layers()
+        #layers_vec = [layer for layer in layers if layer.type() == QgsMapLayer.VectorLayer]
+        layers_ras = [layer for layer in layers if layer.type() == QgsMapLayer.RasterLayer]
+        x = [str(self.listWidget_ras.item(i).text()) for i in range(self.listWidget_ras.count())]
+        for layer in layers_ras:
+            if (layer.name()) not in x:
+                self.ras_dict.update( { layer.name() : layer} )
+                self.listWidget_ras.addItem(str(layer.name()))
     
 
             

@@ -17,7 +17,8 @@ from configparser import ConfigParser, RawConfigParser
 import numpy as np
 
 
-from qgis.core import QgsApplication
+from qgis.core import QgsApplication, QgsSettings
+from PyQt5.QtCore import QSettings
 #==============================================================================
 # custom imports
 #==============================================================================
@@ -41,10 +42,11 @@ from hlpr.plug import logger as plogger
 
 
 class WebConnect(ComWrkr):
-    
+    allGroups = None
     
     def __init__(self,
                  iface=None,
+                 newSettings_fp = None,
                  qini_fp = None, #path to user's QGIS.ini file
                  
                  **kwargs):
@@ -64,6 +66,9 @@ class WebConnect(ComWrkr):
         
         #setup
         
+        #=======================================================================
+        # get the users settings file
+        #=======================================================================
         #qini_fp = os.path.abspath(__file__)[:-59]+"QGIS\QGIS3.ini" # The path to the configuration file for QGIS
         if qini_fp is None:
             qini_fp = os.path.join(QgsApplication.qgisSettingsDirPath(), r'QGIS\QGIS3.ini')
@@ -74,17 +79,20 @@ class WebConnect(ComWrkr):
         self.logger.info('found config file: %s'%qini_fp)
         
         #=======================================================================
-        # load connection info file
+        # load CanFlood's parameters info file
         #=======================================================================
         #get filepath
-        dirname = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        con_fp = os.path.join(dirname, '_pars','WebConnections.ini')
+        if newSettings_fp is None:
+            dirname = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            newSettings_fp = os.path.join(dirname, '_pars','WebConnections.ini')
         
-        self.serv_d = self.retrieve_fromFile(con_fp)
+        self.newCons_d = self.retrieve_fromFile(newSettings_fp)
         
         
-    def retrieve_fromFile(self,
-                          con_fp):
+    def retrieve_fromFile(self, #pull parameters from CanFlood's file
+                          con_fp,
+                          expected_keys = ['group', 'url'], #keys expected under each group
+                          ):
         
         log = self.logger.getChild('retrieve_fromFile')
         assert os.path.exists(con_fp)
@@ -98,313 +106,219 @@ class WebConnect(ComWrkr):
         # loop through each seciton and load
         #=======================================================================
         log.debug('got %i sections'%len(pars.sections()))
-        serv_d = dict()
+        newCons_d = dict()
         for name, sect_d in pars.items():
             if  'DEFAULT' in name: continue #skip the default section
-            serv_d[name] = sect_d
+            newCons_d[name] = dict(sect_d)
             
-            #check it
-            for ele in ('serverType', 'url'):
-                assert ele in sect_d.keys(), '%s missing \'%s\''%(name, ele)
+            miss_l = set(expected_keys).difference(newCons_d[name].keys())
+            assert len(miss_l) == 0, 'parameter file missing some keys: %s'%miss_l
+            
+
 
     
-        log.info('finished loading %i connections \n    %s'%(len(serv_d), list(serv_d.keys())))
+        log.info('retrieved %i connection parameters from file \n    %s'%(len(newCons_d), list(newCons_d.keys())))
         
-        return serv_d
+        return newCons_d
     
     
     def addAll(self, #add all connections
-               serv_d = None, #connections to load
+               qini_fp = None, #users settings path
+               newCons_d = None, #connections to load
                ): 
-        
+        #=======================================================================
+        # defaults
+        #=======================================================================
         log = self.logger.getChild('addAll')
-        if serv_d is None:
-            serv_d = self.serv_d
+        if newCons_d is None: newCons_d = self.newCons_d
+        if qini_fp is None: qini_fp = self.qini_fp
         
-        log.debug('addAll executed')
-        
-        
-        #=======================================================================
-        # serv_d =  {#title: {serverType, url}}
-        #     'NRPI':('arcgisfeatureserver','https://maps-cartes.ec.gc.ca/arcgis/rest/services/NPRI_INRP/NPRI_INRP/MapServer')
-        #     }
-        #=======================================================================
+        log.debug('addAll on %i'%len(newCons_d))
         
         #=======================================================================
-        # loop and add
+        # initilize settings
         #=======================================================================
-        res_d = dict() #results container
-        for title, sect_d in serv_d.items():
-            result = self.saveLayer(title, sect_d['url'], sect_d['serverType'])
-            if not result:
-                log.info('failed to add \'%s\''%title)
-            else:
-                log.info('added \'%s\''%title)
-            res_d[title] = result
+        assert os.path.exists(qini_fp), 'bad settings filepath: %s'%qini_fp
+        usets = QgsSettings(qini_fp, QSettings.IniFormat) 
+        
+        #navigate to group1
+        """all connectins are in the qgis group"""
+        usets.beginGroup('qgis') 
+        
+        #=======================================================================
+        # loop and add each connection
+        #=======================================================================
+        for cname, newPars_d in copy.copy(newCons_d).items():
+            #navigate to this group within the settings
+            usets.beginGroup(newPars_d['group'])
+            
+            """TODO: add checks:
+            warn if this group already exists
+            check if connection is valid
+            """
+            
+            log.debug('setting %i parameters to group \"%s\' \n    %s'%(
+                len(newPars_d), usets.group(), newPars_d))
+            #loop and add each setting to this group
+            for k, v in newPars_d.items():
+                if k=='group': continue 
+                usets.setValue(k, v)
+                
+            #return to the parent group
+            usets.endGroup()
 
+
+        usets.sync() #write unsaved changes to file
         
-        cnt = np.array(list(res_d.values())).sum() #total the TRUEs
+        log.info('added %i connections: \n    %s'%( len(newCons_d), list(newCons_d.keys())))
+        #=======================================================================
+        # check result
+        #=======================================================================
+        result, chk_d = self.checkSettingsGroup(newCons_d, logger=log)
+        assert result, 'failed to set some values \n    %s'%chk_d
+                
+                
         
-        log.info('added %i (of %i) connections'%(cnt, len(serv_d)))
             
-        return cnt, serv_d
-        
-            
+        return newCons_d
     
-    def get_settings(self, serverType, title, url):
+    
+    def checkSettingsGroup(self, #check a group of settings
+                           cons_d,
+                           qini_fp = None,
+                           logger=None,
+                           parent_group = 'qgis',
+                           ):
+        """there's probably some builtin functions for this"""
         
-        """check out 'QGIS3.ini' for syntax
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if qini_fp is None: qini_fp = self.qini_fp
+        if logger is None: logger = self.logger
+        log = logger.getChild('checkSettingsGroup')
         
-        seems like this could be written much cleaner....
+        #=======================================================================
+        # init the settings
+        #=======================================================================
+        """would be nice to not re-init each time.. but not sure how to reset the group cleanly
         """
-        
-        if (serverType == "WMS"): 
-            base_settings = "connections-wms\\"+title+"\\"
-            base_security_settings = "WMS\\"+title+"\\"
+        assert os.path.exists(qini_fp), 'bad settings filepath: %s'%qini_fp
+        usets = QgsSettings(qini_fp, QSettings.IniFormat) 
+        #usets.beginGroup(parent_group) #all checks are done within the 1qgis group
+
+        allGroups = self.getAllGroups(usets)
+        log.debug('found %i groups'%len(allGroups))
             
-            settings = [base_settings+"url",base_settings+"ignoreAxisOrientation",base_settings+"invertAxisOrientation",
-                        base_settings+"ignoreGetMapURI",base_settings+"smoothPixmapTransform",base_settings+"dpimode",base_settings+"referer",
-                        base_settings+"ignoreGetFeatureInfoURI",base_security_settings+"username",base_security_settings+"password",base_security_settings+"authcfg"]
-            
-            settings_ans = [url,"false","false","false","false","7","","false","","",""]
-            
-        elif (serverType == "WFS"):
-            base_settings = "connections-wfs\\"+title+"\\"
-            base_security_settings = "WFS\\"+title+"\\"
-            settings = [base_settings+"url",base_settings+"ignoreAxisOrientation",base_settings+"invertAxisOrientation",
-            base_settings+"version",base_settings+"maxnumfeatures",base_security_settings+"username",
-            base_security_settings+"password",base_security_settings+"authcfg"]
-            
-            settings_ans = [url,"false","false","auto","","","",""]
-        
-        elif (serverType == "arcgismapserver"):
-            base_settings = "connections-arcgismapserver\\"+title+"\\"
-            base_security_settings = "arcgismapserver\\"+title+"\\"
-            settings = [base_settings+"url",base_security_settings+"username",base_security_settings+"password",
-            base_security_settings+"authcfg"]
-            
-            settings_ans = [url,"","",""]
-            
-        elif (serverType == "arcgisfeatureserver"):
-            base_settings = "connections-arcgisfeatureserver\\"+title+"\\"
-            base_security_settings = "arcgisfeatureserver\\"+title+"\\"
-            settings = [base_settings+"url",base_security_settings+"username",base_security_settings+"password",
-            base_security_settings+"authcfg"]
-            
-            settings_ans = [url,"","",""]
-            
-        elif (serverType=='WCS'):
-            
-            """using pythonic code here"""
-            #===================================================================
-            # #default parmaeters:settings
-            #===================================================================
-            
-            
-            conBase_d = { #ocnnections
-                'url':'???',
-                'ignoreAxisOrientation':'false',
-                'invertAxisOrientation':'false',
-                'ignoreReportedLayerExtents':'false',
-                'ignoreGetMapURI':'false',
-                'smoothPixmapTransform':'false',
-                'dpiMode':'7',
-                'referer':''}
+        #=======================================================================
+        # loop and check
+        #=======================================================================
+        log.debug('checking %i connectin settings in fp: \n    %s'%(len(cons_d), qini_fp))
+        res_d = dict() #macro results contqainer
+        for cname, newPars_d in cons_d.items():
+            res_d1 = dict()
+            group = '/qgis/%s'%newPars_d['group'].replace('\\', '/') #group to check
+            for k, v in newPars_d.items():
+                if k=='group': continue 
+                result, msg = self.checkSettings(group, k, v, usets, allGroups)
+                log.debug('\"%s\' %s =%s'%(group,result, msg))
+                res_d1[k] = result #add result
                 
-            secBase_d = { #security settings 
-                'username':'',
-                'password':'',
-                'authcfg':'',
-                }
-                
-               
-            #===================================================================
-            # #populate
-            #===================================================================
-            
-            #add passed parameters
-            conBase_d['url'] = url
-            
-            
-
-            
+            usets.endGroup() #revert group
             
             #===================================================================
-            # #add base values
+            # #report
             #===================================================================
-            con_d, sec_d = copy.copy(conBase_d), copy.copy(secBase_d) #start with defaults
-            base_settings = "connections-wcs\\"+title+"\\"
-            base_security_settings = "WCS\\"+title+"\\"
-            
-            con_d = {base_settings+k:v for k,v in con_d.items()}
-            sec_d = {base_security_settings+k:v for k,v in sec_d.items()}
-            
-  
-            
-            #===================================================================
-            # revert
-            #===================================================================
-            """todo: restructure this whole class to be more pythonic"""
-            settings = list(con_d.keys()) + list(sec_d.keys())
-            settings_ans = list(con_d.values()) + list(sec_d.values())
-                     
-            
-            
-        else:
-            raise Error('unrecognized serverType: %s'%serverType)
-            
-        return settings, settings_ans, base_settings
-        
-        
-        
-    def saveLayer(self, #add entry to the ini file
-                   title,url,serverType):
-        """taken from canadian_web_services
-        
-        is there an api method to do this?
-        
-        https://gis.stackexchange.com/questions/307325/how-to-open-and-add-sqlite-connection-to-browser-with-pyqgis
-        
-        
-        """
-        
-        '''
-        Standalone function that saves services into the registry 
-        @param title - The title of the service
-        @param url - the url of the service
-        @param serverType - the serverType of service (ie WMS,WFS,ESRI MapServer)
-        '''
-        
-        log = self.logger.getChild('saveLayer')
-        
-        log.debug('on %s'%title)
-        filepath =  self.qini_fp
-        #=======================================================================
-        # open up the ini file
-        #=======================================================================
-        config = ConfigParser()
-        config.optionxform =str
-        _ = config.read(self.qini_fp)
-
-        
-        #=======================================================================
-        # calculate the settings
-        #=======================================================================
-        settings, settings_ans, base_settings = self.get_settings(serverType, title, url)
+            ar = np.array(list(res_d1.values()))
+            log.debug('group=\'%s\' %i (of %i) settings match'%(group, ar.sum(), len(ar)))
 
             
-        #=======================================================================
-        # see if its been written
-        #=======================================================================
-
-        try: # try block checks if the service has been added
-            """bad way to do this...."""
-            check = config["qgis"][base_settings+"url"] # Checks if the service has already been added
-            already_added = config["qgis"][base_settings+"url"] == url # checks to see if the urls match (Used since we might encounter services with the same name but different urls)
+            res_d[cname] = ar.all()
             
-            
-            
-        except: # If it hasn't add it 
-            for i in range (len(settings)):
-                """loop through setting variables and set values"""
-                config["qgis"][settings[i]] = settings_ans[i]
-
-            
-            with open(filepath,"w") as configfile:
-                """
-                some protocols were not loading when the spaces aroudn the equal signs were included
-                """
-                config.write(EqualsSpaceRemover(configfile))
-                
-            already_added = True
-            
-            log.info('added \'%s\' with type: \'%s\' and url: \n    %s'%(title, serverType, url))
-            
-            return True
-            
-            
-        
-        #=======================================================================
-        # 
-        # if not already_added: # If the service has still not been added (most common reason to be here is if there are multiple services with the same name (title))
-        #     already_added,title = self.name_finder(title,config,serverType,url,0)
-        #     if(not(already_added)): # If the service has not already been added 
-        #         return False# Do nothing
-        #     
-        #     else: # Otherwise add it to the configuration file
-        #         
-        #         settings, settings_ans, base_settings = self.get_settings(serverType, title, url)
-        #         
-        #         for i in range (len(settings)): # Sets information into config
-        #             config["qgis"][settings[i]] = settings_ans[i]
-        #         
-        #         with open(filepath,"w") as configfile: # writes into file 
-        #             config.write(EqualsSpaceRemover(configfile))
-        #             
-        #         return True    
-        # else:
-        #     return False
-        #=======================================================================
-              
-
+        return np.array(list(res_d.values())).all(), res_d
     
-    
-    def name_finder(self,
-                        title,config,serverType,url,counter):
+    def getAllGroups(self, usets):
+        """couldnt find a nice builtin for this
         
-        '''
-        Helper function for method saveLayers that obtains how we should name our service (Created to counter-act the fact that many services in the plugin have the same name)
+        pulls all groups on the QgsSettings"""
+        assert isinstance(usets, QgsSettings)
         
-        @param title - title of the service
-        @param config - ConfigParser that contains a dictionary like structure that contains the configuration settings of QGIS
-        @param serverType - the serverType of service (ie WMS, WFS, ESRI MapServer)
-        @param counter - Amount of times we have run this helper function for the given service
-        
-        @return bool - that is false if a write is not necessary, and true if it is
-        @return title - the new title we should be using when writing to the configuration settings file.  
-        '''
-        
-        try:# Checks if the service exists
-            counter += 1
-            
-            if (serverType == "WMS"): # If block checks what serverType of service we are given and does the appropriate url check
-                check = config["qgis"]["connections-wms\\"+title+"\\url"] == url
-            elif (serverType == "WFS"):
-                check = config["qgis"]["connections-wfs\\"+title+"\\url"] == url
-            elif (serverType == "arcgismapserver"):
-                check = config["qgis"]["connections-arcgismapserver\\"+title+"\\url"] == url
-            elif (serverType == "arcgisfeatureserver"):
-                check = config["qgis"]["connections-arcgisfeatureserver\\"+title+"\\url"] == url
-            elif serverType == 'WCS':
-                check = config["qgis"]["connections-wcs\\"+title+"\\url"] == url
+        l = list()
+        for k in usets.allKeys():
+            k_all = k.split(r'/') #split all the entries
+            if len(k_all)>1:
+                l.append('/'.join(k_all[:-1]))
             else:
-                raise Error('unrecognized serverType: %s'%serverType)
-            
-            if(check): # If we found the service 
-                return False,title 
-            else: # Otherwise 
-            
-                if (counter == 1): # If block that deals with naming conventions, if this is the first time we ran the function 
-                    title += "_"+str(counter) 
-                else: # For every subsequent run of the function, remove what was previously added, and then add the new version Ex: Given title_1, strips the 1 and add 2 leaving us with : title_2  
-                    title = title[:-(len(str(counter - 1)))]
-                    title += str(counter)
-                return self.name_finder(title,config,serverType,url,counter)
-        except: # If the service doesn't exist, that means we can now write to the configuration settings file without error
-            return True,title 
+                l.append(k_all[0])
+                
+        #add the leading slash
+        l = ['/'+e for e in l]
         
-class EqualsSpaceRemover:
-    output_file = None
-    def __init__( self, new_output_file ):
-        self.output_file = new_output_file
+        return l
+        
+    
+    def checkSettings(self,
+                      group,
+                      key,
+                      value,
+                      usets,
+                      allGroups
+                      ):
+        
 
-    def write( self, what ):
-        self.output_file.write( what.replace( " = ", "=", 1 ) )
+
+                
+        
+        #=======================================================================
+        # run checks
+        #=======================================================================
+        result, msg = True, 'match'
+        
+
+        
+        
+        #see if the group exists
+        if not group in allGroups:
+            msg = 'group \'%s\' does not exist'%group
+            result = False
+        
+        #=======================================================================
+        # see if the key exists
+        #=======================================================================
+        if result:
+            #move to the group
+            usets.beginGroup(group)
+            assert usets.group() in group
+            
+            if not key in usets.childKeys():
+                msg='group \"%s\' does not have key \'%s\''%(group, key)
+                result = False
+            else:
+                #===============================================================
+                # see if the value matches
+                #===============================================================
+                if not value == usets.value(key):
+                    msg = '%s.%s=%s does not match \'%s\''%(
+                        group, key, usets.value(key), value)
+                    result = False
+                
+            #revert gruop
+            usets.endGroup()
+            
+        
+        return result, msg
+            
+
+    
+
+        
+    
         
 if __name__ =="__main__":
     
     
     wrkr = WebConnect(
+        newSettings_fp = r'C:\LS\03_TOOLS\CanFlood\_git\canflood\_pars\WebConnections1.ini',
         qini_fp = r'C:\Users\cefect\AppData\Roaming\QGIS\QGIS3\profiles\dev\QGIS\QGIS3.ini') #setup worker
     
     

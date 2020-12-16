@@ -62,13 +62,12 @@ class QprojPlug(Qcoms): #baseclass for plugins
     invalid_cids = ['fid', 'ogc_fid']
     
     """not a great way to init this one
+    Plugin classes are only initilaizing the first baseclass
     def __init__(self):
         self.logger = logger()"""
     
     def qproj_setup(self): #project inits for Dialog Classes
-        """
-        todo: change this to an __init__
-        """
+
         
         self.logger = logger(self) #init the logger
         self.qproj = QgsProject.instance()
@@ -261,28 +260,51 @@ class QprojPlug(Qcoms): #baseclass for plugins
         
 
 class logger(object): #workaround for qgis logging pythonic
+    """
+    plugin logging
+    
+
+    0.4.1
+        log messages sent to 2 places based on level
+            
+    
+    """
     log_tabnm = 'CanFlood' # qgis logging panel tab name
     
-    log_nm = '' #logger name
+    log_nm = 'cf' #logger name
     
     def __init__(self, parent,
                  statusQlab = None, #Qlabel widget to duplicate push messages
+                 log_nm = None,
                  ):
         #attach
         self.parent = parent
+        
+        #nest the name
+        """theres probably a more elegant way to do this..."""
+        if  log_nm is None: #normal calls
+            self.log_nm = '%s.%s'%(self.log_nm, self.parent.__class__.__name__)
+        else: #getChild calls
+            self.log_nm = log_nm
+        
+        
         
         self.iface = parent.iface
         
         self.statusQlab = statusQlab
         
+        """dont want to call this during getChild
+        self.debug('logger initilized for %s at %s'%(parent.__class__.__name__, datetime.datetime.now()))"""
+        
     def getChild(self, new_childnm):
         
         #build a new logger
         child_log = logger(self.parent, 
-                           statusQlab=self.statusQlab)
+                           statusQlab=self.statusQlab,
+                           log_nm = '%s.%s'%(self.parent.logger.log_nm, new_childnm)
+                           )
         
-        #nest the name
-        child_log.log_nm = '%s.%s'%(self.log_nm, new_childnm)
+
         
         return child_log
     
@@ -296,9 +318,12 @@ class logger(object): #workaround for qgis logging pythonic
         self._loghlp(msg, Qgis.Info, push=False, status=True)
 
 
-    def debug(self, msg_raw):
+    def debug(self, msg):
+        self._loghlp(msg, -1, push=False, status=False)
+        """
         msg = '%s: %s'%(self.log_nm, msg_raw)
         QgsLogger.debug(msg)
+        """
         
     def warning(self, msg):
         self._loghlp(msg, Qgis.Warning, push=False)
@@ -314,14 +339,30 @@ class logger(object): #workaround for qgis logging pythonic
                 msg_raw, qlevel, 
                 push=False,
                 status=False):
+        """
+        QgsMessageLog writes to the message panel
+            optionally, users can enable file logging
+            this file logger 
+        """
+
+        #=======================================================================
+        # send message based on qlevel
+        #=======================================================================
+        msgDebug = '%s    %s: %s'%(datetime.datetime.now().strftime('%d-%H.%M.%S'), self.log_nm,  msg_raw)
+        if qlevel < 0: #file logger only
+            
+            QgsLogger.debug('D_%s'%msgDebug)
+            push, status = False, False #should never trip
+        else:#console logger
+            msg = '%s:   %s'%(self.log_nm, msg_raw)
+            QgsMessageLog.logMessage(msg, self.log_tabnm, level=qlevel)
+            QgsLogger.debug('%i_%s'%(qlevel, msgDebug)) #also send to file
         
-        msg = '%s: %s'%(self.log_nm, msg_raw)
         
-        QgsMessageLog.logMessage(msg, self.log_tabnm, level=qlevel)
         
         #Qgis bar
         if push:
-            self.iface.messageBar().pushMessage(self.log_tabnm, msg, level=qlevel)
+            self.iface.messageBar().pushMessage(self.log_tabnm, msg_raw, level=qlevel)
         
         #Optional widget
         if status or push:

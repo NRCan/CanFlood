@@ -7,7 +7,7 @@ Created on Feb. 9, 2020
 #==========================================================================
 # logger setup-----------------------
 #==========================================================================
-import logging, configparser, datetime, shutil
+import logging, configparser, datetime, shutil, gc
 start = datetime.datetime.now()
 
 
@@ -20,9 +20,10 @@ import pandas as pd
 
 
 #Qgis imports
-from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject, Qgis
+from qgis.core import *
+    
 from qgis.analysis import QgsRasterCalculatorEntry, QgsRasterCalculator
-
+import processing
 #==============================================================================
 # custom imports
 #==============================================================================
@@ -39,7 +40,8 @@ else:
     from hlpr.exceptions import QError as Error
     
 
-from hlpr.Q import *
+#from hlpr.Q import *
+from hlpr.Q import Qcoms,vlay_get_fdf, vlay_get_fdata
 import hlpr.basic as basic
 
 #==============================================================================
@@ -74,14 +76,15 @@ class Rsamp(Qcoms):
                 # 12: All
                 }
     
-    """
-    ['count', 'unique', 'min', 'max', 'range', 'sum', 'mean', 'median', 'stddev', 'minority', 'majority', 'q1', 'q3', 'iqr']
-    """
+
     
     
     def __init__(self,
                  fname='expos', #prefix for file name
                   *args, **kwargs):
+        """
+        Plugin: called by each button push
+        """
         
         super().__init__(*args, **kwargs)
         
@@ -98,9 +101,11 @@ class Rsamp(Qcoms):
                     ):
         
         """
-        special input loader for standalone runs
+        special input loader for StandAlone runs
         Im assuming for the plugin these layers will be loaded already"""
         log = self.logger.getChild('load_layers')
+        
+        
         #======================================================================
         # load rasters
         #======================================================================
@@ -135,10 +140,7 @@ class Rsamp(Qcoms):
         #check if it has geometry
         if vlay_raw.wkbType() == 100:
             raise Error('loaded vlay has NoGeometry')
-        
-        
-        self.mstore.addMapLayer(vlay_raw)
-        
+               
         
         vlay = vlay_raw
         dp = vlay.dataProvider()
@@ -154,22 +156,21 @@ class Rsamp(Qcoms):
         return list(raster_d.values()), vlay
     
 
-            
-
     def run(self, 
-            raster_l, #set of rasters to sample 
+            rlayRaw_l, #set of rasters to sample 
             finv_raw, #inventory layer
-            as_inun=False, #whether to sample for inundation (rather than wsl values)
-            cid = None, #index field name on finv
-            crs = None,
             
+            cid = None, #index field name on finv
+                        
             #exposure value controls
             psmp_stat='Max', #for polygon finvs, statistic to sample
             
             #inundation sampling controls
+            as_inun=False, #whether to sample for inundation (rather than wsl values)
             dtm_rlay=None, #dtm raster
             dthresh = 0, #fordepth threshold
             clip_dtm=False,
+            
             
             ):
         """
@@ -182,38 +183,41 @@ class Rsamp(Qcoms):
         #======================================================================
         log = self.logger.getChild('run')
         if cid is None: cid = self.cid
-        if crs is None: crs = self.crs
+
+        self.as_inun = as_inun
 
         
-        log.info('executing on %i rasters'%(len(raster_l)))
-        self.as_inun = as_inun
+        log.info('executing on %i rasters'%(len(rlayRaw_l)))
+
         #======================================================================
         # precheck
         #======================================================================
+        assert self.crs == self.qproj.crs(), 'crs mismatch!'
         
-        assert isinstance(crs, QgsCoordinateReferenceSystem)
         
         #check the finv_raw
         assert isinstance(finv_raw, QgsVectorLayer), 'bad type on finv_raw'
-        assert finv_raw.crs() == crs, 'finv_raw crs %s doesnt match projects \'%s\'' \
-            %(finv_raw.crs().authid(), crs.authid())
+        """rasteres are checked below"""
+        assert finv_raw.crs() == self.qproj.crs(), 'finv_raw crs %s doesnt match projects \'%s\'' \
+            %(finv_raw.crs().authid(), self.qproj.crs().authid())
         assert cid in [field.name() for field in finv_raw.fields()], \
             'requested cid field \'%s\' not found on the finv_raw'%cid
             
-        finv_raw.wkbType()
-        
+
+
         
         #check the rasters
         rname_l = []
-        for rlay in raster_l:
+        for rlay in rlayRaw_l:
             assert isinstance(rlay, QgsRasterLayer)
+
             assert rlay.crs() == crs, 'rlay %s crs doesnt match project'%(rlay.name())
             rname_l.append(rlay.name())
         
         self.rname_l = rname_l
         
         #======================================================================
-        # build the finv_raw
+        # prep the finv for sampling
         #======================================================================
         self.finv_name = finv_raw.name()
         
@@ -233,7 +237,13 @@ class Rsamp(Qcoms):
         
         if self.gtype.endswith('Z'):
             log.warning('passed finv has Z values... these are not supported')
+            
+        self.feedback.setProgress(20)
+        #=======================================================================
+        # prep the raster layers------
+        #=======================================================================
 
+        self.feedback.setProgress(40)
         #=======================================================================
         # #inundation runs--------
         #=======================================================================
@@ -247,7 +257,7 @@ class Rsamp(Qcoms):
                 
                 2020-05-06
                 ran 2 tests, and this INCREASED run times by ~20%
-                set default to clip_tim=False
+                set default to clip_dtm=False
                 """
                 log.info('trimming dtm \'%s\' by finv extents'%(dtm_rlay.name()))
                 finv_buf = self.polygonfromlayerextent(finv,
@@ -259,39 +269,263 @@ class Rsamp(Qcoms):
                 dtm_rlay1 = self.cliprasterwithpolygon(dtm_rlay,finv_buf, logger=log)
             else:
                 dtm_rlay1 = dtm_rlay
-        
+                
+            self.feedback.setProgress(60)
             #===================================================================
             # sample by goetype
             #===================================================================
             if 'Polygon' in self.gtype:
-                res_vlay = self.samp_inun(finv,raster_l, dtm_rlay1, dthresh)
+                res_vlay = self.samp_inun(finv,rlayRaw_l, dtm_rlay1, dthresh)
             elif 'Line' in self.gtype:
-                res_vlay = self.samp_inun_line(finv, raster_l, dtm_rlay1, dthresh)
+                res_vlay = self.samp_inun_line(finv, rlayRaw_l, dtm_rlay1, dthresh)
             else:
                 raise Error('bad gtype')
             
             res_name = '%s_%s_%i_%i_d%.2f'%(
-                self.fname, self.tag, len(raster_l), res_vlay.dataProvider().featureCount(), dthresh)
+                self.fname, self.tag, len(rlayRaw_l), res_vlay.dataProvider().featureCount(), dthresh)
         
         #=======================================================================
         # #WSL value sampler------
         #=======================================================================
         else:
-            res_vlay = self.samp_vals(finv,raster_l, psmp_stat)
-            res_name = '%s_%s_%i_%i'%(self.fname, self.tag, len(raster_l), res_vlay.dataProvider().featureCount())
+            res_vlay = self.samp_vals(finv,rlayRaw_l, psmp_stat)
+            res_name = '%s_%s_%i_%i'%(self.fname, self.tag, len(rlayRaw_l), res_vlay.dataProvider().featureCount())
             
         res_vlay.setName(res_name)
         #=======================================================================
         # wrap
         #=======================================================================
         #max out the progress bar
-        self.feedback.setProgress(100)
+        self.feedback.setProgress(90)
 
         log.info('sampling finished')
         
         return res_vlay
+    
+
+    def runPrep(self,
+                rlayRaw_l,
+                **kwargs
+                ):
         
-    def samp_vals(self, finv, raster_l,psmp_stat):
+        #=======================================================================
+        # do the prep
+        #=======================================================================
+        self.feedback.setProgress(20)
+        res_l = []
+        for rlayRaw in rlayRaw_l:
+            rlay = self.prep(rlayRaw, **kwargs)
+            res_l.append(rlay)
+            
+            self.feedback.upd_prog(70/len(rlayRaw_l), method='append')
+            assert isinstance(rlay, QgsRasterLayer)
+            
+        self.feedback.setProgress(90)
+            
+        return res_l
+            
+        
+    def prep(self,
+             rlayRaw, #set of raw raster to apply prep handles to
+             allow_download=False,
+             aoi_vlay=None,
+             
+             allow_rproj=False,
+             
+             clip_rlays=False,
+             
+             scaleFactor=1.00,
+             
+             
+             ):
+        """
+        #=======================================================================
+        # mstore
+        #=======================================================================
+        todo: need to fix this... using the store is currently crashing Qgis
+        
+        """
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        log = self.logger.getChild('prep')
+        
+        log.info('on \'%s\''%rlayRaw.name())
+
+        res_d = dict() #reporting container
+        
+        #start a new store for handling  intermediate layers
+        #mstore = QgsMapLayerStore()
+        
+        newLayerName='%s_prepd' % rlayRaw.name()
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        #check the aoi
+        if clip_rlays: assert isinstance(aoi_vlay, QgsVectorLayer)
+        if not aoi_vlay is None:
+            self.check_aoi(aoi_vlay)
+        
+        #=======================================================================
+        # dataProvider check/conversion-----
+        #=======================================================================
+        if not rlayRaw.providerType() == 'gdal':
+            msg = 'raster \'%s\' providerType = \'%s\' and allow_download=%s' % (
+                rlayRaw.name(), rlayRaw.providerType(), allow_download)
+            #check if we're allowed to fix
+            if not allow_download:
+                raise Error(msg)
+            log.info(msg)
+            #set extents
+            if not aoi_vlay is None: #aoi extents in correct CRS
+                extent = QgsCoordinateTransform(aoi_vlay.crs(), rlayRaw.crs(), 
+                                                self.qproj.transformContext()
+                                                ).transformBoundingBox(aoi_vlay.extent())
+            else:
+                extent = rlayRaw.extent() #layers extents
+            #save a local copy
+            ofp = self.write_rlay(rlayRaw, extent=extent, 
+                newLayerName='%s_gdal' % rlayRaw.name(),
+                out_dir =  os.environ['TEMP'], #will write to the working directory at the end
+                logger=log)
+            #load this file
+            rlayDp = self.load_rlay(ofp, logger=log)
+            #check
+            assert rlayDp.bandCount() == rlayRaw.bandCount()
+            assert rlayDp.providerType() == 'gdal'
+            
+            res_d['download'] = 'from \'%s\' to \'gdal\''%rlayRaw.providerType()
+            
+            #mstore.addMapLayer(rlayRaw)
+
+        else:
+            rlayDp = rlayRaw
+            log.debug('%s has expected dataProvider \'gdal\''%rlayRaw.name())
+
+        #=======================================================================
+        # re-projection--------
+        #=======================================================================
+        if not rlayDp.crs() == self.qproj.crs():
+            msg = 'raster \'%s\' crs = \'%s\' and allow_rproj=%s' % (
+                rlayDp.name(), rlayDp.crs(), allow_rproj)
+            if not allow_rproj:
+                raise Error(msg)
+            log.info(msg)
+            #save a local copy?
+            newName = '%s_%s' % (rlayDp.name(), self.qproj.crs().authid()[5:])
+            
+            """just write at the end
+            if allow_download:
+                output = os.path.join(self.out_dir, '%s.tif' % newName)
+            else:
+                output = 'TEMPORARY_OUTPUT'"""
+            output = 'TEMPORARY_OUTPUT'
+            #change the projection
+            rlayProj = self.warpreproject(rlayDp, crsOut=self.qproj.crs(), 
+                output=output, layname=newName)
+            
+            res_d['rproj'] = 'from %s to %s'%(rlayDp.crs().authid(), self.qproj.crs().authid())
+            #mstore.addMapLayer(rlayDp)
+
+        else:
+            log.debug('\'%s\' crs matches project crs: %s'%(rlayDp.name(), rlayDp.crs()))
+            rlayProj = rlayDp
+            
+        #=======================================================================
+        # aoi slice----
+        #=======================================================================
+        if clip_rlays:
+            log.debug('trimming raster %s by AOI'%rlayRaw.name())
+            log.warning('not Tested!')
+            
+            #clip to just the polygons
+            rlayTrim = self.cliprasterwithpolygon(rlayProj,aoi_vlay, logger=log)
+            
+            res_d['clip'] = 'with \'%s\''%aoi_vlay.name()
+            #mstore.addMapLayer(rlayProj)
+        else:
+            rlayTrim = rlayProj
+            
+        #===================================================================
+        # scale
+        #===================================================================
+        if not float(scaleFactor) ==float(1.00):
+            rlayScale = self.raster_mult(rlayTrim, scaleFactor, logger=log)
+            
+            res_d['scale'] = 'by %.4f'%scaleFactor
+            #mstore.addMapLayer(rlayTrim)
+        else:
+            rlayScale = rlayTrim
+            
+        #=======================================================================
+        # final write
+        #=======================================================================
+        resLay1 = rlayScale
+        write=False
+        
+        if len(res_d)>0: #only where we did some operations
+            write=True
+            
+        """write it regardless
+        if len(res_d)==1 and 'download' in res_d.keys():
+            write=False"""
+            
+        
+        
+        if write:
+            resLay1.setName(newLayerName)
+            ofp = self.write_rlay(resLay1, logger=log)
+            
+            #mstore.addMapLayer(resLay1)
+            
+            #use the filestore layer
+            resLay = self.load_rlay(ofp, logger=log)
+            """control canvas loading in the plugin"""
+            
+        else:
+            log.warning('layer \'%s\' not written to file!'%resLay.name())
+            resLay=resLay1
+            
+
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        
+        
+        
+        log.info('finished w/ %i prep operations on \'%s\' \n    %s'%(
+            len(res_d), resLay.name(), res_d))
+        
+        #clean up the store
+        #=======================================================================
+        # _ = mstore.takeMapLayer(rlayRaw) #take out the raw (without deleteing) 
+        # try:
+        #     _ = mstore.takeMapLayer(resLay) #try and pull out the result layer
+        # except:
+        #     log.warning('failed to remove \'%s\' from store'%resLay.name())
+        #=======================================================================
+        
+        """
+        for k,v in mstore.mapLayers().items():
+            print(k,v)
+        
+        """
+        #mstore.removeAllMapLayers() #clear all layers
+        assert isinstance(resLay, QgsRasterLayer)
+        
+        
+        return resLay
+    
+
+
+        
+        
+    def samp_vals(self, #sample a set of rasters with a vectorlayer
+                  finv, raster_l,psmp_stat):
+        """
+        this is NOT for inundation percent
+        can handle all 3 geometries"""
         
         log = self.logger.getChild('samp_vals')
         #=======================================================================
@@ -317,10 +551,14 @@ class Rsamp(Qcoms):
         #=======================================================================
         names_d = dict()
         
-        log.info('sampling %i raster layers w/ algo \'%s\' and gtype: %s'%(len(raster_l), algo_nm, gtype))
+        log.info('sampling %i raster layers w/ algo \'%s\' and gtype: %s'%(
+            len(raster_l), algo_nm, gtype))
+        
         for indxr, rlay in enumerate(raster_l):
             
-            log.info('%i/%i sampling \'%s\' on \'%s\''%(indxr+1, len(raster_l), finv.name(), rlay.name()))
+            log.info('%i/%i sampling \'%s\' on \'%s\''%(
+                indxr+1, len(raster_l), finv.name(), rlay.name()))
+            
             ofnl =  [field.name() for field in finv.fields()]
             #===================================================================
             # sample.poly----------
@@ -350,8 +588,6 @@ class Rsamp(Qcoms):
             # sample.Points----------------
             #======================================================================
             elif 'Point' in gtype: 
-                
-                
                 #build the algo params
                 params_d = { 'COLUMN_PREFIX' : rlay.name(),
                              'INPUT' : finv,
@@ -363,9 +599,7 @@ class Rsamp(Qcoms):
         
                 #extract and clean results
                 finv = res_d['OUTPUT']
-            
-                
-                    
+
             else:
                 raise Error('unexpected geo type: %s'%gtype)
             
@@ -861,6 +1095,101 @@ class Rsamp(Qcoms):
         rlay = QgsRasterLayer(outputFile, layname)
         
         return rlay
+    
+    def raster_mult(self, #performs raster calculator rlayBig - rlaySmall
+                        rlayRaw,
+                        scaleFactor,
+                        out_dir = None,
+                        layname = None,
+                        logger = None,
+                        ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger =  self.logger
+        log = self.logger.getChild('raster_mult')
+        
+        if out_dir is None:
+            out_dir = os.environ['TEMP']
+            
+        if layname is None:
+            layname = '%s_scaled'%rlayRaw.name()
+            
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert scaleFactor >= 0.01, 'scaleFactor = %.2f is too low'%scaleFactor
+        assert round(scaleFactor, 4)!=round(1.0, 4), 'scaleFactor = 1.0'
+        
+        #=======================================================================
+        # assemble the entries
+        #=======================================================================
+        entries_d = dict() 
+
+        for tag, rlay in {'rlayRaw':rlayRaw}.items():
+            rcentry = QgsRasterCalculatorEntry()
+            rcentry.raster=rlay
+            rcentry.ref = '%s@1'%tag
+            rcentry.bandNumber=1
+            entries_d[tag] = rcentry
+
+            
+        #=======================================================================
+        # assemble parameters
+        #=======================================================================
+        formula = '%s * %.2f'%(entries_d['rlayRaw'].ref, scaleFactor)
+        outputFile = os.path.join(out_dir, '%s.tif'%layname)
+        outputExtent  = rlayRaw.extent()
+        outputFormat = 'GTiff'
+        nOutputColumns = rlayRaw.width()
+        nOutputRows = rlayRaw.height()
+        rasterEntries =list(entries_d.values())
+        
+
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+            
+        if os.path.exists(outputFile):
+            msg = 'requseted outputFile exists: %s'%outputFile
+            if self.overwrite:
+                log.warning(msg)
+                os.remove(outputFile)
+            else:
+                raise Error(msg)
+            
+            
+        assert not os.path.exists(outputFile), 'requested outputFile already exists! \n    %s'%outputFile
+        
+        #=======================================================================
+        # execute
+        #=======================================================================
+        """throwing depreciation warning"""
+        rcalc = QgsRasterCalculator(formula, outputFile, outputFormat, outputExtent,
+                            nOutputColumns, nOutputRows, rasterEntries)
+        
+        result = rcalc.processCalculation(feedback=self.feedback)
+        
+        #=======================================================================
+        # check    
+        #=======================================================================
+        if not result == 0:
+            raise Error(rcalc.lastError())
+        
+        assert os.path.exists(outputFile)
+        
+        
+        log.info('saved result to: \n    %s'%outputFile)
+            
+        #=======================================================================
+        # retrieve result
+        #=======================================================================
+        rlay = QgsRasterLayer(outputFile, layname)
+        
+        return rlay
         
         
 
@@ -978,7 +1307,7 @@ class Rsamp(Qcoms):
     def check(self):
         pass
         
-    def write_res(self, 
+    def write_res(self, #save expos dataset to file
                   vlay,
               out_dir = None, #directory for puts
               names_d = None, #names conversion
@@ -1041,200 +1370,8 @@ class Rsamp(Qcoms):
 
 
     
-def run():
-    write_vlay=True
-    clip_dtm = False
-    #===========================================================================
-    # tutorial 1 (points)
-    #===========================================================================
-    #===========================================================================
-    # data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\data'
-    #  
-    # raster_fns = ['haz_1000yr_cT2.tif', 'haz_1000yr_fail_cT2.tif', 'haz_100yr_cT2.tif', 
-    #               'haz_200yr_cT2.tif','haz_50yr_cT2.tif']
-    #  
-    #  
-    #  
-    # finv_fp = os.path.join(data_dir, 'finv_cT2b.gpkg')
-    #  
-    # cf_fp = os.path.join(data_dir, 'CanFlood_control_01.txt')
-    #  
-    #  
-    # cid='xid'
-    # tag='tut1'
-    # as_inun=False
-    # dtm_fp, dthresh = None, None
-    #===========================================================================
-    
-    #===========================================================================
-    # tutorial 2  
-    #===========================================================================
-    data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\data'
 
-    finv_fp = os.path.join(data_dir, 'finv_cT3.gpkg')
-    
-    raster_fns = [
-        'haz_1000yr_cT2.tif',
-        'haz_1000yr_fail_cT3.tif',
-        'haz_100yr_cT2.tif',
-        'haz_200yr_cT2.tif',
-        'haz_50yr_cT2.tif',
-        ]
 
-     
-    cid='xid'
-    tag='tut2'
-    as_inun=False
-    dtm_fp, dthresh = None, None
-    
-    #==========================================================================
-    # tutorial 4a (polygons as inundation)--------
-    #==========================================================================
- #==============================================================================
- #    data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\4\data'
- #        
- #    raster_fns = [
- #                 'haz_1000yr_cT2.tif', 
- #                  'haz_100yr_cT2.tif', 
- #                  'haz_200yr_cT2.tif',
- #                  'haz_50yr_cT2.tif',
- #                  ]
- #       
- #       
- #         
- #    finv_fp = os.path.join(data_dir, 'finv_tut4.gpkg')
- # 
- #       
- #    #inundation sampling
- #    dtm_fp = os.path.join(data_dir, 'dtm_cT1.tif')
- #    as_inun=True
- #    dthresh = 0.5
- #       
- #    cid='xid'
- #    tag='tut4a'
- #==============================================================================
-    
-    #===========================================================================
-    # tutorial 4b (inundation of lines)---------
-    #===========================================================================
-  #=============================================================================
-  #   data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\4\data'
-  #   raster_fns = [
-  #                'haz_1000yr_cT2.tif', 
-  #                 'haz_100yr_cT2.tif', 
-  #                 'haz_200yr_cT2.tif',
-  #                 'haz_50yr_cT2.tif',
-  #                 ]
-  #      
-  #   finv_fp = os.path.join(data_dir, 'finv_tut5_lines.gpkg')
-  # 
-  # 
-  #      
-  #   #inundation sampling
-  #   dtm_fp = os.path.join(data_dir, 'dtm_cT1.tif')
-  #   as_inun=True
-  #   dthresh = 2.0
-  #       
-  #   cid='xid'
-  #   tag='tut4b'
-  #=============================================================================
-    
-    #===========================================================================
-    # test 20200507
-    #===========================================================================
-    #===========================================================================
-    # data_dir = r'C:\LS\03_TOOLS\CanFlood\_ins\20200507'
-    # raster_fns = [
-    #     'haz_1000yr_cT2_12345678901234567890123456789.tif',
-    #     'haz_100yr_cT2_12345678901234567890123456789.tif'
-    #     ]
-    # 
-    # dtm_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\20200507\dtm_cT1.tif'
-    # tag = 'test'
-    #===========================================================================
-    #===========================================================================
-    # fcl polys-----------
-    #===========================================================================
-    #===========================================================================
-    # #run pareameteres
-    # tag = 'fcl_polys'
-    # cid = 'xid'
-    # as_inun=True
-    # dthresh = 0.5
-    #   
-    # #data files
-    # data_dir = r'C:\LS\03_TOOLS\CanFlood\_ins\20200506'
-    #   
-    # #finv_fp = os.path.join(data_dir, 'IBI_FCL_Merge_20200428.gpkg')
-    # finv_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\20200506\IBI_FCL_Merge_20200428_clip.gpkg'
-    #   
-    # raster_fns = [
-    #     'IBI_AG3_Wi_10e0_WL_simu_20200415.tif',
-    #     'IBI_AG3_Wi_10e1_WL_simu_20200415.tif',
-    #     #'IBI_AG3_Wi_10e2_WL_simu_20200415.tif',        
-    #     ]
-    #   
-    # dtm_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\20200506\DTM\NHC_2019_dtm_lores_aoi05h.tif'
-    #===========================================================================
-     
-
-    #===========================================================================
-    # build directories
-    #===========================================================================
-    out_dir = os.path.join(os.getcwd(),'build', 'rsamp', tag)
-    raster_fps = [os.path.join(data_dir, fn) for fn in raster_fns]
-
-    #===========================================================================
-    #run--------
-    #===========================================================================
-    log = logging.getLogger('rsamp')
-    
-    wrkr = Rsamp(logger=log, tag=tag, out_dir=out_dir, cid=cid, LogLevel=20
-                 )
-
-    
-    wrkr.ini_standalone()
-    
-    #==========================================================================
-    # load the data
-    #==========================================================================
-    
-    
-    rlay_l, finv_vlay = wrkr.load_layers(raster_fps, finv_fp)
-    
-    if not dtm_fp is None:
-        dtm_rlay = wrkr.load_rlay(dtm_fp)
-    else:
-        dtm_rlay = None
-    
-    #==========================================================================
-    # execute
-    #==========================================================================
-    res_vlay = wrkr.run(rlay_l, finv_vlay, 
-             crs = finv_vlay.crs(), 
-             as_inun=as_inun, dtm_rlay=dtm_rlay,dthresh=dthresh,
-             clip_dtm=clip_dtm,
-             )
-       
-    wrkr.check()
-
-    
-    #==========================================================================
-    # save results
-    #==========================================================================
-    outfp = wrkr.write_res(res_vlay)
-    if write_vlay:
-        ofp = os.path.join(out_dir, res_vlay.name()+'.gpkg')
-        vlay_write(res_vlay,ofp, overwrite=True)
-     
-    #wrkr.upd_cf(cf_fp)
-    basic.force_open_dir(out_dir)
-    
-if __name__ =="__main__": 
-    
-    run()
-    tdelta = datetime.datetime.now() - start
-    print('finished in %s'%tdelta)
     
     
     
