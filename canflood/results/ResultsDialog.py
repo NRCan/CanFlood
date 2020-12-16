@@ -12,7 +12,7 @@ import os
 
 from PyQt5 import uic, QtWidgets
 from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
-
+from qgis.core import QgsMapLayerProxyModel, QgsVectorLayer, QgsWkbTypes
 
 #==============================================================================
 # custom imports
@@ -21,8 +21,9 @@ from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
 import hlpr.plug
 
 
-from hlpr.Q import *
-from hlpr.basic import *
+#from hlpr.Q import *
+from hlpr.basic import force_open_dir
+from hlpr.exceptions import QError as Error
 
 import results.djoin
 import results.riskPlot
@@ -250,7 +251,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         #general
         wd = self.lineEdit_wd.text()
-        crs = self.qproj.crs()
+        
         tag = self.linEdit_Stag.text() #set the secnario tag from user provided name
         
         #local
@@ -263,8 +264,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # check inputs
         #=======================================================================
         assert isinstance(wd, str)
-        assert isinstance(crs, QgsCoordinateReferenceSystem)
-        assert crs.isValid()
+
         assert isinstance(tag, str)
         
         assert isinstance(geo_vlay, QgsVectorLayer)
@@ -296,7 +296,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         wrkr = results.djoin.Djoiner(logger=self.logger, 
                                      tag = tag,
                                      feedback=self.feedback,
-                                     cid=cid, crs=crs,
+                                     cid=cid, 
                                      out_dir=wd)
         #execute
         res_vlay = wrkr.run(geo_vlay, data_fp, cid,
