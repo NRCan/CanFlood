@@ -146,7 +146,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         if self.crs.authid()=='':
             self.logger.warning('got empty CRS!') #should only trip on StandAlone runs
             
-        assert self.crs.isValid()
+        
 
         #layer store
         """
@@ -179,6 +179,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             crs = QgsCoordinateReferenceSystem(self.crsid_default)
             
         assert isinstance(crs, QgsCoordinateReferenceSystem), 'bad crs type'
+        assert crs.isValid()
             
         self.crs = crs
         self.qproj.setCrs(crs)

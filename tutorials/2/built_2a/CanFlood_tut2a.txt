@@ -14,18 +14,18 @@ as_inun = False
 [dmg_fps]
 curves = #damage curve library filepath
 finv = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\built_2a\finv_tut2a_finv_cT2.csv
-expos = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\built_2a\expos_scenario1_4_32.csv
-gels = #ground elevation data filepath
-#'expos' file path set from rsamp.py at 2020-12-16 08.25.51
+expos = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\built_2a\expos_tut2a_4_32.csv
+gels = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\built_2a\gels_tut2a_1_32.csv
 
 [risk_fps]
 dmgs = #damage data results filepath
 exlikes = #secondary exposure likelihood data filepath
-evals = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\built_2a\evals_4_scenario1.csv
+evals = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\built_2a\evals_4_tut2a.csv
 
 [validation]
 risk1 = False
 dmg2 = False
 risk2 = False
 risk3 = False
+# 'risk2' validated by validator.py at 2020-12-16 08.39.55
 

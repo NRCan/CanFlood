@@ -137,51 +137,6 @@ class Vali(Qcoms):
 
                 
 
-#===============================================================================
-# dev testing
-#===============================================================================
-if __name__ =="__main__": 
-    tag='tag'
-    cf_fp = r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\built\CanFlood_tut2.txt'
-   
-    
-    
-    out_dir = os.path.join(os.getcwd(), 'validator', tag)
-
-    #==========================================================================
-    # load the data
-    #==========================================================================
-
-    wrkr = Vali(cf_fp, logger=mod_logger, tag=tag, out_dir=out_dir, 
-                 )
-    
-    from model.dmg2 import Dmg2
-    from model.risk2 import Risk2
-    
-    res_d = dict()
-    for vtag, modObj in {
-        'dmg2':Dmg2,
-        'risk2':Risk2
-        }.items():
-    
-        
-        errors = wrkr.cf_check(modObj)
-        for e in errors:
-            print('%s: %s'%(vtag, e))
-        wrkr.cf_mark()
-        
-        #store
-        if len(errors) == 0: 
-            res_d[vtag] = True
-        else:
-            res_d[vtag] = False
-    
-    
-    
-    
-    log.push('passed %i validations'%(len(res_d)))
-    
-    print('finished')
     
     
     
