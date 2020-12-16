@@ -99,6 +99,9 @@ class Vali(Qcoms):
         self.valid_par = modObj.valid_par
         if len(errors) == 0:
             self.valid = True
+        else:
+            self.valid = False
+            
         return errors
     
     def cf_mark(self,#mark the validation in the control file
