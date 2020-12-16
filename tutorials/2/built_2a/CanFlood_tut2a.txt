@@ -1,0 +1,31 @@
+[parameters]
+name = tut2a
+cid = xid
+prec = 6                #float precision for calculations
+ground_water = True     #whether to allow wsl < gel
+felv = ground
+event_probs = ari       #format of event probabilities (in 'aeps' data file): 'ari' or 'aep'
+ltail = extrapolate     #EAD extrapolation: left tail treatment code (low prob high damage)
+rtail = 0.5             #EAD extrapolation: right trail treatment (high prob low damage)
+drop_tails = True       #whether to remove the extrapolated values from the results
+integrate = trapz       #integration method to apply: trapz, simps
+as_inun = False         #flag whether to treat exposures as percent inundation
+
+[dmg_fps]
+curves = #damage curve library filepath
+finv = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\built_2a\finv_tut2a_finv_cT2.csv
+expos = #exposure data filepath
+gels = #ground elevation data filepath
+#'finv' file path set from builddialog.py at 2020-12-16 08.18.17
+
+[risk_fps]
+dmgs = #damage data results filepath
+exlikes = #secondary exposure likelihood data filepath
+evals = #event probability data filepath
+
+[validation]
+risk1 = False
+dmg2 = False
+risk2 = False
+risk3 = False
+
