@@ -40,9 +40,9 @@ else:
     from hlpr.exceptions import QError as Error
     
 
-raise Error('only import what you need!')
-from hlpr.Q import *
-from hlpr.basic import *
+
+#from hlpr.Q import *
+#from hlpr.basic import *
 
 #==============================================================================
 # functions-------------------

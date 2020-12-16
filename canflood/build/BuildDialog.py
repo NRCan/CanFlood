@@ -21,12 +21,12 @@ from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
 
 from qgis.core import *
 #from qgis.analysis import *
-import qgis.utils
-import processing
+#import qgis.utils
+#import processing
 from processing.core.Processing import Processing
 
 
-import resources
+#import resources
 
 import pandas as pd
 import numpy as np #Im assuming if pandas is fine, numpy will be fine
