@@ -889,6 +889,22 @@ p, li { white-space: pre-wrap; }
                 </property>
                </widget>
               </item>
+              <item>
+               <widget class="QCheckBox" name="checkBox_i2_updCf">
+                <property name="text">
+                 <string>Update Control File</string>
+                </property>
+                <property name="checkable">
+                 <bool>true</bool>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+                <property name="tristate">
+                 <bool>false</bool>
+                </property>
+               </widget>
+              </item>
              </layout>
             </widget>
            </item>
