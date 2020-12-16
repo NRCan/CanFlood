@@ -20,8 +20,8 @@ from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget
 
 
 # User defined imports
-from qgis.core import *
-from qgis.analysis import *
+from qgis.core import QgsMapLayerProxyModel, QgsVectorLayer
+#from qgis.analysis import *
 import qgis.utils
 import processing
 from processing.core.Processing import Processing
@@ -45,7 +45,8 @@ import results.djoin
 
 
 import hlpr.plug
-from hlpr.basic import *
+from hlpr.basic import force_open_dir
+from hlpr.exceptions import QError as Error
 
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
@@ -322,8 +323,6 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
             self.logger.info('linking in Risk 2')
             self.run_risk2()
             
-        
-    
     def run_risk2(self):
         #======================================================================
         # get run vars
@@ -374,7 +373,6 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
 
         return
 
-        
     def run_risk3(self):
         
         #======================================================================
@@ -445,15 +443,13 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         geo_vlay = self.comboBox_JGfinv.currentLayer()
         cid = self.mFieldComboBox_JGfinv.currentField() #user selected field
-        crs = self.qproj.crs()
+
         #=======================================================================
         # check inputs
         #=======================================================================
         assert isinstance(geo_vlay, QgsVectorLayer), \
             'need to specify a geometry layer on the \'Setup\' tab to join results to'
             
-        assert isinstance(crs, QgsCoordinateReferenceSystem)
-        assert crs.isValid()
         
         #check cid
         assert isinstance(cid, str), 'bad index FieldName passed'
@@ -471,7 +467,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         wrkr = results.djoin.Djoiner(logger=self.logger, 
                                      tag = tag,
                                      feedback=self.feedback,
-                                     cid=cid, crs=crs,
+                                     cid=cid, 
                                      out_dir=wd)
         #execute
         res_vlay = wrkr.run(geo_vlay, data_fp, cid,

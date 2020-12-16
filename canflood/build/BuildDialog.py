@@ -20,7 +20,7 @@ from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
 
 
 from qgis.core import *
-from qgis.analysis import *
+#from qgis.analysis import *
 import qgis.utils
 import processing
 from processing.core.Processing import Processing
@@ -44,10 +44,11 @@ from build.validator import Vali
 
 
 
-from hlpr.plug import *
-from hlpr.Q import *
-#from hlpr.basic import *
-from hlpr.basic import get_valid_filename
+import hlpr.plug
+from hlpr.Q import vlay_get_fdf
+
+from hlpr.basic import get_valid_filename, force_open_dir 
+from hlpr.exceptions import QError as Error
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 ui_fp = os.path.join(os.path.dirname(__file__), 'build.ui')
@@ -55,7 +56,7 @@ assert os.path.exists(ui_fp), 'failed to find the ui file: \n    %s'%ui_fp
 FORM_CLASS, _ = uic.loadUiType(ui_fp)
 
 
-class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
+class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     
     event_name_set = [] #event names
     
@@ -1352,7 +1353,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         # collcet table data
         #======================================================================
 
-        df = qtbl_get_df(self.fieldsTable_EL)
+        df = hlpr.plug.qtbl_get_df(self.fieldsTable_EL)
         
         self.logger.info('extracted data w/ %s \n%s'%(str(df.shape), df))
         

@@ -145,6 +145,8 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         if self.crs.authid()=='':
             self.logger.warning('got empty CRS!') #should only trip on StandAlone runs
+            
+        assert self.crs.isValid()
 
         #layer store
         """
