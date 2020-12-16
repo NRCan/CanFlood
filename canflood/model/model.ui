@@ -65,7 +65,7 @@
           </size>
          </property>
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="tab">
           <attribute name="title">
@@ -863,13 +863,13 @@ p, li { white-space: pre-wrap; }
          </widget>
          <widget class="QWidget" name="tab_3">
           <attribute name="title">
-           <string>Impacts (L2)</string>
+           <string>Exposure (L2)</string>
           </attribute>
           <layout class="QVBoxLayout" name="verticalLayout_6">
            <item>
             <widget class="QLabel" name="label_2">
              <property name="text">
-              <string>Impacts per event calculated with vulnerability functions</string>
+              <string>Exposure per event calculated with vulnerability functions</string>
              </property>
             </widget>
            </item>
@@ -882,7 +882,7 @@ p, li { white-space: pre-wrap; }
               <item>
                <widget class="QCheckBox" name="checkBox_i2RunRisk">
                 <property name="text">
-                 <string>Run Risk Model (L2) upon completion (see 'Risk (L2)' tab for configuration)</string>
+                 <string>Run Risk (L2) upon completion (see 'Risk (L2)' tab for configuration)</string>
                 </property>
                 <property name="checked">
                  <bool>false</bool>
@@ -1413,7 +1413,7 @@ p, li { white-space: pre-wrap; }
               <item>
                <widget class="QLabel" name="label_7">
                 <property name="text">
-                 <string>WARNING: Ensure 'Impacts (L2)' has been executed first</string>
+                 <string>NOTE: Ensure 'Exposure (L2)' has been executed first</string>
                 </property>
                </widget>
               </item>
