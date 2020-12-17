@@ -329,6 +329,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # TAB: CONDITIONAL P-----------
         #======================================================================
         """
+        run_rsamp() attempts to populate this
+        
         todo: rename the buttons so they align w/ the set labels
         
         todo: automatically populate the first column of boxes w/ those layers
@@ -383,13 +385,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # clear button
         #=======================================================================
-        def cp_clear(): #clear all the drop downs
-            
-            for sname, (mlcb_haz, mlcb_lpol) in self.ls_cb_d.items():
-                mlcb_haz.setCurrentIndex(-1) #set selection to none
-                mlcb_lpol.setCurrentIndex(-1) #set selection to none
+
                     
-        self.pushButton_CP_clear.clicked.connect(cp_clear)
+        self.pushButton_CP_clear.clicked.connect(self._CP_clear)
         #======================================================================
         # DTM sampler---------
         #======================================================================
@@ -1099,30 +1097,34 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         log.info('populated tables with event names')
         self.feedback.setProgress(95)
         #======================================================================
-        # populate lisamp
+        # populate Conditional P
         #======================================================================
         """todo: some more intelligent populating"""
-#===============================================================================
-#         #get the mlcb
-#         try:
-#             rlay_d = {indxr: rlay for indxr, rlay in enumerate(rlay_l)}
-#             
-#             #loop through each combobox pair
-#             for indxr, (sname, (mlcb_h, mlcb_v)) in enumerate(self.ls_cb_d.items()):
-#                 if indxr in rlay_d:
-#                     if 'fail' in rlay_d.values()
-#                     mlcb_h.setLayer(rlay_l[indxr])
-#                     
-#                 else:
-#                     """
-#                     todo: clear the remaining comboboxes
-#                     """
-#                     break
-# 
-# 
-#         except Exception as e:
-#             log.error('failed to populate lisamp fields w/\n    %s'%e)
-#===============================================================================
+        #get the mlcb
+        try:
+            self._CP_clear() #clear everything
+            
+            #loop through each of the raster layers and collcet those with 'fail' in the name
+            rFail_l = []
+            for rlay in rlay_l:
+                if 'fail' in rlay.name():
+                    rFail_l.append(rlay)
+
+            #loop through and re-key
+            rFail_d = dict()
+            for indxr, rlay in enumerate(rFail_l):
+                rFail_d[list(self.ls_cb_d.keys())[indxr]] = rlay
+                
+
+            #loop through each combobox pair and assign a raster to it
+            for lsKey, (mlcb_h, mlcb_v) in self.ls_cb_d.items():
+                if lsKey in rFail_d:
+                    mlcb_h.setLayer(rFail_d[lsKey])
+
+ 
+ 
+        except Exception as e:
+            log.error('failed to populate lisamp fields w/\n    %s'%e)
             
         
         #======================================================================
@@ -1549,6 +1551,12 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             if (layer.name()) not in x:
                 self.ras_dict.update( { layer.name() : layer} )
                 self.listWidget_ras.addItem(str(layer.name()))
+                
+    def _CP_clear(self): #clear all the drop downs
+        
+        for sname, (mlcb_haz, mlcb_lpol) in self.ls_cb_d.items():
+            mlcb_haz.setCurrentIndex(-1) #set selection to none
+            mlcb_lpol.setCurrentIndex(-1) #set selection to none
                 
 
     
