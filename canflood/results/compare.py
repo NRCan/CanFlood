@@ -11,7 +11,7 @@ Template for worker scripts
 #==========================================================================
 import logging, configparser, datetime, copy
 
-
+from weakref import WeakValueDictionary as wdict
 
 #==============================================================================
 # imports------------
@@ -48,6 +48,7 @@ else:
 #===============================================================================
 from hlpr.basic import ComWrkr
 from model.modcom import Model
+from results.riskPlot import Plotr as riskPlotr
 
 #==============================================================================
 # functions-------------------
@@ -78,14 +79,14 @@ class Cmpr(ComWrkr):
             self.__class__.__name__, type(self.feedback).__name__))
         
         
-    def rCompare(self,
+    def load_all(self,
                  parsG_d, #container of filepaths 
                  
                  ):
         #=======================================================================
         # defaults
         #=======================================================================
-        log = self.logger.getChild('rCompare')
+        log = self.logger.getChild('load_all')
         
         log.info('on %i scenarios'%len(parsG_d))
         
@@ -111,6 +112,12 @@ class Cmpr(ComWrkr):
         #=======================================================================
         # build each scenario
         #=======================================================================
+        """needs to be a strong reference or the workers die!"""
+        self.sWrkr_d = dict() #start a weak reference container
+        
+        """we dont know the scenario name until its loaded"""
+        self.nameConv_d = dict() #name conversion keys
+        
         for sName, parsN_d in parsG_d.items():
             
             sWrkr = Scenario(self, sName)
@@ -118,13 +125,37 @@ class Cmpr(ComWrkr):
              
             if 'ttl_fp' in parsN_d:
                 sWrkr.load_ttl(parsN_d['ttl_fp'])
+                
+            assert sWrkr.name not in self.sWrkr_d, 'scenario \'%s\' already loaded!'
+                
+            self.sWrkr_d[sWrkr.name] = sWrkr
+            self.nameConv_d[sName] = sWrkr.name
+            
+            log.debug('loaded \'%s\''%sWrkr.name)
+            
+        log.info('compiled %i scenarios: %s'%(len(self.sWrkr_d), list(self.sWrkr_d.keys())))
+        
+        
+        return wdict(self.sWrkr_d)
+        
+    def riskCurves(self,
+                   sWrkr_d, #container of scenario works to plot curve comparison
+                   logger=None
+                   ): 
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('riskCurves')
+        
         
         
         
     
 class Scenario(Model): #simple class for a scenario
     
-    name='ScenarioName'
+    name=None
     
 
     
@@ -169,7 +200,9 @@ class Scenario(Model): #simple class for a scenario
         #=======================================================================
         # load/attach parameters
         #=======================================================================
-        self.cfPars_d = self.cf_attach_pars(cfParsr, setAttr=False)
+        """this will set a 'name' property"""
+        self.cfPars_d = self.cf_attach_pars(cfParsr, setAttr=True)
+        assert isinstance(self.name, str)
         
         log.debug('finished w/ %i pars loaded'%len(self.cfPars_d))
         
@@ -181,6 +214,25 @@ class Scenario(Model): #simple class for a scenario
         log = self.logger.getChild('load_ttl')
         
         assert os.path.exists(fp)
+        
+        
+        #load data
+        """using the riskPlot's loader for consistency"""
+        res_ser = riskPlotr.load_data(self, fp)
+        
+        assert isinstance(res_ser, pd.Series)
+        assert 'float' in res_ser.dtype.name
+        
+        res_ser.name = 'ttl'
+        
+        self.res_ser = res_ser.copy()
+        
+        log.debug('finished w/ \n%s'%res_ser)
+        
+        return res_ser
+        
+        
+        
         
         
         

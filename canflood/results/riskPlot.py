@@ -2,6 +2,8 @@
 Created on Feb. 9, 2020
 
 @author: cefect
+
+plotting risk curve from results
 '''
 
 #==========================================================================
@@ -39,8 +41,8 @@ else:
     
 from hlpr.Q import Qcoms
 
-from hlpr.Q import *
-from hlpr.basic import *
+#from hlpr.Q import *
+from hlpr.basic import ComWrkr, force_open_dir
 
 
 #==============================================================================
