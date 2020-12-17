@@ -18,14 +18,14 @@ expos = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\expos_tut2b_5_32.csv
 gels = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\gels_tut2b_1_32.csv
 
 [risk_fps]
-dmgs = #damage data results filepath
+dmgs = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\model_out\dmgs_tut2b_tut2b.csv
 exlikes = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\exlikes_tut2b.csv
 evals = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\evals_5_tut2b.csv
+#'dmgs' file path set from dmg2.py at 2020-12-17 12.58.30
 
 [validation]
 risk1 = False
 dmg2 = True
-risk2 = False
+risk2 = True
 risk3 = False
-# 'dmg2' validated by validator.py at 2020-12-17 12.55.52
 
