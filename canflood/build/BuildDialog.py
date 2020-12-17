@@ -1101,24 +1101,28 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
         # populate lisamp
         #======================================================================
-        
-        #get the mlcb
-        try:
-            rlay_d = {indxr: rlay for indxr, rlay in enumerate(rlay_l)}
-            
-            for indxr, (sname, (mlcb_h, mlcb_v)) in enumerate(self.ls_cb_d.items()):
-                if indxr in rlay_d:
-                    mlcb_h.setLayer(rlay_l[indxr])
-                    
-                else:
-                    """
-                    todo: clear the remaining comboboxes
-                    """
-                    break
-
-
-        except Exception as e:
-            log.error('failed to populate lisamp fields w/\n    %s'%e)
+        """todo: some more intelligent populating"""
+#===============================================================================
+#         #get the mlcb
+#         try:
+#             rlay_d = {indxr: rlay for indxr, rlay in enumerate(rlay_l)}
+#             
+#             #loop through each combobox pair
+#             for indxr, (sname, (mlcb_h, mlcb_v)) in enumerate(self.ls_cb_d.items()):
+#                 if indxr in rlay_d:
+#                     if 'fail' in rlay_d.values()
+#                     mlcb_h.setLayer(rlay_l[indxr])
+#                     
+#                 else:
+#                     """
+#                     todo: clear the remaining comboboxes
+#                     """
+#                     break
+# 
+# 
+#         except Exception as e:
+#             log.error('failed to populate lisamp fields w/\n    %s'%e)
+#===============================================================================
             
         
         #======================================================================
