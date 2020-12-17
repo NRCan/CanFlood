@@ -326,9 +326,10 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
 
         #======================================================================
-        # TAB: CONDITIONAL PROBABILITIES-----------
+        # TAB: CONDITIONAL P-----------
         #======================================================================
-        """todo: rename the buttons so they align w/ the set labels
+        """
+        todo: rename the buttons so they align w/ the set labels
         
         todo: automatically populate the first column of boxes w/ those layers
         sampled w/ rsamp
@@ -348,6 +349,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #loop and set filteres
         first = True
         for sname, (mlcb_haz, mlcb_lpol) in self.ls_cb_d.items():
+            
             #set drop down filters on hazard bars
             mlcb_haz.setFilters(QgsMapLayerProxyModel.RasterLayer)
             mlcb_haz.setAllowEmptyLayer(True)
@@ -358,6 +360,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             mlcb_lpol.setAllowEmptyLayer(True)
             mlcb_lpol.setCurrentIndex(-1) #set selection to none
             
+            #store the first lpol box for connecting the FieldName dropdown
             if first:
                 mlcb_lpol_1 = mlcb_lpol
                 first = False
@@ -375,7 +378,18 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             
         #connect execute
         self.pushButton_LSsample.clicked.connect(self.run_lisamp)
+        
+        
+        #=======================================================================
+        # clear button
+        #=======================================================================
+        def cp_clear(): #clear all the drop downs
+            
+            for sname, (mlcb_haz, mlcb_lpol) in self.ls_cb_d.items():
+                mlcb_haz.setCurrentIndex(-1) #set selection to none
+                mlcb_lpol.setCurrentIndex(-1) #set selection to none
                     
+        self.pushButton_CP_clear.clicked.connect(cp_clear)
         #======================================================================
         # DTM sampler---------
         #======================================================================
@@ -1531,6 +1545,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             if (layer.name()) not in x:
                 self.ras_dict.update( { layer.name() : layer} )
                 self.listWidget_ras.addItem(str(layer.name()))
+                
+
     
 
             
