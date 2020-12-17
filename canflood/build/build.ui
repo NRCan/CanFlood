@@ -2472,7 +2472,7 @@ p, li { white-space: pre-wrap; }
               <item row="1" column="0">
                <widget class="QCheckBox" name="checkBox_Vi2">
                 <property name="text">
-                 <string>Impacts (L2)</string>
+                 <string>Exposure (L2)</string>
                 </property>
                 <property name="checked">
                  <bool>false</bool>
