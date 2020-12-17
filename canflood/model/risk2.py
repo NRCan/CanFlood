@@ -99,8 +99,8 @@ class Risk2(Model):
     #==========================================================================
     # plot controls----
     #==========================================================================
-    plot_fmt = '${:,.0f}'
-    y1lab = '$dmg'
+    plot_fmt = '{:,.0f}'
+    y1lab = 'impacts'
     
 
     
@@ -199,7 +199,7 @@ class Risk2(Model):
         #format resul series
         res = res_ser.to_frame()
         res.index.name = 'aep'
-        res.columns = ['$']
+        res.columns = ['impacts']
         
         #remove tails
         if self.drop_tails:

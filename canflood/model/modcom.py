@@ -313,10 +313,11 @@ class Model(ComWrkr):
         
     def cf_attach_pars(self, #load parmaeteres from file
                     cpars,
+                    setAttr=True, #whether to save each attribute 
                     ):
         
         """
-        cf_chk_pars should be run first to make sure parameter membership and type matches expectations
+        cf_chk_pars() should be run first to make sure parameter membership and type matches expectations
         
         here we just update every parameter value found:
             on the class
@@ -365,11 +366,13 @@ class Model(ComWrkr):
         # attach all the paramers
         #======================================================================
         cnt = 0
-        for sectName, spars_d in cpars_d.items():
-            for varnm, val in spars_d.items():
-                setattr(self, varnm, val)
-                log.debug('set %s=%s'%(varnm, val))
-                cnt +=1
+        if setAttr:
+            
+            for sectName, spars_d in cpars_d.items():
+                for varnm, val in spars_d.items():
+                    setattr(self, varnm, val)
+                    log.debug('set %s=%s'%(varnm, val))
+                    cnt +=1
                 
         #=======================================================================
         # wrap
