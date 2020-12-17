@@ -15,17 +15,17 @@ as_inun = False
 curves = C:/LS/03_TOOLS/CanFlood/_git/tutorials/2/data/CanFlood_curves_rfda_20200218.xls
 finv = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\finv_tut2b_finv_cT2.csv
 expos = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\expos_tut2b_5_32.csv
-gels = #ground elevation data filepath
+gels = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\gels_tut2b_1_32.csv
 
 [risk_fps]
 dmgs = #damage data results filepath
-exlikes = #secondary exposure likelihood data filepath
+exlikes = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\exlikes_tut2b.csv
 evals = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\evals_5_tut2b.csv
-#evals file path set from canflood.build.builddialog.py at 2020-12-17 12.49.12
 
 [validation]
 risk1 = False
-dmg2 = False
+dmg2 = True
 risk2 = False
 risk3 = False
+# 'dmg2' validated by validator.py at 2020-12-17 12.55.52
 
