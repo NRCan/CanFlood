@@ -1117,11 +1117,14 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                 
 
             #loop through each combobox pair and assign a raster to it
+            res_d = dict()
             for lsKey, (mlcb_h, mlcb_v) in self.ls_cb_d.items():
                 if lsKey in rFail_d:
                     mlcb_h.setLayer(rFail_d[lsKey])
+                    res_d[lsKey] = rFail_d[lsKey].name()
 
- 
+            #wrap
+            log.info('populated %i Conditional P diaglogs'%len(res_d))
  
         except Exception as e:
             log.error('failed to populate lisamp fields w/\n    %s'%e)
