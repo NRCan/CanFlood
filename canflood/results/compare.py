@@ -149,7 +149,12 @@ class Cmpr(ComWrkr):
         if logger is None: logger=self.logger
         log = logger.getChild('riskCurves')
         
+        """
+        compile data from Scenario workers
         
+        pass to riskPlotr.multi()
+        
+        """
         
         
     

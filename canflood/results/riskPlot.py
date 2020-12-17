@@ -28,8 +28,10 @@ import pandas as pd
 #==============================================================================
 #standalone runs
 if __name__ =="__main__": 
-    from hlpr.logr import basic_logger
-    mod_logger = basic_logger()   
+    #===========================================================================
+    # from hlpr.logr import basic_logger
+    # mod_logger = basic_logger()   
+    #===========================================================================
     
     from hlpr.exceptions import Error
     
@@ -58,7 +60,7 @@ class Plotr(ComWrkr):
         
         """inherited by the dialog.
         init is not called during the plugin"""
-        mod_logger.info('simple wrapper inits')
+
         
 
         
@@ -68,7 +70,38 @@ class Plotr(ComWrkr):
         
         self.logger.info('init finished')
         
-    def load_data(self, fp):
+        self._ini_plt()
+        
+        
+    def _ini_plt(self): #initilize matplotlib
+        """
+        calling this here so we get clean parameters each time the class is instanced
+        """
+        import matplotlib
+        matplotlib.use('SVG') #sets the backend (case sensitive)
+        import matplotlib.pyplot as plt
+        
+        #set teh styles
+        plt.style.use('default')
+        
+        #font
+        matplotlib_font = {
+                'family' : 'serif',
+                'weight' : 'normal',
+                'size'   : 8}
+        
+        matplotlib.rc('font', **matplotlib_font)
+        matplotlib.rcParams['axes.titlesize'] = 10 #set the figure title size
+        
+        #spacing parameters
+        matplotlib.rcParams['figure.autolayout'] = False #use tight layout
+        
+        self.plt, self.matplotlib = plt, matplotlib
+        
+        
+        
+    def load_data(self, fp): #load a single dataset
+        
         
         #precheck
         assert os.path.exists(fp)
@@ -77,7 +110,7 @@ class Plotr(ComWrkr):
         return res_ser
         
         
-    def run(self, #generate and save a figure that summarizes the damages 
+    def single(self, #generate and save a figure that summarizes the damages 
                   dmg_ser,
                   
                   #labels
@@ -108,7 +141,8 @@ class Plotr(ComWrkr):
         #======================================================================
         # defaults
         #======================================================================
-        log = self.logger.getChild('run')
+        log = self.logger.getChild('single')
+        plt, matplotlib = self.plt, self.matplotlib
 
 
         if y1lab is None: y1lab = self.y1lab
@@ -116,29 +150,8 @@ class Plotr(ComWrkr):
         # precheck
         #======================================================================
         assert isinstance(dmg_ser, pd.Series)
-        assert 'ead' in dmg_ser.index, 'dmg_ser missing ead index'
-        #======================================================================
-        # setup
-        #======================================================================
-        
-        import matplotlib
-        matplotlib.use('SVG') #sets the backend (case sensitive)
-        import matplotlib.pyplot as plt
-        
-        #set teh styles
-        plt.style.use('default')
-        
-        #font
-        matplotlib_font = {'family' : 'serif',
-                'weight' : 'normal',
-                'size'   : 8}
-        
-        matplotlib.rc('font', **matplotlib_font)
-        matplotlib.rcParams['axes.titlesize'] = 10 #set the figure title size
-        
-        #spacing parameters
-        matplotlib.rcParams['figure.autolayout'] = False #use tight layout
-        
+        assert 'ead' in dmg_ser.index, 'dmg_ser missing ead entry'
+
         #======================================================================
         # data manipulations
         #======================================================================
@@ -269,6 +282,10 @@ class Plotr(ComWrkr):
         
         return fig
     
+    def multi(self, #single plot w/ risk curves from multiple scenarios
+              ):
+        
+        pass
     
 
 if __name__ =="__main__": 
@@ -302,19 +319,7 @@ if __name__ =="__main__":
         assert os.path.exists(out_dir)
 
 
-        #=======================================================================
-        # execute
-        #=======================================================================
-        wrkr = Plotr(out_dir=out_dir, logger=log, tag=tag)
-        
-        #load data
-        res_ser = wrkr.load_data(res_fp)
-        
-        fig = wrkr.run(res_ser, dfmt=dfmt, y1lab=y1lab)
-        
-        wrkr.output_fig(fig)
-        
-        log.info('finished')
+
 
    
         

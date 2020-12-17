@@ -230,7 +230,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         self.feedback.setProgress(20)
         #execute
-        fig = wrkr.run(res_ser, dfmt='{0:.0f}', y1lab='impacts')
+        fig = wrkr.single(res_ser, dfmt='{0:.0f}', y1lab='impacts')
         
         self.feedback.setProgress(80)
         #save
