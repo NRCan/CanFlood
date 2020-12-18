@@ -53,7 +53,7 @@ from results.riskPlot import Plotr as riskPlotr
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Cmpr(ComWrkr):
+class Cmpr(riskPlotr):
     """
     general methods to be called by the Dialog class
     
@@ -79,14 +79,14 @@ class Cmpr(ComWrkr):
             self.__class__.__name__, type(self.feedback).__name__))
         
         
-    def load_all(self,
+    def load_scenarios(self,
                  parsG_d, #container of filepaths 
                  
                  ):
         #=======================================================================
         # defaults
         #=======================================================================
-        log = self.logger.getChild('load_all')
+        log = self.logger.getChild('load_scenarios')
         
         log.info('on %i scenarios'%len(parsG_d))
         
@@ -120,12 +120,29 @@ class Cmpr(ComWrkr):
         
         for sName, parsN_d in parsG_d.items():
             
+            #===================================================================
+            # build/load the children
+            #===================================================================
             sWrkr = Scenario(self, sName)
-            sWrkr.load_cf(parsN_d['cf_fp'])
+            
              
+            #load total results file
             if 'ttl_fp' in parsN_d:
+                """these are riskPlot methods"""
                 sWrkr.load_ttl(parsN_d['ttl_fp'])
+                sWrkr.prep_dtl(logger=log)
                 
+                
+            #load control file
+            """setting this last incase we want to overwrite with control file values"""
+            sWrkr.load_cf(parsN_d['cf_fp'])
+            
+            #populate the plotting parameters
+            sWrkr.get_plot_pars() 
+                
+            #===================================================================
+            # add to family
+            #===================================================================
             assert sWrkr.name not in self.sWrkr_d, 'scenario \'%s\' already loaded!'
                 
             self.sWrkr_d[sWrkr.name] = sWrkr
@@ -149,23 +166,118 @@ class Cmpr(ComWrkr):
         if logger is None: logger=self.logger
         log = logger.getChild('riskCurves')
         
+        
+        #=======================================================================
+        # collect data from children
+        #=======================================================================
+        plotPars_d = dict()
+        
+        #loop through each
+        first = True
+        for childName, sWrkr in sWrkr_d.items():
+            log.debug('preping %s'%childName)
+            plotPars_d[childName] = {
+                                    'ttl_df':sWrkr.ttl_df,
+                                    'ead_tot':sWrkr.ead_tot,
+                                    'impStyle_d':sWrkr.impStyle_d.copy(),
+
+                                    }
+            
+            if first:
+                self.y1lab = sWrkr.impact_name
+                first = False
+            
+        
+        #=======================================================================
+        # plot
+        #=======================================================================
+        """NOTE: each child is also a riskPlotr.. but here we make a separate
+        
+        consider making the parent a risk plotter also?
         """
-        compile data from Scenario workers
+
+        return self.multi(plotPars_d)
         
-        pass to riskPlotr.multi()
         
-        """
+         
+    
+    def cf_compare(self, #compare control file values between Scenarios
+                   sWrkr_d,
+                   logger=None):
         
+        
+        if logger is None: logger=self.logger
+        log = logger.getChild('cf_compare')
+        
+        
+        #=======================================================================
+        # collect all the parameters from the children
+        #=======================================================================
+        first = True
+        for childName, sWrkr in sWrkr_d.items():
+            log.debug('extracting variables from %s'%childName)
+            
+            #===================================================================
+            # collect values from this child
+            #===================================================================
+            firstC = True
+            for sectName, svars_d in sWrkr.cfPars_d.items():
+                
+                sdf = pd.DataFrame.from_dict(svars_d, orient='index')
+                sdf.columns = [childName]
+                
+                #collapse the field names
+                sdf.index = pd.Series(np.full(len(sdf), sectName)
+                                      ).str.cat(pd.Series(sdf.index), sep='.')
+
+                if firstC:
+                    cdf = sdf
+                    firstC=False
+                else:
+                    cdf = cdf.append(sdf)
+                    
+            #add the control file path itself
+            cdf.loc['cf_fp', childName] = sWrkr.cf_fp
+            #===================================================================
+            # update library
+            #===================================================================
+            if first:
+                mdf = cdf
+                first = False
+            else:
+                mdf = mdf.join(cdf)
+                
+        #=======================================================================
+        # compare values
+        #=======================================================================
+        #determine if all values match by row
+        mdf['compare'] = mdf.eq(other=mdf.iloc[:,0], axis=0).all(axis=1)
+        
+        log.info('finished w/ %i (of %i) parameters matching between %i scenarios'%(
+            mdf['compare'].sum(), len(mdf.index), len(mdf.columns)))
+        
+        return mdf
+                    
+
+
         
     
-class Scenario(Model): #simple class for a scenario
+class Scenario(Model, riskPlotr): #simple class for a scenario
     
     name=None
     
-
+    cfPars_d = None
+    
+    #plotting variables
+    color = 'black'
+    linestyle = 'dashdot'
+    linewidth = 2.0
+    alpha =     0.75        #0=transparent 1=opaque
+    marker =    'o'
+    markersize = 4.0
+    fillstyle = 'none'    #marker fill style
     
 
-    
     def __init__(self,
                  parent,
                  nameRaw,              
@@ -176,8 +288,7 @@ class Scenario(Model): #simple class for a scenario
         """we'll set another name from the control file"""
         self.nameRaw = nameRaw 
         
-        
-        
+        """no need to init baseclases"""
         
     def load_cf(self, #load the control file
                 cf_fp):
@@ -187,7 +298,7 @@ class Scenario(Model): #simple class for a scenario
         #=======================================================================
         log = self.logger.getChild('load_cf')
         assert os.path.exists(cf_fp)
-        
+        self.cf_fp = cf_fp
         #=======================================================================
         # init the config parser
         #=======================================================================
@@ -195,7 +306,7 @@ class Scenario(Model): #simple class for a scenario
         log.info('reading parameters from \n     %s'%cfParsr.read(cf_fp))
         
         
-        
+        #self.cfParsr=cfParsr
         #=======================================================================
         # check values
         #=======================================================================
@@ -209,32 +320,31 @@ class Scenario(Model): #simple class for a scenario
         self.cfPars_d = self.cf_attach_pars(cfParsr, setAttr=True)
         assert isinstance(self.name, str)
         
+
         log.debug('finished w/ %i pars loaded'%len(self.cfPars_d))
         
         return
     
-    def load_ttl(self, 
-                 fp):
+    def get_plot_pars(self): #get a set of plotting handles based on your variables
+        """
+        taking instance variables (rather than parser's section) because these are already typset
+        """
+        assert not self.cfPars_d is None, 'load the control file first!'
+        impStyle_d = dict()
         
-        log = self.logger.getChild('load_ttl')
         
-        assert os.path.exists(fp)
+        #loop through the default values
         
-        
-        #load data
-        """using the riskPlot's loader for consistency"""
-        res_ser = riskPlotr.load_data(self, fp)
-        
-        assert isinstance(res_ser, pd.Series)
-        assert 'float' in res_ser.dtype.name
-        
-        res_ser.name = 'ttl'
-        
-        self.res_ser = res_ser.copy()
-        
-        log.debug('finished w/ \n%s'%res_ser)
-        
-        return res_ser
+        for k, v in self.impStyle_d.items():
+            if hasattr(self, k):
+                impStyle_d[k] = getattr(self, k)
+            else: #just use default
+                impStyle_d[k] = v
+                
+        self.impStyle_d = impStyle_d
+                
+    
+
         
         
         

@@ -29,3 +29,13 @@ risk1 = False
 dmg2 = False
 risk2 = False
 risk3 = False
+
+
+[plotting]
+color = black
+linestyle = dashdot
+linewidth = 2
+alpha = 0.75        #0=transparent 1=opaque
+marker = o
+markersize = 4
+fillstyle = none    #marker fill style
