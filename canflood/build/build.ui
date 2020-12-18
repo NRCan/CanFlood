@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>703</width>
-    <height>847</height>
+    <width>700</width>
+    <height>800</height>
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+   <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
@@ -25,7 +25,7 @@
   <property name="maximumSize">
    <size>
     <width>2000</width>
-    <height>1000</height>
+    <height>2000</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -51,8 +51,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>683</width>
-        <height>740</height>
+        <width>663</width>
+        <height>700</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -1990,7 +1990,7 @@ p, li { white-space: pre-wrap; }
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>602</width>
+                   <width>98</width>
                    <height>660</height>
                   </rect>
                  </property>
