@@ -187,30 +187,45 @@ class Risk2(Model):
         # totals
         #======================================================================    
         self.feedback.setProgress(80)    
-        res_ser = self.calc_ead(ddf1.sum(axis=0).to_frame().round(self.prec).T, logger=log).iloc[0]
-        self.res_ser = res_ser.copy() #set for risk_plot()
+        res_ttl = self.calc_ead(
+            ddf1.sum(axis=0).to_frame().T, #rounding at end of calc_ead()
+            drop_tails=False, #handle beslow 
+            logger=log,
+            ).T #1 column df
+            
+        self.res_ser = res_ttl.iloc[:, 0].copy() #set for risk_plot()
 
             
         self.feedback.setProgress(95)
 
-        log.info('finished on %i assets and %i damage cols'%(len(ddf1), len(res_ser)))
+        log.info('finished on %i assets and %i damage cols'%(
+            len(ddf1), len(res_ttl)))
         
 
-        #format resul series
-        res = res_ser.to_frame()
-        res.index.name = 'aep'
-        res.columns = ['impacts']
+        #format total results for writing
+        res_ttl.index.name = 'aep'
+        res_ttl.columns = ['impacts']
         
-        #remove tails
-        if self.drop_tails:
-            res = res.iloc[1:-2,:] #slice of ends 
-            res.loc['ead'] = res_ser['ead'] #add ead back
+        #add labels
+        miss_l = set(self.extrap_vals_d.keys()).difference(res_ttl.index)
+        assert len(miss_l)==0
+
+
+        res_ttl = res_ttl.join(
+            pd.Series(np.full(len(self.extrap_vals_d), 'extraploated'), 
+                  index=self.extrap_vals_d, name='note')
+            )
+        res_ttl.loc['ead', 'note'] = 'integration'
+        res_ttl.loc[:, 'note'] = res_ttl.loc[:, 'note'].fillna('impact_sum')
         
+        #plot lables
+        res_ttl['plot'] = True
+        res_ttl.loc['ead', 'plot'] = False
          
         log.info('finished')
 
 
-        return res, res_df
+        return res_ttl, res_df
 
 
 

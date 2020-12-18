@@ -7,7 +7,7 @@ felv = ground           #'datum' or 'ground': whether felv values provided in th
 event_probs = ari       #format of event probabilities (in 'aeps' data file): 'ari' or 'aep'
 ltail = extrapolate     #EAD extrapolation: left tail treatment code (low prob high damage)
 rtail = 0.5             #EAD extrapolation: right trail treatment (high prob low damage)
-drop_tails = True       #whether to remove the extrapolated values from the results
+drop_tails = False      #EAD extrapolation: whether to remove the extrapolated values before writing the per-asset results
 integrate = trapz       #integration method to apply: trapz, simps 
 as_inun = False         #flag whether to treat exposures as percent inundation
 

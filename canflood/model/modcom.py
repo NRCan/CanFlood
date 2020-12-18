@@ -70,12 +70,11 @@ class Model(ComWrkr):
             'none'           do not extrapolate (not recommended) 
             float           use the passed value as the zero impacts aep value
         
-        drop_tails -- flag to drop the extrapolated values from the results 
-                            (default True)
+        drop_tails -- EAD extrapolation: whether to remove the extrapolated values
+                         before writing the per-asset results (default: False)
         
         integrate -- numpy integration method to apply (default 'trapz')
-        
-        res_per_asset -- flag to generate results per asset 
+
         
         ground_water -- flag to include negative depths in the analysis
         
@@ -144,6 +143,8 @@ class Model(ComWrkr):
         }
     
     max_depth = 20 #maximum depth for throwing an error in build_depths()
+    
+    extrap_vals_d = {} #extraploation used {aep:val}
     
 
     
@@ -1513,11 +1514,12 @@ class Model(ComWrkr):
         return result
             
 
-    def calc_ead(self,
+    def calc_ead(self, #get EAD from a set of impacts per event
                  df_raw, #xid: aep
                  ltail = None,
                  rtail = None,
                  drop_tails = False, #whether to remove the dummy tail values from results
+                 dx = None, #damage step for integration (default:None)
                  logger = None
                  ):      
         
@@ -1555,6 +1557,7 @@ class Model(ComWrkr):
                 ltail  = float(ltail)
             except Exception as e:
                 raise Error('failed to convert \'ltail\'=\'%s\' to numeric \n    %s'%(ltail, e))
+            
         if not rtail in ['extrapolate', 'none']:
             rtail = float(rtail)
             
@@ -1566,7 +1569,7 @@ class Model(ComWrkr):
         
         assert bx.any(), 'no valid results on %s'%str(df_raw.shape)
         #=======================================================================
-        # get tail parameters-----
+        # get tail values-----
         #=======================================================================
         #======================================================================
         # left tail
@@ -1576,17 +1579,27 @@ class Model(ComWrkr):
         if ltail == 'flat':
             df.loc[:,0] = df.iloc[:,0] 
             
-        elif ltail == 'extrapolate':
+            if len(df)==1: 
+                self.extrap_vals_d[0] = df.loc[:,0].mean().round(self.prec) #store for later
+            
+        elif ltail == 'extrapolate': #DEFAULT
             df.loc[bx,0] = df.loc[bx, :].apply(self.extrap, axis=1, left=True)
-
+            
+            #extrap vqalue will be different for each entry
+            if len(df)==1: 
+                self.extrap_vals_d[0] = df.loc[:,0].mean().round(self.prec) #store for later
 
         elif isinstance(ltail, float):
             """this cant be a good idea...."""
             df.loc[bx,0] = ltail
+            
+            self.extrap_vals_d[0] = ltail #store for later
+            
         elif ltail == 'none':
             pass
         else:
             raise Error('unexected ltail key'%ltail)
+        
         
         #======================================================================
         # right tail
@@ -1605,8 +1618,9 @@ class Model(ComWrkr):
             
             log.info('using right intersection of aep= %.2e from average extraploation'%(
                 aep_val))
+            
         
-        elif isinstance(rtail, float):
+        elif isinstance(rtail, float): #DEFAULT
             aep_val = round(rtail, 5)
             assert aep_val > df.columns.max(), 'passed rtail value (%.2f) not > max aep (%.2f)'%(
                 aep_val, df.columns.max())
@@ -1615,7 +1629,7 @@ class Model(ComWrkr):
             
             log.debug('setting ZeroDamage event from user passed \'rtail\' aep=%.7f'%(
                 aep_val))
-            
+
         elif rtail == 'none':
             #set the zero damage year as the lowest year in the model (with a small buffer) 
             aep_val = max(df.columns.tolist())*(1+10**-(self.prec+2))
@@ -1627,6 +1641,8 @@ class Model(ComWrkr):
             raise Error('unexpected rtail %s'%rtail)
             
         df = df.sort_index(axis=1)
+        
+        self.extrap_vals_d[aep_val] = 0 #store for later
 
         #======================================================================
         # check monoticiy again
@@ -1643,7 +1659,9 @@ class Model(ComWrkr):
         #======================================================================
         #get reasonable dx (integration step along damage axis)
         """todo: allow the user to set t his"""
-        dx = df.max().max()/100
+        if dx is None:
+            dx = df.max().max()/100
+        assert isinstance(dx, float)
         
         #re-arrange columns so x is ascending
         df = df.sort_index(ascending=False, axis=1)
@@ -1666,9 +1684,10 @@ class Model(ComWrkr):
         # clean results
         #======================================================================
         if drop_tails:
-            """not sure about this"""
+            #just add the results values onto the raw
             res_df = df_raw.join(df['ead'])
         else:
+            #take everything
             res_df = df
             
         return res_df.round(self.prec)
