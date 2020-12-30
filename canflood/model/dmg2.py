@@ -36,7 +36,7 @@ else:
     from hlpr.exceptions import QError as Error
 
 #from hlpr.Q import *
-from hlpr.basic import ComWrkr
+from hlpr.basic import ComWrkr, view
 from model.modcom import Model
 
 
@@ -294,8 +294,7 @@ class Dmg2(Model):
         return cres_df
         
     def bdmg(self, #get damages on expanded finv
-             
-             #run controls
+
 
             ):
         #======================================================================
@@ -305,13 +304,9 @@ class Dmg2(Model):
         
         #set some locals
         bdf = self.bdf  #expanded finv. see modcom.build_exp_finv(). each row has 1 ftag
-        ddf = self.ddf
+        ddf = self.ddf #exposure set. wsl at each cid
         """ddf is appending _1 to column names"""
         cid, bid = self.cid, self.bid
-        
-
-
-        
         
         assert bid in ddf.columns
         assert ddf.index.name == bid
@@ -556,6 +551,8 @@ class Dmg2(Model):
         
         log.info('capped damages')
         self.feedback.setProgress(90)
+        
+        
         #======================================================================
         # DMG-------------
         #======================================================================
@@ -594,6 +591,8 @@ class Dmg2(Model):
         log.info('finished w/ %s'%str(res_df1.shape))
         return res_df1
         """
+        self.resname
+        view(events_df)
         view(res_df)
         view(res_df1)
         """

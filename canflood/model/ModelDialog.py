@@ -318,6 +318,10 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #update parameter file
         if self.checkBox_i2_updCf.isChecked():
             model.upd_cf()
+            
+        #output expanded results
+        if self.checkBox_i2_outExpnd.isChecked():
+            _ = model.output_df(model.bdmg_df, 'dmgs_expnd_%s_%s'%(model.name, model.tag))
 
         self.logger.push('Impacts2 complete')
         self.feedback.upd_prog(None) #set the progress bar back down to zero
