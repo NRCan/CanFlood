@@ -1378,6 +1378,10 @@ class Model(ComWrkr):
             e.g. 'failure' raster and 'no fail'
         Each event can be assigned conditional probabilities in the edf
         
+        for calculating conditional probabilities from overlapping polygons
+            see build.lisamp.LikeSampler.run()
+            (no impacts)
+        
 
         """
         #======================================================================
