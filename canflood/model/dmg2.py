@@ -12,7 +12,7 @@ impacts model 2
 # imports---------------------------
 #==============================================================================
 #python standards
-import configparser, os, logging
+import configparser, os, logging, datetime
 
 import pandas as pd
 import numpy as np
@@ -35,8 +35,8 @@ else:
 
     from hlpr.exceptions import QError as Error
 
-from hlpr.Q import *
-from hlpr.basic import *
+#from hlpr.Q import *
+from hlpr.basic import ComWrkr
 from model.modcom import Model
 
 
@@ -827,22 +827,29 @@ class Dmg2(Model):
         
         
     def upd_cf(self, #update the control file 
-               out_fp = None,cf_fp = None):
+               out_fp = None,
+               cf_fp = None,
+               ):
         #======================================================================
         # set defaults
         #======================================================================
         if out_fp is None: out_fp = self.out_fp
         if cf_fp is None: cf_fp = self.cf_fp
         
+        #=======================================================================
+        # convert to relative
+        #=======================================================================
+        if not self.absolute_fp:
+            out_fp = os.path.split(out_fp)[1]
+        
         return self.update_cf(
             {
             'risk_fps':(
-                {'dmgs':self.out_fp}, 
-                '#\'dmgs\' file path set from dmg2.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                {'dmgs':out_fp}, 
+                '#\'dmgs\' file path set from dmg2.py at %s'%(
+                    datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
                 ),
-            'validation':(
-                {'risk2':'True'},
-                )
+            #'validation':({'risk2':'True'},)
              },
             cf_fp = cf_fp
             )
