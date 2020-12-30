@@ -242,7 +242,7 @@ class Risk1(Model):
         cdf = bidf1.groupby(cid).max().drop(bid, axis=1)
  
         #======================================================================
-        # resolve alternate impacts (per evemt)
+        # resolve alternate impacts (per evemt)-----
         #======================================================================
         #take maximum expected value at each asset
         if 'exlikes' in self.data_d:
@@ -264,7 +264,7 @@ class Risk1(Model):
         assert np.array_equal(bres_df.columns.values, aep_ser.unique()), 'column name problem'
         _ = self.check_monot(bres_df)
         #======================================================================
-        # get ead per asset
+        # get ead per asset------
         #======================================================================
         if res_per_asset:
             self.feedback.setProgress(50)
