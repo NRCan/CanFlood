@@ -110,7 +110,7 @@ class Dmg2(Model):
         
         self.logger.debug('finished __init__ on Dmg2')
         
-    def setup(self):
+    def _setup(self):
         
         
         
@@ -999,70 +999,7 @@ class DFunc(ComWrkr,
         return {**{'min_dep':min(deps), 'max_dep':max(deps), 
                 'min_dmg':min(dmgs), 'max_dmg':max(dmgs), 'dcnt':len(deps)},
                 **self.pars_d}
-#===============================================================================
-# def run():
-# 
-#     #==========================================================================
-#     # dev data
-#     #=========================================================================
-#     #==========================================================================
-#     # out_dir = os.path.join(os.getcwd(), 'dmg2')
-#     # tag='dev'
-#     # 
-#     # cf_fp = r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\dmg2\CanFlood_dmg2.txt'
-#     #==========================================================================
-#     
-#     #==========================================================================
-#     # tutorial 2
-#     #==========================================================================
-# 
-#     runpars_d={
-#         'Tut2':{
-#             'out_dir':os.path.join(os.getcwd(), 'dmg2', 'Tut2'),
-#             'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\built\CanFlood_tut2.txt',
-#             }
-#         }
-#     
-#     #===========================================================================
-#     # GolderHazard test
-#     #===========================================================================
-#     runpars_d={
-#         'run1':{
-#             'out_dir':r'C:\LS\03_TOOLS\CanFlood\_ins\IBI_GolderHazard_20200507\results\wi_noFail2',
-#             'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\IBI_GolderHazard_20200507\build\CanFlood_GH_wi_noFail.txt',
-#             }
-#         }
-# 
-#     
-#     #==========================================================================
-#     # build/execute
-#     #==========================================================================
-#     for tag, pars in runpars_d.items():
-#         cf_fp, out_dir = pars['cf_fp'], pars['out_dir']
-#         log = mod_logger.getChild(tag)
-#         assert os.path.exists(cf_fp)
-#         
-#         wrkr = Dmg2(cf_fp, out_dir=out_dir, logger=log, tag=tag).setup()
-#         
-#         res_df = wrkr.run()
-#         
-#         if res_df is None:
-#             log.warning('skipping')
-#             continue
-#         #==========================================================================
-#         # output
-#         #==========================================================================
-#         
-#         out_fp = wrkr.output_df(res_df, wrkr.resname)
-#         
-#         wrkr.upd_cf()
-# 
-#     #===========================================================================
-#     # wrap--------
-#     #===========================================================================
-#     force_open_dir(out_dir)
-#     
-#===============================================================================
+
 if __name__ =="__main__": 
 
     print('finished')

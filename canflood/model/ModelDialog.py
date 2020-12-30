@@ -298,7 +298,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         # #build/run model
         #======================================================================
         model = Dmg2(cf_fp, out_dir = out_dir, logger = self.logger, tag=tag,
-                     feedback=self.feedback).setup()
+                     feedback=self.feedback)._setup()
         
         #run the model        
         cres_df = model.run()

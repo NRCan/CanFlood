@@ -527,7 +527,9 @@ class Model(ComWrkr):
                 
                 #get the absolute filepath
                 fp = os.path.join(base_dir, valRaw)
-                assert os.path.exists(fp), '%s.%s not found'%(sectName, varName)
+                """dont bother... some models may not use all the fps
+                better to let the check with handles catch things
+                assert os.path.exists(fp), '%s.%s not found'%(sectName, varName)"""
                 
                 #set it
                 res_d[sectName][varName]=fp
