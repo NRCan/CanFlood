@@ -146,14 +146,15 @@ class Model(ComWrkr):
     
     extrap_vals_d = {} #extraploation used {aep:val}
     
+    
 
     
     
     def __init__(self,
                  cf_fp, #control file path """ note: this could also be attached by basic.ComWrkr.__init__()"""
                  split_key=None,#for checking monotonicy on exposure sets with duplicate events
-
-
+                 absolute_fp=True, #whether filepaths are absolute (False=Relative)
+                 
                  **kwargs):
         
         mod_logger.info('Model.__init__ start')
@@ -163,6 +164,7 @@ class Model(ComWrkr):
         
         self.cf_fp = cf_fp
         self.split_key= split_key
+        self.absolute_fp=absolute_fp
         
 
         #attachments
@@ -189,6 +191,18 @@ class Model(ComWrkr):
 
         self.pars = configparser.ConfigParser(inline_comment_prefixes='#')
         log.info('reading parameters from \n     %s'%self.pars.read(cf_fp))
+        
+        #=======================================================================
+        # filepaths
+        #=======================================================================
+        if not self.absolute_fp:
+            log.info('converting relative filepaths')
+            self.pars = self._cf_relative(self.pars, os.path.split(cf_fp)[0])
+            """
+            self.pars.__dict__
+            """
+            
+            
         
         #=======================================================================
         # check against expectations
@@ -309,8 +323,6 @@ class Model(ComWrkr):
         log.info('finished checking %i sections w/ %i errors. optional=%s \n'%(len(cpars), len(errors), optional))
         
         return len(errors)==0, errors
-        
-        
         
     def cf_attach_pars(self, #load parmaeteres from file
                     cpars,
@@ -438,9 +450,6 @@ class Model(ComWrkr):
         log.debug('retrieved \'%s.%s\'=\'%s\' w/ type: \'%s\''%(sectName, varName, pval, type(pval)))
         return pval
 
-                
-                
-                
     def _par_hndl_chk(self, #check a parameter aginast provided handles
                      sect, varnm, pval, achk_d,
                      logger=None
@@ -494,6 +503,57 @@ class Model(ComWrkr):
             
         log.debug('    \'%s.%s\' passed %i checks'%(sect, varnm, len(achk_d)))
         return True
+    
+    def  _cf_relative(self, #convert filepaths from relative to absolute
+                      cpars, #config parser
+                      base_dir, #base directory to add
+                      sections=['dmg_fps', 'risk_fps'], #sections contaiing values to convert
+                      
+                      ):
+        log = self.logger.getChild('_cf_relative')
+        
+        assert os.path.exists(base_dir)
+        
+        #=======================================================================
+        # #loop through parser and retireve then convert
+        #=======================================================================
+        res_d = dict() #container for new values
+        for sectName in sections:
+            assert sectName in cpars
+            res_d[sectName]=dict()
+            #loop through each variable in this section
+            for varName, valRaw in cpars[sectName].items():
+                if valRaw == '': continue #skip blanks
+                
+                #get the absolute filepath
+                fp = os.path.join(base_dir, valRaw)
+                assert os.path.exists(fp), '%s.%s not found'%(sectName, varName)
+                
+                #set it
+                res_d[sectName][varName]=fp
+                
+        #=======================================================================
+        # set the new values
+        #=======================================================================
+        cnt=0
+        for sectName, sect_d in res_d.items():
+            if len(sect_d)==0: continue #skip blanks
+            
+            for varName, newVal in sect_d.items():
+                cpars.set(sectName, varName, newVal)
+                cnt+=1
+            
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        log.info('converted %i filepaths to absolute'%cnt)
+            
+        """
+        cpars['dmg_fps']['finv']
+        """
+        
+        
+        return cpars
     
 
     def load_finv(self,#loading expo data
