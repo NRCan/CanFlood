@@ -246,7 +246,7 @@ class Risk1(Model):
         #======================================================================
         #take maximum expected value at each asset
         if 'exlikes' in self.data_d:
-            bres_df = self.resolve_multis(cdf, self.data_d['exlikes'], aep_ser, log)
+            bres_df = self.ev_multis(cdf, self.data_d['exlikes'], aep_ser, log)
             
         #no duplicates. .just rename by aep
         else:

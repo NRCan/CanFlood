@@ -1362,17 +1362,21 @@ class Model(ComWrkr):
 
         
         
-    def resolve_multis(self, #selecting maximum expected value for repeat events
-                       ddf, #damages per event
-                       edf, #secondary liklihoods per event
-                       aep_ser,
-                       logger):
+    def ev_multis(self, #calculate expected value from multiple discrete events
+           ddf, #damages per event
+           edf, #secondary liklihoods per event
+           aep_ser,
+           method='max', #ev calculation method
+                #max:  maximum expected value of impacts per asset from the duplicated events
+                    #resolved damage = max(damage w/o fail, damage w/ fail * fail prob)
+                    #default til 2020-12-30
+                #mutexclu: assume each event is mutually exclusive (only one can happen)
+                    #lower bound
+                #indepen: assume each event is independent (failure of one does not influence the other)
+                    #upper bound
+           logger,
+                       ):
         """
-        selecting maximum expected value for repeat events
-        
-        CanFlood selects the maximum expected value of impacts per asset from the duplicated events.
-        e.g. resolved damage = max(damage w/o fail, damage w/ fail * fail prob)
-        
         
         we accept multiple exposure sets for a single event likelihood 
             e.g. 'failure' raster and 'no fail'
@@ -1387,7 +1391,7 @@ class Model(ComWrkr):
         #======================================================================
         # setup
         #======================================================================
-        log = logger.getChild('resolve_multis')
+        log = logger.getChild('ev_multis')
         
         #======================================================================
         # precheck
@@ -1444,8 +1448,16 @@ class Model(ComWrkr):
                 log.info('resolving alternate damages for aep %.2e from %i events: \n    %s'%(
                     aep, len(evn_l), evn_l))
                 
+                """taking the max EV on each asset
+                
+                why not add?
+                
+                """
+                
                 res_df.loc[:, aep] = evdf.loc[:, evn_l].max(axis=1)
                 """
+                view(edf.loc[:, evn_l])
+                view(ddf.loc[:, evn_l])
                 view(evdf.loc[:, evn_l])
                 """
                 
