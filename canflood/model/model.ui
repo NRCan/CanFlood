@@ -220,7 +220,7 @@ p, li { white-space: pre-wrap; }
                  </widget>
                 </item>
                 <item>
-                 <widget class="QRadioButton" name="radioButton_2">
+                 <widget class="QRadioButton" name="radioButton_S_fpAbs">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                     <horstretch>0</horstretch>
@@ -239,7 +239,7 @@ p, li { white-space: pre-wrap; }
                  </widget>
                 </item>
                 <item>
-                 <widget class="QRadioButton" name="radioButton">
+                 <widget class="QRadioButton" name="radioButton_S_fpRel">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                     <horstretch>0</horstretch>
@@ -384,12 +384,9 @@ p, li { white-space: pre-wrap; }
               <item>
                <layout class="QHBoxLayout" name="horizontalLayout_8">
                 <item>
-                 <widget class="QCheckBox" name="checkBox_SSoverwrite">
+                 <widget class="QLabel" name="label_6">
                   <property name="text">
-                   <string>Overwrite any existing files</string>
-                  </property>
-                  <property name="checked">
-                   <bool>true</bool>
+                   <string>Run Tag:</string>
                   </property>
                  </widget>
                 </item>
@@ -401,9 +398,12 @@ p, li { white-space: pre-wrap; }
                  </widget>
                 </item>
                 <item>
-                 <widget class="QLabel" name="label_6">
+                 <widget class="QCheckBox" name="checkBox_SSoverwrite">
                   <property name="text">
-                   <string>Run Tag:</string>
+                   <string>Overwrite any existing files</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
                   </property>
                  </widget>
                 </item>
