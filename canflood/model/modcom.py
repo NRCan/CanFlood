@@ -1374,8 +1374,8 @@ class Model(ComWrkr):
         e.g. resolved damage = max(damage w/o fail, damage w/ fail * fail prob)
         
         
-        we accept multiple exposure sets for a single event likelihood (
-        e.g. 'failure' raster and 'no fail').
+        we accept multiple exposure sets for a single event likelihood 
+            e.g. 'failure' raster and 'no fail'
         Each event can be assigned conditional probabilities in the edf
         
 

@@ -3,7 +3,7 @@ Created on Feb. 9, 2020
 
 @author: cefect
 
-likelihood sampler
+probability sampler
 sampling overlapping polygons at inventory points to calculate combined likelihoods
 '''
 #==========================================================================
@@ -22,7 +22,8 @@ import pandas as pd
 
 
 #Qgis imports
-from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject
+from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject, \
+    QgsWkbTypes, QgsProcessingFeedback
 
 #==============================================================================
 # custom imports
@@ -42,10 +43,10 @@ else:
 
     from hlpr.exceptions import QError as Error
 
-from hlpr.Q import *
-from hlpr.basic import *
 
-from hlpr.Q import view
+#from hlpr.basic import 
+
+from hlpr.Q import view, Qcoms, vlay_get_fdf, vlay_get_fdata, vlay_new_df, vlay_write
 #==============================================================================
 # classes-------------
 #==============================================================================
@@ -474,93 +475,10 @@ class LikeSampler(Qcoms):
         
 
 
-if __name__ =="__main__": 
-    
-    
-    out_dir = os.path.join(os.getcwd(), 'lisamp')
+
     
 
-    #==========================================================================
-    # dev data
-    #==========================================================================
-    tag = 'dev'
-    data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\build\lisamp'
-      
-    cf_fp = os.path.join(data_dir, 'CanFlood_scenario1.txt')
-       
-    finv_fp = os.path.join(data_dir, r'finv_cT2.gpkg')
-       
-    lpol_fn_d = {'Gld_10e2_fail_cT1':r'exposure_likes_10e2_cT1_20200209.gpkg', 
-              'Gld_20e1_fail_cT1':r'exposure_likes_20e1_cT1_20200209.gpkg'}
-       
-       
-    lpol_fp_d = {k:os.path.join(data_dir, v) for k, v in lpol_fn_d.items()}
-    
-    #==========================================================================
-    # 20200304 data
-    #==========================================================================
-    #===========================================================================
-    # tag = 'ICI_rec'
-    #   
-    # out_dir = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDDnrp'
-    #   
-    # cf_fp = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDDnrp\CanFlood_scenario1.txt'
-    #   
-    # finv_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\20200304\finv\TDD_nrp\finv_cconv_20200224_TDDnrp.gpkg'
-    #   
-    #   
-    # data_dir = r'e:\02_INFO\Golder\20200228\jill_20200302\layers'
-    #   
-    # lpol_fn_d = {
-    #     'AG3_Gld_Fr_10e0_WL_fail_20200122':'AG3_Gld_Fr_10e0_Ind_Bd_20200228.gpkg',
-    #     'AG3_Gld_Fr_30e0_WL_fail_20200122':'AG3_Gld_Fr_30e0_Ind_Bd_20200228.gpkg',
-    #     'AG3_Gld_Fr_50e0_WL_fail_20200122':'AG3_Gld_Fr_50e0_Ind_Bd_20200228.gpkg',
-    #     'AG3_Gld_Fr_10e1_WL_fail_20200122':'AG3_Gld_Fr_10e1_Ind_Bd_20200228.gpkg',
-    #     'AG3_Gld_Fr_20e1_WL_fail_20200122':'AG3_Gld_Fr_20e1_Ind_Bd_20200228.gpkg',
-    #     'AG3_Gld_Fr_50e1_WL_fail_20200122':'AG3_Gld_Fr_50e1_Ind_Bd_20200228.gpkg',
-    #     'AG3_Gld_Fr_75e1_WL_fail_20200122':'AG3_Gld_Fr_75e1_Ind_Bd_20200228.gpkg',
-    #     'AG3_Gld_Fr_10e2_WL_fail_20200122':'AG3_Gld_Fr_10e2_Ind_Bd_20200228.gpkg',        
-    #     }
-    #   
-    # lpol_fp_d = {k:os.path.join(data_dir, v) for k, v in lpol_fn_d.items()}
-    #===========================================================================
-    #==========================================================================
-    # load the data
-    #==========================================================================
-    
-    wrkr = LikeSampler(logger=mod_logger, tag=tag, feedback=QgsProcessingFeedback(), out_dir=out_dir,
-                       prec=4)
-    wrkr.ini_standalone() #setup for a standalone run
-    
-    lpol_d, finv_vlay = wrkr.load_layers(lpol_fp_d, finv_fp)
-    
-    wrkr.crs = finv_vlay.crs()
-    #==========================================================================
-    # execute
-    #==========================================================================
-    res_df = wrkr.run(finv_vlay, lpol_d)
-    
-    #convet to a vector
-    res_vlay = wrkr.vectorize(res_df)
-    
-    
-    wrkr.check()
-    
-    #==========================================================================
-    # save results
-    #==========================================================================
-    vlay_write(res_vlay, 
-               os.path.join(wrkr.out_dir, '%s.gpkg'%wrkr.resname),
-               overwrite=True, logger=mod_logger)
-    
-    outfp = wrkr.write_res(res_df)
-    
-    wrkr.upd_cf(cf_fp)
 
-    force_open_dir(out_dir)
-
-    print('finished')
-    
     
     
     
