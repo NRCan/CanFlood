@@ -120,7 +120,7 @@ class Risk1(Model):
         self.logger.debug('finished __init__ on Risk1')
         
         
-    def setup(self): 
+    def _setup(self): 
         """
         called by Dialog and standalones
         """

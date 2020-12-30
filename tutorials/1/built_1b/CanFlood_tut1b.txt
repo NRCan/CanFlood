@@ -9,6 +9,7 @@ ltail = extrapolate     #EAD extrapolation: left tail treatment code (low prob h
 rtail = 0.5             #EAD extrapolation: right trail treatment (high prob low damage)
 drop_tails = False       #whether to remove the extrapolated values from the results
 integrate = trapz       #integration method to apply: trapz, simps
+as_inun = False         #flag whether to treat exposures as percent inundation
 
 [dmg_fps]
 curves = 
