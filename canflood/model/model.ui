@@ -987,7 +987,7 @@ p, li { white-space: pre-wrap; }
                </widget>
               </item>
               <item>
-               <widget class="QCheckBox" name="checkBox">
+               <widget class="QCheckBox" name="checkBox_i2_outExpnd">
                 <property name="text">
                  <string>Output expanded component impacts (dmgs_expnd)</string>
                 </property>
