@@ -303,29 +303,56 @@ p, li { white-space: pre-wrap; }
              <property name="title">
               <string>Run Controls:</string>
              </property>
-             <layout class="QHBoxLayout" name="horizontalLayout">
+             <layout class="QVBoxLayout" name="verticalLayout_14">
               <item>
-               <widget class="QLabel" name="label_6">
-                <property name="text">
-                 <string>Run Tag:</string>
-                </property>
-               </widget>
+               <layout class="QHBoxLayout" name="horizontalLayout_8">
+                <item>
+                 <widget class="QCheckBox" name="checkBox_SSoverwrite">
+                  <property name="text">
+                   <string>Overwrite any existing files</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLineEdit" name="linEdit_Stag">
+                  <property name="text">
+                   <string>run1</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label_6">
+                  <property name="text">
+                   <string>Run Tag:</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
               </item>
               <item>
-               <widget class="QLineEdit" name="linEdit_Stag">
-                <property name="text">
-                 <string>run1</string>
+               <widget class="QGroupBox" name="groupBox_9">
+                <property name="title">
+                 <string>GroupBox</string>
                 </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="checkBox_SSoverwrite">
-                <property name="text">
-                 <string>Overwrite any existing files</string>
-                </property>
-                <property name="checked">
-                 <bool>true</bool>
-                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout">
+                 <item>
+                  <widget class="QRadioButton" name="radioButton_2">
+                   <property name="text">
+                    <string>RadioButton</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="radioButton">
+                   <property name="text">
+                    <string>RadioButton</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
                </widget>
               </item>
              </layout>
