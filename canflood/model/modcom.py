@@ -33,7 +33,7 @@ else:
 
     from hlpr.exceptions import QError as Error
     
-from hlpr.basic import force_open_dir, ComWrkr
+from hlpr.basic import ComWrkr, view
 
 #==============================================================================
 # class-----------
@@ -1417,13 +1417,8 @@ class Model(ComWrkr):
             #==================================================================
             #find event names at this aep
             boolar = aep_ser == aep
-            
-            #handle by match count
-            if boolar.sum() == 0:
-                raise Error('problem with event matching')
-            
-            #get these event names
-            evn_l = aep_ser.index[boolar].tolist()
+            assert boolar.sum() > 0
+            evn_l = aep_ser.index[boolar].tolist() #get these event names
             
             #==================================================================
             # resolve
@@ -1432,9 +1427,9 @@ class Model(ComWrkr):
             #only 1 event.. nothing to resolve
             if len(evn_l) == 1:
                 """
-                possible if a hazard layer doesn't have a corresponding failure layer
+                hazard layer doesn't have a corresponding failure layer
                 """
-                log.warning('only got 1 event \'%s\' for aep %.2e'%(
+                log.debug('only got 1 event \'%s\' for aep %.2e'%(
                     aep_ser.index[boolar].values, aep))
                 
                 #use these
@@ -1446,13 +1441,15 @@ class Model(ComWrkr):
                     aep, len(evn_l), evn_l))
                 
                 res_df.loc[:, aep] = evdf.loc[:, evn_l].max(axis=1)
+                """
+                view(evdf.loc[:, evn_l])
+                """
                 
             if res_df[aep].isna().any():
-                print('yay')
                 raise Error('got nulls on %s'%aep)
                 
         #======================================================================
-        # warp
+        # wrap
         #======================================================================
         if not res_df.notna().all().all():
             raise Error('got %i nulls'%res_df.isna().sum().sum())

@@ -99,7 +99,7 @@ class LikeSampler(Qcoms):
         #======================================================================
         # wrap
         #======================================================================
-        log.info('finished')
+        log.debug('finished')
         return lpol_d, finv_vlay
             
     def run(self,
@@ -127,10 +127,10 @@ class LikeSampler(Qcoms):
                 raise Error('bad type on %s layer: %s'%(ename, type(vlay)))
             assert 'Polygon' in QgsWkbTypes().displayString(vlay.wkbType()), \
                 'unexpected geometry: %s'%QgsWkbTypes().displayString(vlay.wkbType())
-            assert lfield in [field.name() for field in vlay.fields()], 'specified lfield \"%s\' not on layer'
+            assert lfield in [field.name() for field in vlay.fields()], \
+                'specified lfield \"%s\' not on layer'
             assert vlay.isValid()
-            
-            assert vlay.crs() == self.crs, 'crs mismatch on %s'%vlay.name()
+            assert vlay.crs() == self.qproj.crs(), 'crs mismatch on %s'%vlay.name()
             #==================================================================
             # #check values
             #==================================================================
@@ -138,9 +138,7 @@ class LikeSampler(Qcoms):
             chk_df = vlay_get_fdf(vlay, logger=log)
             chk_ser = chk_df.loc[:, lfield]
             
-            #check fo rnulls
-            boolidx = chk_ser.isna()
-            assert not boolidx.any(), 'got nulls on %s'%ename
+            assert not chk_ser.isna().any(), 'got nulls on %s'%ename
         
             #if 0<fval<1
             boolidx = np.logical_and( #checking for fails
@@ -151,17 +149,13 @@ class LikeSampler(Qcoms):
                 raise Error('%s.%s got %i (of %i) values out of range: \n%s'%(
                     ename,lfield, boolidx.sum(), len(boolidx), chk_ser[boolidx]))
             
-        #check vlay
+        #check finv
         assert isinstance(finv, QgsVectorLayer), 'bad type on finv'
         assert finv.isValid(), 'invalid finv'
         assert cid in  [field.name() for field in finv.fields()], 'missing cid \'%s\''%cid
         assert finv.crs() == self.crs, 'crs mismatch on %s'%finv.name()
             
-        #======================================================================
-        # slice data by project aoi
-        #======================================================================
-        
-        
+
         #======================================================================
         # build finv
         #======================================================================
@@ -173,10 +167,9 @@ class LikeSampler(Qcoms):
         #get cid list
         fdf = vlay_get_fdf(fc_vlay, logger=log)
         cid_l = fdf[cid].tolist()
-        
-
+ 
         #======================================================================
-        # sample values
+        # sample values------
         #======================================================================
         log.info('sampling %i lpols w/ %i finvs'%(len(lpol_d), len(cid_l)))
         en_c_sval_d = dict() #container for samples {event name: sample data}
@@ -191,7 +184,6 @@ class LikeSampler(Qcoms):
             """
             svlay, new_fns, jcnt = self.joinattributesbylocation(fc_vlay, lp_vlay, [lfield],
                                                   method=0, #one-to-many
-                                                 
                                                   logger=log,
                                                   expect_j_overlap=True,
                                                   allow_none=True,
@@ -263,17 +255,14 @@ class LikeSampler(Qcoms):
         
         
         #======================================================================
-        # resolve union events
+        # resolve union events------
         #======================================================================
         log = self.logger.getChild('run')
         log.info('collected sample values for %i events and %i assets'%(
             len(en_c_sval_d), len(cid_l)))
         
-        #build results contqainer
-        #res_df = pd.DataFrame(index = fdf[cid], columns = en_c_sval_d.keys())
-        res_df = None
+        res_df = None #build results contqainer
 
-        
         #loop and resolve
         log.debug('resolving %i events'%len(en_c_sval_d))
         for ename, cid_samp_d in en_c_sval_d.items():
