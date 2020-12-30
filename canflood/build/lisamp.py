@@ -36,7 +36,7 @@ if __name__ =="__main__":
     
     from hlpr.exceptions import Error
     
-    from hlpr.plug import QprojPlug as base_class
+
 
 #plugin runs
 else:
@@ -46,7 +46,7 @@ else:
 
 #from hlpr.basic import 
 
-from hlpr.Q import view, Qcoms, vlay_get_fdf, vlay_get_fdata, vlay_new_df, vlay_write
+from hlpr.Q import view, Qcoms, vlay_get_fdf, vlay_get_fdata, vlay_new_df
 #==============================================================================
 # classes-------------
 #==============================================================================
