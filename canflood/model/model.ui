@@ -957,19 +957,9 @@ p, li { white-space: pre-wrap; }
            <item>
             <widget class="QGroupBox" name="verticalGroupBox">
              <property name="title">
-              <string>Risk Modelling Run Parameters:</string>
+              <string>Run Controls:</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout">
-              <item>
-               <widget class="QCheckBox" name="checkBox_i2RunRisk">
-                <property name="text">
-                 <string>Run Risk (L2) upon completion (see 'Risk (L2)' tab for configuration)</string>
-                </property>
-                <property name="checked">
-                 <bool>false</bool>
-                </property>
-               </widget>
-              </item>
               <item>
                <widget class="QCheckBox" name="checkBox_i2_updCf">
                 <property name="text">
@@ -990,6 +980,16 @@ p, li { white-space: pre-wrap; }
                <widget class="QCheckBox" name="checkBox_i2_outExpnd">
                 <property name="text">
                  <string>Output expanded component impacts (dmgs_expnd)</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="checkBox_i2RunRisk">
+                <property name="text">
+                 <string>Run Risk (L2) upon completion (see 'Risk (L2)' tab for configuration)</string>
+                </property>
+                <property name="checked">
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>
@@ -1469,7 +1469,7 @@ p, li { white-space: pre-wrap; }
            <item>
             <widget class="QGroupBox" name="verticalGroupBox_3">
              <property name="title">
-              <string>Risk Modelling:</string>
+              <string>Run Controls:</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_2">
               <item>
