@@ -41,7 +41,7 @@ else:
     
 
 from hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata
-#from hlpr.basic import *
+from hlpr.basic import get_valid_filename
 
 #==============================================================================
 # functions-------------------
@@ -70,6 +70,7 @@ class Preparor(Qcoms):
         
     def copy_cf_template(self, #start a new control file by copying the template
                   wdir,
+                  cf_fp=None,
                   logger=None
                   ):
         
@@ -79,7 +80,7 @@ class Preparor(Qcoms):
         if logger is None: logger=self.logger
         log = logger.getChild('copy_cf_template')
         
-        
+        if cf_fp is None: cf_fp = os.path.join(wdir, 'CanFlood_%s.txt'%self.tag)
         #=======================================================================
         # copy control file template
         #=======================================================================
@@ -94,12 +95,12 @@ class Preparor(Qcoms):
         
         
         #get new file name
-        cf_path = os.path.join(wdir, 'CanFlood_%s.txt'%self.tag)
+        
         
         #see if this exists
-        if os.path.exists(cf_path):
+        if os.path.exists(cf_fp):
             msg = 'generated control file already exists. overwrite=%s \n     %s'%(
-                self.overwrite, cf_path)
+                self.overwrite, cf_fp)
             if self.overwrite:
                 log.warning(msg)
             else:
@@ -107,14 +108,14 @@ class Preparor(Qcoms):
             
             
         #copy over the default template
-        shutil.copyfile(cf_src, cf_path)
+        shutil.copyfile(cf_src, cf_fp)
         
         log.debug('copied control file from\n    %s to \n    %s'%(
-            cf_src, cf_path))
+            cf_src, cf_fp))
         
-        self.cf_fp = cf_path
+        self.cf_fp = cf_fp
         
-        return cf_path
+        return cf_fp
 
     def upd_cf_first(self, #seting initial values to the control file
                      curves_fp,
@@ -131,6 +132,108 @@ class Preparor(Qcoms):
                 'dmg_fps':
                     ({'curves':curves_fp},),           
             })
+        
+    def finv_to_csv(self, #convert the finv to csv
+                    vlay,
+                    felv='datum', #should probabl just leave this if none
+                    cid=None, tag=None,
+                    logger=None,
+                    ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log=logger.getChild('finv_to_csv')
+        
+        if cid is None: cid=self.cid
+        if tag is None: tag=self.tag
+        
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        assert os.path.exists(self.cf_fp), 'bad cf_fp: %s'%self.cf_fp
+        assert vlay.crs()==self.qproj.crs(), 'finv CRS (%s) does not match projects (%s)'%(
+            vlay.crs(), self.qproj.crs())
+        
+        
+        #check cid
+        assert isinstance(cid, str)
+        if cid == '':
+            raise Error('must specify a cid') 
+        if cid in self.invalid_cids:
+            raise Error('user selected invalid cid \'%s\''%cid)  
+        
+        
+        assert cid in [field.name() for field in vlay.fields()]
+        
+        
+        
+        
+        #=======================================================================
+        # #extract data
+        #=======================================================================
+        
+        log.info('extracting data on \'%s\' w/ %i feats'%(
+            vlay.name(), vlay.dataProvider().featureCount()))
+                
+        df = vlay_get_fdf(vlay, feedback=self.feedback)
+          
+        #drop geometery indexes
+        for gindx in self.invalid_cids:   
+            df = df.drop(gindx, axis=1, errors='ignore')
+            
+        #more cid checks
+        if not cid in df.columns:
+            raise Error('cid not found in finv_df')
+        
+        assert df[cid].is_unique
+        assert 'int' in df[cid].dtypes.name, 'cid \'%s\' bad type'%cid
+        
+        self.feedback.upd_prog(50)
+        
+        #=======================================================================
+        # #write to file
+        #=======================================================================
+        out_fp = os.path.join(self.out_dir, get_valid_filename('finv_%s_%s.csv'%(self.tag, vlay.name())))
+        
+        #see if this exists
+        if os.path.exists(out_fp):
+            msg = 'generated finv.csv already exists. overwrite=%s \n     %s'%(
+                self.overwrite, out_fp)
+            if self.overwrite:
+                log.warning(msg)
+            else:
+                raise Error(msg)
+            
+            
+        df.to_csv(out_fp, index=False)  
+        
+        log.info("inventory csv written to file:\n    %s"%out_fp)
+        
+        self.feedback.upd_prog(80)
+        #=======================================================================
+        # write to control file
+        #=======================================================================
+        assert os.path.exists(out_fp)
+        
+        self.update_cf(
+            {
+            'dmg_fps':(
+                {'finv':out_fp}, 
+                '#\'finv\' file path set from BuildDialog.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                ),
+            'parameters':(
+                {'cid':str(cid),
+                 'felv':felv},
+                )
+             },
+
+            )
+        
+        self.feedback.upd_prog(99)
+        
+        return out_fp
             
     
     def to_L1finv(self,

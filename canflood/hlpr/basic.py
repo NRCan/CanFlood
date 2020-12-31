@@ -48,6 +48,8 @@ class ComWrkr(object): #common methods for all classes
     
     #mandatory keys for curves
     crv_keys = ('tag', 'exposure')
+    invalid_cids = ['fid', 'ogc_fid']
+    
     
     def __init__(self, tag='session', 
                  cid='xid', #default used by inventory constructors

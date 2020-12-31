@@ -522,7 +522,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # run the control file builder
         #=======================================================================
         #initilize
-        wrkr = Preparor(logger=self.logger,  out_dir=wdir, tag=tag)
+        wrkr = Preparor(logger=self.logger,  out_dir=wdir, tag=tag, feedback=self.feedback)
         self.feedback.upd_prog(20)
         
         #copy the template
@@ -554,39 +554,27 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
     def convert_finv(self): #aoi slice and convert the finv vector to csv file
         
-        
         log = self.logger.getChild('convert_finv')
-        log.info('started')
-        self.feedback.upd_prog(10)
+        self.feedback.upd_prog(5)
         
         
         #=======================================================================
         # retrieve data
         #=======================================================================
         cid = self.mFieldComboBox_cid.currentField() #user selected field
-        
         vlay_raw = self.comboBox_ivlay.currentLayer()
-        
         cf_fp = self.get_cf_fp()
         tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
         wdir =  self.lineEdit_wd.text() #pull the wd filepath from the user provided in 'Browse'
+        
         #======================================================================
         # prechecks
         #======================================================================
         assert isinstance(vlay_raw, QgsVectorLayer), 'must select a VectorLayer'
-        assert os.path.exists(cf_fp), 'bad cf_fp: %s'%cf_fp
+        
         assert vlay_raw.crs()==self.qproj.crs(), 'finv CRS (%s) does not match projects (%s)'%(vlay_raw.crs(), self.qproj.crs())
         
-        #check cid
-        assert isinstance(cid, str)
-        if cid == '':
-            raise Error('must specify a cid') 
-        if cid in self.invalid_cids:
-            raise Error('user selected invalid cid \'%s\''%cid)  
-        
-        assert cid in [field.name() for field in vlay_raw.fields()]
-        
-        
+ 
         
         #=======================================================================
         # aoi slice
@@ -603,81 +591,30 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             self.logger.info('added \'%s\' to canvas'%vlay.name())
             self.comboBox_ivlay.setLayer(vlay) #set this as the new finv
         
-        
-
         self.feedback.upd_prog(30)
-        #=======================================================================
-        # #extract data
-        #=======================================================================
         
-        log.info('extracting data on \'%s\' w/ %i feats'%(
-            vlay.name(), vlay.dataProvider().featureCount()))
-                
-        df = vlay_get_fdf(vlay, feedback=self.feedback)
-          
-        #drop geometery indexes
-        for gindx in self.invalid_cids:   
-            df = df.drop(gindx, axis=1, errors='ignore')
-            
-        #more cid checks
-        if not cid in df.columns:
-            raise Error('cid not found in finv_df')
-        
-        assert df[cid].is_unique
-        assert 'int' in df[cid].dtypes.name, 'cid \'%s\' bad type'%cid
-        
-        self.feedback.upd_prog(50)
         #=======================================================================
-        # #write to file
+        # extract, download, and update cf
         #=======================================================================
+        wrkr = Preparor(logger=self.logger,  out_dir=wdir, tag=tag, feedback=self.feedback,
+                        cid=cid, cf_fp=self.cf_fp, overwrite=self.overwrite) 
+        
+        out_fp = wrkr.finv_to_csv( vlay, felv=self.comboBox_SSelv.currentText(),
+                                   logger=self.logger)
 
-        out_fp = os.path.join(wdir, get_valid_filename('finv_%s_%s.csv'%(tag, vlay.name())))
-        
-        #see if this exists
-        if os.path.exists(out_fp):
-            msg = 'generated finv.csv already exists. overwrite=%s \n     %s'%(
-                self.overwrite, out_fp)
-            if self.overwrite:
-                log.warning(msg)
-            else:
-                raise Error(msg)
-            
-            
-        df.to_csv(out_fp, index=False)  
-        
-        log.info("inventory csv written to file:\n    %s"%out_fp)
-        
-        self.feedback.upd_prog(80)
-        #=======================================================================
-        # write to control file
-        #=======================================================================
-        assert os.path.exists(out_fp)
-        
-        self.update_cf(
-            {
-            'dmg_fps':(
-                {'finv':out_fp}, 
-                '#\'finv\' file path set from BuildDialog.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
-                ),
-            'parameters':(
-                {'cid':str(cid),
-                 'felv':self.comboBox_SSelv.currentText()},
-                )
-             },
-            cf_fp = cf_fp
-            )
-        
-        self.feedback.upd_prog(99)
         #=======================================================================
         # wrap
         #=======================================================================
         log.push('inventory vector layer stored "\'%s\''%vlay.name())
         self.feedback.upd_prog(None) #set the progress bar back down to zero
         
-        return out_fp
+        return 
     
     
     def convert_rfda(self): #Other.Rfda tab
+        """
+        TODO: move to drop down
+        """
         log = self.logger.getChild('convert_rfda')
         tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
         

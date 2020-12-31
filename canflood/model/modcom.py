@@ -45,6 +45,17 @@ class Model(ComWrkr):
     
     Control File Parameters:
         [parameters]
+        
+        name -- name of the scenario/model run
+        
+        cid -- index column for the 3 inventoried data sets (finv, expos, gels)
+        
+        prec -- float precision for calculations
+        
+        ground_water -- flag to include negative depths in the analysis
+        
+        felv -- 'datum' or 'ground': whether felv values provided in the
+                     inventory are heights or elevations
 
         event_probs -- format of event probabilities (in 'aeps' data file) 
                         (default 'ari')
@@ -76,7 +87,7 @@ class Model(ComWrkr):
         integrate -- numpy integration method to apply (default 'trapz')
 
         
-        ground_water -- flag to include negative depths in the analysis
+        
         
         as_inun    -- flag whether to treat exposures as %inundation
         

@@ -59,7 +59,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
     wd = ''
     progress = 0
     
-    invalid_cids = ['fid', 'ogc_fid']
+    
     
     """not a great way to init this one
     Plugin classes are only initilaizing the first baseclass
