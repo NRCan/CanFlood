@@ -129,7 +129,7 @@ class Preparor(Qcoms):
                     ({'name':'tag'},note_str),
                     
                 'dmg_fps':
-                    ({'curves':curves_fp}),           
+                    ({'curves':curves_fp},),           
             })
             
     
