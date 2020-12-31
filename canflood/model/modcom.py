@@ -851,9 +851,9 @@ class Model(ComWrkr):
         log.debug('loading w/ %s'%str(edf.shape))
         
         
-        #=======================================================================
-        # complete/fix data-----
-        #=======================================================================
+
+        
+
         """TODO: Consider moving these onto the build tool"""
         #======================================================================
         # fill nulls
@@ -872,12 +872,85 @@ class Model(ComWrkr):
         edf = edf.fillna(0.0)
         
         #==================================================================
-        # check/add missing probabilities
+        # check/add event probability totals----
         #==================================================================
-        """
+        
+        #=======================================================================
+        # assemble complex aeps
+        #=======================================================================
+        #collect event names
+        cplx_evn_d = dict()
+        for aep in aep_ser[aep_ser.duplicated(keep='first')]: #those aeps w/ duplicates:
+            cplx_evn_d[aep] = aep_ser[aep_ser==aep].index.tolist()
+        
+        assert len(cplx_evn_d) > 0, 'passed \'exlikes\' but there are no complex events'
+        
+
+        def get_cplx_df(df, aep=None, exp_l=None): #retrieve complex data helper
+            if exp_l is None:
+                exp_l = cplx_evn_d[aep]
+            return df.loc[:, df.columns.isin(exp_l)]
+            
+        #=======================================================================
+        # check we dont already exceed 1
+        #=======================================================================
+        valid = True
+        for aep, exp_l in cplx_evn_d.items():
+            cplx_df = get_cplx_df(edf, exp_l=exp_l) #get data for this event
+            boolidx = cplx_df.sum(axis=1)>=1.0 #find those exceeding 1.0
+
+            if boolidx.any():
+                valid = False
+                log.error('aep%.4f failed %i (of %i) Psum<=1 checks'%(
+                    aep, boolidx.sum(), len(boolidx)))
+                
+        assert valid, 'some complex event probabilities exceed 1'
+            
+        #=======================================================================
+        # #identify those events that need filling
+        #=======================================================================
+        fill_exn_d = dict()
+        for aep, exn_l in cplx_evn_d.items(): 
+            
+            miss_l = set(exn_l).difference(edf.columns)
+            assert len(miss_l)<2, 'can only fill one exposure column per complex event'
+            
+            if len(miss_l)==1:
+                fill_exn_d[aep] = list(miss_l)[0]
+                
+        log.debug('calculating probaility for %i complex events with remaining secnodaries'%(
+            len(fill_exn_d)))
+            
+        #=======================================================================
+        # fill in missing (sum to 1)
+        #=======================================================================
+        res_d = dict()
+        for aep, exn_miss in fill_exn_d.items():
+
+            #data provided on this event
+            """typically this is a single column generated for the failure raster
+            but this should work for multiple failure rasters"""
+            cplx_df = get_cplx_df(edf, aep=aep)
+            assert len(cplx_df.columns)==(len(cplx_evn_d[aep])-1), 'bad column count'
+            assert (cplx_df.sum(axis=1)<=1).all() #check we don't already exceed 1 (redundant)
+            
+            #set remainder values
+            edf[exn_miss] = 1- cplx_df.sum(axis=1)
+            
+            log.debug('for aep %.4f \'%s\' set %i remainder values (mean=%.4f)'%(
+                aep, exn_miss, len(cplx_df), edf[exn_miss].mean()))
+            
+            res_d[exn_miss] = round(edf[exn_miss].mean(), self.prec)
+            
+        if len(res_d)>0: log.info(
+            'set %i complex event conditional probabilities using remainders \n    %s'%(
+                len(res_d), res_d))
+ 
+
+        """NO! probabilities must sum to 1
         missing column = no secondary likelihoods at all for this event.
         all probabilities = 1
-        """
+        
         #identify those missing in the edf (compared with the expos)
         miss_l = set(self.expcols).difference(edf.columns)
         
@@ -888,34 +961,41 @@ class Model(ComWrkr):
                 len(miss_l), miss_l))
             
             for coln in miss_l:
-                edf[coln] = 1.0
+                edf[coln] = 1.0"""
             
         log.debug('prepared edf w/ %s'%str(edf.shape))
         
+
         #=======================================================================
-        # assemble complex aeps-----
+        # #check conditional probabilities sum to 1
         #=======================================================================
-        #collect event names
-        cplx_evn_d = dict()
-        for aep in aep_ser[aep_ser.duplicated(keep='first')]: #those aeps w/ duplicates:
-            cplx_evn_d[aep] = aep_ser[aep_ser==aep].index.tolist()
+
         
-        assert len(cplx_evn_d) > 0, 'resolving multi but there are no complex events'
-        #=======================================================================
-        # check logic----
-        #=======================================================================
-
-
+        valid = True
+        for aep, exp_l in cplx_evn_d.items():
+            cplx_df = get_cplx_df(edf, exp_l=exp_l) #get data for this event
+            boolidx = cplx_df.sum(axis=1)!=1.0 #find those exceeding 1.0
+        
+            """
+            chk_df = edf.loc[:, exn_l]
+            chk_df['sum'] = edf.loc[:, exn_l].sum(axis=1)
+            chk_df['result'] = boolidx
             
-        """
-        view(edf)
-        aep_ser
-        """
-        
+            view(chk_df)
+            """
+
+            if boolidx.any():
+                valid = False
+                log.error('aep%.4f failed %i (of %i) Psum<=1 checks'%(
+                    aep, boolidx.sum(), len(boolidx)))
+                
+        assert valid, 'some complex event probabilities exceed 1'
+
         #==================================================================
         # wrap
         #==================================================================
         self.data_d[dtag] = edf
+        self.cplx_evn_d = cplx_evn_d
         
         return
         
@@ -1413,7 +1493,9 @@ class Model(ComWrkr):
         self.ddf = ddf
         
 
-        
+    #===========================================================================
+    # CALCULATORS-------
+    #===========================================================================
         
     def ev_multis(self, #calculate (discrete) expected value from events w/ multiple exposure sets
            ddf, #damages per exposure set (
@@ -1535,120 +1617,6 @@ class Model(ComWrkr):
         
         return res_df.sort_index(axis=1)
     
-    #==========================================================================
-    # VALIDATORS-----------
-    #==========================================================================
-    
-    def check_monot(self,
-                     df_raw, #event:asset like data. expectes columns as aep 
-                     split_key = False, #optional key to split hazard columns with (for fail/noFail sets)
-                     aep_ser=None, event_probs = 'aep', #optional kwargs for column conversion
-                     logger=None
-                     ):
-        """
-        if damages are equal the warning will be thrown
-        
-        todo: store this as an output
-        """
-        
-        
-        #======================================================================
-        # defaults
-        #======================================================================
-        
-        if logger is None: logger=self.logger
-        if split_key is None: split_key = self.split_key
-        log = logger.getChild('check_monot')
-        
-        #======================================================================
-        # worker func
-        #======================================================================
-        def chk_func(df_raw, log):
-        
-            #======================================================================
-            # convresions
-            #======================================================================
-            if not aep_ser is None:
-                df, d = self.conv_expo_aep(df_raw, aep_ser, event_probs=event_probs, logger=log)
-            else:
-                df = df_raw.copy()
-            
-            log.debug('on %s w/ cols: \n    %s'%(str(df.shape), df.columns.tolist()))
-            #======================================================================
-            # prechecks
-            #======================================================================
-            
-            assert np.issubdtype(df.columns.dtype, np.number)
-            """should be ok
-            assert np.all(df.notna()), 'got some nulls'"""
-            assert df.columns.is_monotonic_increasing #extreme to likely
-            assert df.columns.max() <1
-            
-            #======================================================================
-            # clean
-            #======================================================================
-            if df.isna().any().any():
-                log.warning('replacing %i nulls w/ zeros for check'%df.isna().sum().sum())
-                df = df.fillna(0).copy()
-                
-            #======================================================================
-            # check
-            #======================================================================
-            """
-                    #apply the ead func
-            df.loc[boolidx, 'ead'] = df.loc[boolidx, :].apply(
-                self.get_ev, axis=1, dx=dx)
-            """
-            def chk_func(ser):
-                return ser.is_monotonic_decreasing
-        
-            #check for damage monotonicity (should go from left BIG/extreme to right small/likely
-            """
-            view(df)
-            view(df[boolidx])
-            """
-            #get offenders (from 
-            boolidx = np.logical_and(
-                ~df.apply(chk_func, axis=1), #NOT going left big to righ textreme
-                df.nunique(axis=1) > 1, #only one value per row
-                )
-    
-            if boolidx.any():
-                with pd.option_context(
-                                'display.max_rows', None, 
-                               'display.max_columns', None,
-                               #'display.height',1000,
-                               'display.width',1000):
-                        
-                    log.debug('\n%s'%df.loc[boolidx, :])
-                    log.debug('\n%s'%df[boolidx].index.tolist())
-                    log.warning(' %i (of %i)  assets have non-monotonic-increasing damages. see logger'%(
-                        boolidx.sum(), len(boolidx)))
-                
-                return False
-            else:
-                log.debug('all %i passed'%len(df))
-                return True
-        
-        #======================================================================
-        # splitting
-        #======================================================================
-        if not split_key == False:
-            boolcol = df_raw.columns.str.contains(split_key)
-            
-            if not boolcol.any():
-                raise Error('failed to split events by \"%s\''%split_key)
-            
-            res1 = chk_func(df_raw.loc[:,boolcol], log.getChild(split_key))
-            res2 = chk_func(df_raw.loc[:,~boolcol], log.getChild('no%s'%split_key))
-            
-            result = res1 and res2
-            
-        else:
-            result= chk_func(df_raw, log)
-            
-        return result
-            
 
     def calc_ead(self, #get EAD from a set of impacts per event
                  df_raw, #xid: aep
@@ -1719,7 +1687,7 @@ class Model(ComWrkr):
                 self.extrap_vals_d[0] = df.loc[:,0].mean().round(self.prec) #store for later
             
         elif ltail == 'extrapolate': #DEFAULT
-            df.loc[bx,0] = df.loc[bx, :].apply(self.extrap, axis=1, left=True)
+            df.loc[bx,0] = df.loc[bx, :].apply(self._extrap_rCurve, axis=1, left=True)
             
             #extrap vqalue will be different for each entry
             if len(df)==1: 
@@ -1804,7 +1772,7 @@ class Model(ComWrkr):
         
         #apply the ead func
         df.loc[bx, 'ead'] = df.loc[bx, :].apply(
-            self.get_ev, axis=1, dx=dx)
+            self._get_ev, axis=1, dx=dx)
         
         
         df.loc[:, 'ead'] = df['ead'].fillna(0) #fill remander w/ zeros
@@ -1829,7 +1797,7 @@ class Model(ComWrkr):
         return res_df.round(self.prec)
 
 
-    def extrap(self,  #extraploating EAD curve data
+    def _extrap_rCurve(self,  #extraploating EAD curve data
                ser, #row of dmages (y values) from big df
                left=True, #whether to extraploate left or gihtt
                ):
@@ -1882,7 +1850,7 @@ class Model(ComWrkr):
         
         return float(result) 
     
-    def get_ev(self, #integration caller
+    def _get_ev(self, #integration caller
                ser, #row from damage results
                dx = 0.1,
                ):
@@ -1943,6 +1911,170 @@ class Model(ComWrkr):
 
         return round(ead_tot, self.prec)
     
+    def _conv_expo_aep(self, #converting exposure data set to aep column values 
+                      df, 
+                      aep_ser,
+                      event_probs = 'aep',
+                      logger = None,):
+        
+        if logger is None: logger = self.logger
+        log = self.logger.getChild('_conv_expo_aep')
+        
+        assert isinstance(aep_ser, pd.Series)
+        
+        assert len(df.columns) > 0
+        assert np.issubdtype(aep_ser.dtype, np.number)
+        
+        miss_l = set(df.columns).difference(aep_ser.index)
+        assert len(miss_l) == 0, 'some event columns in the ddf not in the aep'
+        
+        #slice down aep_ser
+        aep_ser = aep_ser
+        
+        aep_ser = aep_ser[aep_ser.index.isin(df.columns)]
+        
+        
+        if not aep_ser.is_unique:
+            raise Error('only setup for unique aeps')
+        
+        #======================================================================
+        # conversions
+        #======================================================================
+        if event_probs == 'ari':
+            aep_ser = 1/aep_ser
+            log.info('converted %i aris to aeps'%len(aep_ser))
+        elif event_probs == 'aep':
+            pass
+        else:
+            raise Error('unrecognized event_probs')
+        
+        #most extreme events from left to right (less extreme)
+        df1 = df.rename(columns = aep_ser.to_dict()).sort_index(axis=1, ascending=True)
+        
+        return df1, aep_ser.to_dict()
+            
+    def force_monot(self, #forcing monotoncity on an exposure data set
+                   df_raw,
+                   aep_ser = None, #optional aep_ser to format here
+                   event_probs = 'ari',
+                   logger = None,
+                   ):
+        
+        if logger is None: logger=self.logger
+        log = logger.getChild('force_monot')
+        
+        assert isinstance(df_raw, pd.DataFrame)
+        
+        log.info('on %s'%str(df_raw.shape))
+        
+        #======================================================================
+        # convresions
+        #======================================================================
+        if not aep_ser is None:
+            df, d = self._conv_expo_aep(df_raw, aep_ser, event_probs=event_probs, logger=log)
+            
+            #get conversion dict to map it back at the end
+
+            rename_d = dict(zip(d.values(),d.keys()))
+            
+        else:
+            rename_d = dict()
+            df = df_raw.copy()
+            
+            
+        #======================================================================
+        # checks
+        #======================================================================
+        assert np.issubdtype(df.columns.dtype, np.number)
+        """should be ok
+        assert np.all(df.notna()), 'got some nulls'"""
+        assert df.columns.is_monotonic_increasing #extreme to likely
+        assert df.columns.max() <1
+
+
+        #======================================================================
+        # identify offenders
+        #======================================================================
+        boolidx1 = ~df.apply(lambda x: x.is_monotonic_decreasing, axis=1)
+        boolidx2 = df.nunique(axis=1, dropna=False) > 1
+        
+        """
+        212 in df[boolidx1].index
+        212 in df[boolidx2].index
+        
+        df.loc[[212, 1462],:].nunique(axis=1, dropna=False) >1
+        
+        """
+        #get offenders (from 
+        boolidx = np.logical_and(
+            boolidx1, #NOT going left big to righ textreme
+            boolidx2, #more than 1 value per row
+            )
+        
+        if not boolidx.any():
+            raise Error('no offending entries!')
+        
+        log.info('fixing %i (of %i) non-monos'%(boolidx.sum(), len(boolidx)))
+        
+        #======================================================================
+        # apply
+        #======================================================================
+        def force_mo(ser):
+            #get first non-null
+            first = True
+            for indxr, val in ser[ser.notna().idxmax():].items():
+                if first:
+                    lval = val
+                    first=False
+                    continue
+                
+                if pd.isnull(val):
+                    ser.loc[indxr] = lval
+                elif val < lval:
+                    ser.loc[indxr] = lval
+                else:
+                    lval = val
+                    
+            #check
+            if not ser.dropna().is_monotonic_increasing:
+                raise Error('failed')
+            
+                    
+            return ser
+                
+
+                
+        #flip the column order (likely -> extreme)
+        df = df.sort_index(axis=1, ascending=False)
+        
+        #apply the forcing
+        res_df = df.copy()
+        res_df.loc[boolidx,:] = res_df[boolidx].apply(force_mo, axis=1)
+        
+        #flip columns back
+        res_df = res_df.sort_index(axis=1, ascending=True)
+        
+        """
+        212 in res_df[boolidx].index
+        """
+        
+        #======================================================================
+        # check it
+        #======================================================================
+        if not self.check_monot(res_df):
+            raise Error('failed to fix')
+        
+        log.info('finished')
+        """
+        view(res_df)
+        """
+        
+        
+        return res_df.rename(columns=rename_d)
+    
+    #===========================================================================
+    # PLOTTING-------
+    #===========================================================================
     def risk_plot(self, #generate and save a figure that summarizes the damages 
                   dmg_ser = None,
                   
@@ -2325,169 +2457,122 @@ class Model(ComWrkr):
         return ead_tot, dmg_ser1
         
     
-    def conv_expo_aep(self, #converting exposure data set to aep column values 
-                      df, 
-                      aep_ser,
-                      event_probs = 'aep',
-                      logger = None,):
+   
+
+    #==========================================================================
+    # VALIDATORS-----------
+    #==========================================================================
+    
+    def check_monot(self,
+                     df_raw, #event:asset like data. expectes columns as aep 
+                     split_key = False, #optional key to split hazard columns with (for fail/noFail sets)
+                     aep_ser=None, event_probs = 'aep', #optional kwargs for column conversion
+                     logger=None
+                     ):
+        """
+        if damages are equal the warning will be thrown
         
-        if logger is None: logger = self.logger
-        log = self.logger.getChild('conv_expo_aep')
+        todo: store this as an output
+        """
         
-        assert isinstance(aep_ser, pd.Series)
-        
-        assert len(df.columns) > 0
-        assert np.issubdtype(aep_ser.dtype, np.number)
-        
-        miss_l = set(df.columns).difference(aep_ser.index)
-        assert len(miss_l) == 0, 'some event columns in the ddf not in the aep'
-        
-        #slice down aep_ser
-        aep_ser = aep_ser
-        
-        aep_ser = aep_ser[aep_ser.index.isin(df.columns)]
-        
-        
-        if not aep_ser.is_unique:
-            raise Error('only setup for unique aeps')
         
         #======================================================================
-        # conversions
+        # defaults
         #======================================================================
-        if event_probs == 'ari':
-            aep_ser = 1/aep_ser
-            log.info('converted %i aris to aeps'%len(aep_ser))
-        elif event_probs == 'aep':
-            pass
-        else:
-            raise Error('unrecognized event_probs')
-        
-        #most extreme events from left to right (less extreme)
-        df1 = df.rename(columns = aep_ser.to_dict()).sort_index(axis=1, ascending=True)
-        
-        return df1, aep_ser.to_dict()
-            
-            
-        
-    def force_monot(self, #forcing monotoncity on an exposure data set
-                   df_raw,
-                   aep_ser = None, #optional aep_ser to format here
-                   event_probs = 'ari',
-                   logger = None,
-                   ):
         
         if logger is None: logger=self.logger
-        log = logger.getChild('force_monot')
-        
-        assert isinstance(df_raw, pd.DataFrame)
-        
-        log.info('on %s'%str(df_raw.shape))
+        if split_key is None: split_key = self.split_key
+        log = logger.getChild('check_monot')
         
         #======================================================================
-        # convresions
+        # worker func
         #======================================================================
-        if not aep_ser is None:
-            df, d = self.conv_expo_aep(df_raw, aep_ser, event_probs=event_probs, logger=log)
+        def chk_func(df_raw, log):
+        
+            #======================================================================
+            # convresions
+            #======================================================================
+            if not aep_ser is None:
+                df, d = self._conv_expo_aep(df_raw, aep_ser, event_probs=event_probs, logger=log)
+            else:
+                df = df_raw.copy()
             
-            #get conversion dict to map it back at the end
-
-            rename_d = dict(zip(d.values(),d.keys()))
+            log.debug('on %s w/ cols: \n    %s'%(str(df.shape), df.columns.tolist()))
+            #======================================================================
+            # prechecks
+            #======================================================================
+            
+            assert np.issubdtype(df.columns.dtype, np.number)
+            """should be ok
+            assert np.all(df.notna()), 'got some nulls'"""
+            assert df.columns.is_monotonic_increasing #extreme to likely
+            assert df.columns.max() <1
+            
+            #======================================================================
+            # clean
+            #======================================================================
+            if df.isna().any().any():
+                log.warning('replacing %i nulls w/ zeros for check'%df.isna().sum().sum())
+                df = df.fillna(0).copy()
+                
+            #======================================================================
+            # check
+            #======================================================================
+            """
+                    #apply the ead func
+            df.loc[boolidx, 'ead'] = df.loc[boolidx, :].apply(
+                self._get_ev, axis=1, dx=dx)
+            """
+            def chk_func(ser):
+                return ser.is_monotonic_decreasing
+        
+            #check for damage monotonicity (should go from left BIG/extreme to right small/likely
+            """
+            view(df)
+            view(df[boolidx])
+            """
+            #get offenders (from 
+            boolidx = np.logical_and(
+                ~df.apply(chk_func, axis=1), #NOT going left big to righ textreme
+                df.nunique(axis=1) > 1, #only one value per row
+                )
+    
+            if boolidx.any():
+                with pd.option_context(
+                                'display.max_rows', None, 
+                               'display.max_columns', None,
+                               #'display.height',1000,
+                               'display.width',1000):
+                        
+                    log.debug('\n%s'%df.loc[boolidx, :])
+                    log.debug('\n%s'%df[boolidx].index.tolist())
+                    log.warning(' %i (of %i)  assets have non-monotonic-increasing damages. see logger'%(
+                        boolidx.sum(), len(boolidx)))
+                
+                return False
+            else:
+                log.debug('all %i passed'%len(df))
+                return True
+        
+        #======================================================================
+        # splitting
+        #======================================================================
+        if not split_key == False:
+            boolcol = df_raw.columns.str.contains(split_key)
+            
+            if not boolcol.any():
+                raise Error('failed to split events by \"%s\''%split_key)
+            
+            res1 = chk_func(df_raw.loc[:,boolcol], log.getChild(split_key))
+            res2 = chk_func(df_raw.loc[:,~boolcol], log.getChild('no%s'%split_key))
+            
+            result = res1 and res2
             
         else:
-            rename_d = dict()
-            df = df_raw.copy()
+            result= chk_func(df_raw, log)
             
+        return result
             
-        #======================================================================
-        # checks
-        #======================================================================
-        assert np.issubdtype(df.columns.dtype, np.number)
-        """should be ok
-        assert np.all(df.notna()), 'got some nulls'"""
-        assert df.columns.is_monotonic_increasing #extreme to likely
-        assert df.columns.max() <1
-
-
-        #======================================================================
-        # identify offenders
-        #======================================================================
-        boolidx1 = ~df.apply(lambda x: x.is_monotonic_decreasing, axis=1)
-        boolidx2 = df.nunique(axis=1, dropna=False) > 1
-        
-        """
-        212 in df[boolidx1].index
-        212 in df[boolidx2].index
-        
-        df.loc[[212, 1462],:].nunique(axis=1, dropna=False) >1
-        
-        """
-        #get offenders (from 
-        boolidx = np.logical_and(
-            boolidx1, #NOT going left big to righ textreme
-            boolidx2, #more than 1 value per row
-            )
-        
-        if not boolidx.any():
-            raise Error('no offending entries!')
-        
-        log.info('fixing %i (of %i) non-monos'%(boolidx.sum(), len(boolidx)))
-        
-        #======================================================================
-        # apply
-        #======================================================================
-        def force_mo(ser):
-            #get first non-null
-            first = True
-            for indxr, val in ser[ser.notna().idxmax():].items():
-                if first:
-                    lval = val
-                    first=False
-                    continue
-                
-                if pd.isnull(val):
-                    ser.loc[indxr] = lval
-                elif val < lval:
-                    ser.loc[indxr] = lval
-                else:
-                    lval = val
-                    
-            #check
-            if not ser.dropna().is_monotonic_increasing:
-                raise Error('failed')
-            
-                    
-            return ser
-                
-
-                
-        #flip the column order (likely -> extreme)
-        df = df.sort_index(axis=1, ascending=False)
-        
-        #apply the forcing
-        res_df = df.copy()
-        res_df.loc[boolidx,:] = res_df[boolidx].apply(force_mo, axis=1)
-        
-        #flip columns back
-        res_df = res_df.sort_index(axis=1, ascending=True)
-        
-        """
-        212 in res_df[boolidx].index
-        """
-        
-        #======================================================================
-        # check it
-        #======================================================================
-        if not self.check_monot(res_df):
-            raise Error('failed to fix')
-        
-        log.info('finished')
-        """
-        view(res_df)
-        """
-        
-        
-        return res_df.rename(columns=rename_d)
-        
 
 if __name__ =="__main__":
     
