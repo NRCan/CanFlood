@@ -1386,7 +1386,7 @@ class Model(ComWrkr):
             see build.lisamp.LikeSampler.run()
             (no impacts)
         
-
+        view(edf)
         """
         #======================================================================
         # setup
@@ -1430,13 +1430,15 @@ class Model(ComWrkr):
             evn_l = aep_ser.index[boolar].tolist() #get these event names
             
             #==================================================================
-            # resolve
+            # resolve--------
             #==================================================================
             log.debug('resolving with %i event names: %s'%(len(evn_l), evn_l))
-            #only 1 event.. nothing to resolve
+            #===================================================================
+            # #only 1 event.. nothing to resolve
+            #===================================================================
             if len(evn_l) == 1:
                 """
-                hazard layer doesn't have a corresponding failure layer
+                where hazard layer doesn't have a corresponding failure layer
                 """
                 log.debug('only got 1 event \'%s\' for aep %.2e'%(
                     aep_ser.index[boolar].values, aep))
@@ -1444,7 +1446,9 @@ class Model(ComWrkr):
                 #use these
                 res_df.loc[:, aep] =  evdf.loc[:, evn_l].iloc[:, 0]
             
-            #multiple events... take maximum
+            #===================================================================
+            # #multiple events... take maximum
+            #===================================================================
             else:
                 log.info('resolving alternate damages for aep %.2e from %i events: \n    %s'%(
                     aep, len(evn_l), evn_l))
