@@ -70,6 +70,7 @@ class Djoiner(Qcoms):
               ): 
         """
         todo: clean this up and switch over to joinattributestable algo
+        TODO: inherit cid from parent
         """
         
         #=======================================================================

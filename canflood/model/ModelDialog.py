@@ -441,7 +441,9 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
     
         self.feedback.upd_prog(None) #set the progress bar back down to zero
         
-    def results_joinGeo(self, data_fp, wd, tag):
+    def results_joinGeo(self, 
+                        data_fp, #filepath to res_per asset tabular results data 
+                        wd, tag):
         """
         not a good way to have the user specify the 
         
