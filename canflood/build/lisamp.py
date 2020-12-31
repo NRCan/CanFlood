@@ -73,23 +73,13 @@ class LikeSampler(Qcoms):
         
         """
         special input loader for standalone runs
-        Im assuming for the plugin these layers will be loaded already
-        
-        finv_fp, lpol_fp_d
         
         """
         log = self.logger.getChild('load_layers')
         #======================================================================
         # load rasters
         #======================================================================
-        lpol_d = dict()
-        
-        for ename, fp in lpol_fp_d.items():
-            
-            vlay = self.load_vlay(fp, logger=log, providerLib=providerLib)
-            
-            #add it in
-            lpol_d[ename] = vlay
+        lpol_d = self.load_lpols(lpol_fp_d, providerLib=providerLib, logger=log)
             
         #======================================================================
         # load finv vector layer
@@ -101,6 +91,28 @@ class LikeSampler(Qcoms):
         #======================================================================
         log.debug('finished')
         return lpol_d, finv_vlay
+    
+    def load_lpols(self,
+                   lpol_fp_d, #{event name:polygon filepath}
+                    providerLib='ogr',
+                    logger=None,
+                    **kwargs
+                   ):
+        """
+        can't load from a directory dump because we need to link to events
+        """
+ 
+        if logger is None: logger=self.logger
+        log=logger.getChild('load_lpols')
+        
+        
+        log.info('on %i layers'%len(lpol_fp_d))
+        lpol_d = dict()
+        for ename, fp in lpol_fp_d.items():
+            lpol_d[ename] = self.load_vlay(fp, logger=log, providerLib=providerLib,
+                                           **kwargs)
+        log.debug('finished w/ %i'%len(lpol_d))
+        return lpol_d
             
     def run(self,
             finv, #inventory layer
