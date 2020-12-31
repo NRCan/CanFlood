@@ -157,10 +157,7 @@ class Model(ComWrkr):
     
     extrap_vals_d = {} #extraploation used {aep:val}
     
-    
 
-    
-    
     def __init__(self,
                  cf_fp, #control file path """ note: this could also be attached by basic.ComWrkr.__init__()"""
                  split_key=None,#for checking monotonicy on exposure sets with duplicate events
@@ -175,6 +172,8 @@ class Model(ComWrkr):
         
         self.cf_fp = cf_fp
         self.split_key= split_key
+        
+        """TODO: Consider moving this to ComWrkr so Build dialogs can access"""
         self.absolute_fp=absolute_fp
         
 

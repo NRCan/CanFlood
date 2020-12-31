@@ -508,8 +508,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         assert isinstance(wdir, str)
         assert isinstance(tag, str)
  
-
- 
+        if self.radioButton_SS_fpRel.isChecked():
+            raise Error('Relative filepaths not implemented')
+             
         #======================================================================
         # setup working directory
         #======================================================================
