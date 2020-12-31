@@ -1189,12 +1189,13 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         wrkr = LikeSampler(logger=self.logger, 
                           tag=tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
+                          cid=cid,
                           )
         
         #connect the status bar
         #wrkr.feedback.progressChanged.connect(self.upd_prog)
         
-        res_df = wrkr.run(finv, lpol_d, cid=cid, lfield=lfield)
+        res_df = wrkr.run(finv, lpol_d,lfield=lfield)
         
         #check it
         wrkr.check()

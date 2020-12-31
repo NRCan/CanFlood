@@ -135,19 +135,20 @@ class LikeSampler(Qcoms):
     def run(self,
             finv, #inventory layer
             lpol_d, #{event name: likelihood polygon layer}
-            cid = 'xid', #index field name on finv
+            cid = None, #index field name on finv
             lfield = 'p_fail', #field with likelihhood value
             ):
         """
         sample conditional probability polygon 'lfield' values with finv geometry
         
-        todo: inherit cid from self
+
         
         """
         
         log = self.logger.getChild('run')
 
-        self.cid = cid #set for other methods
+        if cid is  None: cid=self.cid
+
         #======================================================================
         # #check/load the data
         #======================================================================
