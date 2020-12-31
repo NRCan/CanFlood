@@ -522,8 +522,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
         # build the control file
         #======================================================================
-        
-        
         self.feedback.upd_prog(50)
         
         #called by build_scenario()

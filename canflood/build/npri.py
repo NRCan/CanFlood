@@ -3,7 +3,7 @@ Created on Feb. 9, 2020
 
 @author: cefect
 
-general methods for Building
+setting up finv from NPRI data
 '''
 
 #==========================================================================
@@ -48,9 +48,7 @@ from hlpr.basic import *
 #==============================================================================
 class Npri(Qcoms):
     """
-    general methods for the Build dialog
-    
-    broken out for development/testing
+
     
     each time the user performs an action, 
         a new instance of this should be spawned
