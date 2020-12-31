@@ -28,23 +28,12 @@ from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProj
 #==============================================================================
 # # custom
 #==============================================================================
-#standalone runs
-if __name__ =="__main__": 
-    from hlpr.logr import basic_logger
-    mod_logger = basic_logger()   
-    
-    from hlpr.exceptions import Error
+
+from hlpr.exceptions import QError as Error
     
 
-#plugin runs
-else:
-    #base_class = object
-    from hlpr.exceptions import QError as Error
-    
-from hlpr.Q import Qcoms
-
-from hlpr.Q import *
-from hlpr.basic import *
+from hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata
+#from hlpr.basic import *
 
 
 #==============================================================================
@@ -61,7 +50,7 @@ class Djoiner(Qcoms):
                  ):
         
 
-        mod_logger.info('simple wrapper inits')
+        #mod_logger.info('simple wrapper inits')
         
 
         
@@ -247,110 +236,112 @@ class Djoiner(Qcoms):
      
     
 
-if __name__ =="__main__": 
-    print('start')
-    out_dir = os.path.join(os.getcwd(), 'djoin')
-    
-    #==========================================================================
-    # dev data
-    #==========================================================================
-    #==========================================================================
-    # data_d = {
-    #     'cconv':(
-    #         r'C:\LS\03_TOOLS\CanFlood\_ins\20200225\finv_cconv_20200224_aoiT4.gpkg',
-    #         r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200224\scenario1_risk_passet.csv'
-    #         )
-    #     
-    #     }
-    #==========================================================================
-    
-    #===========================================================================
-    # tutorials
-    #===========================================================================
-    runpars_d={
-        'Tut1a':{
-            'finv_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\data\finv_cT2b.gpkg',
-            'data_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\res_1a\risk1_Tut1_tut1a_passet.csv',
-            'keep_fn':'all',
-            'link_coln':'xid',
-            },
-        
-        }
-
-    runpars_d={
-        'Tut1b':{
-            'finv_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\data\finv_cT2b.gpkg',
-            'data_fp':r'C:\Users\cefect\CanFlood\build\1b\results\risk1_run1_tut2b_passet.csv',
-            'keep_fn':'all',
-            'link_coln':'xid',
-            },
-        
-        }
-        
-    #==========================================================================
-    # 20200304
-    #==========================================================================
-    #===========================================================================
-    # runpars_d = {
-    #     'ICIrec':{
-    #         'finv_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200304\finv\ICI_rec\finv_ICIrec_20200304_aoi05f.gpkg',
-    #         'data_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\risk1\risk1_ICIrec_scenario1_passet.csv',
-    #         'keep_fn':'all',
-    #         'link_coln':'xid',
-    #         },
-    #     'TDDres':{
-    #         'finv_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200304\finv\TDD_res\finv_cconv_20200224_TDDres.gpkg',
-    #         'data_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDD_res\risk1\risk1_TDDres_TDDres_passet.csv',
-    #         'keep_fn':'all',
-    #         'link_coln':'xid',
-    #         },
-    #     'TDDnrp':{
-    #         'finv_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200304\finv\TDD_nrp\finv_cconv_20200224_TDDnrp.gpkg',
-    #         'data_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDDnrp\risk1\risk1_TDDnrp_scenario1_passet.csv',
-    #         'keep_fn':'all',
-    #         'link_coln':'xid',          
-    #         }
-    #     }
-    #===========================================================================
-    
-    #==========================================================================
-    # execute
-    #==========================================================================
-    wrkr = Djoiner(logger=mod_logger, out_dir=out_dir)
-    
-    for tag, pars_d in runpars_d.items():
-        log = mod_logger.getChild(tag)
-        vlay_raw = load_vlay(pars_d['finv_fp'])
-        
-        """
-                      vlay_raw, #layer to join csv to (finv)
-              data_fp, #filepath to tabular data
-              link_coln, #linking column/field name
-              keep_fnl = 'all', #list of field names to keep from the vlay (or 'all' to keep all)
-        """
-        
-        res_vlay = wrkr.run(
-            vlay_raw, 
-            pars_d['data_fp'],pars_d['link_coln'], tag=tag,
-            keep_fnl=pars_d['keep_fn'],
-            logger=log)
-        
-        #==========================================================================
-        # save results
-        #==========================================================================
-        ofp = os.path.join(out_dir, '%s.gpkg'%res_vlay.name())
-        vlay_write(res_vlay, ofp, overwrite=True)
-        
-        log.info('finished')    
-        
-        
-    
-    force_open_dir(out_dir)
-    
-    print('finished')
-    
-
-    
+#===============================================================================
+# if __name__ =="__main__": 
+#     print('start')
+#     out_dir = os.path.join(os.getcwd(), 'djoin')
+#     
+#     #==========================================================================
+#     # dev data
+#     #==========================================================================
+#     #==========================================================================
+#     # data_d = {
+#     #     'cconv':(
+#     #         r'C:\LS\03_TOOLS\CanFlood\_ins\20200225\finv_cconv_20200224_aoiT4.gpkg',
+#     #         r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200224\scenario1_risk_passet.csv'
+#     #         )
+#     #     
+#     #     }
+#     #==========================================================================
+#     
+#     #===========================================================================
+#     # tutorials
+#     #===========================================================================
+#     runpars_d={
+#         'Tut1a':{
+#             'finv_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\data\finv_cT2b.gpkg',
+#             'data_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\res_1a\risk1_Tut1_tut1a_passet.csv',
+#             'keep_fn':'all',
+#             'link_coln':'xid',
+#             },
+#         
+#         }
+# 
+#     runpars_d={
+#         'Tut1b':{
+#             'finv_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\data\finv_cT2b.gpkg',
+#             'data_fp':r'C:\Users\cefect\CanFlood\build\1b\results\risk1_run1_tut2b_passet.csv',
+#             'keep_fn':'all',
+#             'link_coln':'xid',
+#             },
+#         
+#         }
+#         
+#     #==========================================================================
+#     # 20200304
+#     #==========================================================================
+#     #===========================================================================
+#     # runpars_d = {
+#     #     'ICIrec':{
+#     #         'finv_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200304\finv\ICI_rec\finv_ICIrec_20200304_aoi05f.gpkg',
+#     #         'data_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\risk1\risk1_ICIrec_scenario1_passet.csv',
+#     #         'keep_fn':'all',
+#     #         'link_coln':'xid',
+#     #         },
+#     #     'TDDres':{
+#     #         'finv_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200304\finv\TDD_res\finv_cconv_20200224_TDDres.gpkg',
+#     #         'data_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDD_res\risk1\risk1_TDDres_TDDres_passet.csv',
+#     #         'keep_fn':'all',
+#     #         'link_coln':'xid',
+#     #         },
+#     #     'TDDnrp':{
+#     #         'finv_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200304\finv\TDD_nrp\finv_cconv_20200224_TDDnrp.gpkg',
+#     #         'data_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDDnrp\risk1\risk1_TDDnrp_scenario1_passet.csv',
+#     #         'keep_fn':'all',
+#     #         'link_coln':'xid',          
+#     #         }
+#     #     }
+#     #===========================================================================
+#     
+#     #==========================================================================
+#     # execute
+#     #==========================================================================
+#     wrkr = Djoiner(logger=mod_logger, out_dir=out_dir)
+#     
+#     for tag, pars_d in runpars_d.items():
+#         log = mod_logger.getChild(tag)
+#         vlay_raw = load_vlay(pars_d['finv_fp'])
+#         
+#         """
+#                       vlay_raw, #layer to join csv to (finv)
+#               data_fp, #filepath to tabular data
+#               link_coln, #linking column/field name
+#               keep_fnl = 'all', #list of field names to keep from the vlay (or 'all' to keep all)
+#         """
+#         
+#         res_vlay = wrkr.run(
+#             vlay_raw, 
+#             pars_d['data_fp'],pars_d['link_coln'], tag=tag,
+#             keep_fnl=pars_d['keep_fn'],
+#             logger=log)
+#         
+#         #==========================================================================
+#         # save results
+#         #==========================================================================
+#         ofp = os.path.join(out_dir, '%s.gpkg'%res_vlay.name())
+#         vlay_write(res_vlay, ofp, overwrite=True)
+#         
+#         log.info('finished')    
+#         
+#         
+#     
+#     force_open_dir(out_dir)
+#     
+#     print('finished')
+#     
+# 
+#     
+#===============================================================================
     
        
 
