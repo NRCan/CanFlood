@@ -1397,7 +1397,7 @@ class Model(ComWrkr):
         
     def ev_multis(self, #calculate expected value from multiple discrete events
            ddf, #damages per event
-           edf, #secondary liklihoods per event
+           edf, #secondary liklihoods per event. see load_exlikes()
            aep_ser,
            method='max', #ev calculation method
                 #max:  maximum expected value of impacts per asset from the duplicated events

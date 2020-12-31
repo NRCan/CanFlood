@@ -118,15 +118,12 @@ class Risk2(Model):
         if self.as_inun:
             raise Error('risk2 inundation percentage not implemented')
         
-        #self.setup_data()
+        #data loaders
         self.load_finv()
         self.load_evals()
         self.load_dmgs()
-        
         if not self.exlikes == '':
             self.load_exlikes()
-        
-        
         
         self.logger.debug('finished _setup() on Risk2')
         
@@ -140,7 +137,7 @@ class Risk2(Model):
         # defaults
         #======================================================================
         log = self.logger.getChild('run')
-        ddf, aep_ser, cid = self.data_d['dmgs'],self.data_d['evals'], self.cid
+        ddf, aep_ser = self.data_d['dmgs'],self.data_d['evals']
         
         assert isinstance(res_per_asset, bool)
         self.feedback.setProgress(5)
