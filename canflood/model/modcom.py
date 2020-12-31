@@ -1395,9 +1395,12 @@ class Model(ComWrkr):
 
         
         
-    def ev_multis(self, #calculate expected value from multiple discrete events
-           ddf, #damages per event
-           edf, #secondary liklihoods per event. see load_exlikes()
+    def ev_multis(self, #calculate (discrete) expected value from events w/ multiple exposure sets
+           ddf, #damages per exposure set (
+           edf, #secondary liklihoods per exposure set ('exlikes'). see load_exlikes()
+                # nulls were replaced by 0.0 (e.g., asset not provided a secondary probability)
+                # missing colums were replaced by 1.0 (e.g., non-failure events)
+            
            aep_ser,
            method='max', #ev calculation method
                 #max:  maximum expected value of impacts per asset from the duplicated events
@@ -1411,11 +1414,14 @@ class Model(ComWrkr):
                        ):
         """
         
-        we accept multiple exposure sets for a single event likelihood 
+        we accept multiple exposure sets for a single event  
             e.g. 'failure' raster and 'no fail'
-        Each event can be assigned conditional probabilities in the edf
+            
+            where each exposure set is assigned a conditional probability in 'exlikes' (edf)
+                e.g. exlikes=1.0  means only one exposure set
         
-        for calculating conditional probabilities from overlapping polygons
+        
+        for resolving conditional probabilities for a single exposure set:
             see build.lisamp.LikeSampler.run()
             (no impacts)
         
