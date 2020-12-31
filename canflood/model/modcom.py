@@ -826,6 +826,7 @@ class Model(ComWrkr):
                    **kwargs
                    ):
         """
+        load, fill nulls, add 1.0 for missing, set in data_d
         called by:
             risk1
             risk2
@@ -871,33 +872,32 @@ class Model(ComWrkr):
         edf = edf.fillna(0.0)
         
         #==================================================================
-        # #add missing probabilities
+        # check/add missing probabilities
         #==================================================================
         """
         missing column = no secondary likelihoods at all for this event.
         all probabilities = 1
         """
-        
+        #identify those missing in the edf (compared with the expos)
         miss_l = set(self.expcols).difference(edf.columns)
+        
+        #add 1.0 for any missing
         if len(miss_l) > 0:
             
-            log.info('passed exlikes missing %i secondary exposure likelihoods... treating these as 1\n    %s'%(
+            log.info('\'exlikes\' missing %i events... setting to 1.0\n    %s'%(
                 len(miss_l), miss_l))
             
             for coln in miss_l:
                 edf[coln] = 1.0
             
-        
-    
-        log.info('prepared edf w/ %s'%str(edf.shape))
+        log.debug('prepared edf w/ %s'%str(edf.shape))
         
         #==================================================================
-        # check it
+        # wrap
         #==================================================================
-
-        
-        #set it
         self.data_d[dtag] = edf
+        
+        return
         
     def load_gels(self,#loading expo data
                    fp = None,
