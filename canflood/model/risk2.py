@@ -145,7 +145,7 @@ class Risk2(Model):
         assert isinstance(res_per_asset, bool)
         self.feedback.setProgress(5)
         #======================================================================
-        # resolve alternate damages (per evemt)
+        # resolve alternate damages (per evemt)-----------
         #======================================================================
         #take maximum expected value at each asset
         if 'exlikes' in self.data_d:
@@ -166,7 +166,7 @@ class Risk2(Model):
         
         self.feedback.setProgress(40)
         #======================================================================
-        # get ead per asset
+        # get ead per asset-----
         #======================================================================
         if res_per_asset:
             res_df = self.calc_ead(ddf1, drop_tails=self.drop_tails, logger=log)
@@ -175,7 +175,7 @@ class Risk2(Model):
             res_df = None
             
         #======================================================================
-        # totals
+        # totals-------
         #======================================================================    
         self.feedback.setProgress(80)    
         res_ttl = self.calc_ead(
@@ -193,7 +193,9 @@ class Risk2(Model):
             len(ddf1), len(res_ttl)))
         
 
-        #format total results for writing
+        #=======================================================================
+        # #format total results for writing
+        #=======================================================================
         res_ttl.index.name = 'aep'
         res_ttl.columns = ['impacts']
         
@@ -206,6 +208,7 @@ class Risk2(Model):
             pd.Series(np.full(len(self.extrap_vals_d), 'extraploated'), 
                   index=self.extrap_vals_d, name='note')
             )
+        
         res_ttl.loc['ead', 'note'] = 'integration'
         res_ttl.loc[:, 'note'] = res_ttl.loc[:, 'note'].fillna('impact_sum')
         
@@ -213,6 +216,9 @@ class Risk2(Model):
         res_ttl['plot'] = True
         res_ttl.loc['ead', 'plot'] = False
          
+        #=======================================================================
+        # wrap
+        #=======================================================================
         log.info('finished')
 
 

@@ -707,12 +707,20 @@ class Model(ComWrkr):
         
         self.expcols = aep_ser.index.copy() #set for later checks
         
-    def load_expos(self,#loading any exposure type data (expos, or exlikes)
+    def load_expos(self,#generic exposure loader
                    fp = None,
                    dtag = 'expos',
                    check_monot=False, #whether to check monotonciy
                    logger=None,
                    ):
+        """
+        loads, sets index, slices to finv, and lots of checks, adds result to data_d
+        
+        called by:
+            dmg2
+            risk1
+            risk2 (via load_exlikes())
+        """
         #======================================================================
         # defaults
         #======================================================================
@@ -722,9 +730,10 @@ class Model(ComWrkr):
         if fp is None: fp = getattr(self, dtag)
         cid = self.cid
         
+        #=======================================================================
+        # prechecks1
+        #=======================================================================
         assert 'finv' in self.data_d, 'call load_finv first'
-        #assert 'evals' in self.data_d, 'call load_aep first'
-        #assert isinstance(self.expcols, pd.Index), 'bad expcols'
         assert isinstance(self.cindex, pd.Index), 'bad cindex'
         assert os.path.exists(fp), '%s got invalid filepath \n    %s'%(dtag, fp)
         #======================================================================
@@ -733,7 +742,7 @@ class Model(ComWrkr):
         df_raw = pd.read_csv(fp, index_col=None)
         
         #======================================================================
-        # precheck
+        # check raw data
         #======================================================================
         assert cid in df_raw.columns, '%s missing index column \"%s\''%(dtag, cid)
         assert df_raw.columns.dtype.char == 'O','bad event names on %s'%dtag
@@ -804,28 +813,36 @@ class Model(ComWrkr):
         #======================================================================
         # set it
         #======================================================================
-        
+        """consider passing this to caller and letting the caller handel"""
         self.data_d[dtag] = df
+        
         
         log.info('finished loading %s as %s'%(dtag, str(df.shape)))
         
-    def load_exlikes(self,#loading any exposure type data (expos, or exlikes)
+        return
+        
+    def load_exlikes(self,#loading exposure probability data (e.g. failure raster poly samples)
                      dtag = 'exlikes',
                    **kwargs
                    ):
+        """
+        called by:
+            risk1
+            risk2
+        """
         
+        #=======================================================================
+        # defaults
+        #=======================================================================
         log = self.logger.getChild('load_exlikes')
         assert 'evals' in self.data_d, 'evals data set required with conditional exposure exlikes'
         aep_ser = self.data_d['evals']
         #======================================================================
         # load the data
         #======================================================================
-        
-        self.load_expos(dtag=dtag, **kwargs) #use the load_expos
-        
-        edf = self.data_d.pop(dtag)
-        
-        log.info('loading w/ %s'%str(edf.shape))
+        self.load_expos(dtag=dtag, **kwargs) #load, clean, slice, add to data_d
+        edf = self.data_d.pop(dtag) #pull out the reuslt
+        log.debug('loading w/ %s'%str(edf.shape))
         #======================================================================
         # repair assets w/ missing secondaries
         #======================================================================
