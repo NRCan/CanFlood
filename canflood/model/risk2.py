@@ -158,7 +158,7 @@ class Risk2(Model):
         #======================================================================
         #take maximum expected value at each asset
         if 'exlikes' in self.data_d:
-            ddf1 = self.ev_multis(ddf, self.data_d['exlikes'], aep_ser, log)
+            ddf1 = self.ev_multis(ddf, self.data_d['exlikes'], aep_ser, logger=log)
             
         #no duplicates. .just rename by aep
         else:

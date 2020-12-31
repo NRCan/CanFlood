@@ -1374,7 +1374,7 @@ class Model(ComWrkr):
                     #lower bound
                 #indepen: assume each event is independent (failure of one does not influence the other)
                     #upper bound
-           logger,
+           logger=None,
                        ):
         """
         
@@ -1391,6 +1391,7 @@ class Model(ComWrkr):
         #======================================================================
         # setup
         #======================================================================
+        if logger is None: logger=self.logger
         log = logger.getChild('ev_multis')
         
         #======================================================================
