@@ -39,7 +39,7 @@ import numpy as np #Im assuming if pandas is fine, numpy will be fine
 from build.rsamp import Rsamp
 from build.lisamp import LikeSampler
 from build.rfda import RFDAconv
-from build.npri import Npri
+from build.prepr import Preparor
 from build.validator import Vali
 
 
@@ -708,9 +708,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         assert os.path.exists(out_fp)
         
-
-
-        
         self.update_cf(
             {
             'dmg_fps':(
@@ -794,6 +791,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             
 
     def convert_npri(self):
+        """
+        TODO: move this to a drop down menu
+        """
         log = self.logger.getChild('convert_npri')
         tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
         
@@ -806,7 +806,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # input checks
         #=======================================================================
-        wrkr = Npri(logger=self.logger,  out_dir=out_dir, tag=tag)
+        wrkr = Preparor(logger=self.logger,  out_dir=out_dir, tag=tag)
         assert isinstance(in_vlay, QgsVectorLayer), 'no VectorLayer selected!'
         
         #=======================================================================
@@ -820,7 +820,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         
         
-        finv_vlay = wrkr.to_finv(in_vlay_aoi)
+        finv_vlay = wrkr.to_finv(in_vlay_aoi, newLayname = 'finv_NPRI')
         
         #=======================================================================
         # wrap

@@ -3,7 +3,7 @@ Created on Feb. 9, 2020
 
 @author: cefect
 
-setting up finv from NPRI data
+simple build routines
 '''
 
 #==========================================================================
@@ -46,7 +46,7 @@ from hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Npri(Qcoms):
+class Preparor(Qcoms):
     """
 
     
@@ -64,17 +64,18 @@ class Npri(Qcoms):
         
 
         
-        self.logger.debug('Npri.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
+        self.logger.debug('Preparor.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
         
         
     
-    def to_finv(self,
+    def to_L1finv(self,
                 in_vlay,
                 drop_colns=['ogc_fid', 'fid'], #optional columns to drop from df
                 new_data = {'f0_scale':1.0, 'f0_elv':0.0},
+                newLayname = 'finv_L1',
                 ):
         
-        log = self.logger.getChild('to_finv')
+        log = self.logger.getChild('to_L1finv')
         
         #=======================================================================
         # precheck
@@ -127,7 +128,7 @@ class Npri(Qcoms):
         #=======================================================================
         finv_vlay = self.vlay_new_df2(res_df,  geo_d=geo_d, crs=in_vlay.crs(),
                                 logger=log,
-                                layname = 'finv_NPRI')
+                                layname = newLayname)
         
         #=======================================================================
         # wrap
@@ -158,67 +159,7 @@ class Npri(Qcoms):
 
                 
 
-
-#===============================================================================
-# if __name__ =="__main__": 
-#     write_vlay=True
-#     
-#     #===========================================================================
-#     # tutorial 5
-#     #===========================================================================
-#     tag = 'tut5'
-#     
-# 
-#     
-# 
-#     
-#     out_dir = os.path.join(r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\5\built')
-#     
-#     #===========================================================================
-#     # setup project
-#     #===========================================================================
-# 
-#     
-# 
-#     wrkr = Npri(logger=mod_logger, tag=tag, out_dir=out_dir)
-#     wrkr.ini_standalone()
-#     
-#     
-#     #===========================================================================
-#     # #w/ connect to vectorlayer
-#     #===========================================================================
-#     uriW = QgsDataSourceUri()
-#     uriW.setParam('crs','EPSG:3978')
-#     uriW.setParam('bbox','-2103574.4,343903.6,-1715268.4,576272.7')
-#     uriW.setParam('url', r'https://maps-cartes.ec.gc.ca/arcgis/rest/services/NPRI_INRP/NPRI_INRP/MapServer/0')
-#     
-#     in_vlay = QgsVectorLayer(uriW.uri(), 'NRPI_raw', 'arcgisfeatureserver')
-#     
-#     er_l = in_vlay.error().messageList()
-#     assert len(er_l)==0, er_l
-#     assert in_vlay.error().isEmpty()
-#     
-#     #===========================================================================
-#     # run converter
-#     #===========================================================================
-#     
-#     finv_vlay = wrkr.to_finv(in_vlay)
-#     
-# 
-#     
-#     #==========================================================================
-#     # save results
-#     #==========================================================================
-#     ofp = os.path.join(out_dir, finv_vlay.name()+'.gpkg')
-#     vlay_write(finv_vlay, ofp)
-# 
-#      
-# 
-#  
-#     force_open_dir(out_dir)
-#  
-#     print('finished')
-#===============================================================================
+ 
     
     
     

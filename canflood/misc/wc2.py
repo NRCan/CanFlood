@@ -124,11 +124,7 @@ class WebConnect(ComWrkr):
         log.debug('addAll executed')
         
         
-        #=======================================================================
-        # serv_d =  {#title: {serverType, url}}
-        #     'NRPI':('arcgisfeatureserver','https://maps-cartes.ec.gc.ca/arcgis/rest/services/NPRI_INRP/NPRI_INRP/MapServer')
-        #     }
-        #=======================================================================
+ 
         
         #=======================================================================
         # loop and add
