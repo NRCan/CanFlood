@@ -22,7 +22,7 @@ import pandas as pd
 
 
 #Qgis imports
-from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject
+from qgis.core import QgsVectorLayer, QgsWkbTypes
 
 #==============================================================================
 # custom imports
@@ -40,8 +40,8 @@ else:
     from hlpr.exceptions import QError as Error
     
 
-from hlpr.Q import *
-from hlpr.basic import *
+from hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata
+#from hlpr.basic import *
 
 #==============================================================================
 # functions-------------------
@@ -159,64 +159,66 @@ class Npri(Qcoms):
                 
 
 
-if __name__ =="__main__": 
-    write_vlay=True
-    
-    #===========================================================================
-    # tutorial 5
-    #===========================================================================
-    tag = 'tut5'
-    
-
-    
-
-    
-    out_dir = os.path.join(r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\5\built')
-    
-    #===========================================================================
-    # setup project
-    #===========================================================================
-
-    
-
-    wrkr = Npri(logger=mod_logger, tag=tag, out_dir=out_dir)
-    wrkr.ini_standalone()
-    
-    
-    #===========================================================================
-    # #w/ connect to vectorlayer
-    #===========================================================================
-    uriW = QgsDataSourceUri()
-    uriW.setParam('crs','EPSG:3978')
-    uriW.setParam('bbox','-2103574.4,343903.6,-1715268.4,576272.7')
-    uriW.setParam('url', r'https://maps-cartes.ec.gc.ca/arcgis/rest/services/NPRI_INRP/NPRI_INRP/MapServer/0')
-    
-    in_vlay = QgsVectorLayer(uriW.uri(), 'NRPI_raw', 'arcgisfeatureserver')
-    
-    er_l = in_vlay.error().messageList()
-    assert len(er_l)==0, er_l
-    assert in_vlay.error().isEmpty()
-    
-    #===========================================================================
-    # run converter
-    #===========================================================================
-    
-    finv_vlay = wrkr.to_finv(in_vlay)
-    
-
-    
-    #==========================================================================
-    # save results
-    #==========================================================================
-    ofp = os.path.join(out_dir, finv_vlay.name()+'.gpkg')
-    vlay_write(finv_vlay, ofp)
-
-     
-
- 
-    force_open_dir(out_dir)
- 
-    print('finished')
+#===============================================================================
+# if __name__ =="__main__": 
+#     write_vlay=True
+#     
+#     #===========================================================================
+#     # tutorial 5
+#     #===========================================================================
+#     tag = 'tut5'
+#     
+# 
+#     
+# 
+#     
+#     out_dir = os.path.join(r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\5\built')
+#     
+#     #===========================================================================
+#     # setup project
+#     #===========================================================================
+# 
+#     
+# 
+#     wrkr = Npri(logger=mod_logger, tag=tag, out_dir=out_dir)
+#     wrkr.ini_standalone()
+#     
+#     
+#     #===========================================================================
+#     # #w/ connect to vectorlayer
+#     #===========================================================================
+#     uriW = QgsDataSourceUri()
+#     uriW.setParam('crs','EPSG:3978')
+#     uriW.setParam('bbox','-2103574.4,343903.6,-1715268.4,576272.7')
+#     uriW.setParam('url', r'https://maps-cartes.ec.gc.ca/arcgis/rest/services/NPRI_INRP/NPRI_INRP/MapServer/0')
+#     
+#     in_vlay = QgsVectorLayer(uriW.uri(), 'NRPI_raw', 'arcgisfeatureserver')
+#     
+#     er_l = in_vlay.error().messageList()
+#     assert len(er_l)==0, er_l
+#     assert in_vlay.error().isEmpty()
+#     
+#     #===========================================================================
+#     # run converter
+#     #===========================================================================
+#     
+#     finv_vlay = wrkr.to_finv(in_vlay)
+#     
+# 
+#     
+#     #==========================================================================
+#     # save results
+#     #==========================================================================
+#     ofp = os.path.join(out_dir, finv_vlay.name()+'.gpkg')
+#     vlay_write(finv_vlay, ofp)
+# 
+#      
+# 
+#  
+#     force_open_dir(out_dir)
+#  
+#     print('finished')
+#===============================================================================
     
     
     
