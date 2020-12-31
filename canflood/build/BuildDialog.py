@@ -1179,9 +1179,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         if not cid in [field.name() for field in finv.fields()]:
             raise Error('requested cid field \'%s\' not found on the finv_raw'%cid)
-            
-        
-        
+ 
         #======================================================================
         # execute
         #======================================================================
@@ -1321,7 +1319,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         log.info('user pressed \'pushButton_Validate\'')
         
         #======================================================================
-        # collect form ui----
+        # collect form ui
         #======================================================================
         tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
         cf_fp = self.get_cf_fp() #get the control file path
@@ -1330,7 +1328,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #===================================================================
         # setup validation worker
         #===================================================================
-        wrkr = Vali(cf_fp, logger=self.logger, out_dir=self.lineEdit_wd.text(), tag=tag)
+        wrkr = Vali(cf_fp=cf_fp, logger=self.logger, out_dir=self.lineEdit_wd.text(), tag=tag)
         
 
         #======================================================================
@@ -1344,9 +1342,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #populate all possible test parameters
         vpars_all_d = {
                     'risk1':(self.checkBox_Vr1, Risk1),
-                   'dmg2':(self.checkBox_Vi2, Dmg2),
-                   'risk2':(self.checkBox_Vr2, Risk2),
-                   #'risk3':(self.checkBox_Vr3, None), 
+                    'dmg2':(self.checkBox_Vi2, Dmg2),
+                    'risk2':(self.checkBox_Vr2, Risk2),
+                    #'risk3':(self.checkBox_Vr3, None), 
                                            }
         
         #loop and collect based on check boxes
@@ -1389,9 +1387,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # wrap
         #=======================================================================
-            
-
-
         self.feedback.upd_prog(100)
         
         log.push('passed %i (of %i) validations. see log'%(

@@ -92,8 +92,9 @@ class LikeSampler(Qcoms):
         log.debug('finished')
         return lpol_d, finv_vlay
     
-    def load_lpols(self,
-                   lpol_fp_d, #{event name:polygon filepath}
+    def load_lpols(self, #helper for loading vector polygons in standalone runs
+                   lpol_files_d, #{event name:polygon filepath}
+                   basedir = None, #optional directory to append to lpol_files_d
                     providerLib='ogr',
                     logger=None,
                     **kwargs
@@ -101,16 +102,33 @@ class LikeSampler(Qcoms):
         """
         can't load from a directory dump because we need to link to events
         """
- 
+        #=======================================================================
+        # defaults
+        #=======================================================================
         if logger is None: logger=self.logger
         log=logger.getChild('load_lpols')
+        if not basedir is None:
+            assert os.path.exists(basedir)
         
         
-        log.info('on %i layers'%len(lpol_fp_d))
+        log.info('on %i layers'%len(lpol_files_d))
+        
+        #=======================================================================
+        # loop and load
+        #=======================================================================
         lpol_d = dict()
-        for ename, fp in lpol_fp_d.items():
+        for ename, file_str in lpol_files_d.items():
+            
+            #get filepath
+            if isinstance(basedir, str):
+                fp = os.path.join(basedir, file_str)
+            else:
+                fp = file_str
+                
+            #load it
             lpol_d[ename] = self.load_vlay(fp, logger=log, providerLib=providerLib,
                                            **kwargs)
+            
         log.debug('finished w/ %i'%len(lpol_d))
         return lpol_d
             

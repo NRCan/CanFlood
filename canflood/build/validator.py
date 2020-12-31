@@ -9,7 +9,7 @@ Template for 'build' scripts
 #==========================================================================
 # logger setup-----------------------
 #==========================================================================
-import logging, configparser, datetime
+import logging, configparser, datetime, copy
 
 
 
@@ -40,8 +40,8 @@ else:
     from hlpr.exceptions import QError as Error
     
 
-from hlpr.Q import *
-from hlpr.basic import *
+from hlpr.Q import Qcoms
+#from hlpr.basic import *
 
 #==============================================================================
 # functions-------------------
@@ -58,26 +58,43 @@ class Vali(Qcoms):
     valid = False
 
     def __init__(self,
-
-                 cf_fp, #control file path
                   *args, **kwargs):
         
         super().__init__(*args, **kwargs)
         
+        #initlize the config parser
+        if os.path.exists(self.cf_fp):
+            self.config_cf()
 
-        
-        #=======================================================================
-        # load the control file
-        #=======================================================================
-        assert os.path.exists(cf_fp), 'provided parameter file path does not exist \n    %s'%cf_fp
-
-        cpars = configparser.ConfigParser(inline_comment_prefixes='#')
-        self.logger.info('validating parameters from \n     %s'%cpars.read(cf_fp))
-        
-        self.cpars = cpars
-        self.cf_fp = cf_fp
         
         self.logger.debug('Vali.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
+        
+    def config_cf(self, #helper to initilaize the configParser
+                 cf_fp=None,
+                 logger=None):
+        """
+        broke this out for complex console runs where we don't have the cf_fp during init
+        """
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log=logger.getChild('config_cf')
+        if cf_fp is None: cf_fp=self.cf_fp
+        
+        assert os.path.exists(cf_fp), \
+            'provided parameter file path does not exist \n    %s'%cf_fp
+
+        #=======================================================================
+        # initilzie
+        #=======================================================================
+        cpars = configparser.ConfigParser(inline_comment_prefixes='#')
+        log.info('validating parameters from \n     %s'%cpars.read(cf_fp))
+        
+        self.cpars = cpars
+        
+        return cpars
         
         
     def cf_check(self,
