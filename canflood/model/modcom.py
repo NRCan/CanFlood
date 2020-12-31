@@ -567,7 +567,9 @@ class Model(ComWrkr):
         
         return cpars
     
-
+    #===========================================================================
+    # LOADERS------
+    #===========================================================================
     def load_finv(self,#loading expo data
                    fp = None,
                    dtag = 'finv',
@@ -837,14 +839,9 @@ class Model(ComWrkr):
         #=======================================================================
         log = self.logger.getChild('load_exlikes')
         assert 'evals' in self.data_d, 'evals data set required with conditional exposure exlikes'
-        aep_ser = self.data_d['evals']
+        aep_ser = self.data_d['evals'].astype(float)
         
-        #==================================================================
-        # pre check
-        #==================================================================
-        #check logic against aeps
-        if aep_ser.is_unique:
-            raise Error('passed exlikes, but there are no duplicated event: \n    %s'%aep_ser)
+
         
         #======================================================================
         # load the data
@@ -854,7 +851,10 @@ class Model(ComWrkr):
         log.debug('loading w/ %s'%str(edf.shape))
         
         
-        
+        #=======================================================================
+        # complete/fix data-----
+        #=======================================================================
+        """TODO: Consider moving these onto the build tool"""
         #======================================================================
         # fill nulls
         #======================================================================
@@ -891,6 +891,19 @@ class Model(ComWrkr):
                 edf[coln] = 1.0
             
         log.debug('prepared edf w/ %s'%str(edf.shape))
+        
+        #=======================================================================
+        # check logic----
+        #=======================================================================
+        #check for complex events
+        if len(aep_ser.unique()) == len(aep_ser):
+            raise Error('resolving multi but there are no complex events')
+        
+        #check complex events conditional probabilities sum to 1
+        """
+        view(edf)
+        aep_ser
+        """
         
         #==================================================================
         # wrap
@@ -1436,18 +1449,15 @@ class Model(ComWrkr):
         #======================================================================
         # precheck
         #======================================================================
-        aep_ser = aep_ser.astype(float)
-        
-        if len(aep_ser.unique()) == len(aep_ser):
-            raise Error('resolving multi but there are no duplicated events')
-        
 
-        #======================================================================
-        # get expected values of all damages
-        #======================================================================
+        
         assert ddf.shape == edf.shape, 'shape mismatch'
         """where edf > 0 ddf should also be > 0
         but leave this check for the input validator"""
+        #======================================================================
+        # get expected values of all damages
+        #======================================================================
+
         evdf = ddf*edf
         
         log.info('calculating expected values for %i damages'%evdf.size)
@@ -1519,7 +1529,7 @@ class Model(ComWrkr):
         return res_df.sort_index(axis=1)
     
     #==========================================================================
-    # validators-----------
+    # VALIDATORS-----------
     #==========================================================================
     
     def check_monot(self,
