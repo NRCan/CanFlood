@@ -309,6 +309,9 @@ class Preparor(Qcoms):
         self.feedback.upd_prog(99)
         return  finv_vlay
     
+    def test(self):
+        print('Preparor test')
+    
 
 
 

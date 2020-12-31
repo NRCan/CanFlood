@@ -170,6 +170,9 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
     def ini_standalone(self,  #initilize calls for standalone runs
                        crs = None,
                        ):
+        """
+        WARNING! do not call twice (phantom crash)
+        """
         log = self.logger.getChild('ini_standalone')
         #=======================================================================
         # #crs
@@ -427,7 +430,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         assert rlayer.isValid(), "Layer failed to load!"
         assert isinstance(rlayer, QgsRasterLayer), 'failed to get a QgsRasterLayer'
         
-        if not rlayer.crs() == self.crs:
+        if not rlayer.crs() == self.qproj.crs():
             log.warning('loaded layer \'%s\' crs mismatch!'%rlayer.name())
         #assert rlayer.crs() == self.crs, 'crs mismatch'
 

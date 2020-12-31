@@ -101,8 +101,7 @@ class Rsamp(Qcoms):
                     ):
         
         """
-        special input loader for StandAlone runs
-        Im assuming for the plugin these layers will be loaded already"""
+        special input loader for StandAlone runs"""
         log = self.logger.getChild('load_layers')
         
         
@@ -155,6 +154,53 @@ class Rsamp(Qcoms):
         
         return list(raster_d.values()), vlay
     
+    
+    def load_rlays(self, #shortcut for loading a set of rasters in a directory
+                   
+                   data_dir,
+                   rfn_l=None, 
+                   logger=None,
+                   **kwargs
+                   ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log=logger.getChild('load_rlays')
+        
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        assert os.path.exists(data_dir)
+        
+        #=======================================================================
+        # get filenames
+        #=======================================================================
+        #load all in the passed directory
+        if rfn_l is None:
+            rfn_l = [e for e in os.listdir(data_dir) if e.endswith('.tif')]
+            log.info('scanned directory and found %i rasters: %s'%(len(rfn_l), data_dir))
+
+
+        rfp_d = {fn:os.path.join(data_dir, fn) for fn in rfn_l} #get filepaths
+        
+        #check
+        for fn, fp in rfp_d.items():
+            assert os.path.exists(fp), 'bad filepath for \"%s\''%fn
+        #=======================================================================
+        # loop and assemble
+        #=======================================================================
+        log.info('loading %i rlays'%len(rfp_d))
+        rlay_d = dict()
+        for fn, fp in rfp_d.items():
+            rlay_d[fn] = self.load_rlay(fp, logger=log, **kwargs)
+            
+            
+        log.info('loaded %i'%len(rlay_d))
+        
+        return rlay_d
+    
+
 
     def run(self, 
             rlayRaw_l, #set of rasters to sample 
@@ -303,7 +349,7 @@ class Rsamp(Qcoms):
         return res_vlay
     
 
-    def runPrep(self,
+    def runPrep(self, #apply raster preparation handels to a set of rasters
                 rlayRaw_l,
                 **kwargs
                 ):
@@ -325,7 +371,7 @@ class Rsamp(Qcoms):
         return res_l
             
         
-    def prep(self,
+    def prep(self, #prepare a raster for sampling
              rlayRaw, #set of raw raster to apply prep handles to
              allow_download=False,
              aoi_vlay=None,
@@ -1368,10 +1414,8 @@ class Rsamp(Qcoms):
             cf_fp = cf_fp
             )
 
-
-    
-
-
+    def test(self):
+        print('Rsamp test')
     
     
     
