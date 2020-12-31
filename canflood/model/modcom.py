@@ -837,39 +837,45 @@ class Model(ComWrkr):
         log = self.logger.getChild('load_exlikes')
         assert 'evals' in self.data_d, 'evals data set required with conditional exposure exlikes'
         aep_ser = self.data_d['evals']
+        
+        #==================================================================
+        # pre check
+        #==================================================================
+        #check logic against aeps
+        if aep_ser.is_unique:
+            raise Error('passed exlikes, but there are no duplicated event: \n    %s'%aep_ser)
+        
         #======================================================================
         # load the data
         #======================================================================
         self.load_expos(dtag=dtag, **kwargs) #load, clean, slice, add to data_d
         edf = self.data_d.pop(dtag) #pull out the reuslt
         log.debug('loading w/ %s'%str(edf.shape))
+        
+        
+        
         #======================================================================
-        # repair assets w/ missing secondaries
+        # fill nulls
         #======================================================================
-        #replace nulls w/ 1
-        """better not to pass any nulls.. but if so.. should treat them as ZERO!!
-        Null = no failure polygon = no failure
+        """
+        better not to pass any nulls.. but if so.. should treat them as ZERO!!
+            Null = no failure polygon = no failure
+            
         also best not to apply precision to these values
+        
+        view(edf)
         """
         booldf = edf.isna()
         if booldf.any().any():
-            log.warning('got %i (of %i) nulls!... filling with zeros'%(booldf.sum().sum(), booldf.size))
+            log.info('got %i (of %i) nulls!... filling with zeros'%(booldf.sum().sum(), booldf.size))
         edf = edf.fillna(0.0)
         
         #==================================================================
-        # check
-        #==================================================================
-        #check logic against aeps
-        if aep_ser.is_unique:
-            raise Error('passed exlikes, but there are no duplicated event: \n    %s'%aep_ser)
-        
-
-        #==================================================================
-        # #add missing likelihoods
+        # #add missing probabilities
         #==================================================================
         """
         missing column = no secondary likelihoods at all for this event.
-        all = 1
+        all probabilities = 1
         """
         
         miss_l = set(self.expcols).difference(edf.columns)
