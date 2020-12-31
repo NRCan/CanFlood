@@ -29,19 +29,7 @@ from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProj
 # custom imports
 #==============================================================================
 
-#standalone runs
-if __name__ =="__main__": 
-    from hlpr.logr import basic_logger
-    mod_logger = basic_logger()   
-    
-    from hlpr.exceptions import Error
-    
-
-
-#plugin runs
-else:
-
-    from hlpr.exceptions import QError as Error
+from hlpr.exceptions import QError as Error
 
 
 #from hlpr.basic import 
@@ -54,9 +42,14 @@ class LikeSampler(Qcoms):
     """
     Generate conditional probability data set ('exlikes') for each asset
     
-    where conditional probability polygons overlap, the union_probabilities() method 
-    is used to calculate the union probability of multiple events
-    using the exclusion principle
+    resolve conditional probability of realizing a single failure raster
+    
+    where polygons overlap (asset exposed to multiple failures):    
+        attribute join of all, then
+        union_probabilities()  calculates of multiple events using the exclusion principle
+    where an asset has a unique polygon:
+        simple attribute join
+    
 
     """
     
