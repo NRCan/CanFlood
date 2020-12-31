@@ -202,7 +202,8 @@ class ComWrkr(object): #common methods for all classes
         
         
     def update_cf(self, #update one parameter  control file 
-                  new_pars_d, #new paraemeters {section : {valnm : value }}
+                  new_pars_d, #new paraemeters 
+                    # {section : {valnm : value } OR string (for notes)}
                   cf_fp = None):
         
         log = self.logger.getChild('update_cf')
@@ -230,7 +231,7 @@ class ComWrkr(object): #common methods for all classes
                         
                         pars.set(section, valnm, value)
                         
-                #single values    
+                #single values(for notes mostly)
                 elif isinstance(subval, str):
                     pars.set(section, subval)
                     

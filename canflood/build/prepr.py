@@ -54,7 +54,8 @@ class Preparor(Qcoms):
         a new instance of this should be spawned
         this way all the user variables can be freshley pulled
     """
-
+    
+    
 
     def __init__(self,
 
@@ -67,6 +68,70 @@ class Preparor(Qcoms):
         self.logger.debug('Preparor.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
         
         
+    def copy_cf_template(self, #start a new control file by copying the template
+                  wdir,
+                  logger=None
+                  ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('copy_cf_template')
+        
+        
+        #=======================================================================
+        # copy control file template
+        #=======================================================================
+        
+        
+        #get the default template from the program files
+        cf_src = os.path.join(
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                 '_pars/CanFlood_control_01.txt')
+        
+        assert os.path.exists(cf_src)
+        
+        
+        #get new file name
+        cf_path = os.path.join(wdir, 'CanFlood_%s.txt'%self.tag)
+        
+        #see if this exists
+        if os.path.exists(cf_path):
+            msg = 'generated control file already exists. overwrite=%s \n     %s'%(
+                self.overwrite, cf_path)
+            if self.overwrite:
+                log.warning(msg)
+            else:
+                raise Error(msg)
+            
+            
+        #copy over the default template
+        shutil.copyfile(cf_src, cf_path)
+        
+        log.debug('copied control file from\n    %s to \n    %s'%(
+            cf_src, cf_path))
+        
+        self.cf_fp = cf_path
+        
+        return cf_path
+
+    def upd_cf_first(self, #seting initial values to the control file
+                     curves_fp,
+                     ):
+        
+        note_str = '#control file template created from \'upd_cf_first\' on  %s'%(
+            datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S'))
+        
+        return self.update_cf(
+            {
+                'parameters':
+                    ({'name':'tag'},note_str),
+                    
+                'dmg_fps':
+                    ({'curves':curves_fp}),           
+            })
+            
     
     def to_L1finv(self,
                 in_vlay,

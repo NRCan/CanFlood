@@ -499,10 +499,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         log = self.logger.getChild('build_scenario')
         log.info('build_scenario started')
         tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
-        """
-        todo: make a fresh pull of this for each tool
-        """
-        
         wdir =  self.lineEdit_wd.text() #pull the wd filepath from the user provided in 'Browse'
         
 
@@ -510,80 +506,32 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # prechecks
         #=======================================================================
         assert isinstance(wdir, str)
-        
         assert isinstance(tag, str)
+ 
 
-        
+ 
+        #======================================================================
+        # setup working directory
+        #======================================================================
         if not os.path.exists(wdir):
             os.makedirs(wdir)
             log.info('built working directory: %s'%wdir)
+        self.feedback.upd_prog(10)
             
+        #=======================================================================
+        # run the control file builder
+        #=======================================================================
+        #initilize
+        wrkr = Preparor(logger=self.logger,  out_dir=wdir, tag=tag)
+        self.feedback.upd_prog(20)
         
-        #======================================================================
-        # build the control file
-        #======================================================================
-        self.feedback.upd_prog(50)
-        
-        #called by build_scenario()
-        dirname = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        
-        #get the default template from the program files
-        cf_src = os.path.join(dirname, '_pars/CanFlood_control_01.txt')
-        assert os.path.exists(cf_src)
-
-        
-        #get control file name from user provided tag
-        cf_fn = 'CanFlood_%s.txt'%tag
-        cf_path = os.path.join(wdir, cf_fn)
-
-        
-        #see if this exists
-        if os.path.exists(cf_path):
-            msg = 'generated control file already exists. overwrite=%s \n     %s'%(
-                self.overwrite, cf_path)
-            if self.overwrite:
-                log.warning(msg)
-            else:
-                raise Error(msg)
-            
-        
-        #copy over the default template
-        copyfile(cf_src, cf_path)
-            
-
+        #copy the template
+        cf_path = wrkr.copy_cf_template(wdir, logger=self.logger)
         self.feedback.upd_prog(75)
-        #======================================================================
-        # update the control file
-        #======================================================================
-        """todo: switch over to helper function"""
-        pars = configparser.ConfigParser(allow_no_value=True)
-        _ = pars.read(cf_path) #read it from the new location
         
-        #parameters
-        
-        pars.set('parameters', 'name', tag) #user selected field
-        """moved to inventory tab
-        pars.set('parameters', 'felv', self.comboBox_SSelv.currentText()) #user selected field"""
-        
-        #damage curves
-        dmg_fps = self.lineEdit_curve.text()
-        if dmg_fps == '':
-            pass
-        else:
-            assert os.path.exists(dmg_fps), 'bad dmg_fps: %s'%dmg_fps
-            pars.set('dmg_fps', 'curves', dmg_fps)
-        
-        
-        
-        #set note
-        pars.set('parameters', '#control file template created from \'scenario setup\' on  %s'%(
-            datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')
-            ))
-        
-        #write the config file 
-        with open(cf_path, 'w') as configfile:
-            pars.write(configfile)
-            
+        #set some basics
+        wrkr.upd_cf_first(self.lineEdit_curve.text())
+ 
         log.info("default CanFlood model config file created :\n    %s"%cf_path)
         
         """NO. should only populate this automatically from ModelControlFile.Browse
@@ -599,10 +547,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         #display the control file in the dialog
         self.lineEdit_cf_fp.setText(cf_path)
-        
-        """not sure what this is
-        self.lineEdit_control_2.setText(os.path.normpath(os.path.join(wdir, 'CanFlood_control_01.txt')))"""
-        
+
         log.push('control file created for "\'%s\''%tag)
         self.feedback.upd_prog(None) #set the progress bar back down to zero
 
