@@ -893,13 +893,20 @@ class Model(ComWrkr):
         log.debug('prepared edf w/ %s'%str(edf.shape))
         
         #=======================================================================
+        # assemble complex aeps-----
+        #=======================================================================
+        #collect event names
+        cplx_evn_d = dict()
+        for aep in aep_ser[aep_ser.duplicated(keep='first')]: #those aeps w/ duplicates:
+            cplx_evn_d[aep] = aep_ser[aep_ser==aep].index.tolist()
+        
+        assert len(cplx_evn_d) > 0, 'resolving multi but there are no complex events'
+        #=======================================================================
         # check logic----
         #=======================================================================
-        #check for complex events
-        if len(aep_ser.unique()) == len(aep_ser):
-            raise Error('resolving multi but there are no complex events')
-        
-        #check complex events conditional probabilities sum to 1
+
+
+            
         """
         view(edf)
         aep_ser
@@ -1483,7 +1490,7 @@ class Model(ComWrkr):
             #==================================================================
             log.debug('resolving with %i event names: %s'%(len(evn_l), evn_l))
             #===================================================================
-            # #only 1 event.. nothing to resolve
+            # simple events.. nothing to resolve
             #===================================================================
             if len(evn_l) == 1:
                 """
@@ -1496,7 +1503,7 @@ class Model(ComWrkr):
                 res_df.loc[:, aep] =  evdf.loc[:, evn_l].iloc[:, 0]
             
             #===================================================================
-            # #multiple events... take maximum
+            # #complex events.
             #===================================================================
             else:
                 log.info('resolving alternate damages for aep %.2e from %i events: \n    %s'%(
