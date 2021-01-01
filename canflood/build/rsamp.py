@@ -1413,6 +1413,21 @@ class Rsamp(Qcoms):
              },
             cf_fp = cf_fp
             )
+        
+        
+    def upd_cf_dtm(self, cf_fp=None):
+        return self.update_cf(
+            {
+            'dmg_fps':(
+                {'gels':self.out_fp},
+                '#\'gels\' file path set from rsamp.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                    ),
+            'parameters':(
+                {'felv':'ground'}
+                ),   
+             },
+            cf_fp = cf_fp
+            )
 
     def test(self):
         print('Rsamp test')
