@@ -681,8 +681,9 @@ class Model(ComWrkr):
         #======================================================================
         # check
         #======================================================================
+        assert aser_raw.notna().all(), 'got some nulls in evals'
         boolar = aser_raw == 0
-        assert not boolar.any(), 'got some zeros in aep_ser'
+        assert not boolar.any(), 'got some zeros in evals'
         #======================================================================
         # convert
         #======================================================================
@@ -785,9 +786,9 @@ class Model(ComWrkr):
         if dtag == 'exlikes':
             miss_l = set(df.columns).difference(self.expcols)
         else:
-            miss_l = set(self.expcols).difference(df.columns)
+            miss_l = set(self.expcols).symmetric_difference(df.columns)
             
-        assert len(miss_l) == 0, '%i events on \'%s\' not found in aep_ser: \n    %s'%(
+        assert len(miss_l) == 0, '%i eventName mismatch on \'%s\' and \'evals\': \n    %s'%(
             len(miss_l), dtag, miss_l)
         
         
@@ -908,12 +909,15 @@ class Model(ComWrkr):
         valid = True
         for aep, exp_l in cplx_evn_d.items():
             cplx_df = get_cplx_df(edf, exp_l=exp_l) #get data for this event
-            boolidx = cplx_df.sum(axis=1)>=1.0 #find those exceeding 1.0
+            boolidx = cplx_df.sum(axis=1).round(self.prec)>1.0 #find those exceeding 1.0
 
             if boolidx.any():
                 valid = False
-                log.error('aep%.4f failed %i (of %i) Psum<=1 checks'%(
-                    aep, boolidx.sum(), len(boolidx)))
+                rpt_df = cplx_df[boolidx].join(
+                    cplx_df[boolidx].sum(axis=1).rename('sum'))
+                log.debug('aep%.4f: \n\n%s'%(aep, rpt_df))
+                log.error('aep%.4f w/ %i exEvents failed %i (of %i) Psum<1 checks (Pmax=%.2f).. see logger \n    %s'%(
+                    aep, len(exp_l), boolidx.sum(), len(boolidx),cplx_df.sum(axis=1).max(), exp_l))
                 
         assert valid, 'some complex event probabilities exceed 1'
             
