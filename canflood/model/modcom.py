@@ -780,9 +780,7 @@ class Model(ComWrkr):
         assert len(miss_l) == 0, 'some assets on %s not found in finv'%dtag
         
         #check events
-        """
-        must match the aeps
-        """
+
         if dtag == 'exlikes':
             miss_l = set(df.columns).difference(self.expcols)
         else:
@@ -1615,7 +1613,7 @@ class Model(ComWrkr):
             
             log.debug('resolving aep %.4f w/ %i event names: %s'%(aep, len(exn_l), exn_l))
             #===================================================================
-            # simple events.. nothing to resolve
+            # simple events.. nothing to resolve----
             #===================================================================
             if len(exn_l) == 1:
                 """
@@ -1625,7 +1623,7 @@ class Model(ComWrkr):
                 meta_d[aep] = 'simple event'
                 
             #===================================================================
-            # one failure possibility
+            # one failure possibility-----
             #===================================================================
             elif len(exn_l) == 2:
                 
@@ -1638,7 +1636,7 @@ class Model(ComWrkr):
                     res_df.loc[:, aep] = evdf.loc[:, exn_l].sum(axis=1)
             
             #===================================================================
-            # #complex events (more than 1 failure event)
+            # complex events (more than 1 failure event)----
             #===================================================================
             else:
 
@@ -1667,6 +1665,10 @@ class Model(ComWrkr):
                     res_df.loc[:, aep] = evdf.loc[:, exn_l].sum(axis=1)
 
                 elif event_rels == 'indep':
+                    """
+                    NOTE: this is a very slow routine
+                    TODO: parallel processing
+                    """
                     
                     #identify those worth calculating
                     bx = np.logical_and(
@@ -1683,8 +1685,8 @@ class Model(ComWrkr):
 
                     """todo: consider using 'apply'
                     tricky w/ multiple data frames...."""
-                    log.info('aep %.4f calculating %i (of %i) expected values with indepedence'%(
-                        aep, bx.sum(), len(bx)))
+                    log.info('aep %.4f calculating %i (of %i) EVs from %i events w/ indepedence'%(
+                        aep, bx.sum(), len(bx), len(exn_l)))
                     
                     #loop and resolve each asset
                     for cindx, pser in edf.loc[bx, exn_l].iterrows():

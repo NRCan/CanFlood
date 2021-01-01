@@ -89,7 +89,7 @@ class Plotr(ComWrkr):
                   
                   #format controls
                   grid = True, logx = False, 
-                  basev = 1, #base value for dividing damage values
+                  basev = 1, #base value for dividing large impact values
                   dfmt = '{0:.0f}', #formatting of damage values 
                     #'{:,.0f}' #thousands comma no decimal
                     #'{0:.0f}' #no comma no decimal
@@ -438,7 +438,7 @@ class Plotr(ComWrkr):
         
         xlab    =    self.xlab
         
-        y2lab    =    self.y2lab
+        #y2lab    =    self.y2lab
         y1lab    =    self.y1lab
 
         grid    =    self.grid
@@ -486,18 +486,17 @@ class Plotr(ComWrkr):
         plt.show()
         """
         plt.close()
-        fig = plt.figure(1)
-        fig.set_size_inches(figsize)
+        fig = plt.figure(figsize=figsize, constrained_layout = True)
         
         #axis setup
         ax1 = fig.add_subplot(111)
-        ax2 = ax1.twinx()
+        #ax2 = ax1.twinx()
         
         
         # axis label setup
         fig.suptitle(title)
         ax1.set_ylabel(y1lab)
-        ax2.set_ylabel(y2lab)
+        #ax2.set_ylabel(y2lab)
         ax1.set_xlabel(xlab)
         
         
@@ -528,7 +527,7 @@ class Plotr(ComWrkr):
             
 
             #build labels
-            val_str = '%s total Annualized = '%cName + dfmt.format(ead_tot/self.basev)
+            val_str = '%s Tot.Annual = '%cName + dfmt.format(ead_tot/self.basev)
             
             if first:
                 vMaster_str = val_str
@@ -572,8 +571,9 @@ class Plotr(ComWrkr):
 
         #legend
         h1, l1 = ax1.get_legend_handles_labels() #pull legend handles from axis 1
-        h2, l2 = ax2.get_legend_handles_labels()
-        ax1.legend(h1+h2, l1+l2, loc=2) #turn legend on with combined handles
+        #h2, l2 = ax2.get_legend_handles_labels()
+        #ax1.legend(h1+h2, l1+l2, loc=2) #turn legend on with combined handles
+        ax1.legend(h1, l1, loc=1) #turn legend on with combined handles
         
         return fig
         
