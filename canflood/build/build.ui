@@ -1163,14 +1163,31 @@ p, li { white-space: pre-wrap; }
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_13">
               <item>
-               <widget class="QgsMapLayerComboBox" name="comboBox_ivlay">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-               </widget>
+               <layout class="QHBoxLayout" name="horizontalLayout_36">
+                <item>
+                 <widget class="QLabel" name="label_3">
+                  <property name="minimumSize">
+                   <size>
+                    <width>150</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>Inventory Vector Layer:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QgsMapLayerComboBox" name="comboBox_ivlay">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
               </item>
               <item>
                <layout class="QHBoxLayout" name="horizontalLayout_26">
@@ -1184,7 +1201,7 @@ p, li { white-space: pre-wrap; }
                   </property>
                   <property name="minimumSize">
                    <size>
-                    <width>115</width>
+                    <width>150</width>
                     <height>0</height>
                    </size>
                   </property>
@@ -1238,7 +1255,7 @@ p, li { white-space: pre-wrap; }
                     </property>
                     <property name="minimumSize">
                      <size>
-                      <width>115</width>
+                      <width>150</width>
                       <height>0</height>
                      </size>
                     </property>
@@ -1249,7 +1266,7 @@ p, li { white-space: pre-wrap; }
                      </size>
                     </property>
                     <property name="text">
-                     <string>Index FieldName:</string>
+                     <string>Index FieldName (cid):</string>
                     </property>
                    </widget>
                   </item>
