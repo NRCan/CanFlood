@@ -2340,7 +2340,7 @@ class Model(ComWrkr):
         # labels
         #======================================================================\
         
-        val_str = 'annualized impacts = %s \nltail=\"%s\',  rtail=\'%s\''%(
+        val_str = 'annualized impacts = %s \nltail=\'%s\',  rtail=\'%s\''%(
             dfmt.format(ead_tot/basev), self.ltail, self.rtail) + \
             '\nassets = %i, event_rels = \'%s\', prec = %i'%(
                 self.asset_cnt, self.event_rels, self.prec)
@@ -2438,7 +2438,7 @@ class Model(ComWrkr):
         #legend
         h1, l1 = ax1.get_legend_handles_labels() #pull legend handles from axis 1
         h2, l2 = ax2.get_legend_handles_labels()
-        ax1.legend(h1+h2, l1+l2, loc=2) #turn legend on with combined handles
+        ax1.legend(h1+h2, l1+l2, loc=1) #turn legend on with combined handles
         
         return fig
     """
