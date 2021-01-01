@@ -65,6 +65,7 @@ class Risk2(Model):
              'integrate':   {'values':('trapz',)}, 
              'prec':        {'type':int}, 
              'as_inun':     {'type':bool},
+             'event_rels':   {'type':str, 'values':('max', 'mutEx', 'indep')}
              },
             
         'dmg_fps':{

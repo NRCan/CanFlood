@@ -10,7 +10,7 @@ rtail = 0.5             #EAD extrapolation: right trail treatment (high prob low
 drop_tails = False      #EAD extrapolation: whether to remove the extrapolated values before writing the per-asset results
 integrate = trapz       #integration method to apply: trapz, simps 
 as_inun = False         #flag whether to treat exposures as percent inundation
-
+event_rels = mutEx		#assumption for calculated expected value on complex events
 
 [dmg_fps]
 curves =                #damage curve library filepath

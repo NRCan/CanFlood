@@ -11,7 +11,7 @@ Created on Feb. 9, 2020
 # imports------------
 #==============================================================================
 
-import configparser, os, inspect, logging, copy, sys
+import configparser, os, inspect, logging, copy, itertools
 import pandas as pd
 import numpy as np
 
@@ -44,7 +44,7 @@ class Model(ComWrkr):
     
     
     Control File Parameters:
-        [parameters]
+    [parameters]
         
         name -- name of the scenario/model run
         
@@ -86,22 +86,31 @@ class Model(ComWrkr):
         
         integrate -- numpy integration method to apply (default 'trapz')
 
-        
-        
-        
         as_inun    -- flag whether to treat exposures as %inundation
         
-        [dmg_fps]
+        event_rels -- assumption for calculated expected value on complex events
+            #max:  maximum expected value of impacts per asset from the duplicated events
+                #resolved damage = max(damage w/o fail, damage w/ fail * fail prob)
+                #default til 2020-12-30
+            #mutEx: assume each event is mutually exclusive (only one can happen)
+                #lower bound
+            #indep: assume each event is independent (failure of one does not influence the other)
+                #upper bound
+            
+            
+        
+    [dmg_fps]
+        
 
         
-        [risk_fps]
+    [risk_fps]
         dmgs -- damage data results file path (default N/A)
             
         exlikes -- secondary exposure likelihood data file path (default N/A)
         
         evals -- event probability data file path (default N/A)
         
-        [validation]
+    [validation]
         risk2 -- Risk2 validation flag (default False)
     
     """
@@ -121,6 +130,7 @@ class Model(ComWrkr):
     drop_tails = True
     integrate = 'trapz'
     as_inun = False
+    event_rels = 'max'
 
 
     
@@ -156,7 +166,9 @@ class Model(ComWrkr):
     max_depth = 20 #maximum depth for throwing an error in build_depths()
     
     extrap_vals_d = {} #extraploation used {aep:val}
-    
+    cplx_evn_d = None #complex event sets {aep: [exEventName1, exEventName1]}
+    asset_cnt = 0 #for plotting
+    scen_ar_d = dict() #container for empty scenario matrix
 
     def __init__(self,
                  cf_fp, #control file path """ note: this could also be attached by basic.ComWrkr.__init__()"""
@@ -849,14 +861,10 @@ class Model(ComWrkr):
         self.load_expos(dtag=dtag, **kwargs) #load, clean, slice, add to data_d
         edf = self.data_d.pop(dtag) #pull out the reuslt
         log.debug('loading w/ %s'%str(edf.shape))
-        
-        
-
-        
 
         """TODO: Consider moving these onto the build tool"""
         #======================================================================
-        # fill nulls
+        # fill nulls-----
         #======================================================================
         """
         better not to pass any nulls.. but if so.. should treat them as ZERO!!
@@ -880,10 +888,13 @@ class Model(ComWrkr):
         #=======================================================================
         #collect event names
         cplx_evn_d = dict()
-        for aep in aep_ser[aep_ser.duplicated(keep='first')]: #those aeps w/ duplicates:
+        cnt=0
+        for aep in aep_ser.unique(): #those aeps w/ duplicates:
             cplx_evn_d[aep] = aep_ser[aep_ser==aep].index.tolist()
+            cnt=max(cnt, len(cplx_evn_d[aep])) #get the size of the larget complex event
         
-        assert len(cplx_evn_d) > 0, 'passed \'exlikes\' but there are no complex events'
+
+        assert cnt > 1, 'passed \'exlikes\' but there are no complex events'
         
 
         def get_cplx_df(df, aep=None, exp_l=None): #retrieve complex data helper
@@ -913,33 +924,46 @@ class Model(ComWrkr):
         for aep, exn_l in cplx_evn_d.items(): 
             
             miss_l = set(exn_l).difference(edf.columns)
-            assert len(miss_l)<2, 'can only fill one exposure column per complex event'
+            assert len(miss_l)<2, 'can only fill one exposure column per complex event: %s'%miss_l
             
             if len(miss_l)==1:
                 fill_exn_d[aep] = list(miss_l)[0]
+
                 
         log.debug('calculating probaility for %i complex events with remaining secnodaries'%(
             len(fill_exn_d)))
             
+        self.noFailExn_d ={k:v for k,v in fill_exn_d.items()} #set this for the probability calcs
         #=======================================================================
-        # fill in missing (sum to 1)
+        # fill in missing 
         #=======================================================================
         res_d = dict()
         for aep, exn_miss in fill_exn_d.items():
-
-            #data provided on this event
             """typically this is a single column generated for the failure raster
-            but this should work for multiple failure rasters"""
-            cplx_df = get_cplx_df(edf, aep=aep)
-            assert len(cplx_df.columns)==(len(cplx_evn_d[aep])-1), 'bad column count'
-            assert (cplx_df.sum(axis=1)<=1).all() #check we don't already exceed 1 (redundant)
-            
-            #set remainder values
-            edf[exn_miss] = 1- cplx_df.sum(axis=1)
-            
-            log.debug('for aep %.4f \'%s\' set %i remainder values (mean=%.4f)'%(
-                aep, exn_miss, len(cplx_df), edf[exn_miss].mean()))
-            
+                but this should work for multiple failure rasters"""
+            #===================================================================
+            # legacy method
+            #===================================================================
+            if self.event_rels == 'max':
+                edf[exn_miss]=1
+                
+            #===================================================================
+            # rational (sum to 1)
+            #===================================================================
+            else:
+
+                #data provided on this event
+
+                cplx_df = get_cplx_df(edf, aep=aep)
+                assert len(cplx_df.columns)==(len(cplx_evn_d[aep])-1), 'bad column count'
+                assert (cplx_df.sum(axis=1)<=1).all() #check we don't already exceed 1 (redundant)
+                
+                #set remainder values
+                edf[exn_miss] = 1- cplx_df.sum(axis=1)
+                
+                log.debug('for aep %.4f \'%s\' set %i remainder values (mean=%.4f)'%(
+                    aep, exn_miss, len(cplx_df), edf[exn_miss].mean()))
+                
             res_d[exn_miss] = round(edf[exn_miss].mean(), self.prec)
             
         if len(res_d)>0: log.info(
@@ -967,10 +991,9 @@ class Model(ComWrkr):
         
 
         #=======================================================================
-        # #check conditional probabilities sum to 1
+        # #check conditional probabilities sum to 1----
         #=======================================================================
 
-        
         valid = True
         for aep, exp_l in cplx_evn_d.items():
             cplx_df = get_cplx_df(edf, exp_l=exp_l) #get data for this event
@@ -986,10 +1009,11 @@ class Model(ComWrkr):
 
             if boolidx.any():
                 valid = False
-                log.error('aep%.4f failed %i (of %i) Psum<=1 checks'%(
-                    aep, boolidx.sum(), len(boolidx)))
-                
-        assert valid, 'some complex event probabilities exceed 1'
+                log.error('aep%.4f failed %i (of %i) Psum<=1 checks (Pmax=%.2f)'%(
+                    aep, boolidx.sum(), len(boolidx), cplx_df.sum(axis=1).max()))
+        
+        if not self.event_rels == 'max':
+            assert valid, 'some complex event probabilities exceed 1'
 
         #==================================================================
         # wrap
@@ -1161,6 +1185,8 @@ class Model(ComWrkr):
         self.data_d[dtag] = df
         
         log.info('finished loading %s as %s'%(dtag, str(df.shape)))
+        
+        self.asset_cnt=len(df) #for plotting
     
    
     def add_gels(self): #add gels to finv (that's heights)
@@ -1504,13 +1530,13 @@ class Model(ComWrkr):
                 # missing colums were replaced by 1.0 (e.g., non-failure events)
             
            aep_ser,
-           method='max', #ev calculation method
+           event_rels=None, #ev calculation method
                 #max:  maximum expected value of impacts per asset from the duplicated events
                     #resolved damage = max(damage w/o fail, damage w/ fail * fail prob)
                     #default til 2020-12-30
-                #mutexclu: assume each event is mutually exclusive (only one can happen)
+                #mutEx: assume each event is mutually exclusive (only one can happen)
                     #lower bound
-                #indepen: assume each event is independent (failure of one does not influence the other)
+                #indep: assume each event is independent (failure of one does not influence the other)
                     #upper bound
            logger=None,
                        ):
@@ -1530,15 +1556,20 @@ class Model(ComWrkr):
         view(edf)
         """
         #======================================================================
-        # setup
+        # defaults
         #======================================================================
         if logger is None: logger=self.logger
         log = logger.getChild('ev_multis')
-        
+        cplx_evn_d = self.cplx_evn_d #{aep: [eventName1, eventName2,...]}
+        if event_rels is None: event_rels = self.event_rels
+
         #======================================================================
         # precheck
         #======================================================================
-
+        assert isinstance(cplx_evn_d, dict)
+        assert len(cplx_evn_d)>0
+        assert (edf.max(axis=1)<=1).all(), 'got probs exceeding 1'
+        assert (edf.min(axis=1)>=0).all(), 'got negative probs'
         
         assert ddf.shape == edf.shape, 'shape mismatch'
         """where edf > 0 ddf should also be > 0
@@ -1546,63 +1577,130 @@ class Model(ComWrkr):
         #======================================================================
         # get expected values of all damages
         #======================================================================
-
+        """ skip this based on event_rels?"""
         evdf = ddf*edf
         
-        log.info('calculating expected values for %i damages'%evdf.size)
+        log.info('resolving EV w/ %s, %i event sets, and event_rels=\'%s\''%(
+            str(evdf.shape), len(cplx_evn_d), event_rels))
         assert not evdf.isna().any().any()
+        assert evdf.min(axis=1).min()>=0
         #======================================================================
-        # loop by unique aep and resolve
+        # loop by unique aep and resolve-----
         #======================================================================
         res_df = pd.DataFrame(index=evdf.index, columns = aep_ser.unique().tolist())
-        
-        for indxr, aep in enumerate(aep_ser.unique().tolist()):
+        meta_d = dict() 
+        #for indxr, aep in enumerate(aep_ser.unique().tolist()):
+        for indxr, (aep, exn_l) in enumerate(cplx_evn_d.items()):
+            
+            #===================================================================
+            # setup
+            #===================================================================
             self.feedback.setProgress((indxr/len(aep_ser.unique())*80))
             assert isinstance(aep, float)
-            #==================================================================
-            # get these events
-            #==================================================================
-            #find event names at this aep
-            boolar = aep_ser == aep
-            assert boolar.sum() > 0
-            evn_l = aep_ser.index[boolar].tolist() #get these event names
             
-            #==================================================================
-            # resolve--------
-            #==================================================================
-            log.debug('resolving with %i event names: %s'%(len(evn_l), evn_l))
+            if not event_rels=='max':
+                if not (edf.loc[:, exn_l].sum(axis=1).round(self.prec) == 1.0).all():
+                    """
+                    sum_ser = edf.loc[:, exn_l].sum(axis=1) == 1
+                    chk_df = edf.loc[:, exn_l].join(sum_ser.rename('sumChk'))
+                    chk_df['sum'] = edf.loc[:, exn_l].sum(axis=1)
+                    view(chk_df)
+                    view()
+                    """
+                    raise Error('aep %.4f probabilities fail to sum'%aep)
+            
+            log.debug('resolving aep %.4f w/ %i event names: %s'%(aep, len(exn_l), exn_l))
             #===================================================================
             # simple events.. nothing to resolve
             #===================================================================
-            if len(evn_l) == 1:
+            if len(exn_l) == 1:
                 """
                 where hazard layer doesn't have a corresponding failure layer
                 """
-                log.debug('only got 1 event \'%s\' for aep %.2e'%(
-                    aep_ser.index[boolar].values, aep))
+                res_df.loc[:, aep] =  evdf.loc[:, exn_l].iloc[:, 0]
+                meta_d[aep] = 'simple event'
                 
-                #use these
-                res_df.loc[:, aep] =  evdf.loc[:, evn_l].iloc[:, 0]
+            #===================================================================
+            # one failure possibility
+            #===================================================================
+            elif len(exn_l) == 2:
+                
+                if event_rels == 'max':
+                    """special legacy method"""
+                    res_df.loc[:, aep] = evdf.loc[:, exn_l].max(axis=1)
+                else:
+                    """where we only have one failure event
+                        events are mutually exclusive by default"""
+                    res_df.loc[:, aep] = evdf.loc[:, exn_l].sum(axis=1)
             
             #===================================================================
-            # #complex events.
+            # #complex events (more than 1 failure event)
             #===================================================================
             else:
+
+                """
+                view(edf.loc[:, exn_l])
+                view(ddf.loc[:, exn_l])
+                view(evdf.loc[:, exn_l])
+                """
+                
                 log.info('resolving alternate damages for aep %.2e from %i events: \n    %s'%(
-                    aep, len(evn_l), evn_l))
+                    aep, len(exn_l), exn_l))
                 
-                """taking the max EV on each asset
-                
-                why not add?
-                
-                """
-                
-                res_df.loc[:, aep] = evdf.loc[:, evn_l].max(axis=1)
-                """
-                view(edf.loc[:, evn_l])
-                view(ddf.loc[:, evn_l])
-                view(evdf.loc[:, evn_l])
-                """
+                if event_rels == 'max':
+                    """
+                    matching 2020 function
+                    taking the max EV on each asset
+                        where those rasters w/o exlikes P=1 (see load_exlikes())
+                        
+                    WARNING: this violates probability logic
+                    
+                    """
+                    
+                    res_df.loc[:, aep] = evdf.loc[:, exn_l].max(axis=1)
+                    
+                elif event_rels == 'mutEx':
+                    res_df.loc[:, aep] = evdf.loc[:, exn_l].sum(axis=1)
+
+                elif event_rels == 'indep':
+                    
+                    #identify those worth calculating
+                    bx = np.logical_and(
+                        (edf.loc[:, exn_l]>0).sum(axis=1)>1, #with multiple real probabilities
+                        ddf.loc[:,exn_l].sum(axis=1).round(self.prec)>0  #with some damages
+                        )
+                    
+                    #build the event type flags
+                    etype_df = pd.Series(index=exn_l, dtype=np.bool, name='mutEx').to_frame()
+
+                    #mark the failure event
+                    etype_df.loc[etype_df.index.isin(self.noFailExn_d.values()), 'mutEx']=True
+                    assert etype_df.iloc[:,0].sum()==1
+
+                    """todo: consider using 'apply'
+                    tricky w/ multiple data frames...."""
+                    log.info('aep %.4f calculating %i (of %i) expected values with indepedence'%(
+                        aep, bx.sum(), len(bx)))
+                    
+                    #loop and resolve each asset
+                    for cindx, pser in edf.loc[bx, exn_l].iterrows():
+                   
+                        #assemble the prob/consq set for this asset
+                        inde_df = pser.rename('prob').to_frame().join(
+                            ddf.loc[cindx, exn_l].rename('consq').to_frame()
+                            ).join(etype_df)
+                            
+                        #resolve for this asset
+                        res_df.loc[cindx, aep] = self._get_indeEV(inde_df)
+                        
+                    #fill in remainderes
+                    assert res_df.loc[~bx, aep].isna().all()
+                    res_df.loc[~bx, aep] = evdf.loc[~bx, exn_l].max(axis=1)
+                        
+                        
+                        
+                else: raise Error('bad event_rels: %s'%event_rels)
+
                 
             if res_df[aep].isna().any():
                 raise Error('got nulls on %s'%aep)
@@ -1610,6 +1708,7 @@ class Model(ComWrkr):
         #======================================================================
         # wrap
         #======================================================================
+        assert res_df.min(axis=1).min()>=0
         if not res_df.notna().all().all():
             raise Error('got %i nulls'%res_df.isna().sum().sum())
         
@@ -1617,6 +1716,89 @@ class Model(ComWrkr):
         
         return res_df.sort_index(axis=1)
     
+    def _get_indeEV(self,
+                    inde_df #prob, consq, mutual exclusivity flag for each exposure event 
+                    ):
+        
+        """
+        get the expected value at an asset with 
+            n>1 indepednet failure events (w/ probabilities)
+            and 1 noFail event
+        """
+        
+        #=======================================================================
+        # prechecks  
+        #=======================================================================
+        #check the columns
+        miss_l = set(['prob', 'consq', 'mutEx']).symmetric_difference(inde_df.columns)
+        assert len(miss_l)==0
+        
+        #=======================================================================
+        # failures---------
+        #=======================================================================
+        bxf = ~inde_df['mutEx']
+        #=======================================================================
+        # assemble complete scenario matrix
+        #=======================================================================
+        n = len(inde_df[bxf])
+        
+        #build it
+        if not n in self.scen_ar_d:
+            scenFail_ar = np.array([i for i in itertools.product(['yes','no'], repeat=n)])
+            self.scen_ar_d[n] = copy.copy(scenFail_ar)
+        
+        #retrieve pre-built
+        else:
+            scenFail_ar = copy.copy(self.scen_ar_d[n])
+
+        
+        #=======================================================================
+        #  probs
+        #=======================================================================
+        sFailP_df = pd.DataFrame(scenFail_ar, columns=inde_df[bxf].index)
+        
+        #expand probabilities to mathc size
+        prob_ar  = np.tile(inde_df.loc[bxf, 'prob'].to_frame().T.values, (len(sFailP_df), 1))
+        
+        #swap in positives
+        sFailP_df = sFailP_df.where(
+            np.invert(sFailP_df=='yes'), 
+            prob_ar, inplace=False)
+        
+        #swap in negatives
+        sFailP_df = sFailP_df.where(
+            np.invert(sFailP_df=='no'), 
+            1-prob_ar, inplace=False).astype(np.float64)
+        
+        #combine
+        sFailP_df['pTotal'] = sFailP_df.prod(axis=1)
+        assert round(sFailP_df['pTotal'].sum(), self.prec)==1, inde_df
+        
+        #=======================================================================
+        # consequences
+        #=======================================================================
+        sFailC_df = pd.DataFrame(scenFail_ar, columns=inde_df[bxf].index).replace(
+            {'yes':1.0, 'no':0.0}).astype(np.float64)
+        
+        #add in consequences
+        sFailC_df = sFailC_df.multiply(inde_df.loc[bxf, 'consq'])
+        
+        #get maximums
+        sFailC_df['cTotal'] = sFailC_df.max(axis=1)
+        
+        #=======================================================================
+        # expected values
+        #=======================================================================
+        evFail_ser = sFailP_df['pTotal']*sFailC_df['cTotal']
+        
+        #=======================================================================
+        # total-------
+        #=======================================================================
+        noFail_ar = inde_df.loc[~bxf, ['prob', 'consq']].iloc[0, :].values
+        
+        return evFail_ser.sum() + noFail_ar[0]*noFail_ar[1]
+
+
 
     def calc_ead(self, #get EAD from a set of impacts per event
                  df_raw, #xid: aep
@@ -1712,7 +1894,7 @@ class Model(ComWrkr):
             """just using the average for now...
             could extraploate for each asset but need an alternate method"""
             aep_ser = df.loc[bx, :].apply(
-                self.extrap, axis=1, left=False)
+                self._extrap_rCurve, axis=1, left=False)
             
             aep_val = round(aep_ser.mean(), 5)
             
@@ -1799,7 +1981,7 @@ class Model(ComWrkr):
 
     def _extrap_rCurve(self,  #extraploating EAD curve data
                ser, #row of dmages (y values) from big df
-               left=True, #whether to extraploate left or gihtt
+               left=True, #whether to extraploate left or right
                ):
         
         """
@@ -2152,7 +2334,9 @@ class Model(ComWrkr):
         #======================================================================\
         
         val_str = 'annualized impacts = %s \nltail=\"%s\',  rtail=\'%s\''%(
-            dfmt.format(ead_tot/basev), self.ltail, self.rtail)
+            dfmt.format(ead_tot/basev), self.ltail, self.rtail) + \
+            '\nassets = %i, event_rels = \'%s\', prec = %i'%(
+                self.asset_cnt, self.event_rels, self.prec)
         
         title = '%s.%s Impact-%s plot on %i events'%(self.name,self.tag, xlab, len(dmg_ser1))
         
@@ -2574,53 +2758,22 @@ class Model(ComWrkr):
         return result
             
 
-if __name__ =="__main__":
-    
 
-    """checking monotonocity
-    #==========================================================================
-    # chekc failure events
-    #==========================================================================
-    log = mod_logger.getChild('fail')
-    log.info('testing failures')
-    boolcol = ddf_raw.columns.str.contains('fail')
-    
-    assert boolcol.sum() <= len(ddf_raw.columns)/2
-     
-    ddf = ddf_raw.loc[:, boolcol]
-    aep_ser = adf.iloc[0, adf.columns.isin(ddf.columns)].astype(int).sort_values().copy()
-      
-  
-    wrkr.check_monot(ddf, aep_ser, logger=log)
-    
-    
-    #==========================================================================
-    # check normal events
-    #==========================================================================
-    log = mod_logger.getChild('norm')
-    log.info('testing normal events')
-    ddf = ddf_raw.loc[:, ~boolcol]
-    aep_ser = adf.iloc[0, adf.columns.isin(ddf.columns)].astype(int).sort_values()
-    
-    wrkr.check_monot(ddf, aep_ser, logger=log)
-    
-    
-    #==========================================================================
-    # check exlikes
-    #==========================================================================
-    exdf = pd.read_csv(exl_fp).set_index(cid)
-    aep_ser = adf.iloc[0, adf.columns.isin(exdf.columns)].astype(int).sort_values()
-     
-    wrkr.check_monot(exdf, aep_ser, logger=log)
-    """
     
     
     
-    print('finished')
-    
-    
-    
-    
+#===============================================================================
+# def get_scenario_set(n):
+#     
+#     which = np.array(list(itertools.combinations(range(10), 2)))
+#     grid = np.zeros((len(which), 10), dtype="int8")
+#     
+#     # Magic
+#     grid[np.arange(len(which))[None].T, which] = 1
+#     
+#     
+#     return grid
+#===============================================================================
     
     
     
