@@ -5,7 +5,7 @@ ui class for the BUILD toolset
 #==============================================================================
 # imports
 #==============================================================================
-import sys, os, warnings, tempfile, logging, configparser, datetime, time
+import sys, os, datetime, time
 import os.path
 from shutil import copyfile
 
@@ -1247,7 +1247,15 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             event_probs = 'aep'
         self.logger.info('\'event_probs\' set to \'%s\''%event_probs)
         
-        
+        #event_rels
+        if self.radioButton_EL_max.isChecked():
+            event_rels = 'max'
+        elif self.radioButton_EL_mutEx.isChecked():
+            event_rels='mutEx'
+        elif self.radioButton_EL_indep.isChecked():
+            event_rels='indep'
+        else:
+            raise Error('event_rels radio logic fail')
         #======================================================================
         # collcet table data
         #======================================================================
@@ -1291,7 +1299,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
         wrkr.update_cf(
             {
-                'parameters':({'event_probs':event_probs},),
+                'parameters':({
+                    'event_probs':event_probs, 'event_rels':event_rels},),
                 'risk_fps':({'evals':eaep_fp}, 
                             '#evals file path set from %s.py at %s'%(
                                 __name__, datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')))
