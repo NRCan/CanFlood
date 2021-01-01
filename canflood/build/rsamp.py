@@ -1423,8 +1423,8 @@ class Rsamp(Qcoms):
                 '#\'gels\' file path set from rsamp.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
                     ),
             'parameters':(
-                {'felv':'ground'}
-                ),   
+                {'felv':'ground'},
+                )
              },
             cf_fp = cf_fp
             )
