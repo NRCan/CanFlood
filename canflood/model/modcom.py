@@ -57,7 +57,7 @@ class Model(ComWrkr):
             'aris'           expressed as annual recurrance intervals
             
         
-        ltail -- zero probability event extrapolation handle 
+        ltail -- zero probability event  handle 
                 (default 'extrapolate')
             'flat'           set the zero probability event equal to the most 
                             extreme impacts in the passed series
@@ -67,10 +67,11 @@ class Model(ComWrkr):
             float            use the passed value as the zero probability impact value
              
         
-        rtail -- zreo impacts event extrapolation handle    (default 0.5)
+        rtail -- zreo impacts event  handle    (default float(0.5))
             'extrapolate'    set the zero impact event by extrapolating from the 
                             least extreme impact
-            'none'           do not extrapolate (not recommended) 
+            'none'            no enforcing of a zero impact event (not recommended)
+            'flat'           duplicates the minimum AEP as the zero damage event 
             float           use the passed value as the zero impacts aep value
         
         drop_tails -- EAD extrapolation: whether to remove the extrapolated values
@@ -1927,7 +1928,7 @@ class Model(ComWrkr):
             log.info('rtail=\'flat\' setting ZeroDamage event as aep=%.7f'%aep_val)
             
         elif rtail == 'none':
-            pass
+            log.warning('no rtail extrapolation specified! leads to invalid integration bounds!')
         
         else:
             raise Error('unexpected rtail %s'%rtail)
