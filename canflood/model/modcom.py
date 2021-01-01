@@ -57,8 +57,7 @@ class Model(ComWrkr):
             'aris'           expressed as annual recurrance intervals
             
         
-        ltail -- zero probability event  handle 
-                (default 'extrapolate')
+        ltail -- zero probability event  handle  (default 'extrapolate')
             'flat'           set the zero probability event equal to the most 
                             extreme impacts in the passed series
             'extrapolate'    set the zero probability event by extrapolating from 
