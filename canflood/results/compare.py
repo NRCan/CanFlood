@@ -198,9 +198,6 @@ class Cmpr(riskPlotr):
 
         return self.multi(plotPars_d)
         
-        
-         
-    
     def cf_compare(self, #compare control file values between Scenarios
                    sWrkr_d,
                    logger=None):
@@ -258,10 +255,7 @@ class Cmpr(riskPlotr):
         
         return mdf
                     
-
-
-        
-    
+ 
 class Scenario(Model, riskPlotr): #simple class for a scenario
     
     name=None

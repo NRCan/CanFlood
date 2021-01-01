@@ -20,18 +20,10 @@ from scipy import interpolate, integrate
 #==============================================================================
 # custom
 #==============================================================================
-#standalone runs
-if __name__ =="__main__": 
-    from hlpr.logr import basic_logger
-    mod_logger = basic_logger()   
-    from hlpr.exceptions import Error
 
-    
-#plugin runs
-else:
-    mod_logger = logging.getLogger('common') #get the root logger
+mod_logger = logging.getLogger('common') #get the root logger
 
-    from hlpr.exceptions import QError as Error
+from hlpr.exceptions import QError as Error
     
 from hlpr.basic import ComWrkr, view
 
@@ -1911,6 +1903,9 @@ class Model(ComWrkr):
             log.info('using right intersection of aep= %.2e from average extraploation'%(
                 aep_val))
             
+            
+            self.extrap_vals_d[aep_val] = 0 #store for later 
+            
         
         elif isinstance(rtail, float): #DEFAULT
             aep_val = round(rtail, 5)
@@ -1921,20 +1916,25 @@ class Model(ComWrkr):
             
             log.debug('setting ZeroDamage event from user passed \'rtail\' aep=%.7f'%(
                 aep_val))
+            
+            self.extrap_vals_d[aep_val] = 0 #store for later 
 
-        elif rtail == 'none':
+        elif rtail == 'flat':
             #set the zero damage year as the lowest year in the model (with a small buffer) 
             aep_val = max(df.columns.tolist())*(1+10**-(self.prec+2))
             df.loc[bx, aep_val] = 0
             
-            log.info('rtail=\'none\' setting ZeroDamage event as aep=%.7f'%aep_val)
+            log.info('rtail=\'flat\' setting ZeroDamage event as aep=%.7f'%aep_val)
+            
+        elif rtail == 'none':
+            pass
         
         else:
             raise Error('unexpected rtail %s'%rtail)
             
         df = df.sort_index(axis=1)
         
-        self.extrap_vals_d[aep_val] = 0 #store for later
+        
 
         #======================================================================
         # check monoticiy again
