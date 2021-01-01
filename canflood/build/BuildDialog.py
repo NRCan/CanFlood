@@ -1085,12 +1085,11 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                           tag=tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
                           cid=cid,
-                          out_dir = out_dir, fname='gels'
+                          out_dir = out_dir, fname='gels', cf_fp=cf_fp
                           )
         
         
-        #connect the status bar
-        #wrkr.feedback.progressChanged.connect(self.upd_prog)
+
         
         res_vlay = wrkr.run([rlay], finv, psmp_stat=psmp_stat)
         
@@ -1101,16 +1100,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         wrkr.write_res(res_vlay, out_dir = out_dir)
         
         #update ocntrol file
-        wrkr.update_cf({
-            'dmg_fps':(
-                {'gels':wrkr.out_fp},
-                '#\'gels\' file path set from rsamp.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
-                    ),
-            'parameters':(
-                {'felv':'ground'},                
-                )
-            
-                    },cf_fp)
+        wrkr.upd_cf_dtm()
         
         #======================================================================
         # add to map
