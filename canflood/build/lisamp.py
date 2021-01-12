@@ -645,7 +645,7 @@ class LikeSampler(Qcoms):
         # defaults
         #=======================================================================
         log = self.logger.getChild('plot')
-        title = '%s Conditional P boxplots on %i events'%(self.tag, len(df.columns), len(df))
+        title = '%s Conditional P boxplots on %i events'%(self.tag, len(df.columns))
         
         #=======================================================================
         # manipulate data
@@ -715,7 +715,7 @@ class LikeSampler(Qcoms):
         # format axis labels
         #======================================================= ================
         #apply the new labels
-        ax1.set_xticklabels(df.columns, rotation=90, va='center', y=.5)
+        ax1.set_xticklabels(df.columns, rotation=90, va='center', y=.5, color='red')
         
         
         #=======================================================================
