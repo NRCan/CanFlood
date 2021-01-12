@@ -1205,10 +1205,14 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         wrkr.upd_cf(cf_fp)
         
         #=======================================================================
-        # summary histogram
+        # summary plots
         #=======================================================================
         if self.checkBox_LS_hist.isChecked():
             fig = wrkr.plot_hist_all(res_df)
+            wrkr.output_fig(fig)
+            
+        if self.checkBox_LS_box.isChecked():
+            fig = wrkr.plot_box_all(res_df)
             wrkr.output_fig(fig)
         
         #======================================================================
