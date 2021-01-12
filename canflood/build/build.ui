@@ -3374,7 +3374,7 @@ p, li { white-space: pre-wrap; }
            <item>
             <widget class="QGroupBox" name="groupBox_17">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+              <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -3382,7 +3382,7 @@ p, li { white-space: pre-wrap; }
              <property name="minimumSize">
               <size>
                <width>100</width>
-               <height>500</height>
+               <height>0</height>
               </size>
              </property>
              <property name="title">
@@ -3399,9 +3399,15 @@ p, li { white-space: pre-wrap; }
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>616</width>
-                   <height>503</height>
+                   <width>599</width>
+                   <height>500</height>
                   </rect>
+                 </property>
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_2">
                   <item>
@@ -3658,6 +3664,90 @@ p, li { white-space: pre-wrap; }
               </item>
              </layout>
             </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_37">
+             <item>
+              <widget class="QLabel" name="label_14">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Probability FieldName:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QgsFieldComboBox" name="mFieldComboBox_LSfn">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>200</width>
+                 <height>0</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_2">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QGroupBox" name="groupBox_35">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="title">
+                <string>Event Relation Treatment:</string>
+               </property>
+               <layout class="QHBoxLayout" name="horizontalLayout_38">
+                <item>
+                 <widget class="QRadioButton" name="radioButton_LS_mutEx">
+                  <property name="text">
+                   <string>Mutually Exclusive</string>
+                  </property>
+                  <attribute name="buttonGroup">
+                   <string notr="true">buttonGroup_LS_rels</string>
+                  </attribute>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QRadioButton" name="radioButton_LS_indep">
+                  <property name="text">
+                   <string>Independent</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                  <attribute name="buttonGroup">
+                   <string notr="true">buttonGroup_LS_rels</string>
+                  </attribute>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+            </layout>
            </item>
            <item>
             <widget class="QGroupBox" name="groupBox_13">
@@ -4108,42 +4198,6 @@ p, li { white-space: pre-wrap; }
                 </property>
                 <property name="text">
                  <string>Sample</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_2">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_14">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Probability FieldName:</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QgsFieldComboBox" name="mFieldComboBox_LSfn">
-                <property name="minimumSize">
-                 <size>
-                  <width>150</width>
-                  <height>0</height>
-                 </size>
                 </property>
                </widget>
               </item>
@@ -5357,7 +5411,6 @@ p, li { white-space: pre-wrap; }
   <tabstop>MLCB_LS1_event_8</tabstop>
   <tabstop>MLCB_LS1_lpol_8</tabstop>
   <tabstop>pushButton_LSsample</tabstop>
-  <tabstop>mFieldComboBox_LSfn</tabstop>
   <tabstop>comboBox_dtm</tabstop>
   <tabstop>pushButton_DTMsamp</tabstop>
   <tabstop>checkBox_Vr1</tabstop>
@@ -5369,8 +5422,9 @@ p, li { white-space: pre-wrap; }
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="buttonGroup_S_filepaths"/>
   <buttongroup name="buttonGroup_ELfmt"/>
   <buttongroup name="buttonGroup_EV_eventRels"/>
+  <buttongroup name="buttonGroup_S_filepaths"/>
+  <buttongroup name="buttonGroup_LS_rels"/>
  </buttongroups>
 </ui>
