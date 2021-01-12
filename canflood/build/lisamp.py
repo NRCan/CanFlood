@@ -273,15 +273,20 @@ class LikeSampler(Qcoms):
         res_df = None #build results contqainer
 
         #loop and resolve
+
         log.debug('resolving %i events'%len(en_c_sval_d))
         for ename, cid_samp_d in en_c_sval_d.items():
             log.info('resolving \"%s\''%ename)
             
-            #loop through each asset and resolve sample values
+            #===================================================================
+            # #loop through each asset and resolve sample values
+            #===================================================================
+            """
+            TODO: Parallel process this
+            """
             cid_res_d = dict() #harmonized likelihood results
             for cval, pvals in cid_samp_d.items():
-                
-                #log = self.logger.getChild('run.%s.%s'%(ename, cval))
+
                 #simple unitaries
                 if len(pvals) == 1:
                     cid_res_d[cval] = pvals[0]
@@ -291,22 +296,40 @@ class LikeSampler(Qcoms):
                     
                 #multi value
                 else:
-                    #calc union probability for multi predictions
-                    cid_res_d[cval] = self.union_probabilities(pvals, logger=log)
                     
-                #wrap union loop
-                #log.debug('%s.%s got p_unioin = %.2f'%(ename, cval, cid_res_d[cval]))
-            
+                    #calc union probability for multi predictions
+                    if event_rels ==  'indep':
+                        cid_res_d[cval] = self.union_probabilities(pvals, logger=log)
+                    elif event_rels == 'mutEx':
+                        cid_res_d[cval] = sum(pvals)
+                    else:
+                        raise Error('bad event_rels: \'%s\''%event_rels)
+                               
                 
-            #update results
+            #===================================================================
+            # #update results
+            #===================================================================
             res_ser = pd.Series(cid_res_d, name=ename).sort_index()
             if res_df is None:
                 res_df = res_ser.to_frame()
                 res_df.index.name = cid
             else:
+                """
                 if not np.array_equal(res_df.index, res_ser.index):
-                    raise Error('index mmismatch')
+                    raise Error('index mmismatch')"""
                 res_df = res_df.join(res_ser, how='left')
+                
+            #===================================================================
+            # check
+            #===================================================================
+            """
+            res_ser.max()
+            """
+            bx = res_ser>1.0
+            if bx.any():
+                log.debug(res_ser[bx])
+                raise Error('%s got %i (of %i) resolved P > 1.0.. check logger'%(
+                    ename, bx.sum(), (len(bx))))
             
         #======================================================================
         # wrap-------
@@ -322,8 +345,6 @@ class LikeSampler(Qcoms):
         #======================================================================
         # post checks
         #======================================================================
-
-        
         miss_l = set(lpol_d.keys()).symmetric_difference(res_df.columns)
         assert len(miss_l) == 0, 'failed to match columns to events'
         
@@ -349,8 +370,16 @@ class LikeSampler(Qcoms):
         #======================================================================
         # close
         #======================================================================
-        
-        log.info('finished w/ %s'%str(res_df.shape))        
+        try: #fancy reporting
+            log.debug('results stats: \nmeans: \n    %s\nnulls \n    %s \nmaxes: \n    %s \nmins: \n    %s\n\n'%(
+                res_df.mean().to_dict(), 
+                res_df.isna().sum().to_dict(), 
+                res_df.max().to_dict(),
+                res_df.min().to_dict()))
+            
+            log.info('finished w/ %s event_rels = \'%s\'.. see log'%(str(res_df.shape), event_rels))        
+        except: log.error('logging error')
+
         return res_df #will have NaNs where there is no intersect
     
     """
@@ -362,7 +391,10 @@ class LikeSampler(Qcoms):
                             logger = None,
                             ):
         """
-        calculating the union probability of multiple events using the exclusion principle
+        calculating the union probability of multiple independent events using the exclusion principle
+        
+        probability that ANY of the passed independent events will occur
+            
         
         https://en.wikipedia.org/wiki/Inclusion%E2%80%93exclusion_principle#In_probability
         
@@ -412,12 +444,16 @@ class LikeSampler(Qcoms):
         #===========================================================================
         #log.debug('calc total_prob for %i probs: %s'%(len(probs), probs))
         total_prob = 0
-        for r in range(1, len(probs) + 1):
-            #log.debug('for r %i total_prob = %.2f'%(r, total_prob))
-            combs = itertools.combinations(probs, r)
+        for r in range(1, len(probs) + 1): #enumerate through each entry in the probs list
+ 
+            combs = itertools.combinations(probs, r) #assemble all the possible combinations
+            """
+            list(combs)
+            """
+            #multiply all the probability combinations together and add for this layer
             total_prob += ((-1) ** (r + 1)) * sum([np.prod(items) for items in combs])
             
-        #log.debug('finished in %i loops '%len(probs))
+
         
         assert total_prob <1 and total_prob > 0, 'bad result'
     
