@@ -52,6 +52,7 @@ class LikeSampler(Qcoms):
     
 
     """
+    event_rels = 'indep'
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -131,17 +132,21 @@ class LikeSampler(Qcoms):
             cid = None, #index field name on finv
             lfield = 'p_fail', #field with likelihhood value
             
-           event_rels='indep', #ev calculation method
+           event_rels=None, #ev calculation method
                 #mutEx: assume each event is mutually exclusive (only one can happen)
                     #lower bound
                 #indep: assume each event is independent (failure of one does not influence the other)
                     #upper bound
             ):
+        #=======================================================================
+        # defults
+        #=======================================================================
 
         log = self.logger.getChild('run')
 
         if cid is  None: cid=self.cid
-
+        if event_rels is None: event_rels=self.event_rels
+        self.event_rels=event_rels #reset for plotting
         #======================================================================
         # #check/load the data
         #======================================================================
@@ -195,7 +200,8 @@ class LikeSampler(Qcoms):
         #======================================================================
         # sample values------
         #======================================================================
-        log.info('sampling %i lpols w/ %i finvs'%(len(lpol_d), len(cid_l)))
+        log.info('sampling %i lpols w/ %i finvs and event_rels=\'%s\''%(
+            len(lpol_d), len(cid_l), event_rels))
         en_c_sval_d = dict() #container for samples {event name: sample data}
         for ename, lp_vlay in lpol_d.items():
             log = self.logger.getChild('run.%s'%ename)
@@ -336,8 +342,14 @@ class LikeSampler(Qcoms):
         #======================================================================
         log = self.logger.getChild('run')
         
+        #=======================================================================
+        # nulls
+        #=======================================================================
+        """2021-01-12: moved null handling from the model to here"""
+        res_df = res_df.fillna(0.0)
+        
         if res_df.isna().all().all():
-            log.warning('no intersections with any events!')
+            raise Error('no intersections with any events!')
             return res_df
             
             
@@ -507,6 +519,116 @@ class LikeSampler(Qcoms):
             cf_fp = cf_fp
             )
         
+    def plot_hist_all(self, df, #plot failure histogram of all layers
+                      
+                    #figure parametrs
+                    figsize     = (6.5, 4), 
+                    grid=True,
+                      
+                      ): #plot all the histograms stacked
+        
+        """
+        dont want to initiate matplotlib in the module...
+            just using a nasty single f unction
+        """
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        log = self.logger.getChild('plot')
+        title = '%s failure histogram on %i events'%(self.tag, len(df.columns))
+        
+        #=======================================================================
+        # manipulate data
+        #=======================================================================
+        #get a collectio nof arrays from a dataframe's columns
+        data = [ser.values for _, ser in df.items()]
+        #======================================================================
+        # setup
+        #======================================================================
+        
+        import matplotlib
+        matplotlib.use('Qt5Agg') #sets the backend (case sensitive)
+        import matplotlib.pyplot as plt
+        
+        #set teh styles
+        plt.style.use('default')
+        
+        #font
+        matplotlib_font = {
+                'family' : 'serif',
+                'weight' : 'normal',
+                'size'   : 8}
+        
+        matplotlib.rc('font', **matplotlib_font)
+        matplotlib.rcParams['axes.titlesize'] = 10 #set the figure title size
+        
+        #spacing parameters
+        matplotlib.rcParams['figure.autolayout'] = False #use tight layout
+        
+        
+        
+        #======================================================================
+        # figure setup
+        #======================================================================
+        plt.close()
+        fig = plt.figure(figsize=figsize,
+                     tight_layout=False,
+                     constrained_layout = True,
+                     )
+        
+        #axis setup
+        ax1 = fig.add_subplot(111)
+        
+        #aep units
+        ax1.set_xlim(0, 1.0)
+ 
+        
+        # axis label setup
+        fig.suptitle(title)
+        ax1.set_xlabel('Pfail')
+        ax1.set_ylabel('asset count')
+        """
+        plt.show()
+        
+        pd.__version__
+        """
+
+        
+        #=======================================================================
+        # plot thie histogram
+        #=======================================================================
+        histVals_ar, bins_ar, patches = ax1.hist(
+            data, bins='auto', stacked=False, label=df.columns.to_list(),
+            alpha=0.9)
+        
+        
+        #=======================================================================
+        # Add text string 'annot' to lower left of plot
+        #=======================================================================
+        val_str = '%i assets \nevent_rels=\'%s\''%(len(df), self.event_rels)
+        xmin, xmax1 = ax1.get_xlim()
+        ymin, ymax1 = ax1.get_ylim()
+        
+        x_text = xmin + (xmax1 - xmin)*.5 # 1/10 to the right of the left ax1is
+        y_text = ymin + (ymax1 - ymin)*.5 #1/10 above the bottom ax1is
+        anno_obj = ax1.text(x_text, y_text, val_str)
+        
+        #=======================================================================
+        # post formatting
+        #=======================================================================
+        if grid: 
+            ax1.grid()
+        
+
+        #legend
+        h1, l1 = ax1.get_legend_handles_labels() #pull legend handles from axis 1
+
+        ax1.legend(h1, l1, loc=1) #turn legend on with combined handles
+        
+        
+        return fig
+        
+
 
 
 

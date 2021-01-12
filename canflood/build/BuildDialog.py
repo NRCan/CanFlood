@@ -1204,6 +1204,13 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #update ocntrol file
         wrkr.upd_cf(cf_fp)
         
+        #=======================================================================
+        # summary histogram
+        #=======================================================================
+        if self.checkBox_LS_hist.isChecked():
+            fig = wrkr.plot_hist_all(res_df)
+            wrkr.output_fig(fig)
+        
         #======================================================================
         # add to map
         #======================================================================
