@@ -125,7 +125,7 @@ class CurvePlotr(ComWrkr):
                 
                   
                   logger=None,
-                  **lineKwargs,
+                  **lineKwargs
                   ):
         
         

@@ -12,7 +12,7 @@ impacts model 2
 # imports---------------------------
 #==============================================================================
 #python standards
-import configparser, os, logging
+import configparser, os, logging, datetime
 
 import pandas as pd
 import numpy as np
@@ -35,8 +35,8 @@ else:
 
     from hlpr.exceptions import QError as Error
 
-from hlpr.Q import *
-from hlpr.basic import *
+#from hlpr.Q import *
+from hlpr.basic import ComWrkr, view
 from model.modcom import Model
 
 
@@ -110,7 +110,7 @@ class Dmg2(Model):
         
         self.logger.debug('finished __init__ on Dmg2')
         
-    def setup(self):
+    def _setup(self):
         
         
         
@@ -294,8 +294,7 @@ class Dmg2(Model):
         return cres_df
         
     def bdmg(self, #get damages on expanded finv
-             
-             #run controls
+
 
             ):
         #======================================================================
@@ -305,13 +304,9 @@ class Dmg2(Model):
         
         #set some locals
         bdf = self.bdf  #expanded finv. see modcom.build_exp_finv(). each row has 1 ftag
-        ddf = self.ddf
+        ddf = self.ddf #exposure set. wsl at each cid
         """ddf is appending _1 to column names"""
         cid, bid = self.cid, self.bid
-        
-
-
-        
         
         assert bid in ddf.columns
         assert ddf.index.name == bid
@@ -556,6 +551,8 @@ class Dmg2(Model):
         
         log.info('capped damages')
         self.feedback.setProgress(90)
+        
+        
         #======================================================================
         # DMG-------------
         #======================================================================
@@ -594,6 +591,8 @@ class Dmg2(Model):
         log.info('finished w/ %s'%str(res_df1.shape))
         return res_df1
         """
+        self.resname
+        view(events_df)
         view(res_df)
         view(res_df1)
         """
@@ -827,22 +826,29 @@ class Dmg2(Model):
         
         
     def upd_cf(self, #update the control file 
-               out_fp = None,cf_fp = None):
+               out_fp = None,
+               cf_fp = None,
+               ):
         #======================================================================
         # set defaults
         #======================================================================
         if out_fp is None: out_fp = self.out_fp
         if cf_fp is None: cf_fp = self.cf_fp
         
+        #=======================================================================
+        # convert to relative
+        #=======================================================================
+        if not self.absolute_fp:
+            out_fp = os.path.split(out_fp)[1]
+        
         return self.update_cf(
             {
             'risk_fps':(
-                {'dmgs':self.out_fp}, 
-                '#\'dmgs\' file path set from dmg2.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                {'dmgs':out_fp}, 
+                '#\'dmgs\' file path set from dmg2.py at %s'%(
+                    datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
                 ),
-            'validation':(
-                {'risk2':'True'},
-                )
+            'validation':({'risk2':'True'},)
              },
             cf_fp = cf_fp
             )
@@ -992,70 +998,7 @@ class DFunc(ComWrkr,
         return {**{'min_dep':min(deps), 'max_dep':max(deps), 
                 'min_dmg':min(dmgs), 'max_dmg':max(dmgs), 'dcnt':len(deps)},
                 **self.pars_d}
-#===============================================================================
-# def run():
-# 
-#     #==========================================================================
-#     # dev data
-#     #=========================================================================
-#     #==========================================================================
-#     # out_dir = os.path.join(os.getcwd(), 'dmg2')
-#     # tag='dev'
-#     # 
-#     # cf_fp = r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\model\dmg2\CanFlood_dmg2.txt'
-#     #==========================================================================
-#     
-#     #==========================================================================
-#     # tutorial 2
-#     #==========================================================================
-# 
-#     runpars_d={
-#         'Tut2':{
-#             'out_dir':os.path.join(os.getcwd(), 'dmg2', 'Tut2'),
-#             'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\built\CanFlood_tut2.txt',
-#             }
-#         }
-#     
-#     #===========================================================================
-#     # GolderHazard test
-#     #===========================================================================
-#     runpars_d={
-#         'run1':{
-#             'out_dir':r'C:\LS\03_TOOLS\CanFlood\_ins\IBI_GolderHazard_20200507\results\wi_noFail2',
-#             'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\IBI_GolderHazard_20200507\build\CanFlood_GH_wi_noFail.txt',
-#             }
-#         }
-# 
-#     
-#     #==========================================================================
-#     # build/execute
-#     #==========================================================================
-#     for tag, pars in runpars_d.items():
-#         cf_fp, out_dir = pars['cf_fp'], pars['out_dir']
-#         log = mod_logger.getChild(tag)
-#         assert os.path.exists(cf_fp)
-#         
-#         wrkr = Dmg2(cf_fp, out_dir=out_dir, logger=log, tag=tag).setup()
-#         
-#         res_df = wrkr.run()
-#         
-#         if res_df is None:
-#             log.warning('skipping')
-#             continue
-#         #==========================================================================
-#         # output
-#         #==========================================================================
-#         
-#         out_fp = wrkr.output_df(res_df, wrkr.resname)
-#         
-#         wrkr.upd_cf()
-# 
-#     #===========================================================================
-#     # wrap--------
-#     #===========================================================================
-#     force_open_dir(out_dir)
-#     
-#===============================================================================
+
 if __name__ =="__main__": 
 
     print('finished')

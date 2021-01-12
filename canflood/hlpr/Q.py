@@ -146,7 +146,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         if self.crs.authid()=='':
             self.logger.warning('got empty CRS!') #should only trip on StandAlone runs
             
-        assert self.crs.isValid()
+        
 
         #layer store
         """
@@ -170,6 +170,9 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
     def ini_standalone(self,  #initilize calls for standalone runs
                        crs = None,
                        ):
+        """
+        WARNING! do not call twice (phantom crash)
+        """
         log = self.logger.getChild('ini_standalone')
         #=======================================================================
         # #crs
@@ -179,6 +182,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             crs = QgsCoordinateReferenceSystem(self.crsid_default)
             
         assert isinstance(crs, QgsCoordinateReferenceSystem), 'bad crs type'
+        assert crs.isValid()
             
         self.crs = crs
         self.qproj.setCrs(crs)
@@ -426,7 +430,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         assert rlayer.isValid(), "Layer failed to load!"
         assert isinstance(rlayer, QgsRasterLayer), 'failed to get a QgsRasterLayer'
         
-        if not rlayer.crs() == self.crs:
+        if not rlayer.crs() == self.qproj.crs():
             log.warning('loaded layer \'%s\' crs mismatch!'%rlayer.name())
         #assert rlayer.crs() == self.crs, 'crs mismatch'
 
@@ -1015,23 +1019,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         res_vlay, join_cnt = res_d['OUTPUT'], res_d['JOINED_COUNT']
         
-        """
-        res_d['OUTPUT'].dataProvider().featureCount()
-        """
-        
         log.debug('got results: \n    %s'%res_d)
-        
-
-        #===========================================================================
-        # post formatting
-        #===========================================================================
-        #======================================================================
-        # if self.layname is None: 
-        #     self.layname = '%s_fjoin'%self.vlay.name()
-        #     
-        # res_vlay.setName(self.layname) #reset the name
-        #======================================================================
-        
 
         #===========================================================================
         # post checks
@@ -1046,7 +1034,8 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                     raise Error('in and out fcnts dont match')
 
         else:
-            log.debug('expect_overlaps=False, unable to check fcnts')
+            pass
+            #log.debug('expect_overlaps=False, unable to check fcnts')
 
 
 
@@ -1074,10 +1063,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                         fid_val_ser.isna().sum(), len(fid_val_ser), fid_val_ser.name
                         ))
                 
-        #=======================================================================
-        # miss retrival
-        #=======================================================================
-        """removed"""
+
         #=======================================================================
         # get the new field names
         #=======================================================================

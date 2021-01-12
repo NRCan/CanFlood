@@ -3,7 +3,7 @@ Created on Feb. 9, 2020
 
 @author: cefect
 
-likelihood sampler
+probability sampler
 sampling overlapping polygons at inventory points to calculate combined likelihoods
 '''
 #==========================================================================
@@ -22,30 +22,19 @@ import pandas as pd
 
 
 #Qgis imports
-from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject
+from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject, \
+    QgsWkbTypes, QgsProcessingFeedback
 
 #==============================================================================
 # custom imports
 #==============================================================================
 
-#standalone runs
-if __name__ =="__main__": 
-    from hlpr.logr import basic_logger
-    mod_logger = basic_logger()   
-    
-    from hlpr.exceptions import Error
-    
-    from hlpr.plug import QprojPlug as base_class
+from hlpr.exceptions import QError as Error
 
-#plugin runs
-else:
 
-    from hlpr.exceptions import QError as Error
+#from hlpr.basic import 
 
-from hlpr.Q import *
-from hlpr.basic import *
-
-from hlpr.Q import view
+from hlpr.Q import view, Qcoms, vlay_get_fdf, vlay_get_fdata, vlay_new_df
 #==============================================================================
 # classes-------------
 #==============================================================================
@@ -53,11 +42,17 @@ class LikeSampler(Qcoms):
     """
     Generate conditional probability data set ('exlikes') for each asset
     
-    where conditional probability polygons overlap, the union_probabilities() method 
-    is used to calculate the union probability of multiple events
-    using the exclusion principle
+    resolve conditional probability of realizing a single failure raster
+    
+    where polygons overlap (asset exposed to multiple failures):    
+        attribute join of all, then
+        union_probabilities()  calculates of multiple events using the exclusion principle
+    where an asset has a unique polygon:
+        simple attribute join
+    
 
     """
+    event_rels = 'indep'
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -72,23 +67,13 @@ class LikeSampler(Qcoms):
         
         """
         special input loader for standalone runs
-        Im assuming for the plugin these layers will be loaded already
-        
-        finv_fp, lpol_fp_d
         
         """
         log = self.logger.getChild('load_layers')
         #======================================================================
         # load rasters
         #======================================================================
-        lpol_d = dict()
-        
-        for ename, fp in lpol_fp_d.items():
-            
-            vlay = self.load_vlay(fp, logger=log, providerLib=providerLib)
-            
-            #add it in
-            lpol_d[ename] = vlay
+        lpol_d = self.load_lpols(lpol_fp_d, providerLib=providerLib, logger=log)
             
         #======================================================================
         # load finv vector layer
@@ -98,25 +83,70 @@ class LikeSampler(Qcoms):
         #======================================================================
         # wrap
         #======================================================================
-        log.info('finished')
+        log.debug('finished')
         return lpol_d, finv_vlay
+    
+    def load_lpols(self, #helper for loading vector polygons in standalone runs
+                   lpol_files_d, #{event name:polygon filepath}
+                   basedir = None, #optional directory to append to lpol_files_d
+                    providerLib='ogr',
+                    logger=None,
+                    **kwargs
+                   ):
+        """
+        can't load from a directory dump because we need to link to events
+        """
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log=logger.getChild('load_lpols')
+        if not basedir is None:
+            assert os.path.exists(basedir)
+        
+        
+        log.info('on %i layers'%len(lpol_files_d))
+        
+        #=======================================================================
+        # loop and load
+        #=======================================================================
+        lpol_d = dict()
+        for ename, file_str in lpol_files_d.items():
             
-    def run(self,
+            #get filepath
+            if isinstance(basedir, str):
+                fp = os.path.join(basedir, file_str)
+            else:
+                fp = file_str
+                
+            #load it
+            lpol_d[ename] = self.load_vlay(fp, logger=log, providerLib=providerLib,
+                                           **kwargs)
+            
+        log.debug('finished w/ %i'%len(lpol_d))
+        return lpol_d
+            
+    def run(self, #sample conditional probability polygon 'lfield' values with finv geometry
             finv, #inventory layer
             lpol_d, #{event name: likelihood polygon layer}
-            cid = 'xid', #index field name on finv
+            cid = None, #index field name on finv
             lfield = 'p_fail', #field with likelihhood value
+            
+           event_rels=None, #ev calculation method
+                #mutEx: assume each event is mutually exclusive (only one can happen)
+                    #lower bound
+                #indep: assume each event is independent (failure of one does not influence the other)
+                    #upper bound
             ):
-        """
-        sample conditional probability polygon 'lfield' values with finv geometry
-        
-        todo: inherit cid from self
-        
-        """
-        
+        #=======================================================================
+        # defults
+        #=======================================================================
+
         log = self.logger.getChild('run')
 
-        self.cid = cid #set for other methods
+        if cid is  None: cid=self.cid
+        if event_rels is None: event_rels=self.event_rels
+        self.event_rels=event_rels #reset for plotting
         #======================================================================
         # #check/load the data
         #======================================================================
@@ -126,10 +156,10 @@ class LikeSampler(Qcoms):
                 raise Error('bad type on %s layer: %s'%(ename, type(vlay)))
             assert 'Polygon' in QgsWkbTypes().displayString(vlay.wkbType()), \
                 'unexpected geometry: %s'%QgsWkbTypes().displayString(vlay.wkbType())
-            assert lfield in [field.name() for field in vlay.fields()], 'specified lfield \"%s\' not on layer'
+            assert lfield in [field.name() for field in vlay.fields()], \
+                'specified lfield \"%s\' not on layer'
             assert vlay.isValid()
-            
-            assert vlay.crs() == self.crs, 'crs mismatch on %s'%vlay.name()
+            assert vlay.crs() == self.qproj.crs(), 'crs mismatch on %s'%vlay.name()
             #==================================================================
             # #check values
             #==================================================================
@@ -137,9 +167,7 @@ class LikeSampler(Qcoms):
             chk_df = vlay_get_fdf(vlay, logger=log)
             chk_ser = chk_df.loc[:, lfield]
             
-            #check fo rnulls
-            boolidx = chk_ser.isna()
-            assert not boolidx.any(), 'got nulls on %s'%ename
+            assert not chk_ser.isna().any(), 'got nulls on %s'%ename
         
             #if 0<fval<1
             boolidx = np.logical_and( #checking for fails
@@ -150,17 +178,13 @@ class LikeSampler(Qcoms):
                 raise Error('%s.%s got %i (of %i) values out of range: \n%s'%(
                     ename,lfield, boolidx.sum(), len(boolidx), chk_ser[boolidx]))
             
-        #check vlay
+        #check finv
         assert isinstance(finv, QgsVectorLayer), 'bad type on finv'
         assert finv.isValid(), 'invalid finv'
         assert cid in  [field.name() for field in finv.fields()], 'missing cid \'%s\''%cid
         assert finv.crs() == self.crs, 'crs mismatch on %s'%finv.name()
             
-        #======================================================================
-        # slice data by project aoi
-        #======================================================================
-        
-        
+
         #======================================================================
         # build finv
         #======================================================================
@@ -172,12 +196,12 @@ class LikeSampler(Qcoms):
         #get cid list
         fdf = vlay_get_fdf(fc_vlay, logger=log)
         cid_l = fdf[cid].tolist()
-        
-
+ 
         #======================================================================
-        # sample values
+        # sample values------
         #======================================================================
-        log.info('sampling %i lpols w/ %i finvs'%(len(lpol_d), len(cid_l)))
+        log.info('sampling %i lpols w/ %i finvs and event_rels=\'%s\''%(
+            len(lpol_d), len(cid_l), event_rels))
         en_c_sval_d = dict() #container for samples {event name: sample data}
         for ename, lp_vlay in lpol_d.items():
             log = self.logger.getChild('run.%s'%ename)
@@ -188,9 +212,11 @@ class LikeSampler(Qcoms):
             todo: remove any features w/ zero value
             view(fc_vlay)
             """
+            #===================================================================
+            # sapmle values from polygons
+            #===================================================================
             svlay, new_fns, jcnt = self.joinattributesbylocation(fc_vlay, lp_vlay, [lfield],
                                                   method=0, #one-to-many
-                                                 
                                                   logger=log,
                                                   expect_j_overlap=True,
                                                   allow_none=True,
@@ -222,35 +248,17 @@ class LikeSampler(Qcoms):
             boolidx = sdf_raw[lfield].isna()
             log.debug('got %i (of %i) misses. dropping these'%(boolidx.sum(), len(boolidx)))
             
+            #drop misses
             sdf = sdf_raw.dropna(subset=[lfield], axis=0, how='any')
 
             #==================================================================
-            # #pivot this out to unique cids
+            # pivot to {cid:[sample values]}
             #==================================================================
-            """
-            #this works only when all the failure probabilities are unique
-            lp_vlay.dataProvider().featureCount()
-            sdf.pivot(index=cid, columns=lfield, values=lfield)"""
-            
-            #===================================================================
-            # #loop and build for each cid
-            # """not very efficient... but cant think of a better way"""
-            # cid_samp_d = dict() #container for sampling results
-            # for cval in cid_l:
-            #     #get this data
-            #     boolidx = sdf[cid] == cval
-            #     pvals_l = sdf.drop(cid, axis=1)[boolidx].iloc[:, 0].dropna().tolist()
-            #     
-            #     """this will yield an empty list for nulls
-            #     if len(pvals_l) == 0:
-            #         raise Error('got empty result')"""
-            #      
-            #     cid_samp_d[cval] =pvals_l
-            #===================================================================
+
             #drop down to cid groups (pvali values)
             d = {k:csdf[lfield].to_list() for k,csdf in sdf.groupby(cid)}
             
-            #add in any we missed
+            #add dummy empty list for any missing cids
             """not very elegent... doing this to fit in with previous methods
             would be better to just use open joins"""
             cid_samp_d = {**d, **{k:[] for k in cid_l if not k in d}}
@@ -262,27 +270,29 @@ class LikeSampler(Qcoms):
         
         
         #======================================================================
-        # resolve union events
+        # resolve multiple events------
         #======================================================================
         log = self.logger.getChild('run')
         log.info('collected sample values for %i events and %i assets'%(
             len(en_c_sval_d), len(cid_l)))
         
-        #build results contqainer
-        #res_df = pd.DataFrame(index = fdf[cid], columns = en_c_sval_d.keys())
-        res_df = None
+        res_df = None #build results contqainer
 
-        
         #loop and resolve
+
         log.debug('resolving %i events'%len(en_c_sval_d))
         for ename, cid_samp_d in en_c_sval_d.items():
             log.info('resolving \"%s\''%ename)
             
-            #loop through each asset and resolve sample values
+            #===================================================================
+            # #loop through each asset and resolve sample values
+            #===================================================================
+            """
+            TODO: Parallel process this
+            """
             cid_res_d = dict() #harmonized likelihood results
             for cval, pvals in cid_samp_d.items():
-                
-                #log = self.logger.getChild('run.%s.%s'%(ename, cval))
+
                 #simple unitaries
                 if len(pvals) == 1:
                     cid_res_d[cval] = pvals[0]
@@ -292,30 +302,54 @@ class LikeSampler(Qcoms):
                     
                 #multi value
                 else:
-                    #calc union probability for multi predictions
-                    cid_res_d[cval] = self.union_probabilities(pvals, logger=log)
                     
-                #wrap union loop
-                #log.debug('%s.%s got p_unioin = %.2f'%(ename, cval, cid_res_d[cval]))
-            
+                    #calc union probability for multi predictions
+                    if event_rels ==  'indep':
+                        cid_res_d[cval] = self.union_probabilities(pvals, logger=log)
+                    elif event_rels == 'mutEx':
+                        cid_res_d[cval] = sum(pvals)
+                    else:
+                        raise Error('bad event_rels: \'%s\''%event_rels)
+                               
                 
-            #update results
+            #===================================================================
+            # #update results
+            #===================================================================
             res_ser = pd.Series(cid_res_d, name=ename).sort_index()
             if res_df is None:
                 res_df = res_ser.to_frame()
                 res_df.index.name = cid
             else:
+                """
                 if not np.array_equal(res_df.index, res_ser.index):
-                    raise Error('index mmismatch')
+                    raise Error('index mmismatch')"""
                 res_df = res_df.join(res_ser, how='left')
+                
+            #===================================================================
+            # check
+            #===================================================================
+            """
+            res_ser.max()
+            """
+            bx = res_ser>1.0
+            if bx.any():
+                log.debug(res_ser[bx])
+                raise Error('%s got %i (of %i) resolved P > 1.0.. check logger'%(
+                    ename, bx.sum(), (len(bx))))
             
         #======================================================================
         # wrap-------
         #======================================================================
         log = self.logger.getChild('run')
         
+        #=======================================================================
+        # nulls
+        #=======================================================================
+        """2021-01-12: moved null handling from the model to here"""
+        res_df = res_df.fillna(0.0)
+        
         if res_df.isna().all().all():
-            log.warning('no intersections with any events!')
+            raise Error('no intersections with any events!')
             return res_df
             
             
@@ -323,8 +357,6 @@ class LikeSampler(Qcoms):
         #======================================================================
         # post checks
         #======================================================================
-
-        
         miss_l = set(lpol_d.keys()).symmetric_difference(res_df.columns)
         assert len(miss_l) == 0, 'failed to match columns to events'
         
@@ -350,8 +382,16 @@ class LikeSampler(Qcoms):
         #======================================================================
         # close
         #======================================================================
-        
-        log.info('finished w/ %s'%str(res_df.shape))        
+        try: #fancy reporting
+            log.debug('results stats: \nmeans: \n    %s\nnulls \n    %s \nmaxes: \n    %s \nmins: \n    %s\n\n'%(
+                res_df.mean().to_dict(), 
+                res_df.isna().sum().to_dict(), 
+                res_df.max().to_dict(),
+                res_df.min().to_dict()))
+            
+            log.info('finished w/ %s event_rels = \'%s\'.. see log'%(str(res_df.shape), event_rels))        
+        except: log.error('logging error')
+
         return res_df #will have NaNs where there is no intersect
     
     """
@@ -363,7 +403,10 @@ class LikeSampler(Qcoms):
                             logger = None,
                             ):
         """
-        calculating the union probability of multiple events using the exclusion principle
+        calculating the union probability of multiple independent events using the exclusion principle
+        
+        probability that ANY of the passed independent events will occur
+            
         
         https://en.wikipedia.org/wiki/Inclusion%E2%80%93exclusion_principle#In_probability
         
@@ -413,12 +456,16 @@ class LikeSampler(Qcoms):
         #===========================================================================
         #log.debug('calc total_prob for %i probs: %s'%(len(probs), probs))
         total_prob = 0
-        for r in range(1, len(probs) + 1):
-            #log.debug('for r %i total_prob = %.2f'%(r, total_prob))
-            combs = itertools.combinations(probs, r)
+        for r in range(1, len(probs) + 1): #enumerate through each entry in the probs list
+ 
+            combs = itertools.combinations(probs, r) #assemble all the possible combinations
+            """
+            list(combs)
+            """
+            #multiply all the probability combinations together and add for this layer
             total_prob += ((-1) ** (r + 1)) * sum([np.prod(items) for items in combs])
             
-        #log.debug('finished in %i loops '%len(probs))
+
         
         assert total_prob <1 and total_prob > 0, 'bad result'
     
@@ -472,95 +519,226 @@ class LikeSampler(Qcoms):
             cf_fp = cf_fp
             )
         
+    def plot_hist_all(self, df, #plot failure histogram of all layers
+                      
+                    #figure parametrs
+                    figsize     = (6.5, 4), 
+                    grid=True,
+                      
+                      ): #plot all the histograms stacked
+        
+        """
+        dont want to initiate matplotlib in the module...
+            just using a nasty single f unction
+        """
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        log = self.logger.getChild('plot')
+        title = '%s Conditional P histogram on %i events'%(self.tag, len(df.columns))
+        
+        #=======================================================================
+        # manipulate data
+        #=======================================================================
+        #get a collectio nof arrays from a dataframe's columns
+        data = [ser.values for _, ser in df.items()]
+        #======================================================================
+        # setup
+        #======================================================================
+        
+        import matplotlib
+        matplotlib.use('Qt5Agg') #sets the backend (case sensitive)
+        import matplotlib.pyplot as plt
+        
+        #set teh styles
+        plt.style.use('default')
+        
+        #font
+        matplotlib_font = {
+                'family' : 'serif',
+                'weight' : 'normal',
+                'size'   : 8}
+        
+        matplotlib.rc('font', **matplotlib_font)
+        matplotlib.rcParams['axes.titlesize'] = 10 #set the figure title size
+        
+        #spacing parameters
+        matplotlib.rcParams['figure.autolayout'] = False #use tight layout
+        
+        
+        
+        #======================================================================
+        # figure setup
+        #======================================================================
+        plt.close()
+        fig = plt.figure(figsize=figsize,
+                     tight_layout=False,
+                     constrained_layout = True,
+                     )
+        
+        #axis setup
+        ax1 = fig.add_subplot(111)
+        
+        #aep units
+        ax1.set_xlim(0, 1.0)
+ 
+        
+        # axis label setup
+        fig.suptitle(title)
+        ax1.set_xlabel('Pfail')
+        ax1.set_ylabel('asset count')
+        """
+        plt.show()
+        
+        pd.__version__
+        """
+
+        
+        #=======================================================================
+        # plot thie histogram
+        #=======================================================================
+        histVals_ar, bins_ar, patches = ax1.hist(
+            data, bins='auto', stacked=False, label=df.columns.to_list(),
+            alpha=0.9)
+        
+        
+        #=======================================================================
+        # Add text string 'annot' to lower left of plot
+        #=======================================================================
+        val_str = '%i assets \nevent_rels=\'%s\''%(len(df), self.event_rels)
+        xmin, xmax1 = ax1.get_xlim()
+        ymin, ymax1 = ax1.get_ylim()
+        
+        x_text = xmin + (xmax1 - xmin)*.5 # 1/10 to the right of the left ax1is
+        y_text = ymin + (ymax1 - ymin)*.5 #1/10 above the bottom ax1is
+        anno_obj = ax1.text(x_text, y_text, val_str)
+        
+        #=======================================================================
+        # post formatting
+        #=======================================================================
+        if grid: 
+            ax1.grid()
+        
+
+        #legend
+        h1, l1 = ax1.get_legend_handles_labels() #pull legend handles from axis 1
+
+        ax1.legend(h1, l1, loc=1) #turn legend on with combined handles
+        
+        
+        return fig
+        
+
+    def plot_box_all(self, df, #plot failure histogram of all layers
+                      
+                    #figure parametrs
+                    figsize     = (6.5, 4), 
+                    grid=True,
+                      
+                      ): #plot all the histograms stacked
+        
+        """
+        dont want to initiate matplotlib in the module...
+            just using a nasty single f unction
+        """
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        log = self.logger.getChild('plot')
+        title = '%s Conditional P boxplots on %i events'%(self.tag, len(df.columns))
+        
+        #=======================================================================
+        # manipulate data
+        #=======================================================================
+        #get a collectio nof arrays from a dataframe's columns
+        data = [ser.values for _, ser in df.items()]
+        #======================================================================
+        # setup
+        #======================================================================
+        
+        import matplotlib
+        matplotlib.use('Qt5Agg') #sets the backend (case sensitive)
+        import matplotlib.pyplot as plt
+        
+        #set teh styles
+        plt.style.use('default')
+        
+        #font
+        matplotlib_font = {
+                'family' : 'serif',
+                'weight' : 'normal',
+                'size'   : 8}
+        
+        matplotlib.rc('font', **matplotlib_font)
+        matplotlib.rcParams['axes.titlesize'] = 10 #set the figure title size
+        
+        #spacing parameters
+        matplotlib.rcParams['figure.autolayout'] = False #use tight layout
+        
+        
+        
+        #======================================================================
+        # figure setup
+        #======================================================================
+        plt.close()
+        fig = plt.figure(figsize=figsize,
+                     tight_layout=False,
+                     constrained_layout = True,
+                     )
+        
+        #axis setup
+        ax1 = fig.add_subplot(111)
+        
+        #aep units
+        ax1.set_ylim(0, 1.0)
+ 
+        
+        # axis label setup
+        fig.suptitle(title)
+        ax1.set_xlabel('hazard layer')
+        ax1.set_ylabel('Pfail')
+        """
+        plt.show()
+        
+        pd.__version__
+        """
+
+        
+        #=======================================================================
+        # plot thie histogram
+        #=======================================================================
+        boxRes_d = ax1.boxplot(data, whis=1.5)
+        
 
 
-if __name__ =="__main__": 
-    
-    
-    out_dir = os.path.join(os.getcwd(), 'lisamp')
+        #=======================================================================
+        # format axis labels
+        #======================================================= ================
+        #apply the new labels
+        ax1.set_xticklabels(df.columns, rotation=90, va='center', y=.5, color='red')
+        
+        
+        #=======================================================================
+        # Add text string 'annot' to lower left of plot
+        #=======================================================================
+        val_str = '%i assets \nevent_rels=\'%s\''%(len(df), self.event_rels)
+        xmin, xmax1 = ax1.get_xlim()
+        ymin, ymax1 = ax1.get_ylim()
+        
+        x_text = xmin + (xmax1 - xmin)*.5 # 1/10 to the right of the left ax1is
+        y_text = ymin + (ymax1 - ymin)*.8 #1/10 above the bottom ax1is
+        anno_obj = ax1.text(x_text, y_text, val_str)
+
+        
+        
+        return fig
+        
+
+
+
     
 
-    #==========================================================================
-    # dev data
-    #==========================================================================
-    tag = 'dev'
-    data_dir = r'C:\LS\03_TOOLS\_git\CanFlood\Test_Data\build\lisamp'
-      
-    cf_fp = os.path.join(data_dir, 'CanFlood_scenario1.txt')
-       
-    finv_fp = os.path.join(data_dir, r'finv_cT2.gpkg')
-       
-    lpol_fn_d = {'Gld_10e2_fail_cT1':r'exposure_likes_10e2_cT1_20200209.gpkg', 
-              'Gld_20e1_fail_cT1':r'exposure_likes_20e1_cT1_20200209.gpkg'}
-       
-       
-    lpol_fp_d = {k:os.path.join(data_dir, v) for k, v in lpol_fn_d.items()}
-    
-    #==========================================================================
-    # 20200304 data
-    #==========================================================================
-    #===========================================================================
-    # tag = 'ICI_rec'
-    #   
-    # out_dir = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDDnrp'
-    #   
-    # cf_fp = r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDDnrp\CanFlood_scenario1.txt'
-    #   
-    # finv_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\20200304\finv\TDD_nrp\finv_cconv_20200224_TDDnrp.gpkg'
-    #   
-    #   
-    # data_dir = r'e:\02_INFO\Golder\20200228\jill_20200302\layers'
-    #   
-    # lpol_fn_d = {
-    #     'AG3_Gld_Fr_10e0_WL_fail_20200122':'AG3_Gld_Fr_10e0_Ind_Bd_20200228.gpkg',
-    #     'AG3_Gld_Fr_30e0_WL_fail_20200122':'AG3_Gld_Fr_30e0_Ind_Bd_20200228.gpkg',
-    #     'AG3_Gld_Fr_50e0_WL_fail_20200122':'AG3_Gld_Fr_50e0_Ind_Bd_20200228.gpkg',
-    #     'AG3_Gld_Fr_10e1_WL_fail_20200122':'AG3_Gld_Fr_10e1_Ind_Bd_20200228.gpkg',
-    #     'AG3_Gld_Fr_20e1_WL_fail_20200122':'AG3_Gld_Fr_20e1_Ind_Bd_20200228.gpkg',
-    #     'AG3_Gld_Fr_50e1_WL_fail_20200122':'AG3_Gld_Fr_50e1_Ind_Bd_20200228.gpkg',
-    #     'AG3_Gld_Fr_75e1_WL_fail_20200122':'AG3_Gld_Fr_75e1_Ind_Bd_20200228.gpkg',
-    #     'AG3_Gld_Fr_10e2_WL_fail_20200122':'AG3_Gld_Fr_10e2_Ind_Bd_20200228.gpkg',        
-    #     }
-    #   
-    # lpol_fp_d = {k:os.path.join(data_dir, v) for k, v in lpol_fn_d.items()}
-    #===========================================================================
-    #==========================================================================
-    # load the data
-    #==========================================================================
-    
-    wrkr = LikeSampler(logger=mod_logger, tag=tag, feedback=QgsProcessingFeedback(), out_dir=out_dir,
-                       prec=4)
-    wrkr.ini_standalone() #setup for a standalone run
-    
-    lpol_d, finv_vlay = wrkr.load_layers(lpol_fp_d, finv_fp)
-    
-    wrkr.crs = finv_vlay.crs()
-    #==========================================================================
-    # execute
-    #==========================================================================
-    res_df = wrkr.run(finv_vlay, lpol_d)
-    
-    #convet to a vector
-    res_vlay = wrkr.vectorize(res_df)
-    
-    
-    wrkr.check()
-    
-    #==========================================================================
-    # save results
-    #==========================================================================
-    vlay_write(res_vlay, 
-               os.path.join(wrkr.out_dir, '%s.gpkg'%wrkr.resname),
-               overwrite=True, logger=mod_logger)
-    
-    outfp = wrkr.write_res(res_df)
-    
-    wrkr.upd_cf(cf_fp)
 
-    force_open_dir(out_dir)
-
-    print('finished')
-    
     
     
     

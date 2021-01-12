@@ -120,7 +120,7 @@ class Risk1(Model):
         self.logger.debug('finished __init__ on Risk1')
         
         
-    def setup(self): 
+    def _setup(self): 
         """
         called by Dialog and standalones
         """
@@ -242,11 +242,11 @@ class Risk1(Model):
         cdf = bidf1.groupby(cid).max().drop(bid, axis=1)
  
         #======================================================================
-        # resolve alternate impacts (per evemt)
+        # resolve alternate impacts (per evemt)-----
         #======================================================================
         #take maximum expected value at each asset
         if 'exlikes' in self.data_d:
-            bres_df = self.resolve_multis(cdf, self.data_d['exlikes'], aep_ser, log)
+            bres_df = self.ev_multis(cdf, self.data_d['exlikes'], aep_ser, logger=log)
             
         #no duplicates. .just rename by aep
         else:
@@ -264,7 +264,7 @@ class Risk1(Model):
         assert np.array_equal(bres_df.columns.values, aep_ser.unique()), 'column name problem'
         _ = self.check_monot(bres_df)
         #======================================================================
-        # get ead per asset
+        # get ead per asset------
         #======================================================================
         if res_per_asset:
             self.feedback.setProgress(50)

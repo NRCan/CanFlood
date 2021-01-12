@@ -5,7 +5,7 @@ ui class for the BUILD toolset
 #==============================================================================
 # imports
 #==============================================================================
-import sys, os, warnings, tempfile, logging, configparser, datetime, time
+import sys, os, datetime, time
 import os.path
 from shutil import copyfile
 
@@ -21,12 +21,12 @@ from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
 
 from qgis.core import *
 #from qgis.analysis import *
-import qgis.utils
-import processing
+#import qgis.utils
+#import processing
 from processing.core.Processing import Processing
 
 
-import resources
+#import resources
 
 import pandas as pd
 import numpy as np #Im assuming if pandas is fine, numpy will be fine
@@ -39,7 +39,7 @@ import numpy as np #Im assuming if pandas is fine, numpy will be fine
 from build.rsamp import Rsamp
 from build.lisamp import LikeSampler
 from build.rfda import RFDAconv
-from build.npri import Npri
+from build.prepr import Preparor
 from build.validator import Vali
 
 
@@ -326,9 +326,12 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
 
         #======================================================================
-        # TAB: CONDITIONAL PROBABILITIES-----------
+        # TAB: CONDITIONAL P-----------
         #======================================================================
-        """todo: rename the buttons so they align w/ the set labels
+        """
+        run_rsamp() attempts to populate this
+        
+        todo: rename the buttons so they align w/ the set labels
         
         todo: automatically populate the first column of boxes w/ those layers
         sampled w/ rsamp
@@ -348,6 +351,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #loop and set filteres
         first = True
         for sname, (mlcb_haz, mlcb_lpol) in self.ls_cb_d.items():
+            
             #set drop down filters on hazard bars
             mlcb_haz.setFilters(QgsMapLayerProxyModel.RasterLayer)
             mlcb_haz.setAllowEmptyLayer(True)
@@ -358,6 +362,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             mlcb_lpol.setAllowEmptyLayer(True)
             mlcb_lpol.setCurrentIndex(-1) #set selection to none
             
+            #store the first lpol box for connecting the FieldName dropdown
             if first:
                 mlcb_lpol_1 = mlcb_lpol
                 first = False
@@ -375,7 +380,14 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             
         #connect execute
         self.pushButton_LSsample.clicked.connect(self.run_lisamp)
+        
+        
+        #=======================================================================
+        # clear button
+        #=======================================================================
+
                     
+        self.pushButton_CP_clear.clicked.connect(self._CP_clear)
         #======================================================================
         # DTM sampler---------
         #======================================================================
@@ -486,98 +498,45 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         """
         log = self.logger.getChild('build_scenario')
         log.info('build_scenario started')
-        self.tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
-        """
-        todo: make a fresh pull of this for each tool
-        """
-        
-        self.wd =  self.lineEdit_wd.text() #pull the wd filepath from the user provided in 'Browse'
+        tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
+        wdir =  self.lineEdit_wd.text() #pull the wd filepath from the user provided in 'Browse'
         
 
         #=======================================================================
         # prechecks
         #=======================================================================
-        assert isinstance(self.wd, str)
-        
-        assert isinstance(self.tag, str)
-
-        
-        if not os.path.exists(self.wd):
-            os.makedirs(self.wd)
-            log.info('built working directory: %s'%self.wd)
-            
-        
+        assert isinstance(wdir, str)
+        assert isinstance(tag, str)
+ 
+        if self.radioButton_SS_fpRel.isChecked():
+            raise Error('Relative filepaths not implemented')
+             
         #======================================================================
-        # build the control file
+        # setup working directory
         #======================================================================
-        
-        
-        self.feedback.upd_prog(50)
-        
-        #called by build_scenario()
-        dirname = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        
-        #get the default template from the program files
-        cf_src = os.path.join(dirname, '_pars/CanFlood_control_01.txt')
-        assert os.path.exists(cf_src)
-
-        
-        #get control file name from user provided tag
-        cf_fn = 'CanFlood_%s.txt'%self.tag
-        cf_path = os.path.join(self.wd, cf_fn)
-
-        
-        #see if this exists
-        if os.path.exists(cf_path):
-            msg = 'generated control file already exists. overwrite=%s \n     %s'%(
-                self.overwrite, cf_path)
-            if self.overwrite:
-                log.warning(msg)
-            else:
-                raise Error(msg)
+        if not os.path.exists(wdir):
+            os.makedirs(wdir)
+            log.info('built working directory: %s'%wdir)
+        self.feedback.upd_prog(10)
             
+        #=======================================================================
+        # run the control file builder
+        #=======================================================================
+        #initilize
+        wrkr = Preparor(logger=self.logger,  out_dir=wdir, tag=tag, feedback=self.feedback)
+        self.feedback.upd_prog(20)
         
-        #copy over the default template
-        copyfile(cf_src, cf_path)
-            
-
+        #copy the template
+        cf_path = wrkr.copy_cf_template(wdir, logger=self.logger)
         self.feedback.upd_prog(75)
-        #======================================================================
-        # update the control file
-        #======================================================================
-        """todo: switch over to helper function"""
-        pars = configparser.ConfigParser(allow_no_value=True)
-        _ = pars.read(cf_path) #read it from the new location
         
-        #parameters
-        
-        pars.set('parameters', 'name', self.tag) #user selected field
-        """moved to inventory tab
-        pars.set('parameters', 'felv', self.comboBox_SSelv.currentText()) #user selected field"""
-        
-        #damage curves
-        dmg_fps = self.lineEdit_curve.text()
-        if dmg_fps == '':
-            pass
-        else:
-            assert os.path.exists(dmg_fps), 'bad dmg_fps: %s'%dmg_fps
-            pars.set('dmg_fps', 'curves', dmg_fps)
-        
-        
-        
-        #set note
-        pars.set('parameters', '#control file template created from \'scenario setup\' on  %s'%(
-            datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')
-            ))
-        
-        #write the config file 
-        with open(cf_path, 'w') as configfile:
-            pars.write(configfile)
-            
+        #set some basics
+        wrkr.upd_cf_first(self.lineEdit_curve.text())
+ 
         log.info("default CanFlood model config file created :\n    %s"%cf_path)
         
         """NO. should only populate this automatically from ModelControlFile.Browse
-        self.lineEdit_curve.setText(os.path.normpath(os.path.join(self.wd, 'CanFlood - curve set 01.xls')))"""
+        self.lineEdit_curve.setText(os.path.normpath(os.path.join(wdir, 'CanFlood - curve set 01.xls')))"""
         
         """TODO:
         write aoi filepath to scratch file
@@ -589,49 +548,34 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         #display the control file in the dialog
         self.lineEdit_cf_fp.setText(cf_path)
-        
-        """not sure what this is
-        self.lineEdit_control_2.setText(os.path.normpath(os.path.join(self.wd, 'CanFlood_control_01.txt')))"""
-        
-        log.push('control file created for "\'%s\''%self.tag)
+
+        log.push('control file created for "\'%s\''%tag)
         self.feedback.upd_prog(None) #set the progress bar back down to zero
 
         
     def convert_finv(self): #aoi slice and convert the finv vector to csv file
         
-        
         log = self.logger.getChild('convert_finv')
-        log.info('started')
-        self.feedback.upd_prog(10)
+        self.feedback.upd_prog(5)
         
         
         #=======================================================================
         # retrieve data
         #=======================================================================
         cid = self.mFieldComboBox_cid.currentField() #user selected field
-        
         vlay_raw = self.comboBox_ivlay.currentLayer()
-        
         cf_fp = self.get_cf_fp()
+        tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
+        wdir =  self.lineEdit_wd.text() #pull the wd filepath from the user provided in 'Browse'
         
-
         #======================================================================
         # prechecks
         #======================================================================
         assert isinstance(vlay_raw, QgsVectorLayer), 'must select a VectorLayer'
-        assert os.path.exists(cf_fp), 'bad cf_fp: %s'%cf_fp
+        
         assert vlay_raw.crs()==self.qproj.crs(), 'finv CRS (%s) does not match projects (%s)'%(vlay_raw.crs(), self.qproj.crs())
         
-        #check cid
-        assert isinstance(cid, str)
-        if cid == '':
-            raise Error('must specify a cid') 
-        if cid in self.invalid_cids:
-            raise Error('user selected invalid cid \'%s\''%cid)  
-        
-        assert cid in [field.name() for field in vlay_raw.fields()]
-        
-        
+ 
         
         #=======================================================================
         # aoi slice
@@ -648,85 +592,32 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             self.logger.info('added \'%s\' to canvas'%vlay.name())
             self.comboBox_ivlay.setLayer(vlay) #set this as the new finv
         
-        
-
         self.feedback.upd_prog(30)
-        #=======================================================================
-        # #extract data
-        #=======================================================================
         
-        log.info('extracting data on \'%s\' w/ %i feats'%(
-            vlay.name(), vlay.dataProvider().featureCount()))
-                
-        df = vlay_get_fdf(vlay, feedback=self.feedback)
-          
-        #drop geometery indexes
-        for gindx in self.invalid_cids:   
-            df = df.drop(gindx, axis=1, errors='ignore')
-            
-        #more cid checks
-        if not cid in df.columns:
-            raise Error('cid not found in finv_df')
-        
-        assert df[cid].is_unique
-        assert 'int' in df[cid].dtypes.name, 'cid \'%s\' bad type'%cid
-        
-        self.feedback.upd_prog(50)
         #=======================================================================
-        # #write to file
+        # extract, download, and update cf
         #=======================================================================
+        wrkr = Preparor(logger=self.logger,  out_dir=wdir, tag=tag, feedback=self.feedback,
+                        cid=cid, cf_fp=cf_fp, overwrite=self.overwrite) 
+        
+        out_fp = wrkr.finv_to_csv( vlay, felv=self.comboBox_SSelv.currentText(),
+                                   logger=self.logger)
 
-        out_fp = os.path.join(self.wd, get_valid_filename('finv_%s_%s.csv'%(self.tag, vlay.name())))
-        
-        #see if this exists
-        if os.path.exists(out_fp):
-            msg = 'generated finv.csv already exists. overwrite=%s \n     %s'%(
-                self.overwrite, out_fp)
-            if self.overwrite:
-                log.warning(msg)
-            else:
-                raise Error(msg)
-            
-            
-        df.to_csv(out_fp, index=False)  
-        
-        log.info("inventory csv written to file:\n    %s"%out_fp)
-        
-        self.feedback.upd_prog(80)
-        #=======================================================================
-        # write to control file
-        #=======================================================================
-        assert os.path.exists(out_fp)
-        
-
-
-        
-        self.update_cf(
-            {
-            'dmg_fps':(
-                {'finv':out_fp}, 
-                '#\'finv\' file path set from BuildDialog.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
-                ),
-            'parameters':(
-                {'cid':str(cid),
-                 'felv':self.comboBox_SSelv.currentText()},
-                )
-             },
-            cf_fp = cf_fp
-            )
-        
-        self.feedback.upd_prog(99)
         #=======================================================================
         # wrap
         #=======================================================================
         log.push('inventory vector layer stored "\'%s\''%vlay.name())
         self.feedback.upd_prog(None) #set the progress bar back down to zero
         
-        return out_fp
+        return 
     
     
     def convert_rfda(self): #Other.Rfda tab
+        """
+        TODO: move to drop down
+        """
         log = self.logger.getChild('convert_rfda')
+        tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
         
         #======================================================================
         # collect from  ui
@@ -749,7 +640,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # input checks
         #======================================================================
         
-        wrkr = RFDAconv(logger=self.logger, out_dir=out_dir, tag=self.tag, bsmt_ht = bsmt_ht)
+        wrkr = RFDAconv(logger=self.logger, out_dir=out_dir, tag=tag, bsmt_ht = bsmt_ht)
         #======================================================================
         # invnentory convert
         #======================================================================
@@ -783,7 +674,11 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             
 
     def convert_npri(self):
+        """
+        TODO: move this to a drop down menu
+        """
         log = self.logger.getChild('convert_npri')
+        tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
         
         #=======================================================================
         # collect from UI
@@ -794,7 +689,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # input checks
         #=======================================================================
-        wrkr = Npri(logger=self.logger,  out_dir=out_dir, tag=self.tag)
+        wrkr = Preparor(logger=self.logger,  out_dir=out_dir, tag=tag)
         assert isinstance(in_vlay, QgsVectorLayer), 'no VectorLayer selected!'
         
         #=======================================================================
@@ -808,7 +703,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         
         
-        finv_vlay = wrkr.to_finv(in_vlay_aoi)
+        finv_vlay = wrkr.to_finv(in_vlay_aoi, newLayname = 'finv_NPRI')
         
         #=======================================================================
         # wrap
@@ -827,6 +722,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         log = self.logger.getChild('run_rPrep')
         start = datetime.datetime.now()
         log.info('start \'run_rPrep\' at %s'%start)
+        tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
         
         
         
@@ -873,7 +769,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # execute
         #=======================================================================
         wrkr = Rsamp(logger=self.logger, 
-                          tag = self.tag, #set by build_scenario() 
+                          tag = tag, #set by build_scenario() 
                           feedback = self.feedback, #let the instance build its own feedback worker
                           out_dir = out_dir
                           )
@@ -951,6 +847,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
         cf_fp = self.get_cf_fp()
         out_dir = self.lineEdit_wd.text()
+        tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
 
         cid = self.mFieldComboBox_cid.currentField() #user selected field
         psmp_stat = self.comboBox_HS_stat.currentText()
@@ -1022,7 +919,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         #build the sample
         wrkr = Rsamp(logger=self.logger, 
-                          tag = self.tag, #set by build_scenario() 
+                          tag = tag, #set by build_scenario() 
                           feedback = self.feedback, #let the instance build its own feedback worker
                           cid=cid,
                           out_dir = out_dir
@@ -1081,24 +978,35 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         log.info('populated tables with event names')
         self.feedback.setProgress(95)
         #======================================================================
-        # populate lisamp
+        # populate Conditional P
         #======================================================================
-        
+        """todo: some more intelligent populating"""
         #get the mlcb
         try:
-            rlay_d = {indxr: rlay for indxr, rlay in enumerate(rlay_l)}
+            self._CP_clear() #clear everything
             
-            for indxr, (sname, (mlcb_h, mlcb_v)) in enumerate(self.ls_cb_d.items()):
-                if indxr in rlay_d:
-                    mlcb_h.setLayer(rlay_l[indxr])
-                    
-                else:
-                    """
-                    todo: clear the remaining comboboxes
-                    """
-                    break
+            #loop through each of the raster layers and collcet those with 'fail' in the name
+            rFail_l = []
+            for rlay in rlay_l:
+                if 'fail' in rlay.name():
+                    rFail_l.append(rlay)
 
+            #loop through and re-key
+            rFail_d = dict()
+            for indxr, rlay in enumerate(rFail_l):
+                rFail_d[list(self.ls_cb_d.keys())[indxr]] = rlay
+                
 
+            #loop through each combobox pair and assign a raster to it
+            res_d = dict()
+            for lsKey, (mlcb_h, mlcb_v) in self.ls_cb_d.items():
+                if lsKey in rFail_d:
+                    mlcb_h.setLayer(rFail_d[lsKey])
+                    res_d[lsKey] = rFail_d[lsKey].name()
+
+            #wrap
+            log.info('populated %i Conditional P diaglogs'%len(res_d))
+ 
         except Exception as e:
             log.error('failed to populate lisamp fields w/\n    %s'%e)
             
@@ -1120,7 +1028,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # assemble/prepare inputs
         #=======================================================================
-        
+        tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
         finv_raw = self.comboBox_ivlay.currentLayer()
         rlay = self.comboBox_dtm.currentLayer()
         
@@ -1174,15 +1082,14 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
         #build the sample
         wrkr = Rsamp(logger=self.logger, 
-                          tag=self.tag, #set by build_scenario() 
+                          tag=tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
                           cid=cid,
-                          out_dir = out_dir, fname='gels'
+                          out_dir = out_dir, fname='gels', cf_fp=cf_fp
                           )
         
         
-        #connect the status bar
-        #wrkr.feedback.progressChanged.connect(self.upd_prog)
+
         
         res_vlay = wrkr.run([rlay], finv, psmp_stat=psmp_stat)
         
@@ -1193,16 +1100,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         wrkr.write_res(res_vlay, out_dir = out_dir)
         
         #update ocntrol file
-        wrkr.update_cf({
-            'dmg_fps':(
-                {'gels':wrkr.out_fp},
-                '#\'gels\' file path set from rsamp.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
-                    ),
-            'parameters':(
-                {'felv':'ground'},                
-                )
-            
-                    },cf_fp)
+        wrkr.upd_cf_dtm()
         
         #======================================================================
         # add to map
@@ -1217,11 +1115,12 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     def run_lisamp(self): #sample dtm raster
         
         self.logger.info('user pressed \'pushButton_DTMsamp\'')
-
+        
         
         #=======================================================================
         # assemble/prepare inputs
         #=======================================================================
+        tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
         finv_raw = self.comboBox_ivlay.currentLayer()
 
         cf_fp = self.get_cf_fp()
@@ -1244,6 +1143,14 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                 raise Error('must provide a matching VectorLayer for set %s'%sname)
 
             lpol_d[hlay.name()] = lpol_vlay 
+            
+        #get relation type
+        if self.radioButton_LS_mutEx.isChecked():
+            event_rels='mutEx'
+        elif self.radioButton_LS_indep.isChecked():
+            event_rels='indep'
+        else:
+            raise Error('button logic fail')
             
         #======================================================================
         # aoi slice
@@ -1271,23 +1178,22 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         if not cid in [field.name() for field in finv.fields()]:
             raise Error('requested cid field \'%s\' not found on the finv_raw'%cid)
-            
-        
-        
+ 
         #======================================================================
         # execute
         #======================================================================
 
         #build the sample
         wrkr = LikeSampler(logger=self.logger, 
-                          tag=self.tag, #set by build_scenario() 
+                          tag=tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
+                          cid=cid, out_dir=out_dir
                           )
         
         #connect the status bar
         #wrkr.feedback.progressChanged.connect(self.upd_prog)
         
-        res_df = wrkr.run(finv, lpol_d, cid=cid, lfield=lfield)
+        res_df = wrkr.run(finv, lpol_d,lfield=lfield, event_rels=event_rels)
         
         #check it
         wrkr.check()
@@ -1297,6 +1203,17 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         #update ocntrol file
         wrkr.upd_cf(cf_fp)
+        
+        #=======================================================================
+        # summary plots
+        #=======================================================================
+        if self.checkBox_LS_hist.isChecked():
+            fig = wrkr.plot_hist_all(res_df)
+            wrkr.output_fig(fig)
+            
+        if self.checkBox_LS_box.isChecked():
+            fig = wrkr.plot_box_all(res_df)
+            wrkr.output_fig(fig)
         
         #======================================================================
         # add to map
@@ -1326,17 +1243,15 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             
     
     def set_event_vals(self): #saving the event likelihoods table to file
-        """store user specified event variables into the 'evals' dataset
-        
-        
-        """
+
         log = self.logger.getChild('set_event_vals')
-        log.info('user pushed \'pushButton_ELstore\'')
+        #log.info('user pushed \'pushButton_ELstore\'')
         
 
         #======================================================================
         # collect variables
         #======================================================================
+        tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
         #get displayed control file path
         cf_fp = self.get_cf_fp()
         out_dir = self.lineEdit_wd.text()
@@ -1348,7 +1263,15 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             event_probs = 'aep'
         self.logger.info('\'event_probs\' set to \'%s\''%event_probs)
         
-        
+        #event_rels
+        if self.radioButton_EL_max.isChecked():
+            event_rels = 'max'
+        elif self.radioButton_EL_mutEx.isChecked():
+            event_rels='mutEx'
+        elif self.radioButton_EL_indep.isChecked():
+            event_rels='indep'
+        else:
+            raise Error('event_rels radio logic fail')
         #======================================================================
         # collcet table data
         #======================================================================
@@ -1376,11 +1299,11 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
         # #write to file
         #======================================================================
-        ofn = os.path.join(self.lineEdit_wd.text(), 'evals_%i_%s.csv'%(len(aep_df.columns), self.tag))
+        ofn = os.path.join(self.lineEdit_wd.text(), 'evals_%i_%s.csv'%(len(aep_df.columns), tag))
         
         from hlpr.Q import Qcoms
         #build a shell worker for these taxks
-        wrkr = Qcoms(logger=log, tag=self.tag, feedback=self.feedback, out_dir=out_dir)
+        wrkr = Qcoms(logger=log, tag=tag, feedback=self.feedback, out_dir=out_dir)
         
         eaep_fp = wrkr.output_df(aep_df, ofn, 
                                   overwrite=self.overwrite, write_index=False)
@@ -1392,7 +1315,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
         wrkr.update_cf(
             {
-                'parameters':({'event_probs':event_probs},),
+                'parameters':({
+                    'event_probs':event_probs, 'event_rels':event_rels},),
                 'risk_fps':({'evals':eaep_fp}, 
                             '#evals file path set from %s.py at %s'%(
                                 __name__, datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')))
@@ -1412,16 +1336,16 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         log.info('user pressed \'pushButton_Validate\'')
         
         #======================================================================
-        # collect form ui----
+        # collect form ui
         #======================================================================
-        
+        tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
         cf_fp = self.get_cf_fp() #get the control file path
         
         
         #===================================================================
         # setup validation worker
         #===================================================================
-        wrkr = Vali(cf_fp, logger=self.logger, out_dir=self.lineEdit_wd.text(), tag=self.tag)
+        wrkr = Vali(cf_fp=cf_fp, logger=self.logger, out_dir=self.lineEdit_wd.text(), tag=tag)
         
 
         #======================================================================
@@ -1435,9 +1359,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #populate all possible test parameters
         vpars_all_d = {
                     'risk1':(self.checkBox_Vr1, Risk1),
-                   'dmg2':(self.checkBox_Vi2, Dmg2),
-                   'risk2':(self.checkBox_Vr2, Risk2),
-                   #'risk3':(self.checkBox_Vr3, None), 
+                    'dmg2':(self.checkBox_Vi2, Dmg2),
+                    'risk2':(self.checkBox_Vr2, Risk2),
+                    #'risk3':(self.checkBox_Vr3, None), 
                                            }
         
         #loop and collect based on check boxes
@@ -1480,9 +1404,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # wrap
         #=======================================================================
-            
-
-
         self.feedback.upd_prog(100)
         
         log.push('passed %i (of %i) validations. see log'%(
@@ -1525,6 +1446,14 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             if (layer.name()) not in x:
                 self.ras_dict.update( { layer.name() : layer} )
                 self.listWidget_ras.addItem(str(layer.name()))
+                
+    def _CP_clear(self): #clear all the drop downs
+        
+        for sname, (mlcb_haz, mlcb_lpol) in self.ls_cb_d.items():
+            mlcb_haz.setCurrentIndex(-1) #set selection to none
+            mlcb_lpol.setCurrentIndex(-1) #set selection to none
+                
+
     
 
             

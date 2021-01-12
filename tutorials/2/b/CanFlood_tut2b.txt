@@ -1,0 +1,31 @@
+[parameters]
+name = tut2b
+cid = xid
+prec = 6                #float precision for calculations
+ground_water = True     #whether to allow wsl < gel
+felv = ground
+event_probs = ari
+ltail = extrapolate     #EAD extrapolation: left tail treatment code (low prob high damage)
+rtail = 0.5             #EAD extrapolation: right trail treatment (high prob low damage)
+drop_tails = True       #whether to remove the extrapolated values from the results
+integrate = trapz       #integration method to apply: trapz, simps
+as_inun = False
+
+[dmg_fps]
+curves = C:/LS/03_TOOLS/CanFlood/_git/tutorials/2/data/CanFlood_curves_rfda_20200218.xls
+finv = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\finv_tut2b_finv_cT2.csv
+expos = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\expos_tut2b_5_32.csv
+gels = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\gels_tut2b_1_32.csv
+
+[risk_fps]
+dmgs = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\model_out\dmgs_tut2b_tut2b.csv
+exlikes = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\exlikes_tut2b.csv
+evals = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\evals_5_tut2b.csv
+#'dmgs' file path set from dmg2.py at 2020-12-17 12.58.30
+
+[validation]
+risk1 = False
+dmg2 = True
+risk2 = True
+risk3 = False
+

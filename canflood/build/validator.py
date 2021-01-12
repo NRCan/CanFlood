@@ -9,7 +9,7 @@ Template for 'build' scripts
 #==========================================================================
 # logger setup-----------------------
 #==========================================================================
-import logging, configparser, datetime
+import logging, configparser, datetime, copy
 
 
 
@@ -40,8 +40,8 @@ else:
     from hlpr.exceptions import QError as Error
     
 
-from hlpr.Q import *
-from hlpr.basic import *
+from hlpr.Q import Qcoms
+#from hlpr.basic import *
 
 #==============================================================================
 # functions-------------------
@@ -58,26 +58,43 @@ class Vali(Qcoms):
     valid = False
 
     def __init__(self,
-
-                 cf_fp, #control file path
                   *args, **kwargs):
         
         super().__init__(*args, **kwargs)
         
+        #initlize the config parser
+        if os.path.exists(self.cf_fp):
+            self.config_cf()
 
-        
-        #=======================================================================
-        # load the control file
-        #=======================================================================
-        assert os.path.exists(cf_fp), 'provided parameter file path does not exist \n    %s'%cf_fp
-
-        cpars = configparser.ConfigParser(inline_comment_prefixes='#')
-        self.logger.info('validating parameters from \n     %s'%cpars.read(cf_fp))
-        
-        self.cpars = cpars
-        self.cf_fp = cf_fp
         
         self.logger.debug('Vali.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
+        
+    def config_cf(self, #helper to initilaize the configParser
+                 cf_fp=None,
+                 logger=None):
+        """
+        broke this out for complex console runs where we don't have the cf_fp during init
+        """
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log=logger.getChild('config_cf')
+        if cf_fp is None: cf_fp=self.cf_fp
+        
+        assert os.path.exists(cf_fp), \
+            'provided parameter file path does not exist \n    %s'%cf_fp
+
+        #=======================================================================
+        # initilzie
+        #=======================================================================
+        cpars = configparser.ConfigParser(inline_comment_prefixes='#')
+        log.info('validating parameters from \n     %s'%cpars.read(cf_fp))
+        
+        self.cpars = cpars
+        
+        return cpars
         
         
     def cf_check(self,
@@ -99,6 +116,9 @@ class Vali(Qcoms):
         self.valid_par = modObj.valid_par
         if len(errors) == 0:
             self.valid = True
+        else:
+            self.valid = False
+            
         return errors
     
     def cf_mark(self,#mark the validation in the control file
@@ -137,51 +157,6 @@ class Vali(Qcoms):
 
                 
 
-#===============================================================================
-# dev testing
-#===============================================================================
-if __name__ =="__main__": 
-    tag='tag'
-    cf_fp = r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\built\CanFlood_tut2.txt'
-   
-    
-    
-    out_dir = os.path.join(os.getcwd(), 'validator', tag)
-
-    #==========================================================================
-    # load the data
-    #==========================================================================
-
-    wrkr = Vali(cf_fp, logger=mod_logger, tag=tag, out_dir=out_dir, 
-                 )
-    
-    from model.dmg2 import Dmg2
-    from model.risk2 import Risk2
-    
-    res_d = dict()
-    for vtag, modObj in {
-        'dmg2':Dmg2,
-        'risk2':Risk2
-        }.items():
-    
-        
-        errors = wrkr.cf_check(modObj)
-        for e in errors:
-            print('%s: %s'%(vtag, e))
-        wrkr.cf_mark()
-        
-        #store
-        if len(errors) == 0: 
-            res_d[vtag] = True
-        else:
-            res_d[vtag] = False
-    
-    
-    
-    
-    log.push('passed %i validations'%(len(res_d)))
-    
-    print('finished')
     
     
     

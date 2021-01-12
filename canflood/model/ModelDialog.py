@@ -247,12 +247,13 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         out_dir = self.get_wd()
         tag = self.linEdit_Stag.text()
         res_per_asset = self.checkBox_r2rpa_2.isChecked()
+        absolute_fp = self._get_absolute_fp()
 
         #=======================================================================
         # setup/execute
         #=======================================================================
-        model = Risk1(cf_fp, out_dir=out_dir, logger=self.logger, tag=tag,
-                      feedback=self.feedback).setup()
+        model = Risk1(cf_fp, out_dir=out_dir, logger=self.logger, tag=tag,absolute_fp=absolute_fp,
+                      feedback=self.feedback)._setup()
         
         res, res_df = model.run(res_per_asset=res_per_asset)
         
@@ -290,15 +291,20 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         
     def run_impact2(self):
         log = self.logger.getChild('run_impact2')
+        #=======================================================================
+        # retrive variable values
+        #=======================================================================
         cf_fp = self.get_cf_fp()
         out_dir = self.get_wd()
         tag = self.linEdit_Stag.text()
-
+        absolute_fp = self._get_absolute_fp()
+        
         #======================================================================
         # #build/run model
         #======================================================================
-        model = Dmg2(cf_fp, out_dir = out_dir, logger = self.logger, tag=tag,
-                     feedback=self.feedback).setup()
+        model = Dmg2(cf_fp, out_dir = out_dir, logger = self.logger, tag=tag, 
+                     absolute_fp=absolute_fp,
+                     feedback=self.feedback)._setup()
         
         #run the model        
         cres_df = model.run()
@@ -310,7 +316,12 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         out_fp = model.output_df(cres_df, model.resname)
         
         #update parameter file
-        model.upd_cf()
+        if self.checkBox_i2_updCf.isChecked():
+            model.upd_cf()
+            
+        #output expanded results
+        if self.checkBox_i2_outExpnd.isChecked():
+            _ = model.output_df(model.bdmg_df, 'dmgs_expnd_%s_%s'%(model.name, model.tag))
 
         self.logger.push('Impacts2 complete')
         self.feedback.upd_prog(None) #set the progress bar back down to zero
@@ -333,12 +344,13 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         out_dir = self.get_wd()
         tag = self.linEdit_Stag.text()
         res_per_asset = self.checkBox_r2rpa.isChecked()
+        absolute_fp = self._get_absolute_fp()
         
 
         #======================================================================
         # run the model
         #======================================================================
-        model = Risk2(cf_fp, out_dir=out_dir, logger=self.logger, tag=tag,
+        model = Risk2(cf_fp, out_dir=out_dir, logger=self.logger, tag=tag,absolute_fp=absolute_fp,
                       feedback=self.feedback)._setup()
         
         res_ser, res_df = model.run(res_per_asset=res_per_asset)
@@ -429,7 +441,9 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
     
         self.feedback.upd_prog(None) #set the progress bar back down to zero
         
-    def results_joinGeo(self, data_fp, wd, tag):
+    def results_joinGeo(self, 
+                        data_fp, #filepath to res_per asset tabular results data 
+                        wd, tag):
         """
         not a good way to have the user specify the 
         
@@ -484,6 +498,18 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         self.feedback.upd_prog(None)
         log.push('run_joinGeo finished')
         
+    def _get_absolute_fp(self): #helper to get the absoulte filepath flag
+        if self.radioButton_S_fpAbs.isChecked():
+            absolute_fp=True
+            assert not self.radioButton_S_fpRel.isChecked()
+            
+        elif self.radioButton_S_fpRel.isChecked():
+            absolute_fp=False
+            
+        else:
+            raise Error('butotn logic fail')
+        
+        return absolute_fp
         
         
         

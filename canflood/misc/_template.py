@@ -3,7 +3,7 @@ Created on Feb. 9, 2020
 
 @author: cefect
 
-Template for 'build' scripts
+Template for worker scripts
 '''
 
 #==========================================================================
@@ -21,11 +21,11 @@ import numpy as np
 import pandas as pd
 
 
-#Qgis imports
-from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject
+
+
 
 #==============================================================================
-# custom imports
+# Logger
 #==============================================================================
 
 #standalone runs
@@ -40,18 +40,25 @@ else:
     from hlpr.exceptions import QError as Error
     
 
-raise Error('only import what you need!')
-from hlpr.Q import *
-from hlpr.basic import *
+
+#===============================================================================
+# Qgis imports
+#===============================================================================
+from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject
+
+from hlpr.Q import Qcoms
+
+#===============================================================================
+# non-Qgis
+#===============================================================================
+from hlpr.basic import ComWrkr
 
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Gen(Qcoms):
+class Gen(ComWrkr):
     """
-    general methods for the Build dialog
-    
-    broken out for development/testing
+    general methods to be called by the Dialog class
     
     each time the user performs an action, 
         a new instance of this should be spawned
@@ -67,43 +74,11 @@ class Gen(Qcoms):
         
 
         
-        self.logger.debug('Gen.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
+        self.logger.debug('%s.__init__ w/ feedback \'%s\''%(self.__class__.__name__, type(self.feedback).__name__))
         
     
 
 
-                
-
-
-if __name__ =="__main__": 
-    tag='tag'
-    
-   
-    
-    
-    out_dir = os.path.join(os.getcwd(), 'wsamp', tag)
-
-    #==========================================================================
-    # load the data
-    #==========================================================================
-
-    wrkr = Gen(logger=mod_logger, tag=tag, out_dir=out_dir, 
-                 )
-    
-
-    
-
-    
-    #==========================================================================
-    # save results
-    #==========================================================================
-
-     
-
- 
-    force_open_dir(out_dir)
- 
-    print('finished')
     
     
     
