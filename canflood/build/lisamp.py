@@ -645,7 +645,7 @@ class LikeSampler(Qcoms):
         # defaults
         #=======================================================================
         log = self.logger.getChild('plot')
-        title = '%s failure histogram on %i events'%(self.tag, len(df.columns))
+        title = '%s failure boxplots on %i events and %i assets'%(self.tag, len(df.columns), len(df))
         
         #=======================================================================
         # manipulate data
@@ -690,13 +690,13 @@ class LikeSampler(Qcoms):
         ax1 = fig.add_subplot(111)
         
         #aep units
-        ax1.set_xlim(0, 1.0)
+        ax1.set_ylim(0, 1.0)
  
         
         # axis label setup
         fig.suptitle(title)
-        ax1.set_xlabel('Pfail')
-        ax1.set_ylabel('asset count')
+        ax1.set_xlabel('hazard layer')
+        ax1.set_ylabel('Pfail')
         """
         plt.show()
         
@@ -707,31 +707,16 @@ class LikeSampler(Qcoms):
         #=======================================================================
         # plot thie histogram
         #=======================================================================
-        ax1.boxplot(data)
-        
-        
-        #=======================================================================
-        # Add text string 'annot' to lower left of plot
-        #=======================================================================
-        val_str = '%i assets \nevent_rels=\'%s\''%(len(df), self.event_rels)
-        xmin, xmax1 = ax1.get_xlim()
-        ymin, ymax1 = ax1.get_ylim()
-        
-        x_text = xmin + (xmax1 - xmin)*.5 # 1/10 to the right of the left ax1is
-        y_text = ymin + (ymax1 - ymin)*.5 #1/10 above the bottom ax1is
-        anno_obj = ax1.text(x_text, y_text, val_str)
-        
-        #=======================================================================
-        # post formatting
-        #=======================================================================
-        if grid: 
-            ax1.grid()
+        boxRes_d = ax1.boxplot(data, whis=1.5)
         
 
-        #legend
-        h1, l1 = ax1.get_legend_handles_labels() #pull legend handles from axis 1
 
-        ax1.legend(h1, l1, loc=1) #turn legend on with combined handles
+        #=======================================================================
+        # format axis labels
+        #======================================================= ================
+        #apply the new labels
+        ax1.set_xticklabels(df.columns, rotation=90, va='center', y=.5)
+
         
         
         return fig
