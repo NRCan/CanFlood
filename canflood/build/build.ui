@@ -5459,8 +5459,8 @@ p, li { white-space: pre-wrap; }
  <connections/>
  <buttongroups>
   <buttongroup name="buttonGroup_ELfmt"/>
-  <buttongroup name="buttonGroup_EV_eventRels"/>
-  <buttongroup name="buttonGroup_S_filepaths"/>
   <buttongroup name="buttonGroup_LS_rels"/>
+  <buttongroup name="buttonGroup_S_filepaths"/>
+  <buttongroup name="buttonGroup_EV_eventRels"/>
  </buttongroups>
 </ui>

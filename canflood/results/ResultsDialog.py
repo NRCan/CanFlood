@@ -4,7 +4,7 @@
 
 """
 
-import os
+import os, copy
 
 #===============================================================================
 # PyQT
@@ -27,6 +27,7 @@ from hlpr.exceptions import QError as Error
 
 import results.djoin
 import results.riskPlot
+import results.compare
 
 
 
@@ -158,13 +159,81 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.comboBox_JGfinv.layerChanged.connect(set_style)
         
         
-
-
-        
         #execute
         self.pushButton_JG_join.clicked.connect(self.run_joinGeo)
         
+        #=======================================================================
+        # COMPARE--------
+        #=======================================================================
+        #=======================================================================
+        # browse/open buttons
+        #=======================================================================
+
+        for scName, d in {
+            '1':{
+                'rd_browse':self.pushButton_C_Rdir_browse_1,
+                'rd_open':self.pushButton_C_Rdir_open_1,
+                'rd_line':self.lineEdit_C_Rdir_1,
+                'cf':self.pushButton_C_cf_browse_1,
+                'cf_line':self.lineEdit_C_cf_1,
+                'ttl':self.pushButton_C_ttl_browse_1,
+                'ttl_line':self.lineEdit_C_ttl_1,
+                },
+            '2':{
+                'rd_browse':self.pushButton_C_Rdir_browse_2,
+                'rd_open':self.pushButton_C_Rdir_open_2,
+                'rd_line':self.lineEdit_C_Rdir_2,
+                'cf':self.pushButton_C_cf_browse_2,
+                'cf_line':self.lineEdit_C_cf_2,
+                'ttl':self.pushButton_C_ttl_browse_2,
+                'ttl_line':self.lineEdit_C_ttl_1,
+                },
+            '3':{
+                'rd_browse':self.pushButton_C_Rdir_browse_3,
+                'rd_open':self.pushButton_C_Rdir_open_3,
+                'rd_line':self.lineEdit_C_Rdir_3,
+                'cf':self.pushButton_C_cf_browse_3,
+                'cf_line':self.lineEdit_C_cf_3,
+                'ttl':self.pushButton_C_ttl_browse_3,
+                'ttl_line':self.lineEdit_C_ttl_1,
+                },
+            '4':{
+                'rd_browse':self.pushButton_C_Rdir_browse_4,
+                'rd_open':self.pushButton_C_Rdir_open_4,
+                'rd_line':self.lineEdit_C_Rdir_4,
+                'cf':self.pushButton_C_cf_browse_4,
+                'cf_line':self.lineEdit_C_cf_4,
+                'ttl':self.pushButton_C_ttl_browse_4,
+                'ttl_line':self.lineEdit_C_ttl_1,
+                }
+            }.items():
+            
+
+                
+            #Results Directory
+            
+            #Control File
+            def browse_cf():
+                return self.fileSelect_button(d['cf_line'], 
+                                              caption='Select Control File for Scenario %s'%scName,
+                                              path = self.lineEdit_wd.text(),
+                                              filters="Control Files (*.txt)")
         
+            d['cf'].clicked.connect(browse_cf)
+            
+            #total results
+            def browse_ttl(): 
+                return self.fileSelect_button(d['ttl_line'], 
+                              caption='Select Total Results for Scenario %s'%scName,
+                              path = self.lineEdit_wd.text(),
+                              filters="Data Files (*.csv)")
+                
+            d['ttl'].clicked.connect(browse_ttl)
+        #=======================================================================
+        # execute button
+        #=======================================================================
+        
+        self.pushButton_C_compare.clicked.connect(self.run_compare)
         #======================================================================
         # defaults-----------
         #======================================================================
@@ -323,17 +392,86 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.feedback.upd_prog(None)
         log.push('run_joinGeo finished')
     
+    def run_compare(self):
+        log = self.logger.getChild('run_compare')
+        log.info('user pushed \'run_compare\'')
+        
+        #=======================================================================
+        # collect inputs
+        #=======================================================================
+        #general
+        out_dir = self.lineEdit_wd.text()
+        tag = self.linEdit_Stag.text() #set the secnario tag from user provided name
+        
+
+        
+        
+        #scenario filepaths
+        raw_d = {
+            '1':{
+                'cf_fp':self.lineEdit_C_cf_1.text(),
+                'ttt_fp':self.lineEdit_C_ttl_1.text(),
+                },
+            '2':{
+                'cf_fp':self.lineEdit_C_cf_2.text(),
+                'ttt_fp':self.lineEdit_C_ttl_2.text(),              
+                },
+            '3':{
+                'cf_fp':self.lineEdit_C_cf_3.text(),
+                'ttl_fp':self.lineEdit_C_ttl_3.text(),
+                },
+            '4':{
+                'cf_fp':self.lineEdit_C_cf_4.text(),
+                'ttl_fp':self.lineEdit_C_ttl_4.text(),                
+                }
+            }
+        
+        #clean it out
+        parsG_d = dict()
+        for k1, rd in copy.copy(raw_d).items():
+            for k2, v in rd.items():
+                if v=='':
+                    pass
+                else:
+                    #add the page
+                    if not k1 in parsG_d:
+                        parsG_d[k1] = dict()
+                    
+                    parsG_d[k1][k2]=v
+                    
+                    
     
     
+        log.debug('pars w/ %i keys: \n    %s'%(len(parsG_d), list(parsG_d.keys())))
+        #=======================================================================
+        # working dir
+        #=======================================================================
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+            log.info('built working directory: %s'%out_dir)
     
+        #=======================================================================
+        # init
+        #=======================================================================
+        wrkr = results.compare.Cmpr(out_dir=out_dir, tag=tag, logger=self.logger,
+                    )
     
-    
-    
-    
-    
-    
-    
-    
+        #load
+        sWrkr_d = wrkr.load_scenarios(parsG_d)
+        
+        #=======================================================================
+        # #compare the control files
+        #=======================================================================
+        if self.checkBox_C_cf.isChecked():
+            mdf = wrkr.cf_compare(sWrkr_d)
+            mdf.to_csv(os.path.join(out_dir, 'CFcompare_%s_%i.csv'%(tag, len(mdf.columns))))
+        
+        #=======================================================================
+        # #plot curves
+        #=======================================================================
+        if self.checkBox_C_rplot.isChecked():
+            fig = wrkr.riskCurves(sWrkr_d)
+            wrkr.output_fig(fig)
     
     
     
