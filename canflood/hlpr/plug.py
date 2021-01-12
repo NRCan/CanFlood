@@ -157,8 +157,10 @@ class QprojPlug(Qcoms): #baseclass for plugins
         #=======================================================================
         if path is None:
             path = os.getcwd()
+        
+        if not os.path.exists(path):
+            path = os.getcwd()
             
-        assert os.path.exists(path)
         #ask the user for the path
         """
         using the Dialog instance as the QWidge parent

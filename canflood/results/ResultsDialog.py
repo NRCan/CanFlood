@@ -82,7 +82,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.pushButton_wd.clicked.connect(browse_wd) # SS. Working Dir. Browse
         
         
-                #WD force open
+        #WD force open
         def open_wd():
             force_open_dir(self.lineEdit_wd.text())
         
@@ -186,7 +186,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                 'cf':self.pushButton_C_cf_browse_2,
                 'cf_line':self.lineEdit_C_cf_2,
                 'ttl':self.pushButton_C_ttl_browse_2,
-                'ttl_line':self.lineEdit_C_ttl_1,
+                'ttl_line':self.lineEdit_C_ttl_2,
                 },
             '3':{
                 'rd_browse':self.pushButton_C_Rdir_browse_3,
@@ -195,7 +195,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                 'cf':self.pushButton_C_cf_browse_3,
                 'cf_line':self.lineEdit_C_cf_3,
                 'ttl':self.pushButton_C_ttl_browse_3,
-                'ttl_line':self.lineEdit_C_ttl_1,
+                'ttl_line':self.lineEdit_C_ttl_3,
                 },
             '4':{
                 'rd_browse':self.pushButton_C_Rdir_browse_4,
@@ -204,31 +204,37 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                 'cf':self.pushButton_C_cf_browse_4,
                 'cf_line':self.lineEdit_C_cf_4,
                 'ttl':self.pushButton_C_ttl_browse_4,
-                'ttl_line':self.lineEdit_C_ttl_1,
+                'ttl_line':self.lineEdit_C_ttl_4,
                 }
             }.items():
             
 
                 
             #Results Directory
+            cap1='Select Results Directory for Scenario %s'%scName
+            d['rd_browse'].clicked.connect(
+                lambda a, x=d['rd_line'], c=cap1: \
+                self.browse_button(x, prompt=c))
+            
+            d['rd_open'].clicked.connect(
+                lambda a, x=d['rd_line']: force_open_dir(x.text()))
+
             
             #Control File
-            def browse_cf():
-                return self.fileSelect_button(d['cf_line'], 
-                                              caption='Select Control File for Scenario %s'%scName,
-                                              path = self.lineEdit_wd.text(),
-                                              filters="Control Files (*.txt)")
-        
-            d['cf'].clicked.connect(browse_cf)
+            cap1='Select Control File for Scenario %s'%scName
+            fil1="Control Files (*.txt)"
+            d['cf'].clicked.connect(
+                lambda a, x=d.pop('cf_line'), c=cap1, f=fil1: \
+                self.fileSelect_button(x, caption=c, filters=f, path=self.lineEdit_wd.text()))
             
             #total results
-            def browse_ttl(): 
-                return self.fileSelect_button(d['ttl_line'], 
-                              caption='Select Total Results for Scenario %s'%scName,
-                              path = self.lineEdit_wd.text(),
-                              filters="Data Files (*.csv)")
-                
-            d['ttl'].clicked.connect(browse_ttl)
+            cap1='Select Total Results for Scenario %s'%scName
+            fil1="Data Files (*.csv)"
+            d['ttl'].clicked.connect(
+                lambda a, x=d.pop('ttl_line'), c=cap1, f=fil1: \
+                self.fileSelect_button(x, caption=c, filters=f, path=self.lineEdit_wd.text()))
+
+
         #=======================================================================
         # execute button
         #=======================================================================
@@ -410,11 +416,11 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         raw_d = {
             '1':{
                 'cf_fp':self.lineEdit_C_cf_1.text(),
-                'ttt_fp':self.lineEdit_C_ttl_1.text(),
+                'ttl_fp':self.lineEdit_C_ttl_1.text(),
                 },
             '2':{
                 'cf_fp':self.lineEdit_C_cf_2.text(),
-                'ttt_fp':self.lineEdit_C_ttl_2.text(),              
+                'ttl_fp':self.lineEdit_C_ttl_2.text(),              
                 },
             '3':{
                 'cf_fp':self.lineEdit_C_cf_3.text(),
@@ -443,6 +449,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     
     
         log.debug('pars w/ %i keys: \n    %s'%(len(parsG_d), list(parsG_d.keys())))
+        self.feedback.setProgress(10)
         #=======================================================================
         # working dir
         #=======================================================================
@@ -458,7 +465,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     
         #load
         sWrkr_d = wrkr.load_scenarios(parsG_d)
-        
+        self.feedback.setProgress(20)
         #=======================================================================
         # #compare the control files
         #=======================================================================
@@ -466,13 +473,21 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             mdf = wrkr.cf_compare(sWrkr_d)
             mdf.to_csv(os.path.join(out_dir, 'CFcompare_%s_%i.csv'%(tag, len(mdf.columns))))
         
+        self.feedback.setProgress(60)
         #=======================================================================
         # #plot curves
         #=======================================================================
         if self.checkBox_C_rplot.isChecked():
             fig = wrkr.riskCurves(sWrkr_d)
             wrkr.output_fig(fig)
-    
+            
+        self.feedback.setProgress(90)
+        
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        self.feedback.upd_prog(None)
+        log.push('run_compare finished')
     
     
     
