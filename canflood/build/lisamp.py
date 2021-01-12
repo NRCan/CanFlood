@@ -535,7 +535,7 @@ class LikeSampler(Qcoms):
         # defaults
         #=======================================================================
         log = self.logger.getChild('plot')
-        title = '%s failure histogram on %i events'%(self.tag, len(df.columns))
+        title = '%s Conditional P histogram on %i events'%(self.tag, len(df.columns))
         
         #=======================================================================
         # manipulate data
@@ -645,7 +645,7 @@ class LikeSampler(Qcoms):
         # defaults
         #=======================================================================
         log = self.logger.getChild('plot')
-        title = '%s failure boxplots on %i events and %i assets'%(self.tag, len(df.columns), len(df))
+        title = '%s Conditional P boxplots on %i events'%(self.tag, len(df.columns), len(df))
         
         #=======================================================================
         # manipulate data
@@ -716,6 +716,18 @@ class LikeSampler(Qcoms):
         #======================================================= ================
         #apply the new labels
         ax1.set_xticklabels(df.columns, rotation=90, va='center', y=.5)
+        
+        
+        #=======================================================================
+        # Add text string 'annot' to lower left of plot
+        #=======================================================================
+        val_str = '%i assets \nevent_rels=\'%s\''%(len(df), self.event_rels)
+        xmin, xmax1 = ax1.get_xlim()
+        ymin, ymax1 = ax1.get_ylim()
+        
+        x_text = xmin + (xmax1 - xmin)*.8 # 1/10 to the right of the left ax1is
+        y_text = ymin + (ymax1 - ymin)*.8 #1/10 above the bottom ax1is
+        anno_obj = ax1.text(x_text, y_text, val_str)
 
         
         
