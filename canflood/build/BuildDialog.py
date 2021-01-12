@@ -1224,12 +1224,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             
     
     def set_event_vals(self): #saving the event likelihoods table to file
-        """store user specified event variables into the 'evals' dataset
-        
-        
-        """
+
         log = self.logger.getChild('set_event_vals')
-        log.info('user pushed \'pushButton_ELstore\'')
+        #log.info('user pushed \'pushButton_ELstore\'')
         
 
         #======================================================================
