@@ -1144,6 +1144,14 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
             lpol_d[hlay.name()] = lpol_vlay 
             
+        #get relation type
+        if self.radioButton_LS_mutEx.isChecked():
+            event_rels='mutEx'
+        elif self.radioButton_LS_indep.isChecked():
+            event_rels='indep'
+        else:
+            raise Error('button logic fail')
+            
         #======================================================================
         # aoi slice
         #======================================================================
@@ -1185,7 +1193,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #connect the status bar
         #wrkr.feedback.progressChanged.connect(self.upd_prog)
         
-        res_df = wrkr.run(finv, lpol_d,lfield=lfield)
+        res_df = wrkr.run(finv, lpol_d,lfield=lfield, event_rels=event_rels)
         
         #check it
         wrkr.check()

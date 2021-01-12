@@ -130,6 +130,12 @@ class LikeSampler(Qcoms):
             lpol_d, #{event name: likelihood polygon layer}
             cid = None, #index field name on finv
             lfield = 'p_fail', #field with likelihhood value
+            
+           event_rels='indep', #ev calculation method
+                #mutEx: assume each event is mutually exclusive (only one can happen)
+                    #lower bound
+                #indep: assume each event is independent (failure of one does not influence the other)
+                    #upper bound
             ):
         """
         sample conditional probability polygon 'lfield' values with finv geometry
