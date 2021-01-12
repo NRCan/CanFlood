@@ -125,7 +125,7 @@ class LikeSampler(Qcoms):
         log.debug('finished w/ %i'%len(lpol_d))
         return lpol_d
             
-    def run(self,
+    def run(self, #sample conditional probability polygon 'lfield' values with finv geometry
             finv, #inventory layer
             lpol_d, #{event name: likelihood polygon layer}
             cid = None, #index field name on finv
@@ -137,13 +137,7 @@ class LikeSampler(Qcoms):
                 #indep: assume each event is independent (failure of one does not influence the other)
                     #upper bound
             ):
-        """
-        sample conditional probability polygon 'lfield' values with finv geometry
-        
 
-        
-        """
-        
         log = self.logger.getChild('run')
 
         if cid is  None: cid=self.cid
@@ -212,6 +206,9 @@ class LikeSampler(Qcoms):
             todo: remove any features w/ zero value
             view(fc_vlay)
             """
+            #===================================================================
+            # sapmle values from polygons
+            #===================================================================
             svlay, new_fns, jcnt = self.joinattributesbylocation(fc_vlay, lp_vlay, [lfield],
                                                   method=0, #one-to-many
                                                   logger=log,
@@ -245,35 +242,17 @@ class LikeSampler(Qcoms):
             boolidx = sdf_raw[lfield].isna()
             log.debug('got %i (of %i) misses. dropping these'%(boolidx.sum(), len(boolidx)))
             
+            #drop misses
             sdf = sdf_raw.dropna(subset=[lfield], axis=0, how='any')
 
             #==================================================================
-            # #pivot this out to unique cids
+            # pivot to {cid:[sample values]}
             #==================================================================
-            """
-            #this works only when all the failure probabilities are unique
-            lp_vlay.dataProvider().featureCount()
-            sdf.pivot(index=cid, columns=lfield, values=lfield)"""
-            
-            #===================================================================
-            # #loop and build for each cid
-            # """not very efficient... but cant think of a better way"""
-            # cid_samp_d = dict() #container for sampling results
-            # for cval in cid_l:
-            #     #get this data
-            #     boolidx = sdf[cid] == cval
-            #     pvals_l = sdf.drop(cid, axis=1)[boolidx].iloc[:, 0].dropna().tolist()
-            #     
-            #     """this will yield an empty list for nulls
-            #     if len(pvals_l) == 0:
-            #         raise Error('got empty result')"""
-            #      
-            #     cid_samp_d[cval] =pvals_l
-            #===================================================================
+
             #drop down to cid groups (pvali values)
             d = {k:csdf[lfield].to_list() for k,csdf in sdf.groupby(cid)}
             
-            #add in any we missed
+            #add dummy empty list for any missing cids
             """not very elegent... doing this to fit in with previous methods
             would be better to just use open joins"""
             cid_samp_d = {**d, **{k:[] for k in cid_l if not k in d}}
@@ -285,7 +264,7 @@ class LikeSampler(Qcoms):
         
         
         #======================================================================
-        # resolve union events------
+        # resolve multiple events------
         #======================================================================
         log = self.logger.getChild('run')
         log.info('collected sample values for %i events and %i assets'%(

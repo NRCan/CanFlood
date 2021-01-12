@@ -1019,23 +1019,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         res_vlay, join_cnt = res_d['OUTPUT'], res_d['JOINED_COUNT']
         
-        """
-        res_d['OUTPUT'].dataProvider().featureCount()
-        """
-        
         log.debug('got results: \n    %s'%res_d)
-        
-
-        #===========================================================================
-        # post formatting
-        #===========================================================================
-        #======================================================================
-        # if self.layname is None: 
-        #     self.layname = '%s_fjoin'%self.vlay.name()
-        #     
-        # res_vlay.setName(self.layname) #reset the name
-        #======================================================================
-        
 
         #===========================================================================
         # post checks
@@ -1050,7 +1034,8 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                     raise Error('in and out fcnts dont match')
 
         else:
-            log.debug('expect_overlaps=False, unable to check fcnts')
+            pass
+            #log.debug('expect_overlaps=False, unable to check fcnts')
 
 
 
@@ -1078,10 +1063,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                         fid_val_ser.isna().sum(), len(fid_val_ser), fid_val_ser.name
                         ))
                 
-        #=======================================================================
-        # miss retrival
-        #=======================================================================
-        """removed"""
+
         #=======================================================================
         # get the new field names
         #=======================================================================
