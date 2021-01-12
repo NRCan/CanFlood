@@ -598,7 +598,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # extract, download, and update cf
         #=======================================================================
         wrkr = Preparor(logger=self.logger,  out_dir=wdir, tag=tag, feedback=self.feedback,
-                        cid=cid, cf_fp=self.cf_fp, overwrite=self.overwrite) 
+                        cid=cid, cf_fp=cf_fp, overwrite=self.overwrite) 
         
         out_fp = wrkr.finv_to_csv( vlay, felv=self.comboBox_SSelv.currentText(),
                                    logger=self.logger)
@@ -1187,7 +1187,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         wrkr = LikeSampler(logger=self.logger, 
                           tag=tag, #set by build_scenario() 
                           feedback = self.feedback, #needs to be connected to progress bar
-                          cid=cid,
+                          cid=cid, out_dir=out_dir
                           )
         
         #connect the status bar

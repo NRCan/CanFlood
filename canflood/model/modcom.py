@@ -994,17 +994,12 @@ class Model(ComWrkr):
             cplx_df = get_cplx_df(edf, exp_l=exp_l) #get data for this event
             boolidx = cplx_df.sum(axis=1)!=1.0 #find those exceeding 1.0
         
-            """
-            chk_df = edf.loc[:, exn_l]
-            chk_df['sum'] = edf.loc[:, exn_l].sum(axis=1)
-            chk_df['result'] = boolidx
-            
-            view(chk_df)
-            """
+
 
             if boolidx.any():
+                """allowing this to mass when event_rels=max"""
                 valid = False
-                log.error('aep%.4f failed %i (of %i) Psum<=1 checks (Pmax=%.2f)'%(
+                log.warning('aep%.4f failed %i (of %i) Psum<=1 checks (Pmax=%.2f)'%(
                     aep, boolidx.sum(), len(boolidx), cplx_df.sum(axis=1).max()))
         
         if not self.event_rels == 'max':
