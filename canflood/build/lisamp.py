@@ -725,7 +725,7 @@ class LikeSampler(Qcoms):
         xmin, xmax1 = ax1.get_xlim()
         ymin, ymax1 = ax1.get_ylim()
         
-        x_text = xmin + (xmax1 - xmin)*.8 # 1/10 to the right of the left ax1is
+        x_text = xmin + (xmax1 - xmin)*.5 # 1/10 to the right of the left ax1is
         y_text = ymin + (ymax1 - ymin)*.8 #1/10 above the bottom ax1is
         anno_obj = ax1.text(x_text, y_text, val_str)
 

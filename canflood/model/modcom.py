@@ -863,11 +863,12 @@ class Model(ComWrkr):
             
         also best not to apply precision to these values
         
-        view(edf)
+        2020-01-12: moved null filling to lisamp.py
+            keeping it here as well for backwards compatability
         """
         booldf = edf.isna()
         if booldf.any().any():
-            log.info('got %i (of %i) nulls!... filling with zeros'%(booldf.sum().sum(), booldf.size))
+            log.warning('got %i (of %i) nulls!... filling with zeros'%(booldf.sum().sum(), booldf.size))
         edf = edf.fillna(0.0)
         
         #==================================================================
