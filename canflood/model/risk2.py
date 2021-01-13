@@ -141,6 +141,9 @@ class Risk2(Model):
 
 
     def promote_attrim(self): #add new index level
+        """
+        risk1 doesnt use dmg1... so the attrim will be differnet
+        """
         
         aep_ser = self.data_d['evals'].copy()
         atr_dxcol = self.data_d['attrimat'].copy()

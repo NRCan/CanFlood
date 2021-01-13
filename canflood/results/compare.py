@@ -23,21 +23,7 @@ import pandas as pd
 
 
 
-
-#==============================================================================
-# Logger
-#==============================================================================
-
-#standalone runs
-if __name__ =="__main__": 
-    from hlpr.logr import basic_logger
-    mod_logger = basic_logger()   
-    
-    from hlpr.exceptions import Error
-#plugin runs
-else:
-    #base_class = object
-    from hlpr.exceptions import QError as Error
+from hlpr.exceptions import QError as Error
     
 
 
@@ -46,7 +32,7 @@ else:
 #===============================================================================
 # non-Qgis
 #===============================================================================
-from hlpr.basic import ComWrkr
+#from hlpr.basic import ComWrkr
 from model.modcom import Model
 from results.riskPlot import Plotr as riskPlotr
 
@@ -54,13 +40,7 @@ from results.riskPlot import Plotr as riskPlotr
 # functions-------------------
 #==============================================================================
 class Cmpr(riskPlotr):
-    """
-    general methods to be called by the Dialog class
-    
-    each time the user performs an action, 
-        a new instance of this should be spawned
-        this way all the user variables can be freshley pulled
-    """
+ 
     
     #keys to expect on the sub co ntainers
     exp_pSubKeys = (
