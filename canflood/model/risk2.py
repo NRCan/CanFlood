@@ -129,6 +129,8 @@ class Risk2(Model):
         self.load_dmgs()
         if not self.exlikes == '':
             self.load_exlikes()
+        if not self.attrimat == '':
+            self.load_attrimat(dxcol_lvls=2)
         
         self.logger.debug('finished _setup() on Risk2')
         
@@ -149,6 +151,7 @@ class Risk2(Model):
         #======================================================================
         # resolve alternate damages (per evemt)-----------
         #======================================================================
+
         #take maximum expected value at each asset
         if 'exlikes' in self.data_d:
             ddf1 = self.ev_multis(ddf, self.data_d['exlikes'], aep_ser, logger=log)

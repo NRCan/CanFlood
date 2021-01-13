@@ -104,6 +104,9 @@ class Model(ComWrkr):
         
     [validation]
         risk2 -- Risk2 validation flag (default False)
+        
+    [results_fps]
+        attrimat -- attribution matrix file path
     
     """
     
@@ -143,6 +146,9 @@ class Model(ComWrkr):
     dmg2 = False
     risk2 = False
     risk3 = False
+    
+    #[results_fps]
+    attrimat=''
     
     #==========================================================================
     # program vars
@@ -1101,6 +1107,10 @@ class Model(ComWrkr):
         if fp is None: fp = getattr(self, dtag)
         cid = self.cid
         
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        
         assert 'finv' in self.data_d, 'call load_finv first'
         assert 'evals' in self.data_d, 'call load_evals first'
         assert isinstance(self.expcols, pd.Index), 'bad expcols'
@@ -1123,17 +1133,20 @@ class Model(ComWrkr):
         # clean it
         #======================================================================
         df = df_raw.copy()
+        
         #drop dmg suffix
+        """2021-01-13: dropped the _dmg suffix during dmg2.run()
+        left this cleaning for backwards compatailibity"""
         boolcol = df.columns.str.endswith('_dmg')
         enm_l = df.columns[boolcol].str.replace('_dmg', '').tolist()
         
-        #rename these
         ren_d = dict(zip(df.columns[boolcol].values, enm_l))
         df = df.rename(columns=ren_d)
         
-        
+        #set new index
         df = df.set_index(cid, drop=True).sort_index(axis=0)
         
+        #apply rounding
         df = df.round(self.prec)
         
         #======================================================================
@@ -1177,7 +1190,60 @@ class Model(ComWrkr):
         log.info('finished loading %s as %s'%(dtag, str(df.shape)))
         
         self.asset_cnt=len(df) #for plotting
-    
+
+    def load_attrimat(self,
+                      dxcol_lvls=2, #levels present in passed data
+                      fp=None,
+                      dtag='attrimat',
+                      check_psum=False,
+                      logger=None): #load the attributino matrix
+        
+        """
+        this data file is built by dmg2.get_attribution()
+        loader is called by:
+            risk1
+            risk2
+        """
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('load_attrimat')
+        if fp is None: fp = getattr(self, dtag)
+        cid = self.cid
+        
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        assert 'dmgs' in self.data_d, 'dmgs data set required with attrimat'
+        assert os.path.exists(fp), '%s got invalid filepath \n    %s'%(dtag, fp)
+        
+        assert isinstance(self.expcols, pd.Index), 'bad expcols'
+        assert isinstance(self.cindex, pd.Index), 'bad cindex'
+
+        #======================================================================
+        # load it
+        #======================================================================
+        dxcol_raw = pd.read_csv(fp, index_col=0, header=list(range(0,dxcol_lvls)))
+        
+        #build the name:rank keys
+        nameRank_d = {lvlName:i for i, lvlName in enumerate(dxcol_raw.columns.names)}
+        #=======================================================================
+        # data precheck
+        #=======================================================================
+        assert dxcol_raw.index.name==cid, 'bad index name %s'%(dxcol_raw.index.name)
+        
+        """leaving the column labels flexible
+        risk models (dxcol_lvls=2) should get mdexcol lvl0 name = 'rEventName'
+        as the matrix grows, the position of this name should change"""
+        assert 'rEventName' in dxcol_raw.columns.names,'missing rEventName from coldex'
+
+        #check the rEventNames        
+        miss_l = set(dxcol_raw.columns.get_level_values(nameRank_d['rEventName'])).difference(
+            self.expcols)
+  
+        
    
     def add_gels(self): #add gels to finv (that's heights)
         log = self.logger.getChild('add_gels')

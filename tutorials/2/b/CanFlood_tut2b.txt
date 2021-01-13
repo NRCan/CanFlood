@@ -10,6 +10,7 @@ rtail = 0.5             #EAD extrapolation: right trail treatment (high prob low
 drop_tails = True       #whether to remove the extrapolated values from the results
 integrate = trapz       #integration method to apply: trapz, simps
 as_inun = False
+event_rels = max
 
 [dmg_fps]
 curves = C:/LS/03_TOOLS/CanFlood/_git/tutorials/2/data/CanFlood_curves_rfda_20200218.xls

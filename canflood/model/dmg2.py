@@ -821,7 +821,7 @@ class Dmg2(Model):
     def get_attribution(self, #build the attreibution matrix
                         cres_df, # asset totals (asset:eventRaster:impact)
                         bdmg_df=None, # nested impacts (bid:eventRaster:impact)
-                        #events_df=None,  #keys to bdmg_df column
+                        events_df=None,  #keys to bdmg_df column
                         grpColn = 'nestID', #column name (in bdmg_df) to group on
                         logger=None):
         
@@ -833,7 +833,7 @@ class Dmg2(Model):
         cid = self.cid
         
         if bdmg_df is None: bdmg_df=self.bdmg_df.copy()
-        #if events_df is None: events_df = self.events_df.copy()
+        if events_df is None: events_df = self.events_df.copy()
         
         #=======================================================================
         # check data
@@ -865,6 +865,8 @@ class Dmg2(Model):
         #set new level names
         bdmg_dxcol.columns.set_names(['rEventName', grpColn], inplace=True)
         
+        
+        
         #=======================================================================
         # calc attribution
         #=======================================================================
@@ -883,12 +885,13 @@ class Dmg2(Model):
         view(cres_df)
         view(bdmg_df)
         view(atr_dxcol)
+        view(events_df)
         """
         
-        #=======================================================================
-        # checks
-        #=======================================================================
 
+        #=======================================================================
+        # Psum checks
+        #=======================================================================
         #sum each of the grpColns nested under the rEventName        
         bool_df = atr_dxcol.sum(axis=1, level=0, skipna=False).round(self.prec)==1.0
         
@@ -905,6 +908,22 @@ class Dmg2(Model):
                 np.invert(bool2_df).sum().sum(), bool2_df.size))
             
         log.info('finished w/ %s'%str(atr_dxcol.shape))
+        
+        #=======================================================================
+        # clean (drop _dmg suffix)
+        #=======================================================================
+        #build the name:rank keys
+        nameRank_d= {lvlName:i for i, lvlName in enumerate(atr_dxcol.columns.names)}
+    
+        #get conversion d {oldName:newName}
+        d1 = pd.Series(events_df['dmg'].index, index=events_df['dmg']).to_dict()
+        
+        #get conversion d in the order found on the dxcol {newName:oldName}
+        d2 = {d1[e]:e for e in atr_dxcol.columns.get_level_values(nameRank_d['rEventName'])}
+        
+        #replace the keys on the dxcol with these
+        atr_dxcol.columns = atr_dxcol.columns.set_levels(d2.keys(), level=nameRank_d['rEventName'])
+        
         
         #set for writing
         self.att_df = atr_dxcol.copy()
