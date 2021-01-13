@@ -984,6 +984,13 @@ p, li { white-space: pre-wrap; }
                </widget>
               </item>
               <item>
+               <widget class="QCheckBox" name="checkBox_i2_attr">
+                <property name="text">
+                 <string>Generate attribution matrix</string>
+                </property>
+               </widget>
+              </item>
+              <item>
                <widget class="QCheckBox" name="checkBox_i2RunRisk">
                 <property name="text">
                  <string>Run Risk (L2) upon completion (see 'Risk (L2)' tab for configuration)</string>

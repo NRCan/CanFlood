@@ -249,7 +249,7 @@ class Dmg2(Model):
         self.f_ftags = f_ftags
 
     def run(self, #main runner fucntion
-            attribution=False, #whether to generate attribution matrix
+
             ):
         #======================================================================
         # defaults
@@ -283,13 +283,8 @@ class Dmg2(Model):
         assert len(miss_l) == 0, 'result inventory mismatch: \n    %s'%miss_l
         assert np.array_equal(fdf.index, cres_df.index), 'index mismatch'
         
-        #=======================================================================
-        # attribution
-        #=======================================================================
-        if attribution:
-            _ = self.get_attribution(cres_df.copy(), logger=log)
         
-        self.feedback.setProgress(95)
+        self.feedback.setProgress(90)
         #=======================================================================
         # report
         #=======================================================================
@@ -517,7 +512,7 @@ class Dmg2(Model):
                 raise Error('failed w/ \n    %s'%e)
                 
         log.info('scaled damages')
-        self.feedback.setProgress(80)
+        self.feedback.setProgress(70)
         #======================================================================
         #CAPPED------------
         #======================================================================
@@ -557,7 +552,7 @@ class Dmg2(Model):
             len(meta_d), len(res_df), meta_d))
         
         log.info('capped damages')
-        self.feedback.setProgress(90)
+        self.feedback.setProgress(80)
         
         
         #======================================================================
@@ -569,7 +564,7 @@ class Dmg2(Model):
             res_df[e_ser['dmg']] = res_df.loc[:, boolcol].fillna(0)
             
         log.info('got final damages')
-        self.feedback.setProgress(92)
+        
         
         #=======================================================================
         # meta--------
@@ -595,6 +590,7 @@ class Dmg2(Model):
         assert res_df1.notna().all().all(), 'got some nulls'
         
         log.info('finished w/ %s'%str(res_df1.shape))
+        self.feedback.setProgress(85)
         return res_df1
         """
         self.resname
@@ -825,7 +821,7 @@ class Dmg2(Model):
     def get_attribution(self, #build the attreibution matrix
                         cres_df, # asset totals (asset:eventRaster:impact)
                         bdmg_df=None, # nested impacts (bid:eventRaster:impact)
-                        events_df=None,  #keys to bdmg_df column
+                        #events_df=None,  #keys to bdmg_df column
                         grpColn = 'nestID', #column name (in bdmg_df) to group on
                         logger=None):
         
@@ -837,7 +833,7 @@ class Dmg2(Model):
         cid = self.cid
         
         if bdmg_df is None: bdmg_df=self.bdmg_df.copy()
-        if events_df is None: events_df = self.events_df.copy()
+        #if events_df is None: events_df = self.events_df.copy()
         
         #=======================================================================
         # check data
