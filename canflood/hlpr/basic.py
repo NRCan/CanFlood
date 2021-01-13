@@ -19,6 +19,7 @@ helper functions w/o qgis api
 #python
 import os, configparser, logging, re
 import pandas as pd
+pd.set_option('display.max_rows',10)
 import numpy as np
 
 

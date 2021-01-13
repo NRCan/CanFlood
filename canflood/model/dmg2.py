@@ -16,24 +16,15 @@ import configparser, os, logging, datetime
 
 import pandas as pd
 import numpy as np
-import math
-
+#import math
+idx = pd.IndexSlice
 #==============================================================================
 # custom imports
 #==============================================================================
 
-#standalone runs
-if __name__ =="__main__": 
-    from hlpr.logr import basic_logger
-    mod_logger = basic_logger()   
-    
-    from hlpr.exceptions import Error
-    
-#plugin runs
-else:
-    mod_logger = logging.getLogger('dmg2') #get the root logger
+mod_logger = logging.getLogger('dmg2') #get the root logger
 
-    from hlpr.exceptions import QError as Error
+from hlpr.exceptions import QError as Error
 
 #from hlpr.Q import *
 from hlpr.basic import ComWrkr, view
@@ -837,6 +828,7 @@ class Dmg2(Model):
         # defaults
         #=======================================================================
         if logger is None: logger=self.logger
+
         log = logger.getChild('get_attribution')
         cid = self.cid
         
@@ -903,29 +895,42 @@ class Dmg2(Model):
         view(cres_df)
         view(bdf)
         view(atr_dxcol)
-        view(events_df)
+        view(booldxcol)
         """
+        log.debug('built raw attriM w/ %i (of %i) nulls'%(
+            atr_dxcol.isna().sum().sum(), atr_dxcol.size))
+        #=======================================================================
+        # #handle nulls----
+        #=======================================================================
+        #=======================================================================
+        # for those w/ zero damage, set f0 attribition = 1.0
+        #=======================================================================
+        #builld replacement locator frame
+        booldf = cres_df==0.0
         
+        booldxcol = pd.concat([booldf], keys=[atr_dxcol.columns.get_level_values(1)[0]], axis=1
+                              ).swaplevel(axis=1)
+                              
+        booldxcol = booldxcol.reindex(atr_dxcol.columns, axis=1).fillna(False)
+        assert np.array_equal(booldxcol.columns, atr_dxcol.columns)
+        
+        #use it
+        atr_dxcol = atr_dxcol.where(~booldxcol, other=1.0)
+        log.debug('setting %i (of %i) dmg=0 entries with f0 attribution = %.2f'%(
+            booldxcol.sum().sum(), booldxcol.size, 1.0))
+        
+        #=======================================================================
+        # give remainders no attribution
+        #=======================================================================
+        log.debug('filling remaining %i (of %i) entries w/ attribution = 0.0'%(
+            atr_dxcol.isna().sum().sum(), atr_dxcol.size))
+        atr_dxcol = atr_dxcol.fillna(0.0)
+
 
         #=======================================================================
         # Psum checks
         #=======================================================================
-        #sum each of the grpColns nested under the rEventName        
-        bool_df = atr_dxcol.sum(axis=1, level=0, skipna=False).round(self.prec)==1.0
-        
-        #check the failures line up with the zeros
-        bool2_df = bool_df==np.invert(cres_df==0.0)
-        
-        """
-        view(atr_dxcol.sum(axis=1, level=0, skipna=False))
-        view(bool_df)
-        view(bool2_df)
-        """
-        if not bool2_df.all().all():
-            raise Error('%i (of %i) entries failed sum=1 test'%(
-                np.invert(bool2_df).sum().sum(), bool2_df.size))
-            
-        
+        self.check_attrimat(atr_dxcol = atr_dxcol)
         
         #=======================================================================
         # wrap
@@ -974,28 +979,7 @@ class Dmg2(Model):
             
         return self.output_df(self.bdmg_df, ofn)
     
-    def output_attr(self, #short cut for saving the expanded reuslts
-                    ofn = None,
-                    upd_cf= True,
-                    ):
-        if ofn is None:
-            ofn = 'attr%02d_%s'%(self.att_df.columns.nlevels, self.name)
-            
-        out_fp = self.output_df(self.att_df, ofn)
-        
-        #update the control file
-        if upd_cf:
-            self.update_cf(
-                    {
-                    'results_fps':(
-                        {'attriMat':out_fp}, 
-                        '#\'attriMat\' file path set from dmg2.py at %s'%(
-                            datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
-                        ),
-                     },
-                    cf_fp = self.cf_fp
-                )
-        return out_fp
+
             
             
         

@@ -25,7 +25,7 @@ mod_logger = logging.getLogger('risk2') #get the root logger
 from hlpr.exceptions import QError as Error
 
 #from hlpr.Q import *
-from hlpr.basic import force_open_dir
+from hlpr.basic import force_open_dir, view
 from model.modcom import Model
 
 #==============================================================================
@@ -131,11 +131,39 @@ class Risk2(Model):
             self.load_exlikes()
         if not self.attrimat == '':
             self.load_attrimat(dxcol_lvls=2)
+            self.promote_attrim()
+            
         
         self.logger.debug('finished _setup() on Risk2')
         
         return self
         
+
+
+    def promote_attrim(self): #add new index level
+        
+        aep_ser = self.data_d['evals'].copy()
+        atr_dxcol = self.data_d['attrimat'].copy()
+        """
+        view(atr_dxcol)
+        """
+        
+        #get the new mindex we want to join in
+        mindex2 = pd.MultiIndex.from_frame(
+            aep_ser.to_frame().reset_index().rename(columns={'index':'rEventName'}))
+        #join this in and move it up some levels
+        atr_dxcol.columns = atr_dxcol.columns.join(mindex2)[0].swaplevel(i=2, j=1).swaplevel(i=1, j=0)
+        #check the values all match
+        """nulls are not matching for somereaseon"""
+        booldf = atr_dxcol.droplevel(level=0, axis=1).fillna(999) == self.data_d['attrimat'].fillna(999)
+        assert booldf.all().all(), 'bad conversion'
+        del self.data_d['attrimat']
+        self.att_df = atr_dxcol.sort_index(axis=1, level=0, sort_remaining=True, 
+                                           inplace=False, ascending=True)
+        
+        assert self.attriMode
+        
+        return 
 
     def run(self, #main runner fucntion
             res_per_asset=False,
@@ -145,29 +173,37 @@ class Risk2(Model):
         #======================================================================
         log = self.logger.getChild('run')
         ddf, aep_ser = self.data_d['dmgs'],self.data_d['evals']
+
         
 
         self.feedback.setProgress(5)
+
         #======================================================================
         # resolve alternate damages (per evemt)-----------
         #======================================================================
 
-        #take maximum expected value at each asset
+        #=======================================================================
+        # #take maximum expected value at each asset
+        #=======================================================================
         if 'exlikes' in self.data_d:
             ddf1 = self.ev_multis(ddf, self.data_d['exlikes'], aep_ser, logger=log)
             
-        #no duplicates. .just rename by aep
+        #=======================================================================
+        # #no duplicates. .just rename by aep
+        #=======================================================================
         else:
             ddf1 = ddf.rename(columns = aep_ser.to_dict()).sort_index(axis=1)
-            
+
+        #======================================================================
+        # cleans and checks
+        #======================================================================
         ddf1 = ddf1.round(self.prec)
-        #======================================================================
-        # checks
-        #======================================================================
+        
         #check the columns
         assert np.array_equal(ddf1.columns.values, aep_ser.unique()), 'column name problem'
         log.info('checking monotonoticy on %s'%str(ddf1.shape))
         _ = self.check_monot(ddf1)
+        
         
         self.feedback.setProgress(40)
         #======================================================================

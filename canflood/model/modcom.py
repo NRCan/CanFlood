@@ -11,8 +11,9 @@ Created on Feb. 9, 2020
 # imports------------
 #==============================================================================
 
-import configparser, os, inspect, logging, copy, itertools
+import configparser, os, inspect, logging, copy, itertools, datetime
 import pandas as pd
+idx = pd.IndexSlice
 import numpy as np
 
 from scipy import interpolate, integrate
@@ -167,6 +168,7 @@ class Model(ComWrkr):
     cplx_evn_d = None #complex event sets {aep: [exEventName1, exEventName1]}
     asset_cnt = 0 #for plotting
     scen_ar_d = dict() #container for empty scenario matrix
+    attriMode = False #flow control for some attribution matrix functions
 
     def __init__(self,
                  cf_fp, #control file path """ note: this could also be attached by basic.ComWrkr.__init__()"""
@@ -1192,7 +1194,7 @@ class Model(ComWrkr):
                       dxcol_lvls=2, #levels present in passed data
                       fp=None,
                       dtag='attrimat',
-                      check_psum=False,
+                      check_psum=True,
                       logger=None): #load the attributino matrix
         
         """
@@ -1253,12 +1255,13 @@ class Model(ComWrkr):
         # check psum
         #=======================================================================
         if check_psum:
-            raise Error('not implemented')
+            self.check_attrimat(atr_dxcol = dxcol)
         
         #=======================================================================
         # set
         #=======================================================================
         self.data_d[dtag] = dxcol
+        self.attriMode=True #flag for controling some functions
         log.info('finished loading %s as %s'%(dtag, str(dxcol.shape)))
   
         
@@ -1678,6 +1681,10 @@ class Model(ComWrkr):
                     raise Error('aep %.4f probabilities fail to sum'%aep)
             
             log.debug('resolving aep %.4f w/ %i event names: %s'%(aep, len(exn_l), exn_l))
+            
+            """
+            view(self.att_df)
+            """
             #===================================================================
             # simple events.. nothing to resolve----
             #===================================================================
@@ -1688,18 +1695,22 @@ class Model(ComWrkr):
                 res_df.loc[:, aep] =  evdf.loc[:, exn_l].iloc[:, 0]
                 meta_d[aep] = 'simple event'
                 
+                """no attribution modification required"""
+                
             #===================================================================
             # one failure possibility-----
             #===================================================================
             elif len(exn_l) == 2:
                 
                 if event_rels == 'max':
-                    """special legacy method"""
+                    """special legacy method... see below"""
                     res_df.loc[:, aep] = evdf.loc[:, exn_l].max(axis=1)
                 else:
                     """where we only have one failure event
                         events are mutually exclusive by default"""
                     res_df.loc[:, aep] = evdf.loc[:, exn_l].sum(axis=1)
+                    
+
             
             #===================================================================
             # complex events (more than 2 failure event)----
@@ -1777,6 +1788,70 @@ class Model(ComWrkr):
             if res_df[aep].isna().any():
                 raise Error('got nulls on %s'%aep)
                 
+        #=======================================================================
+        # attribution------
+        #=======================================================================
+        if self.attriMode:
+            atr_dxcol_raw = self.att_df.copy()
+            edf = edf.sort_index(axis=1, ascending=False)
+            """
+            view(edf)
+            view(atr_dxcol_raw)
+            view(atr_dxcol)
+            view(bool_dxcol)
+            view(mult_dxcol)
+            pd.__version__
+            """
+            if event_rels == 'max':
+                """this is a pretty nasty back-calculate
+                consider incorporating into th emain calc loop above"""
+                #===============================================================
+                # # identify entries with attribution
+                #===============================================================
+                bool_dxcol = None
+                for aep, exn_l in cplx_evn_d.items():
+                    #id where each is the max
+                    newdf = evdf.loc[:, exn_l].isin(evdf.loc[:, exn_l].max(axis=1))
+                    
+                    
+                    #handle duplicates
+                    if len(exn_l)>1:
+                        boolidx = evdf.loc[:, exn_l].duplicated(keep=False)
+                        #where a row has duplicates, only give the first event attribution
+                        newdf.loc[boolidx, :]=False #set all to false
+                        newdf.loc[boolidx, newdf.columns[0]]=True#set first column
+                    
+                    #append
+                    newdxcol = pd.concat([newdf],  keys=[aep], axis=1)
+                    if bool_dxcol is None:
+                        bool_dxcol = newdxcol
+                    else:
+                        bool_dxcol = bool_dxcol.join(newdxcol)
+                    
+                #===============================================================
+                # build and aply multiplier
+                #===============================================================
+                #assemble multiplyer (attributes = 1, non attributors = 0)
+                mult_dxcol = pd.DataFrame().reindex_like(bool_dxcol
+                                     ).where(bool_dxcol, other=0.0).fillna(1.0)
+                #check the multiplier
+                self.check_attrimat(atr_dxcol=mult_dxcol, logger=log)
+                
+                #multiply on each event name
+                atr_dxcol = atr_dxcol_raw.multiply(mult_dxcol.droplevel(0, axis=1), 
+                                               axis='columns', level='rEventName')
+                
+                    
+            elif event_rels=='mutEx':
+                """scale all nests within each"""
+                atr_dxcol = atr_dxcol_raw.multiply(edf, axis='columns', level=1)
+
+            elif event_rels=='indep':
+                raise Error('not implemented')
+            else: raise Error('bad evnet-Rels')
+            
+            self.check_attrimat(atr_dxcol=atr_dxcol, logger=log)
+            self.att_df = atr_dxcol
         #======================================================================
         # wrap
         #======================================================================
@@ -2726,6 +2801,51 @@ class Model(ComWrkr):
     #==========================================================================
     # VALIDATORS-----------
     #==========================================================================
+    def check_attrimat(self, #check the logic of the attrimat
+                       atr_dxcol=None,
+                       logger=None,
+
+                       ):
+        """
+        attrimat rows should always sum to 1.0 on lvl0
+        """
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if atr_dxcol is None: atr_dxcol=self.att_df
+        
+        #mdex = atr_dxcol.columns
+        #=======================================================================
+        # #determine what level to perofrm sum check on
+        # sumLvl = atr_dxcol.columns.nlevels -2 #should always be the last rank/level
+        #=======================================================================
+        
+        #sum each of the grpColns nested under the rEventName        
+        bool_df = atr_dxcol.sum(axis=1, level=0, skipna=False).round(self.prec)==1.0
+        
+        #=======================================================================
+        # #drop all but the top level. identify null locations
+        # nbool_df = atr_dxcol.droplevel(
+        #     level=list(range(1, mdex.nlevels)), axis=1
+        #     ).notna()
+        # 
+        # #check the failures line up with the nulls
+        # bool2_df = psumBool_df==nbool_df.loc[:, ~nbool_df.columns.duplicated(keep='first')]
+        #=======================================================================
+        
+        """
+
+        view(atr_dxcol.sum(axis=1, level=0, skipna=False))
+        view(psumBool_df)
+        view(nbool_df)
+        """
+        if not bool_df.all().all():
+            raise Error('%i (of %i) attribute matrix entries failed sum=1 test'%(
+                np.invert(bool_df).sum().sum(), bool_df.size))
+            
+        return True
+            
+        
     
     def check_monot(self,
                      df_raw, #event:asset like data. expectes columns as aep 
@@ -2836,6 +2956,32 @@ class Model(ComWrkr):
             result= chk_func(df_raw, log)
             
         return result
+    
+    #===========================================================================
+    # OUTPUTS---------
+    #===========================================================================
+    def output_attr(self, #short cut for saving the expanded reuslts
+                    ofn = None,
+                    upd_cf= True,
+                    ):
+        if ofn is None:
+            ofn = 'attr%02d_%s'%(self.att_df.columns.nlevels, self.name)
+            
+        out_fp = self.output_df(self.att_df, ofn)
+        
+        #update the control file
+        if upd_cf:
+            self.update_cf(
+                    {
+                    'results_fps':(
+                        {'attriMat':out_fp}, 
+                        '#\'attriMat\' file path set from dmg2.py at %s'%(
+                            datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                        ),
+                     },
+                    cf_fp = self.cf_fp
+                )
+        return out_fp
             
 
 

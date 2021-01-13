@@ -10,6 +10,7 @@ rtail = 0.5             #EAD extrapolation: right trail treatment (high prob low
 drop_tails = True       #whether to remove the extrapolated values from the results
 integrate = trapz       #integration method to apply: trapz, simps
 as_inun = False
+event_rels = max
 
 [dmg_fps]
 curves = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\data\CanFlood_curves_rfda_20200218.xls #damage curve library filepath
@@ -30,5 +31,5 @@ risk3 = False
 
 [results_fps]
 attrimat = C:\Users\cefect\CanFlood\tutorials\2\20210113\attr02_tut2a.csv
-#'attrimat' file path set from dmg2.py at 2021-01-13 09.24.15
+#'attrimat' file path set from dmg2.py at 2021-01-13 14.13.06
 

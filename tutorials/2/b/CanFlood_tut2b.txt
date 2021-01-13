@@ -31,5 +31,5 @@ risk3 = False
 
 [results_fps]
 attrimat = C:\Users\cefect\CanFlood\tutorials\2\20210113\attr02_tut2b.csv
-#'attrimat' file path set from dmg2.py at 2021-01-13 10.34.59
+#'attrimat' file path set from dmg2.py at 2021-01-13 14.13.07
 
