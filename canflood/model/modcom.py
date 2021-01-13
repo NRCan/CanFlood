@@ -1590,13 +1590,7 @@ class Model(ComWrkr):
             
             if not event_rels=='max':
                 if not (edf.loc[:, exn_l].sum(axis=1).round(self.prec) == 1.0).all():
-                    """
-                    sum_ser = edf.loc[:, exn_l].sum(axis=1) == 1
-                    chk_df = edf.loc[:, exn_l].join(sum_ser.rename('sumChk'))
-                    chk_df['sum'] = edf.loc[:, exn_l].sum(axis=1)
-                    view(chk_df)
-                    view()
-                    """
+ 
                     raise Error('aep %.4f probabilities fail to sum'%aep)
             
             log.debug('resolving aep %.4f w/ %i event names: %s'%(aep, len(exn_l), exn_l))
@@ -1624,7 +1618,7 @@ class Model(ComWrkr):
                     res_df.loc[:, aep] = evdf.loc[:, exn_l].sum(axis=1)
             
             #===================================================================
-            # complex events (more than 1 failure event)----
+            # complex events (more than 2 failure event)----
             #===================================================================
             else:
 

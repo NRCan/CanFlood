@@ -140,7 +140,7 @@ class Risk2(Model):
         log = self.logger.getChild('run')
         ddf, aep_ser = self.data_d['dmgs'],self.data_d['evals']
         
-        assert isinstance(res_per_asset, bool)
+
         self.feedback.setProgress(5)
         #======================================================================
         # resolve alternate damages (per evemt)-----------
