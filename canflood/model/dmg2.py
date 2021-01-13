@@ -272,6 +272,14 @@ class Dmg2(Model):
         log.info('got damages for %i events and %i assets'%(
             len(cres_df), len(cres_df.columns)))
         
+        #=======================================================================
+        # clean
+        #=======================================================================
+        #drop _dmg suffix
+        d1 = pd.Series(self.events_df['dmg'].index, index=self.events_df['dmg']).to_dict()
+        cres_df = cres_df.rename(columns=d1)
+        
+        
         #======================================================================
         # checks
         #======================================================================
@@ -845,21 +853,31 @@ class Dmg2(Model):
         miss_l = set(bdmg_df[cid]).symmetric_difference(cres_df.index)
         assert len(miss_l)==0, 'key mismatch'
         
-        #check eventRasters
-        miss_l = set(cres_df.columns).difference(bdmg_df.columns)
-        assert len(miss_l)==0, 'event rastesr mismatch'
+
         
         #=======================================================================
         # clean bdmg
         #=======================================================================
-        boolcol = bdmg_df.columns.isin([cid, grpColn]+ cres_df.columns.to_list())
+        #get conversion d {oldName:newName}
+        d1 = pd.Series(events_df['dmg'].index, index=events_df['dmg']).to_dict()
+        
+        #get just the columsn of interest (and drop the _dmg sufix)
+        boolcol = bdmg_df.columns.isin([cid, grpColn]+ list(d1.keys()))
+        bdf = bdmg_df.loc[:, boolcol].rename(columns=d1) 
+        
+        #=======================================================================
+        # check data2
+        #=======================================================================
+        #check eventRasters
+        miss_l = set(cres_df.columns).difference(bdf.columns)
+        assert len(miss_l)==0, 'event rastesr mismatch'
 
         
         #=======================================================================
         # get pivot
         #=======================================================================
         #cid: dxcol(l1:eventName, l2:nestID)
-        bdmg_dxcol = bdmg_df.loc[:, boolcol].pivot(
+        bdmg_dxcol = bdf.pivot(
             index=cid, columns=grpColn, values=cres_df.columns.to_list())
         
         #set new level names
@@ -883,7 +901,7 @@ class Dmg2(Model):
         view(bdmg_dxcol)
         view(bdmg_dxcol.columns.to_frame())
         view(cres_df)
-        view(bdmg_df)
+        view(bdf)
         view(atr_dxcol)
         view(events_df)
         """
@@ -907,27 +925,16 @@ class Dmg2(Model):
             raise Error('%i (of %i) entries failed sum=1 test'%(
                 np.invert(bool2_df).sum().sum(), bool2_df.size))
             
-        log.info('finished w/ %s'%str(atr_dxcol.shape))
+        
         
         #=======================================================================
-        # clean (drop _dmg suffix)
+        # wrap
         #=======================================================================
-        #build the name:rank keys
-        nameRank_d= {lvlName:i for i, lvlName in enumerate(atr_dxcol.columns.names)}
-    
-        #get conversion d {oldName:newName}
-        d1 = pd.Series(events_df['dmg'].index, index=events_df['dmg']).to_dict()
-        
-        #get conversion d in the order found on the dxcol {newName:oldName}
-        d2 = {d1[e]:e for e in atr_dxcol.columns.get_level_values(nameRank_d['rEventName'])}
-        
-        #replace the keys on the dxcol with these
-        atr_dxcol.columns = atr_dxcol.columns.set_levels(d2.keys(), level=nameRank_d['rEventName'])
         
         
         #set for writing
         self.att_df = atr_dxcol.copy()
-        
+        log.info('finished w/ %s'%str(atr_dxcol.shape))
         return atr_dxcol
         
         

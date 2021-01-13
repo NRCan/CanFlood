@@ -1152,17 +1152,14 @@ class Model(ComWrkr):
         #======================================================================
         # postcheck
         #======================================================================
-        assert len(enm_l) > 1, 'failed to identify sufficient damage columns'
+        #assert len(enm_l) > 1, 'failed to identify sufficient damage columns'
         
 
         #check cid index match
         assert np.array_equal(self.cindex, df.index), \
             'provided \'%s\' index (%i) does not match finv index (%i)'%(dtag, len(df), len(self.cindex))
         
-        #check events
-        """
-        must match the aeps
-        """
+        #check rEvents
         miss_l = set(self.expcols).difference(df.columns)
             
         assert len(miss_l) == 0, '%i events on \'%s\' not found in aep_ser: \n    %s'%(
@@ -1225,23 +1222,44 @@ class Model(ComWrkr):
         #======================================================================
         # load it
         #======================================================================
-        dxcol_raw = pd.read_csv(fp, index_col=0, header=list(range(0,dxcol_lvls)))
+        dxcol = pd.read_csv(fp, index_col=0, header=list(range(0,dxcol_lvls)))
         
         #build the name:rank keys
-        nameRank_d = {lvlName:i for i, lvlName in enumerate(dxcol_raw.columns.names)}
+        nameRank_d = {lvlName:i for i, lvlName in enumerate(dxcol.columns.names)}
+        
         #=======================================================================
         # data precheck
         #=======================================================================
-        assert dxcol_raw.index.name==cid, 'bad index name %s'%(dxcol_raw.index.name)
+        #index checks
+        assert dxcol.index.name==cid, 'bad index name %s'%(dxcol.index.name)
+        assert np.array_equal(dxcol.index, self.cindex), 'attrimat index mismatch'
         
+        #dxcolumn check
         """leaving the column labels flexible
         risk models (dxcol_lvls=2) should get mdexcol lvl0 name = 'rEventName'
         as the matrix grows, the position of this name should change"""
-        assert 'rEventName' in dxcol_raw.columns.names,'missing rEventName from coldex'
+        assert 'rEventName' in dxcol.columns.names,'missing rEventName from coldex'
 
         #check the rEventNames        
-        miss_l = set(dxcol_raw.columns.get_level_values(nameRank_d['rEventName'])).difference(
+        miss_l = set(dxcol.columns.get_level_values(nameRank_d['rEventName'])).symmetric_difference(
             self.expcols)
+        assert len(miss_l)==0, 'attimat rEventName mismatch: %s'%miss_l
+        
+        #check dtypes
+        for e in dxcol.dtypes.values: assert e==np.dtype(float)
+        
+        
+        #=======================================================================
+        # check psum
+        #=======================================================================
+        if check_psum:
+            raise Error('not implemented')
+        
+        #=======================================================================
+        # set
+        #=======================================================================
+        self.data_d[dtag] = dxcol
+        log.info('finished loading %s as %s'%(dtag, str(dxcol.shape)))
   
         
    
