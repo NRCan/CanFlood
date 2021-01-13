@@ -2289,6 +2289,31 @@ class Model(ComWrkr):
         df1 = df.rename(columns = aep_ser.to_dict()).sort_index(axis=1, ascending=True)
         
         return df1, aep_ser.to_dict()
+    
+    def _promote_attrim(self): #add new index level
+        
+        aep_ser = self.data_d['evals'].copy()
+        atr_dxcol = self.data_d['attrimat'].copy()
+        """
+        view(atr_dxcol)
+        """
+        
+        #get the new mindex we want to join in
+        mindex2 = pd.MultiIndex.from_frame(
+            aep_ser.to_frame().reset_index().rename(columns={'index':'rEventName'}))
+        #join this in and move it up some levels
+        atr_dxcol.columns = atr_dxcol.columns.join(mindex2)[0].swaplevel(i=2, j=1).swaplevel(i=1, j=0)
+        #check the values all match
+        """nulls are not matching for somereaseon"""
+        booldf = atr_dxcol.droplevel(level=0, axis=1).fillna(999) == self.data_d['attrimat'].fillna(999)
+        assert booldf.all().all(), 'bad conversion'
+        del self.data_d['attrimat']
+        self.att_df = atr_dxcol.sort_index(axis=1, level=0, sort_remaining=True, 
+                                           inplace=False, ascending=True)
+        
+        assert self.attriMode
+        
+        return 
             
     def force_monot(self, #forcing monotoncity on an exposure data set
                    df_raw,
