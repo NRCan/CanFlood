@@ -949,11 +949,29 @@ class Dmg2(Model):
         return self.output_df(self.bdmg_df, ofn)
     
     def output_attr(self, #short cut for saving the expanded reuslts
-                    ofn = None):
+                    ofn = None,
+                    upd_cf= True,
+                    ):
         if ofn is None:
-            ofn = 'attr01_%s_%s'%(self.name, self.tag)
+            ofn = 'attr%02d_%s'%(self.att_df.columns.nlevels, self.name)
             
-        return self.output_df(self.att_df, ofn)
+        out_fp = self.output_df(self.att_df, ofn)
+        
+        #update the control file
+        if upd_cf:
+            self.update_cf(
+                    {
+                    'results_fps':(
+                        {'attriMat':out_fp}, 
+                        '#\'attriMat\' file path set from dmg2.py at %s'%(
+                            datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                        ),
+                     },
+                    cf_fp = self.cf_fp
+                )
+        return out_fp
+            
+            
         
                    
 class DFunc(ComWrkr, 

@@ -70,23 +70,27 @@ class Risk2(Model):
             
         'dmg_fps':{
              'finv':{'ext':('.csv',)},
-
                     },
+        
         'risk_fps':{
              'dmgs':{'ext':('.csv',)},
              'evals':{'ext':('.csv',)},
-
-                    },        
+                    },
+                
         'validation':{
             'risk2':{'type':bool}
-                    }
-                    }
+                    },
+                }
     
     exp_pars_op = {#optional expectations
         'risk_fps':{
             'exlikes':{'ext':('.csv',)},
+                    },
+        
+        'results_fps':{
+             'attrimat':{'ext':('.csv',)},
                     }
-                    }
+                }
     
     #==========================================================================
     # plot controls----

@@ -312,7 +312,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #attribution
         if self.checkBox_i2_attr.isChecked():
             _ = model.get_attribution(cres_df)
-            model.output_attr()
+            model.output_attr(upd_cf = self.checkBox_i2_updCf.isChecked())
         
         self.feedback.setProgress(95)
         #======================================================================
