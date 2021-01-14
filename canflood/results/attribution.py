@@ -19,6 +19,7 @@ from weakref import WeakValueDictionary as wdict
 import os
 import numpy as np
 import pandas as pd
+from pandas import IndexSlice as idx
 
 
 
@@ -75,6 +76,7 @@ class Attr(Model):
             self.__class__.__name__, type(self.feedback).__name__))
         
     def _setup(self):
+        log = self.logger.getChild('setup')
         self.init_model()
         
         self.load_ttl()
@@ -99,9 +101,10 @@ class Attr(Model):
         assert len(miss_l)==0, 'event mismatch'
         
         #=======================================================================
-        # get multiplied values
+        # get TOTAL multiplied values
         #=======================================================================
-        self.build_mvals()
+        self.mula_dxcol = self.get_mult(self.data_d[self.attrdtag_in].copy(), logger=log)
+ 
         
         return self
         
@@ -147,8 +150,6 @@ class Attr(Model):
         
         self.data_d['ttl'] = df
         
-        
-    
     def load_passet(self, #load the per-asset results
                    fp = None,
                    dtag = 'r2_passet',
@@ -184,41 +185,107 @@ class Attr(Model):
         #=======================================================================
         self.cindex = df.index.copy() #set this for checks later
         self.data_d[dtag] = df
+            
+    def get_slice(self,
+                  lvals_d, #mdex lvl values {lvlName:(lvlval1, lvlval2...)}
+                  atr_dxcol=None,
+                  logger=None,
+                  ):
         
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is  None: logger=self.logger
+        if atr_dxcol is None: atr_dxcol=self.data_d[self.attrdtag_in].copy()
+        log=logger.getChild('get_slice')
+        
+        mdex = atr_dxcol.columns
+        """
+        view(mdex.to_frame())
+        """
+        nameRank_d= {lvlName:i for i, lvlName in enumerate(mdex.names)}
+        rankName_d= {i:lvlName for i, lvlName in enumerate(mdex.names)}
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        #quick check on the names
+        miss_l = set(lvals_d.keys()).difference(mdex.names)
+        assert len(miss_l)==0, '%i requested lvlNames not on mdex: %s'%(len(miss_l), miss_l)
+        
+        #chekc values
+        for lvlName, lvals in lvals_d.items():
+            
+            #chekc all these are in there
+            miss_l = set(lvals).difference(mdex.levels[nameRank_d[lvlName]])
+            assert len(miss_l)==0, '%i requsted lvals on \"%s\' not in mdex: %s'%(len(miss_l), lvlName, miss_l)
+            
+
+        #=======================================================================
+        # get slice            
+        #=======================================================================
+        log.info('from %i levels on %s'%(len(lvals_d), str(atr_dxcol.shape)))
+        """
+        s_dxcol = atr_dxcol.loc[:, idx[:, lvals_d['rEventName'], :]].columns.to_frame())
+        """
+        
+        
+        """seems like there should be a better way to do this...
+        could force the user to pass request with all levels complete"""
+        s_dxcol = atr_dxcol.copy()
+        #populate missing elements
+        for lvlName, lRank  in nameRank_d.items():
+            if not lvlName in lvals_d: continue 
+            
+            if lRank == 0: continue #always keeping this
+            elif lRank == 1:
+                s_dxcol = s_dxcol.loc[:, idx[:, lvals_d[lvlName]]]
+            elif lRank == 2:
+                s_dxcol = s_dxcol.loc[:, idx[:, :, lvals_d[lvlName]]]
+            else:
+                raise Error
+                
  
-    
-    
-    def build_mvals(self, #multiply attM to get attributed impacts
-                  logger=None): 
+        log.info('sliced  to %s'%str(s_dxcol.shape))
+        
+        return s_dxcol
+
+    def get_mult(self, #multiply dxcol by the asset event totals
+                atr_dxcol,
+                logger=None,
+ 
+                ): 
         #=======================================================================
         # defaults
         #=======================================================================
         if logger is None: logger=self.logger
-        log=logger.getChild('get_mvals')
-        
+        log=logger.getChild('get_ttl')
         rp_df = self.data_d['r2_passet'].copy()
-        atr_dxcol = self.data_d[self.attrdtag_in].copy()
- 
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        #aep set
+        miss_l = set(rp_df.columns).difference(atr_dxcol.columns.levels[0])
+        assert len(miss_l)==0, 'event mismatch'
+        
+        #attribute matrix logic
+        """note we accept slices... so sum=1 wont always hold"""
+        assert atr_dxcol.notna().all().all()
+        assert (atr_dxcol.max()<=1.0).all().all()
+        assert (atr_dxcol.max()>=0.0).all().all()
+        for e in atr_dxcol.dtypes.values: assert e==np.dtype(float)
         #=======================================================================
         # multiply
         #=======================================================================
-        self.mula_dxcol = atr_dxcol.multiply(rp_df, level='aeps')
- 
-        
-        return 
+        return atr_dxcol.multiply(rp_df, level='aeps')
     
-    def get_slice(self,
-                  lvals_d, #mdex lvl values {lvlName:(lvlval1, lvlval2...)}
-                  logger=None,
-                  ):
+    def get_ttl(self, #get a total impacts summary from an impacts dxcol 
+                i_dxcol, #impacts (not attribution ratios)
+                ):
+
+        return i_dxcol.sum(axis=1, level='aeps').sum(axis=0).rename('impacts').reset_index(drop=False)
         
-        if logger is  None: logger=self.logger
-        log=logger.getChild('get_slice')
-        
-        
-    def get_ttl(self): #sum to totals
-        
-        pass
+
     
     def plot(self): #plot slice against original risk c urve
         
