@@ -156,6 +156,15 @@ class Model(ComWrkr):
     r2_passet=''
     r2_ttl =''
     
+    #[plotting]
+    color = 'black'
+    linestyle = 'dashdot'
+    linewidth = 2.0
+    alpha =     0.75        #0=transparent 1=opaque
+    marker =    'o'
+    markersize = 4.0
+    fillstyle = 'none'    #marker fill style
+    
     #==========================================================================
     # program vars
     #==========================================================================
@@ -2541,13 +2550,13 @@ class Model(ComWrkr):
         xar,  yar = dmg_ser1.index.values, dmg_ser1.values
         pline1 = ax1.semilogx(xar,yar,
                             label       = y1lab,
-                            color       = 'black',
-                            linestyle   = 'dashdot',
-                            linewidth   = 2,
-                            alpha       = 0.5,
-                            marker      = 's',
-                            markersize  = 4,
-                            fillstyle   = 'full', #marker fill style
+                            color       = self.color,
+                            linestyle   = self.linestyle,
+                            linewidth   = self.linewidth,
+                            alpha       = self.alpha,
+                            marker      = self.marker,
+                            markersize  = self.markersize,
+                            fillstyle   = self.fillstyle, #marker fill style
                             )
         
         #add a hatch
@@ -2728,13 +2737,13 @@ class Model(ComWrkr):
         xar,  yar = aep_ser.values.astype(np.float), aep_ser.index.values
         pline1 = ax1.plot(xar,yar,
                             label       = y1lab,
-                            color       = 'black',
-                            linestyle   = 'dashdot',
-                            linewidth   = 2,
-                            alpha       = 0.5,
-                            marker      = 's',
-                            markersize  = 4,
-                            fillstyle   = 'full', #marker fill style
+                            color       = self.color,
+                            linestyle   = self.linestyle,
+                            linewidth   = self.linewidth,
+                            alpha       = self.alpha,
+                            marker      = self.marker,
+                            markersize  = self.markersize,
+                            fillstyle   = self.fillstyle, #marker fill style
                             )
         
         #add a hatch
