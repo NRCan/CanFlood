@@ -90,9 +90,8 @@ class CurvePlotr(ComWrkr):
                  **kwargs
                  ):
         
-        """inherited by the dialog.
-        init is not called during the plugin"""
-        #mod_logger.info('simple wrapper inits')
+ 
+ 
         
         super().__init__(**kwargs) #initilzie teh baseclass
         

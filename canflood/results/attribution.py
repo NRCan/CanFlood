@@ -34,12 +34,13 @@ from hlpr.exceptions import QError as Error
 # non-Qgis
 #===============================================================================
 from model.modcom import Model
+from results.riskPlot import Plotr as riskPlotr
 from hlpr.basic import view
 
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Attr(Model):
+class Attr(Model, riskPlotr):
     
     #===========================================================================
     # program vars
@@ -130,19 +131,29 @@ class Attr(Model):
         #======================================================================
         df_raw = pd.read_csv(fp, index_col=None)
         self.data_d[dtag] = df_raw.copy()
+        
+        
         #=======================================================================
         # clean
         #=======================================================================
-        df = df_raw.drop('plot', axis=1)
+        #df = df_raw.drop('plot', axis=1)
+        df=df_raw.copy()
         
         #drop EAD row
         boolidx = df['aep']=='ead'
+        self.ead_tot = df_raw.loc[boolidx,'impacts'].values[0]
+        
         df = df.loc[~boolidx, :]
         df.loc[:, 'aep'] = df['aep'].astype(np.float)
         
         #drop extraploated
         boolidx = df['note']=='extraploated'
         df = df.loc[~boolidx, :].drop('note', axis=1)
+        
+        #=======================================================================
+        # add ari
+        #=======================================================================
+        df['ari'] = (1/df['aep']).astype(int)
         #=======================================================================
         # set it
         #=======================================================================
@@ -283,14 +294,59 @@ class Attr(Model):
                 i_dxcol, #impacts (not attribution ratios)
                 ):
 
-        return i_dxcol.sum(axis=1, level='aeps').sum(axis=0).rename('impacts').reset_index(drop=False)
+        df =  i_dxcol.sum(axis=1, level='aeps').sum(axis=0).rename('impacts'
+                     ).reset_index(drop=False).rename(columns={'aeps':'aep'})
+                     
+        #add ari
+        df['ari'] = (1/df['aep']).astype(int)
+        
+        #add plot keys
+        df['plot']=True
+        
+        return df
         
 
     
-    def plot(self): #plot slice against original risk c urve
+    def plot_slice(self, #plot slice against original risk c urve
+                   sttl_df, #sliced data
+                   ttl_df=None, #original (full) data
+                   logger=None,
+                   ): 
         
-        pass
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('plot_slice')
+        if ttl_df is None: ttl_df=self.data_d['ttl'].copy()
         
+        #=======================================================================
+        # precheck
+        #=======================================================================
+
+        
+        #check aep membership
+        miss_l = set(sttl_df['aep']).difference(ttl_df['aep'])
+        assert len(miss_l)==0, 'aep miss: %s'%miss_l
+        #=======================================================================
+        # plot the group
+        #=======================================================================
+        plotParsG_d = {
+            'slice':{
+                    'ttl_df':sttl_df,
+                    'ead_tot':0.0,
+                    'impStyle_d':dict(),
+                    },
+            'full':{
+                    'ttl_df':ttl_df,
+                    'ead_tot':self.ead_tot,
+                    'impStyle_d':dict(),
+                    }
+            }
+        
+        return self.multi(plotParsG_d, logger=log)
+                    
+            
         
         
         

@@ -419,8 +419,13 @@ class Plotr(ComWrkr):
     def multi(self, #single plot w/ risk curves from multiple scenarios
        
                   parsG_d, #container of data and plot handles
+                    #{cName:{
+                            #ttl_df:df to plot
+                            #ead_tot:total ead value (for label)
+                            #impStyle_d: kwargs for semilogx
 
                   plot_aep_line = False, #whether to add the aep line
+                  logger=None,
                   ):
         
         """
@@ -433,7 +438,8 @@ class Plotr(ComWrkr):
         #======================================================================
         # defaults
         #======================================================================
-        log = self.logger.getChild('multi')
+        if logger is None: logger=self.logger
+        log = logger.getChild('multi')
         plt, matplotlib = self.plt, self.matplotlib
         
         xlab    =    self.xlab
@@ -450,28 +456,33 @@ class Plotr(ComWrkr):
         
         
         #=======================================================================
-        # collect all the data
+        # collect all the impacts ari data into one
         #=======================================================================
-        """makes it easier for some operations"""
-        all_df = pd.DataFrame(columns=[])
+        """makes it easier for some operations
+        still plot on each individually"""
+ 
         
         first = True
         for cName, cPars_d in parsG_d.items():
             cdf = cPars_d['ttl_df'].copy()
+            
+            #check columns
+            miss_l = set(['aep', 'impacts', 'ari', 'plot']).difference(cdf.columns)
+            assert len(miss_l)==0, '%s missing columns: %s'%(cName, miss_l)
+            
+            #drop to just the data (and rename)
+            cdf = cdf.loc[cdf['plot'],:].loc[:,('ari','impacts')].rename(columns={'impacts':cName})
+
             #get index columns from first
             if first:
-                all_df = cdf.loc[:, ('aep', 'ari')].copy()
+                all_df = cdf.copy()
                 first = False
-                
-            #check indexers
-            """assumes indexes match..."""
-            bdf = all_df.loc[:, ('aep', 'ari')] == cdf.loc[:, ('aep', 'ari')]
-            assert bdf.all().all()
-            
-            #add data
-            all_df = all_df.join(cdf['impacts'].rename(cName))
+            else:
+                #add data
+                all_df = all_df.merge(cdf, how='outer', on='ari')
 
-
+        #add back in aep
+        all_df['aep'] = 1/all_df['ari']
         
         #======================================================================
         # labels
@@ -501,7 +512,6 @@ class Plotr(ComWrkr):
         
         
         #yaxis limit
-        
         ax1.set_xlim(max(all_df['ari']), 1) #aep limits 
         
         #======================================================================
@@ -513,6 +523,7 @@ class Plotr(ComWrkr):
             
             #pull values from container
             cdf = cPars_d['ttl_df'].copy()
+            cdf = cdf.loc[cdf['plot'], :] #drop from handles
             ead_tot = cPars_d['ead_tot']
             impStyle_d = cPars_d['impStyle_d']
             
