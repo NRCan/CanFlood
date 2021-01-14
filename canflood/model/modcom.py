@@ -1814,7 +1814,7 @@ class Model(ComWrkr):
             if event_rels == 'max':
                 """this is a pretty nasty back-calculate
                 consider incorporating into th emain calc loop above"""
-                raise Error('check this')
+ 
                 #===============================================================
                 # # identify entries with attribution
                 #===============================================================
@@ -1826,7 +1826,13 @@ class Model(ComWrkr):
                     
                     #handle duplicates
                     if len(exn_l)>1:
-                        boolidx = evdf.loc[:, exn_l].duplicated(keep=False)
+                        """
+                        view(evdf.loc[:, exn_l])
+                        view(boolidx)
+                        """
+                        #get slice to compare on
+                        df1 = evdf.loc[:, exn_l].round(self.prec)
+                        boolidx = df1.eq(df1.iloc[:,0], axis=0).all(axis=1)
                         #where a row has duplicates, only give the first event attribution
                         newdf.loc[boolidx, :]=False #set all to false
                         newdf.loc[boolidx, newdf.columns[0]]=True#set first column
@@ -1844,6 +1850,8 @@ class Model(ComWrkr):
                 #assemble multiplyer (attributes = 1, non attributors = 0)
                 mult_dxcol = pd.DataFrame().reindex_like(bool_dxcol
                                      ).where(bool_dxcol, other=0.0).fillna(1.0)
+                                     
+                view(bool_dxcol)
                 #check the multiplier
                 self.check_attrimat(atr_dxcol=mult_dxcol, logger=log)
                 
@@ -2846,8 +2854,8 @@ class Model(ComWrkr):
         """
 
         view(atr_dxcol.sum(axis=1, level=0, skipna=False))
-        view(psumBool_df)
-        view(nbool_df)
+        view(bool_df)
+        view(atr_dxcol)
         """
         if not bool_df.all().all():
             raise Error('%i (of %i) attribute matrix entries failed sum=1 test'%(
