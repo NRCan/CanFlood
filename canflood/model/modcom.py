@@ -108,6 +108,8 @@ class Model(ComWrkr):
         
     [results_fps]
         attrimat02 -- attribution matrix file path
+        r2_passet -- per_asset results from the risk2 model
+        r2_ttl  -- total results from risk2
     
     """
     
@@ -151,6 +153,8 @@ class Model(ComWrkr):
     #[results_fps]
     attrimat02=''
     attrimat03=''
+    r2_passet=''
+    r2_ttl =''
     
     #==========================================================================
     # program vars
@@ -280,7 +284,7 @@ class Model(ComWrkr):
         """checks are done on a configparser (rather than a dictionary)
         to better handle python's type reading from files"""
         assert isinstance(chk_d, dict)
-        assert len(chk_d)>0
+        if not optional: assert len(chk_d)>0
         assert len(cpars)>0
         
         
@@ -1218,11 +1222,11 @@ class Model(ComWrkr):
         #=======================================================================
         # prechecks
         #=======================================================================
-        assert 'dmgs' in self.data_d, 'dmgs data set required with attrimat'
+        #assert 'dmgs' in self.data_d, 'dmgs data set required with attrimat'
         assert os.path.exists(fp), '%s got invalid filepath \n    %s'%(dtag, fp)
         
-        assert isinstance(self.expcols, pd.Index), 'bad expcols'
-        assert isinstance(self.cindex, pd.Index), 'bad cindex'
+        #assert isinstance(self.expcols, pd.Index), 'bad expcols'
+        #assert isinstance(self.cindex, pd.Index), 'bad cindex'
 
         #======================================================================
         # load it
@@ -1236,8 +1240,9 @@ class Model(ComWrkr):
         # data precheck
         #=======================================================================
         #index checks
-        assert dxcol.index.name==cid, 'bad index name %s'%(dxcol.index.name)
-        assert np.array_equal(dxcol.index, self.cindex), 'attrimat index mismatch'
+        if hasattr(self, 'cindex'): 
+            assert dxcol.index.name==cid, 'bad index name %s'%(dxcol.index.name)
+            assert np.array_equal(dxcol.index, self.cindex), 'attrimat index mismatch'
         
         #dxcolumn check
         """leaving the column labels flexible
@@ -1245,10 +1250,11 @@ class Model(ComWrkr):
         as the matrix grows, the position of this name should change"""
         assert 'rEventName' in dxcol.columns.names,'missing rEventName from coldex'
 
-        #check the rEventNames        
-        miss_l = set(dxcol.columns.get_level_values(nameRank_d['rEventName'])).symmetric_difference(
-            self.expcols)
-        assert len(miss_l)==0, 'attimat rEventName mismatch: %s'%miss_l
+        #check the rEventNames     
+        if hasattr(self, 'expcols'):  
+            miss_l = set(dxcol.columns.get_level_values(nameRank_d['rEventName'])
+                         ).symmetric_difference(self.expcols)
+            assert len(miss_l)==0, 'attimat rEventName mismatch: %s'%miss_l
         
         #check dtypes
         for e in dxcol.dtypes.values: assert e==np.dtype(float)
@@ -1808,6 +1814,7 @@ class Model(ComWrkr):
             if event_rels == 'max':
                 """this is a pretty nasty back-calculate
                 consider incorporating into th emain calc loop above"""
+                raise Error('check this')
                 #===============================================================
                 # # identify entries with attribution
                 #===============================================================

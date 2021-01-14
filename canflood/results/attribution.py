@@ -32,307 +32,194 @@ from hlpr.exceptions import QError as Error
 #===============================================================================
 # non-Qgis
 #===============================================================================
-from hlpr.basic import ComWrkr
-
+from model.modcom import Model
+from hlpr.basic import view
 
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Attr(ComWrkr):
+class Attr(Model):
+    
+    #===========================================================================
+    # program vars
+    #===========================================================================
+    """todo: fix this"""
+    valid_par='risk2' 
+    attrdtag_in = 'attrimat03'
+    #===========================================================================
+    # expectations from parameter file
+    #===========================================================================
+    exp_pars_md = {
+        'results_fps':{
+             'attrimat03':{'ext':('.csv',)},
+             'r2_ttl':{'ext':('.csv',)},
+             'r2_passet':{'ext':('.csv',)},
+             }
+        }
+    
+    exp_pars_op=dict()
  
     
-    #keys to expect on the sub co ntainers
-    exp_pSubKeys = (
-        'cf_fp', 
-        )
+
 
     def __init__(self,
+                 cf_fp,
 
                   *args, **kwargs):
         
-        super().__init__(*args, **kwargs)
+        super().__init__(cf_fp, *args, **kwargs)
         
 
         
         self.logger.debug('%s.__init__ w/ feedback \'%s\''%(
             self.__class__.__name__, type(self.feedback).__name__))
         
+    def _setup(self):
+        self.init_model()
         
-    def load_scenarios(self,
-                 parsG_d, #container of filepaths 
-                 
-                 ):
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        log = self.logger.getChild('load_scenarios')
+        self.load_ttl()
+        self.load_passet()
         
-        log.info('on %i scenarios'%len(parsG_d))
-        
+        self.load_attrimat(dxcol_lvls=3)
         
         #=======================================================================
-        # precheck
+        # post fix attrim
         #=======================================================================
-        for sName, parsN_d in parsG_d.items():
-            assert isinstance(sName, str)
-            assert isinstance(parsN_d, dict)
-            
-            #check all the keys match
-            miss_l = set(self.exp_pSubKeys).difference(parsN_d.keys())
-            assert len(miss_l)==0, 'bad keys: %s'%miss_l
-            
-            #check all the filepaths are good
-            for pName, fp in parsN_d.items():
-                assert os.path.exists(fp), 'bad filepath for \'%s.%s\': %s'%(
-                    sName, pName, fp)
-                
-            log.debug('checked scenario \'%s\''%sName)
-            
+        #reformat aep values
+        atr_dxcol = self.data_d.pop(self.attrdtag_in)
+        mdex = atr_dxcol.columns
+        atr_dxcol.columns = mdex.set_levels(mdex.levels[0].astype(np.float), level=0)
+        self.data_d[self.attrdtag_in] = atr_dxcol
+        
+        
         #=======================================================================
-        # build each scenario
+        # check
         #=======================================================================
-        """needs to be a strong reference or the workers die!"""
-        self.sWrkr_d = dict() #start a weak reference container
+        miss_l = set(atr_dxcol.columns.levels[0]).symmetric_difference(self.data_d['r2_passet'].columns)
+        assert len(miss_l)==0, 'event mismatch'
         
-        """we dont know the scenario name until its loaded"""
-        self.nameConv_d = dict() #name conversion keys
+        return self
         
-        for sName, parsN_d in parsG_d.items():
-            
-            #===================================================================
-            # build/load the children
-            #===================================================================
-            sWrkr = Scenario(self, sName)
-            
-             
-            #load total results file
-            if 'ttl_fp' in parsN_d:
-                """these are riskPlot methods"""
-                sWrkr.load_ttl(parsN_d['ttl_fp'])
-                sWrkr.prep_dtl(logger=log)
-                
-                
-            #load control file
-            """setting this last incase we want to overwrite with control file values"""
-            sWrkr.load_cf(parsN_d['cf_fp'])
-            
-            #populate the plotting parameters
-            sWrkr.get_plot_pars() 
-                
-            #===================================================================
-            # add to family
-            #===================================================================
-            assert sWrkr.name not in self.sWrkr_d, 'scenario \'%s\' already loaded!'
-                
-            self.sWrkr_d[sWrkr.name] = sWrkr
-            self.nameConv_d[sName] = sWrkr.name
-            
-            log.debug('loaded \'%s\''%sWrkr.name)
-            
-        log.info('compiled %i scenarios: %s'%(len(self.sWrkr_d), list(self.sWrkr_d.keys())))
-        
-        
-        return wdict(self.sWrkr_d)
-        
-    def riskCurves(self,
-                   sWrkr_d, #container of scenario works to plot curve comparison
-                   logger=None
-                   ): 
-        
+    def load_ttl(self,
+                   fp = None,
+                   dtag = 'r2_ttl',
+
+                   logger=None,
+                    
+                    ):
         #=======================================================================
         # defaults
         #=======================================================================
         if logger is None: logger=self.logger
-        log = logger.getChild('riskCurves')
         
-        
-        #=======================================================================
-        # collect data from children
-        #=======================================================================
-        plotPars_d = dict()
-        
-        #loop through each
-        first = True
-        for childName, sWrkr in sWrkr_d.items():
-            log.debug('preping %s'%childName)
-            plotPars_d[childName] = {
-                                    'ttl_df':sWrkr.ttl_df,
-                                    'ead_tot':sWrkr.ead_tot,
-                                    'impStyle_d':sWrkr.impStyle_d.copy(),
-
-                                    }
-            
-            if first:
-                self.y1lab = sWrkr.impact_name
-                first = False
-            
-        
-        #=======================================================================
-        # plot
-        #=======================================================================
-        """NOTE: each child is also a riskPlotr.. but here we make a separate
-        
-        consider making the parent a risk plotter also?
-        """
-
-        return self.multi(plotPars_d)
-        
-    def cf_compare(self, #compare control file values between Scenarios
-                   sWrkr_d,
-                   logger=None):
-        
-        
-        if logger is None: logger=self.logger
-        log = logger.getChild('cf_compare')
-        
-        
-        #=======================================================================
-        # collect all the parameters from the children
-        #=======================================================================
-        first = True
-        for childName, sWrkr in sWrkr_d.items():
-            log.debug('extracting variables from %s'%childName)
-            
-            #===================================================================
-            # collect values from this child
-            #===================================================================
-            firstC = True
-            for sectName, svars_d in sWrkr.cfPars_d.items():
-                
-                sdf = pd.DataFrame.from_dict(svars_d, orient='index')
-                sdf.columns = [childName]
-                
-                #collapse the field names
-                sdf.index = pd.Series(np.full(len(sdf), sectName)
-                                      ).str.cat(pd.Series(sdf.index), sep='.')
-
-                if firstC:
-                    cdf = sdf
-                    firstC=False
-                else:
-                    cdf = cdf.append(sdf)
-                    
-            #add the control file path itself
-            cdf.loc['cf_fp', childName] = sWrkr.cf_fp
-            #===================================================================
-            # update library
-            #===================================================================
-            if first:
-                mdf = cdf
-                first = False
-            else:
-                mdf = mdf.join(cdf)
-                
-        #=======================================================================
-        # compare values
-        #=======================================================================
-        #determine if all values match by row
-        mdf['compare'] = mdf.eq(other=mdf.iloc[:,0], axis=0).all(axis=1)
-        
-        log.info('finished w/ %i (of %i) parameters matching between %i scenarios'%(
-            mdf['compare'].sum(), len(mdf.index), len(mdf.columns)))
-        
-        return mdf
-                    
+        log = logger.getChild('load_ttl')
+        if fp is None: fp = getattr(self, dtag)
  
-class Scenario(Model, riskPlotr): #simple class for a scenario
+        
+        
+        #======================================================================
+        # load it
+        #======================================================================
+        df_raw = pd.read_csv(fp, index_col=None)
+        self.data_d[dtag] = df_raw.copy()
+        #=======================================================================
+        # clean
+        #=======================================================================
+        df = df_raw.drop('plot', axis=1)
+        
+        #drop EAD row
+        boolidx = df['aep']=='ead'
+        df = df.loc[~boolidx, :]
+        df.loc[:, 'aep'] = df['aep'].astype(np.float)
+        
+        #drop extraploated
+        boolidx = df['note']=='extraploated'
+        df = df.loc[~boolidx, :].drop('note', axis=1)
+        #=======================================================================
+        # set it
+        #=======================================================================
+        self.eventNames = df['aep'].values
+        
+        self.data_d['ttl'] = df
+        
+        
     
-    name=None
-    
-    cfPars_d = None
-    
-    #plotting variables
-    color = 'black'
-    linestyle = 'dashdot'
-    linewidth = 2.0
-    alpha =     0.75        #0=transparent 1=opaque
-    marker =    'o'
-    markersize = 4.0
-    fillstyle = 'none'    #marker fill style
-    
+    def load_passet(self, #load the per-asset results
+                   fp = None,
+                   dtag = 'r2_passet',
 
-    def __init__(self,
-                 parent,
-                 nameRaw,              
-                 ):
+                   logger=None,
+                    
+                    ):
+        #=======================================================================
+        # defa8ults
+        #=======================================================================
+        if logger is None: logger=self.logger
         
-        self.logger = parent.logger.getChild(nameRaw)
+        log = logger.getChild('load_passet')
+        if fp is None: fp = getattr(self, dtag)
+        cid = self.cid
         
-        """we'll set another name from the control file"""
-        self.nameRaw = nameRaw 
+        #======================================================================
+        # load it
+        #======================================================================
+        df_raw = pd.read_csv(fp, index_col=0)
         
-        """no need to init baseclases"""
+        #drop ead and format column
+        df = df_raw.drop('ead', axis=1)
+        df.columns = df.columns.astype(np.float)
         
-    def load_cf(self, #load the control file
-                cf_fp):
+        #drop extraploators and ead
+        boolcol = df.columns.isin(self.eventNames)
+        df = df.loc[:, boolcol].sort_index(axis=1, ascending=True)
         
+        
+        #=======================================================================
+        # set it
+        #=======================================================================
+        self.cindex = df.index.copy() #set this for checks later
+        self.data_d[dtag] = df
+        
+    def get_slice(self, #calculate new totals from a slice of the attriMat
+                  slice_str,
+                  logger=None):
+        pass
+    
+    
+    
+    def get_mvals(self, #multiply attM to get attributed impacts
+                  logger=None): 
         #=======================================================================
         # defaults
         #=======================================================================
-        log = self.logger.getChild('load_cf')
-        assert os.path.exists(cf_fp)
-        self.cf_fp = cf_fp
-        #=======================================================================
-        # init the config parser
-        #=======================================================================
-        cfParsr = configparser.ConfigParser(inline_comment_prefixes='#')
-        log.info('reading parameters from \n     %s'%cfParsr.read(cf_fp))
+        if logger is None: logger=self.logger
+        log=logger.getChild('get_mvals')
         
+        rp_df = self.data_d['r2_passet'].copy()
+        atr_dxcol = self.data_d[self.attrdtag_in].copy()
         
-        #self.cfParsr=cfParsr
-        #=======================================================================
-        # check values
-        #=======================================================================
-        """just for information I guess....
-        self.cf_chk_pars(cfParsr, copy.copy(self.exp_pars_md), optional=False)"""
-        
-        #=======================================================================
-        # load/attach parameters
-        #=======================================================================
-        """this will set a 'name' property"""
-        self.cfPars_d = self.cf_attach_pars(cfParsr, setAttr=True)
-        assert isinstance(self.name, str)
+    
         
 
-        log.debug('finished w/ %i pars loaded'%len(self.cfPars_d))
         
-        return
-    
-    def get_plot_pars(self): #get a set of plotting handles based on your variables
+        
+        #=======================================================================
+        # multiply
+        #=======================================================================
+        dxcol = atr_dxcol.multiply(rp_df, level='aeps')
         """
-        taking instance variables (rather than parser's section) because these are already typset
+        view(dxcol)
+        view(atr_dxcol)
+        view(rp_df)
         """
-        assert not self.cfPars_d is None, 'load the control file first!'
-        impStyle_d = dict()
-        
-        
-        #loop through the default values
-        
-        for k, v in self.impStyle_d.items():
-            if hasattr(self, k):
-                impStyle_d[k] = getattr(self, k)
-            else: #just use default
-                impStyle_d[k] = v
-                
-        self.impStyle_d = impStyle_d
-                
-    
 
         
         
         
+        return dxcol
         
         
         
         
         
-        
-
-    
-    
-    
-
-    
-
             
-        
