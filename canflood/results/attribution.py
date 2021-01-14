@@ -98,6 +98,11 @@ class Attr(Model):
         miss_l = set(atr_dxcol.columns.levels[0]).symmetric_difference(self.data_d['r2_passet'].columns)
         assert len(miss_l)==0, 'event mismatch'
         
+        #=======================================================================
+        # get multiplied values
+        #=======================================================================
+        self.build_mvals()
+        
         return self
         
     def load_ttl(self,
@@ -180,14 +185,10 @@ class Attr(Model):
         self.cindex = df.index.copy() #set this for checks later
         self.data_d[dtag] = df
         
-    def get_slice(self, #calculate new totals from a slice of the attriMat
-                  slice_str,
-                  logger=None):
-        pass
+ 
     
     
-    
-    def get_mvals(self, #multiply attM to get attributed impacts
+    def build_mvals(self, #multiply attM to get attributed impacts
                   logger=None): 
         #=======================================================================
         # defaults
@@ -197,26 +198,37 @@ class Attr(Model):
         
         rp_df = self.data_d['r2_passet'].copy()
         atr_dxcol = self.data_d[self.attrdtag_in].copy()
-        
-    
-        
-
-        
-        
+ 
         #=======================================================================
         # multiply
         #=======================================================================
-        dxcol = atr_dxcol.multiply(rp_df, level='aeps')
-        """
-        view(dxcol)
-        view(atr_dxcol)
-        view(rp_df)
-        """
-
+        self.mula_dxcol = atr_dxcol.multiply(rp_df, level='aeps')
+ 
+        
+        return 
+    
+    def get_slice(self,
+                  lvals_d, #mdex lvl values {lvlName:(lvlval1, lvlval2...)}
+                  logger=None,
+                  ):
+        
+        if logger is  None: logger=self.logger
+        log=logger.getChild('get_slice')
+        
+        
+    def get_ttl(self): #sum to totals
+        
+        pass
+    
+    def plot(self): #plot slice against original risk c urve
+        
+        pass
         
         
         
-        return dxcol
+        
+        
+        
         
         
         
