@@ -310,7 +310,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         cres_df = model.run()
         
         #attribution
-        if self.checkBox_i2_attr.isChecked():
+        if self.checkBox_SS_attr.isChecked():
             _ = model.get_attribution(cres_df)
             model.output_attr(upd_cf = self.checkBox_SS_updCf.isChecked())
         
@@ -379,6 +379,10 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #update the control file
         if self.checkBox_SS_updCf.isChecked():
             model.upd_cf()
+            
+        #attribution
+        if self.checkBox_SS_attr.isChecked():
+            model.output_attr(upd_cf = self.checkBox_SS_updCf.isChecked())
         
         
         #=======================================================================
