@@ -312,7 +312,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #attribution
         if self.checkBox_i2_attr.isChecked():
             _ = model.get_attribution(cres_df)
-            model.output_attr(upd_cf = self.checkBox_i2_updCf.isChecked())
+            model.output_attr(upd_cf = self.checkBox_SS_updCf.isChecked())
         
         self.feedback.setProgress(95)
         #======================================================================
@@ -321,7 +321,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         out_fp = model.output_df(cres_df, model.resname)
         
         #update parameter file
-        if self.checkBox_i2_updCf.isChecked():
+        if self.checkBox_SS_updCf.isChecked():
             model.upd_cf()
             
         #output expanded results
@@ -370,13 +370,20 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         # output
         #=======================================================================
-        model.output_df(res_ser, '%s_%s'%(model.resname, 'ttl'))
+        model.output_ttl()
         
         out_fp2=''
         if not res_df is None:
-            out_fp2= model.output_df(res_df, '%s_%s'%(model.resname, 'passet'))
+            out_fp2= model.output_passet()
+            
+        #update the control file
+        if self.checkBox_SS_updCf.isChecked():
+            model.upd_cf()
         
         
+        #=======================================================================
+        # wrap
+        #=======================================================================
         tdelta = (time.time()-start)/60.0
         self.logger.push('Risk2 complete in %.4f mins'%tdelta)
         self.feedback.upd_prog(None) #set the progress bar back down to zero

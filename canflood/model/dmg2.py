@@ -39,10 +39,23 @@ class Dmg2(Model):
     # #program vars
     #==========================================================================
     valid_par = 'dmg2'
+    attrdtag_out = 'attrimat02'
     #datafp_section = 'dmg_fps'
     
+    group_cnt = 4
     
-    #expectations from parameter file
+    plot_fmt = '${:,.0f}'
+    
+    #minimum inventory expectations
+    finv_exp_d = {
+        'f0_tag':{'type':np.object},
+        'f0_scale':{'type':np.number},
+        'f0_elv':{'type':np.number},
+        }
+    
+    #===========================================================================
+    # #expectations from parameter file
+    #===========================================================================
     exp_pars_md = {#mandataory: section: {variable: handles} 
         'parameters' :
             {'name':{'type':str}, 'cid':{'type':str},
@@ -70,18 +83,6 @@ class Dmg2(Model):
              'evals':{'ext':('.csv',)}, #only required for checks
                     },
                     }
-    
-    group_cnt = 4
-    
-    plot_fmt = '${:,.0f}'
-    
-    #minimum inventory expectations
-    finv_exp_d = {
-        'f0_tag':{'type':np.object},
-        'f0_scale':{'type':np.number},
-        'f0_elv':{'type':np.number},
-        }
-
 
     
     def __init__(self,

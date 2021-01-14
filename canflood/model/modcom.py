@@ -107,7 +107,7 @@ class Model(ComWrkr):
         risk2 -- Risk2 validation flag (default False)
         
     [results_fps]
-        attrimat -- attribution matrix file path
+        attrimat02 -- attribution matrix file path
     
     """
     
@@ -149,7 +149,8 @@ class Model(ComWrkr):
     risk3 = False
     
     #[results_fps]
-    attrimat=''
+    attrimat02=''
+    attrimat03=''
     
     #==========================================================================
     # program vars
@@ -1193,7 +1194,7 @@ class Model(ComWrkr):
     def load_attrimat(self,
                       dxcol_lvls=2, #levels present in passed data
                       fp=None,
-                      dtag='attrimat',
+                      dtag=None,
                       check_psum=True,
                       logger=None): #load the attributino matrix
         
@@ -1209,8 +1210,10 @@ class Model(ComWrkr):
         #=======================================================================
         if logger is None: logger=self.logger
         log = logger.getChild('load_attrimat')
+        if dtag is None: dtag = self.attrdtag_in
         if fp is None: fp = getattr(self, dtag)
         cid = self.cid
+        
         
         #=======================================================================
         # prechecks
@@ -2961,11 +2964,16 @@ class Model(ComWrkr):
     # OUTPUTS---------
     #===========================================================================
     def output_attr(self, #short cut for saving the expanded reuslts
+                    dtag=None,
                     ofn = None,
                     upd_cf= True,
                     ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
         if ofn is None:
             ofn = 'attr%02d_%s'%(self.att_df.columns.nlevels, self.name)
+        if dtag is None: dtag = self.attrdtag_out
             
         out_fp = self.output_df(self.att_df, ofn)
         
@@ -2974,9 +2982,9 @@ class Model(ComWrkr):
             self.update_cf(
                     {
                     'results_fps':(
-                        {'attriMat':out_fp}, 
-                        '#\'attriMat\' file path set from dmg2.py at %s'%(
-                            datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                        {dtag:out_fp}, 
+                        '#\'%s\' file path set from dmg2.py at %s'%(
+                            dtag, datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
                         ),
                      },
                     cf_fp = self.cf_fp

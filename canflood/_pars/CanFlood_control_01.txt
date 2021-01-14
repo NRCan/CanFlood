@@ -30,8 +30,6 @@ dmg2 = False
 risk2 = False
 risk3 = False
 
-[results_fps]
-attrimat =          #attribution matrix file path
 
 
 [plotting]

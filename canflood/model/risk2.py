@@ -9,7 +9,7 @@ Created on Feb. 7, 2020
 # imports---------------------------
 #==============================================================================
 #python standards
-import os, logging
+import os, logging, datetime
 
 import pandas as pd
 import numpy as np
@@ -25,7 +25,7 @@ mod_logger = logging.getLogger('risk2') #get the root logger
 from hlpr.exceptions import QError as Error
 
 #from hlpr.Q import *
-from hlpr.basic import force_open_dir, view
+from hlpr.basic import view
 from model.modcom import Model
 
 #==============================================================================
@@ -45,7 +45,10 @@ class Risk2(Model):
     #==========================================================================
     
     valid_par = 'risk2'
-
+    rttl_ofp=None
+    rpasset_ofp=None
+    attrdtag_out = 'attrimat03'
+    attrdtag_in = 'attrimat02' #also check exp_pars_op below
     
     #===========================================================================
     # #expectations from parameter file
@@ -88,7 +91,7 @@ class Risk2(Model):
                     },
         
         'results_fps':{
-             'attrimat':{'ext':('.csv',)},
+             'attrimat02':{'ext':('.csv',)},
                     }
                 }
     
@@ -129,7 +132,7 @@ class Risk2(Model):
         self.load_dmgs()
         if not self.exlikes == '':
             self.load_exlikes()
-        if not self.attrimat == '':
+        if not getattr(self, self.attrdtag_in) == '':
             self.load_attrimat(dxcol_lvls=2)
             self.promote_attrim()
             
@@ -140,13 +143,14 @@ class Risk2(Model):
         
 
 
-    def promote_attrim(self): #add new index level
+    def promote_attrim(self, dtag=None): #add new index level
+        if dtag is None: dtag = self.attrdtag_in
         """
         risk1 doesnt use dmg1... so the attrim will be differnet
         """
         
         aep_ser = self.data_d['evals'].copy()
-        atr_dxcol = self.data_d['attrimat'].copy()
+        atr_dxcol = self.data_d[dtag].copy()
         """
         view(atr_dxcol)
         """
@@ -158,9 +162,9 @@ class Risk2(Model):
         atr_dxcol.columns = atr_dxcol.columns.join(mindex2)[0].swaplevel(i=2, j=1).swaplevel(i=1, j=0)
         #check the values all match
         """nulls are not matching for somereaseon"""
-        booldf = atr_dxcol.droplevel(level=0, axis=1).fillna(999) == self.data_d['attrimat'].fillna(999)
+        booldf = atr_dxcol.droplevel(level=0, axis=1).fillna(999) == self.data_d[dtag].fillna(999)
         assert booldf.all().all(), 'bad conversion'
-        del self.data_d['attrimat']
+        del self.data_d[dtag]
         self.att_df = atr_dxcol.sort_index(axis=1, level=0, sort_remaining=True, 
                                            inplace=False, ascending=True)
         
@@ -259,14 +263,76 @@ class Risk2(Model):
         #plot lables
         res_ttl['plot'] = True
         res_ttl.loc['ead', 'plot'] = False
-         
+        
         #=======================================================================
         # wrap
         #=======================================================================
+        self.res_ttl=res_ttl
+        self.res_df = res_df
         log.info('finished')
 
 
         return res_ttl, res_df
+    
+    def output_ttl(self,  #helper to o utput the total results file
+                   ofn=None
+                   ):
+        """using these to help with control file writing"""
+        if ofn is None:
+            ofn = '%s_%s'%(self.resname, 'ttl') 
+            
+        self.rttl_ofp = self.output_df(self.res_ttl, ofn)
+        return self.rttl_ofp
+    
+    def output_passet(self,  #helper to o utput the total results file
+                   ofn=None
+                   ):
+        """using these to help with control file writing"""
+        if ofn is None:
+            ofn = '%s_%s'%(self.resname, 'passet')
+            
+        self.rpasset_ofp = self.output_df(self.res_df, ofn)
+        return self.rpasset_ofp
+        
+    
+    def upd_cf(self, #update the control file 
+               cf_fp = None,
+               ):
+        #======================================================================
+        # set defaults
+        #======================================================================
+        if cf_fp is None: cf_fp = self.cf_fp
+        
+        
+        
+        #=======================================================================
+        # build results_fps
+        #=======================================================================
+        rf_d = dict()
+        
+            
+        for k, out_fp in {
+            'r2_passet':self.rpasset_ofp,
+            'r2_ttl':self.rttl_ofp,
+            }.items():
+            
+            if isinstance(out_fp, str):
+                if not self.absolute_fp:
+                    out_fp = os.path.split(out_fp)[1]
+                
+                rf_d[k] = out_fp
+        
+ 
+        return self.update_cf(
+            {
+            'results_fps':(rf_d, '#ile paths set from risk2.py at %s'%(
+                    datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                ),
+             },
+            cf_fp = cf_fp
+            )
+    
+    
 
 
 
