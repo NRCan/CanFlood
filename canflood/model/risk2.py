@@ -236,7 +236,7 @@ class Risk2(Model, Plotr):
             logger=log,
             ).T #1 column df
             
-        self.res_ser = res_ttl.iloc[:, 0].copy() #set for risk_plot()
+        #self.res_ser = res_ttl.iloc[:, 0].copy() #set for risk_plot()
         self.ead_tot = res_ttl.iloc[:,0]['ead'] #set for plot_riskCurve()
             
         self.feedback.setProgress(95)

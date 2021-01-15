@@ -382,154 +382,8 @@ class Plotr(ComWrkr):
         self._tickSet(ax1, xfmtFunc=xfmtFunc, yfmtFunc=yfmtFunc)
         
         return fig
-        
-
-    def _lineToAx(self, #add a line to the axis
-              res_ttl,
-              y1lab,
-              ax,
-              lineLabel=None,
-              impStyle_d=None,
-              hatch_f=True,
-              h_color=None, h_alpha=None, hatch=None,
-              ): #add a line to an axis
-        
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        plt, matplotlib = self.plt, self.matplotlib
-        if impStyle_d is None: impStyle_d = self.impStyle_d
-        
-        if h_color is None: h_color=self.h_color
-        if h_alpha is None: h_alpha=self.h_alpha
-        if hatch is None: hatch=self.hatch
-        if lineLabel is  None: lineLabel=self.tag
-
-        """
-        plt.show()
-        """
-        #======================================================================
-        # fill the plot
-        #======================================================================
-        if y1lab == self.impact_name:
-            xar,  yar = res_ttl['ari'].values, res_ttl['impacts'].values
-            pline1 = ax.semilogx(xar,yar,
-                                label       = lineLabel,
-                                **impStyle_d
-                                )
-            #add a hatch
-            if hatch_f:
-                polys = ax.fill_between(xar, yar, y2=0, 
-                                        color       = h_color, 
-                                        alpha       = h_alpha,
-                                        hatch       = hatch)
-        
-        elif y1lab == 'AEP':
-            xar,  yar = res_ttl['impacts'].values, res_ttl['aep'].values
-            pline1 = ax.plot(xar,yar,
-                            label       = lineLabel,
-                            **impStyle_d
-                            )
-                    
-            if hatch_f:
-                polys = ax.fill_betweenx(yar.astype(np.float), x1=xar, x2=0, 
-                                    color       = h_color, 
-                                    alpha       = h_alpha,
-                                    hatch       = hatch)
-            
-        
-        return ax
-            
-        
-    def _postFmt(self, #text, grid, leend
-                 ax, 
-
-                 val_str=None,
-                 grid=None,
-                 legendLoc = 1,
-                 ):
-        
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        plt, matplotlib = self.plt, self.matplotlib
-        if grid is None: grid=self.grid
-        
-        #=======================================================================
-        # Add text string 'annot' to lower left of plot
-        #=======================================================================
-        if isinstance(val_str, str):
-            xmin, xmax = ax.get_xlim()
-            ymin, ymax = ax.get_ylim()
-            
-            x_text = xmin + (xmax - xmin)*.1 # 1/10 to the right of the left axis
-            y_text = ymin + (ymax - ymin)*.1 #1/10 above the bottom axis
-            anno_obj = ax.text(x_text, y_text, val_str)
-        
-        #=======================================================================
-        # grid
-        #=======================================================================
-        if grid: ax.grid()
-        
-
-        #=======================================================================
-        # #legend
-        #=======================================================================
-        h1, l1 = ax.get_legend_handles_labels() #pull legend handles from axis 1
-        #h2, l2 = ax2.get_legend_handles_labels()
-        #ax.legend(h1+h2, l1+l2, loc=2) #turn legend on with combined handles
-        ax.legend(h1, l1, loc=legendLoc) #turn legend on with combined handles
-        
-        return ax
     
-    def _tickSet(self,
-                 ax,
-                 xfmtFunc=None, #function that returns a formatted string for x labels
-                 xlrot=0,
-                 
-                 yfmtFunc=None,
-                 ylrot=0):
-        
-
-        #=======================================================================
-        # xaxis
-        #=======================================================================
-        if not xfmtFunc is None:
-            # build the new ticks
-            l = [xfmtFunc(value) for value in ax.get_xticks()]
-                  
-            #apply the new labels
-            ax.set_xticklabels(l, rotation=xlrot)
-        
-        
-        #=======================================================================
-        # yaxis
-        #=======================================================================
-        if not yfmtFunc is None:
-            # build the new ticks
-            l = [yfmtFunc(value) for value in ax.get_yticks()]
-                  
-            #apply the new labels
-            ax.set_yticklabels(l, rotation=ylrot)
-        
-    def _get_val_str(self, #helper to get value string for writing text on the plot
-                     val_str,impactFmtFunc
-                     ):
-        
-        if val_str is None:
-            val_str = self.val_str
-        
-        if isinstance(val_str, str):
-            if val_str=='*defalut':
-                val_str='annualized impacts = ' + impactFmtFunc(self.ead_tot)
-            elif val_str=='*no':
-                val_str=None
-                
-        return val_str
-        
-
-    
-    def multi(self, #single plot w/ risk curves from multiple scenarios
+    def plot_mriskCurves(self, #single plot w/ risk curves from multiple scenarios
        
                   parsG_d, #container of data and plot handles
                     #{cName:{
@@ -697,6 +551,154 @@ class Plotr(ComWrkr):
         ax1.legend(h1, l1, loc=1) #turn legend on with combined handles
         
         return fig
+        
+
+    
+
+        
+
+    def _lineToAx(self, #add a line to the axis
+              res_ttl,
+              y1lab,
+              ax,
+              lineLabel=None,
+              impStyle_d=None,
+              hatch_f=True,
+              h_color=None, h_alpha=None, hatch=None,
+              ): #add a line to an axis
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        plt, matplotlib = self.plt, self.matplotlib
+        if impStyle_d is None: impStyle_d = self.impStyle_d
+        
+        if h_color is None: h_color=self.h_color
+        if h_alpha is None: h_alpha=self.h_alpha
+        if hatch is None: hatch=self.hatch
+        if lineLabel is  None: lineLabel=self.tag
+
+        """
+        plt.show()
+        """
+        #======================================================================
+        # fill the plot
+        #======================================================================
+        if y1lab == self.impact_name:
+            xar,  yar = res_ttl['ari'].values, res_ttl['impacts'].values
+            pline1 = ax.semilogx(xar,yar,
+                                label       = lineLabel,
+                                **impStyle_d
+                                )
+            #add a hatch
+            if hatch_f:
+                polys = ax.fill_between(xar, yar, y2=0, 
+                                        color       = h_color, 
+                                        alpha       = h_alpha,
+                                        hatch       = hatch)
+        
+        elif y1lab == 'AEP':
+            xar,  yar = res_ttl['impacts'].values, res_ttl['aep'].values
+            pline1 = ax.plot(xar,yar,
+                            label       = lineLabel,
+                            **impStyle_d
+                            )
+                    
+            if hatch_f:
+                polys = ax.fill_betweenx(yar.astype(np.float), x1=xar, x2=0, 
+                                    color       = h_color, 
+                                    alpha       = h_alpha,
+                                    hatch       = hatch)
+            
+        
+        return ax
+            
+        
+    def _postFmt(self, #text, grid, leend
+                 ax, 
+
+                 val_str=None,
+                 grid=None,
+                 legendLoc = 1,
+                 ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        plt, matplotlib = self.plt, self.matplotlib
+        if grid is None: grid=self.grid
+        
+        #=======================================================================
+        # Add text string 'annot' to lower left of plot
+        #=======================================================================
+        if isinstance(val_str, str):
+            xmin, xmax = ax.get_xlim()
+            ymin, ymax = ax.get_ylim()
+            
+            x_text = xmin + (xmax - xmin)*.1 # 1/10 to the right of the left axis
+            y_text = ymin + (ymax - ymin)*.1 #1/10 above the bottom axis
+            anno_obj = ax.text(x_text, y_text, val_str)
+        
+        #=======================================================================
+        # grid
+        #=======================================================================
+        if grid: ax.grid()
+        
+
+        #=======================================================================
+        # #legend
+        #=======================================================================
+        h1, l1 = ax.get_legend_handles_labels() #pull legend handles from axis 1
+        #h2, l2 = ax2.get_legend_handles_labels()
+        #ax.legend(h1+h2, l1+l2, loc=2) #turn legend on with combined handles
+        ax.legend(h1, l1, loc=legendLoc) #turn legend on with combined handles
+        
+        return ax
+    
+    def _tickSet(self,
+                 ax,
+                 xfmtFunc=None, #function that returns a formatted string for x labels
+                 xlrot=0,
+                 
+                 yfmtFunc=None,
+                 ylrot=0):
+        
+
+        #=======================================================================
+        # xaxis
+        #=======================================================================
+        if not xfmtFunc is None:
+            # build the new ticks
+            l = [xfmtFunc(value) for value in ax.get_xticks()]
+                  
+            #apply the new labels
+            ax.set_xticklabels(l, rotation=xlrot)
+        
+        
+        #=======================================================================
+        # yaxis
+        #=======================================================================
+        if not yfmtFunc is None:
+            # build the new ticks
+            l = [yfmtFunc(value) for value in ax.get_yticks()]
+                  
+            #apply the new labels
+            ax.set_yticklabels(l, rotation=ylrot)
+        
+    def _get_val_str(self, #helper to get value string for writing text on the plot
+                     val_str,impactFmtFunc
+                     ):
+        
+        if val_str is None:
+            val_str = self.val_str
+        
+        if isinstance(val_str, str):
+            if val_str=='*defalut':
+                val_str='annualized impacts = ' + impactFmtFunc(self.ead_tot)
+            elif val_str=='*no':
+                val_str=None
+                
+        return val_str
         
 
     

@@ -138,7 +138,8 @@ class Cmpr(riskPlotr):
         
     def riskCurves(self,
                    sWrkr_d, #container of scenario works to plot curve comparison
-                   logger=None
+                   logger=None,
+                   **plotKwargs
                    ): 
         
         #=======================================================================
@@ -161,23 +162,14 @@ class Cmpr(riskPlotr):
                                     'ttl_df':sWrkr.ttl_df,
                                     'ead_tot':sWrkr.ead_tot,
                                     'impStyle_d':sWrkr.impStyle_d.copy(),
-
                                     }
             
             if first:
                 self.y1lab = sWrkr.impact_name
                 first = False
-            
-        
-        #=======================================================================
-        # plot
-        #=======================================================================
-        """NOTE: each child is also a riskPlotr.. but here we make a separate
-        
-        consider making the parent a risk plotter also?
-        """
 
-        return self.multi(plotPars_d)
+
+        return self.multi(plotPars_d, **plotKwargs)
         
     def cf_compare(self, #compare control file values between Scenarios
                    sWrkr_d,

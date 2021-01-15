@@ -3,14 +3,14 @@
 ui class for the MODEL toolset
 """
 
-import os,  os.path, warnings, tempfile, logging, configparser, sys, time
+import os,  os.path, time
 from shutil import copyfile
 
 from PyQt5 import uic, QtWidgets
 
 
-from PyQt5.QtCore import QSettings, QTranslator, QCoreApplication, QObject
-from PyQt5.QtGui import QIcon
+#from PyQt5.QtCore import QSettings, QTranslator, QCoreApplication, QObject
+#from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget
 
 # Initialize Qt resources from file resources.py
@@ -359,13 +359,15 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
                       feedback=self.feedback, attriMode=self.checkBox_SS_attr.isChecked(),
                       )._setup()
         
-        res_ser, res_df = model.run(res_per_asset=res_per_asset)
+        res_ttl, res_df = model.run(res_per_asset=res_per_asset)
         
         #======================================================================
         # plot
         #======================================================================
         if self.checkBox_r2plot.isChecked():
-            fig = model.risk_plot()
+            ttl_df = model.prep_dtl(tlRaw_df=res_ttl)
+            """just giving one curve here"""
+            fig = model.plot_riskCurve(ttl_df, y1lab='impacts')
             _ = model.output_fig(fig)
        
         #=======================================================================
