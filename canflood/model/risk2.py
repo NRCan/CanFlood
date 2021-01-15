@@ -27,11 +27,12 @@ from hlpr.exceptions import QError as Error
 #from hlpr.Q import *
 from hlpr.basic import view
 from model.modcom import Model
+from results.riskPlot import Plotr
 
 #==============================================================================
 # functions----------------------
 #==============================================================================
-class Risk2(Model):
+class Risk2(Model, Plotr):
     """Risk T2 tool for calculating expected value for a set of events from impact results
     
     METHODS:
@@ -135,7 +136,10 @@ class Risk2(Model):
         if self.attriMode:
             self.load_attrimat(dxcol_lvls=2)
             self.promote_attrim()
-            
+        
+        """consider makeing riskPloter a child of modcom?"""    
+        self.upd_impStyle() 
+        
         
         self.logger.debug('finished _setup() on Risk2')
         
@@ -233,7 +237,7 @@ class Risk2(Model):
             ).T #1 column df
             
         self.res_ser = res_ttl.iloc[:, 0].copy() #set for risk_plot()
-
+        self.ead_tot = res_ttl.iloc[:,0]['ead'] #set for plot_riskCurve()
             
         self.feedback.setProgress(95)
 
@@ -264,10 +268,19 @@ class Risk2(Model):
         res_ttl['plot'] = True
         res_ttl.loc['ead', 'plot'] = False
         
+        res_ttl=res_ttl.reset_index(drop=False)
+        
         #=======================================================================
-        # wrap
+        # wrap----
         #=======================================================================
-        self.res_ttl=res_ttl
+        #plotting string
+        self.val_str = 'annualized impacts = %s \nltail=\'%s\',  rtail=\'%s\''%(
+            self.impactFmtFunc(self.ead_tot), self.ltail, self.rtail) + \
+            '\nassets = %i, event_rels = \'%s\', prec = %i'%(
+                self.asset_cnt, self.event_rels, self.prec)
+            
+        
+        self.res_ttl=res_ttl #for convenioence outputters
         self.res_df = res_df
         log.info('finished')
 
@@ -281,7 +294,7 @@ class Risk2(Model):
         if ofn is None:
             ofn = '%s_%s'%(self.resname, 'ttl') 
             
-        self.rttl_ofp = self.output_df(self.res_ttl, ofn)
+        self.rttl_ofp = self.output_df(self.res_ttl, ofn, write_index=False)
         return self.rttl_ofp
     
     def output_passet(self,  #helper to o utput the total results file

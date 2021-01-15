@@ -26,25 +26,10 @@ import pandas as pd
 #==============================================================================
 # # custom
 #==============================================================================
-#standalone runs
-if __name__ =="__main__": 
-    #===========================================================================
-    # from hlpr.logr import basic_logger
-    # mod_logger = basic_logger()   
-    #===========================================================================
-    
-    from hlpr.exceptions import Error
-    
 
-#plugin runs
-else:
-    #base_class = object
-    from hlpr.exceptions import QError as Error
-    
-from hlpr.Q import Qcoms
+from hlpr.exceptions import QError as Error
 
-#from hlpr.Q import *
-from hlpr.basic import ComWrkr, force_open_dir
+from hlpr.basic import ComWrkr
 
 
 #==============================================================================
@@ -84,18 +69,9 @@ class Plotr(ComWrkr):
                  name='Results',
                  impStyle_d=None,
                    #labels
-                  xlab='ARI', y1lab=None, y2lab='AEP',
-                  
-                  
-                  #impacts line style controls
-                
-                  
+ 
                   #format controls
                   grid = True, logx = False, 
-                  basev = 1, #base value for dividing large impact values
-                  dfmt = '{0:.0f}', #formatting of damage values 
-                    #'{:,.0f}' #thousands comma no decimal
-                    #'{0:.0f}' #no comma no decimal
                   
                   
                   #figure parametrs
@@ -106,11 +82,9 @@ class Plotr(ComWrkr):
                     h_color = 'blue',
                     h_alpha = 0.1,
                     
+                    impactFmtFunc=None, #function for formatting the impact results
                     
-                    
-                    
-                    
-                    
+
                  **kwargs
                  ):
         
@@ -126,13 +100,10 @@ class Plotr(ComWrkr):
         # attached passed        
         #=======================================================================
         self.name = name
-        self.xlab    =xlab
-        self.y1lab    =y1lab
-        self.y2lab    =y2lab
+ 
         self.grid    =grid
         self.logx    =logx
-        self.basev    =basev
-        self.dfmt    =dfmt
+ 
         self.figsize    =figsize
         self.hatch    =hatch
         self.h_color    =h_color
@@ -142,6 +113,10 @@ class Plotr(ComWrkr):
             self.upd_impStyle()
         else:
             self.impStyle_d=impStyle_d
+            
+        if impactFmtFunc is None:
+            impactFmtFunc = lambda x:'%.2e'%x #default to scientific notation
+        self.impactFmtFunc=impactFmtFunc
         
         self.logger.info('init finished')
         
@@ -193,8 +168,8 @@ class Plotr(ComWrkr):
         
         
         
-    def load_ttl(self, fp,
-                 logger=None): #load a single dataset
+    def load_ttl(self, fp, #load a single ttl dataset
+                 logger=None): 
         
         #=======================================================================
         # defaults
@@ -248,7 +223,8 @@ class Plotr(ComWrkr):
         #=======================================================================
         # column labling
         #=======================================================================
-        """letting the user pass whatever label for the impacts"""
+        """letting the user pass whatever label for the impacts
+            then reverting"""
         df1 = tlRaw_df.copy()
         
         self.impact_name = list(df1.columns)[1] #get the label for the impacts
@@ -300,10 +276,18 @@ class Plotr(ComWrkr):
         return self.ttl_df
         
         
-    def single(self, #generate and save a figure that summarizes the damages 
+    def plot_riskCurve(self, #risk plot
                   res_ttl,
-                  y2lab = None,
-                  plot_aep_line = False, #whether to add the aep line
+                  y1lab='AEP', #yaxis label and plot type c ontrol
+                    #'impacts': impacts vs. ARI (use self.impact_name)
+                    #'AEP': AEP vs. impacts 
+                    
+                    impactFmtFunc=None, #tick label format function for impact values
+                    #lambda x:'{:,.0f}'.format(x)
+                    
+                    val_str=None, #text to write on plot. see _get_val_str()
+
+                  
                   ):
         
         """
@@ -318,127 +302,232 @@ class Plotr(ComWrkr):
         #======================================================================
         log = self.logger.getChild('single')
         plt, matplotlib = self.plt, self.matplotlib
-        
-        xlab    =    self.xlab
-        y1lab    =    self.y1lab
-
-        grid    =    self.grid
-        #logx    =    self.logx
-        basev    =    self.basev
-        dfmt    =    self.dfmt
         figsize    =    self.figsize
-        hatch    =    self.hatch
-        h_color    =    self.h_color
-        h_alpha    =    self.h_alpha
 
+        if y1lab =='impacts':
+            y1lab = self.impact_name
+            
+        if impactFmtFunc is None:
+            impactFmtFunc=self.impactFmtFunc
         
-        if y2lab is None:
-            y2lab = self.impact_name
-
-
-
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        assert isinstance(res_ttl, pd.DataFrame)
+        miss_l = set(['aep', 'ari', 'impacts']).difference(res_ttl.columns)
+        assert len(miss_l)==0, miss_l
         
-        
+
         #======================================================================
         # labels
         #======================================================================
+        val_str = self._get_val_str(val_str, impactFmtFunc)
         
-        val_str = 'total Annualized = ' + dfmt.format(self.ead_tot/self.basev)
         
-        title = 'CanFlood \'%s\' Annualized-%s plot on %i events'%(self.tag, xlab, len(res_ttl))
-        
-        #======================================================================
+        if y1lab == 'AEP':
+            title = '%s AEP-Impacts plot for %i events'%(self.tag, len(res_ttl))
+            xlab=self.impact_name
+        elif y1lab == self.impact_name:
+            title = '%s Impacts-ARI plot for %i events'%(self.tag, len(res_ttl))
+            xlab='ARI'
+        else:
+            raise Error('bad y1lab: %s'%y1lab)
+            
+ 
+        #=======================================================================
         # figure setup
-        #======================================================================
+        #=======================================================================
         """
         plt.show()
         """
         plt.close()
-        fig = plt.figure(1)
-        fig.set_size_inches(figsize)
+        fig = plt.figure(figsize=figsize, constrained_layout = True)
         
         #axis setup
         ax1 = fig.add_subplot(111)
-        ax2 = ax1.twinx()
-        ax1.set_xlim(max(res_ttl['ari']), 1) #aep limits 
+        #ax2 = ax1.twinx()
+        
         
         # axis label setup
         fig.suptitle(title)
         ax1.set_ylabel(y1lab)
-        ax2.set_ylabel(y2lab)
+
         ax1.set_xlabel(xlab)
         
+        #=======================================================================
+        # add the line
+        #=======================================================================
+        self._lineToAx(res_ttl, y1lab, ax1)
+        
+        #set limits
+        if y1lab == 'AEP':
+            ax1.set_xlim(0, max(res_ttl['impacts'])) #aep limits 
+            ax1.set_ylim(0, max(res_ttl['aep'])*1.1)
+        elif y1lab == self.impact_name:
+            ax1.set_xlim(max(res_ttl['ari']), 1) #aep limits 
+        
+        #=======================================================================
+        # post format
+        #=======================================================================
+        self._postFmt(ax1, val_str=val_str)
+        
+        #assign tick formatter functions
+        if y1lab == 'AEP':
+            xfmtFunc = impactFmtFunc
+            yfmtFunc=lambda x:'%.4f'%x
+        elif y1lab==self.impact_name:
+            xfmtFunc = lambda x:'{:,.0f}'.format(x) #thousands separatro
+            yfmtFunc=impactFmtFunc
+            
+        self._tickSet(ax1, xfmtFunc=xfmtFunc, yfmtFunc=yfmtFunc)
+        
+        return fig
+        
+
+    def _lineToAx(self, #add a line to the axis
+              res_ttl,
+              y1lab,
+              ax,
+              lineLabel=None,
+              impStyle_d=None,
+              hatch_f=True,
+              h_color=None, h_alpha=None, hatch=None,
+              ): #add a line to an axis
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        plt, matplotlib = self.plt, self.matplotlib
+        if impStyle_d is None: impStyle_d = self.impStyle_d
+        
+        if h_color is None: h_color=self.h_color
+        if h_alpha is None: h_alpha=self.h_alpha
+        if hatch is None: hatch=self.hatch
+        if lineLabel is  None: lineLabel=self.tag
+
+        """
+        plt.show()
+        """
         #======================================================================
         # fill the plot
         #======================================================================
-        #damage plot
-        xar,  yar = res_ttl['ari'].values, res_ttl['impacts'].values
-        pline1 = ax1.semilogx(xar,yar,
-                            label       = y1lab,
-                            **self.impStyle_d
-                            )
-        #add a hatch
-        polys = ax1.fill_between(xar, yar, y2=0, 
-                                color       = h_color, 
-                                alpha       = h_alpha,
-                                hatch       = hatch)
-        
-        #aep plot
-        if plot_aep_line:
-            
-            xar,  yar = res_ttl['aep'].values, res_ttl['impacts'].values
-            pline2 = ax2.semilogx(xar,yar,
-                                label       = y2lab,
-                                color       = 'blue',
-                                linestyle   = 'dashed',
-                                linewidth   = 1,
-                                alpha       = 1,
-                                marker      = 'x',
-                                markersize  = 0,
+        if y1lab == self.impact_name:
+            xar,  yar = res_ttl['ari'].values, res_ttl['impacts'].values
+            pline1 = ax.semilogx(xar,yar,
+                                label       = lineLabel,
+                                **impStyle_d
                                 )
+            #add a hatch
+            if hatch_f:
+                polys = ax.fill_between(xar, yar, y2=0, 
+                                        color       = h_color, 
+                                        alpha       = h_alpha,
+                                        hatch       = hatch)
         
+        elif y1lab == 'AEP':
+            xar,  yar = res_ttl['impacts'].values, res_ttl['aep'].values
+            pline1 = ax.plot(xar,yar,
+                            label       = lineLabel,
+                            **impStyle_d
+                            )
+                    
+            if hatch_f:
+                polys = ax.fill_betweenx(yar.astype(np.float), x1=xar, x2=0, 
+                                    color       = h_color, 
+                                    alpha       = h_alpha,
+                                    hatch       = hatch)
+            
+        
+        return ax
+            
+        
+    def _postFmt(self, #text, grid, leend
+                 ax, 
 
+                 val_str=None,
+                 grid=None,
+                 legendLoc = 1,
+                 ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        plt, matplotlib = self.plt, self.matplotlib
+        if grid is None: grid=self.grid
         
         #=======================================================================
         # Add text string 'annot' to lower left of plot
         #=======================================================================
-        xmin, xmax1 = ax1.get_xlim()
-        ymin, ymax1 = ax1.get_ylim()
-        
-        x_text = xmin + (xmax1 - xmin)*.1 # 1/10 to the right of the left ax1is
-        y_text = ymin + (ymax1 - ymin)*.1 #1/10 above the bottom ax1is
-        anno_obj = ax1.text(x_text, y_text, val_str)
-        
-        #=======================================================================
-        # format axis labels
-        #======================================================= ================
-        #damage values (yaxis for ax1)
-        old_tick_l = ax1.get_yticks() #get teh old labels
-         
-        # build the new ticks
-        l = [dfmt.format(value/basev) for value in old_tick_l]
-              
-        #apply the new labels
-        ax1.set_yticklabels(l)
-        
-        
-        
-        #ARI (xaxis for ax1)
-        ax1.get_xaxis().set_major_formatter(
-                matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+        if isinstance(val_str, str):
+            xmin, xmax = ax.get_xlim()
+            ymin, ymax = ax.get_ylim()
+            
+            x_text = xmin + (xmax - xmin)*.1 # 1/10 to the right of the left axis
+            y_text = ymin + (ymax - ymin)*.1 #1/10 above the bottom axis
+            anno_obj = ax.text(x_text, y_text, val_str)
         
         #=======================================================================
-        # post formatting
+        # grid
         #=======================================================================
-        if grid: ax1.grid()
+        if grid: ax.grid()
         
 
-        #legend
-        h1, l1 = ax1.get_legend_handles_labels() #pull legend handles from axis 1
-        h2, l2 = ax2.get_legend_handles_labels()
-        ax1.legend(h1+h2, l1+l2, loc=2) #turn legend on with combined handles
+        #=======================================================================
+        # #legend
+        #=======================================================================
+        h1, l1 = ax.get_legend_handles_labels() #pull legend handles from axis 1
+        #h2, l2 = ax2.get_legend_handles_labels()
+        #ax.legend(h1+h2, l1+l2, loc=2) #turn legend on with combined handles
+        ax.legend(h1, l1, loc=legendLoc) #turn legend on with combined handles
         
-        return fig
+        return ax
+    
+    def _tickSet(self,
+                 ax,
+                 xfmtFunc=None, #function that returns a formatted string for x labels
+                 xlrot=0,
+                 
+                 yfmtFunc=None,
+                 ylrot=0):
+        
+
+        #=======================================================================
+        # xaxis
+        #=======================================================================
+        if not xfmtFunc is None:
+            # build the new ticks
+            l = [xfmtFunc(value) for value in ax.get_xticks()]
+                  
+            #apply the new labels
+            ax.set_xticklabels(l, rotation=xlrot)
+        
+        
+        #=======================================================================
+        # yaxis
+        #=======================================================================
+        if not yfmtFunc is None:
+            # build the new ticks
+            l = [yfmtFunc(value) for value in ax.get_yticks()]
+                  
+            #apply the new labels
+            ax.set_yticklabels(l, rotation=ylrot)
+        
+    def _get_val_str(self, #helper to get value string for writing text on the plot
+                     val_str,impactFmtFunc
+                     ):
+        
+        if val_str is None:
+            val_str = self.val_str
+        
+        if isinstance(val_str, str):
+            if val_str=='*defalut':
+                val_str='annualized impacts = ' + impactFmtFunc(self.ead_tot)
+            elif val_str=='*no':
+                val_str=None
+                
+        return val_str
+        
+
     
     def multi(self, #single plot w/ risk curves from multiple scenarios
        
@@ -454,12 +543,7 @@ class Plotr(ComWrkr):
                   logger=None,
                   ):
         
-        """
-        summary risk results plotter
-        
-        This is similar to what's  on modcom.risk_plot()
-        
-        """
+
         
         #======================================================================
         # defaults

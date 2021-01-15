@@ -301,11 +301,11 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         self.feedback.setProgress(10)
         #load tabular
-        res_ser = wrkr.load_data(data_fp)
+        res_ser = wrkr.load_ttl(data_fp)
         
         self.feedback.setProgress(20)
         #execute
-        fig = wrkr.single(res_ser, dfmt='{0:.0f}', y1lab='impacts')
+        fig = wrkr.plot_riskCurve(res_ser, dfmt='{0:.0f}', y1lab='impacts')
         
         self.feedback.setProgress(80)
         #save
