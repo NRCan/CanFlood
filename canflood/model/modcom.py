@@ -2433,7 +2433,7 @@ class Model(ComWrkr):
     #===========================================================================
     # PLOTTING-------
     #===========================================================================
-    def risk_plot(self, #generate and save a figure that summarizes the damages 
+    def risk_plot(self, #impacts vs ARI
                   dmg_ser = None,
                   
                   #labels
@@ -2614,7 +2614,7 @@ class Model(ComWrkr):
     plt.show()
     """
     
-    def plot_aep(self, #generate and save a figure that summarizes the damages 
+    def plot_aep(self, #AEP vs impacts
                   dmg_ser = None,
                   
                   #labels
