@@ -113,6 +113,7 @@ class Model(ComWrkr,
         attrimat02 -- attribution matrix file path
         r2_passet -- per_asset results from the risk2 model
         r2_ttl  -- total results from risk2
+        eventypes -- df of aep, noFail, and rEventName
     
     """
     
@@ -158,6 +159,7 @@ class Model(ComWrkr,
     attrimat03=''
     r2_passet=''
     r2_ttl =''
+    eventypes=''
     
     #[plotting]
     """see ComWrkr"""
@@ -324,7 +326,7 @@ class Model(ComWrkr,
         miss_l = set(chk_d.keys()).difference(cpars.sections())
         
         if len(miss_l) > 0:
-            raise Error('missing %i expected sections in control file: %s'%(len(miss_l), miss_l))
+            log.warning('missing %i expected sections in control file: %s'%(len(miss_l), miss_l))
         
         
         #=======================================================================
@@ -332,6 +334,7 @@ class Model(ComWrkr,
         #=======================================================================
         errors = [] #container for errors
         for sectName, vchk_d in chk_d.items():
+            if not sectName in cpars: continue #allow for backward scompatailbiity
             csectName = cpars[sectName] #get these parameters
             
             #===================================================================
@@ -687,7 +690,7 @@ class Model(ComWrkr,
             
             
         
-    def load_evals(self,#loading expo data
+    def load_evals(self,#loading event probability data
                    fp = None,
                    dtag = 'evals',
                    ):
@@ -890,7 +893,7 @@ class Model(ComWrkr,
 
         
         #======================================================================
-        # load the data
+        # load the data-------
         #======================================================================
         self.load_expos(dtag=dtag, **kwargs) #load, clean, slice, add to data_d
         edf = self.data_d.pop(dtag) #pull out the reuslt
@@ -966,12 +969,24 @@ class Model(ComWrkr,
             
             if len(miss_l)==1:
                 fill_exn_d[aep] = list(miss_l)[0]
+            elif len(miss_l)==0:
+                pass #not filling any events
+            else: raise Error('only allowed 1 empty')
 
                 
         log.debug('calculating probaility for %i complex events with remaining secnodaries'%(
             len(fill_exn_d)))
             
-        self.noFailExn_d ={k:v for k,v in fill_exn_d.items()} #set this for the probability calcs
+        self.noFailExn_d =copy.copy(fill_exn_d) #set this for the probability calcs
+        
+        #assemble event type  frame
+        """this is a late add.. would have been nice to use this more in multi_ev"""
+        df = aep_ser.to_frame().reset_index(drop=False).rename(columns={'index':'rEventName'})
+        df['noFail'] = df['rEventName'].isin(fill_exn_d.values())
+        
+        self.eventType_df = df
+ 
+        
         #=======================================================================
         # fill in missing 
         #=======================================================================
@@ -991,7 +1006,6 @@ class Model(ComWrkr,
             else:
 
                 #data provided on this event
-
                 cplx_df = get_cplx_df(edf, aep=aep)
                 assert len(cplx_df.columns)==(len(cplx_evn_d[aep])-1), 'bad column count'
                 assert (cplx_df.sum(axis=1)<=1).all() #check we don't already exceed 1 (redundant)
@@ -3015,6 +3029,7 @@ class Model(ComWrkr,
                     dtag=None,
                     ofn = None,
                     upd_cf= True,
+                    logger=None,
                     ):
         assert self.attriMode
         #=======================================================================
@@ -3024,7 +3039,7 @@ class Model(ComWrkr,
             ofn = 'attr%02d_%s'%(self.att_df.columns.nlevels, self.name)
         if dtag is None: dtag = self.attrdtag_out
             
-        out_fp = self.output_df(self.att_df, ofn)
+        out_fp = self.output_df(self.att_df, ofn, logger=logger)
         
         #update the control file
         if upd_cf:
@@ -3032,7 +3047,40 @@ class Model(ComWrkr,
                     {
                     'results_fps':(
                         {dtag:out_fp}, 
-                        '#\'%s\' file path set from dmg2.py at %s'%(
+                        '#\'%s\' file path set from output_attr at %s'%(
+                            dtag, datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                        ),
+                     },
+                    cf_fp = self.cf_fp
+                )
+        return out_fp
+    
+    def output_etype(self,
+                     df = None,
+                     dtag='eventypes',
+                     ofn=None,
+                     upd_cf=True,
+                     logger=None):
+        
+        
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if df is None: df = self.eventType_df
+        if ofn is None:
+            ofn = '%s_%s'%(dtag, self.name)
+
+            
+        out_fp = self.output_df(df, ofn, logger=logger, write_index=False)
+        
+        #update the control file
+        if upd_cf:
+            self.update_cf(
+                    {
+                    'results_fps':(
+                        {dtag:out_fp}, 
+                        '#\'%s\' file path set from output_etype at %s'%(
                             dtag, datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
                         ),
                      },

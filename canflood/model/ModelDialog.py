@@ -373,21 +373,21 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         # output
         #=======================================================================
-        model.output_ttl()
+        #risk results
+        model.output_ttl(upd_cf = self.checkBox_SS_updCf.isChecked())
         
         out_fp2=''
         if not res_df is None:
-            out_fp2= model.output_passet()
+            out_fp2= model.output_passet(upd_cf = self.checkBox_SS_updCf.isChecked())
             
-        #update the control file
-        if self.checkBox_SS_updCf.isChecked():
-            model.upd_cf()
+
             
         #attribution
         if self.checkBox_SS_attr.isChecked():
             model.output_attr(upd_cf = self.checkBox_SS_updCf.isChecked())
         
-        
+        #event metadata
+        model.output_etype(upd_cf = self.checkBox_SS_updCf.isChecked())
         #=======================================================================
         # wrap
         #=======================================================================

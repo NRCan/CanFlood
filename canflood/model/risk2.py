@@ -292,62 +292,51 @@ class Risk2(Model,
         return res_ttl, res_df
     
     def output_ttl(self,  #helper to o utput the total results file
-                   ofn=None
+                    dtag='r2_ttl',
+                   ofn=None,
+                   upd_cf= True,
+                   logger=None,
                    ):
-        """using these to help with control file writing"""
+ 
         if ofn is None:
             ofn = '%s_%s'%(self.resname, 'ttl') 
             
-        self.rttl_ofp = self.output_df(self.res_ttl, ofn, write_index=False)
-        return self.rttl_ofp
+        out_fp = self.output_df(self.res_ttl, ofn, write_index=False, logger=logger)
+        
+        if upd_cf:
+            self.update_cf( {
+                    'results_fps':(
+                        {dtag:out_fp}, 
+                        '#\'%s\' file path set from output_ttl at %s'%(
+                            dtag, datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                        ), }, cf_fp = self.cf_fp )
+        
+        return out_fp
     
     def output_passet(self,  #helper to o utput the total results file
-                   ofn=None
+                      dtag='r2_passet',
+                   ofn=None,
+                   upd_cf= True,
+                   logger=None,
                    ):
         """using these to help with control file writing"""
         if ofn is None:
-            ofn = '%s_%s'%(self.resname, 'passet')
+            ofn = '%s_%s'%(self.resname, dtag)
             
-        self.rpasset_ofp = self.output_df(self.res_df, ofn)
-        return self.rpasset_ofp
+        out_fp = self.output_df(self.res_df, ofn, logger=logger)
+        
+        if upd_cf:
+            self.update_cf( {
+                    'results_fps':(
+                        {dtag:out_fp}, 
+                        '#\'%s\' file path set from output_passet at %s'%(
+                            dtag, datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                        ), }, cf_fp = self.cf_fp )
+        
+        return out_fp
         
     
-    def upd_cf(self, #update the control file 
-               cf_fp = None,
-               ):
-        #======================================================================
-        # set defaults
-        #======================================================================
-        if cf_fp is None: cf_fp = self.cf_fp
-        
-        
-        
-        #=======================================================================
-        # build results_fps
-        #=======================================================================
-        rf_d = dict()
-        
-            
-        for k, out_fp in {
-            'r2_passet':self.rpasset_ofp,
-            'r2_ttl':self.rttl_ofp,
-            }.items():
-            
-            if isinstance(out_fp, str):
-                if not self.absolute_fp:
-                    out_fp = os.path.split(out_fp)[1]
-                
-                rf_d[k] = out_fp
-        
- 
-        return self.update_cf(
-            {
-            'results_fps':(rf_d, '#ile paths set from risk2.py at %s'%(
-                    datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
-                ),
-             },
-            cf_fp = cf_fp
-            )
+
     
     
 
