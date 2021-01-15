@@ -301,18 +301,22 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         self.feedback.setProgress(10)
         #load tabular
-        res_ser = wrkr.load_ttl(data_fp)
+        tlRaw_df = wrkr.load_ttl(data_fp)
+        tl_df = wrkr.prep_dtl(tlRaw_df)
         
         self.feedback.setProgress(20)
         #execute
-        fig = wrkr.plot_riskCurve(res_ser, dfmt='{0:.0f}', y1lab='impacts')
-        
-        self.feedback.setProgress(80)
-        #save
-        out_fp = wrkr.output_fig(fig)
+        if self.checkBox_RP_aep.isChecked():
+            fig = wrkr.plot_riskCurve(tl_df, y1lab='AEP')
+            wrkr.output_fig(fig)
+        if self.checkBox_RP_ari.isChecked():
+            fig = wrkr.plot_riskCurve(tl_df, y1lab='impacts')
+            wrkr.output_fig(fig)
+            
+
         self.feedback.setProgress(95)
         
-        log.info('riskPlot saved to file: %s'%out_fp)
+
         self.feedback.upd_prog(None) #set the progress bar back down to zero
         
         
