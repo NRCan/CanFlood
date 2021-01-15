@@ -66,26 +66,29 @@ class Plotr(ComWrkr):
     ead_tot=''
     impact_name=''
     
+    """values are dummies.. upd_impStyle will reset form attributes"""
     impStyle_d = {
-                            'color': 'black',
-                            'linestyle': 'dashdot',
-                            'linewidth': 2,
-                            'alpha': 0.75, # 0=transparent, 1=opaque
-                            'marker': 'o',
-                            'markersize': 4,
-                            'fillstyle': 'none', #marker fill style
-                      }
+            'color': 'black',
+            'linestyle': 'dashdot',
+            'linewidth': 2.0,
+            'alpha':0.75 , # 0=transparent, 1=opaque
+            'marker':'o',
+            'markersize':  4.0,
+            'fillstyle': 'none' #marker fill style
+                            }
+    
+
     
     
     def __init__(self,
                  name='Results',
-                 
+                 impStyle_d=None,
                    #labels
                   xlab='ARI', y1lab=None, y2lab='AEP',
                   
                   
                   #impacts line style controls
-                 impStyle_d = None,                 
+                
                   
                   #format controls
                   grid = True, logx = False, 
@@ -102,6 +105,8 @@ class Plotr(ComWrkr):
                     hatch =  None,
                     h_color = 'blue',
                     h_alpha = 0.1,
+                    
+                    
                     
                     
                     
@@ -134,8 +139,9 @@ class Plotr(ComWrkr):
         self.h_alpha    =h_alpha
         
         if impStyle_d is None:
-            impStyle_d = self.impStyle_d.copy()
-        self.impStyle_d=impStyle_d
+            self.upd_impStyle()
+        else:
+            self.impStyle_d=impStyle_d
         
         self.logger.info('init finished')
         
@@ -166,6 +172,24 @@ class Plotr(ComWrkr):
         matplotlib.rcParams['figure.autolayout'] = False #use tight layout
         
         self.plt, self.matplotlib = plt, matplotlib
+        
+    def upd_impStyle(self): #update the plotting pars based on your attributes
+        """
+        taking instance variables (rather than parser's section) because these are already typset
+        """
+        #assert not self.cfPars_d is None, 'load the control file first!'
+        impStyle_d = dict()
+        
+        
+        #loop through the default values
+        
+        for k, v in self.impStyle_d.items():
+            if hasattr(self, k):
+                impStyle_d[k] = getattr(self, k)
+            else: #just use default
+                impStyle_d[k] = v
+                
+        self.impStyle_d = impStyle_d
         
         
         

@@ -118,7 +118,8 @@ class Cmpr(riskPlotr):
             sWrkr.load_cf(parsN_d['cf_fp'])
             
             #populate the plotting parameters
-            sWrkr.get_plot_pars() 
+            sWrkr.upd_impStyle() 
+
                 
             #===================================================================
             # add to family
@@ -243,13 +244,10 @@ class Scenario(Model, riskPlotr): #simple class for a scenario
     cfPars_d = None
     
     #plotting variables
-    color = 'black'
-    linestyle = 'dashdot'
-    linewidth = 2.0
-    alpha =     0.75        #0=transparent 1=opaque
-    marker =    'o'
-    markersize = 4.0
-    fillstyle = 'none'    #marker fill style
+    """
+    moved to Model
+    """
+
     
 
     def __init__(self,
@@ -261,6 +259,8 @@ class Scenario(Model, riskPlotr): #simple class for a scenario
         
         """we'll set another name from the control file"""
         self.nameRaw = nameRaw 
+        
+
         
         """no need to init baseclases"""
         
@@ -299,23 +299,7 @@ class Scenario(Model, riskPlotr): #simple class for a scenario
         
         return
     
-    def get_plot_pars(self): #get a set of plotting handles based on your variables
-        """
-        taking instance variables (rather than parser's section) because these are already typset
-        """
-        assert not self.cfPars_d is None, 'load the control file first!'
-        impStyle_d = dict()
-        
-        
-        #loop through the default values
-        
-        for k, v in self.impStyle_d.items():
-            if hasattr(self, k):
-                impStyle_d[k] = getattr(self, k)
-            else: #just use default
-                impStyle_d[k] = v
-                
-        self.impStyle_d = impStyle_d
+
                 
     
 

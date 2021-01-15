@@ -157,13 +157,7 @@ class Model(ComWrkr):
     r2_ttl =''
     
     #[plotting]
-    color = 'black'
-    linestyle = 'dashdot'
-    linewidth = 2.0
-    alpha =     0.75        #0=transparent 1=opaque
-    marker =    'o'
-    markersize = 4.0
-    fillstyle = 'none'    #marker fill style
+    """see ComWrkr"""
     
     #==========================================================================
     # program vars

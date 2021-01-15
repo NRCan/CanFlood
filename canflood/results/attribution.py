@@ -78,7 +78,12 @@ class Attr(Model, riskPlotr):
         
     def _setup(self):
         log = self.logger.getChild('setup')
+        
+        #load the control file
         self.init_model()
+        
+        #upldate your group plot style container
+        self.upd_impStyle()
         
         self.load_ttl()
         self.load_passet()
@@ -201,6 +206,7 @@ class Attr(Model, riskPlotr):
                   lvals_d, #mdex lvl values {lvlName:(lvlval1, lvlval2...)}
                   atr_dxcol=None,
                   logger=None,
+                  sliceName='slice', #
                   ):
         
         #=======================================================================
@@ -303,6 +309,9 @@ class Attr(Model, riskPlotr):
         #add plot keys
         df['plot']=True
         
+        
+        #calc ead
+        
         return df
         
 
@@ -328,6 +337,10 @@ class Attr(Model, riskPlotr):
         #check aep membership
         miss_l = set(sttl_df['aep']).difference(ttl_df['aep'])
         assert len(miss_l)==0, 'aep miss: %s'%miss_l
+        
+        """
+        self.color
+        """
         #=======================================================================
         # plot the group
         #=======================================================================
@@ -340,7 +353,7 @@ class Attr(Model, riskPlotr):
             'full':{
                     'ttl_df':ttl_df,
                     'ead_tot':self.ead_tot,
-                    'impStyle_d':dict(),
+                    'impStyle_d':self.impStyle_d,
                     }
             }
         
