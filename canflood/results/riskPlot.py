@@ -576,8 +576,14 @@ class Plotr(ComWrkr):
     
     def plot_stackdRCurves(self,
                    dxind,
+                   sEAD_ser=None, #series with EAD data for labels
                    y1lab='AEP',
-                   figsize=None, impactFmtFunc=None, val_str=None,
+                   
+                   #hatch format
+                   h_alpha = 0.9,
+                   
+                   figsize=None, impactFmtFunc=None, 
+                   val_str='*default',
                    logger=None,):
         #=======================================================================
         # defaults
@@ -595,6 +601,8 @@ class Plotr(ComWrkr):
             
         if impactFmtFunc is None:
             impactFmtFunc=self.impactFmtFunc
+            
+        if h_alpha is None: h_alpha=self.h_alpha
         
         #=======================================================================
         # prechecks
@@ -607,10 +615,14 @@ class Plotr(ComWrkr):
 
         nameRank_d= {lvlName:i for i, lvlName in enumerate(mindex.names)}
         
+        if isinstance(sEAD_ser, pd.Series):
+            miss_l = set(sEAD_ser.index).symmetric_difference(dxind.columns)
+            assert len(miss_l)==0, 'mismatch on plot group names'
+        
         #======================================================================
         # labels
         #======================================================================
-        #val_str = self._get_val_str(val_str, impactFmtFunc)
+        val_str = self._get_val_str(val_str, impactFmtFunc)
          
          
         if y1lab == 'AEP':
@@ -646,17 +658,17 @@ class Plotr(ComWrkr):
         #=======================================================================
         # plot line
         #=======================================================================
+
         if y1lab == 'AEP':
             """I dont see any native support for x axis stacks"""
             
-            yar = mindex.levels[nameRank_d['eads']].values #ARI values 
+            yar = mindex.levels[nameRank_d['aeps']].values
+            xCum_ar = 0
             for colName, cser in dxind.items():
-                ax1.fill_betweenx()
-                print(colName)
+                ax1.fill_betweenx(yar, xCum_ar, xCum_ar+cser.values, label=colName, 
+                                  lw=0, alpha=h_alpha)
+                xCum_ar +=cser.values
 
-        
-        
-        
         elif y1lab == self.impact_name:
             
             #ARI values  (ascending?)
@@ -666,24 +678,30 @@ class Plotr(ComWrkr):
             
             #plot the stack
             ax1.stackplot(xar, yar, baseline='zero', labels=dxind.columns,
-                          alpha=0.9)
+                          alpha=h_alpha, lw=0)
+            
             ax1.set_xscale('log')
             
-            """
-            view(dxind)
-            ax1.legend()
-            """
         #set limits
         if y1lab == 'AEP':
-            ax1.set_xlim(0, max(res_ttl['impacts'])) #aep limits 
-            ax1.set_ylim(0, max(res_ttl['aep'])*1.1)
+            ax1.set_xlim(0, max(xCum_ar)) #aep limits 
+            ax1.set_ylim(0, max(yar)*1.1)
         elif y1lab == self.impact_name:
             ax1.set_xlim(max(xar), 1) #ari limits
         
         #=======================================================================
         # post format
         #=======================================================================
-        self._postFmt(ax1, val_str=val_str)
+        #legend
+        h1, l1 = ax1.get_legend_handles_labels()
+        legLab_d = {e:'\'%s\' annualized = '%e + impactFmtFunc(sEAD_ser[e]) for e in l1}
+
+        
+        self._postFmt(ax1, 
+                      val_str=None, #putting in legend ittle 
+                      legendHandles=(h1, list(legLab_d.values())),
+                      xLocScale=0.8, yLocScale=0.1,
+                      legendTitle=val_str)
         
         #assign tick formatter functions
         if y1lab == 'AEP':
@@ -763,8 +781,12 @@ class Plotr(ComWrkr):
 
                  val_str=None,
                  grid=None,
+                 
+                 #legend kwargs
                  legendLoc = 1,
                  xLocScale=0.1, yLocScale=0.1,
+                 legendHandles=None, 
+                 legendTitle=None,
                  ):
         
         #=======================================================================
@@ -793,10 +815,15 @@ class Plotr(ComWrkr):
         #=======================================================================
         # #legend
         #=======================================================================
-        h1, l1 = ax.get_legend_handles_labels() #pull legend handles from axis 1
+        if legendHandles is None:
+            h1, l1 = ax.get_legend_handles_labels() #pull legend handles from axis 1
+        else:
+            assert isinstance(legendHandles, tuple)
+            assert len(legendHandles)==2
+            h1, l1 = legendHandles
         #h2, l2 = ax2.get_legend_handles_labels()
         #ax.legend(h1+h2, l1+l2, loc=2) #turn legend on with combined handles
-        ax.legend(h1, l1, loc=legendLoc) #turn legend on with combined handles
+        ax.legend(h1, l1, loc=legendLoc, title=legendTitle) #turn legend on with combined handles
         
         return ax
     
@@ -838,8 +865,8 @@ class Plotr(ComWrkr):
             val_str = self.val_str
         
         if isinstance(val_str, str):
-            if val_str=='*defalut':
-                val_str='annualized impacts = ' + impactFmtFunc(self.ead_tot)
+            if val_str=='*default':
+                val_str='total annualized impacts = ' + impactFmtFunc(self.ead_tot)
             elif val_str=='*no':
                 val_str=None
                 

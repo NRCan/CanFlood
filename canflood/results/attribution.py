@@ -344,9 +344,22 @@ class Attr(Model, riskPlotr):
                 
         #join this in and move it up some levels
         sdf.index = sdf.index.join(mindex2)
+        
+        #=======================================================================
+        # get ead values
+        #=======================================================================
+        """should apply the same ltail/rtail parameters from the cf"""
 
         
-        return sdf 
+        sEAD_ser = self.calc_ead(
+            sdf.droplevel(level='ari').T, #reshape to ead format
+            drop_tails=False, #handle beslow 
+            logger=log,
+            )['ead'] #1 column df
+            
+
+        
+        return sdf, sEAD_ser
         
 
  
