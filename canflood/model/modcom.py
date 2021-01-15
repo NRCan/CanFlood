@@ -204,7 +204,7 @@ class Model(ComWrkr,
         super().__init__(cf_fp=cf_fp, **kwargs) #initilzie teh baseclass
         
         """have to call on child's init
-        self._ini_plt() #setup matplotlib"""
+        self._init_plt() #setup matplotlib"""
         
         #=======================================================================
         # attachments

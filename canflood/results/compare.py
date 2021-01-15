@@ -53,7 +53,7 @@ class Cmpr(Plotr):
         
         super().__init__(*args, **kwargs)
         
-        self._ini_plt() #setup matplotlib
+        self._init_plt() #setup matplotlib
         
         self.logger.debug('%s.__init__ w/ feedback \'%s\''%(
             self.__class__.__name__, type(self.feedback).__name__))

@@ -115,7 +115,7 @@ class Risk2(Model,
         
         #init the baseclass
         super().__init__(cf_fp, **kwargs) #initilzie Model
-        self._ini_plt() #setup matplotlib
+        self._init_plt() #setup matplotlib
         
         self.logger.debug('finished __init__ on Risk')
         
@@ -261,7 +261,7 @@ class Risk2(Model,
 
 
         res_ttl = res_ttl.join(
-            pd.Series(np.full(len(self.extrap_vals_d), 'extraploated'), 
+            pd.Series(np.full(len(self.extrap_vals_d), 'extrap'), 
                   index=self.extrap_vals_d, name='note')
             )
         

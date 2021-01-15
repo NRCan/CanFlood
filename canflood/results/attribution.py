@@ -81,7 +81,7 @@ class Attr(Model, riskPlotr):
         
         #load the control file
         self.init_model()
-        
+        self._init_plt()
         #upldate your group plot style container
         self.upd_impStyle()
         
@@ -106,7 +106,9 @@ class Attr(Model, riskPlotr):
         #=======================================================================
         # check
         #=======================================================================
-        miss_l = set(atr_dxcol.columns.levels[0]).symmetric_difference(self.data_d['r2_passet'].columns)
+        miss_l = set(atr_dxcol.columns.levels[0]).symmetric_difference(
+            self.aep_df.loc[~self.aep_df['extrap'], 'aep'])
+ 
         assert len(miss_l)==0, 'event mismatch'
         
         #=======================================================================
@@ -196,7 +198,7 @@ class Attr(Model, riskPlotr):
         df.columns = df.columns.astype(np.float)
         
         #drop extraploators and ead
-        boolcol = df.columns.isin(self.aepEvents)
+        boolcol = df.columns.isin(self.aep_df.loc[~self.aep_df['extrap'], 'aep'])
         df = df.loc[:, boolcol].sort_index(axis=1, ascending=True)
         
         
@@ -286,7 +288,7 @@ class Attr(Model, riskPlotr):
         # precheck
         #=======================================================================
         #aep set
-        miss_l = set(rp_df.columns).difference(atr_dxcol.columns.levels[0])
+        miss_l = set(atr_dxcol.columns.levels[0]).difference(rp_df.columns)
         assert len(miss_l)==0, 'event mismatch'
         
         #attribute matrix logic
@@ -295,6 +297,13 @@ class Attr(Model, riskPlotr):
         assert (atr_dxcol.max()<=1.0).all().all()
         assert (atr_dxcol.max()>=0.0).all().all()
         for e in atr_dxcol.dtypes.values: assert e==np.dtype(float)
+        
+        #=======================================================================
+        # prep
+        #=======================================================================
+        """
+        view(rp_df)
+        """
         #=======================================================================
         # multiply
         #=======================================================================

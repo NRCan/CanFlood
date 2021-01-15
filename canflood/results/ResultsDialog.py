@@ -297,7 +297,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         wrkr = results.riskPlot.Plotr(logger=self.logger, 
                                      tag = tag,
                                      feedback=self.feedback,
-                                     out_dir=wd)._ini_plt()
+                                     out_dir=wd)._init_plt()
         
         self.feedback.setProgress(10)
         #load tabular

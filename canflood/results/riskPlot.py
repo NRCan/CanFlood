@@ -119,10 +119,10 @@ class Plotr(ComWrkr):
         self.logger.info('init finished')
         
         """call explicitly... sometimes we want lots of children who shouldnt call this
-        self._ini_plt()"""
+        self._init_plt()"""
         
         
-    def _ini_plt(self): #initilize matplotlib
+    def _init_plt(self): #initilize matplotlib
         """
         calling this here so we get clean parameters each time the class is instanced
         """
@@ -280,7 +280,17 @@ class Plotr(ComWrkr):
         
         ttl_df = df2.loc[:, sorted(df2.columns)].sort_values('ari', ascending=True)
         self.data_d['ttl'] = ttl_df.copy()
-        self.aepEvents = ttl_df['aep'].values #for checking
+        
+        #shortcut for datachecks
+        df1 = ttl_df.loc[:, ('aep', 'note')]
+        df1['extrap']= df1['note']=='extrap'
+        """
+        df1.dtypes
+        
+        #non-extraploated events
+        self.aep_df.loc[~self.aep_df['extrap'], 'aep']
+        """
+        self.aep_df = df1.drop('note', axis=1)  #for checking
         
         
         return ttl_df
