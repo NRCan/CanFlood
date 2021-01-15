@@ -430,6 +430,11 @@ class Plotr(ComWrkr):
 
         first = True
         for cName, cPars_d in parsG_d.items():
+            #check keys
+            miss_l = set(['ttl_df', 'ead_tot', 'impStyle_d']).difference(cPars_d.keys())
+            assert len(miss_l)==0, '\'%s\' missing keys: %s'%(cName, miss_l)
+            
+            #check data
             cdf = cPars_d['ttl_df'].copy()
             
             #check columns
@@ -503,9 +508,15 @@ class Plotr(ComWrkr):
             cdf = cdf.loc[cdf['plot'], :] #drop from handles
             ead_tot = cPars_d['ead_tot']
             
+            #defaults
+            if 'hatch_f' in cPars_d:
+                hatch_f=cPars_d['hatch_f']
+            else:
+                hatch_f=False
+            
             #add the line
             self._lineToAx(cdf, y1lab, ax1, impStyle_d=cPars_d['impStyle_d'],
-                           hatch_f=False, lineLabel=cName)
+                           hatch_f=hatch_f, lineLabel=cName)
             
 
 
@@ -602,6 +613,8 @@ class Plotr(ComWrkr):
                                     color       = h_color, 
                                     alpha       = h_alpha,
                                     hatch       = hatch)
+        else:
+            raise Error('bad yl1ab: %s'%y1lab)
             
         
         return ax

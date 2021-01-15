@@ -71,7 +71,7 @@ class Attr(Model, riskPlotr):
         
         super().__init__(cf_fp, *args, **kwargs)
         
-
+        self.attriMode=True #always for this worker
         
         self.logger.debug('%s.__init__ w/ feedback \'%s\''%(
             self.__class__.__name__, type(self.feedback).__name__))
@@ -121,6 +121,7 @@ class Attr(Model, riskPlotr):
                    logger=None,
                     
                     ):
+        raise Error('harmonize with riskPlot methods')
         #=======================================================================
         # defaults
         #=======================================================================
@@ -320,6 +321,10 @@ class Attr(Model, riskPlotr):
                    sttl_df, #sliced data
                    ttl_df=None, #original (full) data
                    logger=None,
+                   
+                   #plot keys
+                   y1lab='AEP',
+                   **plotKwargs
                    ): 
         
         #=======================================================================
@@ -354,10 +359,11 @@ class Attr(Model, riskPlotr):
                     'ttl_df':ttl_df,
                     'ead_tot':self.ead_tot,
                     'impStyle_d':self.impStyle_d,
+                    'hatch_f':True
                     }
             }
         
-        return self.multi(plotParsG_d, logger=log)
+        return self.plot_mRiskCurves(plotParsG_d,y1lab=y1lab, logger=log, **plotKwargs)
                     
             
         
