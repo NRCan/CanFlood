@@ -194,14 +194,15 @@ class Plotr(ComWrkr):
         #=======================================================================
         assert isinstance(tlRaw_df, pd.DataFrame)
         
-        
         #check the column expectations
         miss_l = set(self.exp_ttl_colns).difference(tlRaw_df.columns)
         assert len(miss_l)==0
-        
-        
+
         assert 'ead' in tlRaw_df.iloc[:,0].values, 'dmg_ser missing ead entry'
         
+        #=======================================================================
+        # wrap
+        #=======================================================================
         log.info('loaded %s from %s'%(str(tlRaw_df.shape), fp))
         
         self.tlRaw_df=tlRaw_df
@@ -257,7 +258,7 @@ class Plotr(ComWrkr):
         df2 = df1.loc[df1['plot'], :].copy()
         
         #typeset aeps
-        df2.loc[:, 'aep'] = df2['aep'].astype(np.float64)
+        df2.loc[:, 'aep'] = df2['aep'].astype(np.float64).round(self.prec)
         """
         df2.dtypes
         """

@@ -96,12 +96,21 @@ class Attr(Model, riskPlotr):
         #=======================================================================
         # post fix attrim
         #=======================================================================
+        """ROUNDING
+        forcing the project precision aon all hte aep values...
+            not the greatest.. but only decent way to ensure they are treated as members
+        """
         #reformat aep values
         atr_dxcol = self.data_d.pop(self.attrdtag_in)
-        mdex = atr_dxcol.columns
-        atr_dxcol.columns = mdex.set_levels(mdex.levels[0].astype(np.float), level=0)
-        self.data_d[self.attrdtag_in] = atr_dxcol
         
+        mdex = atr_dxcol.columns
+        atr_dxcol.columns = mdex.set_levels(
+            np.around(mdex.levels[0].astype(np.float), decimals=self.prec), 
+            level=0)
+        
+        #store
+        self.data_d[self.attrdtag_in] = atr_dxcol
+ 
         
         #=======================================================================
         # check
@@ -119,58 +128,7 @@ class Attr(Model, riskPlotr):
         
         return self
         
-    def xxxload_ttl(self,
-                   fp = None,
-                   dtag = 'r2_ttl',
 
-                   logger=None,
-                    
-                    ):
-        raise Error('harmonize with riskPlot methods')
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        if logger is None: logger=self.logger
-        
-        log = logger.getChild('load_ttl')
-        if fp is None: fp = getattr(self, dtag)
- 
-        
-        
-        #======================================================================
-        # load it
-        #======================================================================
-        df_raw = pd.read_csv(fp, index_col=None)
-        self.data_d[dtag] = df_raw.copy()
-        
-        
-        #=======================================================================
-        # clean
-        #=======================================================================
-        #df = df_raw.drop('plot', axis=1)
-        df=df_raw.copy()
-        
-        #drop EAD row
-        boolidx = df['aep']=='ead'
-        self.ead_tot = df_raw.loc[boolidx,'impacts'].values[0]
-        
-        df = df.loc[~boolidx, :]
-        df.loc[:, 'aep'] = df['aep'].astype(np.float)
-        
-        #drop extraploated
-        boolidx = df['note']=='extraploated'
-        df = df.loc[~boolidx, :].drop('note', axis=1)
-        
-        #=======================================================================
-        # add ari
-        #=======================================================================
-        df['ari'] = (1/df['aep']).astype(int)
-        #=======================================================================
-        # set it
-        #=======================================================================
-        self.eventNames = df['aep'].values
-        
-        self.data_d['ttl'] = df
         
     def load_passet(self, #load the per-asset results
                    fp = None,
@@ -192,15 +150,30 @@ class Attr(Model, riskPlotr):
         # load it
         #======================================================================
         df_raw = pd.read_csv(fp, index_col=0)
+        """
+        df_raw.columns
+        df.columns
+        """
         
         #drop ead and format column
         df = df_raw.drop('ead', axis=1)
-        df.columns = df.columns.astype(np.float)
+        df.columns = np.around(df.columns.astype(np.float), decimals=self.prec)
         
         #drop extraploators and ead
         boolcol = df.columns.isin(self.aep_df.loc[~self.aep_df['extrap'], 'aep'])
+        assert boolcol.sum() >2, 'suspicious event match count'
         df = df.loc[:, boolcol].sort_index(axis=1, ascending=True)
         
+
+        
+        #=======================================================================
+        # check
+        #=======================================================================
+        """a bit redundant.. because we just selected for these above"""
+        miss_l = set(df.columns).symmetric_difference(
+            self.aep_df.loc[~self.aep_df['extrap'], 'aep'])
+ 
+        assert len(miss_l)==0, 'event mismatch'
         
         #=======================================================================
         # set it
