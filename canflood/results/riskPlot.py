@@ -283,11 +283,10 @@ class Plotr(ComWrkr):
                     #'AEP': AEP vs. impacts 
                     
                     impactFmtFunc=None, #tick label format function for impact values
-                    #lambda x:'{:,.0f}'.format(x)
+                    #lambda x:'{:,.0f}'.format(x) #thousands comma
                     
                     val_str=None, #text to write on plot. see _get_val_str()
-
-                  
+                    figsize=None, logger=None,                  
                   ):
         
         """
@@ -300,9 +299,10 @@ class Plotr(ComWrkr):
         #======================================================================
         # defaults
         #======================================================================
-        log = self.logger.getChild('single')
+        if logger is None: logger=self.logger
+        log = logger.getChild('plot_riskCurve')
         plt, matplotlib = self.plt, self.matplotlib
-        figsize    =    self.figsize
+        if figsize is None: figsize    =    self.figsize
 
         if y1lab =='impacts':
             y1lab = self.impact_name
@@ -383,7 +383,7 @@ class Plotr(ComWrkr):
         
         return fig
     
-    def plot_mriskCurves(self, #single plot w/ risk curves from multiple scenarios
+    def plot_mRiskCurves(self, #single plot w/ risk curves from multiple scenarios
        
                   parsG_d, #container of data and plot handles
                     #{cName:{
@@ -391,10 +391,16 @@ class Plotr(ComWrkr):
                             #ead_tot:total ead value (for label)
                             #impStyle_d: kwargs for semilogx
                             
-                  
+                  y1lab='AEP', #yaxis label and plot type c ontrol
+                    #'impacts': impacts vs. ARI (use self.impact_name)
+                    #'AEP': AEP vs. impacts 
+                    
+                    impactFmtFunc=None, #tick label format function for impact values
+                    #lambda x:'{:,.0f}'.format(x)
+                    
+                    val_str=None, #text to write on plot. see _get_val_str()
 
-                  plot_aep_line = False, #whether to add the aep line
-                  logger=None,
+                  figsize=None, logger=None,
                   ):
         
 
@@ -406,26 +412,22 @@ class Plotr(ComWrkr):
         log = logger.getChild('multi')
         plt, matplotlib = self.plt, self.matplotlib
         
-        xlab    =    self.xlab
+        if figsize is None: figsize=self.figsize
         
-        #y2lab    =    self.y2lab
-        y1lab    =    self.y1lab
-
-        grid    =    self.grid
-        #logx    =    self.logx
-        basev    =    self.basev
-        dfmt    =    self.dfmt
-        figsize    =    self.figsize
+        if y1lab =='impacts':
+            y1lab = self.impact_name
+            
+        if impactFmtFunc is None:
+            impactFmtFunc=self.impactFmtFunc
         
         
         
         #=======================================================================
-        # collect all the impacts ari data into one
+        # pre-data manip: collect all the impacts ari data into one
         #=======================================================================
         """makes it easier for some operations
         still plot on each individually"""
- 
-        
+
         first = True
         for cName, cPars_d in parsG_d.items():
             cdf = cPars_d['ttl_df'].copy()
@@ -448,11 +450,24 @@ class Plotr(ComWrkr):
         #add back in aep
         all_df['aep'] = 1/all_df['ari']
         
+        #move these to the index for quicker operations
+        all_df = all_df.set_index(['aep', 'ari'], drop=True)
+        
+
         #======================================================================
         # labels
         #======================================================================
-        title = 'CanFlood \'%s\' Annualized-%s comparison plot of %i scenarios'%(
-            self.tag, xlab, len(parsG_d))
+        
+        
+        
+        if y1lab == 'AEP':
+            title = '%s AEP-Impacts plot for %i scenarios'%(self.tag, len(parsG_d))
+            xlab=self.impact_name
+        elif y1lab == self.impact_name:
+            title = '%s Impacts-ARI plot for %i scenarios'%(self.tag, len(parsG_d))
+            xlab='ARI'
+        else:
+            raise Error('bad y1lab: %s'%y1lab)
         
         #======================================================================
         # figure setup
@@ -474,9 +489,7 @@ class Plotr(ComWrkr):
         #ax2.set_ylabel(y2lab)
         ax1.set_xlabel(xlab)
         
-        
-        #yaxis limit
-        ax1.set_xlim(max(all_df['ari']), 1) #aep limits 
+
         
         #======================================================================
         # fill the plot
@@ -489,20 +502,15 @@ class Plotr(ComWrkr):
             cdf = cPars_d['ttl_df'].copy()
             cdf = cdf.loc[cdf['plot'], :] #drop from handles
             ead_tot = cPars_d['ead_tot']
-            impStyle_d = cPars_d['impStyle_d']
+            
+            #add the line
+            self._lineToAx(cdf, y1lab, ax1, impStyle_d=cPars_d['impStyle_d'],
+                           hatch_f=False, lineLabel=cName)
             
 
-            
-            #add the damag eplot
-            xar,  yar = cdf['ari'].values, cdf['impacts'].values
-            pline1 = ax1.semilogx(xar,yar,
-                                label= cName,
-                                **impStyle_d
-                                )
-            
 
             #build labels
-            val_str = '%s Tot.Annual = '%cName + dfmt.format(ead_tot/self.basev)
+            val_str = '%s Tot.Annual = '%cName + impactFmtFunc(ead_tot)
             
             if first:
                 vMaster_str = val_str
@@ -510,47 +518,32 @@ class Plotr(ComWrkr):
             else:
                 vMaster_str= '%s\n%s'%(vMaster_str, val_str)
 
+        #set limits
+        if  y1lab==self.impact_name:
+            ax1.set_xlim(max(all_df.index.get_level_values('ari')), 1) #ARI x-axis limits
+        else:
+            ax1.set_xlim(0, all_df.max().max())
+            ax1.set_ylim(0, max(all_df.index.get_level_values('aep'))*1.1)
+            
         #=======================================================================
-        # Add text string 'annot' to lower left of plot
+        # post format
         #=======================================================================
-        xmin, xmax1 = ax1.get_xlim()
-        ymin, ymax1 = ax1.get_ylim()
+        self._postFmt(ax1, val_str=vMaster_str)
         
-        x_text = xmin + (xmax1 - xmin)*.1 # 1/10 to the right of the left ax1is
-        y_text = ymin + (ymax1 - ymin)*.1 #1/10 above the bottom ax1is
-        anno_obj = ax1.text(x_text, y_text, vMaster_str)
-        
-        #=======================================================================
-        # format axis labels
-        #======================================================= ================
-        #damage values (yaxis for ax1)
-        old_tick_l = ax1.get_yticks() #get teh old labels
-         
-        # build the new ticks
-        l = [dfmt.format(value/basev) for value in old_tick_l]
-              
-        #apply the new labels
-        ax1.set_yticklabels(l)
-        
-        
-        
-        #ARI (xaxis for ax1)
-        ax1.get_xaxis().set_major_formatter(
-                matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
-        
-        #=======================================================================
-        # post formatting
-        #=======================================================================
-        if grid: ax1.grid()
-        
-
-        #legend
-        h1, l1 = ax1.get_legend_handles_labels() #pull legend handles from axis 1
-        #h2, l2 = ax2.get_legend_handles_labels()
-        #ax1.legend(h1+h2, l1+l2, loc=2) #turn legend on with combined handles
-        ax1.legend(h1, l1, loc=1) #turn legend on with combined handles
+        #assign tick formatter functions
+        if y1lab == 'AEP':
+            xfmtFunc = impactFmtFunc
+            yfmtFunc=lambda x:'%.4f'%x
+        elif y1lab==self.impact_name:
+            xfmtFunc = lambda x:'{:,.0f}'.format(x) #thousands separatro
+            yfmtFunc=impactFmtFunc
+            
+        self._tickSet(ax1, xfmtFunc=xfmtFunc, yfmtFunc=yfmtFunc)
         
         return fig
+ 
+ 
+ 
         
 
     
@@ -620,6 +613,7 @@ class Plotr(ComWrkr):
                  val_str=None,
                  grid=None,
                  legendLoc = 1,
+                 xLocScale=0.1, yLocScale=0.1,
                  ):
         
         #=======================================================================
@@ -635,8 +629,8 @@ class Plotr(ComWrkr):
             xmin, xmax = ax.get_xlim()
             ymin, ymax = ax.get_ylim()
             
-            x_text = xmin + (xmax - xmin)*.1 # 1/10 to the right of the left axis
-            y_text = ymin + (ymax - ymin)*.1 #1/10 above the bottom axis
+            x_text = xmin + (xmax - xmin)*xLocScale # 1/10 to the right of the left axis
+            y_text = ymin + (ymax - ymin)*yLocScale #1/10 above the bottom axis
             anno_obj = ax.text(x_text, y_text, val_str)
         
         #=======================================================================

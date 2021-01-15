@@ -139,6 +139,9 @@ class Cmpr(riskPlotr):
     def riskCurves(self,
                    sWrkr_d, #container of scenario works to plot curve comparison
                    logger=None,
+                   
+                   #plot keys
+                   y1lab='AEP', #yaxis label and plot type c ontrol
                    **plotKwargs
                    ): 
         
@@ -165,11 +168,11 @@ class Cmpr(riskPlotr):
                                     }
             
             if first:
-                self.y1lab = sWrkr.impact_name
+                self.impact_name = sWrkr.impact_name
                 first = False
 
 
-        return self.multi(plotPars_d, **plotKwargs)
+        return self.plot_mRiskCurves(plotPars_d,y1lab=y1lab, **plotKwargs)
         
     def cf_compare(self, #compare control file values between Scenarios
                    sWrkr_d,
