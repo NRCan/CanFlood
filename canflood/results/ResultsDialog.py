@@ -478,7 +478,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # #plot curves
         #=======================================================================
         if self.checkBox_C_rplot.isChecked():
-            fig = wrkr.riskCurves(sWrkr_d)
+            fig = wrkr.riskCurves(sWrkr_d, y1lab='impacts')
             wrkr.output_fig(fig)
             
         self.feedback.setProgress(90)

@@ -2466,6 +2466,7 @@ class Model(ComWrkr):
         # defaults
         #======================================================================
         log = self.logger.getChild('risk_plot')
+        log.warning('depreciated!!')
         if dmg_ser is None: dmg_ser = self.res_ser.copy()
         if dfmt is None: dfmt = self.plot_fmt
         if y1lab is None: y1lab = self.y1lab
@@ -2647,6 +2648,7 @@ class Model(ComWrkr):
         # defaults
         #======================================================================
         log = self.logger.getChild('plot_aep')
+        log.warning('depreciated!!')
         if dmg_ser is None: dmg_ser = self.res_ser.copy()
         if dfmt is None: dfmt = self.plot_fmt
         if xlab is None: xlab = self.y1lab #pull from risk_plot notation

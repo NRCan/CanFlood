@@ -492,7 +492,7 @@ class Plotr(ComWrkr):
 
         
         #======================================================================
-        # fill the plot
+        # fill the plot----
         #======================================================================
         first = True
         for cName, cPars_d in parsG_d.items():
@@ -510,7 +510,7 @@ class Plotr(ComWrkr):
 
 
             #build labels
-            val_str = '%s Tot.Annual = '%cName + impactFmtFunc(ead_tot)
+            val_str = '%s = '%cName + impactFmtFunc(ead_tot)
             
             if first:
                 vMaster_str = val_str
