@@ -356,7 +356,8 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         # run the model
         #======================================================================
         model = Risk2(cf_fp, out_dir=out_dir, logger=self.logger, tag=tag,absolute_fp=absolute_fp,
-                      feedback=self.feedback)._setup()
+                      feedback=self.feedback, attriMode=self.checkBox_SS_attr.isChecked(),
+                      )._setup()
         
         res_ser, res_df = model.run(res_per_asset=res_per_asset)
         

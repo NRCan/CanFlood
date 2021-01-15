@@ -132,7 +132,7 @@ class Risk2(Model):
         self.load_dmgs()
         if not self.exlikes == '':
             self.load_exlikes()
-        if not getattr(self, self.attrdtag_in) == '':
+        if self.attriMode:
             self.load_attrimat(dxcol_lvls=2)
             self.promote_attrim()
             

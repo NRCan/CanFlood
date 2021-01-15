@@ -447,6 +447,8 @@ class Plotr(ComWrkr):
                             #ttl_df:df to plot
                             #ead_tot:total ead value (for label)
                             #impStyle_d: kwargs for semilogx
+                            
+                  
 
                   plot_aep_line = False, #whether to add the aep line
                   logger=None,

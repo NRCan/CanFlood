@@ -824,7 +824,9 @@ class Dmg2(Model):
                         events_df=None,  #keys to bdmg_df column
                         grpColn = 'nestID', #column name (in bdmg_df) to group on
                         logger=None):
-        
+        """
+        not using 'attriMode' flag... just control w/ the caller
+        """
         #=======================================================================
         # defaults
         #=======================================================================

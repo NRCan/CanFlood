@@ -176,12 +176,13 @@ class Model(ComWrkr):
     cplx_evn_d = None #complex event sets {aep: [exEventName1, exEventName1]}
     asset_cnt = 0 #for plotting
     scen_ar_d = dict() #container for empty scenario matrix
-    attriMode = False #flow control for some attribution matrix functions
+    
 
     def __init__(self,
                  cf_fp, #control file path """ note: this could also be attached by basic.ComWrkr.__init__()"""
                  split_key=None,#for checking monotonicy on exposure sets with duplicate events
                  absolute_fp=True, #whether filepaths are absolute (False=Relative)
+                 attriMode = False, #flow control for some attribution matrix functions
                  
                  **kwargs):
         
@@ -196,6 +197,8 @@ class Model(ComWrkr):
         """TODO: Consider moving this to ComWrkr so Build dialogs can access"""
         self.absolute_fp=absolute_fp
         
+        
+        self.attriMode=attriMode
 
         #attachments
         self.data_d = dict() #dictionary for loaded data sets
@@ -1225,6 +1228,7 @@ class Model(ComWrkr):
         #=======================================================================
         # prechecks
         #=======================================================================
+        assert self.attriMode
         #assert 'dmgs' in self.data_d, 'dmgs data set required with attrimat'
         assert os.path.exists(fp), '%s got invalid filepath \n    %s'%(dtag, fp)
         
@@ -1273,7 +1277,7 @@ class Model(ComWrkr):
         # set
         #=======================================================================
         self.data_d[dtag] = dxcol
-        self.attriMode=True #flag for controling some functions
+
         log.info('finished loading %s as %s'%(dtag, str(dxcol.shape)))
   
         
