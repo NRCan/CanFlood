@@ -97,7 +97,7 @@ class Dmg2(Model):
         super().__init__(cf_fp, **kwargs) #initilzie Model
        
         self.dfuncs_d = dict() #container for damage functions
-        
+
 
         
         self.logger.debug('finished __init__ on Dmg2')
@@ -824,14 +824,18 @@ class Dmg2(Model):
                         events_df=None,  #keys to bdmg_df column
                         grpColn = 'nestID', #column name (in bdmg_df) to group on
                         logger=None):
-        """
-        not using 'attriMode' flag... just control w/ the caller
-        """
+
         #=======================================================================
         # defaults
         #=======================================================================
         if logger is None: logger=self.logger
-
+        
+        """
+        even though we're called explicitly...
+            adding the check for consistency
+        """
+        assert self.attriMode
+        
         log = logger.getChild('get_attribution')
         cid = self.cid
         

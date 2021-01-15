@@ -103,7 +103,10 @@ class Cmpr(riskPlotr):
             #===================================================================
             # build/load the children
             #===================================================================
-            sWrkr = Scenario(self, sName)
+            sWrkr = Scenario(self, sName, cf_fp=parsN_d['cf_fp'])
+            """
+            sWrkr.data_d
+            """
             
              
             #load total results file
@@ -115,7 +118,7 @@ class Cmpr(riskPlotr):
                 
             #load control file
             """setting this last incase we want to overwrite with control file values"""
-            sWrkr.load_cf(parsN_d['cf_fp'])
+            sWrkr.load_cf()
             
             #populate the plotting parameters
             sWrkr.upd_impStyle() 
@@ -247,27 +250,29 @@ class Scenario(Model, riskPlotr): #simple class for a scenario
 
     def __init__(self,
                  parent,
-                 nameRaw,              
+                 nameRaw,
+                 cf_fp=None,
+                 **kwargs              
                  ):
         
-        self.logger = parent.logger.getChild(nameRaw)
+        super().__init__(cf_fp, **kwargs) #initilzie teh baseclass
+        #self.logger = parent.logger.getChild(nameRaw)
         
         """we'll set another name from the control file"""
         self.nameRaw = nameRaw 
         
 
         
-        """no need to init baseclases"""
-        
     def load_cf(self, #load the control file
-                cf_fp):
+                ):
         
         #=======================================================================
         # defaults
         #=======================================================================
         log = self.logger.getChild('load_cf')
+        
+        cf_fp = self.cf_fp
         assert os.path.exists(cf_fp)
-        self.cf_fp = cf_fp
         #=======================================================================
         # init the config parser
         #=======================================================================

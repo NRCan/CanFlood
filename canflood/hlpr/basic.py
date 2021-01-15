@@ -63,9 +63,11 @@ class ComWrkr(object): #common methods for all classes
     fillstyle = 'none'    #marker fill style
     
     
-    def __init__(self, tag='session', 
+    def __init__(self, 
+                 tag='session', 
                  cid='xid', #default used by inventory constructors
                  cf_fp='',
+
                  overwrite=True, 
                  out_dir=None, 
                  logger=mod_logger,
@@ -98,6 +100,7 @@ class ComWrkr(object): #common methods for all classes
             os.makedirs(out_dir)
             self.logger.info('created requested output directory: \n    %s'%out_dir)
 
+        self.data_d = dict() #dictionary for loaded data sets
         #======================================================================
         # attach
         #======================================================================

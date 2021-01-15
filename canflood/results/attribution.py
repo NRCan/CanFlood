@@ -114,7 +114,7 @@ class Attr(Model, riskPlotr):
         
         return self
         
-    def load_ttl(self,
+    def xxxload_ttl(self,
                    fp = None,
                    dtag = 'r2_ttl',
 
@@ -193,7 +193,7 @@ class Attr(Model, riskPlotr):
         df.columns = df.columns.astype(np.float)
         
         #drop extraploators and ead
-        boolcol = df.columns.isin(self.eventNames)
+        boolcol = df.columns.isin(self.aepEvents)
         df = df.loc[:, boolcol].sort_index(axis=1, ascending=True)
         
         

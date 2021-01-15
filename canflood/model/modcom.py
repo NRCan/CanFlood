@@ -31,7 +31,10 @@ from hlpr.basic import ComWrkr, view
 #==============================================================================
 # class-----------
 #==============================================================================
-class Model(ComWrkr):
+class Model(ComWrkr,
+            #Plotr #making each child inherit this speifically
+                #keeps damage modeuls without plotting a bit simpler
+            ):
     """
     common methods for model classes
     
@@ -179,20 +182,36 @@ class Model(ComWrkr):
     
 
     def __init__(self,
-                 cf_fp, #control file path """ note: this could also be attached by basic.ComWrkr.__init__()"""
+                 cf_fp, #control file path 
+                    #note: this could also be attached by basic.ComWrkr.__init__()
+                    #now that this is a parent... wish this was a kwarg
+                 
                  split_key=None,#for checking monotonicy on exposure sets with duplicate events
                  absolute_fp=True, #whether filepaths are absolute (False=Relative)
                  attriMode = False, #flow control for some attribution matrix functions
                  
                  **kwargs):
         
+        #=======================================================================
+        # precheck
+        #=======================================================================
         mod_logger.info('Model.__init__ start')
         assert os.path.exists(cf_fp), 'bad control filepath: %s'%cf_fp
         
-        super().__init__(**kwargs) #initilzie teh baseclass
+        #=======================================================================
+        # parent setup
+        #=======================================================================
+        super().__init__(cf_fp=cf_fp, **kwargs) #initilzie teh baseclass
         
-        self.cf_fp = cf_fp
-        self.split_key= split_key
+        """have to call on child's init
+        self._ini_plt() #setup matplotlib"""
+        
+        #=======================================================================
+        # attachments
+        #=======================================================================
+        """ moved to Comwrkr
+        self.cf_fp = cf_fp"""
+        self.split_key= split_key 
         
         """TODO: Consider moving this to ComWrkr so Build dialogs can access"""
         self.absolute_fp=absolute_fp
@@ -200,8 +219,13 @@ class Model(ComWrkr):
         
         self.attriMode=attriMode
 
-        #attachments
-        self.data_d = dict() #dictionary for loaded data sets
+
+        """moved to comWrkr
+        self.data_d = dict() #dictionary for loaded data sets"""
+        
+        #=======================================================================
+        # wrap
+        #=======================================================================
         
         self.logger.debug('finished Model.__init__')
         

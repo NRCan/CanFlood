@@ -120,7 +120,8 @@ class Plotr(ComWrkr):
         
         self.logger.info('init finished')
         
-        self._ini_plt()
+        """call explicitly... sometimes we want lots of children who shouldnt call this
+        self._ini_plt()"""
         
         
     def _ini_plt(self): #initilize matplotlib
@@ -210,6 +211,11 @@ class Plotr(ComWrkr):
                  tlRaw_df=None, #raw total results info
                  logger=None,
                  ):
+        """
+        when ttl is output, we add the EAD data, drop ARI, and add plotting handles
+            which is not great for data manipulation
+        here we clean it up and only take those for plotting
+        """
         
         if tlRaw_df is None: tlRaw_df = self.tlRaw_df
         if logger is None: logger=self.logger
@@ -271,9 +277,12 @@ class Plotr(ComWrkr):
         #=======================================================================
         log.info('finished w/ %s'%str(df2.shape))
         
-        self.ttl_df = df2.loc[:, sorted(df2.columns)].sort_values('ari', ascending=True)
+        ttl_df = df2.loc[:, sorted(df2.columns)].sort_values('ari', ascending=True)
+        self.data_d['ttl'] = ttl_df.copy()
+        self.aepEvents = ttl_df['aep'].values #for checking
         
-        return self.ttl_df
+        
+        return ttl_df
         
         
     def plot_riskCurve(self, #risk plot
