@@ -34,12 +34,12 @@ from hlpr.exceptions import QError as Error
 #===============================================================================
 #from hlpr.basic import ComWrkr
 from model.modcom import Model
-from results.riskPlot import Plotr as riskPlotr
+from results.riskPlot import Plotr
 
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Cmpr(riskPlotr):
+class Cmpr(Plotr):
  
     
     #keys to expect on the sub co ntainers
@@ -53,7 +53,7 @@ class Cmpr(riskPlotr):
         
         super().__init__(*args, **kwargs)
         
-
+        self._ini_plt() #setup matplotlib
         
         self.logger.debug('%s.__init__ w/ feedback \'%s\''%(
             self.__class__.__name__, type(self.feedback).__name__))
@@ -112,7 +112,7 @@ class Cmpr(riskPlotr):
             #load total results file
             if 'ttl_fp' in parsN_d:
                 """these are riskPlot methods"""
-                sWrkr.load_ttl(parsN_d['ttl_fp'])
+                sWrkr.load_ttl(fp=parsN_d['ttl_fp'])
                 sWrkr.prep_dtl(logger=log)
                 
                 
@@ -165,7 +165,7 @@ class Cmpr(riskPlotr):
         for childName, sWrkr in sWrkr_d.items():
             log.debug('preping %s'%childName)
             plotPars_d[childName] = {
-                                    'ttl_df':sWrkr.ttl_df,
+                                    'ttl_df':sWrkr.data_d['ttl'],
                                     'ead_tot':sWrkr.ead_tot,
                                     'impStyle_d':sWrkr.impStyle_d.copy(),
                                     }
@@ -235,7 +235,7 @@ class Cmpr(riskPlotr):
         return mdf
                     
  
-class Scenario(Model, riskPlotr): #simple class for a scenario
+class Scenario(Model, Plotr): #simple class for a scenario
     
     name=None
     
@@ -258,7 +258,8 @@ class Scenario(Model, riskPlotr): #simple class for a scenario
         super().__init__(cf_fp, **kwargs) #initilzie teh baseclass
         #self.logger = parent.logger.getChild(nameRaw)
         
-        """we'll set another name from the control file"""
+        """we'll set another name from the control file
+        TODO: clean this up"""
         self.nameRaw = nameRaw 
         
 

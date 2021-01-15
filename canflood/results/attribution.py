@@ -85,7 +85,10 @@ class Attr(Model, riskPlotr):
         #upldate your group plot style container
         self.upd_impStyle()
         
-        self.load_ttl()
+        #load and prep the total results
+        _ = self.load_ttl(logger=log)
+        _ = self.prep_dtl(logger=log)
+        
         self.load_passet()
         
         self.load_attrimat(dxcol_lvls=3)

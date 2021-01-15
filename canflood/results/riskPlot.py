@@ -36,18 +36,16 @@ from hlpr.basic import ComWrkr
 # functions-------------------
 #==============================================================================
 class Plotr(ComWrkr):
-    """
+
     #===========================================================================
-    # variables
+    # controls
     #===========================================================================
-    res_ttl: dataframe of total results
-        first column is impact values (positional)
-        col1: 'note' string
-        col2: 'plot' boolean
-    """
-    
     exp_ttl_colns = ('note', 'plot', 'aep')
     
+    #===========================================================================
+    # defaults
+    #===========================================================================
+    val_str='*defalut'
     ead_tot=''
     impact_name=''
     
@@ -148,6 +146,7 @@ class Plotr(ComWrkr):
         matplotlib.rcParams['figure.autolayout'] = False #use tight layout
         
         self.plt, self.matplotlib = plt, matplotlib
+        return self
         
     def upd_impStyle(self): #update the plotting pars based on your attributes
         """
@@ -169,7 +168,8 @@ class Plotr(ComWrkr):
         
         
         
-    def load_ttl(self, fp, #load a single ttl dataset
+    def load_ttl(self,  #load a single raw ttl dataset
+                 fp=None, 
                  logger=None): 
         
         #=======================================================================
@@ -177,6 +177,7 @@ class Plotr(ComWrkr):
         #=======================================================================
         if logger is None: logger=self.logger
         log = logger.getChild('load_data')
+        if fp is None: fp=self.r2_ttl
         
         #=======================================================================
         # #precheck
