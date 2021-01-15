@@ -185,7 +185,7 @@ class Attr(Model, riskPlotr):
                   lvals_d, #mdex lvl values {lvlName:(lvlval1, lvlval2...)}
                   atr_dxcol=None,
                   logger=None,
-                  sliceName='slice', #
+                  sliceName='slice', #plot identifying?
                   ):
         
         #=======================================================================
@@ -299,8 +299,58 @@ class Attr(Model, riskPlotr):
         #calc ead
         
         return df
+    
+    def get_stack(self, #get a set of stacked data for a stack plot
+                  lvlName, #level from which to build stacked data from
+                  
+                  atr_dxcol=None,
+                  logger=None,
+                  
+                  ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is  None: logger=self.logger
+        if atr_dxcol is None: atr_dxcol=self.data_d[self.attrdtag_in].copy()
+        log=logger.getChild('get_slice')
         
 
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert lvlName in atr_dxcol.columns.names
+        
+        #=======================================================================
+        # get impact values
+        #=======================================================================
+
+        i_dxcol = self.get_mult(atr_dxcol, logger=log)
+
+        #=======================================================================
+        # get stack
+        #=======================================================================
+        #compres rows to totals. pivot out new columns. compress all remaining mindex rows to sums
+        sdf = i_dxcol.sum(axis=0).unstack(level=lvlName).sum(axis=0, level='aeps')
+        
+        #=======================================================================
+        # #add ari index
+        #=======================================================================
+        df1 = pd.Series(sdf.index).to_frame()
+        df1['ari'] = (1/df1['aeps']).round(0).astype(int)
+
+        #get the new mindex we want to join in
+        mindex2 = pd.MultiIndex.from_frame(df1)                
+                
+        #join this in and move it up some levels
+        sdf.index = sdf.index.join(mindex2)
+
+        
+        return sdf 
+        
+
+ 
+        
     
     def plot_slice(self, #plot slice against original risk c urve
                    sttl_df, #sliced data
@@ -352,7 +402,8 @@ class Attr(Model, riskPlotr):
                     
             
         
-        
+
+ 
         
         
         

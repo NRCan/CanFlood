@@ -29,7 +29,7 @@ import pandas as pd
 
 from hlpr.exceptions import QError as Error
 
-from hlpr.basic import ComWrkr
+from hlpr.basic import ComWrkr, view
 
 
 #==============================================================================
@@ -81,7 +81,7 @@ class Plotr(ComWrkr):
                     h_alpha = 0.1,
                     
                     impactFmtFunc=None, #function for formatting the impact results
-                    
+                        #lambda x:'{:,.0f}'.format(x)   #(thousands separator)
 
                  **kwargs
                  ):
@@ -573,12 +573,129 @@ class Plotr(ComWrkr):
         self._tickSet(ax1, xfmtFunc=xfmtFunc, yfmtFunc=yfmtFunc)
         
         return fig
- 
- 
- 
+    
+    def plot_stackdRCurves(self,
+                   dxind,
+                   y1lab='AEP',
+                   figsize=None, impactFmtFunc=None, val_str=None,
+                   logger=None,):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('plot_stack')
         
 
-    
+        plt, matplotlib = self.plt, self.matplotlib
+        
+        if figsize is None: figsize=self.figsize
+        
+        if y1lab =='impacts':
+            y1lab = self.impact_name
+            
+        if impactFmtFunc is None:
+            impactFmtFunc=self.impactFmtFunc
+        
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        #expectations on stacked data
+        mindex=dxind.index
+        assert isinstance(mindex, pd.MultiIndex)
+        assert np.array_equal(np.array(['aeps', 'ari']), mindex.names)
+        
+
+        nameRank_d= {lvlName:i for i, lvlName in enumerate(mindex.names)}
+        
+        #======================================================================
+        # labels
+        #======================================================================
+        #val_str = self._get_val_str(val_str, impactFmtFunc)
+         
+         
+        if y1lab == 'AEP':
+            title = '%s AEP-Impacts plot for %i stacks'%(self.tag, len(dxind.columns))
+            xlab=self.impact_name
+        elif y1lab == self.impact_name:
+            title = '%s Impacts-ARI plot for %i stacks'%(self.tag, len(dxind.columns))
+            xlab='ARI'
+        else:
+            raise Error('bad y1lab: %s'%y1lab)
+            
+ 
+        #=======================================================================
+        # figure setup
+        #=======================================================================
+        """
+        plt.show()
+        """
+        plt.close()
+        fig = plt.figure(figsize=figsize, constrained_layout = True)
+        
+        #axis setup
+        ax1 = fig.add_subplot(111)
+        #ax2 = ax1.twinx()
+        
+        
+        # axis label setup
+        fig.suptitle(title)
+        ax1.set_ylabel(y1lab)
+
+        ax1.set_xlabel(xlab)
+ 
+        #=======================================================================
+        # plot line
+        #=======================================================================
+        if y1lab == 'AEP':
+            """I dont see any native support for x axis stacks"""
+            
+            yar = mindex.levels[nameRank_d['eads']].values #ARI values 
+            for colName, cser in dxind.items():
+                ax1.fill_betweenx()
+                print(colName)
+
+        
+        
+        
+        elif y1lab == self.impact_name:
+            
+            #ARI values  (ascending?)
+            xar = np.sort(mindex.levels[nameRank_d['ari']].values)
+            #transpose, and ensure sorted
+            yar = dxind.T.sort_index(axis=1, level='ari', ascending=True).values
+            
+            #plot the stack
+            ax1.stackplot(xar, yar, baseline='zero', labels=dxind.columns,
+                          alpha=0.9)
+            ax1.set_xscale('log')
+            
+            """
+            view(dxind)
+            ax1.legend()
+            """
+        #set limits
+        if y1lab == 'AEP':
+            ax1.set_xlim(0, max(res_ttl['impacts'])) #aep limits 
+            ax1.set_ylim(0, max(res_ttl['aep'])*1.1)
+        elif y1lab == self.impact_name:
+            ax1.set_xlim(max(xar), 1) #ari limits
+        
+        #=======================================================================
+        # post format
+        #=======================================================================
+        self._postFmt(ax1, val_str=val_str)
+        
+        #assign tick formatter functions
+        if y1lab == 'AEP':
+            xfmtFunc = impactFmtFunc
+            yfmtFunc=lambda x:'%.4f'%x
+        elif y1lab==self.impact_name:
+            xfmtFunc = lambda x:'{:,.0f}'.format(x) #thousands separatro
+            yfmtFunc=impactFmtFunc
+            
+        self._tickSet(ax1, xfmtFunc=xfmtFunc, yfmtFunc=yfmtFunc)
+        
+        return fig
 
         
 
