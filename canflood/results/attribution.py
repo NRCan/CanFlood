@@ -575,18 +575,23 @@ class Attr(Model, riskPlotr):
         #=======================================================================
         # plot the group
         #=======================================================================
+        """
+        nice for FULL to plot first
+        """
         plotParsG_d = {
-            self.sliceName:{
-                    'ttl_df':sttl_df,
-                    'label':'\'%s\' annualized = '%self.sliceName + self.impactFmtFunc(self.slice_ead),
-                    'impStyle_d':slice_impStyle_d,
-                    },
             'full':{
                     'ttl_df':ttl_df,
                     'label':'\'%s\' annualized = '%'Total' + self.impactFmtFunc(self.ead_tot),
                     'impStyle_d':self.impStyle_d,
                     'hatch_f':True
-                    }
+                    },
+                        
+            self.sliceName:{
+                    'ttl_df':sttl_df,
+                    'label':'\'%s\' annualized = '%self.sliceName + self.impactFmtFunc(self.slice_ead),
+                    'impStyle_d':slice_impStyle_d,
+                    },
+
             }
         
         return self.plot_mRiskCurves(plotParsG_d,y1lab=y1lab, logger=log, **plotKwargs)

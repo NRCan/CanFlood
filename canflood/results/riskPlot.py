@@ -607,7 +607,7 @@ class Plotr(ComWrkr):
         #expectations on stacked data
         mindex=dxind.index
         assert isinstance(mindex, pd.MultiIndex)
-        assert np.array_equal(np.array(['aeps', 'ari']), mindex.names)
+        assert np.array_equal(np.array(['aep', 'ari']), mindex.names)
         
 
         nameRank_d= {lvlName:i for i, lvlName in enumerate(mindex.names)}
@@ -659,7 +659,7 @@ class Plotr(ComWrkr):
         if y1lab == 'AEP':
             """I dont see any native support for x axis stacks"""
             
-            yar = mindex.levels[nameRank_d['aeps']].values
+            yar = mindex.levels[nameRank_d['aep']].values
             xCum_ar = 0
             for colName, cser in dxind.items():
                 ax1.fill_betweenx(yar, xCum_ar, xCum_ar+cser.values, label=colName, 
