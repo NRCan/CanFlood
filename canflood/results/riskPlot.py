@@ -266,13 +266,9 @@ class Plotr(ComWrkr):
         #=======================================================================
         # #invert aep (w/ zero handling)
         #=======================================================================
-        ar = df2.loc[:,'aep'].T.values
+
         
-        ar_ari = 1/np.where(ar==0, #replaced based on zero value
-                           sorted(ar)[1]/10, #dummy value for zero (take the second smallest value and divide by 10)
-                           ar) 
-        
-        df2['ari'] = ar_ari.astype(np.int32)
+        self._get_ttl_ari(df2)
         
         #=======================================================================
         # re-order
@@ -419,7 +415,9 @@ class Plotr(ComWrkr):
                     impactFmtFunc=None, #tick label format function for impact values
                     #lambda x:'{:,.0f}'.format(x)
                     
-                    val_str=None, #text to write on plot. see _get_val_str()
+                    val_str='*no', #text to write on plot. see _get_val_str()
+                        #NOTE: pass 'levendLab' in the pars to add custom text to the legend
+
 
                   figsize=None, logger=None,
                   ):
@@ -452,7 +450,7 @@ class Plotr(ComWrkr):
         first = True
         for cName, cPars_d in parsG_d.items():
             #check keys
-            miss_l = set(['ttl_df', 'ead_tot', 'impStyle_d']).difference(cPars_d.keys())
+            miss_l = set(['ttl_df', 'impStyle_d']).difference(cPars_d.keys())
             assert len(miss_l)==0, '\'%s\' missing keys: %s'%(cName, miss_l)
             
             #check data
@@ -460,7 +458,7 @@ class Plotr(ComWrkr):
             
             #check columns
             miss_l = set(['aep', 'impacts', 'ari', 'plot']).difference(cdf.columns)
-            assert len(miss_l)==0, '%s missing columns: %s'%(cName, miss_l)
+            assert len(miss_l)==0, '\'%s\' missing columns: %s'%(cName, miss_l)
             
             #drop to just the data (and rename)
             cdf = cdf.loc[cdf['plot'],:].loc[:,('ari','impacts')].rename(columns={'impacts':cName})
@@ -527,28 +525,26 @@ class Plotr(ComWrkr):
             #pull values from container
             cdf = cPars_d['ttl_df'].copy()
             cdf = cdf.loc[cdf['plot'], :] #drop from handles
-            ead_tot = cPars_d['ead_tot']
+            
             
             #defaults
             if 'hatch_f' in cPars_d:
                 hatch_f=cPars_d['hatch_f']
             else:
                 hatch_f=False
+                
+            if 'label' in cPars_d:
+                label = cPars_d['label']
+            else:
+                label = cName
             
             #add the line
             self._lineToAx(cdf, y1lab, ax1, impStyle_d=cPars_d['impStyle_d'],
-                           hatch_f=hatch_f, lineLabel=cName)
+                           hatch_f=hatch_f, lineLabel=label)
             
 
 
-            #build labels
-            val_str = '%s = '%cName + impactFmtFunc(ead_tot)
-            
-            if first:
-                vMaster_str = val_str
-                first = False
-            else:
-                vMaster_str= '%s\n%s'%(vMaster_str, val_str)
+
 
         #set limits
         if  y1lab==self.impact_name:
@@ -560,7 +556,8 @@ class Plotr(ComWrkr):
         #=======================================================================
         # post format
         #=======================================================================
-        self._postFmt(ax1, val_str=vMaster_str)
+        val_str = self._get_val_str(val_str, impactFmtFunc)
+        self._postFmt(ax1, val_str=val_str)
         
         #assign tick formatter functions
         if y1lab == 'AEP':
@@ -869,8 +866,22 @@ class Plotr(ComWrkr):
                 val_str='total annualized impacts = ' + impactFmtFunc(self.ead_tot)
             elif val_str=='*no':
                 val_str=None
+            elif val_str.startswith('*'):
+                raise Error('unrecognized val_str: %s'%val_str)
                 
         return val_str
+    
+    def _get_ttl_ari(self, df): #add an ari column to a frame (from the aep vals)
+        
+        ar = df.loc[:,'aep'].T.values
+        
+        ar_ari = 1/np.where(ar==0, #replaced based on zero value
+                           sorted(ar)[1]/10, #dummy value for zero (take the second smallest value and divide by 10)
+                           ar) 
+        
+        df['ari'] = ar_ari.astype(np.int32)
+        
+        return 
         
 
     

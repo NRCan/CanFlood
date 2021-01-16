@@ -53,12 +53,12 @@ class Model(ComWrkr,
         felv -- 'datum' or 'ground': whether felv values provided in the
                      inventory are heights or elevations
 
-        event_probs -- format of event probabilities (in 'aeps' data file) 
+        event_probs -- format of event probabilities (in 'evals' data file) 
                         (default 'ari')
                         
-            'aeps'           event probabilities in aeps file expressed as 
+            'aep'           event probabilities in aeps file expressed as 
                             annual exceedance probabilities
-            'aris'           expressed as annual recurrance intervals
+            'ari'           expressed as annual recurrance intervals
             
         
         ltail -- zero probability event  handle  (default 'extrapolate')
@@ -738,7 +738,8 @@ class Model(ComWrkr,
         
         #extreme to likely
         aep_ser = aep_ser.sort_values(ascending=True)
-        aep_ser.name='aeps'
+        aep_ser.name='aep'  
+ 
         #======================================================================
         # check range
         #======================================================================
@@ -1843,10 +1844,18 @@ class Model(ComWrkr,
                 raise Error('got nulls on %s'%aep)
                 
         #=======================================================================
+        # # check
+        #=======================================================================
+        assert res_df.min(axis=1).min()>=0
+        if not res_df.notna().all().all():
+            raise Error('got %i nulls'%res_df.isna().sum().sum())
+        #=======================================================================
         # attribution------
         #=======================================================================
         if self.attriMode:
             atr_dxcol_raw = self.att_df.copy()
+            mdex = atr_dxcol_raw.columns
+            nameRank_d= {lvlName:i for i, lvlName in enumerate(mdex.names)}
             edf = edf.sort_index(axis=1, ascending=False)
             """
             view(edf)
@@ -1857,74 +1866,168 @@ class Model(ComWrkr,
             pd.__version__
             """
             if event_rels == 'max':
-                """this is a pretty nasty back-calculate
-                consider incorporating into th emain calc loop above"""
- 
+                """                
+                turns out we need to get the ACTUAL expected value matrix
+                    here we reconstruct by gettin a max=0, no=1, shared=0.5 matrix
+                    then mutiplyling that by the evdf to get the ACTUAL ev matrix"""
+                
                 #===============================================================
-                # # identify entries with attribution
+                # build multipler (boolean based on max)
                 #===============================================================
-                bool_dxcol = None
-                for aep, exn_l in cplx_evn_d.items():
-                    #id where each is the max
-                    newdf = evdf.loc[:, exn_l].isin(evdf.loc[:, exn_l].max(axis=1))
+                mbdxcol=None
+                for aep, gdf in atr_dxcol_raw.groupby(level=0, axis=1):
+                    #get events on this aep
+                    exn_l = gdf.columns.remove_unused_levels().levels[nameRank_d['rEventName']]
                     
+                    #identify maximums
+                    booldf = evdf.loc[:, exn_l].isin(evdf.loc[:, exn_l].max(axis=1)).astype(int)
                     
-                    #handle duplicates
+                    #handle duplicates (assign equal portion)
                     if len(exn_l)>1:
-                        """
-                        view(evdf.loc[:, exn_l])
-                        view(boolidx)
-                        """
-                        #get slice to compare on
-                        df1 = evdf.loc[:, exn_l].round(self.prec)
-                        boolidx = df1.eq(df1.iloc[:,0], axis=0).all(axis=1)
-                        #where a row has duplicates, only give the first event attribution
-                        newdf.loc[boolidx, :]=False #set all to false
-                        newdf.loc[boolidx, newdf.columns[0]]=True#set first column
-                    
-                    #append
-                    newdxcol = pd.concat([newdf],  keys=[aep], axis=1)
-                    if bool_dxcol is None:
-                        bool_dxcol = newdxcol
+                        boolidx =  booldf.eq(booldf.iloc[:,0], axis=0).all(axis=1)
+                        booldf.loc[boolidx, :] = float(1/len(exn_l))
+
+                    #add in the dummy lvl0 aep
+                    bdxcol = pd.concat([booldf], keys=[aep], axis=1)
+
+                    if mbdxcol is None:
+                        mbdxcol = bdxcol
                     else:
-                        bool_dxcol = bool_dxcol.join(newdxcol)
+                        mbdxcol = mbdxcol.merge(bdxcol, how='outer', left_index=True, right_index=True)
+                        
+                    log.debug('%.4f: got %s'%(aep, str(mbdxcol.shape)))
                     
+                #check it
+                self.check_attrimat(atr_dxcol=mbdxcol, logger=log)
+
+
                 #===============================================================
-                # build and aply multiplier
+                # apply multiplication
                 #===============================================================
-                #assemble multiplyer (attributes = 1, non attributors = 0)
-                mult_dxcol = pd.DataFrame().reindex_like(bool_dxcol
-                                     ).where(bool_dxcol, other=0.0).fillna(1.0)
-                                     
-                view(bool_dxcol)
-                #check the multiplier
-                self.check_attrimat(atr_dxcol=mult_dxcol, logger=log)
+                #get EV from this
+                evdf1 = mbdxcol.multiply(evdf, axis='column', level=1).droplevel(level=0, axis=1)
                 
-                #multiply on each event name
-                atr_dxcol = atr_dxcol_raw.multiply(mult_dxcol.droplevel(0, axis=1), 
-                                               axis='columns', level='rEventName')
-                
+
                     
             elif event_rels=='mutEx':
-                """scale all nests within each"""
-                atr_dxcol = atr_dxcol_raw.multiply(edf, axis='columns', level=1)
+ 
+                evdf1=evdf
 
             elif event_rels=='indep':
                 raise Error('not implemented')
             else: raise Error('bad evnet-Rels')
             
-            self.check_attrimat(atr_dxcol=atr_dxcol, logger=log)
+            #===================================================================
+            # common
+            #===================================================================
+            #multiply thorugh to get all the expected value components 
+            i_dxcol = atr_dxcol_raw.multiply(evdf1, axis='columns', level=1)
+                
+            #divide by the event totals to get ratios back
+            atr_dxcol = i_dxcol.divide(res_df, axis='columns', level='aep')
+            
+            #apportion null values
+            atr_dxcol = self._attriM_nulls(res_df, atr_dxcol, logger=log)
+            
             self.att_df = atr_dxcol
         #======================================================================
         # wrap
         #======================================================================
-        assert res_df.min(axis=1).min()>=0
-        if not res_df.notna().all().all():
-            raise Error('got %i nulls'%res_df.isna().sum().sum())
+
         
         log.info('resolved to %i unique event damages'%len(res_df.columns))
         
         return res_df.sort_index(axis=1)
+    
+    def _attriM_nulls(self, #handle nulls in an attribution matrix
+                     idf, #impact values (of which we are calculating attributions)
+                     aRaw_dxcol, #attribution matrix w/ nulls (that need filling)
+                     logger=None,
+                     
+                     ):
+        
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log=logger.getChild('_attriM_nulls')
+        mdex = aRaw_dxcol.columns
+        nameRank_d= {lvlName:i for i, lvlName in enumerate(mdex.names)}
+        
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        assert np.array_equal(mdex.levels[0], idf.columns), 'impacts and top level dont match'
+        #=======================================================================
+        # zero damage for event across set: equal attribution---
+        #=======================================================================
+        #=======================================================================
+        # #builld replacement locator frame
+        #=======================================================================
+        booldxcol = idf==0.0  #elements w/ zero impact
+        
+        booldxcol.columns.names=[mdex.names[0]]
+        """not very elegant"""
+        
+        #propagate boolean values into dxcol
+        for lRank, lvlName in enumerate(mdex.names):
+            if lRank==0: continue #always skipping top level
+            
+            lvals = mdex.levels[lRank].tolist() 
+            
+            #propagate into this level
+            booldxcol = pd.concat([booldxcol]*len(lvals), keys=lvals, axis=1,
+                                  names=[lvlName]+booldxcol.columns.names
+                                  )
+        #re-order
+        booldxcol = booldxcol.reorder_levels(mdex.names, axis=1)
+        booldxcol = booldxcol.reindex(aRaw_dxcol.columns, axis=1)
+        assert np.array_equal(booldxcol.columns, aRaw_dxcol.columns)
+        """
+        view(booldxcol)
+        view(aRaw_dxcol)
+        view(atr_dxcol)
+        """
+        #=======================================================================
+        # #apply locator frame
+        #=======================================================================
+
+        #loop through each of the top-level values and figure out the set size
+        fv_d = dict()
+        dxcol = None
+        for lval, gdf in aRaw_dxcol.groupby(level=0, axis=1):
+            fv_d[lval] = 1/len(gdf.columns)
+            booldf = booldxcol.loc[:, idx[lval,:,:]]
+            
+            gdxcol = gdf.where(~booldf, other=fv_d[lval])
+            
+            if dxcol is None:
+                dxcol = gdxcol
+            else:
+                dxcol = dxcol.join(gdxcol) 
+            
+            log.debug('l0=%s. setting %i (of %i) full dmg=0 entries with equal attribution = %.2f'%(
+                lval, booldf.sum().sum(), booldf.size, fv_d[lval]))
+        
+        #=======================================================================
+        # remaining partial zero damage nests
+        #=======================================================================
+        log.debug('setting %i (of %i) partial dmg=0 entries w/ 0.0 attribution'%(
+            dxcol.isna().sum().sum(), dxcol.size))
+        
+        dxcol = dxcol.fillna(0.0)
+        
+        #=======================================================================
+        # checks
+        #=======================================================================
+        if not dxcol.notna().all().all():
+            raise Error('got %i (of %i) remaining nulls after filling'%(
+                dxcol.isna().sum().sum(), dxcol.size))
+            
+        self.check_attrimat(atr_dxcol=dxcol, logger=log)
+        
+        return dxcol
     
     def _get_indeEV(self,
                     inde_df #prob, consq, mutual exclusivity flag for each exposure event 

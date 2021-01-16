@@ -48,6 +48,7 @@ class Attr(Model, riskPlotr):
     """todo: fix this"""
     valid_par='risk2' 
     attrdtag_in = 'attrimat03'
+    sliceName='slice'
     #===========================================================================
     # expectations from parameter file
     #===========================================================================
@@ -56,6 +57,7 @@ class Attr(Model, riskPlotr):
              'attrimat03':{'ext':('.csv',)},
              'r2_ttl':{'ext':('.csv',)},
              'r2_passet':{'ext':('.csv',)},
+             'eventypes':{'ext':('.csv',)}
              }
         }
     
@@ -90,11 +92,12 @@ class Attr(Model, riskPlotr):
         _ = self.prep_dtl(logger=log)
         
         self.load_passet()
+        self.load_etypes()
         
         self.load_attrimat(dxcol_lvls=3)
         
         #=======================================================================
-        # post fix attrim
+        # attrim----
         #=======================================================================
         """ROUNDING
         forcing the project precision aon all hte aep values...
@@ -108,22 +111,37 @@ class Attr(Model, riskPlotr):
             np.around(mdex.levels[0].astype(np.float), decimals=self.prec), 
             level=0)
         
-        #store
-        self.data_d[self.attrdtag_in] = atr_dxcol
+
+        
+
  
         
         #=======================================================================
         # check
         #=======================================================================
-        miss_l = set(atr_dxcol.columns.levels[0]).symmetric_difference(
+        mdex = atr_dxcol.columns
+        #check aep values
+        miss_l = set(mdex.levels[0]).symmetric_difference(
             self.aep_df.loc[~self.aep_df['extrap'], 'aep'])
  
-        assert len(miss_l)==0, 'event mismatch'
+        assert len(miss_l)==0, 'aep mismatch: %s'%miss_l
+        
+        #check rEventNames
+        miss_l = set(mdex.levels[1]).symmetric_difference(
+            self.data_d['eventypes']['rEventName'])
+        assert len(miss_l)==0, 'rEventName mismatch: %s'%miss_l
+        
+        #store
+        self.data_d[self.attrdtag_in] = atr_dxcol
+        #=======================================================================
+        # get TOTAL multiplied values---
+        #=======================================================================
+        self.mula_dxcol = self.get_mult(atr_dxcol.copy(), logger=log)
         
         #=======================================================================
-        # get TOTAL multiplied values
+        # wrap
         #=======================================================================
-        self.mula_dxcol = self.get_mult(self.data_d[self.attrdtag_in].copy(), logger=log)
+        log.debug('finished')
  
         
         return self
@@ -137,6 +155,9 @@ class Attr(Model, riskPlotr):
                    logger=None,
                     
                     ):
+        """
+        TODO: Consider moving to a results common
+        """
         #=======================================================================
         # defa8ults
         #=======================================================================
@@ -146,6 +167,10 @@ class Attr(Model, riskPlotr):
         if fp is None: fp = getattr(self, dtag)
         cid = self.cid
         
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert os.path.exists(fp), 'bad filepath for per_asset results: %s'%fp
         #======================================================================
         # load it
         #======================================================================
@@ -155,6 +180,9 @@ class Attr(Model, riskPlotr):
         df.columns
         """
         
+        #=======================================================================
+        # clean
+        #=======================================================================
         #drop ead and format column
         df = df_raw.drop('ead', axis=1)
         df.columns = np.around(df.columns.astype(np.float), decimals=self.prec)
@@ -180,12 +208,109 @@ class Attr(Model, riskPlotr):
         #=======================================================================
         self.cindex = df.index.copy() #set this for checks later
         self.data_d[dtag] = df
+        
+    def load_etypes(self,
+                   fp = None,
+                   dtag = 'eventypes',
+
+                   logger=None,
+                    
+                    ):
+        """
+        TODO: Consider moving to a results common
+        """
+        #=======================================================================
+        # defa8ults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        
+        log = logger.getChild('eventypes')
+        if fp is None: fp = getattr(self, dtag)
+        
+        assert os.path.exists(fp), 'bad filepath for eventypes: %s'%fp
+        
+        #=======================================================================
+        # load
+        #=======================================================================
+        df_raw = pd.read_csv(fp, index_col=None)
+        
+        #=======================================================================
+        # check
+        #=======================================================================
+        assert np.array_equal(np.array(['rEventName', 'aep', 'noFail']), df_raw.columns)
+        
+        #=======================================================================
+        # clean
+        #=======================================================================
+        df = df_raw.copy()
+        df['aep'] = df_raw['aep'].astype(np.float).round(self.prec)
+        
+        #=======================================================================
+        # post-check
+        #=======================================================================
+        miss_l = set(self.aep_df.loc[~self.aep_df['extrap'],'aep']).difference(df['aep'])
+        assert len(miss_l)==0, 'aep match fail: %s'%miss_l
+        
+        
+        self.data_d[dtag] = df
+        
+
+        """
+        df_raw.columns
+        df.columns
+        """
+        
+        
+    def get_slice_noFail(self, #slice of noFail and fail
+                         
+                         atr_dxcol=None,
+                         et_df = None,
+                         logger=None,
+                         ): 
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is  None: logger=self.logger
+        if atr_dxcol is None: atr_dxcol=self.data_d[self.attrdtag_in].copy()
+        if et_df is  None: et_df=self.data_d['eventypes']
+        log=logger.getChild('get_slice_noFail')
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        
+        #=======================================================================
+        # build slice of noFails
+        #=======================================================================
+        #get nofail event names
+        renf_ar = et_df.loc[et_df['noFail'], 'rEventName'].values
+        
+        #get slice of this        
+        s1_dxcol = self.get_slice({'rEventName':renf_ar.tolist()}, logger=log,
+                                  sliceName='noFail',
+                                  slice_impStyle_d={
+                                      'color':'red'
+                                      }) 
+        """
+        view(atr_dxcol)
+        view(s1_dxcol)
+        view(s1i_ttl)
+        self.data_d['ttl']
+        view(self.data_d['r2_passet'])
+        """
+        
+        s1i_dxcol = self.get_mult(s1_dxcol, logger=log) #multiply by impacts
+        
+        s1i_ttl, ead = self.get_ttl(s1i_dxcol, logger=log) #sum to aeps
+        
+        return s1i_ttl
             
     def get_slice(self,
                   lvals_d, #mdex lvl values {lvlName:(lvlval1, lvlval2...)}
                   atr_dxcol=None,
                   logger=None,
                   sliceName='slice', #plot identifying?
+                  slice_impStyle_d=dict(),
                   ):
         
         #=======================================================================
@@ -195,12 +320,15 @@ class Attr(Model, riskPlotr):
         if atr_dxcol is None: atr_dxcol=self.data_d[self.attrdtag_in].copy()
         log=logger.getChild('get_slice')
         
+        self.sliceName=sliceName #setting for plot
+        self.slice_impStyle_d=slice_impStyle_d
+        
         mdex = atr_dxcol.columns
         """
         view(mdex.to_frame())
         """
         nameRank_d= {lvlName:i for i, lvlName in enumerate(mdex.names)}
-        rankName_d= {i:lvlName for i, lvlName in enumerate(mdex.names)}
+        #rankName_d= {i:lvlName for i, lvlName in enumerate(mdex.names)}
         #=======================================================================
         # precheck
         #=======================================================================
@@ -280,25 +408,68 @@ class Attr(Model, riskPlotr):
         #=======================================================================
         # multiply
         #=======================================================================
-        return atr_dxcol.multiply(rp_df, level='aeps')
+        return atr_dxcol.multiply(rp_df, level='aep')
     
     def get_ttl(self, #get a total impacts summary from an impacts dxcol 
                 i_dxcol, #impacts (not attribution ratios)
+                logger=None,
                 ):
 
-        df =  i_dxcol.sum(axis=1, level='aeps').sum(axis=0).rename('impacts'
-                     ).reset_index(drop=False).rename(columns={'aeps':'aep'})
+        df =  i_dxcol.sum(axis=1, level='aep').sum(axis=0).rename('impacts'
+                     ).reset_index(drop=False)
                      
-        #add ari
-        df['ari'] = (1/df['aep']).astype(int)
+        #=======================================================================
+        # #add ari
+        # df['ari'] = (1/df['aep']).astype(int)
+        # 
+        # #add plot keys
+        # df['plot']=True
+        # 
+        #=======================================================================
         
-        #add plot keys
-        df['plot']=True
         
+        #=======================================================================
+        # get ead and tail values
+        #=======================================================================
+        """should apply the same ltail/rtail parameters from the cf"""
         
-        #calc ead
+        if df['impacts'].sum()==0:
+            ead = 0.0
+            df1 = df.copy()
+            
+        elif df['impacts'].sum()>0:
         
-        return df
+            ttl_ser = self.calc_ead(
+                df.loc[:, ('aep', 'impacts')].set_index('aep').T,
+                drop_tails=False, logger=logger, )
+            
+            ead = ttl_ser['ead'][0] 
+            df1 = ttl_ser.drop('ead', axis=1).T.reset_index()
+            
+ 
+        else:
+            raise Error('negative impacts!')
+            
+        assert isinstance(ead, float)
+        
+        #=======================================================================
+        # add ari 
+        #=======================================================================
+        self._get_ttl_ari(df1) #add ari column
+        
+        #=======================================================================
+        # add plot columns from ttl
+        #=======================================================================
+        ttl_df=self.data_d['ttl'].copy()
+        df1 = df1.merge(ttl_df.loc[:, ('aep', 'plot')], on='aep', how='inner')
+        
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        
+        self.slice_ead = ead #set for plotter
+        
+        return df1, ead
     
     def get_stack(self, #get a set of stacked data for a stack plot
                   lvlName, #level from which to build stacked data from
@@ -331,13 +502,13 @@ class Attr(Model, riskPlotr):
         # get stack
         #=======================================================================
         #compres rows to totals. pivot out new columns. compress all remaining mindex rows to sums
-        sdf = i_dxcol.sum(axis=0).unstack(level=lvlName).sum(axis=0, level='aeps')
+        sdf = i_dxcol.sum(axis=0).unstack(level=lvlName).sum(axis=0, level='aep')
         
         #=======================================================================
         # #add ari index
         #=======================================================================
         df1 = pd.Series(sdf.index).to_frame()
-        df1['ari'] = (1/df1['aeps']).round(0).astype(int)
+        df1['ari'] = (1/df1['aep']).round(0).astype(int)
 
         #get the new mindex we want to join in
         mindex2 = pd.MultiIndex.from_frame(df1)                
@@ -360,6 +531,8 @@ class Attr(Model, riskPlotr):
 
         
         return sdf, sEAD_ser
+    
+    
         
 
  
@@ -372,6 +545,8 @@ class Attr(Model, riskPlotr):
                    
                    #plot keys
                    y1lab='AEP',
+                   slice_impStyle_d=None,
+                   slice_ead=None,
                    **plotKwargs
                    ): 
         
@@ -382,6 +557,9 @@ class Attr(Model, riskPlotr):
         log = logger.getChild('plot_slice')
         if ttl_df is None: ttl_df=self.data_d['ttl'].copy()
         
+        #slice default attributes
+        if slice_impStyle_d is None: slice_impStyle_d=self.slice_impStyle_d
+        if slice_ead is None: slice_ead=self.slice_ead
         #=======================================================================
         # precheck
         #=======================================================================
@@ -398,14 +576,14 @@ class Attr(Model, riskPlotr):
         # plot the group
         #=======================================================================
         plotParsG_d = {
-            'slice':{
+            self.sliceName:{
                     'ttl_df':sttl_df,
-                    'ead_tot':0.0,
-                    'impStyle_d':dict(),
+                    'label':'\'%s\' annualized = '%self.sliceName + self.impactFmtFunc(self.slice_ead),
+                    'impStyle_d':slice_impStyle_d,
                     },
             'full':{
                     'ttl_df':ttl_df,
-                    'ead_tot':self.ead_tot,
+                    'label':'\'%s\' annualized = '%'Total' + self.impactFmtFunc(self.ead_tot),
                     'impStyle_d':self.impStyle_d,
                     'hatch_f':True
                     }

@@ -892,52 +892,18 @@ class Dmg2(Model):
         #divide bdmg entries by total results values (for each level)
         """ for asset, revents, nestID couples with zero impact, will get null
         leaving these so the summation validation still works"""
-        atr_dxcol = bdmg_dxcol.divide(cres_df, axis='columns', level='rEventName')
+        atr_dxcol_raw = bdmg_dxcol.divide(cres_df, axis='columns', level='rEventName')
         
-        """
-        view(atr_dxcol)
-        cres_df.columns
-        view(bdmg_dxcol)
-        view(bdmg_dxcol.columns.to_frame())
-        view(cres_df)
-        view(bdf)
-        view(atr_dxcol)
-        view(booldxcol)
-        """
+
         log.debug('built raw attriM w/ %i (of %i) nulls'%(
-            atr_dxcol.isna().sum().sum(), atr_dxcol.size))
-        #=======================================================================
-        # #handle nulls----
-        #=======================================================================
-        #=======================================================================
-        # for those w/ zero damage, set f0 attribition = 1.0
-        #=======================================================================
-        #builld replacement locator frame
-        booldf = cres_df==0.0
-        
-        booldxcol = pd.concat([booldf], keys=[atr_dxcol.columns.get_level_values(1)[0]], axis=1
-                              ).swaplevel(axis=1)
-                              
-        booldxcol = booldxcol.reindex(atr_dxcol.columns, axis=1).fillna(False)
-        assert np.array_equal(booldxcol.columns, atr_dxcol.columns)
-        
-        #use it
-        atr_dxcol = atr_dxcol.where(~booldxcol, other=1.0)
-        log.debug('setting %i (of %i) dmg=0 entries with f0 attribution = %.2f'%(
-            booldxcol.sum().sum(), booldxcol.size, 1.0))
-        
-        #=======================================================================
-        # give remainders no attribution
-        #=======================================================================
-        log.debug('filling remaining %i (of %i) entries w/ attribution = 0.0'%(
-            atr_dxcol.isna().sum().sum(), atr_dxcol.size))
-        atr_dxcol = atr_dxcol.fillna(0.0)
+            atr_dxcol_raw.isna().sum().sum(), atr_dxcol_raw.size))
 
+        
+        #=======================================================================
+        # handle nulls----
+        #=======================================================================
+        atr_dxcol = self._attriM_nulls(cres_df, atr_dxcol_raw, logger=log)
 
-        #=======================================================================
-        # Psum checks
-        #=======================================================================
-        self.check_attrimat(atr_dxcol = atr_dxcol)
         
         #=======================================================================
         # wrap
