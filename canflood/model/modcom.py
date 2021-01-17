@@ -11,8 +11,9 @@ Created on Feb. 9, 2020
 # imports------------
 #==============================================================================
 
-import configparser, os, inspect, logging, copy, itertools
+import configparser, os, inspect, logging, copy, itertools, datetime
 import pandas as pd
+idx = pd.IndexSlice
 import numpy as np
 
 from scipy import interpolate, integrate
@@ -30,7 +31,10 @@ from hlpr.basic import ComWrkr, view
 #==============================================================================
 # class-----------
 #==============================================================================
-class Model(ComWrkr):
+class Model(ComWrkr,
+            #Plotr #making each child inherit this speifically
+                #keeps damage modeuls without plotting a bit simpler
+            ):
     """
     common methods for model classes
     
@@ -49,12 +53,12 @@ class Model(ComWrkr):
         felv -- 'datum' or 'ground': whether felv values provided in the
                      inventory are heights or elevations
 
-        event_probs -- format of event probabilities (in 'aeps' data file) 
+        event_probs -- format of event probabilities (in 'evals' data file) 
                         (default 'ari')
                         
-            'aeps'           event probabilities in aeps file expressed as 
+            'aep'           event probabilities in aeps file expressed as 
                             annual exceedance probabilities
-            'aris'           expressed as annual recurrance intervals
+            'ari'           expressed as annual recurrance intervals
             
         
         ltail -- zero probability event  handle  (default 'extrapolate')
@@ -104,6 +108,12 @@ class Model(ComWrkr):
         
     [validation]
         risk2 -- Risk2 validation flag (default False)
+        
+    [results_fps]
+        attrimat02 -- attribution matrix file path
+        r2_passet -- per_asset results from the risk2 model
+        r2_ttl  -- total results from risk2
+        eventypes -- df of aep, noFail, and rEventName
     
     """
     
@@ -144,6 +154,16 @@ class Model(ComWrkr):
     risk2 = False
     risk3 = False
     
+    #[results_fps]
+    attrimat02=''
+    attrimat03=''
+    r2_passet=''
+    r2_ttl =''
+    eventypes=''
+    
+    #[plotting]
+    """see ComWrkr"""
+    
     #==========================================================================
     # program vars
     #==========================================================================
@@ -161,28 +181,53 @@ class Model(ComWrkr):
     cplx_evn_d = None #complex event sets {aep: [exEventName1, exEventName1]}
     asset_cnt = 0 #for plotting
     scen_ar_d = dict() #container for empty scenario matrix
+    
 
     def __init__(self,
-                 cf_fp, #control file path """ note: this could also be attached by basic.ComWrkr.__init__()"""
+                 cf_fp, #control file path 
+                    #note: this could also be attached by basic.ComWrkr.__init__()
+                    #now that this is a parent... wish this was a kwarg
+                 
                  split_key=None,#for checking monotonicy on exposure sets with duplicate events
                  absolute_fp=True, #whether filepaths are absolute (False=Relative)
+                 attriMode = False, #flow control for some attribution matrix functions
                  
                  **kwargs):
         
+        #=======================================================================
+        # precheck
+        #=======================================================================
         mod_logger.info('Model.__init__ start')
         assert os.path.exists(cf_fp), 'bad control filepath: %s'%cf_fp
         
-        super().__init__(**kwargs) #initilzie teh baseclass
+        #=======================================================================
+        # parent setup
+        #=======================================================================
+        super().__init__(cf_fp=cf_fp, **kwargs) #initilzie teh baseclass
         
-        self.cf_fp = cf_fp
-        self.split_key= split_key
+        """have to call on child's init
+        self._init_plt() #setup matplotlib"""
+        
+        #=======================================================================
+        # attachments
+        #=======================================================================
+        """ moved to Comwrkr
+        self.cf_fp = cf_fp"""
+        self.split_key= split_key 
         
         """TODO: Consider moving this to ComWrkr so Build dialogs can access"""
         self.absolute_fp=absolute_fp
         
+        
+        self.attriMode=attriMode
 
-        #attachments
-        self.data_d = dict() #dictionary for loaded data sets
+
+        """moved to comWrkr
+        self.data_d = dict() #dictionary for loaded data sets"""
+        
+        #=======================================================================
+        # wrap
+        #=======================================================================
         
         self.logger.debug('finished Model.__init__')
         
@@ -271,7 +316,7 @@ class Model(ComWrkr):
         """checks are done on a configparser (rather than a dictionary)
         to better handle python's type reading from files"""
         assert isinstance(chk_d, dict)
-        assert len(chk_d)>0
+        if not optional: assert len(chk_d)>0
         assert len(cpars)>0
         
         
@@ -281,7 +326,7 @@ class Model(ComWrkr):
         miss_l = set(chk_d.keys()).difference(cpars.sections())
         
         if len(miss_l) > 0:
-            raise Error('missing %i expected sections in control file: %s'%(len(miss_l), miss_l))
+            log.warning('missing %i expected sections in control file: %s'%(len(miss_l), miss_l))
         
         
         #=======================================================================
@@ -289,6 +334,7 @@ class Model(ComWrkr):
         #=======================================================================
         errors = [] #container for errors
         for sectName, vchk_d in chk_d.items():
+            if not sectName in cpars: continue #allow for backward scompatailbiity
             csectName = cpars[sectName] #get these parameters
             
             #===================================================================
@@ -644,7 +690,7 @@ class Model(ComWrkr):
             
             
         
-    def load_evals(self,#loading expo data
+    def load_evals(self,#loading event probability data
                    fp = None,
                    dtag = 'evals',
                    ):
@@ -692,7 +738,8 @@ class Model(ComWrkr):
         
         #extreme to likely
         aep_ser = aep_ser.sort_values(ascending=True)
-        aep_ser.name='aeps'
+        aep_ser.name='aep'  
+ 
         #======================================================================
         # check range
         #======================================================================
@@ -847,7 +894,7 @@ class Model(ComWrkr):
 
         
         #======================================================================
-        # load the data
+        # load the data-------
         #======================================================================
         self.load_expos(dtag=dtag, **kwargs) #load, clean, slice, add to data_d
         edf = self.data_d.pop(dtag) #pull out the reuslt
@@ -923,12 +970,24 @@ class Model(ComWrkr):
             
             if len(miss_l)==1:
                 fill_exn_d[aep] = list(miss_l)[0]
+            elif len(miss_l)==0:
+                pass #not filling any events
+            else: raise Error('only allowed 1 empty')
 
                 
         log.debug('calculating probaility for %i complex events with remaining secnodaries'%(
             len(fill_exn_d)))
             
-        self.noFailExn_d ={k:v for k,v in fill_exn_d.items()} #set this for the probability calcs
+        self.noFailExn_d =copy.copy(fill_exn_d) #set this for the probability calcs
+        
+        #assemble event type  frame
+        """this is a late add.. would have been nice to use this more in multi_ev"""
+        df = aep_ser.to_frame().reset_index(drop=False).rename(columns={'index':'rEventName'})
+        df['noFail'] = df['rEventName'].isin(fill_exn_d.values())
+        
+        self.eventType_df = df
+ 
+        
         #=======================================================================
         # fill in missing 
         #=======================================================================
@@ -948,7 +1007,6 @@ class Model(ComWrkr):
             else:
 
                 #data provided on this event
-
                 cplx_df = get_cplx_df(edf, aep=aep)
                 assert len(cplx_df.columns)==(len(cplx_evn_d[aep])-1), 'bad column count'
                 assert (cplx_df.sum(axis=1)<=1).all() #check we don't already exceed 1 (redundant)
@@ -1101,6 +1159,10 @@ class Model(ComWrkr):
         if fp is None: fp = getattr(self, dtag)
         cid = self.cid
         
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        
         assert 'finv' in self.data_d, 'call load_finv first'
         assert 'evals' in self.data_d, 'call load_evals first'
         assert isinstance(self.expcols, pd.Index), 'bad expcols'
@@ -1123,33 +1185,33 @@ class Model(ComWrkr):
         # clean it
         #======================================================================
         df = df_raw.copy()
+        
         #drop dmg suffix
+        """2021-01-13: dropped the _dmg suffix during dmg2.run()
+        left this cleaning for backwards compatailibity"""
         boolcol = df.columns.str.endswith('_dmg')
         enm_l = df.columns[boolcol].str.replace('_dmg', '').tolist()
         
-        #rename these
         ren_d = dict(zip(df.columns[boolcol].values, enm_l))
         df = df.rename(columns=ren_d)
         
-        
+        #set new index
         df = df.set_index(cid, drop=True).sort_index(axis=0)
         
+        #apply rounding
         df = df.round(self.prec)
         
         #======================================================================
         # postcheck
         #======================================================================
-        assert len(enm_l) > 1, 'failed to identify sufficient damage columns'
+        #assert len(enm_l) > 1, 'failed to identify sufficient damage columns'
         
 
         #check cid index match
         assert np.array_equal(self.cindex, df.index), \
             'provided \'%s\' index (%i) does not match finv index (%i)'%(dtag, len(df), len(self.cindex))
         
-        #check events
-        """
-        must match the aeps
-        """
+        #check rEvents
         miss_l = set(self.expcols).difference(df.columns)
             
         assert len(miss_l) == 0, '%i events on \'%s\' not found in aep_ser: \n    %s'%(
@@ -1177,7 +1239,87 @@ class Model(ComWrkr):
         log.info('finished loading %s as %s'%(dtag, str(df.shape)))
         
         self.asset_cnt=len(df) #for plotting
-    
+
+    def load_attrimat(self,
+                      dxcol_lvls=2, #levels present in passed data
+                      fp=None,
+                      dtag=None,
+                      check_psum=True,
+                      logger=None): #load the attributino matrix
+        
+        """
+        this data file is built by dmg2.get_attribution()
+        loader is called by:
+            risk1
+            risk2
+        """
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('load_attrimat')
+        if dtag is None: dtag = self.attrdtag_in
+        if fp is None: fp = getattr(self, dtag)
+        cid = self.cid
+        
+        
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        assert self.attriMode
+        #assert 'dmgs' in self.data_d, 'dmgs data set required with attrimat'
+        assert os.path.exists(fp), '%s got invalid filepath \n    %s'%(dtag, fp)
+        
+        #assert isinstance(self.expcols, pd.Index), 'bad expcols'
+        #assert isinstance(self.cindex, pd.Index), 'bad cindex'
+
+        #======================================================================
+        # load it
+        #======================================================================
+        dxcol = pd.read_csv(fp, index_col=0, header=list(range(0,dxcol_lvls)))
+        
+        #build the name:rank keys
+        nameRank_d = {lvlName:i for i, lvlName in enumerate(dxcol.columns.names)}
+        
+        #=======================================================================
+        # data precheck
+        #=======================================================================
+        #index checks
+        if hasattr(self, 'cindex'): 
+            assert dxcol.index.name==cid, 'bad index name %s'%(dxcol.index.name)
+            assert np.array_equal(dxcol.index, self.cindex), 'attrimat index mismatch'
+        
+        #dxcolumn check
+        """leaving the column labels flexible
+        risk models (dxcol_lvls=2) should get mdexcol lvl0 name = 'rEventName'
+        as the matrix grows, the position of this name should change"""
+        assert 'rEventName' in dxcol.columns.names,'missing rEventName from coldex'
+
+        #check the rEventNames     
+        if hasattr(self, 'expcols'):  
+            miss_l = set(dxcol.columns.get_level_values(nameRank_d['rEventName'])
+                         ).symmetric_difference(self.expcols)
+            assert len(miss_l)==0, 'attimat rEventName mismatch: %s'%miss_l
+        
+        #check dtypes
+        for e in dxcol.dtypes.values: assert e==np.dtype(float)
+        
+        
+        #=======================================================================
+        # check psum
+        #=======================================================================
+        if check_psum:
+            self.check_attrimat(atr_dxcol = dxcol)
+        
+        #=======================================================================
+        # set
+        #=======================================================================
+        self.data_d[dtag] = dxcol
+
+        log.info('finished loading %s as %s'%(dtag, str(dxcol.shape)))
+  
+        
    
     def add_gels(self): #add gels to finv (that's heights)
         log = self.logger.getChild('add_gels')
@@ -1590,16 +1732,14 @@ class Model(ComWrkr):
             
             if not event_rels=='max':
                 if not (edf.loc[:, exn_l].sum(axis=1).round(self.prec) == 1.0).all():
-                    """
-                    sum_ser = edf.loc[:, exn_l].sum(axis=1) == 1
-                    chk_df = edf.loc[:, exn_l].join(sum_ser.rename('sumChk'))
-                    chk_df['sum'] = edf.loc[:, exn_l].sum(axis=1)
-                    view(chk_df)
-                    view()
-                    """
+ 
                     raise Error('aep %.4f probabilities fail to sum'%aep)
             
             log.debug('resolving aep %.4f w/ %i event names: %s'%(aep, len(exn_l), exn_l))
+            
+            """
+            view(self.att_df)
+            """
             #===================================================================
             # simple events.. nothing to resolve----
             #===================================================================
@@ -1610,21 +1750,25 @@ class Model(ComWrkr):
                 res_df.loc[:, aep] =  evdf.loc[:, exn_l].iloc[:, 0]
                 meta_d[aep] = 'simple event'
                 
+                """no attribution modification required"""
+                
             #===================================================================
             # one failure possibility-----
             #===================================================================
             elif len(exn_l) == 2:
                 
                 if event_rels == 'max':
-                    """special legacy method"""
+                    """special legacy method... see below"""
                     res_df.loc[:, aep] = evdf.loc[:, exn_l].max(axis=1)
                 else:
                     """where we only have one failure event
                         events are mutually exclusive by default"""
                     res_df.loc[:, aep] = evdf.loc[:, exn_l].sum(axis=1)
+                    
+
             
             #===================================================================
-            # complex events (more than 1 failure event)----
+            # complex events (more than 2 failure event)----
             #===================================================================
             else:
 
@@ -1699,16 +1843,191 @@ class Model(ComWrkr):
             if res_df[aep].isna().any():
                 raise Error('got nulls on %s'%aep)
                 
-        #======================================================================
-        # wrap
-        #======================================================================
+        #=======================================================================
+        # # check
+        #=======================================================================
         assert res_df.min(axis=1).min()>=0
         if not res_df.notna().all().all():
             raise Error('got %i nulls'%res_df.isna().sum().sum())
+        #=======================================================================
+        # attribution------
+        #=======================================================================
+        if self.attriMode:
+            atr_dxcol_raw = self.att_df.copy()
+            mdex = atr_dxcol_raw.columns
+            nameRank_d= {lvlName:i for i, lvlName in enumerate(mdex.names)}
+            edf = edf.sort_index(axis=1, ascending=False)
+            """
+            view(edf)
+            view(atr_dxcol_raw)
+            view(atr_dxcol)
+            view(bool_dxcol)
+            view(mult_dxcol)
+            pd.__version__
+            """
+            if event_rels == 'max':
+                """                
+                turns out we need to get the ACTUAL expected value matrix
+                    here we reconstruct by gettin a max=0, no=1, shared=0.5 matrix
+                    then mutiplyling that by the evdf to get the ACTUAL ev matrix"""
+                
+                #===============================================================
+                # build multipler (boolean based on max)
+                #===============================================================
+                mbdxcol=None
+                for aep, gdf in atr_dxcol_raw.groupby(level=0, axis=1):
+                    #get events on this aep
+                    exn_l = gdf.columns.remove_unused_levels().levels[nameRank_d['rEventName']]
+                    
+                    #identify maximums
+                    booldf = evdf.loc[:, exn_l].isin(evdf.loc[:, exn_l].max(axis=1)).astype(int)
+                    
+                    #handle duplicates (assign equal portion)
+                    if len(exn_l)>1:
+                        boolidx =  booldf.eq(booldf.iloc[:,0], axis=0).all(axis=1)
+                        booldf.loc[boolidx, :] = float(1/len(exn_l))
+
+                    #add in the dummy lvl0 aep
+                    bdxcol = pd.concat([booldf], keys=[aep], axis=1)
+
+                    if mbdxcol is None:
+                        mbdxcol = bdxcol
+                    else:
+                        mbdxcol = mbdxcol.merge(bdxcol, how='outer', left_index=True, right_index=True)
+                        
+                    log.debug('%.4f: got %s'%(aep, str(mbdxcol.shape)))
+                    
+                #check it
+                self.check_attrimat(atr_dxcol=mbdxcol, logger=log)
+
+
+                #===============================================================
+                # apply multiplication
+                #===============================================================
+                #get EV from this
+                evdf1 = mbdxcol.multiply(evdf, axis='column', level=1).droplevel(level=0, axis=1)
+                
+
+                    
+            elif event_rels=='mutEx':
+ 
+                evdf1=evdf
+
+            elif event_rels=='indep':
+                raise Error('not implemented')
+            else: raise Error('bad evnet-Rels')
+            
+            #===================================================================
+            # common
+            #===================================================================
+            #multiply thorugh to get all the expected value components 
+            i_dxcol = atr_dxcol_raw.multiply(evdf1, axis='columns', level=1)
+                
+            #divide by the event totals to get ratios back
+            atr_dxcol = i_dxcol.divide(res_df, axis='columns', level='aep')
+            
+            #apportion null values
+            atr_dxcol = self._attriM_nulls(res_df, atr_dxcol, logger=log)
+            
+            self.att_df = atr_dxcol
+        #======================================================================
+        # wrap
+        #======================================================================
+
         
         log.info('resolved to %i unique event damages'%len(res_df.columns))
         
         return res_df.sort_index(axis=1)
+    
+    def _attriM_nulls(self, #handle nulls in an attribution matrix
+                     idf, #impact values (of which we are calculating attributions)
+                     aRaw_dxcol, #attribution matrix w/ nulls (that need filling)
+                     logger=None,
+                     
+                     ):
+        
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log=logger.getChild('_attriM_nulls')
+        mdex = aRaw_dxcol.columns
+        nameRank_d= {lvlName:i for i, lvlName in enumerate(mdex.names)}
+        
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        assert np.array_equal(mdex.levels[0], idf.columns), 'impacts and top level dont match'
+        #=======================================================================
+        # zero damage for event across set: equal attribution---
+        #=======================================================================
+        #=======================================================================
+        # #builld replacement locator frame
+        #=======================================================================
+        booldxcol = idf==0.0  #elements w/ zero impact
+        
+        booldxcol.columns.names=[mdex.names[0]]
+        """not very elegant"""
+        
+        #propagate boolean values into dxcol
+        for lRank, lvlName in enumerate(mdex.names):
+            if lRank==0: continue #always skipping top level
+            
+            lvals = mdex.levels[lRank].tolist() 
+            
+            #propagate into this level
+            booldxcol = pd.concat([booldxcol]*len(lvals), keys=lvals, axis=1,
+                                  names=[lvlName]+booldxcol.columns.names
+                                  )
+        #re-order
+        booldxcol = booldxcol.reorder_levels(mdex.names, axis=1)
+        booldxcol = booldxcol.reindex(aRaw_dxcol.columns, axis=1)
+        assert np.array_equal(booldxcol.columns, aRaw_dxcol.columns)
+        """
+        view(booldxcol)
+        view(aRaw_dxcol)
+        view(atr_dxcol)
+        """
+        #=======================================================================
+        # #apply locator frame
+        #=======================================================================
+
+        #loop through each of the top-level values and figure out the set size
+        fv_d = dict()
+        dxcol = None
+        for lval, gdf in aRaw_dxcol.groupby(level=0, axis=1):
+            fv_d[lval] = 1/len(gdf.columns)
+            booldf = booldxcol.loc[:, idx[lval,:,:]]
+            
+            gdxcol = gdf.where(~booldf, other=fv_d[lval])
+            
+            if dxcol is None:
+                dxcol = gdxcol
+            else:
+                dxcol = dxcol.join(gdxcol) 
+            
+            log.debug('l0=%s. setting %i (of %i) full dmg=0 entries with equal attribution = %.2f'%(
+                lval, booldf.sum().sum(), booldf.size, fv_d[lval]))
+        
+        #=======================================================================
+        # remaining partial zero damage nests
+        #=======================================================================
+        log.debug('setting %i (of %i) partial dmg=0 entries w/ 0.0 attribution'%(
+            dxcol.isna().sum().sum(), dxcol.size))
+        
+        dxcol = dxcol.fillna(0.0)
+        
+        #=======================================================================
+        # checks
+        #=======================================================================
+        if not dxcol.notna().all().all():
+            raise Error('got %i (of %i) remaining nulls after filling'%(
+                dxcol.isna().sum().sum(), dxcol.size))
+            
+        self.check_attrimat(atr_dxcol=dxcol, logger=log)
+        
+        return dxcol
     
     def _get_indeEV(self,
                     inde_df #prob, consq, mutual exclusivity flag for each exposure event 
@@ -2259,7 +2578,7 @@ class Model(ComWrkr):
     #===========================================================================
     # PLOTTING-------
     #===========================================================================
-    def risk_plot(self, #generate and save a figure that summarizes the damages 
+    def risk_plot(self, #impacts vs ARI 
                   dmg_ser = None,
                   
                   #labels
@@ -2288,6 +2607,7 @@ class Model(ComWrkr):
         # defaults
         #======================================================================
         log = self.logger.getChild('risk_plot')
+        log.warning('depreciated!!')
         if dmg_ser is None: dmg_ser = self.res_ser.copy()
         if dfmt is None: dfmt = self.plot_fmt
         if y1lab is None: y1lab = self.y1lab
@@ -2370,13 +2690,13 @@ class Model(ComWrkr):
         xar,  yar = dmg_ser1.index.values, dmg_ser1.values
         pline1 = ax1.semilogx(xar,yar,
                             label       = y1lab,
-                            color       = 'black',
-                            linestyle   = 'dashdot',
-                            linewidth   = 2,
-                            alpha       = 0.5,
-                            marker      = 's',
-                            markersize  = 4,
-                            fillstyle   = 'full', #marker fill style
+                            color       = self.color,
+                            linestyle   = self.linestyle,
+                            linewidth   = self.linewidth,
+                            alpha       = self.alpha,
+                            marker      = self.marker,
+                            markersize  = self.markersize,
+                            fillstyle   = self.fillstyle, #marker fill style
                             )
         
         #add a hatch
@@ -2440,7 +2760,7 @@ class Model(ComWrkr):
     plt.show()
     """
     
-    def plot_aep(self, #generate and save a figure that summarizes the damages 
+    def plot_aep(self, #AEP vs impacts
                   dmg_ser = None,
                   
                   #labels
@@ -2469,6 +2789,7 @@ class Model(ComWrkr):
         # defaults
         #======================================================================
         log = self.logger.getChild('plot_aep')
+        log.warning('depreciated!!')
         if dmg_ser is None: dmg_ser = self.res_ser.copy()
         if dfmt is None: dfmt = self.plot_fmt
         if xlab is None: xlab = self.y1lab #pull from risk_plot notation
@@ -2557,13 +2878,13 @@ class Model(ComWrkr):
         xar,  yar = aep_ser.values.astype(np.float), aep_ser.index.values
         pline1 = ax1.plot(xar,yar,
                             label       = y1lab,
-                            color       = 'black',
-                            linestyle   = 'dashdot',
-                            linewidth   = 2,
-                            alpha       = 0.5,
-                            marker      = 's',
-                            markersize  = 4,
-                            fillstyle   = 'full', #marker fill style
+                            color       = self.color,
+                            linestyle   = self.linestyle,
+                            linewidth   = self.linewidth,
+                            alpha       = self.alpha,
+                            marker      = self.marker,
+                            markersize  = self.markersize,
+                            fillstyle   = self.fillstyle, #marker fill style
                             )
         
         #add a hatch
@@ -2648,6 +2969,51 @@ class Model(ComWrkr):
     #==========================================================================
     # VALIDATORS-----------
     #==========================================================================
+    def check_attrimat(self, #check the logic of the attrimat
+                       atr_dxcol=None,
+                       logger=None,
+
+                       ):
+        """
+        attrimat rows should always sum to 1.0 on lvl0
+        """
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if atr_dxcol is None: atr_dxcol=self.att_df
+        
+        #mdex = atr_dxcol.columns
+        #=======================================================================
+        # #determine what level to perofrm sum check on
+        # sumLvl = atr_dxcol.columns.nlevels -2 #should always be the last rank/level
+        #=======================================================================
+        
+        #sum each of the grpColns nested under the rEventName        
+        bool_df = atr_dxcol.sum(axis=1, level=0, skipna=False).round(self.prec)==1.0
+        
+        #=======================================================================
+        # #drop all but the top level. identify null locations
+        # nbool_df = atr_dxcol.droplevel(
+        #     level=list(range(1, mdex.nlevels)), axis=1
+        #     ).notna()
+        # 
+        # #check the failures line up with the nulls
+        # bool2_df = psumBool_df==nbool_df.loc[:, ~nbool_df.columns.duplicated(keep='first')]
+        #=======================================================================
+        
+        """
+
+        view(atr_dxcol.sum(axis=1, level=0, skipna=False))
+        view(bool_df)
+        view(atr_dxcol)
+        """
+        if not bool_df.all().all():
+            raise Error('%i (of %i) attribute matrix entries failed sum=1 test'%(
+                np.invert(bool_df).sum().sum(), bool_df.size))
+            
+        return True
+            
+        
     
     def check_monot(self,
                      df_raw, #event:asset like data. expectes columns as aep 
@@ -2758,6 +3124,72 @@ class Model(ComWrkr):
             result= chk_func(df_raw, log)
             
         return result
+    
+    #===========================================================================
+    # OUTPUTS---------
+    #===========================================================================
+    def output_attr(self, #short cut for saving the expanded reuslts
+                    dtag=None,
+                    ofn = None,
+                    upd_cf= True,
+                    logger=None,
+                    ):
+        assert self.attriMode
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if ofn is None:
+            ofn = 'attr%02d_%s'%(self.att_df.columns.nlevels, self.name)
+        if dtag is None: dtag = self.attrdtag_out
+            
+        out_fp = self.output_df(self.att_df, ofn, logger=logger)
+        
+        #update the control file
+        if upd_cf:
+            self.update_cf(
+                    {
+                    'results_fps':(
+                        {dtag:out_fp}, 
+                        '#\'%s\' file path set from output_attr at %s'%(
+                            dtag, datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                        ),
+                     },
+                    cf_fp = self.cf_fp
+                )
+        return out_fp
+    
+    def output_etype(self,
+                     df = None,
+                     dtag='eventypes',
+                     ofn=None,
+                     upd_cf=True,
+                     logger=None):
+        
+        
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if df is None: df = self.eventType_df
+        if ofn is None:
+            ofn = '%s_%s'%(dtag, self.name)
+
+            
+        out_fp = self.output_df(df, ofn, logger=logger, write_index=False)
+        
+        #update the control file
+        if upd_cf:
+            self.update_cf(
+                    {
+                    'results_fps':(
+                        {dtag:out_fp}, 
+                        '#\'%s\' file path set from output_etype at %s'%(
+                            dtag, datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                        ),
+                     },
+                    cf_fp = self.cf_fp
+                )
+        return out_fp
             
 
 

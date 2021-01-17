@@ -382,6 +382,56 @@ p, li { white-space: pre-wrap; }
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_14">
               <item>
+               <layout class="QHBoxLayout" name="horizontalLayout">
+                <item>
+                 <widget class="QCheckBox" name="checkBox_SSoverwrite">
+                  <property name="text">
+                   <string>Overwrite any existing files</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QCheckBox" name="checkBox_SS_updCf">
+                  <property name="text">
+                   <string>Allow control file updates</string>
+                  </property>
+                  <property name="checkable">
+                   <bool>true</bool>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                  <property name="tristate">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QCheckBox" name="checkBox_SS_attr">
+                  <property name="text">
+                   <string>Generate attribution matrix</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_3">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </item>
+              <item>
                <layout class="QHBoxLayout" name="horizontalLayout_8">
                 <item>
                  <widget class="QLabel" name="label_6">
@@ -394,16 +444,6 @@ p, li { white-space: pre-wrap; }
                  <widget class="QLineEdit" name="linEdit_Stag">
                   <property name="text">
                    <string>run1</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QCheckBox" name="checkBox_SSoverwrite">
-                  <property name="text">
-                   <string>Overwrite any existing files</string>
-                  </property>
-                  <property name="checked">
-                   <bool>true</bool>
                   </property>
                  </widget>
                 </item>
@@ -960,22 +1000,6 @@ p, li { white-space: pre-wrap; }
               <string>Run Controls:</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout">
-              <item>
-               <widget class="QCheckBox" name="checkBox_i2_updCf">
-                <property name="text">
-                 <string>Update Control File</string>
-                </property>
-                <property name="checkable">
-                 <bool>true</bool>
-                </property>
-                <property name="checked">
-                 <bool>true</bool>
-                </property>
-                <property name="tristate">
-                 <bool>false</bool>
-                </property>
-               </widget>
-              </item>
               <item>
                <widget class="QCheckBox" name="checkBox_i2_outExpnd">
                 <property name="text">

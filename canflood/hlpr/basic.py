@@ -19,6 +19,7 @@ helper functions w/o qgis api
 #python
 import os, configparser, logging, re
 import pandas as pd
+pd.set_option('display.max_rows',10)
 import numpy as np
 
 
@@ -51,9 +52,22 @@ class ComWrkr(object): #common methods for all classes
     invalid_cids = ['fid', 'ogc_fid']
     
     
-    def __init__(self, tag='session', 
+    #[plotting]
+    """these can also be loaded from a control file"""
+    color = 'black'
+    linestyle = 'dashdot'
+    linewidth = 2.0
+    alpha =     0.75        #0=transparent 1=opaque
+    marker =    'o'
+    markersize = 4.0
+    fillstyle = 'none'    #marker fill style
+    
+    
+    def __init__(self, 
+                 tag='session', 
                  cid='xid', #default used by inventory constructors
                  cf_fp='',
+
                  overwrite=True, 
                  out_dir=None, 
                  logger=mod_logger,
@@ -86,6 +100,7 @@ class ComWrkr(object): #common methods for all classes
             os.makedirs(out_dir)
             self.logger.info('created requested output directory: \n    %s'%out_dir)
 
+        self.data_d = dict() #dictionary for loaded data sets
         #======================================================================
         # attach
         #======================================================================
@@ -257,13 +272,15 @@ class ComWrkr(object): #common methods for all classes
                       out_dir = None,
                       overwrite=None,
                       write_index=True,
+                      logger=None,
             ):
         #======================================================================
         # defaults
         #======================================================================
         if out_dir is None: out_dir = self.out_dir
         if overwrite is None: overwrite = self.overwrite
-        log = self.logger.getChild('output')
+        if logger is None: logger=self.logger
+        log = logger.getChild('output_df')
         
         #======================================================================
         # prechecks

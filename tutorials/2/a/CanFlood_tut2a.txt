@@ -10,6 +10,7 @@ rtail = 0.5             #EAD extrapolation: right trail treatment (high prob low
 drop_tails = True       #whether to remove the extrapolated values from the results
 integrate = trapz       #integration method to apply: trapz, simps
 as_inun = False
+event_rels = max
 
 [dmg_fps]
 curves = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\data\CanFlood_curves_rfda_20200218.xls #damage curve library filepath
@@ -18,14 +19,17 @@ expos = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\a\expos_tut2a_4_32.csv
 gels = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\a\gels_tut2a_1_32.csv
 
 [risk_fps]
-dmgs = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\a\results\dmgs_tut2a_run1.csv
+dmgs = C:\Users\cefect\CanFlood\tutorials\2\20210113\dmgs_tut2a_tut2a.csv
 exlikes = #secondary exposure likelihood data filepath
 evals = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\a\evals_4_tut2a.csv
-#'dmgs' file path set from dmg2.py at 2020-12-16 09.27.53
 
 [validation]
 risk1 = False
 dmg2 = True
 risk2 = True
 risk3 = False
+
+[results_fps]
+attrimat = C:\Users\cefect\CanFlood\tutorials\2\20210113\attr02_tut2a.csv
+#'attrimat' file path set from dmg2.py at 2021-01-13 14.13.06
 

@@ -23,21 +23,7 @@ import pandas as pd
 
 
 
-
-#==============================================================================
-# Logger
-#==============================================================================
-
-#standalone runs
-if __name__ =="__main__": 
-    from hlpr.logr import basic_logger
-    mod_logger = basic_logger()   
-    
-    from hlpr.exceptions import Error
-#plugin runs
-else:
-    #base_class = object
-    from hlpr.exceptions import QError as Error
+from hlpr.exceptions import QError as Error
     
 
 
@@ -46,21 +32,15 @@ else:
 #===============================================================================
 # non-Qgis
 #===============================================================================
-from hlpr.basic import ComWrkr
+#from hlpr.basic import ComWrkr
 from model.modcom import Model
-from results.riskPlot import Plotr as riskPlotr
+from results.riskPlot import Plotr
 
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Cmpr(riskPlotr):
-    """
-    general methods to be called by the Dialog class
-    
-    each time the user performs an action, 
-        a new instance of this should be spawned
-        this way all the user variables can be freshley pulled
-    """
+class Cmpr(Plotr):
+ 
     
     #keys to expect on the sub co ntainers
     exp_pSubKeys = (
@@ -73,7 +53,7 @@ class Cmpr(riskPlotr):
         
         super().__init__(*args, **kwargs)
         
-
+        self._init_plt() #setup matplotlib
         
         self.logger.debug('%s.__init__ w/ feedback \'%s\''%(
             self.__class__.__name__, type(self.feedback).__name__))
@@ -123,22 +103,26 @@ class Cmpr(riskPlotr):
             #===================================================================
             # build/load the children
             #===================================================================
-            sWrkr = Scenario(self, sName)
+            sWrkr = Scenario(self, sName, cf_fp=parsN_d['cf_fp'])
+            """
+            sWrkr.data_d
+            """
             
              
             #load total results file
             if 'ttl_fp' in parsN_d:
                 """these are riskPlot methods"""
-                sWrkr.load_ttl(parsN_d['ttl_fp'])
+                sWrkr.load_ttl(fp=parsN_d['ttl_fp'])
                 sWrkr.prep_dtl(logger=log)
                 
                 
             #load control file
             """setting this last incase we want to overwrite with control file values"""
-            sWrkr.load_cf(parsN_d['cf_fp'])
+            sWrkr.load_cf()
             
             #populate the plotting parameters
-            sWrkr.get_plot_pars() 
+            sWrkr.upd_impStyle() 
+
                 
             #===================================================================
             # add to family
@@ -157,7 +141,11 @@ class Cmpr(riskPlotr):
         
     def riskCurves(self,
                    sWrkr_d, #container of scenario works to plot curve comparison
-                   logger=None
+                   logger=None,
+                   
+                   #plot keys
+                   y1lab='AEP', #yaxis label and plot type c ontrol
+                   **plotKwargs
                    ): 
         
         #=======================================================================
@@ -177,26 +165,17 @@ class Cmpr(riskPlotr):
         for childName, sWrkr in sWrkr_d.items():
             log.debug('preping %s'%childName)
             plotPars_d[childName] = {
-                                    'ttl_df':sWrkr.ttl_df,
+                                    'ttl_df':sWrkr.data_d['ttl'],
                                     'ead_tot':sWrkr.ead_tot,
                                     'impStyle_d':sWrkr.impStyle_d.copy(),
-
                                     }
             
             if first:
-                self.y1lab = sWrkr.impact_name
+                self.impact_name = sWrkr.impact_name
                 first = False
-            
-        
-        #=======================================================================
-        # plot
-        #=======================================================================
-        """NOTE: each child is also a riskPlotr.. but here we make a separate
-        
-        consider making the parent a risk plotter also?
-        """
 
-        return self.multi(plotPars_d)
+
+        return self.plot_mRiskCurves(plotPars_d,y1lab=y1lab, **plotKwargs)
         
     def cf_compare(self, #compare control file values between Scenarios
                    sWrkr_d,
@@ -256,43 +235,45 @@ class Cmpr(riskPlotr):
         return mdf
                     
  
-class Scenario(Model, riskPlotr): #simple class for a scenario
+class Scenario(Model, Plotr): #simple class for a scenario
     
     name=None
     
     cfPars_d = None
     
     #plotting variables
-    color = 'black'
-    linestyle = 'dashdot'
-    linewidth = 2.0
-    alpha =     0.75        #0=transparent 1=opaque
-    marker =    'o'
-    markersize = 4.0
-    fillstyle = 'none'    #marker fill style
+    """
+    moved to Model
+    """
+
     
 
     def __init__(self,
                  parent,
-                 nameRaw,              
+                 nameRaw,
+                 cf_fp=None,
+                 **kwargs              
                  ):
         
-        self.logger = parent.logger.getChild(nameRaw)
+        super().__init__(cf_fp, **kwargs) #initilzie teh baseclass
+        #self.logger = parent.logger.getChild(nameRaw)
         
-        """we'll set another name from the control file"""
+        """we'll set another name from the control file
+        TODO: clean this up"""
         self.nameRaw = nameRaw 
         
-        """no need to init baseclases"""
+
         
     def load_cf(self, #load the control file
-                cf_fp):
+                ):
         
         #=======================================================================
         # defaults
         #=======================================================================
         log = self.logger.getChild('load_cf')
+        
+        cf_fp = self.cf_fp
         assert os.path.exists(cf_fp)
-        self.cf_fp = cf_fp
         #=======================================================================
         # init the config parser
         #=======================================================================
@@ -319,23 +300,7 @@ class Scenario(Model, riskPlotr): #simple class for a scenario
         
         return
     
-    def get_plot_pars(self): #get a set of plotting handles based on your variables
-        """
-        taking instance variables (rather than parser's section) because these are already typset
-        """
-        assert not self.cfPars_d is None, 'load the control file first!'
-        impStyle_d = dict()
-        
-        
-        #loop through the default values
-        
-        for k, v in self.impStyle_d.items():
-            if hasattr(self, k):
-                impStyle_d[k] = getattr(self, k)
-            else: #just use default
-                impStyle_d[k] = v
-                
-        self.impStyle_d = impStyle_d
+
                 
     
 

@@ -3,14 +3,14 @@
 ui class for the MODEL toolset
 """
 
-import os,  os.path, warnings, tempfile, logging, configparser, sys, time
+import os,  os.path, time
 from shutil import copyfile
 
 from PyQt5 import uic, QtWidgets
 
 
-from PyQt5.QtCore import QSettings, QTranslator, QCoreApplication, QObject
-from PyQt5.QtGui import QIcon
+#from PyQt5.QtCore import QSettings, QTranslator, QCoreApplication, QObject
+#from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget
 
 # Initialize Qt resources from file resources.py
@@ -309,19 +309,24 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #run the model        
         cres_df = model.run()
         
-
+        #attribution
+        if self.checkBox_SS_attr.isChecked():
+            _ = model.get_attribution(cres_df)
+            model.output_attr(upd_cf = self.checkBox_SS_updCf.isChecked())
+        
+        self.feedback.setProgress(95)
         #======================================================================
         # save reuslts
         #======================================================================
         out_fp = model.output_df(cres_df, model.resname)
         
         #update parameter file
-        if self.checkBox_i2_updCf.isChecked():
+        if self.checkBox_SS_updCf.isChecked():
             model.upd_cf()
             
         #output expanded results
         if self.checkBox_i2_outExpnd.isChecked():
-            _ = model.output_df(model.bdmg_df, 'dmgs_expnd_%s_%s'%(model.name, model.tag))
+            _ = model.output_bdmg()
 
         self.logger.push('Impacts2 complete')
         self.feedback.upd_prog(None) #set the progress bar back down to zero
@@ -351,27 +356,41 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         # run the model
         #======================================================================
         model = Risk2(cf_fp, out_dir=out_dir, logger=self.logger, tag=tag,absolute_fp=absolute_fp,
-                      feedback=self.feedback)._setup()
+                      feedback=self.feedback, attriMode=self.checkBox_SS_attr.isChecked(),
+                      )._setup()
         
-        res_ser, res_df = model.run(res_per_asset=res_per_asset)
+        res_ttl, res_df = model.run(res_per_asset=res_per_asset)
         
         #======================================================================
         # plot
         #======================================================================
         if self.checkBox_r2plot.isChecked():
-            fig = model.risk_plot()
+            ttl_df = model.prep_dtl(tlRaw_df=res_ttl)
+            """just giving one curve here"""
+            fig = model.plot_riskCurve(ttl_df, y1lab='impacts')
             _ = model.output_fig(fig)
        
         #=======================================================================
         # output
         #=======================================================================
-        model.output_df(res_ser, '%s_%s'%(model.resname, 'ttl'))
+        #risk results
+        model.output_ttl(upd_cf = self.checkBox_SS_updCf.isChecked())
         
         out_fp2=''
         if not res_df is None:
-            out_fp2= model.output_df(res_df, '%s_%s'%(model.resname, 'passet'))
+            out_fp2= model.output_passet(upd_cf = self.checkBox_SS_updCf.isChecked())
+            
+
+            
+        #attribution
+        if self.checkBox_SS_attr.isChecked():
+            model.output_attr(upd_cf = self.checkBox_SS_updCf.isChecked())
         
-        
+        #event metadata
+        model.output_etype(upd_cf = self.checkBox_SS_updCf.isChecked())
+        #=======================================================================
+        # wrap
+        #=======================================================================
         tdelta = (time.time()-start)/60.0
         self.logger.push('Risk2 complete in %.4f mins'%tdelta)
         self.feedback.upd_prog(None) #set the progress bar back down to zero
