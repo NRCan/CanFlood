@@ -162,7 +162,7 @@ class Model(ComWrkr,
     eventypes=''
     
     #[plotting]
-    """see ComWrkr"""
+    """see Plotr"""
     
     #==========================================================================
     # program vars

@@ -35,7 +35,7 @@ r2_ttl = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\r2_out\risk2_Tut2b_tut2b_ttl
 eventypes = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\r2_out\eventypes_tut2b.csv
 r2_passet = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\r2_out\risk2_Tut2b_tut2b_r2_passet.csv
 attrimat03 = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\r2_out\attr03_tut2b.csv
-#'attrimat03' file path set from output_attr at 2021-01-19 13.37.19
+#'attrimat03' file path set from output_attr at 2021-01-19 16.07.44
 
 [plotting]
 color = green
@@ -45,3 +45,4 @@ alpha = 0.75        #0=transparent 1=opaque
 marker = o
 markersize = 4
 fillstyle = none    #marker fill style
+

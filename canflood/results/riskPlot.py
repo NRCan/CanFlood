@@ -37,7 +37,20 @@ from model.modcom import Model
 # functions-------------------
 #==============================================================================
 class Plotr(Model):
+    
+    #===========================================================================
+    # parameters from control file
+    #===========================================================================
+    #[plotting]
 
+    color = 'black'
+    linestyle = 'dashdot'
+    linewidth = 2.0
+    alpha =     0.75        #0=transparent 1=opaque
+    marker =    'o'
+    markersize = 4.0
+    fillstyle = 'none'    #marker fill style
+    impactFmt_str = '%.2e'
     #===========================================================================
     # expectations from parameter file
     #===========================================================================
@@ -735,7 +748,7 @@ class Plotr(Model):
         self._postFmt(ax1, 
                       val_str=val_str, #putting in legend ittle 
                       legendHandles=(h1, list(legLab_d.values())),
-                      #xLocScale=0.8, yLocScale=0.1,
+                      xLocScale=0.8, yLocScale=0.1,
                       legendTitle=legendTitle)
         
         #assign tick formatter functions
@@ -814,6 +827,7 @@ class Plotr(Model):
     def _postFmt(self, #text, grid, leend
                  ax, 
 
+                 
                  grid=None,
                  
                  #plot text

@@ -24,17 +24,9 @@ from scipy import interpolate, integrate
 #==============================================================================
 
 #standalone runs
-if __name__ =="__main__": 
-    from hlpr.logr import basic_logger
-    mod_logger = basic_logger()   
-    
-    from hlpr.exceptions import Error
-    
-#plugin runs
-else:
-    mod_logger = logging.getLogger('risk1') #get the root logger
+mod_logger = logging.getLogger('risk1') #get the root logger
 
-    from hlpr.exceptions import QError as Error
+from hlpr.exceptions import QError as Error
 
 #from hlpr.Q import *
 from hlpr.basic import *
