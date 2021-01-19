@@ -4,7 +4,7 @@ cid = xid
 prec = 6                #float precision for calculations
 ground_water = True     #whether to allow wsl < gel
 felv = datum
-event_probs = ari       #format of event probabilities (in 'aeps' data file): 'ari' or 'aep'
+event_probs = ari
 ltail = extrapolate     #EAD extrapolation: left tail treatment code (low prob high damage)
 rtail = 0.5             #EAD extrapolation: right trail treatment (high prob low damage)
 drop_tails = False      #EAD extrapolation: whether to remove the extrapolated values before writing the per-asset results
@@ -17,18 +17,18 @@ curves = #damage curve library filepath
 finv = C:\LS\03_TOOLS\CanFlood\_git\tutorials\1\1a\finv_tut1a_finv_cT2b.csv
 expos = C:\LS\03_TOOLS\CanFlood\_git\tutorials\1\1a\expos_tut1a_5_32.csv
 gels = #ground elevation data filepath
-#'expos' file path set from rsamp.py at 2021-01-19 16.34.35
 
 [risk_fps]
 dmgs = #damage data results filepath
 exlikes = #secondary exposure likelihood data filepath
-evals = #event probability data filepath
+evals = C:\LS\03_TOOLS\CanFlood\_git\tutorials\1\1a\evals_4_tut1a.csv
 
 [validation]
-risk1 = False
+risk1 = True
 dmg2 = False
 risk2 = False
 risk3 = False
+# 'risk1' validated by validator.py at 2021-01-19 16.40.28
 
 [results_fps]
 

@@ -20,7 +20,7 @@ gels = #ground elevation data filepath
 
 [risk_fps]
 dmgs = #damage data results filepath
-exlikes = C:\LS\03_TOOLS\CanFlood\_git\tutorials\1\1b\exlikes_tut1b.csv
+exlikes = C:\LS\03_TOOLS\CanFlood\_git\tutorials\1\1b\exlikes_tut1a.csv
 evals = C:\LS\03_TOOLS\CanFlood\_git\tutorials\1\1b\evals_5_tut1b.csv
 
 [validation]
@@ -28,7 +28,7 @@ risk1 = True
 dmg2 = False
 risk2 = False
 risk3 = False
-# 'risk1' validated by validator.py at 2021-01-19 16.34.14
+# 'risk1' validated by validator.py at 2021-01-19 16.40.29
 
 [results_fps]
 
