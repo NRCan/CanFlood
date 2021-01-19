@@ -1,0 +1,43 @@
+[parameters]
+name = tag
+cid = xid
+prec = 6                #float precision for calculations
+ground_water = True     #whether to allow wsl < gel
+felv = datum
+event_probs = ari
+ltail = extrapolate     #EAD extrapolation: left tail treatment code (low prob high damage)
+rtail = 0.5             #EAD extrapolation: right trail treatment (high prob low damage)
+drop_tails = False      #EAD extrapolation: whether to remove the extrapolated values before writing the per-asset results
+integrate = trapz       #integration method to apply: trapz, simps
+as_inun = False
+event_rels = mutEx		#assumption for calculated expected value on complex events
+
+[dmg_fps]
+curves = #damage curve library filepath
+finv = C:\LS\03_TOOLS\CanFlood\_git\tutorials\1\1b\finv_tut1b_finv_cT2b.csv
+expos = C:\LS\03_TOOLS\CanFlood\_git\tutorials\1\1b\expos_tut1b_5_32.csv
+gels = #ground elevation data filepath
+
+[risk_fps]
+dmgs = #damage data results filepath
+exlikes = C:\LS\03_TOOLS\CanFlood\_git\tutorials\1\1b\exlikes_tut1b.csv
+evals = C:\LS\03_TOOLS\CanFlood\_git\tutorials\1\1b\evals_5_tut1b.csv
+
+[validation]
+risk1 = True
+dmg2 = False
+risk2 = False
+risk3 = False
+# 'risk1' validated by validator.py at 2021-01-19 16.34.14
+
+[results_fps]
+
+[plotting]
+color = black
+linestyle = dashdot
+linewidth = 2
+alpha = 0.75        #0=transparent 1=opaque
+marker = o
+markersize = 4
+fillstyle = none    #marker fill style
+
