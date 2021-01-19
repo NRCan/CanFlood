@@ -184,7 +184,7 @@ class Model(ComWrkr,
     
 
     def __init__(self,
-                 cf_fp, #control file path 
+                 cf_fp, #control file path TODO: make this a kwarg
                     #note: this could also be attached by basic.ComWrkr.__init__()
                     #now that this is a parent... wish this was a kwarg
                  
@@ -198,7 +198,8 @@ class Model(ComWrkr,
         # precheck
         #=======================================================================
         mod_logger.info('Model.__init__ start')
-        assert os.path.exists(cf_fp), 'bad control filepath: %s'%cf_fp
+        """no.. letting dummy cf_fps get passed
+        assert os.path.exists(cf_fp), 'bad control filepath: %s'%cf_fp"""
         
         #=======================================================================
         # parent setup

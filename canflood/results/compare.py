@@ -235,7 +235,7 @@ class Cmpr(Plotr):
         return mdf
                     
  
-class Scenario(Model, Plotr): #simple class for a scenario
+class Scenario(Plotr): #simple class for a scenario
     
     name=None
     
@@ -251,11 +251,11 @@ class Scenario(Model, Plotr): #simple class for a scenario
     def __init__(self,
                  parent,
                  nameRaw,
-                 cf_fp=None,
+                 #cf_fp=None, #should be picked up in kwargs now
                  **kwargs              
                  ):
         
-        super().__init__(cf_fp, **kwargs) #initilzie teh baseclass
+        super().__init__( **kwargs) #initilzie teh baseclass
         #self.logger = parent.logger.getChild(nameRaw)
         
         """we'll set another name from the control file

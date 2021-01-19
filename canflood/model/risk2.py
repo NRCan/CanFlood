@@ -32,8 +32,7 @@ from results.riskPlot import Plotr
 #==============================================================================
 # functions----------------------
 #==============================================================================
-class Risk2(Model, 
-            Plotr, #TODO: consider moviing this onto Model
+class Risk2(Plotr, #This inherits 'Model'
              
             ):
     """Risk T2 tool for calculating expected value for a set of events from impact results
@@ -114,7 +113,7 @@ class Risk2(Model,
                  ):
         
         #init the baseclass
-        super().__init__(cf_fp, **kwargs) #initilzie Model
+        super().__init__(cf_fp=cf_fp, **kwargs) #initilzie Model
         self._init_plt() #setup matplotlib
         
         self.logger.debug('finished __init__ on Risk')

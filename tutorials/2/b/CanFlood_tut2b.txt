@@ -19,7 +19,7 @@ expos = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\expos_tut2b_5_32.csv
 gels = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\gels_tut2b_1_32.csv
 
 [risk_fps]
-dmgs = C:\Users\cefect\CanFlood\tutorials\2\20210113\dmgs_tut2b_tut2b.csv
+dmgs = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\dmg_out\dmgs_tut2b_tut2b.csv
 exlikes = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\exlikes_tut2b.csv
 evals = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\evals_5_tut2b.csv
 
@@ -30,6 +30,10 @@ risk2 = True
 risk3 = False
 
 [results_fps]
-attrimat = C:\Users\cefect\CanFlood\tutorials\2\20210113\attr02_tut2b.csv
-#'attrimat' file path set from dmg2.py at 2021-01-13 14.13.07
+attrimat02 = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\dmg_out\attr02_tut2b.csv
+r2_ttl = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\r2_out\risk2_Tut2b_tut2b_ttl.csv
+eventypes = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\r2_out\eventypes_tut2b.csv
+r2_passet = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\r2_out\risk2_Tut2b_tut2b_r2_passet.csv
+attrimat03 = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\r2_out\attr03_tut2b.csv
+#'attrimat03' file path set from output_attr at 2021-01-19 13.37.19
 

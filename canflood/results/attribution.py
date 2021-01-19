@@ -33,21 +33,20 @@ from hlpr.exceptions import QError as Error
 #===============================================================================
 # non-Qgis
 #===============================================================================
-from model.modcom import Model
+
 from results.riskPlot import Plotr as riskPlotr
 from hlpr.basic import view
 
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Attr(Model, riskPlotr):
+class Attr(riskPlotr):
     
     #===========================================================================
     # program vars
     #===========================================================================
     """todo: fix this"""
-    valid_par='risk2' 
-    attrdtag_in = 'attrimat03'
+
     sliceName='slice'
     #===========================================================================
     # expectations from parameter file
@@ -84,6 +83,7 @@ class Attr(Model, riskPlotr):
         #load the control file
         self.init_model()
         self._init_plt()
+        
         #upldate your group plot style container
         self.upd_impStyle()
         

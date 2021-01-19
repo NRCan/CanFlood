@@ -65,7 +65,7 @@
           </size>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>3</number>
          </property>
          <widget class="QWidget" name="tab_welcome">
           <attribute name="title">
@@ -145,7 +145,11 @@ p, li { white-space: pre-wrap; }
               <item>
                <layout class="QHBoxLayout" name="_6">
                 <item>
-                 <widget class="QLineEdit" name="lineEdit_wd"/>
+                 <widget class="QLineEdit" name="lineEdit_wd">
+                  <property name="placeholderText">
+                   <string>Select a working directory for outputs</string>
+                  </property>
+                 </widget>
                 </item>
                 <item>
                  <widget class="QPushButton" name="pushButton_wd">
@@ -158,6 +162,39 @@ p, li { white-space: pre-wrap; }
                  <widget class="QPushButton" name="pushButton_wd_open">
                   <property name="text">
                    <string>Open</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_Co_s1_13">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="title">
+              <string>Control File (optional):</string>
+             </property>
+             <layout class="QVBoxLayout" name="_31">
+              <item>
+               <layout class="QHBoxLayout" name="_32">
+                <item>
+                 <widget class="QLineEdit" name="lineEdit_SS_cf">
+                  <property name="placeholderText">
+                   <string>Select a Control File for performing single scenario analysis</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="pushButton_SS_cf_browse">
+                  <property name="text">
+                   <string>Browse</string>
                   </property>
                  </widget>
                 </item>
@@ -181,14 +218,14 @@ p, li { white-space: pre-wrap; }
               <item>
                <widget class="QLabel" name="label_6">
                 <property name="text">
-                 <string>Run Tag:</string>
+                 <string>Session Tag:</string>
                 </property>
                </widget>
               </item>
               <item>
                <widget class="QLineEdit" name="linEdit_Stag">
                 <property name="text">
-                 <string>run1</string>
+                 <string>res1</string>
                 </property>
                </widget>
               </item>
@@ -897,18 +934,28 @@ p, li { white-space: pre-wrap; }
            <item>
             <widget class="QGroupBox" name="verticalGroupBox_7">
              <property name="title">
-              <string>Model Results Data:</string>
+              <string>Results Data:</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_2">
               <item>
-               <layout class="QHBoxLayout" name="_8">
+               <layout class="QHBoxLayout" name="horizontalLayout_9">
                 <item>
-                 <widget class="QLineEdit" name="lineEdit_RP_fp"/>
+                 <widget class="QLabel" name="label_8">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>Control File Path:</string>
+                  </property>
+                 </widget>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="pushButton_RP_fp">
+                 <widget class="QLabel" name="label_RP_cfPath">
                   <property name="text">
-                   <string>Browse</string>
+                   <string>''</string>
                   </property>
                  </widget>
                 </item>
@@ -1353,7 +1400,7 @@ p, li { white-space: pre-wrap; }
                  </font>
                 </property>
                 <property name="text">
-                 <string>Plot</string>
+                 <string>Plot Totals</string>
                 </property>
                </widget>
               </item>

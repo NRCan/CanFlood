@@ -28,6 +28,7 @@ from hlpr.exceptions import QError as Error
 import results.djoin
 import results.riskPlot
 import results.compare
+import results.attribution
 
 
 
@@ -74,32 +75,32 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # setup------------
         #=======================================================================
-        #Working Directory browse
-        def browse_wd():
-            return self.browse_button(self.lineEdit_wd, prompt='Select Working Directory',
+        #Working Directory browse            
+        self.pushButton_wd.clicked.connect(
+                lambda: self.browse_button(self.lineEdit_wd, 
+                                           prompt='Select Working Directory',
                                       qfd = QFileDialog.getExistingDirectory)
-            
-        self.pushButton_wd.clicked.connect(browse_wd) # SS. Working Dir. Browse
+                )
+
+        #WD Open
+        self.pushButton_wd_open.clicked.connect(
+                lambda: force_open_dir(self.lineEdit_wd.text()))
+                
+        #Control File browse
+        self.pushButton_SS_cf_browse.clicked.connect(
+                lambda: self.fileSelect_button(self.lineEdit_SS_cf, 
+                                          caption='Select Control File',
+                                          path = self.lineEdit_wd.text(),
+                                          filters="Text Files (*.txt)")
+                )
         
-        
-        #WD force open
-        def open_wd():
-            force_open_dir(self.lineEdit_wd.text())
-        
-        self.pushButton_wd_open.clicked.connect(open_wd)
-        
+        #CF update RP label
+        self.pushButton_SS_cf_browse.clicked.connect(
+            lambda:self.label_RP_cfPath.setText(self.lineEdit_SS_cf.text()))
         #=======================================================================
         # Risk PLot-------------
         #=======================================================================
 
-        #data file browse
-        def browse_pd():
-            return self.fileSelect_button(self.lineEdit_RP_fp, 
-                                          caption='Select Total Results Data File',
-                                          path = self.lineEdit_wd.text(),
-                                          filters="Data Files (*.csv)")
-            
-        self.pushButton_RP_fp.clicked.connect(browse_pd)
         
         self.pushButton_RP_plot.clicked.connect(self.run_plotRisk) 
         
@@ -259,7 +260,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         log.debug('connect_slots finished')
         
-    def run_plotRisk(self): 
+    def run_plotRisk(self): #single risk plot of total results
         log = self.logger.getChild('run_plotRisk')
         log.info('user pushed \'plotRisk\'')
         
@@ -268,56 +269,48 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
 
         #general
-        wd = self.lineEdit_wd.text()
+        out_dir = self.lineEdit_wd.text()
         tag = self.linEdit_Stag.text() #set the secnario tag from user provided name
+        cf_fp = self.lineEdit_SS_cf.text()
         
-        #local
-        data_fp = self.lineEdit_RP_fp.text()
         
         #=======================================================================
         # checks
         #=======================================================================
-        assert isinstance(wd, str)
         assert isinstance(tag, str)
-        
-        assert os.path.exists(data_fp), 'invalid data_fp'
-        
-        #=======================================================================
-        # working dir
-        #=======================================================================
-        if not os.path.exists(wd):
-            os.makedirs(wd)
-            log.info('built working directory: %s'%wd)
+        assert os.path.exists(cf_fp), 'invalid cf_fp: %s'%cf_fp
+        assert os.path.exists(out_dir), 'working directory does not exist'
             
         #=======================================================================
-        # execute
+        # setup and load
         #=======================================================================
         self.feedback.setProgress(5)
         #setup
         wrkr = results.riskPlot.Plotr(logger=self.logger, 
                                      tag = tag,
                                      feedback=self.feedback,
-                                     out_dir=wd)._init_plt()
+                                     out_dir=out_dir)._setup()
         
         self.feedback.setProgress(10)
-        #load tabular
-        tlRaw_df = wrkr.load_ttl(data_fp)
-        tl_df = wrkr.prep_dtl(tlRaw_df)
-        
-        self.feedback.setProgress(20)
-        #execute
+
+        #=======================================================================
+        # #execute
+        #=======================================================================
         if self.checkBox_RP_aep.isChecked():
-            fig = wrkr.plot_riskCurve(tl_df, y1lab='AEP')
+            fig = wrkr.plot_riskCurve(y1lab='AEP')
             wrkr.output_fig(fig)
-        if self.checkBox_RP_ari.isChecked():
-            fig = wrkr.plot_riskCurve(tl_df, y1lab='impacts')
-            wrkr.output_fig(fig)
+            self.feedback.upd_prog(30, method='append')
             
-
-        self.feedback.setProgress(95)
+        if self.checkBox_RP_ari.isChecked():
+            fig = wrkr.plot_riskCurve(y1lab='impacts')
+            wrkr.output_fig(fig)
+            self.feedback.upd_prog(30, method='append')
         
-
+        #=======================================================================
+        # wrap    
+        #=======================================================================
         self.feedback.upd_prog(None) #set the progress bar back down to zero
+        
         
         
         

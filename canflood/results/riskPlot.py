@@ -29,23 +29,37 @@ import pandas as pd
 
 from hlpr.exceptions import QError as Error
 
-from hlpr.basic import ComWrkr, view
+from hlpr.basic import view
+from model.modcom import Model
 
 
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Plotr(ComWrkr):
+class Plotr(Model):
 
+    #===========================================================================
+    # expectations from parameter file
+    #===========================================================================
+    exp_pars_md = {
+        'results_fps':{
+             'r2_ttl':{'ext':('.csv',)},
+             }
+        }
+    
+    exp_pars_op=dict()
+    
     #===========================================================================
     # controls
     #===========================================================================
     exp_ttl_colns = ('note', 'plot', 'aep')
     
+    valid_par='risk2'  #TODO: fix this
+    
     #===========================================================================
     # defaults
     #===========================================================================
-    val_str='*defalut'
+    val_str='*default'
     ead_tot=''
     impact_name=''
     
@@ -64,6 +78,7 @@ class Plotr(ComWrkr):
     
     
     def __init__(self,
+                 cf_fp='',
                  name='Results',
                  impStyle_d=None,
                    #labels
@@ -92,7 +107,7 @@ class Plotr(ComWrkr):
         
 
         
-        super().__init__(**kwargs) #initilzie teh baseclass
+        super().__init__(cf_fp, **kwargs) #initilzie teh baseclass
 
         #=======================================================================
         # attached passed        
@@ -121,7 +136,22 @@ class Plotr(ComWrkr):
         """call explicitly... sometimes we want lots of children who shouldnt call this
         self._init_plt()"""
         
+    def _setup(self):
+        """attribution has its own _setup function which will overwrite this"""
+        log = self.logger.getChild('setup')
         
+        #load the control file
+        self.init_model()
+        self._init_plt()
+        
+        #upldate your group plot style container
+        self.upd_impStyle()
+        
+        #load and prep the total results
+        _ = self.load_ttl(logger=log)
+        _ = self.prep_dtl(logger=log)
+        return self
+    
     def _init_plt(self): #initilize matplotlib
         """
         calling this here so we get clean parameters each time the class is instanced
@@ -294,7 +324,7 @@ class Plotr(ComWrkr):
         
         
     def plot_riskCurve(self, #risk plot
-                  res_ttl,
+                  res_ttl=None,
                   y1lab='AEP', #yaxis label and plot type c ontrol
                     #'impacts': impacts vs. ARI (use self.impact_name)
                     #'AEP': AEP vs. impacts 
@@ -326,6 +356,8 @@ class Plotr(ComWrkr):
             
         if impactFmtFunc is None:
             impactFmtFunc=self.impactFmtFunc
+            
+        if res_ttl is None: res_ttl = self.data_d['ttl']
         
         #=======================================================================
         # prechecks
