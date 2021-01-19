@@ -473,8 +473,8 @@ class Attr(riskPlotr):
         return df1, ead
     
     def get_stack(self, #get a set of stacked data for a stack plot
-                  lvlName, #level from which to build stacked data from
-                  
+                  lvlName='nestID', #level from which to build stacked data from
+                    #eventually we could support different unstacking dimensions.. but nestID is the only obviuos one now
                   atr_dxcol=None,
                   logger=None,
                   
@@ -502,6 +502,9 @@ class Attr(riskPlotr):
         #=======================================================================
         # get stack
         #=======================================================================
+        """
+        view(i_dxcol.columns.to_frame())
+        """
         #compres rows to totals. pivot out new columns. compress all remaining mindex rows to sums
         sdf = i_dxcol.sum(axis=0).unstack(level=lvlName).sum(axis=0, level='aep')
         

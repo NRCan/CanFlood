@@ -605,7 +605,7 @@ class Plotr(Model):
     
     def plot_stackdRCurves(self,
                    dxind,
-                   sEAD_ser=None, #series with EAD data for labels
+                   sEAD_ser, #series with EAD data for labels
                    y1lab='AEP',
                    
                    #hatch format

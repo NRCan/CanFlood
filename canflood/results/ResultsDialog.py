@@ -104,10 +104,8 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # Risk PLot-------------
         #=======================================================================
-
-        
         self.pushButton_RP_plot.clicked.connect(self.run_plotRisk) 
-        
+        self.pushButton_RP_pStacks.clicked.connect(self.run_pStack)
         #=======================================================================
         # Join Geometry------------
         #=======================================================================
@@ -315,7 +313,67 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # wrap    
         #=======================================================================
         self.feedback.upd_prog(None) #set the progress bar back down to zero
+        log.push('plotRisk finished')
         
+    def run_pStack(self): #single risk plot of total results
+        """
+        similar to plotRisk for now... may choose to expand later
+        """
+        log = self.logger.getChild('run_pStack')
+        log.info('user pushed \'run_pStack\'')
+        
+        #=======================================================================
+        # collect inputs
+        #=======================================================================
+        #general
+        out_dir = self.lineEdit_wd.text()
+        tag = self.linEdit_Stag.text() #set the secnario tag from user provided name
+        cf_fp = self.lineEdit_SS_cf.text()
+        
+        
+        #=======================================================================
+        # checks
+        #=======================================================================
+        assert isinstance(tag, str)
+        assert os.path.exists(cf_fp), 'invalid cf_fp: %s'%cf_fp
+        assert os.path.exists(out_dir), 'working directory does not exist'
+            
+        #=======================================================================
+        # setup and load
+        #=======================================================================
+        self.feedback.setProgress(5)
+        #setup
+        wrkr = results.attribution.Attr(cf_fp=cf_fp, 
+                                      logger=self.logger, 
+                                     tag = tag,
+                                     feedback=self.feedback,
+                                     out_dir=out_dir)._setup()
+        
+        
+        
+        self.feedback.setProgress(10)
+        
+        stack_df, sEAD_ser = wrkr.get_stack()
+        
+        self.feedback.setProgress(20)
+        #=======================================================================
+        # #execute
+        #=======================================================================
+        if self.checkBox_RP_aep.isChecked():
+            fig = wrkr.plot_stackdRCurves(stack_df, sEAD_ser, y1lab='AEP')
+            wrkr.output_fig(fig)
+            self.feedback.upd_prog(30, method='append')
+            
+        if self.checkBox_RP_ari.isChecked():
+            fig = wrkr.plot_stackdRCurves(stack_df, sEAD_ser, y1lab='impacts')
+            wrkr.output_fig(fig)
+            self.feedback.upd_prog(30, method='append')
+        
+        #=======================================================================
+        # wrap    
+        #=======================================================================
+        self.feedback.upd_prog(None) #set the progress bar back down to zero
+        log.push('pStack finished')
         
         
         
