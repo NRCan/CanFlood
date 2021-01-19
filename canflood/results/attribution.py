@@ -11,7 +11,7 @@ attribution analysis
 #==========================================================================
 import logging, configparser, datetime, copy
 
-from weakref import WeakValueDictionary as wdict
+
 
 #==============================================================================
 # imports------------
@@ -48,6 +48,7 @@ class Attr(riskPlotr):
     """todo: fix this"""
 
     sliceName='slice'
+    attrdtag_in = 'attrimat03' 
     #===========================================================================
     # expectations from parameter file
     #===========================================================================

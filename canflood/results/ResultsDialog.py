@@ -95,8 +95,12 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                 )
         
         #CF update RP label
-        self.pushButton_SS_cf_browse.clicked.connect(
+        self.lineEdit_SS_cf.textChanged.connect(
             lambda:self.label_RP_cfPath.setText(self.lineEdit_SS_cf.text()))
+        
+        """
+        TODO: open the cf and display the plot styles
+        """
         #=======================================================================
         # Risk PLot-------------
         #=======================================================================
@@ -286,7 +290,8 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         self.feedback.setProgress(5)
         #setup
-        wrkr = results.riskPlot.Plotr(logger=self.logger, 
+        wrkr = results.riskPlot.Plotr(cf_fp=cf_fp, 
+                                      logger=self.logger, 
                                      tag = tag,
                                      feedback=self.feedback,
                                      out_dir=out_dir)._setup()

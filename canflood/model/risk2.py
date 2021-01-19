@@ -26,7 +26,7 @@ from hlpr.exceptions import QError as Error
 
 #from hlpr.Q import *
 from hlpr.basic import view
-from model.modcom import Model
+#from model.modcom import Model
 from results.riskPlot import Plotr
 
 #==============================================================================
