@@ -299,10 +299,14 @@ class Attr(riskPlotr):
         self.data_d['ttl']
         view(self.data_d['r2_passet'])
         """
+        #multiply by impacts
+        s1i_dxcol = self.get_mult(s1_dxcol, logger=log)
         
-        s1i_dxcol = self.get_mult(s1_dxcol, logger=log) #multiply by impacts
+        #compress to event totals
+        s1i_df =  s1i_dxcol.sum(axis=1, level='aep').sum(axis=0).rename('impacts'
+                     ).reset_index(drop=False)
         
-        s1i_ttl, ead = self.get_ttl(s1i_dxcol, logger=log) #sum to aeps
+        s1i_ttl, ead = self.get_ttl(s1i_df, logger=log) #sum to aeps
         
         return s1i_ttl
             
@@ -412,22 +416,21 @@ class Attr(riskPlotr):
         return atr_dxcol.multiply(rp_df, level='aep')
     
     def get_ttl(self, #get a total impacts summary from an impacts dxcol 
-                i_dxcol, #impacts (not attribution ratios)
+                df, # index: {aep, impacts}
                 logger=None,
                 ):
-
-        df =  i_dxcol.sum(axis=1, level='aep').sum(axis=0).rename('impacts'
-                     ).reset_index(drop=False)
-                     
-        #=======================================================================
-        # #add ari
-        # df['ari'] = (1/df['aep']).astype(int)
-        # 
-        # #add plot keys
-        # df['plot']=True
-        # 
-        #=======================================================================
+        """
+        see also Plotr.prep_dtl()
+        """
         
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert isinstance(df, pd.DataFrame)
+        miss_l = set(['aep', 'impacts']).symmetric_difference(df.columns)
+        assert len(miss_l)==0, 'bad column labels: %s'%df.columns.tolist()
+        
+                     
         
         #=======================================================================
         # get ead and tail values
@@ -486,8 +489,6 @@ class Attr(riskPlotr):
         if atr_dxcol is None: atr_dxcol=self.data_d[self.attrdtag_in].copy()
         log=logger.getChild('get_slice')
         
-
-        
         #=======================================================================
         # precheck
         #=======================================================================
@@ -496,7 +497,6 @@ class Attr(riskPlotr):
         #=======================================================================
         # get impact values
         #=======================================================================
-
         i_dxcol = self.get_mult(atr_dxcol, logger=log)
 
         #=======================================================================
@@ -504,44 +504,44 @@ class Attr(riskPlotr):
         #=======================================================================
         """
         view(i_dxcol.columns.to_frame())
+        view(sdf)
         """
         #compres rows to totals. pivot out new columns. compress all remaining mindex rows to sums
         sdf = i_dxcol.sum(axis=0).unstack(level=lvlName).sum(axis=0, level='aep')
         
         #=======================================================================
-        # #add ari index
+        # add in tails
         #=======================================================================
-        df1 = pd.Series(sdf.index).to_frame()
-        df1['ari'] = (1/df1['aep']).round(0).astype(int)
-
-        #get the new mindex we want to join in
-        mindex2 = pd.MultiIndex.from_frame(df1)                
-                
-        #join this in and move it up some levels
-        sdf.index = sdf.index.join(mindex2)
-        
-        #=======================================================================
-        # get ead values
-        #=======================================================================
-        """should apply the same ltail/rtail parameters from the cf"""
-
-        
-        sEAD_ser = self.calc_ead(
-            sdf.droplevel(level='ari').T, #reshape to ead format
-            drop_tails=False, #handle beslow 
-            logger=log,
-            )['ead'] #1 column df
+        sdf1 = None
+        ead_d = dict()
+        for coln, cser in sdf.items():
+            tdf, ead_d[coln] = self.get_ttl(cser.to_frame().reset_index().rename(columns={coln:'impacts'}))
             
 
-        
-        return sdf, sEAD_ser
-    
-    
-        
+            if sdf1 is None:
+                sdf1 = tdf.drop('impacts', axis=1)
 
- 
+            sdf1 = sdf1.join(tdf['impacts']).rename(columns={'impacts':coln})
+
+        #=======================================================================
+        # reformat as dxind
+        #=======================================================================
+        dxind = sdf1.set_index('aep', drop=True).drop('ari', axis=1)
+        mindex = pd.MultiIndex.from_frame(sdf1.loc[:, ('aep', 'ari')])
+        dxind.index = dxind.index.join(mindex)
         
+        #drop no plotters
+        dxind = dxind.loc[dxind['plot'], :].sort_index(level=1).drop('plot', axis=1)
+        
+        #=======================================================================
+        # add plot text
+        #=======================================================================
+        self.val_str = ''
+
+        
+        return dxind, pd.Series(ead_d)
     
+ 
     def plot_slice(self, #plot slice against original risk c urve
                    sttl_df, #sliced data
                    ttl_df=None, #original (full) data
@@ -550,7 +550,7 @@ class Attr(riskPlotr):
                    #plot keys
                    y1lab='AEP',
                    slice_impStyle_d=None,
-                   slice_ead=None,
+                   slice_ead=None, plotTag=None,
                    **plotKwargs
                    ): 
         
@@ -559,11 +559,15 @@ class Attr(riskPlotr):
         #=======================================================================
         if logger is None: logger=self.logger
         log = logger.getChild('plot_slice')
+        
+        if plotTag is None: plotTag='%s byFail'%self.tag
+        
         if ttl_df is None: ttl_df=self.data_d['ttl'].copy()
         
         #slice default attributes
         if slice_impStyle_d is None: slice_impStyle_d=self.slice_impStyle_d
         if slice_ead is None: slice_ead=self.slice_ead
+        
         #=======================================================================
         # precheck
         #=======================================================================
@@ -598,7 +602,8 @@ class Attr(riskPlotr):
 
             }
         
-        return self.plot_mRiskCurves(plotParsG_d,y1lab=y1lab, logger=log, **plotKwargs)
+        return self.plot_mRiskCurves(plotParsG_d,y1lab=y1lab, logger=log, plotTag=plotTag,
+                                     **plotKwargs)
                     
             
         

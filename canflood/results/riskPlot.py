@@ -112,7 +112,8 @@ class Plotr(Model):
         #=======================================================================
         # attached passed        
         #=======================================================================
-        self.name = name
+        self.name = name #where are we using this?
+
  
         self.grid    =grid
         self.logx    =logx
@@ -150,6 +151,15 @@ class Plotr(Model):
         #load and prep the total results
         _ = self.load_ttl(logger=log)
         _ = self.prep_dtl(logger=log)
+        
+        #set default plot text
+        try:
+            self.val_str =  'annualized impacts = %s \nltail=\'%s\',  rtail=\'%s\''%(
+                self.impactFmtFunc(self.ead_tot), self.ltail, self.rtail) + \
+                '\naevent_rels = \'%s\', prec = %i'%(self.event_rels, self.prec)
+        except Exception as e:
+            log.warning('failed to set default plot string w/ \n    %s'%e)
+        
         return self
     
     def _init_plt(self): #initilize matplotlib
@@ -247,6 +257,8 @@ class Plotr(Model):
         when ttl is output, we add the EAD data, drop ARI, and add plotting handles
             which is not great for data manipulation
         here we clean it up and only take those for plotting
+        
+        see also Artr.get_ttl()
         """
         
         if tlRaw_df is None: tlRaw_df = self.tlRaw_df
@@ -272,8 +284,6 @@ class Plotr(Model):
         
         df1.columns = newColNames
 
-
-
         #=======================================================================
         # #get ead
         #=======================================================================
@@ -285,21 +295,16 @@ class Plotr(Model):
         #=======================================================================
         # #get plot values
         #=======================================================================
-        df2 = df1.loc[df1['plot'], :].copy()
+        df2 = df1.loc[df1['plot'], :].copy() #drop those not flagged for plotting
         
         #typeset aeps
         df2.loc[:, 'aep'] = df2['aep'].astype(np.float64).round(self.prec)
-        """
-        df2.dtypes
-        """
 
         #=======================================================================
         # #invert aep (w/ zero handling)
         #=======================================================================
-
-        
         self._get_ttl_ari(df2)
-        
+
         #=======================================================================
         # re-order
         #=======================================================================
@@ -311,12 +316,7 @@ class Plotr(Model):
         #shortcut for datachecks
         df1 = ttl_df.loc[:, ('aep', 'note')]
         df1['extrap']= df1['note']=='extrap'
-        """
-        df1.dtypes
-        
-        #non-extraploated events
-        self.aep_df.loc[~self.aep_df['extrap'], 'aep']
-        """
+
         self.aep_df = df1.drop('note', axis=1)  #for checking
         
         
@@ -333,7 +333,7 @@ class Plotr(Model):
                     #lambda x:'{:,.0f}'.format(x) #thousands comma
                     
                     val_str=None, #text to write on plot. see _get_val_str()
-                    figsize=None, logger=None,                  
+                    figsize=None, logger=None,  plotTag=None,                
                   ):
         
         """
@@ -358,7 +358,7 @@ class Plotr(Model):
             impactFmtFunc=self.impactFmtFunc
             
         if res_ttl is None: res_ttl = self.data_d['ttl']
-        
+        if plotTag is None: plotTag=self.tag
         #=======================================================================
         # prechecks
         #=======================================================================
@@ -374,10 +374,10 @@ class Plotr(Model):
         
         
         if y1lab == 'AEP':
-            title = '%s AEP-Impacts plot for %i events'%(self.tag, len(res_ttl))
+            title = '%s AEP-Impacts plot for %i events'%(plotTag, len(res_ttl))
             xlab=self.impact_name
         elif y1lab == self.impact_name:
-            title = '%s Impacts-ARI plot for %i events'%(self.tag, len(res_ttl))
+            title = '%s Impacts-ARI plot for %i events'%(plotTag, len(res_ttl))
             xlab='ARI'
         else:
             raise Error('bad y1lab: %s'%y1lab)
@@ -451,7 +451,7 @@ class Plotr(Model):
                         #NOTE: pass 'levendLab' in the pars to add custom text to the legend
 
 
-                  figsize=None, logger=None,
+                  figsize=None, logger=None, plotTag=None,
                   ):
         
 
@@ -471,6 +471,7 @@ class Plotr(Model):
         if impactFmtFunc is None:
             impactFmtFunc=self.impactFmtFunc
         
+        if plotTag is None: plotTag=self.tag
         
         
         #=======================================================================
@@ -513,14 +514,11 @@ class Plotr(Model):
         #======================================================================
         # labels
         #======================================================================
-        
-        
-        
         if y1lab == 'AEP':
-            title = '%s AEP-Impacts plot for %i scenarios'%(self.tag, len(parsG_d))
+            title = '%s AEP-Impacts plot for %i scenarios'%(plotTag, len(parsG_d))
             xlab=self.impact_name
         elif y1lab == self.impact_name:
-            title = '%s Impacts-ARI plot for %i scenarios'%(self.tag, len(parsG_d))
+            title = '%s Impacts-ARI plot for %i scenarios'%(plotTag, len(parsG_d))
             xlab='ARI'
         else:
             raise Error('bad y1lab: %s'%y1lab)
@@ -603,16 +601,16 @@ class Plotr(Model):
         
         return fig
     
-    def plot_stackdRCurves(self,
-                   dxind,
+    def plot_stackdRCurves(self, #single plot with stacks of risk components for single scenario
+                   dxind, #mindex(aep, ari), columns: one stack or component
                    sEAD_ser, #series with EAD data for labels
                    y1lab='AEP',
                    
                    #hatch format
                    h_alpha = 0.9,
                    
-                   figsize=None, impactFmtFunc=None, 
-                   val_str='*default',
+                   figsize=None, impactFmtFunc=None, plotTag=None,
+                   val_str=None,
                    logger=None,):
         #=======================================================================
         # defaults
@@ -632,7 +630,11 @@ class Plotr(Model):
             impactFmtFunc=self.impactFmtFunc
             
         if h_alpha is None: h_alpha=self.h_alpha
+        if plotTag is None: plotTag=self.tag
         
+        if val_str is None:
+            val_str =  'ltail=\'%s\',  rtail=\'%s\''%(self.ltail, self.rtail) + \
+                        '\naevent_rels = \'%s\', prec = %i'%(self.event_rels, self.prec)
         #=======================================================================
         # prechecks
         #=======================================================================
@@ -655,15 +657,19 @@ class Plotr(Model):
          
          
         if y1lab == 'AEP':
-            title = '%s AEP-Impacts plot for %i stacks'%(self.tag, len(dxind.columns))
+            title = '%s AEP-Impacts plot for %i stacks'%(plotTag, len(dxind.columns))
             xlab=self.impact_name
         elif y1lab == self.impact_name:
-            title = '%s Impacts-ARI plot for %i stacks'%(self.tag, len(dxind.columns))
+            title = '%s Impacts-ARI plot for %i stacks'%(plotTag, len(dxind.columns))
             xlab='ARI'
         else:
             raise Error('bad y1lab: %s'%y1lab)
             
- 
+        #=======================================================================
+        # data prep
+        #=======================================================================
+        dxind = dxind.sort_index(axis=0, level=0)
+        mindex = dxind.index
         #=======================================================================
         # figure setup
         #=======================================================================
@@ -724,13 +730,13 @@ class Plotr(Model):
         #legend
         h1, l1 = ax1.get_legend_handles_labels()
         legLab_d = {e:'\'%s\' annualized = '%e + impactFmtFunc(sEAD_ser[e]) for e in l1}
-
+        legendTitle = self._get_val_str('*default')
         
         self._postFmt(ax1, 
-                      val_str=None, #putting in legend ittle 
+                      val_str=val_str, #putting in legend ittle 
                       legendHandles=(h1, list(legLab_d.values())),
-                      xLocScale=0.8, yLocScale=0.1,
-                      legendTitle=val_str)
+                      #xLocScale=0.8, yLocScale=0.1,
+                      legendTitle=legendTitle)
         
         #assign tick formatter functions
         if y1lab == 'AEP':
@@ -808,12 +814,15 @@ class Plotr(Model):
     def _postFmt(self, #text, grid, leend
                  ax, 
 
-                 val_str=None,
                  grid=None,
+                 
+                 #plot text
+                 val_str=None,
+                 xLocScale=0.1, yLocScale=0.1,
                  
                  #legend kwargs
                  legendLoc = 1,
-                 xLocScale=0.1, yLocScale=0.1,
+                 
                  legendHandles=None, 
                  legendTitle=None,
                  ):
@@ -887,12 +896,19 @@ class Plotr(Model):
             ax.set_yticklabels(l, rotation=ylrot)
         
     def _get_val_str(self, #helper to get value string for writing text on the plot
-                     val_str,impactFmtFunc
+                     val_str, #cant be a kwarg.. allowing None
+                     impactFmtFunc=None,
                      ):
-        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if impactFmtFunc is None: impactFmtFunc=self.impactFmtFunc
         if val_str is None:
             val_str = self.val_str
         
+        #=======================================================================
+        # special keys
+        #=======================================================================
         if isinstance(val_str, str):
             if val_str=='*default':
                 val_str='total annualized impacts = ' + impactFmtFunc(self.ead_tot)

@@ -353,19 +353,19 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         self.feedback.setProgress(10)
         
-        stack_df, sEAD_ser = wrkr.get_stack()
+        stack_dxind, sEAD_ser = wrkr.get_stack()
         
         self.feedback.setProgress(20)
         #=======================================================================
         # #execute
         #=======================================================================
         if self.checkBox_RP_aep.isChecked():
-            fig = wrkr.plot_stackdRCurves(stack_df, sEAD_ser, y1lab='AEP')
+            fig = wrkr.plot_stackdRCurves(stack_dxind, sEAD_ser, y1lab='AEP')
             wrkr.output_fig(fig)
             self.feedback.upd_prog(30, method='append')
             
         if self.checkBox_RP_ari.isChecked():
-            fig = wrkr.plot_stackdRCurves(stack_df, sEAD_ser, y1lab='impacts')
+            fig = wrkr.plot_stackdRCurves(stack_dxind, sEAD_ser, y1lab='impacts')
             wrkr.output_fig(fig)
             self.feedback.upd_prog(30, method='append')
         
