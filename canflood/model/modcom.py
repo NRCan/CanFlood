@@ -115,6 +115,10 @@ class Model(ComWrkr,
         r2_ttl  -- total results from risk2
         eventypes -- df of aep, noFail, and rEventName
     
+    
+    [plotting]
+        impactfmt_str -- python formatter to use for formatting the impact results values
+    
     """
     
     #==========================================================================

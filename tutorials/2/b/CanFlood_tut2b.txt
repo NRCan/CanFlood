@@ -1,5 +1,5 @@
 [parameters]
-name = tut2b
+name = tut2bx
 cid = xid
 prec = 6                #float precision for calculations
 ground_water = True     #whether to allow wsl < gel
@@ -38,11 +38,12 @@ attrimat03 = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\r2_out\attr03_tut2b.csv
 #'attrimat03' file path set from output_attr at 2021-01-19 16.07.44
 
 [plotting]
-color = green
+color = purple
 linestyle = dashdot
 linewidth = 2
 alpha = 0.75        #0=transparent 1=opaque
 marker = o
 markersize = 4
 fillstyle = none    #marker fill style
+impactfmt_str = .0f
 

@@ -41,3 +41,4 @@ alpha = 0.75        #0=transparent 1=opaque
 marker = o
 markersize = 4
 fillstyle = none    #marker fill style
+impactfmt_str = .2e #python formatter to use for formatting the impact results values

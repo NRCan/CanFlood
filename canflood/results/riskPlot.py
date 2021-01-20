@@ -50,7 +50,7 @@ class Plotr(Model):
     marker =    'o'
     markersize = 4.0
     fillstyle = 'none'    #marker fill style
-    impactFmt_str = '%.2e'
+    impactfmt_str = '.2e'
     #===========================================================================
     # expectations from parameter file
     #===========================================================================
@@ -136,13 +136,14 @@ class Plotr(Model):
         self.h_color    =h_color
         self.h_alpha    =h_alpha
         
+        """get the style handles
+            setup to load from control file or passed explicitly"""
         if impStyle_d is None:
             self.upd_impStyle()
         else:
             self.impStyle_d=impStyle_d
             
-        if impactFmtFunc is None:
-            impactFmtFunc = lambda x:'%.2e'%x #default to scientific notation
+
         self.impactFmtFunc=impactFmtFunc
         
         self.logger.info('init finished')
@@ -172,13 +173,22 @@ class Plotr(Model):
                 '\naevent_rels = \'%s\', prec = %i'%(self.event_rels, self.prec)
         except Exception as e:
             log.warning('failed to set default plot string w/ \n    %s'%e)
+            
+   
         
         return self
     
-    def _init_plt(self): #initilize matplotlib
+    def _init_plt(self,  #initilize matplotlib
+                **kwargs
+                  ):
         """
         calling this here so we get clean parameters each time the class is instanced
         """
+
+        
+        #=======================================================================
+        # imports
+        #=======================================================================
         import matplotlib
         matplotlib.use('Qt5Agg') #sets the backend (case sensitive)
         import matplotlib.pyplot as plt
@@ -199,11 +209,50 @@ class Plotr(Model):
         matplotlib.rcParams['figure.autolayout'] = False #use tight layout
         
         self.plt, self.matplotlib = plt, matplotlib
+        
+        #=======================================================================
+        # #value formatter
+        #=======================================================================
+        self._init_fmtFunc(**kwargs)
+
+        
+
+        
         return self
+    
+    def _init_fmtFunc(self,
+                    impactFmtFunc=None,
+                  impactfmt_str=None, #used for building impactFmtFunc (if not passed)
+                  ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        """whatever was passed during construction.. usually None"""
+        if impactFmtFunc is None: impactFmtFunc=self.impactFmtFunc
+        if impactfmt_str is  None: impactfmt_str=self.impactfmt_str
+        
+        
+        if not callable(impactFmtFunc):
+            
+            impactFmtFunc = lambda x, fmt=impactfmt_str:'{:>{fmt}}'.format(x, fmt=fmt)
+            
+        self.impactFmtFunc=impactFmtFunc
+        
+        """
+        self.name
+        """
+        
+        return
+            
         
     def upd_impStyle(self): #update the plotting pars based on your attributes
         """
         taking instance variables (rather than parser's section) because these are already typset
+        
+        usually called twice
+            1) before loading the control file, to build a default
+            2) after, to update values
         """
         #assert not self.cfPars_d is None, 'load the control file first!'
         impStyle_d = dict()
