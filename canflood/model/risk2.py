@@ -125,7 +125,7 @@ class Risk2(Plotr, #This inherits 'Model'
         #======================================================================
         self.init_model() #mostly just attaching and checking parameters from file
         
-        self.resname = 'risk2_%s_%s'%(self.tag, self.name)
+        self.resname = 'risk2_%s_%s'%(self.name, self.tag)
         
         if self.as_inun:
             raise Error('risk2 inundation percentage not implemented')

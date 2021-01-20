@@ -440,10 +440,10 @@ class Plotr(Model):
         
         
         if y1lab == 'AEP':
-            title = '%s AEP-Impacts plot for %i events'%(plotTag, len(res_ttl))
+            title = '%s %s AEP-Impacts plot for %i events'%(self.name, plotTag, len(res_ttl))
             xlab=self.impact_name
         elif y1lab == self.impact_name:
-            title = '%s Impacts-ARI plot for %i events'%(plotTag, len(res_ttl))
+            title = '%s %s Impacts-ARI plot for %i events'%(self.name, plotTag, len(res_ttl))
             xlab='ARI'
         else:
             raise Error('bad y1lab: %s'%y1lab)
