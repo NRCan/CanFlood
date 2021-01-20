@@ -57,7 +57,7 @@ class LikeSampler(Qcoms):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        self.resname = 'exlikes_%s'%self.tag
+        #self.resname = 'exlikes_%s'%self.tag
         
     def load_layers(self, #load data to project (for standalone runs)
                     lpol_fp_d, #{event name:polygon filepath}
@@ -472,9 +472,12 @@ class LikeSampler(Qcoms):
         return total_prob
     
     def vectorize(self, #map results back onto the finv geometry 
-                  res_df_raw):
+                  res_df_raw,
+                  layName=None,
+                  ):
         
         log = self.logger.getChild('vectorize')
+        if layName is None: layName = 'exlikes_%s'%self.tag
         res_df = res_df_raw.copy()
         #======================================================================
         # extract data from finv
@@ -498,7 +501,7 @@ class LikeSampler(Qcoms):
         res_df[self.cid] = res_df.index #copy it over
         
         res_vlay = vlay_new_df(res_df, vlay.crs(), geo_d = cid_geo_d, 
-                               layname = self.resname,
+                               layname = layName,
                                 logger=log)
         
         return res_vlay
@@ -506,8 +509,9 @@ class LikeSampler(Qcoms):
     def check(self):
         pass #placeholder
     
-    def write_res(self, res_df,**kwargs):
-        return self.output_df(res_df, self.resname,write_index=True, **kwargs)
+    def write_res(self, res_df,ofn=None, **kwargs):
+        if ofn is None: ofn = 'exlikes_%s'%self.tag
+        return self.output_df(res_df, ofn,write_index=True, **kwargs)
     
     def upd_cf(self, cf_fp): #configured control file updater
         return self.update_cf(

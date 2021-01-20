@@ -23,7 +23,7 @@ from qgis.core import *
 #from qgis.analysis import *
 #import qgis.utils
 #import processing
-from processing.core.Processing import Processing
+#from processing.core.Processing import Processing
 
 
 #import resources
@@ -45,7 +45,7 @@ from build.validator import Vali
 
 
 import hlpr.plug
-from hlpr.Q import vlay_get_fdf
+#from hlpr.Q import vlay_get_fdf
 
 from hlpr.basic import get_valid_filename, force_open_dir 
 from hlpr.exceptions import QError as Error
@@ -520,18 +520,26 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.feedback.upd_prog(10)
             
         #=======================================================================
-        # run the control file builder
+        # run the control file builder----
         #=======================================================================
         #initilize
         wrkr = Preparor(logger=self.logger,  out_dir=wdir, tag=tag, feedback=self.feedback)
         self.feedback.upd_prog(20)
         
-        #copy the template
+        #=======================================================================
+        # #copy the template
+        #=======================================================================
         cf_path = wrkr.copy_cf_template(wdir, logger=self.logger)
         self.feedback.upd_prog(75)
         
-        #set some basics
-        wrkr.upd_cf_first(self.lineEdit_curve.text())
+        #=======================================================================
+        # #set some basics
+        #=======================================================================
+        if not self.lineEdit_curve.text()=='':
+            curves_fp=self.lineEdit_curve.text()
+        else:
+            curves_fp = None
+        wrkr.upd_cf_first(scenarioName=self.linEdit_ScenTag.text(), curves_fp=curves_fp)
  
         log.info("default CanFlood model config file created :\n    %s"%cf_path)
         

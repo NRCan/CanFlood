@@ -28,8 +28,7 @@ from hlpr.exceptions import QError as Error
 import results.djoin
 import results.riskPlot
 import results.compare
-
-
+import results.attribution
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 ui_fp = os.path.join(os.path.dirname(__file__), 'results.ui')
@@ -74,35 +73,38 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # setup------------
         #=======================================================================
-        #Working Directory browse
-        def browse_wd():
-            return self.browse_button(self.lineEdit_wd, prompt='Select Working Directory',
+        #Working Directory browse            
+        self.pushButton_wd.clicked.connect(
+                lambda: self.browse_button(self.lineEdit_wd, 
+                                           prompt='Select Working Directory',
                                       qfd = QFileDialog.getExistingDirectory)
-            
-        self.pushButton_wd.clicked.connect(browse_wd) # SS. Working Dir. Browse
+                )
+
+        #WD Open
+        self.pushButton_wd_open.clicked.connect(
+                lambda: force_open_dir(self.lineEdit_wd.text()))
+                
+        #Control File browse
+        self.pushButton_SS_cf_browse.clicked.connect(
+                lambda: self.fileSelect_button(self.lineEdit_SS_cf, 
+                                          caption='Select Control File',
+                                          path = self.lineEdit_wd.text(),
+                                          filters="Text Files (*.txt)")
+                )
         
+        #CF update RP label
+        self.lineEdit_SS_cf.textChanged.connect(
+            lambda:self.label_RP_cfPath.setText(self.lineEdit_SS_cf.text()))
         
-        #WD force open
-        def open_wd():
-            force_open_dir(self.lineEdit_wd.text())
-        
-        self.pushButton_wd_open.clicked.connect(open_wd)
-        
+        """
+        TODO: open the cf and display the plot styles
+        """
         #=======================================================================
         # Risk PLot-------------
         #=======================================================================
-
-        #data file browse
-        def browse_pd():
-            return self.fileSelect_button(self.lineEdit_RP_fp, 
-                                          caption='Select Total Results Data File',
-                                          path = self.lineEdit_wd.text(),
-                                          filters="Data Files (*.csv)")
-            
-        self.pushButton_RP_fp.clicked.connect(browse_pd)
-        
         self.pushButton_RP_plot.clicked.connect(self.run_plotRisk) 
-        
+        self.pushButton_RP_pStacks.clicked.connect(self.run_pStack)
+        self.pushButton_RP_pNoFail.clicked.connect(self.run_pNoFail)
         #=======================================================================
         # Join Geometry------------
         #=======================================================================
@@ -171,53 +173,55 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
         for scName, d in {
             '1':{
-                'rd_browse':self.pushButton_C_Rdir_browse_1,
-                'rd_open':self.pushButton_C_Rdir_open_1,
-                'rd_line':self.lineEdit_C_Rdir_1,
+                #'rd_browse':self.pushButton_C_Rdir_browse_1,
+                #'rd_open':self.pushButton_C_Rdir_open_1,
+                #'rd_line':self.lineEdit_C_Rdir_1,
                 'cf':self.pushButton_C_cf_browse_1,
                 'cf_line':self.lineEdit_C_cf_1,
-                'ttl':self.pushButton_C_ttl_browse_1,
-                'ttl_line':self.lineEdit_C_ttl_1,
+                #'ttl':self.pushButton_C_ttl_browse_1,
+                #'ttl_line':self.lineEdit_C_ttl_1,
                 },
             '2':{
-                'rd_browse':self.pushButton_C_Rdir_browse_2,
-                'rd_open':self.pushButton_C_Rdir_open_2,
-                'rd_line':self.lineEdit_C_Rdir_2,
+                #'rd_browse':self.pushButton_C_Rdir_browse_2,
+                #'rd_open':self.pushButton_C_Rdir_open_2,
+                #'rd_line':self.lineEdit_C_Rdir_2,
                 'cf':self.pushButton_C_cf_browse_2,
                 'cf_line':self.lineEdit_C_cf_2,
-                'ttl':self.pushButton_C_ttl_browse_2,
-                'ttl_line':self.lineEdit_C_ttl_2,
+                #'ttl':self.pushButton_C_ttl_browse_2,
+                #'ttl_line':self.lineEdit_C_ttl_2,
                 },
             '3':{
-                'rd_browse':self.pushButton_C_Rdir_browse_3,
-                'rd_open':self.pushButton_C_Rdir_open_3,
-                'rd_line':self.lineEdit_C_Rdir_3,
+                #'rd_browse':self.pushButton_C_Rdir_browse_3,
+                #'rd_open':self.pushButton_C_Rdir_open_3,
+                #'rd_line':self.lineEdit_C_Rdir_3,
                 'cf':self.pushButton_C_cf_browse_3,
                 'cf_line':self.lineEdit_C_cf_3,
-                'ttl':self.pushButton_C_ttl_browse_3,
-                'ttl_line':self.lineEdit_C_ttl_3,
+                #'ttl':self.pushButton_C_ttl_browse_3,
+                #'ttl_line':self.lineEdit_C_ttl_3,
                 },
             '4':{
-                'rd_browse':self.pushButton_C_Rdir_browse_4,
-                'rd_open':self.pushButton_C_Rdir_open_4,
-                'rd_line':self.lineEdit_C_Rdir_4,
+                #'rd_browse':self.pushButton_C_Rdir_browse_4,
+                #'rd_open':self.pushButton_C_Rdir_open_4,
+                #'rd_line':self.lineEdit_C_Rdir_4,
                 'cf':self.pushButton_C_cf_browse_4,
                 'cf_line':self.lineEdit_C_cf_4,
-                'ttl':self.pushButton_C_ttl_browse_4,
-                'ttl_line':self.lineEdit_C_ttl_4,
+                #'ttl':self.pushButton_C_ttl_browse_4,
+                #'ttl_line':self.lineEdit_C_ttl_4,
                 }
             }.items():
             
 
                 
             #Results Directory
-            cap1='Select Results Directory for Scenario %s'%scName
-            d['rd_browse'].clicked.connect(
-                lambda a, x=d['rd_line'], c=cap1: \
-                self.browse_button(x, prompt=c))
-            
-            d['rd_open'].clicked.connect(
-                lambda a, x=d['rd_line']: force_open_dir(x.text()))
+            #===================================================================
+            # cap1='Select Results Directory for Scenario %s'%scName
+            # d['rd_browse'].clicked.connect(
+            #     lambda a, x=d['rd_line'], c=cap1: \
+            #     self.browse_button(x, prompt=c))
+            # 
+            # d['rd_open'].clicked.connect(
+            #     lambda a, x=d['rd_line']: force_open_dir(x.text()))
+            #===================================================================
 
             
             #Control File
@@ -228,11 +232,13 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                 self.fileSelect_button(x, caption=c, filters=f, path=self.lineEdit_wd.text()))
             
             #total results
-            cap1='Select Total Results for Scenario %s'%scName
-            fil1="Data Files (*.csv)"
-            d['ttl'].clicked.connect(
-                lambda a, x=d.pop('ttl_line'), c=cap1, f=fil1: \
-                self.fileSelect_button(x, caption=c, filters=f, path=self.lineEdit_wd.text()))
+            #===================================================================
+            # cap1='Select Total Results for Scenario %s'%scName
+            # fil1="Data Files (*.csv)"
+            # d['ttl'].clicked.connect(
+            #     lambda a, x=d.pop('ttl_line'), c=cap1, f=fil1: \
+            #     self.fileSelect_button(x, caption=c, filters=f, path=self.lineEdit_wd.text()))
+            #===================================================================
 
 
         #=======================================================================
@@ -259,7 +265,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         log.debug('connect_slots finished')
         
-    def run_plotRisk(self): 
+    def run_plotRisk(self): #single risk plot of total results
         log = self.logger.getChild('run_plotRisk')
         log.info('user pushed \'plotRisk\'')
         
@@ -268,58 +274,170 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
 
         #general
-        wd = self.lineEdit_wd.text()
+        out_dir = self.lineEdit_wd.text()
         tag = self.linEdit_Stag.text() #set the secnario tag from user provided name
+        cf_fp = self.lineEdit_SS_cf.text()
         
-        #local
-        data_fp = self.lineEdit_RP_fp.text()
         
         #=======================================================================
         # checks
         #=======================================================================
-        assert isinstance(wd, str)
         assert isinstance(tag, str)
-        
-        assert os.path.exists(data_fp), 'invalid data_fp'
-        
-        #=======================================================================
-        # working dir
-        #=======================================================================
-        if not os.path.exists(wd):
-            os.makedirs(wd)
-            log.info('built working directory: %s'%wd)
+        assert os.path.exists(cf_fp), 'invalid cf_fp: %s'%cf_fp
+        assert os.path.exists(out_dir), 'working directory does not exist'
             
         #=======================================================================
-        # execute
+        # setup and load
         #=======================================================================
         self.feedback.setProgress(5)
         #setup
-        wrkr = results.riskPlot.Plotr(logger=self.logger, 
+        wrkr = results.riskPlot.Plotr(cf_fp=cf_fp, 
+                                      logger=self.logger, 
                                      tag = tag,
                                      feedback=self.feedback,
-                                     out_dir=wd)._init_plt()
+                                     out_dir=out_dir)._setup()
         
         self.feedback.setProgress(10)
-        #load tabular
-        tlRaw_df = wrkr.load_ttl(data_fp)
-        tl_df = wrkr.prep_dtl(tlRaw_df)
+
+        #=======================================================================
+        # #execute
+        #=======================================================================
+        if self.checkBox_RP_aep.isChecked():
+            fig = wrkr.plot_riskCurve(y1lab='AEP')
+            wrkr.output_fig(fig)
+            self.feedback.upd_prog(30, method='append')
+            
+        if self.checkBox_RP_ari.isChecked():
+            fig = wrkr.plot_riskCurve(y1lab='impacts')
+            wrkr.output_fig(fig)
+            self.feedback.upd_prog(30, method='append')
+        
+        #=======================================================================
+        # wrap    
+        #=======================================================================
+        self.feedback.upd_prog(None) #set the progress bar back down to zero
+        log.push('plotRisk finished')
+        
+        
+    def run_pStack(self): #single risk plot of total results
+        """
+        similar to plotRisk for now... may choose to expand later
+        """
+        log = self.logger.getChild('run_pStack')
+        log.info('user pushed \'run_pStack\'')
+        
+        #=======================================================================
+        # collect inputs
+        #=======================================================================
+        #general
+        out_dir = self.lineEdit_wd.text()
+        tag = self.linEdit_Stag.text() #set the secnario tag from user provided name
+        cf_fp = self.lineEdit_SS_cf.text()
+        
+        
+        #=======================================================================
+        # checks
+        #=======================================================================
+        assert isinstance(tag, str)
+        assert os.path.exists(cf_fp), 'invalid cf_fp: %s'%cf_fp
+        assert os.path.exists(out_dir), 'working directory does not exist'
+            
+        #=======================================================================
+        # setup and load
+        #=======================================================================
+        self.feedback.setProgress(5)
+        #setup
+        wrkr = results.attribution.Attr(cf_fp=cf_fp, 
+                                      logger=self.logger, 
+                                     tag = tag,
+                                     feedback=self.feedback,
+                                     out_dir=out_dir)._setup()
+        
+        
+        
+        self.feedback.setProgress(10)
+        
+        stack_dxind, sEAD_ser = wrkr.get_stack()
         
         self.feedback.setProgress(20)
-        #execute
+        #=======================================================================
+        # #execute
+        #=======================================================================
         if self.checkBox_RP_aep.isChecked():
-            fig = wrkr.plot_riskCurve(tl_df, y1lab='AEP')
+            fig = wrkr.plot_stackdRCurves(stack_dxind, sEAD_ser, y1lab='AEP')
             wrkr.output_fig(fig)
-        if self.checkBox_RP_ari.isChecked():
-            fig = wrkr.plot_riskCurve(tl_df, y1lab='impacts')
-            wrkr.output_fig(fig)
+            self.feedback.upd_prog(30, method='append')
             
-
-        self.feedback.setProgress(95)
+        if self.checkBox_RP_ari.isChecked():
+            fig = wrkr.plot_stackdRCurves(stack_dxind, sEAD_ser, y1lab='impacts')
+            wrkr.output_fig(fig)
+            self.feedback.upd_prog(30, method='append')
         
-
+        #=======================================================================
+        # wrap    
+        #=======================================================================
         self.feedback.upd_prog(None) #set the progress bar back down to zero
+        log.push('pStack finished')
+        
+    def run_pNoFail(self):
+        """
+        similar to plotRisk for now... may choose to expand later
+        """
+        log = self.logger.getChild('run_pStack')
+        log.info('user pushed \'run_pStack\'')
+        
+        #=======================================================================
+        # collect inputs
+        #=======================================================================
+        #general
+        out_dir = self.lineEdit_wd.text()
+        tag = self.linEdit_Stag.text() #set the secnario tag from user provided name
+        cf_fp = self.lineEdit_SS_cf.text()
         
         
+        #=======================================================================
+        # checks
+        #=======================================================================
+        assert isinstance(tag, str)
+        assert os.path.exists(cf_fp), 'invalid cf_fp: %s'%cf_fp
+        assert os.path.exists(out_dir), 'working directory does not exist'
+            
+        #=======================================================================
+        # setup and load
+        #=======================================================================
+        self.feedback.setProgress(5)
+        #setup
+        wrkr = results.attribution.Attr(cf_fp=cf_fp, 
+                                      logger=self.logger, 
+                                     tag = tag,
+                                     feedback=self.feedback,
+                                     out_dir=out_dir)._setup()
+        
+        
+        
+        self.feedback.setProgress(10)
+        
+        si_ttl = wrkr.get_slice_noFail()
+        
+        self.feedback.setProgress(20)
+        #=======================================================================
+        # #execute
+        #=======================================================================
+        if self.checkBox_RP_aep.isChecked():
+            fig = wrkr.plot_slice(si_ttl, y1lab='AEP')
+            wrkr.output_fig(fig)
+            self.feedback.upd_prog(30, method='append')
+            
+        if self.checkBox_RP_ari.isChecked():
+            fig = wrkr.plot_slice(si_ttl, y1lab='impacts')
+            wrkr.output_fig(fig)
+            self.feedback.upd_prog(30, method='append')
+        
+        #=======================================================================
+        # wrap    
+        #=======================================================================
+        self.feedback.upd_prog(None) #set the progress bar back down to zero
+        log.push('pNoFail finished')
         
     def run_joinGeo(self):
         log = self.logger.getChild('run_joinGeo')
@@ -411,64 +529,73 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         #general
         out_dir = self.lineEdit_wd.text()
+        if not os.path.exists(out_dir): os.makedirs(out_dir)
+        
         tag = self.linEdit_Stag.text() #set the secnario tag from user provided name
-        
-
-        
+        main_cf_fp = self.lineEdit_SS_cf.text() #for general plot styles
         
         #scenario filepaths
         raw_d = {
             '1':{
                 'cf_fp':self.lineEdit_C_cf_1.text(),
-                'ttl_fp':self.lineEdit_C_ttl_1.text(),
+                #'ttl_fp':self.lineEdit_C_ttl_1.text(),
                 },
             '2':{
                 'cf_fp':self.lineEdit_C_cf_2.text(),
-                'ttl_fp':self.lineEdit_C_ttl_2.text(),              
+                #'ttl_fp':self.lineEdit_C_ttl_2.text(),              
                 },
             '3':{
                 'cf_fp':self.lineEdit_C_cf_3.text(),
-                'ttl_fp':self.lineEdit_C_ttl_3.text(),
+                #'ttl_fp':self.lineEdit_C_ttl_3.text(),
                 },
             '4':{
                 'cf_fp':self.lineEdit_C_cf_4.text(),
-                'ttl_fp':self.lineEdit_C_ttl_4.text(),                
+                #'ttl_fp':self.lineEdit_C_ttl_4.text(),                
                 }
             }
         
         #clean it out
-        parsG_d = dict()
+        fp_d = dict()
         for k1, rd in copy.copy(raw_d).items():
-            for k2, v in rd.items():
-                if v=='':
-                    pass
-                else:
-                    #add the page
-                    if not k1 in parsG_d:
-                        parsG_d[k1] = dict()
-                    
-                    parsG_d[k1][k2]=v
-                    
-                    
+            #===================================================================
+            # for k2, v in rd.items():
+            #     if v=='':
+            #         pass
+            #     else:
+            #         #add the page
+            #         if not k1 in parsG_d:
+            #             parsG_d[k1] = dict()
+            #         parsG_d[k1][k2]=v
+            #===================================================================
+            
+            if not rd['cf_fp']=='':
+                fp_d[k1] = rd['cf_fp']
+            
     
-    
-        log.debug('pars w/ %i keys: \n    %s'%(len(parsG_d), list(parsG_d.keys())))
+        log.debug('pars w/ %i keys'%(len(fp_d)))
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert os.path.exists(main_cf_fp), 'bad filepath for main control file'
+        for k, v in fp_d.items(): assert os.path.exists(v), 'bad fp on %s'%k
+        
         self.feedback.setProgress(10)
+        
         #=======================================================================
         # working dir
         #=======================================================================
-        if not os.path.exists(out_dir):
-            os.makedirs(out_dir)
-            log.info('built working directory: %s'%out_dir)
+        
+
     
         #=======================================================================
         # init
         #=======================================================================
         wrkr = results.compare.Cmpr(out_dir=out_dir, tag=tag, logger=self.logger,
-                    )
+                    cf_fp = main_cf_fp)
     
         #load
-        sWrkr_d = wrkr.load_scenarios(parsG_d)
+        sWrkr_d = wrkr.load_scenarios(list(fp_d.values()))
         self.feedback.setProgress(20)
         #=======================================================================
         # #compare the control files
@@ -482,8 +609,14 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # #plot curves
         #=======================================================================
         if self.checkBox_C_rplot.isChecked():
-            fig = wrkr.riskCurves(sWrkr_d, y1lab='impacts')
-            wrkr.output_fig(fig)
+            
+            if self.checkBox_C_ari.isChecked():
+                fig = wrkr.riskCurves(sWrkr_d, y1lab='impacts')
+                wrkr.output_fig(fig)
+            if self.checkBox_C_aep.isChecked():
+                fig = wrkr.riskCurves(sWrkr_d, y1lab='AEP')
+                wrkr.output_fig(fig)
+                
             
         self.feedback.setProgress(90)
         

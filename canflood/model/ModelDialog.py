@@ -303,8 +303,9 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         # #build/run model
         #======================================================================
         model = Dmg2(cf_fp, out_dir = out_dir, logger = self.logger, tag=tag, 
-                     absolute_fp=absolute_fp,
-                     feedback=self.feedback)._setup()
+                     absolute_fp=absolute_fp, feedback=self.feedback,
+                     attriMode=self.checkBox_SS_attr.isChecked(),
+                     )._setup()
         
         #run the model        
         cres_df = model.run()
@@ -365,7 +366,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         # plot
         #======================================================================
         if self.checkBox_r2plot.isChecked():
-            ttl_df = model.prep_dtl(tlRaw_df=res_ttl)
+            ttl_df = model.prep_ttl(tlRaw_df=res_ttl)
             """just giving one curve here"""
             fig = model.plot_riskCurve(ttl_df, y1lab='impacts')
             _ = model.output_fig(fig)

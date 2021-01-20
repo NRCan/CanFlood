@@ -52,15 +52,7 @@ class ComWrkr(object): #common methods for all classes
     invalid_cids = ['fid', 'ogc_fid']
     
     
-    #[plotting]
-    """these can also be loaded from a control file"""
-    color = 'black'
-    linestyle = 'dashdot'
-    linewidth = 2.0
-    alpha =     0.75        #0=transparent 1=opaque
-    marker =    'o'
-    markersize = 4.0
-    fillstyle = 'none'    #marker fill style
+
     
     
     def __init__(self, 
@@ -356,7 +348,7 @@ class ComWrkr(object): #common methods for all classes
         #write the file
         try: 
             fig.savefig(out_fp, dpi = dpi, format = fmt, transparent=transparent)
-            log.info('saved figure to file: \n    %s'%out_fp)
+            log.info('saved figure to file:   %s'%out_fp)
         except Exception as e:
             raise Error('failed to write figure to file w/ \n    %s'%e)
         

@@ -118,20 +118,27 @@ class Preparor(Qcoms):
         return cf_fp
 
     def upd_cf_first(self, #seting initial values to the control file
-                     curves_fp,
+                     scenarioName=None,
+                     curves_fp=None,
                      ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if scenarioName is None: scenarioName=self.tag
         
+        #get new parameters
         note_str = '#control file template created from \'upd_cf_first\' on  %s'%(
             datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S'))
         
-        return self.update_cf(
-            {
-                'parameters':
-                    ({'name':'tag'},note_str),
-                    
-                'dmg_fps':
-                    ({'curves':curves_fp},),           
-            })
+        
+        new_pars_d = {'parameters':({'name':scenarioName},note_str)}
+        
+        #add curves
+        if isinstance(curves_fp, str):
+            new_pars_d['dmg_fps'] = ({'curves':curves_fp},)
+        
+        
+        return self.update_cf(new_pars_d)
         
     def finv_to_csv(self, #convert the finv to csv
                     vlay,
