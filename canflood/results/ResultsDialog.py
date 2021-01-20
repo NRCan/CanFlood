@@ -609,8 +609,14 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # #plot curves
         #=======================================================================
         if self.checkBox_C_rplot.isChecked():
-            fig = wrkr.riskCurves(sWrkr_d, y1lab='impacts')
-            wrkr.output_fig(fig)
+            
+            if self.checkBox_C_ari.isChecked():
+                fig = wrkr.riskCurves(sWrkr_d, y1lab='impacts')
+                wrkr.output_fig(fig)
+            if self.checkBox_C_aep.isChecked():
+                fig = wrkr.riskCurves(sWrkr_d, y1lab='AEP')
+                wrkr.output_fig(fig)
+                
             
         self.feedback.setProgress(90)
         
