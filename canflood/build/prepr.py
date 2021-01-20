@@ -118,15 +118,20 @@ class Preparor(Qcoms):
         return cf_fp
 
     def upd_cf_first(self, #seting initial values to the control file
+                     scenarioName=None,
                      curves_fp=None,
                      ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if scenarioName is None: scenarioName=self.name
         
         #get new parameters
         note_str = '#control file template created from \'upd_cf_first\' on  %s'%(
             datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S'))
         
         
-        new_pars_d = {'parameters':({'name':'tag'},note_str)}
+        new_pars_d = {'parameters':({'name':scenarioName},note_str)}
         
         #add curves
         if isinstance(curves_fp, str):

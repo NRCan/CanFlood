@@ -3263,7 +3263,7 @@ class Model(ComWrkr,
         #=======================================================================
         if df is None: df = self.eventType_df
         if ofn is None:
-            ofn = '%s_%s'%(dtag, self.name)
+            ofn = '%s_%s_%s'%(dtag, self.tag, self.name)
 
             
         out_fp = self.output_df(df, ofn, logger=logger, write_index=False)
