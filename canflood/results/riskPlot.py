@@ -60,7 +60,11 @@ class Plotr(Model):
              }
         }
     
-    exp_pars_op=dict()
+    exp_pars_op={
+        'results_fps':{
+             'r2_passet':{'ext':('.csv',)},
+             }
+        }
     
     #===========================================================================
     # controls

@@ -110,7 +110,8 @@ class Model(ComWrkr,
         risk2 -- Risk2 validation flag (default False)
         
     [results_fps]
-        attrimat02 -- attribution matrix file path
+        attrimat02 -- lvl2 attribution matrix fp (post dmg model)
+        attrimat03 -- lvl3 attribution matrix fp (post risk model)
         r2_passet -- per_asset results from the risk2 model
         r2_ttl  -- total results from risk2
         eventypes -- df of aep, noFail, and rEventName
@@ -345,7 +346,6 @@ class Model(ComWrkr,
             #===================================================================
             # #check all the expected keys are there
             #===================================================================
-            
             miss_l = set(vchk_d.keys()).difference(list(csectName))
             if len(miss_l) > 0:
                 raise Error('\'%s\' missing %i (of %i) expected varirables: \n    %s'%(

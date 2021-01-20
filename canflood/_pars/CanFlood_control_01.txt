@@ -31,14 +31,18 @@ risk2 = False
 risk3 = False
 
 [results_fps]
-
+attrimat02 =            #lvl2 attribution matrix fp (post dmg model)
+attrimat03 =            #lvl3 attribution matrix fp (post risk model)
+r2_passet =             #per_asset results from the risk2 model
+r2_ttl =                #total results from risk2
+eventypes =             #dataframe of aep, noFail, and rEventName
 
 [plotting]
-color = black
+color = black           #line color
 linestyle = dashdot
 linewidth = 2
-alpha = 0.75        #0=transparent 1=opaque
+alpha = 0.75            #0=transparent 1=opaque
 marker = o
 markersize = 4
-fillstyle = none    #marker fill style
-impactfmt_str = .2e #python formatter to use for formatting the impact results values
+fillstyle = none        #marker fill style
+impactfmt_str = .2e     #python formatter to use for formatting the impact results values

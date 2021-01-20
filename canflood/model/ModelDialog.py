@@ -303,8 +303,9 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         # #build/run model
         #======================================================================
         model = Dmg2(cf_fp, out_dir = out_dir, logger = self.logger, tag=tag, 
-                     absolute_fp=absolute_fp,
-                     feedback=self.feedback)._setup()
+                     absolute_fp=absolute_fp, feedback=self.feedback,
+                     attriMode=self.checkBox_SS_attr.isChecked(),
+                     )._setup()
         
         #run the model        
         cres_df = model.run()
