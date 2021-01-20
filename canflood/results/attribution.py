@@ -108,15 +108,16 @@ class Attr(riskPlotr):
         atr_dxcol = self.data_d.pop(self.attrdtag_in)
         
         mdex = atr_dxcol.columns
+        
         atr_dxcol.columns = mdex.set_levels(
             np.around(mdex.levels[0].astype(np.float), decimals=self.prec), 
             level=0)
         
+        #sort them
+        """this flips the usual atr_dxcol order.. but matches the EAD calc expectation"""
+        atr_dxcol = atr_dxcol.sort_index(axis=1, level=0, ascending=False)
 
-        
 
- 
-        
         #=======================================================================
         # check
         #=======================================================================
@@ -191,7 +192,7 @@ class Attr(riskPlotr):
         #drop extraploators and ead
         boolcol = df.columns.isin(self.aep_df.loc[~self.aep_df['extrap'], 'aep'])
         assert boolcol.sum() >2, 'suspicious event match count'
-        df = df.loc[:, boolcol].sort_index(axis=1, ascending=True)
+        df = df.loc[:, boolcol].sort_index(axis=1, ascending=False)
         
 
         
@@ -203,6 +204,10 @@ class Attr(riskPlotr):
             self.aep_df.loc[~self.aep_df['extrap'], 'aep'])
  
         assert len(miss_l)==0, 'event mismatch'
+        
+        if not self.check_eDmg(df, dropna=False, logger=log):
+            raise Error('failed check')
+        
         
         #=======================================================================
         # set it
@@ -408,12 +413,30 @@ class Attr(riskPlotr):
         # prep
         #=======================================================================
         """
-        view(rp_df)
+        
+        view(rp_df.round(0))
+        rp_df.sum(axis=0)
+        view(mdxcol)
+        
+        view(atr_dxcol.sum(axis=1, level=0))
         """
         #=======================================================================
         # multiply
         #=======================================================================
-        return atr_dxcol.multiply(rp_df, level='aep')
+        mdxcol = atr_dxcol.multiply(rp_df, level='aep')
+        
+        #=======================================================================
+        # check it
+        #=======================================================================
+        if not self.check_eDmg(mdxcol.sum(axis=1, level=0), logger=log):
+            """allowing this as we still want to give the user the plot
+            can happen if a slice/component reduces with aep
+            likely something with bad failure data"""
+            pass
+        
+            #raise Error('failed damage monotonciy check')
+        
+        return mdxcol
     
     def get_ttl(self, #get a total impacts summary from an impacts dxcol 
                 df, # index: {aep, impacts}
@@ -442,9 +465,8 @@ class Attr(riskPlotr):
             df1 = df.copy()
             
         elif df['impacts'].sum()>0:
-        
-            ttl_ser = self.calc_ead(
-                df.loc[:, ('aep', 'impacts')].set_index('aep').T,
+            dfc = df.loc[:, ('aep', 'impacts')].set_index('aep').T
+            ttl_ser = self.calc_ead(dfc,
                 drop_tails=False, logger=logger, )
             
             ead = ttl_ser['ead'][0] 
@@ -455,7 +477,7 @@ class Attr(riskPlotr):
             raise Error('negative impacts!')
             
         assert isinstance(ead, float)
-        
+        assert df1['impacts'].min()>=0
         #=======================================================================
         # add ari 
         #=======================================================================
@@ -536,7 +558,8 @@ class Attr(riskPlotr):
         #=======================================================================
         # add plot text
         #=======================================================================
-        self.val_str = ''
+
+        self.plotTag = lvlName
 
         
         return dxind, pd.Series(ead_d)

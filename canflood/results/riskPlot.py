@@ -126,7 +126,7 @@ class Plotr(Model):
         # attached passed        
         #=======================================================================
         self.name = name #where are we using this?
-
+        self.plotTag = self.tag #easier to store in methods this way
  
         self.grid    =grid
         self.logx    =logx
@@ -692,7 +692,7 @@ class Plotr(Model):
             impactFmtFunc=self.impactFmtFunc
             
         if h_alpha is None: h_alpha=self.h_alpha
-        if plotTag is None: plotTag=self.tag
+        if plotTag is None: plotTag=self.plotTag
         
         if val_str is None:
             val_str =  'ltail=\'%s\',  rtail=\'%s\''%(self.ltail, self.rtail) + \
@@ -719,10 +719,10 @@ class Plotr(Model):
          
          
         if y1lab == 'AEP':
-            title = '%s AEP-Impacts plot for %i stacks'%(plotTag, len(dxind.columns))
+            title = '%s %s AEP-Impacts plot for %i stacks'%(self.tag, plotTag, len(dxind.columns))
             xlab=self.impact_name
         elif y1lab == self.impact_name:
-            title = '%s Impacts-ARI plot for %i stacks'%(plotTag, len(dxind.columns))
+            title = '%s %s Impacts-ARI plot for %i stacks'%(self.tag, plotTag, len(dxind.columns))
             xlab='ARI'
         else:
             raise Error('bad y1lab: %s'%y1lab)
@@ -797,7 +797,7 @@ class Plotr(Model):
         self._postFmt(ax1, 
                       val_str=val_str, #putting in legend ittle 
                       legendHandles=(h1, list(legLab_d.values())),
-                      xLocScale=0.8, yLocScale=0.1,
+                      #xLocScale=0.8, yLocScale=0.1,
                       legendTitle=legendTitle)
         
         #assign tick formatter functions

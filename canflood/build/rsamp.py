@@ -216,7 +216,7 @@ class Rsamp(Qcoms):
             dtm_rlay=None, #dtm raster
             dthresh = 0, #fordepth threshold
             clip_dtm=False,
-            
+            fname = None, #prefix for layer name
             
             ):
         """
@@ -229,7 +229,7 @@ class Rsamp(Qcoms):
         #======================================================================
         log = self.logger.getChild('run')
         if cid is None: cid = self.cid
-
+        if fname is None: fname=self.fname
         self.as_inun = as_inun
 
         
@@ -328,14 +328,14 @@ class Rsamp(Qcoms):
                 raise Error('bad gtype')
             
             res_name = '%s_%s_%i_%i_d%.2f'%(
-                self.fname, self.tag, len(rlayRaw_l), res_vlay.dataProvider().featureCount(), dthresh)
+                fname, self.tag, len(rlayRaw_l), res_vlay.dataProvider().featureCount(), dthresh)
         
         #=======================================================================
         # #WSL value sampler------
         #=======================================================================
         else:
             res_vlay = self.samp_vals(finv,rlayRaw_l, psmp_stat)
-            res_name = '%s_%s_%i_%i'%(self.fname, self.tag, len(rlayRaw_l), res_vlay.dataProvider().featureCount())
+            res_name = '%s_%s_%i_%i'%(fname, self.tag, len(rlayRaw_l), res_vlay.dataProvider().featureCount())
             
         res_vlay.setName(res_name)
         #=======================================================================
@@ -1358,6 +1358,7 @@ class Rsamp(Qcoms):
               out_dir = None, #directory for puts
               names_d = None, #names conversion
               rname_l = None,
+              res_name = None, #prefix for output name
               ):
         
         log = self.logger.getChild('write_res')
@@ -1367,7 +1368,7 @@ class Rsamp(Qcoms):
         if names_d is None: names_d = self.names_d
         if rname_l is None: rname_l = self.rname_l
         if out_dir is None: out_dir = self.out_dir
-        res_name = vlay.name()
+        if res_name is None: res_name = vlay.name()
         log.debug("on \'%s\'"%res_name)
         #======================================================================
         # prechekss
