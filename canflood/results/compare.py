@@ -32,7 +32,7 @@ from hlpr.exceptions import QError as Error
 #===============================================================================
 # non-Qgis
 #===============================================================================
-#from hlpr.basic import ComWrkr
+from hlpr.basic import view
 from model.modcom import Model
 from results.riskPlot import Plotr
 
@@ -53,14 +53,25 @@ class Cmpr(Plotr):
         
         super().__init__(*args, **kwargs)
         
-        self._init_plt() #setup matplotlib
+        #=======================================================================
+        # setup
+        #=======================================================================
+        self.init_model() #load the control file (style defaults)
+        self._init_plt()
+        
+        
+        self.upd_impStyle() #upldate your group plot style container
+        #=======================================================================
+        # wrap
+        #=======================================================================
         
         self.logger.debug('%s.__init__ w/ feedback \'%s\''%(
             self.__class__.__name__, type(self.feedback).__name__))
-        
+    
+    
         
     def load_scenarios(self,
-                 parsG_d, #container of filepaths 
+                 fps_l, #container of filepaths 
                  
                  ):
         #=======================================================================
@@ -68,72 +79,41 @@ class Cmpr(Plotr):
         #=======================================================================
         log = self.logger.getChild('load_scenarios')
         
-        log.info('on %i scenarios'%len(parsG_d))
+        log.info('on %i scenarios'%len(fps_l))
         
         
         #=======================================================================
         # precheck
         #=======================================================================
-        for sName, parsN_d in parsG_d.items():
-            assert isinstance(sName, str)
-            assert isinstance(parsN_d, dict)
-            
-            #check all the keys match
-            miss_l = set(self.exp_pSubKeys).difference(parsN_d.keys())
-            assert len(miss_l)==0, 'bad keys: %s'%miss_l
-            
-            #check all the filepaths are good
-            for pName, fp in parsN_d.items():
-                assert os.path.exists(fp), 'bad filepath for \'%s.%s\': %s'%(
-                    sName, pName, fp)
+        assert isinstance(fps_l, list)
+        assert len(fps_l)==len(set(fps_l)), 'non unique fps!'
+        
+        for i, fp in enumerate(fps_l):
+            assert isinstance(fp, str)
+            assert os.path.exists(fp), 'bad filepath: %s'%(fp)
                 
-            log.debug('checked scenario \'%s\''%sName)
+
             
         #=======================================================================
-        # build each scenario
+        # build each scenario----
         #=======================================================================
         """needs to be a strong reference or the workers die!"""
-        self.sWrkr_d = dict() #start a weak reference container
+        d = dict() #start a weak reference container
         
-        """we dont know the scenario name until its loaded"""
-        self.nameConv_d = dict() #name conversion keys
-        
-        for sName, parsN_d in parsG_d.items():
-            
-            #===================================================================
+        for i, fp in enumerate(fps_l):
+            log.debug('loading %i/%i'%(i+1, len(fps_l)))
             # build/load the children
-            #===================================================================
-            sWrkr = Scenario(self, sName, cf_fp=parsN_d['cf_fp'])
-            """
-            sWrkr.data_d
-            """
-            
-             
-            #load total results file
-            if 'ttl_fp' in parsN_d:
-                """these are riskPlot methods"""
-                sWrkr.load_ttl(fp=parsN_d['ttl_fp'])
-                sWrkr.prep_dtl(logger=log)
-                
-                
-            #load control file
-            """setting this last incase we want to overwrite with control file values"""
-            sWrkr.load_cf()
-            
-            #populate the plotting parameters
-            sWrkr.upd_impStyle() 
+            sWrkr = Scenario(self, cf_fp=fp)
 
-                
-            #===================================================================
+
             # add to family
-            #===================================================================
-            assert sWrkr.name not in self.sWrkr_d, 'scenario \'%s\' already loaded!'
-                
-            self.sWrkr_d[sWrkr.name] = sWrkr
-            self.nameConv_d[sName] = sWrkr.name
+            assert sWrkr.name not in d, 'scenario \'%s\' already loaded!'%sWrkr.name
+    
+            d[sWrkr.name] = sWrkr
             
             log.debug('loaded \'%s\''%sWrkr.name)
             
+        self.sWrkr_d = d
         log.info('compiled %i scenarios: %s'%(len(self.sWrkr_d), list(self.sWrkr_d.keys())))
         
         
@@ -145,6 +125,9 @@ class Cmpr(Plotr):
                    
                    #plot keys
                    y1lab='AEP', #yaxis label and plot type c ontrol
+                   
+                   #plot formatters
+                   val_str='*no',
                    **plotKwargs
                    ): 
         
@@ -175,7 +158,11 @@ class Cmpr(Plotr):
                 first = False
 
 
-        return self.plot_mRiskCurves(plotPars_d,y1lab=y1lab, **plotKwargs)
+        return self.plot_mRiskCurves(plotPars_d,y1lab=y1lab, 
+                                     impactFmtFunc=self.impactFmtFunc,
+                                     val_str=val_str, 
+                                     logger=log,
+                                     **plotKwargs)
         
     def cf_compare(self, #compare control file values between Scenarios
                    sWrkr_d,
@@ -249,24 +236,48 @@ class Scenario(Plotr): #simple class for a scenario
     
 
     def __init__(self,
-                 parent,
-                 nameRaw,
+                 parent, #not using this yet
+                 #nameRaw,
                  #cf_fp=None, #should be picked up in kwargs now
                  **kwargs              
                  ):
         
+        
         super().__init__( **kwargs) #initilzie teh baseclass
         #self.logger = parent.logger.getChild(nameRaw)
-        
+        log = self.logger
         """we'll set another name from the control file
         TODO: clean this up"""
-        self.nameRaw = nameRaw 
+        #self.nameRaw = nameRaw 
         
+        #=======================================================================
+        # loaders
+        #=======================================================================
+        self.init_model()
+        self.upd_impStyle() #update plot style dict w/ parameters from control file
+        
+        """note these also store on the instance"""
+        tlRaw_df = self.load_ttl()
+        ttl_df = self.prep_ttl(tlRaw_df)
+        
+        """
+        view(self.data_d['ttl'])
+        self.
+        """
+        
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        log.info('finished _init_')
 
         
-    def load_cf(self, #load the control file
+    def xxxload_cf(self, #load the control file
                 ):
+        """
+        this is a simplified version of whats on Model.init_model()
         
+        TODO: Consider just using the full function
+        """
         #=======================================================================
         # defaults
         #=======================================================================

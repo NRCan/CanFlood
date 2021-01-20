@@ -90,7 +90,7 @@ class Attr(riskPlotr):
         
         #load and prep the total results
         _ = self.load_ttl(logger=log)
-        _ = self.prep_dtl(logger=log)
+        _ = self.prep_ttl(logger=log)
         
         self.load_passet()
         self.load_etypes()
@@ -443,7 +443,7 @@ class Attr(riskPlotr):
                 logger=None,
                 ):
         """
-        see also Plotr.prep_dtl()
+        see also Plotr.prep_ttl()
         """
         
         #=======================================================================

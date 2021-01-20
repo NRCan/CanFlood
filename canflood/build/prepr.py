@@ -124,7 +124,7 @@ class Preparor(Qcoms):
         #=======================================================================
         # defaults
         #=======================================================================
-        if scenarioName is None: scenarioName=self.name
+        if scenarioName is None: scenarioName=self.tag
         
         #get new parameters
         note_str = '#control file template created from \'upd_cf_first\' on  %s'%(

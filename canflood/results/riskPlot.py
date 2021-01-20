@@ -51,6 +51,7 @@ class Plotr(Model):
     markersize = 4.0
     fillstyle = 'none'    #marker fill style
     impactfmt_str = '.2e'
+        #',.0f' #Thousands separator
     #===========================================================================
     # expectations from parameter file
     #===========================================================================
@@ -159,8 +160,8 @@ class Plotr(Model):
         """attribution has its own _setup function which will overwrite this"""
         log = self.logger.getChild('setup')
         
-        #load the control file
-        self.init_model()
+        
+        self.init_model() #load the control file
         self._init_plt()
         
         #upldate your group plot style container
@@ -168,7 +169,7 @@ class Plotr(Model):
         
         #load and prep the total results
         _ = self.load_ttl(logger=log)
-        _ = self.prep_dtl(logger=log)
+        _ = self.prep_ttl(logger=log)
         
         #set default plot text
         try:
@@ -236,16 +237,18 @@ class Plotr(Model):
         if impactFmtFunc is None: impactFmtFunc=self.impactFmtFunc
         if impactfmt_str is  None: impactfmt_str=self.impactfmt_str
         
-        
+        assert isinstance(impactfmt_str, str)
         if not callable(impactFmtFunc):
             
             impactFmtFunc = lambda x, fmt=impactfmt_str:'{:>{fmt}}'.format(x, fmt=fmt)
             
         self.impactFmtFunc=impactFmtFunc
         
-        """
-        self.name
-        """
+        #check it
+        try:
+            impactFmtFunc(1.2)
+        except Exception as e:
+            self.logger.warning('bad formatter: %s w/ \n    %s'%(impactfmt_str, e))
         
         return
             
@@ -288,7 +291,8 @@ class Plotr(Model):
         #=======================================================================
         # #precheck
         #=======================================================================
-        assert os.path.exists(fp)
+        assert isinstance(fp, str)
+        assert os.path.exists(fp), 'bad fp: %s'%fp
         
         #=======================================================================
         # load
@@ -315,7 +319,7 @@ class Plotr(Model):
         
         return tlRaw_df
     
-    def prep_dtl(self, # prep the raw results for plotting
+    def prep_ttl(self, # prep the raw results for plotting
                  tlRaw_df=None, #raw total results info
                  logger=None,
                  ):
@@ -329,7 +333,7 @@ class Plotr(Model):
         
         if tlRaw_df is None: tlRaw_df = self.tlRaw_df
         if logger is None: logger=self.logger
-        log = logger.getChild('prep_dtl')
+        log = logger.getChild('prep_ttl')
         
         #=======================================================================
         # precheck
@@ -357,6 +361,9 @@ class Plotr(Model):
         assert bx.sum()==1
 
         self.ead_tot = df1.loc[bx, 'impacts'].values[0]
+        
+        assert not pd.isna(self.ead_tot)
+        assert isinstance(self.ead_tot, float)
         
         #=======================================================================
         # #get plot values
@@ -513,8 +520,9 @@ class Plotr(Model):
                     impactFmtFunc=None, #tick label format function for impact values
                     #lambda x:'{:,.0f}'.format(x)
                     
+                    legendTitle=None,
                     val_str='*no', #text to write on plot. see _get_val_str()
-                        #NOTE: pass 'levendLab' in the pars to add custom text to the legend
+ 
 
 
                   figsize=None, logger=None, plotTag=None,
@@ -615,12 +623,14 @@ class Plotr(Model):
         # fill the plot----
         #======================================================================
         first = True
+        ead_d=dict()
         for cName, cPars_d in parsG_d.items():
             
             
             #pull values from container
             cdf = cPars_d['ttl_df'].copy()
             cdf = cdf.loc[cdf['plot'], :] #drop from handles
+            
             
             
             #defaults
@@ -638,7 +648,7 @@ class Plotr(Model):
             self._lineToAx(cdf, y1lab, ax1, impStyle_d=cPars_d['impStyle_d'],
                            hatch_f=hatch_f, lineLabel=label)
             
-
+            ead_d[label] = float(cPars_d['ead_tot'])
 
 
 
@@ -652,8 +662,25 @@ class Plotr(Model):
         #=======================================================================
         # post format
         #=======================================================================
-        val_str = self._get_val_str(val_str, impactFmtFunc)
-        self._postFmt(ax1, val_str=val_str)
+        
+        #legend
+        h1, l1 = ax1.get_legend_handles_labels()
+        legLab_d = {e:'\'%s\' annualized = '%e + impactFmtFunc(ead_d[e]) for e in l1}
+        val_str = self._get_val_str(val_str)
+        #legendTitle = self._get_val_str('*default')
+        
+        self._postFmt(ax1, 
+                      val_str=val_str, #putting in legend ittle 
+                      legendHandles=(h1, list(legLab_d.values())),
+                      #xLocScale=0.8, yLocScale=0.1,
+                      legendTitle=legendTitle,
+                      )
+        
+        
+        #=======================================================================
+        # val_str = self._get_val_str(val_str, impactFmtFunc)
+        # self._postFmt(ax1, val_str=val_str)
+        #=======================================================================
         
         #assign tick formatter functions
         if y1lab == 'AEP':
@@ -978,6 +1005,7 @@ class Plotr(Model):
         #=======================================================================
         if isinstance(val_str, str):
             if val_str=='*default':
+                assert isinstance(self.ead_tot, float)
                 val_str='total annualized impacts = ' + impactFmtFunc(self.ead_tot)
             elif val_str=='*no':
                 val_str=None
@@ -986,17 +1014,7 @@ class Plotr(Model):
                 
         return val_str
     
-    def _get_ttl_ari(self, df): #add an ari column to a frame (from the aep vals)
-        
-        ar = df.loc[:,'aep'].T.values
-        
-        ar_ari = 1/np.where(ar==0, #replaced based on zero value
-                           sorted(ar)[1]/10, #dummy value for zero (take the second smallest value and divide by 10)
-                           ar) 
-        
-        df['ari'] = ar_ari.astype(np.int32)
-        
-        return 
+
         
 
     

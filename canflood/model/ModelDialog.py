@@ -366,7 +366,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         # plot
         #======================================================================
         if self.checkBox_r2plot.isChecked():
-            ttl_df = model.prep_dtl(tlRaw_df=res_ttl)
+            ttl_df = model.prep_ttl(tlRaw_df=res_ttl)
             """just giving one curve here"""
             fig = model.plot_riskCurve(ttl_df, y1lab='impacts')
             _ = model.output_fig(fig)

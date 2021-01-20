@@ -291,7 +291,7 @@ class Model(ComWrkr,
         # attach control file parameter values
         #=======================================================================
 
-        _ = self.cf_attach_pars(self.pars)
+        self.cfPars_d = self.cf_attach_pars(self.pars)
         
         
         #=======================================================================
@@ -1936,7 +1936,7 @@ class Model(ComWrkr,
                 evdf1=evdf
 
             elif event_rels=='indep':
-                raise Error('not implemented')
+                raise Error('attribution not implemented for event_rels=\'indep\'')
             else: raise Error('bad evnet-Rels')
             
             #===================================================================
@@ -2454,6 +2454,11 @@ class Model(ComWrkr,
                       aep_ser,
                       event_probs = 'aep',
                       logger = None,):
+        """
+        used by the force/check monotonociy
+        
+        also see '_get_ttl_ari()'
+        """
         
         if logger is None: logger = self.logger
         log = self.logger.getChild('_conv_expo_aep')
@@ -2490,6 +2495,18 @@ class Model(ComWrkr,
         df1 = df.rename(columns = aep_ser.to_dict()).sort_index(axis=1, ascending=True)
         
         return df1, aep_ser.to_dict()
+    
+    def _get_ttl_ari(self, df): #add an ari column to a frame (from the aep vals)
+        
+        ar = df.loc[:,'aep'].T.values
+        
+        ar_ari = 1/np.where(ar==0, #replaced based on zero value
+                           sorted(ar)[1]/10, #dummy value for zero (take the second smallest value and divide by 10)
+                           ar) 
+        
+        df['ari'] = ar_ari.astype(np.int32)
+        
+        return 
             
     def force_monot(self, #forcing monotoncity on an exposure data set
                    df_raw,
@@ -3230,7 +3247,7 @@ class Model(ComWrkr,
         # defaults
         #=======================================================================
         if ofn is None:
-            ofn = 'attr%02d_%s'%(self.att_df.columns.nlevels, self.name)
+            ofn = 'attr%02d_%s_%s'%(self.att_df.columns.nlevels, self.name, self.tag)
         if dtag is None: dtag = self.attrdtag_out
             
         out_fp = self.output_df(self.att_df, ofn, logger=logger)
