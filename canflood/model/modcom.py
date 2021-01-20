@@ -110,10 +110,15 @@ class Model(ComWrkr,
         risk2 -- Risk2 validation flag (default False)
         
     [results_fps]
-        attrimat02 -- attribution matrix file path
+        attrimat02 -- lvl2 attribution matrix fp (post dmg model)
+        attrimat03 -- lvl3 attribution matrix fp (post risk model)
         r2_passet -- per_asset results from the risk2 model
         r2_ttl  -- total results from risk2
         eventypes -- df of aep, noFail, and rEventName
+    
+    
+    [plotting]
+        impactfmt_str -- python formatter to use for formatting the impact results values
     
     """
     
@@ -162,7 +167,7 @@ class Model(ComWrkr,
     eventypes=''
     
     #[plotting]
-    """see ComWrkr"""
+    """see Plotr"""
     
     #==========================================================================
     # program vars
@@ -184,7 +189,7 @@ class Model(ComWrkr,
     
 
     def __init__(self,
-                 cf_fp, #control file path 
+                 cf_fp, #control file path TODO: make this a kwarg
                     #note: this could also be attached by basic.ComWrkr.__init__()
                     #now that this is a parent... wish this was a kwarg
                  
@@ -198,7 +203,8 @@ class Model(ComWrkr,
         # precheck
         #=======================================================================
         mod_logger.info('Model.__init__ start')
-        assert os.path.exists(cf_fp), 'bad control filepath: %s'%cf_fp
+        """no.. letting dummy cf_fps get passed
+        assert os.path.exists(cf_fp), 'bad control filepath: %s'%cf_fp"""
         
         #=======================================================================
         # parent setup
@@ -285,7 +291,7 @@ class Model(ComWrkr,
         # attach control file parameter values
         #=======================================================================
 
-        _ = self.cf_attach_pars(self.pars)
+        self.cfPars_d = self.cf_attach_pars(self.pars)
         
         
         #=======================================================================
@@ -340,7 +346,6 @@ class Model(ComWrkr,
             #===================================================================
             # #check all the expected keys are there
             #===================================================================
-            
             miss_l = set(vchk_d.keys()).difference(list(csectName))
             if len(miss_l) > 0:
                 raise Error('\'%s\' missing %i (of %i) expected varirables: \n    %s'%(
@@ -750,6 +755,16 @@ class Model(ComWrkr,
         
         assert np.all(boolar), 'passed aeps out of range'
         
+        
+        #=======================================================================
+        # #assemble event type  frame
+        #=======================================================================
+        """this is a late add.. would have been nice to use this more in multi_ev"""
+        df = aep_ser.to_frame().reset_index(drop=False).rename(columns={'index':'rEventName'})
+        df['noFail'] = True
+        
+        self.eventType_df = df
+        
         #======================================================================
         # #wrap
         #======================================================================
@@ -980,12 +995,7 @@ class Model(ComWrkr,
             
         self.noFailExn_d =copy.copy(fill_exn_d) #set this for the probability calcs
         
-        #assemble event type  frame
-        """this is a late add.. would have been nice to use this more in multi_ev"""
-        df = aep_ser.to_frame().reset_index(drop=False).rename(columns={'index':'rEventName'})
-        df['noFail'] = df['rEventName'].isin(fill_exn_d.values())
         
-        self.eventType_df = df
  
         
         #=======================================================================
@@ -1062,10 +1072,22 @@ class Model(ComWrkr,
         
         if not self.event_rels == 'max':
             assert valid, 'some complex event probabilities exceed 1'
+            
+            
+
 
         #==================================================================
         # wrap
         #==================================================================
+
+        # update event type  frame
+        """this is a late add.. would have been nice to use this more in multi_ev
+        see load_evals()
+        """
+        
+        self.eventType_df['noFail'] = self.eventType_df['rEventName'].isin(fill_exn_d.values())
+        
+        
         self.data_d[dtag] = edf
         self.cplx_evn_d = cplx_evn_d
         
@@ -1914,7 +1936,7 @@ class Model(ComWrkr,
                 evdf1=evdf
 
             elif event_rels=='indep':
-                raise Error('not implemented')
+                raise Error('attribution not implemented for event_rels=\'indep\'')
             else: raise Error('bad evnet-Rels')
             
             #===================================================================
@@ -2163,17 +2185,25 @@ class Model(ComWrkr,
         log.info('getting ead on %s w/ ltail=\'%s\' and rtail=\'%s\''%(
             str(df_raw.shape), ltail, rtail))
         
-        #identify columns to calc ead for
-        bx = (df_raw > 0).any(axis=1) #only want those with some real damages
-        
-        assert bx.any(), 'no valid results on %s'%str(df_raw.shape)
+
         #=======================================================================
         # get tail values-----
         #=======================================================================
+        df = df_raw.copy().sort_index(axis=1, ascending=False)
+        
+        #identify columns to calc ead for
+        bx = (df > 0).any(axis=1) #only want those with some real damages
+        
+        assert bx.any(), 'no valid results on %s'%str(df.shape)
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        self.check_eDmg(df, dropna=True, logger=log)
+
         #======================================================================
         # left tail
         #======================================================================
-        df = df_raw.copy()
+        
         #flat projection
         if ltail == 'flat':
             df.loc[:,0] = df.iloc[:,0] 
@@ -2247,19 +2277,12 @@ class Model(ComWrkr,
         else:
             raise Error('unexpected rtail %s'%rtail)
             
-        df = df.sort_index(axis=1)
-        
-        
-
+        #re-arrange columns so x is ascending
+        df = df.sort_index(ascending=False, axis=1)
         #======================================================================
-        # check monoticiy again
+        # check  again
         #======================================================================
-        #check for damage monoticyt
-        cboolidx = df.apply(lambda x: x.is_monotonic_increasing, axis=1)
-        if cboolidx.any():
-            log.debug('%s/n'%df.loc[cboolidx, :])
-            log.warning(' %i (of %i)  assets have non-monotonic-increasing damages. see logger'%(
-                cboolidx.sum(), len(cboolidx)))
+        self.check_eDmg(df, dropna=True, logger=log)
 
         #======================================================================
         # calc EAD-----------
@@ -2270,8 +2293,7 @@ class Model(ComWrkr,
             dx = df.max().max()/100
         assert isinstance(dx, float)
         
-        #re-arrange columns so x is ascending
-        df = df.sort_index(ascending=False, axis=1)
+
         
         #apply the ead func
         df.loc[bx, 'ead'] = df.loc[bx, :].apply(
@@ -2287,17 +2309,27 @@ class Model(ComWrkr,
         if boolidx.any():
             log.warning('got %i (of %i) negative eads'%( boolidx.sum(), len(boolidx)))
         
+        """
+        df.columns.dtype
+        """
         #======================================================================
         # clean results
         #======================================================================
         if drop_tails:
             #just add the results values onto the raw
-            res_df = df_raw.join(df['ead'])
+            res_df = df_raw.join(df['ead']).round(self.prec)
         else:
             #take everything
-            res_df = df
+            res_df = df.round(self.prec)
             
-        return res_df.round(self.prec)
+        #final check
+        """nasty conversion because we use aep as a column name..."""
+        cdf = res_df.drop('ead', axis=1)
+        cdf.columns = cdf.columns.astype(float)
+            
+        self.check_eDmg(cdf, dropna=True, logger=log)
+            
+        return res_df
 
 
     def _extrap_rCurve(self,  #extraploating EAD curve data
@@ -2344,14 +2376,17 @@ class Model(ComWrkr,
             
         else:
             #xvalues = damages
-            f = interpolate.interp1d( ser.values, ser.index.values,
+            f = interpolate.interp1d(ser.values, ser.index.values,
                                      fill_value='extrapolate')
             
         
         #calculate new y value by applying interpolation function
-        result = f(0) #y value at x=0
+        result = float(f(0)) #y value at x=0
         
-        return float(result) 
+        if not result >=0:
+            raise Error('got negative extrapolation: %.2f'%result)
+        
+        return result 
     
     def _get_ev(self, #integration caller
                ser, #row from damage results
@@ -2419,6 +2454,11 @@ class Model(ComWrkr,
                       aep_ser,
                       event_probs = 'aep',
                       logger = None,):
+        """
+        used by the force/check monotonociy
+        
+        also see '_get_ttl_ari()'
+        """
         
         if logger is None: logger = self.logger
         log = self.logger.getChild('_conv_expo_aep')
@@ -2455,6 +2495,18 @@ class Model(ComWrkr,
         df1 = df.rename(columns = aep_ser.to_dict()).sort_index(axis=1, ascending=True)
         
         return df1, aep_ser.to_dict()
+    
+    def _get_ttl_ari(self, df): #add an ari column to a frame (from the aep vals)
+        
+        ar = df.loc[:,'aep'].T.values
+        
+        ar_ari = 1/np.where(ar==0, #replaced based on zero value
+                           sorted(ar)[1]/10, #dummy value for zero (take the second smallest value and divide by 10)
+                           ar) 
+        
+        df['ari'] = ar_ari.astype(np.int32)
+        
+        return 
             
     def force_monot(self, #forcing monotoncity on an exposure data set
                    df_raw,
@@ -3125,6 +3177,62 @@ class Model(ComWrkr,
             
         return result
     
+    def check_eDmg(self, #check eap vs. impact like frames
+                 df_raw,
+                 dropna=True,
+                 logger=None):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+
+        
+        #=======================================================================
+        # #check expectations
+        #=======================================================================
+        if not 'float' in df_raw.columns.dtype.name:
+            raise Error('expected aep values in columns')
+        assert len(df_raw.columns)>2
+        
+        #=======================================================================
+        # prep
+        #=======================================================================
+        if dropna:
+            df = df_raw.dropna(how='any', axis=0)
+        else:
+            assert df_raw.notna().all().all(), 'got some nulls when dropna=False'
+            df = df_raw
+            
+        #=======================================================================
+        # check order
+        #=======================================================================
+        assert np.all(np.diff(df.columns) <=0), 'passed headers are not descending'
+        #=======================================================================
+        # #check everything is positive
+        #=======================================================================
+        booldf = df>=0
+        if not booldf.all().all():
+            raise Error('got %i (of %i) negative values'%(
+                np.invert(booldf).sum().sum(), booldf.size))
+        
+        #=======================================================================
+        # #check for damage monoticyt
+        #=======================================================================
+        """
+        view(df)
+        cboolidx.name='non-mono'
+        view(df.join(cboolidx))
+        """
+        cboolidx = np.invert(df.apply(lambda x: x.is_monotonic_increasing, axis=1))
+        if cboolidx.any():
+            if logger is None: logger = self.logger
+            log = logger.getChild('chk_eDmg')
+            log.debug('%s/n'%df.loc[cboolidx, :])
+            log.warning(' %i (of %i)  assets have non-monotonic-increasing damages. see logger'%(
+                cboolidx.sum(), len(cboolidx)))
+            
+            return False
+        return True
+    
     #===========================================================================
     # OUTPUTS---------
     #===========================================================================
@@ -3139,7 +3247,7 @@ class Model(ComWrkr,
         # defaults
         #=======================================================================
         if ofn is None:
-            ofn = 'attr%02d_%s'%(self.att_df.columns.nlevels, self.name)
+            ofn = 'attr%02d_%s_%s'%(self.att_df.columns.nlevels, self.name, self.tag)
         if dtag is None: dtag = self.attrdtag_out
             
         out_fp = self.output_df(self.att_df, ofn, logger=logger)
@@ -3172,7 +3280,7 @@ class Model(ComWrkr,
         #=======================================================================
         if df is None: df = self.eventType_df
         if ofn is None:
-            ofn = '%s_%s'%(dtag, self.name)
+            ofn = '%s_%s_%s'%(dtag, self.tag, self.name)
 
             
         out_fp = self.output_df(df, ofn, logger=logger, write_index=False)

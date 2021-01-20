@@ -175,7 +175,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
         
         #see if they picked something
         if fp == '':
-            self.logger.error('user failed to make a selection. skipping')
+            self.logger.warning('user failed to make a selection. skipping')
             return 
         
         #update the bar

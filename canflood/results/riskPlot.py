@@ -29,23 +29,55 @@ import pandas as pd
 
 from hlpr.exceptions import QError as Error
 
-from hlpr.basic import ComWrkr, view
+from hlpr.basic import view
+from model.modcom import Model
 
 
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Plotr(ComWrkr):
+class Plotr(Model):
+    
+    #===========================================================================
+    # parameters from control file
+    #===========================================================================
+    #[plotting]
 
+    color = 'black'
+    linestyle = 'dashdot'
+    linewidth = 2.0
+    alpha =     0.75        #0=transparent 1=opaque
+    marker =    'o'
+    markersize = 4.0
+    fillstyle = 'none'    #marker fill style
+    impactfmt_str = '.2e'
+        #',.0f' #Thousands separator
+    #===========================================================================
+    # expectations from parameter file
+    #===========================================================================
+    exp_pars_md = {
+        'results_fps':{
+             'r2_ttl':{'ext':('.csv',)},
+             }
+        }
+    
+    exp_pars_op={
+        'results_fps':{
+             'r2_passet':{'ext':('.csv',)},
+             }
+        }
+    
     #===========================================================================
     # controls
     #===========================================================================
     exp_ttl_colns = ('note', 'plot', 'aep')
     
+    valid_par='risk2'  #TODO: fix this
+    
     #===========================================================================
     # defaults
     #===========================================================================
-    val_str='*defalut'
+    val_str='*default'
     ead_tot=''
     impact_name=''
     
@@ -64,6 +96,7 @@ class Plotr(ComWrkr):
     
     
     def __init__(self,
+                 cf_fp='',
                  name='Results',
                  impStyle_d=None,
                    #labels
@@ -92,12 +125,13 @@ class Plotr(ComWrkr):
         
 
         
-        super().__init__(**kwargs) #initilzie teh baseclass
+        super().__init__(cf_fp, **kwargs) #initilzie teh baseclass
 
         #=======================================================================
         # attached passed        
         #=======================================================================
-        self.name = name
+        self.name = name #where are we using this?
+        self.plotTag = self.tag #easier to store in methods this way
  
         self.grid    =grid
         self.logx    =logx
@@ -107,13 +141,14 @@ class Plotr(ComWrkr):
         self.h_color    =h_color
         self.h_alpha    =h_alpha
         
+        """get the style handles
+            setup to load from control file or passed explicitly"""
         if impStyle_d is None:
             self.upd_impStyle()
         else:
             self.impStyle_d=impStyle_d
             
-        if impactFmtFunc is None:
-            impactFmtFunc = lambda x:'%.2e'%x #default to scientific notation
+
         self.impactFmtFunc=impactFmtFunc
         
         self.logger.info('init finished')
@@ -121,11 +156,44 @@ class Plotr(ComWrkr):
         """call explicitly... sometimes we want lots of children who shouldnt call this
         self._init_plt()"""
         
+    def _setup(self):
+        """attribution has its own _setup function which will overwrite this"""
+        log = self.logger.getChild('setup')
         
-    def _init_plt(self): #initilize matplotlib
+        
+        self.init_model() #load the control file
+        self._init_plt()
+        
+        #upldate your group plot style container
+        self.upd_impStyle()
+        
+        #load and prep the total results
+        _ = self.load_ttl(logger=log)
+        _ = self.prep_ttl(logger=log)
+        
+        #set default plot text
+        try:
+            self.val_str =  'annualized impacts = %s \nltail=\'%s\',  rtail=\'%s\''%(
+                self.impactFmtFunc(self.ead_tot), self.ltail, self.rtail) + \
+                '\naevent_rels = \'%s\', prec = %i'%(self.event_rels, self.prec)
+        except Exception as e:
+            log.warning('failed to set default plot string w/ \n    %s'%e)
+            
+   
+        
+        return self
+    
+    def _init_plt(self,  #initilize matplotlib
+                **kwargs
+                  ):
         """
         calling this here so we get clean parameters each time the class is instanced
         """
+
+        
+        #=======================================================================
+        # imports
+        #=======================================================================
         import matplotlib
         matplotlib.use('Qt5Agg') #sets the backend (case sensitive)
         import matplotlib.pyplot as plt
@@ -146,11 +214,52 @@ class Plotr(ComWrkr):
         matplotlib.rcParams['figure.autolayout'] = False #use tight layout
         
         self.plt, self.matplotlib = plt, matplotlib
+        
+        #=======================================================================
+        # #value formatter
+        #=======================================================================
+        self._init_fmtFunc(**kwargs)
+
+        
+
+        
         return self
+    
+    def _init_fmtFunc(self,
+                    impactFmtFunc=None,
+                  impactfmt_str=None, #used for building impactFmtFunc (if not passed)
+                  ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        """whatever was passed during construction.. usually None"""
+        if impactFmtFunc is None: impactFmtFunc=self.impactFmtFunc
+        if impactfmt_str is  None: impactfmt_str=self.impactfmt_str
+        
+        assert isinstance(impactfmt_str, str)
+        if not callable(impactFmtFunc):
+            
+            impactFmtFunc = lambda x, fmt=impactfmt_str:'{:>{fmt}}'.format(x, fmt=fmt)
+            
+        self.impactFmtFunc=impactFmtFunc
+        
+        #check it
+        try:
+            impactFmtFunc(1.2)
+        except Exception as e:
+            self.logger.warning('bad formatter: %s w/ \n    %s'%(impactfmt_str, e))
+        
+        return
+            
         
     def upd_impStyle(self): #update the plotting pars based on your attributes
         """
         taking instance variables (rather than parser's section) because these are already typset
+        
+        usually called twice
+            1) before loading the control file, to build a default
+            2) after, to update values
         """
         #assert not self.cfPars_d is None, 'load the control file first!'
         impStyle_d = dict()
@@ -182,7 +291,8 @@ class Plotr(ComWrkr):
         #=======================================================================
         # #precheck
         #=======================================================================
-        assert os.path.exists(fp)
+        assert isinstance(fp, str)
+        assert os.path.exists(fp), 'bad fp: %s'%fp
         
         #=======================================================================
         # load
@@ -209,7 +319,7 @@ class Plotr(ComWrkr):
         
         return tlRaw_df
     
-    def prep_dtl(self, # prep the raw results for plotting
+    def prep_ttl(self, # prep the raw results for plotting
                  tlRaw_df=None, #raw total results info
                  logger=None,
                  ):
@@ -217,11 +327,13 @@ class Plotr(ComWrkr):
         when ttl is output, we add the EAD data, drop ARI, and add plotting handles
             which is not great for data manipulation
         here we clean it up and only take those for plotting
+        
+        see also Artr.get_ttl()
         """
         
         if tlRaw_df is None: tlRaw_df = self.tlRaw_df
         if logger is None: logger=self.logger
-        log = logger.getChild('prep_dtl')
+        log = logger.getChild('prep_ttl')
         
         #=======================================================================
         # precheck
@@ -242,8 +354,6 @@ class Plotr(ComWrkr):
         
         df1.columns = newColNames
 
-
-
         #=======================================================================
         # #get ead
         #=======================================================================
@@ -252,24 +362,22 @@ class Plotr(ComWrkr):
 
         self.ead_tot = df1.loc[bx, 'impacts'].values[0]
         
+        assert not pd.isna(self.ead_tot)
+        assert isinstance(self.ead_tot, float)
+        
         #=======================================================================
         # #get plot values
         #=======================================================================
-        df2 = df1.loc[df1['plot'], :].copy()
+        df2 = df1.loc[df1['plot'], :].copy() #drop those not flagged for plotting
         
         #typeset aeps
         df2.loc[:, 'aep'] = df2['aep'].astype(np.float64).round(self.prec)
-        """
-        df2.dtypes
-        """
 
         #=======================================================================
         # #invert aep (w/ zero handling)
         #=======================================================================
-
-        
         self._get_ttl_ari(df2)
-        
+
         #=======================================================================
         # re-order
         #=======================================================================
@@ -281,12 +389,7 @@ class Plotr(ComWrkr):
         #shortcut for datachecks
         df1 = ttl_df.loc[:, ('aep', 'note')]
         df1['extrap']= df1['note']=='extrap'
-        """
-        df1.dtypes
-        
-        #non-extraploated events
-        self.aep_df.loc[~self.aep_df['extrap'], 'aep']
-        """
+
         self.aep_df = df1.drop('note', axis=1)  #for checking
         
         
@@ -294,7 +397,7 @@ class Plotr(ComWrkr):
         
         
     def plot_riskCurve(self, #risk plot
-                  res_ttl,
+                  res_ttl=None,
                   y1lab='AEP', #yaxis label and plot type c ontrol
                     #'impacts': impacts vs. ARI (use self.impact_name)
                     #'AEP': AEP vs. impacts 
@@ -303,7 +406,7 @@ class Plotr(ComWrkr):
                     #lambda x:'{:,.0f}'.format(x) #thousands comma
                     
                     val_str=None, #text to write on plot. see _get_val_str()
-                    figsize=None, logger=None,                  
+                    figsize=None, logger=None,  plotTag=None,                
                   ):
         
         """
@@ -326,7 +429,9 @@ class Plotr(ComWrkr):
             
         if impactFmtFunc is None:
             impactFmtFunc=self.impactFmtFunc
-        
+            
+        if res_ttl is None: res_ttl = self.data_d['ttl']
+        if plotTag is None: plotTag=self.tag
         #=======================================================================
         # prechecks
         #=======================================================================
@@ -342,10 +447,10 @@ class Plotr(ComWrkr):
         
         
         if y1lab == 'AEP':
-            title = '%s AEP-Impacts plot for %i events'%(self.tag, len(res_ttl))
+            title = '%s %s AEP-Impacts plot for %i events'%(self.name, plotTag, len(res_ttl))
             xlab=self.impact_name
         elif y1lab == self.impact_name:
-            title = '%s Impacts-ARI plot for %i events'%(self.tag, len(res_ttl))
+            title = '%s %s Impacts-ARI plot for %i events'%(self.name, plotTag, len(res_ttl))
             xlab='ARI'
         else:
             raise Error('bad y1lab: %s'%y1lab)
@@ -415,11 +520,12 @@ class Plotr(ComWrkr):
                     impactFmtFunc=None, #tick label format function for impact values
                     #lambda x:'{:,.0f}'.format(x)
                     
+                    legendTitle=None,
                     val_str='*no', #text to write on plot. see _get_val_str()
-                        #NOTE: pass 'levendLab' in the pars to add custom text to the legend
+ 
 
 
-                  figsize=None, logger=None,
+                  figsize=None, logger=None, plotTag=None,
                   ):
         
 
@@ -439,6 +545,7 @@ class Plotr(ComWrkr):
         if impactFmtFunc is None:
             impactFmtFunc=self.impactFmtFunc
         
+        if plotTag is None: plotTag=self.tag
         
         
         #=======================================================================
@@ -481,14 +588,11 @@ class Plotr(ComWrkr):
         #======================================================================
         # labels
         #======================================================================
-        
-        
-        
         if y1lab == 'AEP':
-            title = '%s AEP-Impacts plot for %i scenarios'%(self.tag, len(parsG_d))
+            title = '%s AEP-Impacts plot for %i scenarios'%(plotTag, len(parsG_d))
             xlab=self.impact_name
         elif y1lab == self.impact_name:
-            title = '%s Impacts-ARI plot for %i scenarios'%(self.tag, len(parsG_d))
+            title = '%s Impacts-ARI plot for %i scenarios'%(plotTag, len(parsG_d))
             xlab='ARI'
         else:
             raise Error('bad y1lab: %s'%y1lab)
@@ -519,12 +623,14 @@ class Plotr(ComWrkr):
         # fill the plot----
         #======================================================================
         first = True
+        ead_d=dict()
         for cName, cPars_d in parsG_d.items():
             
             
             #pull values from container
             cdf = cPars_d['ttl_df'].copy()
             cdf = cdf.loc[cdf['plot'], :] #drop from handles
+            
             
             
             #defaults
@@ -542,7 +648,7 @@ class Plotr(ComWrkr):
             self._lineToAx(cdf, y1lab, ax1, impStyle_d=cPars_d['impStyle_d'],
                            hatch_f=hatch_f, lineLabel=label)
             
-
+            ead_d[label] = float(cPars_d['ead_tot'])
 
 
 
@@ -556,8 +662,25 @@ class Plotr(ComWrkr):
         #=======================================================================
         # post format
         #=======================================================================
-        val_str = self._get_val_str(val_str, impactFmtFunc)
-        self._postFmt(ax1, val_str=val_str)
+        
+        #legend
+        h1, l1 = ax1.get_legend_handles_labels()
+        legLab_d = {e:'\'%s\' annualized = '%e + impactFmtFunc(ead_d[e]) for e in l1}
+        val_str = self._get_val_str(val_str)
+        #legendTitle = self._get_val_str('*default')
+        
+        self._postFmt(ax1, 
+                      val_str=val_str, #putting in legend ittle 
+                      legendHandles=(h1, list(legLab_d.values())),
+                      #xLocScale=0.8, yLocScale=0.1,
+                      legendTitle=legendTitle,
+                      )
+        
+        
+        #=======================================================================
+        # val_str = self._get_val_str(val_str, impactFmtFunc)
+        # self._postFmt(ax1, val_str=val_str)
+        #=======================================================================
         
         #assign tick formatter functions
         if y1lab == 'AEP':
@@ -571,16 +694,16 @@ class Plotr(ComWrkr):
         
         return fig
     
-    def plot_stackdRCurves(self,
-                   dxind,
-                   sEAD_ser=None, #series with EAD data for labels
+    def plot_stackdRCurves(self, #single plot with stacks of risk components for single scenario
+                   dxind, #mindex(aep, ari), columns: one stack or component
+                   sEAD_ser, #series with EAD data for labels
                    y1lab='AEP',
                    
                    #hatch format
                    h_alpha = 0.9,
                    
-                   figsize=None, impactFmtFunc=None, 
-                   val_str='*default',
+                   figsize=None, impactFmtFunc=None, plotTag=None,
+                   val_str=None,
                    logger=None,):
         #=======================================================================
         # defaults
@@ -600,7 +723,11 @@ class Plotr(ComWrkr):
             impactFmtFunc=self.impactFmtFunc
             
         if h_alpha is None: h_alpha=self.h_alpha
+        if plotTag is None: plotTag=self.plotTag
         
+        if val_str is None:
+            val_str =  'ltail=\'%s\',  rtail=\'%s\''%(self.ltail, self.rtail) + \
+                        '\naevent_rels = \'%s\', prec = %i'%(self.event_rels, self.prec)
         #=======================================================================
         # prechecks
         #=======================================================================
@@ -623,15 +750,19 @@ class Plotr(ComWrkr):
          
          
         if y1lab == 'AEP':
-            title = '%s AEP-Impacts plot for %i stacks'%(self.tag, len(dxind.columns))
+            title = '%s %s AEP-Impacts plot for %i stacks'%(self.tag, plotTag, len(dxind.columns))
             xlab=self.impact_name
         elif y1lab == self.impact_name:
-            title = '%s Impacts-ARI plot for %i stacks'%(self.tag, len(dxind.columns))
+            title = '%s %s Impacts-ARI plot for %i stacks'%(self.tag, plotTag, len(dxind.columns))
             xlab='ARI'
         else:
             raise Error('bad y1lab: %s'%y1lab)
             
- 
+        #=======================================================================
+        # data prep
+        #=======================================================================
+        dxind = dxind.sort_index(axis=0, level=0)
+        mindex = dxind.index
         #=======================================================================
         # figure setup
         #=======================================================================
@@ -692,13 +823,13 @@ class Plotr(ComWrkr):
         #legend
         h1, l1 = ax1.get_legend_handles_labels()
         legLab_d = {e:'\'%s\' annualized = '%e + impactFmtFunc(sEAD_ser[e]) for e in l1}
-
+        legendTitle = self._get_val_str('*default')
         
         self._postFmt(ax1, 
-                      val_str=None, #putting in legend ittle 
+                      val_str=val_str, #putting in legend ittle 
                       legendHandles=(h1, list(legLab_d.values())),
-                      xLocScale=0.8, yLocScale=0.1,
-                      legendTitle=val_str)
+                      #xLocScale=0.8, yLocScale=0.1,
+                      legendTitle=legendTitle)
         
         #assign tick formatter functions
         if y1lab == 'AEP':
@@ -776,12 +907,16 @@ class Plotr(ComWrkr):
     def _postFmt(self, #text, grid, leend
                  ax, 
 
-                 val_str=None,
+                 
                  grid=None,
+                 
+                 #plot text
+                 val_str=None,
+                 xLocScale=0.1, yLocScale=0.1,
                  
                  #legend kwargs
                  legendLoc = 1,
-                 xLocScale=0.1, yLocScale=0.1,
+                 
                  legendHandles=None, 
                  legendTitle=None,
                  ):
@@ -855,14 +990,22 @@ class Plotr(ComWrkr):
             ax.set_yticklabels(l, rotation=ylrot)
         
     def _get_val_str(self, #helper to get value string for writing text on the plot
-                     val_str,impactFmtFunc
+                     val_str, #cant be a kwarg.. allowing None
+                     impactFmtFunc=None,
                      ):
-        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if impactFmtFunc is None: impactFmtFunc=self.impactFmtFunc
         if val_str is None:
             val_str = self.val_str
         
+        #=======================================================================
+        # special keys
+        #=======================================================================
         if isinstance(val_str, str):
             if val_str=='*default':
+                assert isinstance(self.ead_tot, float)
                 val_str='total annualized impacts = ' + impactFmtFunc(self.ead_tot)
             elif val_str=='*no':
                 val_str=None
@@ -871,17 +1014,7 @@ class Plotr(ComWrkr):
                 
         return val_str
     
-    def _get_ttl_ari(self, df): #add an ari column to a frame (from the aep vals)
-        
-        ar = df.loc[:,'aep'].T.values
-        
-        ar_ari = 1/np.where(ar==0, #replaced based on zero value
-                           sorted(ar)[1]/10, #dummy value for zero (take the second smallest value and divide by 10)
-                           ar) 
-        
-        df['ari'] = ar_ari.astype(np.int32)
-        
-        return 
+
         
 
     

@@ -24,25 +24,17 @@ from scipy import interpolate, integrate
 #==============================================================================
 
 #standalone runs
-if __name__ =="__main__": 
-    from hlpr.logr import basic_logger
-    mod_logger = basic_logger()   
-    
-    from hlpr.exceptions import Error
-    
-#plugin runs
-else:
-    mod_logger = logging.getLogger('risk1') #get the root logger
+mod_logger = logging.getLogger('risk1') #get the root logger
 
-    from hlpr.exceptions import QError as Error
+from hlpr.exceptions import QError as Error
 
 #from hlpr.Q import *
-from hlpr.basic import *
-from model.modcom import Model
+#from hlpr.basic import *
+from results.riskPlot import Plotr
 
 
 
-class Risk1(Model):
+class Risk1(Plotr):
     """
     model for summarizing inundation counts (positive depths)
     """
@@ -113,7 +105,7 @@ class Risk1(Model):
                  ):
         
         #init the baseclass
-        super().__init__(cf_fp, **kwargs) #initilzie Model
+        super().__init__(cf_fp=cf_fp, **kwargs) #initilzie Model
         
         
         
@@ -306,96 +298,4 @@ class Risk1(Model):
     
 
 if __name__ =="__main__": 
-    
-    
-    
-
-    ead_plot = True
-    #==========================================================================
-    # dev data
-    #==========================================================================
-    runpars_d = {
-        'Test':{
-            'out_dir': os.path.join(os.getcwd(), 'dev'),
-            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200330\1a\CanFlood_tut1a.txt',
-            }
-        }
-    
-    #==========================================================================
-    # tutorials
-    #==========================================================================
-    #===========================================================================
-    # runpars_d={
-    #     'Tut1a':{
-    #         'out_dir':os.path.join(os.getcwd(), 'Tut1a'),
-    #         'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\built_1a\CanFlood_tut1a.txt',
-    #         },
-    #     'Tut1b':{
-    #         'out_dir':os.path.join(os.getcwd(), 'Tut1b'),
-    #         'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\built_1b\CanFlood_tut1b.txt',
-    #         }
-    #     }
-    #===========================================================================
-    runpars_d={
-    'Tut4':{
-        'out_dir':os.path.join(os.getcwd(),'risk1' 'Tut4'),
-        'cf_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\4\built\CanFlood_tut4.txt',
-        }}
-        
-    #==========================================================================
-    # 20200304
-    #==========================================================================
-    #==========================================================================
-    # runpars_d = {
-    #     'TDDnrp':{
-    #         'out_dir':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDDnrp\risk1',
-    #         'cf_fp': r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDDnrp\CanFlood_TDDnrp.txt',
-    #          },
-    #     'TDDres':{
-    #         'out_dir':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDD_res\risk1',
-    #         'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDD_res\CanFlood_TDDres.txt',            
-    #         },
-    #     'ICIrec':{
-    #         'out_dir':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\risk1',
-    #         'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\CanFlood_ICIrec.txt',
-    #         }
-    #     }
-    #==========================================================================
-    
-    
-
-    
-    for tag, pars in runpars_d.items():
-        cf_fp, out_dir = pars['cf_fp'], pars['out_dir']
-        assert os.path.exists(cf_fp)
-        log = mod_logger.getChild(tag)
-        #==========================================================================
-        # execute
-        #==========================================================================
-        wrkr = Risk1(cf_fp, out_dir=out_dir, logger=log, tag=tag, split_key='fail')
-        
-        wrkr.setup()
-        
-        res, res_df = wrkr.run(res_per_asset=True)
-        
-        #======================================================================
-        # plot
-        #======================================================================
-        if ead_plot:
-            fig = wrkr.risk_plot()
-            _ = wrkr.output_fig(fig)
-        
-        #==========================================================================
-        # output
-        #==========================================================================
-        wrkr.output_df(res, '%s_%s'%(wrkr.resname, 'ttl'))
-        
-        if not res_df is None:
-            _ = wrkr.output_df(res_df, '%s_%s'%(wrkr.resname, 'passet'))
-            
-        log.info('finished')
-    
-
-    force_open_dir(out_dir)
-
-    print('finished')
+      print('???')

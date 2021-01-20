@@ -26,14 +26,13 @@ from hlpr.exceptions import QError as Error
 
 #from hlpr.Q import *
 from hlpr.basic import view
-from model.modcom import Model
+#from model.modcom import Model
 from results.riskPlot import Plotr
 
 #==============================================================================
 # functions----------------------
 #==============================================================================
-class Risk2(Model, 
-            Plotr, #TODO: consider moviing this onto Model
+class Risk2(Plotr, #This inherits 'Model'
              
             ):
     """Risk T2 tool for calculating expected value for a set of events from impact results
@@ -114,7 +113,7 @@ class Risk2(Model,
                  ):
         
         #init the baseclass
-        super().__init__(cf_fp, **kwargs) #initilzie Model
+        super().__init__(cf_fp=cf_fp, **kwargs) #initilzie Model
         self._init_plt() #setup matplotlib
         
         self.logger.debug('finished __init__ on Risk')
@@ -126,7 +125,7 @@ class Risk2(Model,
         #======================================================================
         self.init_model() #mostly just attaching and checking parameters from file
         
-        self.resname = 'risk2_%s_%s'%(self.tag, self.name)
+        self.resname = 'risk2_%s_%s'%(self.name, self.tag)
         
         if self.as_inun:
             raise Error('risk2 inundation percentage not implemented')
@@ -137,6 +136,8 @@ class Risk2(Model,
         self.load_dmgs()
         if not self.exlikes == '':
             self.load_exlikes()
+
+            
         if self.attriMode:
             self.load_attrimat(dxcol_lvls=2)
             self.promote_attrim()
