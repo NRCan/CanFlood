@@ -46,7 +46,7 @@
         <x>0</x>
         <y>0</y>
         <width>683</width>
-        <height>712</height>
+        <height>707</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_5">
@@ -90,7 +90,7 @@
               <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:9.75pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Welcome to CanFlood!&lt;/span&gt;&lt;/p&gt;
 &lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;img src=&quot;:/plugins/canflood_inprep/icons/logo_100x100.png&quot; /&gt;&lt;/p&gt;
@@ -99,7 +99,7 @@ p, li { white-space: pre-wrap; }
 &lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;To generate model results, see the 'Model' toolset.&lt;/span&gt;&lt;/p&gt;
 &lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8.25pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
             </widget>
            </item>
@@ -2312,8 +2312,8 @@ p, li { white-space: pre-wrap; }
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>622</width>
-                <height>912</height>
+                <width>639</width>
+                <height>568</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -2324,98 +2324,22 @@ p, li { white-space: pre-wrap; }
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_6">
                   <item>
-                   <widget class="QGroupBox" name="groupBox_Co_s1">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="title">
-                     <string>Results Directory:</string>
-                    </property>
-                    <layout class="QVBoxLayout" name="_4">
-                     <item>
-                      <layout class="QHBoxLayout" name="_9">
-                       <item>
-                        <widget class="QLineEdit" name="lineEdit_C_Rdir_1"/>
-                       </item>
-                       <item>
-                        <widget class="QPushButton" name="pushButton_C_Rdir_browse_1">
-                         <property name="text">
-                          <string>Browse</string>
-                         </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <widget class="QPushButton" name="pushButton_C_Rdir_open_1">
-                         <property name="text">
-                          <string>Open</string>
-                         </property>
-                        </widget>
-                       </item>
-                      </layout>
-                     </item>
-                    </layout>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QGroupBox" name="groupBox_Co_s1_5">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="title">
-                     <string>Control File:</string>
-                    </property>
-                    <layout class="QVBoxLayout" name="_15">
-                     <item>
-                      <layout class="QHBoxLayout" name="_16">
-                       <item>
-                        <widget class="QLineEdit" name="lineEdit_C_cf_1"/>
-                       </item>
-                       <item>
-                        <widget class="QPushButton" name="pushButton_C_cf_browse_1">
-                         <property name="text">
-                          <string>Browse</string>
-                         </property>
-                        </widget>
-                       </item>
-                      </layout>
-                     </item>
-                    </layout>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QGroupBox" name="groupBox_Co_s1_6">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="title">
-                     <string>Total Impacts (ttl) file:</string>
-                    </property>
-                    <layout class="QVBoxLayout" name="_17">
-                     <item>
-                      <layout class="QHBoxLayout" name="_18">
-                       <item>
-                        <widget class="QLineEdit" name="lineEdit_C_ttl_1"/>
-                       </item>
-                       <item>
-                        <widget class="QPushButton" name="pushButton_C_ttl_browse_1">
-                         <property name="text">
-                          <string>Browse</string>
-                         </property>
-                        </widget>
-                       </item>
-                      </layout>
-                     </item>
-                    </layout>
-                   </widget>
+                   <layout class="QHBoxLayout" name="_16">
+                    <item>
+                     <widget class="QLineEdit" name="lineEdit_C_cf_1">
+                      <property name="placeholderText">
+                       <string>Control File path</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="pushButton_C_cf_browse_1">
+                      <property name="text">
+                       <string>Browse</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
                   </item>
                  </layout>
                 </widget>
@@ -2427,98 +2351,22 @@ p, li { white-space: pre-wrap; }
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_7">
                   <item>
-                   <widget class="QGroupBox" name="groupBox_Co_s1_2">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="title">
-                     <string>Results Directory:</string>
-                    </property>
-                    <layout class="QVBoxLayout" name="_5">
-                     <item>
-                      <layout class="QHBoxLayout" name="_10">
-                       <item>
-                        <widget class="QLineEdit" name="lineEdit_C_Rdir_2"/>
-                       </item>
-                       <item>
-                        <widget class="QPushButton" name="pushButton_C_Rdir_browse_2">
-                         <property name="text">
-                          <string>Browse</string>
-                         </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <widget class="QPushButton" name="pushButton_C_Rdir_open_2">
-                         <property name="text">
-                          <string>Open</string>
-                         </property>
-                        </widget>
-                       </item>
-                      </layout>
-                     </item>
-                    </layout>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QGroupBox" name="groupBox_Co_s1_7">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="title">
-                     <string>Control File:</string>
-                    </property>
-                    <layout class="QVBoxLayout" name="_19">
-                     <item>
-                      <layout class="QHBoxLayout" name="_20">
-                       <item>
-                        <widget class="QLineEdit" name="lineEdit_C_cf_2"/>
-                       </item>
-                       <item>
-                        <widget class="QPushButton" name="pushButton_C_cf_browse_2">
-                         <property name="text">
-                          <string>Browse</string>
-                         </property>
-                        </widget>
-                       </item>
-                      </layout>
-                     </item>
-                    </layout>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QGroupBox" name="groupBox_Co_s1_8">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="title">
-                     <string>Total Impacts (ttl) file:</string>
-                    </property>
-                    <layout class="QVBoxLayout" name="_21">
-                     <item>
-                      <layout class="QHBoxLayout" name="_22">
-                       <item>
-                        <widget class="QLineEdit" name="lineEdit_C_ttl_2"/>
-                       </item>
-                       <item>
-                        <widget class="QPushButton" name="pushButton_C_ttl_browse_2">
-                         <property name="text">
-                          <string>Browse</string>
-                         </property>
-                        </widget>
-                       </item>
-                      </layout>
-                     </item>
-                    </layout>
-                   </widget>
+                   <layout class="QHBoxLayout" name="_20">
+                    <item>
+                     <widget class="QLineEdit" name="lineEdit_C_cf_2">
+                      <property name="placeholderText">
+                       <string>Control File path</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="pushButton_C_cf_browse_2">
+                      <property name="text">
+                       <string>Browse</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
                   </item>
                  </layout>
                 </widget>
@@ -2530,98 +2378,22 @@ p, li { white-space: pre-wrap; }
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_8">
                   <item>
-                   <widget class="QGroupBox" name="groupBox_Co_s1_3">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="title">
-                     <string>Results Directory:</string>
-                    </property>
-                    <layout class="QVBoxLayout" name="_11">
-                     <item>
-                      <layout class="QHBoxLayout" name="_12">
-                       <item>
-                        <widget class="QLineEdit" name="lineEdit_C_Rdir_3"/>
-                       </item>
-                       <item>
-                        <widget class="QPushButton" name="pushButton_C_Rdir_browse_3">
-                         <property name="text">
-                          <string>Browse</string>
-                         </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <widget class="QPushButton" name="pushButton_C_Rdir_open_3">
-                         <property name="text">
-                          <string>Open</string>
-                         </property>
-                        </widget>
-                       </item>
-                      </layout>
-                     </item>
-                    </layout>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QGroupBox" name="groupBox_Co_s1_9">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="title">
-                     <string>Control File:</string>
-                    </property>
-                    <layout class="QVBoxLayout" name="_23">
-                     <item>
-                      <layout class="QHBoxLayout" name="_24">
-                       <item>
-                        <widget class="QLineEdit" name="lineEdit_C_cf_3"/>
-                       </item>
-                       <item>
-                        <widget class="QPushButton" name="pushButton_C_cf_browse_3">
-                         <property name="text">
-                          <string>Browse</string>
-                         </property>
-                        </widget>
-                       </item>
-                      </layout>
-                     </item>
-                    </layout>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QGroupBox" name="groupBox_Co_s1_10">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="title">
-                     <string>Total Impacts (ttl) file:</string>
-                    </property>
-                    <layout class="QVBoxLayout" name="_25">
-                     <item>
-                      <layout class="QHBoxLayout" name="_26">
-                       <item>
-                        <widget class="QLineEdit" name="lineEdit_C_ttl_3"/>
-                       </item>
-                       <item>
-                        <widget class="QPushButton" name="pushButton_C_ttl_browse_3">
-                         <property name="text">
-                          <string>Browse</string>
-                         </property>
-                        </widget>
-                       </item>
-                      </layout>
-                     </item>
-                    </layout>
-                   </widget>
+                   <layout class="QHBoxLayout" name="_24">
+                    <item>
+                     <widget class="QLineEdit" name="lineEdit_C_cf_3">
+                      <property name="placeholderText">
+                       <string>Control File path</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="pushButton_C_cf_browse_3">
+                      <property name="text">
+                       <string>Browse</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
                   </item>
                  </layout>
                 </widget>
@@ -2633,98 +2405,22 @@ p, li { white-space: pre-wrap; }
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_9">
                   <item>
-                   <widget class="QGroupBox" name="groupBox_Co_s1_4">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="title">
-                     <string>Results Directory:</string>
-                    </property>
-                    <layout class="QVBoxLayout" name="_13">
-                     <item>
-                      <layout class="QHBoxLayout" name="_14">
-                       <item>
-                        <widget class="QLineEdit" name="lineEdit_C_Rdir_4"/>
-                       </item>
-                       <item>
-                        <widget class="QPushButton" name="pushButton_C_Rdir_browse_4">
-                         <property name="text">
-                          <string>Browse</string>
-                         </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <widget class="QPushButton" name="pushButton_C_Rdir_open_4">
-                         <property name="text">
-                          <string>Open</string>
-                         </property>
-                        </widget>
-                       </item>
-                      </layout>
-                     </item>
-                    </layout>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QGroupBox" name="groupBox_Co_s1_11">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="title">
-                     <string>Control File:</string>
-                    </property>
-                    <layout class="QVBoxLayout" name="_27">
-                     <item>
-                      <layout class="QHBoxLayout" name="_28">
-                       <item>
-                        <widget class="QLineEdit" name="lineEdit_C_cf_4"/>
-                       </item>
-                       <item>
-                        <widget class="QPushButton" name="pushButton_C_cf_browse_4">
-                         <property name="text">
-                          <string>Browse</string>
-                         </property>
-                        </widget>
-                       </item>
-                      </layout>
-                     </item>
-                    </layout>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QGroupBox" name="groupBox_Co_s1_12">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="title">
-                     <string>Total Impacts (ttl) file:</string>
-                    </property>
-                    <layout class="QVBoxLayout" name="_29">
-                     <item>
-                      <layout class="QHBoxLayout" name="_30">
-                       <item>
-                        <widget class="QLineEdit" name="lineEdit_C_ttl_4"/>
-                       </item>
-                       <item>
-                        <widget class="QPushButton" name="pushButton_C_ttl_browse_4">
-                         <property name="text">
-                          <string>Browse</string>
-                         </property>
-                        </widget>
-                       </item>
-                      </layout>
-                     </item>
-                    </layout>
-                   </widget>
+                   <layout class="QHBoxLayout" name="_28">
+                    <item>
+                     <widget class="QLineEdit" name="lineEdit_C_cf_4">
+                      <property name="placeholderText">
+                       <string>Control File path</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="pushButton_C_cf_browse_4">
+                      <property name="text">
+                       <string>Browse</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
                   </item>
                  </layout>
                 </widget>
