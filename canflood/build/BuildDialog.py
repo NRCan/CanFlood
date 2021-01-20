@@ -23,7 +23,7 @@ from qgis.core import *
 #from qgis.analysis import *
 #import qgis.utils
 #import processing
-from processing.core.Processing import Processing
+#from processing.core.Processing import Processing
 
 
 #import resources
@@ -45,7 +45,7 @@ from build.validator import Vali
 
 
 import hlpr.plug
-from hlpr.Q import vlay_get_fdf
+#from hlpr.Q import vlay_get_fdf
 
 from hlpr.basic import get_valid_filename, force_open_dir 
 from hlpr.exceptions import QError as Error

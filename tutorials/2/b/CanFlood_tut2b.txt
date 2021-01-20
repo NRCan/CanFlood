@@ -1,5 +1,5 @@
 [parameters]
-name = tut2bx
+name = tag
 cid = xid
 prec = 6                #float precision for calculations
 ground_water = True     #whether to allow wsl < gel
@@ -7,19 +7,19 @@ felv = ground
 event_probs = ari
 ltail = extrapolate     #EAD extrapolation: left tail treatment code (low prob high damage)
 rtail = 0.5             #EAD extrapolation: right trail treatment (high prob low damage)
-drop_tails = True       #whether to remove the extrapolated values from the results
+drop_tails = False      #EAD extrapolation: whether to remove the extrapolated values before writing the per-asset results
 integrate = trapz       #integration method to apply: trapz, simps
 as_inun = False
-event_rels = max
+event_rels = mutEx		#assumption for calculated expected value on complex events
 
 [dmg_fps]
-curves = C:/LS/03_TOOLS/CanFlood/_git/tutorials/2/data/CanFlood_curves_rfda_20200218.xls
+curves = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\data\CanFlood_curves_rfda_20200218.xls
 finv = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\finv_tut2b_finv_cT2.csv
-expos = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\expos_tut2b_5_32.csv
+expos = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\expos_tut2b_6_32.csv
 gels = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\gels_tut2b_1_32.csv
 
 [risk_fps]
-dmgs = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\dmg_out\dmgs_tut2b_tut2b.csv
+dmgs = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\dmg_out\dmgs_tag_tut2b.csv
 exlikes = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\exlikes_tut2b.csv
 evals = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\evals_5_tut2b.csv
 
@@ -30,20 +30,16 @@ risk2 = True
 risk3 = False
 
 [results_fps]
-attrimat02 = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\dmg_out\attr02_tut2b.csv
-r2_ttl = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\r2_out\risk2_Tut2b_tut2b_ttl.csv
-eventypes = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\r2_out\eventypes_tut2b.csv
-r2_passet = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\r2_out\risk2_Tut2b_tut2b_r2_passet.csv
-attrimat03 = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\r2_out\attr03_tut2b.csv
-#'attrimat03' file path set from output_attr at 2021-01-19 16.07.44
+attrimat02 = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\b\dmg_out\attr02_tag.csv
+#'attrimat02' file path set from output_attr at 2021-01-19 18.00.36
 
 [plotting]
-color = purple
+color = black
 linestyle = dashdot
 linewidth = 2
 alpha = 0.75        #0=transparent 1=opaque
 marker = o
 markersize = 4
 fillstyle = none    #marker fill style
-impactfmt_str = .0f
+impactfmt_str = .2e #python formatter to use for formatting the impact results values
 

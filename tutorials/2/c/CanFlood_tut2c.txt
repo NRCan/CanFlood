@@ -1,5 +1,5 @@
 [parameters]
-name = max
+name = tag
 cid = xid
 prec = 6                #float precision for calculations
 ground_water = True     #whether to allow wsl < gel
@@ -10,19 +10,18 @@ rtail = 0.5             #EAD extrapolation: right trail treatment (high prob low
 drop_tails = False      #EAD extrapolation: whether to remove the extrapolated values before writing the per-asset results
 integrate = trapz       #integration method to apply: trapz, simps
 as_inun = False
-event_rels = max
+event_rels = mutEx		#assumption for calculated expected value on complex events
 
 [dmg_fps]
 curves = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\data\CanFlood_curves_rfda_20200218.xls
 finv = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\c\finv_tut2c_finv_cT2.csv
-expos = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\c\expos_tut2c_6_32.csv
+expos = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\c\gels_tut2c_6_32.csv
 gels = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\c\gels_tut2c_1_32.csv
 
 [risk_fps]
-dmgs = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\c\mod_out\dmgs_tag_run1.csv
-exlikes = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\c\exlikes_tut2c.csv
+dmgs = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\c\dmg_out\dmgs_tag_tut2c.csv
+exlikes = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\c\exlikes_tut2b.csv
 evals = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\c\evals_6_tut2c.csv
-#'dmgs' file path set from dmg2.py at 2021-01-12 13.55.58
 
 [validation]
 risk1 = False
@@ -30,12 +29,17 @@ dmg2 = True
 risk2 = True
 risk3 = False
 
+[results_fps]
+attrimat02 = C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\c\dmg_out\attr02_tag.csv
+#'attrimat02' file path set from output_attr at 2021-01-19 18.00.36
+
 [plotting]
-color = red
-linestyle = solid
+color = black
+linestyle = dashdot
 linewidth = 2
 alpha = 0.75        #0=transparent 1=opaque
 marker = o
 markersize = 4
 fillstyle = none    #marker fill style
+impactfmt_str = .2e #python formatter to use for formatting the impact results values
 

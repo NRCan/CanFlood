@@ -755,6 +755,16 @@ class Model(ComWrkr,
         
         assert np.all(boolar), 'passed aeps out of range'
         
+        
+        #=======================================================================
+        # #assemble event type  frame
+        #=======================================================================
+        """this is a late add.. would have been nice to use this more in multi_ev"""
+        df = aep_ser.to_frame().reset_index(drop=False).rename(columns={'index':'rEventName'})
+        df['noFail'] = True
+        
+        self.eventType_df = df
+        
         #======================================================================
         # #wrap
         #======================================================================
@@ -985,12 +995,7 @@ class Model(ComWrkr,
             
         self.noFailExn_d =copy.copy(fill_exn_d) #set this for the probability calcs
         
-        #assemble event type  frame
-        """this is a late add.. would have been nice to use this more in multi_ev"""
-        df = aep_ser.to_frame().reset_index(drop=False).rename(columns={'index':'rEventName'})
-        df['noFail'] = df['rEventName'].isin(fill_exn_d.values())
         
-        self.eventType_df = df
  
         
         #=======================================================================
@@ -1067,10 +1072,22 @@ class Model(ComWrkr,
         
         if not self.event_rels == 'max':
             assert valid, 'some complex event probabilities exceed 1'
+            
+            
+
 
         #==================================================================
         # wrap
         #==================================================================
+
+        # update event type  frame
+        """this is a late add.. would have been nice to use this more in multi_ev
+        see load_evals()
+        """
+        
+        self.eventType_df['noFail'] = self.eventType_df['rEventName'].isin(fill_exn_d.values())
+        
+        
         self.data_d[dtag] = edf
         self.cplx_evn_d = cplx_evn_d
         

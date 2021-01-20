@@ -28,7 +28,7 @@ risk1 = True
 dmg2 = False
 risk2 = False
 risk3 = False
-# 'risk1' validated by validator.py at 2021-01-19 16.40.29
+# 'risk1' validated by validator.py at 2021-01-19 17.44.24
 
 [results_fps]
 
@@ -40,4 +40,5 @@ alpha = 0.75        #0=transparent 1=opaque
 marker = o
 markersize = 4
 fillstyle = none    #marker fill style
+impactfmt_str = .2e #python formatter to use for formatting the impact results values
 

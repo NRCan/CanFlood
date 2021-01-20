@@ -136,6 +136,8 @@ class Risk2(Plotr, #This inherits 'Model'
         self.load_dmgs()
         if not self.exlikes == '':
             self.load_exlikes()
+
+            
         if self.attriMode:
             self.load_attrimat(dxcol_lvls=2)
             self.promote_attrim()

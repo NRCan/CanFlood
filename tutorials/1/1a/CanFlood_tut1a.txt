@@ -24,11 +24,10 @@ exlikes = #secondary exposure likelihood data filepath
 evals = C:\LS\03_TOOLS\CanFlood\_git\tutorials\1\1a\evals_4_tut1a.csv
 
 [validation]
-risk1 = True
+risk1 = False
 dmg2 = False
 risk2 = False
 risk3 = False
-# 'risk1' validated by validator.py at 2021-01-19 16.40.28
 
 [results_fps]
 
@@ -40,4 +39,5 @@ alpha = 0.75        #0=transparent 1=opaque
 marker = o
 markersize = 4
 fillstyle = none    #marker fill style
+impactfmt_str = .2e #python formatter to use for formatting the impact results values
 
