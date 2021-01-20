@@ -173,53 +173,55 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
         for scName, d in {
             '1':{
-                'rd_browse':self.pushButton_C_Rdir_browse_1,
-                'rd_open':self.pushButton_C_Rdir_open_1,
-                'rd_line':self.lineEdit_C_Rdir_1,
+                #'rd_browse':self.pushButton_C_Rdir_browse_1,
+                #'rd_open':self.pushButton_C_Rdir_open_1,
+                #'rd_line':self.lineEdit_C_Rdir_1,
                 'cf':self.pushButton_C_cf_browse_1,
                 'cf_line':self.lineEdit_C_cf_1,
-                'ttl':self.pushButton_C_ttl_browse_1,
-                'ttl_line':self.lineEdit_C_ttl_1,
+                #'ttl':self.pushButton_C_ttl_browse_1,
+                #'ttl_line':self.lineEdit_C_ttl_1,
                 },
             '2':{
-                'rd_browse':self.pushButton_C_Rdir_browse_2,
-                'rd_open':self.pushButton_C_Rdir_open_2,
-                'rd_line':self.lineEdit_C_Rdir_2,
+                #'rd_browse':self.pushButton_C_Rdir_browse_2,
+                #'rd_open':self.pushButton_C_Rdir_open_2,
+                #'rd_line':self.lineEdit_C_Rdir_2,
                 'cf':self.pushButton_C_cf_browse_2,
                 'cf_line':self.lineEdit_C_cf_2,
-                'ttl':self.pushButton_C_ttl_browse_2,
-                'ttl_line':self.lineEdit_C_ttl_2,
+                #'ttl':self.pushButton_C_ttl_browse_2,
+                #'ttl_line':self.lineEdit_C_ttl_2,
                 },
             '3':{
-                'rd_browse':self.pushButton_C_Rdir_browse_3,
-                'rd_open':self.pushButton_C_Rdir_open_3,
-                'rd_line':self.lineEdit_C_Rdir_3,
+                #'rd_browse':self.pushButton_C_Rdir_browse_3,
+                #'rd_open':self.pushButton_C_Rdir_open_3,
+                #'rd_line':self.lineEdit_C_Rdir_3,
                 'cf':self.pushButton_C_cf_browse_3,
                 'cf_line':self.lineEdit_C_cf_3,
-                'ttl':self.pushButton_C_ttl_browse_3,
-                'ttl_line':self.lineEdit_C_ttl_3,
+                #'ttl':self.pushButton_C_ttl_browse_3,
+                #'ttl_line':self.lineEdit_C_ttl_3,
                 },
             '4':{
-                'rd_browse':self.pushButton_C_Rdir_browse_4,
-                'rd_open':self.pushButton_C_Rdir_open_4,
-                'rd_line':self.lineEdit_C_Rdir_4,
+                #'rd_browse':self.pushButton_C_Rdir_browse_4,
+                #'rd_open':self.pushButton_C_Rdir_open_4,
+                #'rd_line':self.lineEdit_C_Rdir_4,
                 'cf':self.pushButton_C_cf_browse_4,
                 'cf_line':self.lineEdit_C_cf_4,
-                'ttl':self.pushButton_C_ttl_browse_4,
-                'ttl_line':self.lineEdit_C_ttl_4,
+                #'ttl':self.pushButton_C_ttl_browse_4,
+                #'ttl_line':self.lineEdit_C_ttl_4,
                 }
             }.items():
             
 
                 
             #Results Directory
-            cap1='Select Results Directory for Scenario %s'%scName
-            d['rd_browse'].clicked.connect(
-                lambda a, x=d['rd_line'], c=cap1: \
-                self.browse_button(x, prompt=c))
-            
-            d['rd_open'].clicked.connect(
-                lambda a, x=d['rd_line']: force_open_dir(x.text()))
+            #===================================================================
+            # cap1='Select Results Directory for Scenario %s'%scName
+            # d['rd_browse'].clicked.connect(
+            #     lambda a, x=d['rd_line'], c=cap1: \
+            #     self.browse_button(x, prompt=c))
+            # 
+            # d['rd_open'].clicked.connect(
+            #     lambda a, x=d['rd_line']: force_open_dir(x.text()))
+            #===================================================================
 
             
             #Control File
@@ -230,11 +232,13 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                 self.fileSelect_button(x, caption=c, filters=f, path=self.lineEdit_wd.text()))
             
             #total results
-            cap1='Select Total Results for Scenario %s'%scName
-            fil1="Data Files (*.csv)"
-            d['ttl'].clicked.connect(
-                lambda a, x=d.pop('ttl_line'), c=cap1, f=fil1: \
-                self.fileSelect_button(x, caption=c, filters=f, path=self.lineEdit_wd.text()))
+            #===================================================================
+            # cap1='Select Total Results for Scenario %s'%scName
+            # fil1="Data Files (*.csv)"
+            # d['ttl'].clicked.connect(
+            #     lambda a, x=d.pop('ttl_line'), c=cap1, f=fil1: \
+            #     self.fileSelect_button(x, caption=c, filters=f, path=self.lineEdit_wd.text()))
+            #===================================================================
 
 
         #=======================================================================
@@ -525,64 +529,73 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         #general
         out_dir = self.lineEdit_wd.text()
+        if not os.path.exists(out_dir): os.makedirs(out_dir)
+        
         tag = self.linEdit_Stag.text() #set the secnario tag from user provided name
-        
-
-        
+        main_cf_fp = self.lineEdit_SS_cf.text() #for general plot styles
         
         #scenario filepaths
         raw_d = {
             '1':{
                 'cf_fp':self.lineEdit_C_cf_1.text(),
-                'ttl_fp':self.lineEdit_C_ttl_1.text(),
+                #'ttl_fp':self.lineEdit_C_ttl_1.text(),
                 },
             '2':{
                 'cf_fp':self.lineEdit_C_cf_2.text(),
-                'ttl_fp':self.lineEdit_C_ttl_2.text(),              
+                #'ttl_fp':self.lineEdit_C_ttl_2.text(),              
                 },
             '3':{
                 'cf_fp':self.lineEdit_C_cf_3.text(),
-                'ttl_fp':self.lineEdit_C_ttl_3.text(),
+                #'ttl_fp':self.lineEdit_C_ttl_3.text(),
                 },
             '4':{
                 'cf_fp':self.lineEdit_C_cf_4.text(),
-                'ttl_fp':self.lineEdit_C_ttl_4.text(),                
+                #'ttl_fp':self.lineEdit_C_ttl_4.text(),                
                 }
             }
         
         #clean it out
-        parsG_d = dict()
+        fp_d = dict()
         for k1, rd in copy.copy(raw_d).items():
-            for k2, v in rd.items():
-                if v=='':
-                    pass
-                else:
-                    #add the page
-                    if not k1 in parsG_d:
-                        parsG_d[k1] = dict()
-                    
-                    parsG_d[k1][k2]=v
-                    
-                    
+            #===================================================================
+            # for k2, v in rd.items():
+            #     if v=='':
+            #         pass
+            #     else:
+            #         #add the page
+            #         if not k1 in parsG_d:
+            #             parsG_d[k1] = dict()
+            #         parsG_d[k1][k2]=v
+            #===================================================================
+            
+            if not rd['cf_fp']=='':
+                fp_d[k1] = rd['cf_fp']
+            
     
-    
-        log.debug('pars w/ %i keys: \n    %s'%(len(parsG_d), list(parsG_d.keys())))
+        log.debug('pars w/ %i keys'%(len(fp_d)))
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert os.path.exists(main_cf_fp), 'bad filepath for main control file'
+        for k, v in fp_d.items(): assert os.path.exists(v), 'bad fp on %s'%k
+        
         self.feedback.setProgress(10)
+        
         #=======================================================================
         # working dir
         #=======================================================================
-        if not os.path.exists(out_dir):
-            os.makedirs(out_dir)
-            log.info('built working directory: %s'%out_dir)
+        
+
     
         #=======================================================================
         # init
         #=======================================================================
         wrkr = results.compare.Cmpr(out_dir=out_dir, tag=tag, logger=self.logger,
-                    )
+                    cf_fp = main_cf_fp)
     
         #load
-        sWrkr_d = wrkr.load_scenarios(parsG_d)
+        sWrkr_d = wrkr.load_scenarios(list(fp_d.values()))
         self.feedback.setProgress(20)
         #=======================================================================
         # #compare the control files

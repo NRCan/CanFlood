@@ -187,7 +187,7 @@ p, li { white-space: pre-wrap; }
                 <item>
                  <widget class="QLineEdit" name="lineEdit_SS_cf">
                   <property name="placeholderText">
-                   <string>Select a Control File for performing single scenario analysis</string>
+                   <string>Select a Control File for single scenario analysis</string>
                   </property>
                  </widget>
                 </item>
