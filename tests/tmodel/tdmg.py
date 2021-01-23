@@ -24,30 +24,52 @@ also there are no class-level fixtures (i.e., all the data would have to be re-l
 '''
 
 
-import unittest
+import unittest, tempfile
 #import nose
 #from nose import tools
 
 #from nose.loader import TestLoader
 from unittest import TestLoader
 
+from model.dmg2 import Dmg2
 
 
+#===============================================================================
+# class Dummy(object):
+#     def __init__(self,
+#                  cf_fp='',
+#                  name='dummyName'):
+#         self.cf_fp=cf_fp
+#         self.name=name
+#         
+#         print('init \'%s\' w/ %s'%(self.__class__.__name__, self.name))
+#         
+#         
+#     def foo(self):
+#         print('yea!')
+#===============================================================================
 
-#@tools.nottest
-class tModel(unittest.TestCase):
+
+class tModel(unittest.TestCase): #common model level testing methods
     
     def __init__(self, *args, 
-                 name='caseName',
-                 cf_fp='',
+                 wrkr=None,
+                 #==============================================================
+                 # name='caseName',
+                 # cf_fp='',
+                 #==============================================================
                  **kwargs):
         #attach passed
-        self.cf_fp = cf_fp
-        self.name = name
+        #=======================================================================
+        # self.cf_fp = cf_fp
+        # self.name = name
+        #=======================================================================
         
+        #print(type(wrkr))
+        self.wrkr=wrkr
         
-        print('init \'%s\' \'%s\' w/ \n    args: %s \n    kwargs: %s'%(
-            self.__class__.__name__, self.name, args, kwargs))
+        print('init \'%s\' w/ \'%s\' \n    args: %s'%(
+            self.__class__.__name__, self.wrkr.name,   args))
         
 
         super().__init__(*args, **kwargs) #initilzie the baseclass cascade
@@ -61,7 +83,7 @@ class tModel(unittest.TestCase):
         
         
     def setUp(self):
-        print('setting up \'%s\''%self.__class__.__name__)
+        print('setting up %s (%s) %s'%(self.__class__.__name__, self.wrkr.name, self._testMethodName))
     def tearDown(self):
         print('tearing down\n')
         
@@ -74,7 +96,8 @@ class tModel(unittest.TestCase):
     # test methods---------
     #===========================================================================
     def test_main(self):
-        print('test_main w/ cf_fp: %s'%self.cf_fp)
+        print('test_main w/ \'%s\''%self.wrkr.name)
+        self.wrkr.foo()
         self.assertTrue(False)
         
     def test_one(self):
@@ -89,42 +112,48 @@ class tDmg(tModel):
         super().__init__(*args, **kwargs) #init baseclass
     
     def test_parent1(self):
-        print('test parent1 on \"%s\''%self.name)
+        print('test parent1 on \"%s\''%self.wrkr.name)
         self.assertTrue(False)
 
 
 
 
-def get_suite1(suitePars_d, #build the tDmg testing suite from a set of paramters
-                ):
-    
-    cases_d = dict()
-    for testName, d in suitePars_d.items():
-        cases_d[testName] = tDmg(name=testName, cf_fp=d['cf_fp'])
-        
-        #=======================================================================
-        # unittest.TestLoader().loadTestsFromTestCase(tDmg)
-        # pass
-        #=======================================================================
-    
-    return unittest.TestSuite(cases_d.values())
+#===============================================================================
+# def get_suite1(suitePars_d, #build the tDmg testing suite from a set of paramters
+#                 ):
+#     
+#     cases_d = dict()
+#     for testName, d in suitePars_d.items():
+#         cases_d[testName] = tDmg(name=testName, cf_fp=d['cf_fp'])
+#         
+#         #=======================================================================
+#         # unittest.TestLoader().loadTestsFromTestCase(tDmg)
+#         # pass
+#         #=======================================================================
+#     
+#     return unittest.TestSuite(cases_d.values())
+#===============================================================================
 
 
 
 def get_suite(suitePars_d, #build the tDmg testing suite from a set of paramters
                 ):
     
-    suite = unittest.TestSuite()
-    #suite = nose.suite.LazySuite()
+    suite = unittest.TestSuite() #start the suite container
     
     for testName, d in suitePars_d.items():
 
+        wrkr = Dmg2(d['cf_fp'], 
+                    out_dir=tempfile.mkdtemp(), #get a dummy temp directory
+                    logger=mod_logger.getChild(testName), 
+                    tag=tag, 
+                     absolute_fp=absolute_fp, attriMode=attribution,
+                     )._setup()
+        
+        #build a test for each mathing method in the class
         for tMethodName in TestLoader().getTestCaseNames(tDmg):
-            suite.addTest(tDmg(tMethodName, name=testName, cf_fp=d['cf_fp']))
-        #=======================================================================
-        # unittest.TestLoader().loadTestsFromTestCase(tDmg)
-        # pass
-        #=======================================================================
+            suite.addTest(tDmg(tMethodName, wrkr=wrkr))
+
     print('built suites')
     return suite
 
@@ -147,21 +176,10 @@ if __name__ == '__main__':
     
     suite = get_suite(runpars_d)
     
-    unittest.TextTestRunner(verbosity=0).run(suite)
+    print('executing tests \n\n')
+    unittest.TextTestRunner(verbosity=3).run(suite)
     
-    #nose.core.TextTestRunner(verbosity=0).run(suite)
-        
-      
 
-    
-    #===========================================================================
-    # unittest.main(
-    #     module='__main__', #pull tests from this module
-    #     defaultTest=None, #None=all TestCases
-    #     exit=False, #True: command line (call sys.exit())
-    #     )
-    #===========================================================================
-    
     
     
     

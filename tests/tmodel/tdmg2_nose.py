@@ -25,115 +25,32 @@ also there are no class-level fixtures (i.e., all the data would have to be re-l
 
 
 import unittest
-#import nose
-#from nose import tools
+import nose
+from nose import tools
 
 #from nose.loader import TestLoader
 from unittest import TestLoader
 
 
-
-
-#@tools.nottest
-class tModel(unittest.TestCase):
-    
-    def __init__(self, *args, 
-                 name='caseName',
-                 cf_fp='',
-                 **kwargs):
-        #attach passed
-        self.cf_fp = cf_fp
-        self.name = name
-        
-        
+def Tdmg(object):
+    def __init__(self, *args, **kwargs):
+        #super().__init__(*args, **kwargs) #initilzie the baseclass cascade
         print('init \'%s\' \'%s\' w/ \n    args: %s \n    kwargs: %s'%(
             self.__class__.__name__, self.name, args, kwargs))
-        
-
-        super().__init__(*args, **kwargs) #initilzie the baseclass cascade
-        
-    #===========================================================================
-    # expected handler methods---------
-    #===========================================================================
+    
+    
     @classmethod
     def setupClass(self):
-        print('setting up class \'%s\''%self.__class__.__name__)
-        
-        
-    def setUp(self):
-        print('setting up \'%s\''%self.__class__.__name__)
-    def tearDown(self):
-        print('tearing down\n')
-        
-    def runTest(self): #called by the suite
-        print('runTest')
-        
+        print('setting up parent class \'%s\'\n'%self.__class__.__name__)
     
-        
-    #===========================================================================
-    # test methods---------
-    #===========================================================================
-    def test_main(self):
-        print('test_main w/ cf_fp: %s'%self.cf_fp)
-        self.assertTrue(False)
-        
     def test_one(self):
-        print('test_one')
-        self.assertTrue(True)
-
-        
+        assert True
+    def test_two(self):
+        assert False
     
-#@tools.nottest
-class tDmg(tModel):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs) #init baseclass
-    
-    def test_parent1(self):
-        print('test parent1 on \"%s\''%self.name)
-        self.assertTrue(False)
 
 
-
-
-def get_suite1(suitePars_d, #build the tDmg testing suite from a set of paramters
-                ):
-    
-    cases_d = dict()
-    for testName, d in suitePars_d.items():
-        cases_d[testName] = tDmg(name=testName, cf_fp=d['cf_fp'])
-        
-        #=======================================================================
-        # unittest.TestLoader().loadTestsFromTestCase(tDmg)
-        # pass
-        #=======================================================================
-    
-    return unittest.TestSuite(cases_d.values())
-
-
-
-def get_suite(suitePars_d, #build the tDmg testing suite from a set of paramters
-                ):
-    
-    suite = unittest.TestSuite()
-    #suite = nose.suite.LazySuite()
-    
-    for testName, d in suitePars_d.items():
-
-        for tMethodName in TestLoader().getTestCaseNames(tDmg):
-            suite.addTest(tDmg(tMethodName, name=testName, cf_fp=d['cf_fp']))
-        #=======================================================================
-        # unittest.TestLoader().loadTestsFromTestCase(tDmg)
-        # pass
-        #=======================================================================
-    print('built suites')
-    return suite
-
-
-
-
-
-if __name__ == '__main__':
-
+def test_all():
     runpars_d={
         'tut2_01.b01':{
              'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\b01\CanFlood_tut2b_20210123.txt',
@@ -145,11 +62,24 @@ if __name__ == '__main__':
              }, 
              }
     
-    suite = get_suite(runpars_d)
+    for testName, d in runpars_d.items():
+        
     
-    unittest.TextTestRunner(verbosity=0).run(suite)
     
-    #nose.core.TextTestRunner(verbosity=0).run(suite)
+        
+
+
+
+if __name__ == '__main__':
+
+
+    
+    #suite = get_suite(runpars_d)
+    
+    #unittest.TextTestRunner(verbosity=0).run(suite)
+    
+    #nose.core.TextTestRunner(verbosity=0).run(Test_dmg)
+    nose.runmodule(argv=['--verbosity=3', '--nocapture', '--with-id'])
         
       
 
