@@ -14,17 +14,27 @@ lets use one 'TestCase' for each input
     
 use a test suite to run all the tests on that model
 
+
+#===============================================================================
+# 2021-01-23
+#===============================================================================
+This is working ... but difficult to tell which test (in the suite loop) is failing
+also there are no class-level fixtures (i.e., all the data would have to be re-loaded for each test)
+
 '''
 
 
 import unittest
+#import nose
+#from nose import tools
+
+#from nose.loader import TestLoader
+from unittest import TestLoader
 
 
 
 
-
-
-
+#@tools.nottest
 class tModel(unittest.TestCase):
     
     def __init__(self, *args, 
@@ -39,17 +49,21 @@ class tModel(unittest.TestCase):
         print('init \'%s\' \'%s\' w/ \n    args: %s \n    kwargs: %s'%(
             self.__class__.__name__, self.name, args, kwargs))
         
-        
-        unittest.TestLoader().getTestCaseNames(self)
+
         super().__init__(*args, **kwargs) #initilzie the baseclass cascade
         
     #===========================================================================
     # expected handler methods---------
     #===========================================================================
+    @classmethod
+    def setupClass(self):
+        print('setting up class \'%s\''%self.__class__.__name__)
+        
+        
     def setUp(self):
-        print('setting up')
+        print('setting up \'%s\''%self.__class__.__name__)
     def tearDown(self):
-        print('tearing down')
+        print('tearing down\n')
         
     def runTest(self): #called by the suite
         print('runTest')
@@ -61,28 +75,27 @@ class tModel(unittest.TestCase):
     #===========================================================================
     def test_main(self):
         print('test_main w/ cf_fp: %s'%self.cf_fp)
+        self.assertTrue(False)
+        
     def test_one(self):
         print('test_one')
-        self.assertEqual('foo'.upper(), 'FOO')
-    def test_two(self):
-        print('test_two')
-        self.assertEqual('foo'.upper(), 'x')
-        
-    def tno(self):
-        print('tno')
-        self.assertEqual('foo'.upper(), 'FOO')
+        self.assertTrue(True)
+
         
     
-
+#@tools.nottest
 class tDmg(tModel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs) #init baseclass
     
     def test_parent1(self):
         print('test parent1 on \"%s\''%self.name)
+        self.assertTrue(False)
 
 
 
 
-def get_suite(suitePars_d, #build the tDmg testing suite from a set of paramters
+def get_suite1(suitePars_d, #build the tDmg testing suite from a set of paramters
                 ):
     
     cases_d = dict()
@@ -98,7 +111,22 @@ def get_suite(suitePars_d, #build the tDmg testing suite from a set of paramters
 
 
 
+def get_suite(suitePars_d, #build the tDmg testing suite from a set of paramters
+                ):
+    
+    suite = unittest.TestSuite()
+    #suite = nose.suite.LazySuite()
+    
+    for testName, d in suitePars_d.items():
 
+        for tMethodName in TestLoader().getTestCaseNames(tDmg):
+            suite.addTest(tDmg(tMethodName, name=testName, cf_fp=d['cf_fp']))
+        #=======================================================================
+        # unittest.TestLoader().loadTestsFromTestCase(tDmg)
+        # pass
+        #=======================================================================
+    print('built suites')
+    return suite
 
 
 
@@ -119,7 +147,9 @@ if __name__ == '__main__':
     
     suite = get_suite(runpars_d)
     
-    unittest.TextTestRunner().run(suite)
+    unittest.TextTestRunner(verbosity=0).run(suite)
+    
+    #nose.core.TextTestRunner(verbosity=0).run(suite)
         
       
 
