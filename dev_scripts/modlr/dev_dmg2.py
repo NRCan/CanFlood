@@ -79,19 +79,35 @@ if __name__ =="__main__":
     
     runpars_d={
         'Tut2a':{
-             'cf_fp':r'C:\LS\03_TOOLS\CanFlood\tut_builds\2\a\CanFlood_tut2a.txt',
-             'out_dir':r'C:\LS\03_TOOLS\CanFlood\tut_builds\2\a\dev\dmg',
+             'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\CanFlood_tut2a_20210123.txt',
+             'out_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\dmg2',
              }, 
     
         'Tut2b':{
-            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\tut_builds\2\b\CanFlood_tut2b.txt',
-            'out_dir':r'C:\LS\03_TOOLS\CanFlood\tut_builds\2\b\dev\dmg',
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\b01\CanFlood_tut2b_20210123.txt',
+            'out_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\b01\dmg2',
             },
          
-        'Tut2c':{
-            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\tut_builds\2\c\CanFlood_tut2c.txt',
-            'out_dir':r'C:\LS\03_TOOLS\CanFlood\tut_builds\2\c\dev\dmg',
-            },
+
+
+        
+    #===========================================================================
+    #     'Tut2a':{
+    #          'cf_fp':r'C:\LS\03_TOOLS\CanFlood\tut_builds\2\a\CanFlood_tut2a.txt',
+    #          'out_dir':r'C:\LS\03_TOOLS\CanFlood\tut_builds\2\a\dev\dmg',
+    #          }, 
+    # 
+    #     'Tut2b':{
+    #         'cf_fp':r'C:\LS\03_TOOLS\CanFlood\tut_builds\2\b\CanFlood_tut2b.txt',
+    #         'out_dir':r'C:\LS\03_TOOLS\CanFlood\tut_builds\2\b\dev\dmg',
+    #         },
+    #      
+    #     'Tut2c':{
+    #         'cf_fp':r'C:\LS\03_TOOLS\CanFlood\tut_builds\2\c\CanFlood_tut2c.txt',
+    #         'out_dir':r'C:\LS\03_TOOLS\CanFlood\tut_builds\2\c\dev\dmg',
+    #         },
+    #===========================================================================
+        
         #=======================================================================
         # 'LMFRA.bldgs.sfd3':{
         #     'out_dir':r'C:\Users\cefect\CanFlood\LMFRA\bldgs.sfd3\build_aoi02\dmg2',

@@ -284,61 +284,61 @@ if __name__ =="__main__":
         
         #=======================================================================
         # 'tut2a':{
-        #     'out_dir':r'C:\LS\03_TOOLS\CanFlood\tut_builds\2\a',
+        #     'out_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2\a01',
         #     'crs_id':'EPSG:3005', 'cid':'xid', 'felv':'ground','validate':'dmg2',
-        #     
-        #     #'aoi_fp':r'C:\Users\cefect\CanFlood\LMFRA\bs7\aoi05.gpkg',
-        #      'finv_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\finv_cT2.gpkg',
-        #      'curves_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\CanFlood_curves_rfda_20200218.xls',
-        #     'raster_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\rlays',
-        #      'dtm_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\dtm_cT1.tif',
-        #      'evals_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\evals_4_tut2a.csv',
-        #     },
-        #=======================================================================
-         
-        #=======================================================================
-        # 'tut2b':{
-        #     'out_dir':r'C:\LS\03_TOOLS\CanFlood\tut_builds\2\b',
-        #     'crs_id':'EPSG:3005', 'cid':'xid', 'felv':'ground','validate':'dmg2',
-        #   
-        #     #'aoi_fp':r'C:\Users\cefect\CanFlood\LMFRA\bs7\aoi05.gpkg',
-        #      'finv_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\finv_cT2.gpkg',
-        #      'curves_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\CanFlood_curves_rfda_20200218.xls',
-        #     'raster_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\rlays',
-        #      'dtm_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\dtm_cT1.tif',
-        #      'evals_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\evals_4_tut2a.csv',
-        #        
-        #      #LikeSampler
-        #     'lpol_fn_d':{
-        #         'haz_1000yr_fail_A_cT4':'expoProbPoly_1000yr_A_T2d.gpkg',
-        #         },
         #      
-        #     'lpol_basedir':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\lpols',
-        #     'lfield':'p_fail', 'event_rels':'mutEx'
+        #     #'aoi_fp':r'C:\Users\cefect\CanFlood\LMFRA\bs7\aoi05.gpkg',
+        #      'finv_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\finv_cT2.gpkg',
+        #      'curves_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\CanFlood_curves_rfda_20200218.xls',
+        #     'raster_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\rlays',
+        #      'dtm_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\dtm_cT1.tif',
+        #      'evals_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\evals_4_tut2a.csv',
         #     },
         #=======================================================================
-
-        
-        'tut2c':{
-            'out_dir':r'C:\LS\03_TOOLS\CanFlood\tut_builds\2\c',
-            'crs_id':'EPSG:3005', 'cid':'xid', 'felv':'ground','validate':'dmg2',
          
+        'tut2b':{
+            'out_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\b01',
+            'crs_id':'EPSG:3005', 'cid':'xid', 'felv':'ground','validate':'dmg2',
+           
             #'aoi_fp':r'C:\Users\cefect\CanFlood\LMFRA\bs7\aoi05.gpkg',
              'finv_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\finv_cT2.gpkg',
-             'curves_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\CanFlood_curves_rfda_20200218.xls',
+             'curves_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\CanFlood_curves_rfda_20200218.xls',
             'raster_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\rlays',
              'dtm_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\dtm_cT1.tif',
-             'evals_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\evals_4_tut2c.csv',
-              
+             'evals_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\evals_4_tut2b.csv',
+                
              #LikeSampler
             'lpol_fn_d':{
                 'haz_1000yr_fail_A_cT4':'expoProbPoly_1000yr_A_T2d.gpkg',
-                'haz_1000yr_fail_B_cT4':'expoProbPoly_1000yr_B_T2d.gpkg',
                 },
+              
             'lpol_basedir':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\lpols',
-            'lfield':'p_fail', 
-            'event_rels':'mutEx', #just for likesamp... need to set another flag in the CF for Risk
-            }
+            'lfield':'p_fail', 'event_rels':'mutEx'
+            },
+
+        
+        #=======================================================================
+        # 'tut2c':{
+        #     'out_dir':r'C:\LS\03_TOOLS\CanFlood\tut_builds\2\c',
+        #     'crs_id':'EPSG:3005', 'cid':'xid', 'felv':'ground','validate':'dmg2',
+        #  
+        #     #'aoi_fp':r'C:\Users\cefect\CanFlood\LMFRA\bs7\aoi05.gpkg',
+        #      'finv_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\finv_cT2.gpkg',
+        #      'curves_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\CanFlood_curves_rfda_20200218.xls',
+        #     'raster_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\rlays',
+        #      'dtm_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\dtm_cT1.tif',
+        #      'evals_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\evals_4_tut2c.csv',
+        #       
+        #      #LikeSampler
+        #     'lpol_fn_d':{
+        #         'haz_1000yr_fail_A_cT4':'expoProbPoly_1000yr_A_T2d.gpkg',
+        #         'haz_1000yr_fail_B_cT4':'expoProbPoly_1000yr_B_T2d.gpkg',
+        #         },
+        #     'lpol_basedir':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\lpols',
+        #     'lfield':'p_fail', 
+        #     'event_rels':'mutEx', #just for likesamp... need to set another flag in the CF for Risk
+        #     }
+        #=======================================================================
  
         }
     

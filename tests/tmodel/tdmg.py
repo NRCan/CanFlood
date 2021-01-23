@@ -25,17 +25,22 @@ import unittest
 
 
 
-class tDmg(unittest.TestCase):
+class tModel(unittest.TestCase):
     
     def __init__(self, *args, 
+                 name='caseName',
                  cf_fp='',
                  **kwargs):
         #attach passed
         self.cf_fp = cf_fp
+        self.name = name
         
         
-        print('init \'%s\' w/ \n    args: %s \n    kwargs: %s'%(
-            self.__class__.__name__, args, kwargs))
+        print('init \'%s\' \'%s\' w/ \n    args: %s \n    kwargs: %s'%(
+            self.__class__.__name__, self.name, args, kwargs))
+        
+        
+        unittest.TestLoader().getTestCaseNames(self)
         super().__init__(*args, **kwargs) #initilzie the baseclass cascade
         
     #===========================================================================
@@ -69,7 +74,10 @@ class tDmg(unittest.TestCase):
         
     
 
-
+class tDmg(tModel):
+    
+    def test_parent1(self):
+        print('test parent1 on \"%s\''%self.name)
 
 
 
@@ -77,11 +85,16 @@ class tDmg(unittest.TestCase):
 def get_suite(suitePars_d, #build the tDmg testing suite from a set of paramters
                 ):
     
+    cases_d = dict()
     for testName, d in suitePars_d.items():
+        cases_d[testName] = tDmg(name=testName, cf_fp=d['cf_fp'])
         
-        unittest.TestLoader().loadTestsFromTestCase(tDmg)
-        pass
+        #=======================================================================
+        # unittest.TestLoader().loadTestsFromTestCase(tDmg)
+        # pass
+        #=======================================================================
     
+    return unittest.TestSuite(cases_d.values())
 
 
 
@@ -94,16 +107,20 @@ def get_suite(suitePars_d, #build the tDmg testing suite from a set of paramters
 if __name__ == '__main__':
 
     runpars_d={
-        'Tut2a':{
-             'cf_fp':r'C:\LS\03_TOOLS\CanFlood\tut_builds\2\a\CanFlood_tut2a.txt',
-             'out_dir':r'C:\LS\03_TOOLS\CanFlood\tut_builds\2\a\dev\dmg',
+        'tut2_01.b01':{
+             'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\b01\CanFlood_tut2b_20210123.txt',
+             #'res_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\b01\dmg2',
              }, 
-        }
+        'tut2_01.a01':{
+             'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\CanFlood_tut2a_20210123.txt',
+             #'res_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\b01\dmg2',
+             }, 
+             }
     
-    suite = get_suite()
+    suite = get_suite(runpars_d)
     
     unittest.TextTestRunner().run(suite)
-        )
+        
       
 
     
