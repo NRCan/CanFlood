@@ -3,33 +3,24 @@
 ui class for the BUILD toolset
 """
 #==============================================================================
-# imports
+# imports-----------
 #==============================================================================
+#python
 import sys, os, datetime, time
-import os.path
+
 from shutil import copyfile
+
+"""see __init__.py for dependency check"""
+import pandas as pd
+import numpy as np #assuming if pandas is fine, numpy will be fine
 
 #PyQt
 from PyQt5 import uic, QtWidgets
 from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
 
-#===============================================================================
-# from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QObject 
-# from qgis.PyQt.QtGui import QIcon
-#===============================================================================
-
+#qgis
 
 from qgis.core import *
-#from qgis.analysis import *
-#import qgis.utils
-#import processing
-#from processing.core.Processing import Processing
-
-
-#import resources
-
-import pandas as pd
-import numpy as np #Im assuming if pandas is fine, numpy will be fine
 
 
 #==============================================================================
@@ -50,11 +41,18 @@ import hlpr.plug
 from hlpr.basic import get_valid_filename, force_open_dir 
 from hlpr.exceptions import QError as Error
 
+#===============================================================================
+# load UI file
+#===============================================================================
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 ui_fp = os.path.join(os.path.dirname(__file__), 'build.ui')
 assert os.path.exists(ui_fp), 'failed to find the ui file: \n    %s'%ui_fp
 FORM_CLASS, _ = uic.loadUiType(ui_fp)
 
+
+#===============================================================================
+# class objects-------
+#===============================================================================
 
 class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     
