@@ -7,21 +7,19 @@ Created on Feb. 25, 2020
 helper functions for use in plugins
 '''
 
-#==========================================================================
-# logger setup-----------------------
-#==========================================================================
-import logging, configparser, datetime, sys
+
 
 #==============================================================================
 # imports------------
 #==============================================================================
-
-
+#python
+import logging, configparser, datetime, sys, os
+import pandas as pd
 
 #Qgis imports
-#from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject
+from qgis.core import QgsVectorLayer, Qgis, QgsProject, QgsLogger, QgsMessageLog
 
-
+#pyQt
 from PyQt5.QtWidgets import QApplication, QWidget, QInputDialog, QLineEdit, QFileDialog, QPushButton
 #from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt 
@@ -31,11 +29,8 @@ from PyQt5.QtCore import Qt
 #==============================================================================
 
 from hlpr.exceptions import QError as Error
+from hlpr.Q import MyFeedBackQ, Qcoms
 
-    
-
-from hlpr.Q import *
-from hlpr.basic import *
 
 #==============================================================================
 # classes-----------
