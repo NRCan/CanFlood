@@ -30,8 +30,7 @@ class tModel(unittest.TestCase): #common model level testing methods
 
         assert inspect.isclass(type(Model))
         
-        print('init \'%s\' w/ \'%s\' \n    args: %s'%(
-            self.__class__.__name__, self.Model.tag,   args))
+        #print('init \'%s\' w/ \'%s\' \n    args: %s'%(self.__class__.__name__, self.Model.tag,   args))
         
 
         super().__init__(*args, **kwargs) #initilzie the baseclass cascade
@@ -41,9 +40,11 @@ class tModel(unittest.TestCase): #common model level testing methods
     #===========================================================================
         
     def setUp(self):
-        print('setting up %s (%s) %s'%(self.__class__.__name__, self.Model.tag, self._testMethodName))
+        #print('setting up %s (%s) %s'%(self.__class__.__name__, self.Model.tag, self._testMethodName))
+        pass
     def tearDown(self):
-        print('tearing down %s (%s) %s \n'%(self.__class__.__name__, self.Model.tag, self._testMethodName))
+        #print('tearing down %s (%s) %s \n'%(self.__class__.__name__, self.Model.tag, self._testMethodName))
+        pass
         
         
     #===========================================================================
@@ -76,7 +77,7 @@ def load_test_data(
         fp = os.path.join(res_dir, match_l[0])
         d[k] = pd.read_csv(fp, **load_kwargs)
         
-        print('loaded \'%s\'  w/ %s'%(searchPattern, str(d[k].shape)))
+        #print('loaded \'%s\'  w/ %s'%(searchPattern, str(d[k].shape)))
         
     
     return d
