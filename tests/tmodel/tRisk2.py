@@ -132,15 +132,7 @@ class tRisk(tModel): #worker for testing the damage model
         
 
 
-
-
-
-
-
-
-def test_module():
-
-    runpars_d={
+def gen_suite(    runpars_d={
 
         'tut2_01.a01':{
              'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\CanFlood_tut2a_20210123.txt',
@@ -159,20 +151,25 @@ def test_module():
              'res_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\r2_max',
              }
         }
-    
-    suite = get_suite(runpars_d,
+        ):
+
+
+    return get_suite(runpars_d,
                       Risk2,tRisk,
                    dataLoad_pars = {'attr03*':{'header':[0,1,2], 'index_col':0}, 
                                     '*passet.csv':{'index_col':0},
                                     '*ttl.csv':{}}
                       
                       )
+
+
+
+    
+if __name__ == '__main__':
+    suite = gen_suite()
     
     print('executing tests \n\n')
     unittest.TextTestRunner(verbosity=3).run(suite)
-    
-if __name__ == '__main__':
-    test_module()
     
     
     
