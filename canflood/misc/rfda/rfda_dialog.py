@@ -36,6 +36,8 @@ import hlpr.plug
 from hlpr.basic import get_valid_filename, force_open_dir 
 from hlpr.exceptions import QError as Error
 
+from .convert import RFDAconv
+
 #===============================================================================
 # load UI file
 #===============================================================================
