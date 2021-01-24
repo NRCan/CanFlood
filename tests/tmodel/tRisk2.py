@@ -58,7 +58,8 @@ class tRisk(tModel): #worker for testing the damage model
         
         self.assertEqual(res_ttl.shape, chk_df.shape, msg='%s'%self.name)
         
-        self.assertEqual(res_ttl['impacts'].sum(), chk_df['impacts'].sum(),  
+        self.assertEqual(res_ttl['impacts'].round(self.prec).sum(), 
+                         chk_df['impacts'].round(self.prec).sum(),  
                          msg='%s data failed to sum'%self.name)
         
     def test_passet(self,
@@ -149,7 +150,23 @@ def gen_suite(    runpars_d={
         'tut2_01.c01.max':{ 
              'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\CanFlood_tut2c_20210123_max.txt',
              'res_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\r2_max',
-             }
+             },
+        'LM_bs.b01':{
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b01\CanFlood_Lbs6.ind.txt',
+            'res_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b01\r01'
+            },
+        'LM_bs.b02':{
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b02\CanFlood_LML.bs7_b02_20210123.txt',
+            'res_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b02\r01'
+            },
+        'LM_bs.b03_max':{
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b03\CanFlood_LML.bs7.b03_max_20210123.txt',
+            'res_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b03\r01_max'
+            },
+        'LM_bs.b02_mutEx':{
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b03\CanFlood_LML.bs7.b03_mutEx_20210123.txt',
+            'res_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b03\r02_mutEx'
+            },
         }
         ):
 

@@ -3,15 +3,7 @@ Created on Jan. 23, 2021
 
 @author: cefect
 
-unit tests for model modules
 
-
-best use case seems to be testing a model to see if it still generates the expected outputs from inputs
-this means testing on a broad-range of inputs against each model's 'run' method
-lets use one 'TestCase' for each input
-    with a 'test_main' method to perform the main check against the outputs
-    can always add secondary tests on the non'run' functions that sure the setUp methods
-    
 
 '''
 
@@ -102,10 +94,6 @@ class tDmg(tModel): #worker for testing the damage model
         
         
 
-        
-
-
-
 def gen_suite(
 
     runpars_d={
@@ -125,7 +113,25 @@ def gen_suite(
         # 'tut2_01.c01.max':{ #same as mutEx
         #      'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\CanFlood_tut2c_20210123_max.txt',
         #      'res_dir':r'CC:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\dmg2',
-        #      }
+        #      },
+        #=======================================================================
+        'LM_bs.b01':{
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b01\CanFlood_Lbs6.ind.txt',
+            'res_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b01\dmg'
+            },
+        'LM_bs.b02':{
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b02\CanFlood_LML.bs7_b02_20210123.txt',
+            'res_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b02\dmg'
+            },
+        'LM_bs.b03_max':{
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b03\CanFlood_LML.bs7.b03_max_20210123.txt',
+            'res_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b03\dmg'
+            },
+        #=======================================================================
+        # 'LM_bs.b02_mutEx':{ #same
+        #     'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b03\CanFlood_LML.bs7.b03_mutEx_20210123.txt',
+        #     'res_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b03\dmg'
+        #     },
         #=======================================================================
         }
     ):

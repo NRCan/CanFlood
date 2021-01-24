@@ -4,6 +4,16 @@ Created on Jan. 23, 2021
 @author: cefect
 
 standalone scrip to collect all testing suites and run in bulk
+
+unit tests for model modules
+
+
+best use case seems to be testing a model to see if it still generates the expected outputs from inputs
+this means testing on a broad-range of inputs against each model's 'run' method
+lets use one 'TestCase' for each input
+    with a 'test_main' method to perform the main check against the outputs
+    can always add secondary tests on the non'run' functions that sure the setUp methods
+    
 '''
 
 import unittest, importlib
