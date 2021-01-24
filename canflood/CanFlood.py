@@ -3,7 +3,7 @@
 main plugin parent
 """
 #==============================================================================
-#import------------------------------------------------------------------ 
+#imports
 #==============================================================================
 #from PyQt5.QtCore import QSettings, QTranslator, QCoreApplication, QObject
 from PyQt5.QtGui import QIcon
@@ -11,27 +11,21 @@ from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QMenu
 
 # Initialize Qt resources from file resources.py
 from .resources import *
-# Import the code for the dialog
 
-#from .canFlood_inPrep_dialog import CanFlood_inPrepDialog
+
+
 import os.path
 from qgis.core import Qgis, QgsMessageLog
 
-# User defined imports
-#from qgis.core import *
-#from qgis.analysis import *
-#import qgis.utils
-#import processing
-#from processing.core.Processing import Processing
-#import sys, os, warnings, tempfile, logging, configparser
 
 
-
-
+#===============================================================================
+# custom imports
+#===============================================================================
 """
 relative references seem to work in Qgis.. but IDE doesnt recognize
 """
-#from canFlood_model import CanFlood_Model
+
 from .hlpr.exceptions import QError as Error
 
 
