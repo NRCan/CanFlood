@@ -1338,7 +1338,10 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.logger.push('generated \'aeps\' and set \'event_probs\' to control file')
         
     def run_validate(self):
-
+        """only validating the text in the control file for now (not the data objects)
+        
+        
+        """
 
         log = self.logger.getChild('validator')
         log.info('user pressed \'pushButton_Validate\'')
