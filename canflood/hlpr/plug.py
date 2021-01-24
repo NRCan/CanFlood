@@ -15,34 +15,22 @@ import logging, configparser, datetime, sys
 #==============================================================================
 # imports------------
 #==============================================================================
-import os
-import numpy as np
-import pandas as pd
+
 
 
 #Qgis imports
-from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject
+#from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject
 
 
 from PyQt5.QtWidgets import QApplication, QWidget, QInputDialog, QLineEdit, QFileDialog, QPushButton
-from PyQt5.QtGui import QIcon
+#from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt 
 
 #==============================================================================
 # custom imports
 #==============================================================================
 
-#standalone runs
-if __name__ =="__main__": 
-    from hlpr.logr import basic_logger
-    mod_logger = basic_logger()   
-    
-    from hlpr.exceptions import Error
-
-#plugin runs
-else:
-
-    from hlpr.exceptions import QError as Error
+from hlpr.exceptions import QError as Error
 
     
 

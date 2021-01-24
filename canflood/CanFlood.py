@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-second call
-test
+main plugin parent
 """
 #==============================================================================
 #import------------------------------------------------------------------ 
 #==============================================================================
-from PyQt5.QtCore import QSettings, QTranslator, QCoreApplication, QObject
+#from PyQt5.QtCore import QSettings, QTranslator, QCoreApplication, QObject
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QMenu
 
@@ -16,35 +15,25 @@ from .resources import *
 
 #from .canFlood_inPrep_dialog import CanFlood_inPrepDialog
 import os.path
-from qgis.core import QgsProject, Qgis, QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest
+from qgis.core import Qgis, QgsMessageLog
 
 # User defined imports
-from qgis.core import *
-from qgis.analysis import *
-import qgis.utils
-import processing
-from processing.core.Processing import Processing
-import sys, os, warnings, tempfile, logging, configparser
+#from qgis.core import *
+#from qgis.analysis import *
+#import qgis.utils
+#import processing
+#from processing.core.Processing import Processing
+#import sys, os, warnings, tempfile, logging, configparser
 
 
-import numpy as np
-import pandas as pd
+
+
 """
-Tony's testing workaround?
-the absolute imports don't seem to work at this
-
-there has to be a better way"""
-
-
-#file_dir = os.path.dirname(os.path.abspath(__file__))
-#sys.path.append(file_dir)
-
-
-
-
+relative references seem to work in Qgis.. but IDE doesnt recognize
+"""
 #from canFlood_model import CanFlood_Model
 from .hlpr.exceptions import QError as Error
-from shutil import copyfile
+
 
 from .build.BuildDialog import DataPrep_Dialog
 from .model.ModelDialog import Modelling_Dialog
@@ -53,15 +42,13 @@ from .misc.wc import WebConnect
 
 
 
-"""QprojPlug classes will call this during init
-may want to connect some simpler objects here though"""
-#===============================================================================
-# imports for PluginReloader
-#===============================================================================
 
 
 
 class CanFlood:
+    """
+    called by __init__.py 's classFactor method
+    """
 
 
     def __init__(self, iface):
