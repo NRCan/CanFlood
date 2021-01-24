@@ -33,7 +33,7 @@ from .build.BuildDialog import DataPrep_Dialog
 from .model.ModelDialog import Modelling_Dialog
 from .results.ResultsDialog import Results_Dialog
 from .misc.wc import WebConnect
-
+from .misc.rfda import rfda_dialog
 
 
 
@@ -64,11 +64,14 @@ class CanFlood:
         self.dlg2 = Modelling_Dialog(self.iface)
         self.dlg3 = Results_Dialog(self.iface)
         
+        self.dlg_rfda = rfda_dialog.rDialog(self.iface)
+        
 
         
 
         # Declare instance attributes
-        """not sure how this gets populated"""
+        """not sure how this gets populated
+        used by 'unload' to unload everything"""
         self.actions = []
         
 
@@ -78,7 +81,7 @@ class CanFlood:
         
         
         #start with an empty ref
-        self.canflood_menu = None
+        #self.canflood_menu = None
 
 
 
@@ -160,6 +163,13 @@ class CanFlood:
         #=======================================================================
         # rfda
         #=======================================================================
+        #build the action
+        icon = QIcon(os.path.dirname(__file__) + "/icons/rfda.png")
+        self.action_rfda = QAction(QIcon(icon), 'RFDA Conversions', self.iface.mainWindow())
+        self.action_rfda.triggered.connect(self.showRFDA)
+        
+        #add to the menu
+        self.iface.addPluginToMenu("&CanFlood", self.action_rfda)
         
 
     def showToolbarDataPrep(self):
@@ -172,6 +182,9 @@ class CanFlood:
     
     def showToolbarProjectResults(self):
         self.dlg3.show()
+        
+    def showRFDA(self):
+        pass
         
     def webConnect(self):
         self.logger('pushed webConnect')
