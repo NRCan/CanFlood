@@ -53,33 +53,11 @@ class CanFlood:
             application at run time.
         :type iface: QgsInterface
         """
-        # Save reference to the QGIS interface
-        #=======================================================================
-        # self.ras = []
-        # self.ras_dict = {}
-        # self.vec = None
-        # self.wd = None
-        # self.cf = None
-        #=======================================================================
+
         
         self.iface = iface
         
-        """ some unused initilization stuff Tony needed?
-        # initialize plugin directory
-        self.plugin_dir = os.path.dirname(__file__)
-        
-        
-        # initialize locale
-        locale = QSettings().value('locale/userLocale')[0:2]
-        locale_path = os.path.join(
-            self.plugin_dir,
-            'i18n',
-            'CanFlood_inPrep_{}.qm'.format(locale))
 
-        if os.path.exists(locale_path):
-            self.translator = QTranslator()
-            self.translator.load(locale_path)
-            QCoreApplication.installTranslator(self.translator)"""
 
         # Create the dialog (after translation) and keep reference
         self.dlg1 = DataPrep_Dialog(self.iface)
@@ -93,8 +71,6 @@ class CanFlood:
         """not sure how this gets populated"""
         self.actions = []
         
-        """old menu pointer?
-        self.menu = self.tr(u'&CanFlood_inPrep')"""
 
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
@@ -106,16 +82,15 @@ class CanFlood:
 
 
 
-    def initGui(self):
+    def initGui(self): #add UI elements to Qgis
         """
-        where is this called?
         called on Qgis Load?
-        add UI elements to Qgis
+        
         """
         
 
         #=======================================================================
-        # add toolbar
+        # toolbar--------
         #=======================================================================
         """Create the menu entries and toolbar icons inside the QGIS GUI."""  
         self.toolbar = self.iface.addToolBar('CanFlood') #build a QToolBar
@@ -134,12 +109,13 @@ class CanFlood:
         self.button_build.setCheckable(False)
         self.button_build.triggered.connect(self.showToolbarDataPrep)
         
-        
+        #add button to th etoolbar
         self.toolbar.addAction(self.button_build)
 
         #=======================================================================
         # button 2: Model
         #=======================================================================
+        #build
         self.button_model = QAction(
             QIcon(':/plugins/canflood_inprep/icons/house_flood.png'),
             'Model', self.iface.mainWindow())
@@ -147,11 +123,14 @@ class CanFlood:
         self.button_model.setObjectName('Model')
         self.button_model.setCheckable(False)
         self.button_model.triggered.connect(self.showToolbarProjectModelling)
+        
+        #add it
         self.toolbar.addAction(self.button_model)
 
         #=======================================================================
         # button 3: Results
         #=======================================================================
+        #build
         self.button_results = QAction(
             QIcon(':/plugins/canflood_inprep/icons/eye_23x23.png'), 
             'Results', self.iface.mainWindow())
@@ -159,10 +138,15 @@ class CanFlood:
         self.button_results.setObjectName('button_results')
         self.button_results.setCheckable(False)
         self.button_results.triggered.connect(self.showToolbarProjectResults)
+        
+        #add
         self.toolbar.addAction(self.button_results)
         
         #=======================================================================
-        # add menus---------
+        # menus---------
+        #=======================================================================
+        #=======================================================================
+        # Add Connections
         #=======================================================================
         #build the action
         icon = QIcon(os.path.dirname(__file__) + "/icons/download-cloud.png")
@@ -171,6 +155,11 @@ class CanFlood:
         
         #use helper method to add to the PLugins menu
         self.iface.addPluginToMenu("&CanFlood", self.action_dl)
+        
+        
+        #=======================================================================
+        # rfda
+        #=======================================================================
         
 
     def showToolbarDataPrep(self):
