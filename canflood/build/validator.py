@@ -22,7 +22,7 @@ import pandas as pd
 
 
 #Qgis imports
-from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject
+#from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject
 
 #==============================================================================
 # custom imports
@@ -32,6 +32,7 @@ from hlpr.exceptions import QError as Error
     
 
 from hlpr.Q import Qcoms
+"""do we need the pyqgis handles?"""
 #from hlpr.basic import *
 
 #==============================================================================
