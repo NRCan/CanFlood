@@ -254,33 +254,31 @@ if __name__ =="__main__":
         #     },
         #=======================================================================
         
-        #=======================================================================
-        # 'LML.bs7':{
-        #     'out_dir':r'C:\Users\cefect\CanFlood\LMFRA\bs7\b03',
-        #     'crs_id':'EPSG:3005', 'cid':'zid2', 'felv':'datum',
-        # 
-        #     'aoi_fp':r'C:\Users\cefect\CanFlood\LMFRA\bs7\aoi05.gpkg',
-        #      'finv_fp':r'C:\Users\cefect\CanFlood\LMFRA\bs7\finv_tagSFD_20200608_pts.gpkg',
-        #      'curves_fp':r'C:\Users\cefect\CanFlood\LMFRA\bs7\curves_CFcc_20200608_sfd.xls',
-        #     'raster_dir':r'C:\Users\cefect\CanFlood\LMFRA\bs7\rlays',
-        #      'dtm_fp':r'C:\LS\02_WORK\IBI\201909_FBC\02_INFO\DTM\NHC_2019_dtm_lores_aoi05h.tif',
-        #      'evals_fp':r'C:\Users\cefect\CanFlood\LMFRA\bs7\evals_fresh_20200603.csv',
-        # 
-        #     #LikeSampler
-        #     'lpol_fn_d':{
-        #         'AG4_Fr_0010_WL_fail_0415':'AG4_Fr_0010_Ind_Bd_0415c.gpkg',
-        #         'AG4_Fr_0030_WL_fail_0415':'AG4_Fr_0030_Ind_Bd_0415c.gpkg',
-        #         'AG4_Fr_0050_WL_fail_0415':'AG4_Fr_0050_Ind_Bd_0415c.gpkg',
-        #         'AG4_Fr_0100_WL_fail_0415':'AG4_Fr_0100_Ind_Bd_0415c.gpkg',
-        #         'AG4_Fr_0200_WL_fail_0415':'AG4_Fr_0200_Ind_Bd_0415c.gpkg',
-        #         'AG4_Fr_0500_WL_fail_0415':'AG4_Fr_0500_Ind_Bd_0415c.gpkg',
-        #         'AG4_Fr_0750_WL_fail_0415':'AG4_Fr_0750_Ind_Bd_0415c.gpkg',
-        #         'AG4_Fr_1000_WL_fail_0415':'AG4_Fr_1000_Ind_Bd_0415c.gpkg'
-        #         },
-        #     'lpol_basedir':r'C:\Users\cefect\CanFlood\LMFRA\bs7\lpols',
-        #     'lfield':'p_fail2', 'event_rels':'indep'
-        #     },
-        #=======================================================================
+        'LML.bs7':{
+            'out_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs',
+            'crs_id':'EPSG:3005', 'cid':'zid2', 'felv':'datum',
+         
+            'aoi_fp':r'C:\Users\cefect\CanFlood\LMFRA\bs7\aoi05.gpkg',
+             'finv_fp':r'C:\Users\cefect\CanFlood\LMFRA\bs7\finv_tagSFD_20200608_pts.gpkg',
+             'curves_fp':r'C:\Users\cefect\CanFlood\LMFRA\bs7\curves_CFcc_20200608_sfd.xls',
+            'raster_dir':r'C:\Users\cefect\CanFlood\LMFRA\bs7\rlays',
+             'dtm_fp':r'C:\LS\02_WORK\IBI\201909_FBC\02_INFO\DTM\NHC_2019_dtm_lores_aoi05h.tif',
+             'evals_fp':r'C:\Users\cefect\CanFlood\LMFRA\bs7\evals_fresh_20200603.csv',
+         
+            #LikeSampler
+            'lpol_fn_d':{
+                'AG4_Fr_0010_WL_fail_0415':'AG4_Fr_0010_Ind_Bd_0415c.gpkg',
+                'AG4_Fr_0030_WL_fail_0415':'AG4_Fr_0030_Ind_Bd_0415c.gpkg',
+                'AG4_Fr_0050_WL_fail_0415':'AG4_Fr_0050_Ind_Bd_0415c.gpkg',
+                'AG4_Fr_0100_WL_fail_0415':'AG4_Fr_0100_Ind_Bd_0415c.gpkg',
+                'AG4_Fr_0200_WL_fail_0415':'AG4_Fr_0200_Ind_Bd_0415c.gpkg',
+                'AG4_Fr_0500_WL_fail_0415':'AG4_Fr_0500_Ind_Bd_0415c.gpkg',
+                'AG4_Fr_0750_WL_fail_0415':'AG4_Fr_0750_Ind_Bd_0415c.gpkg',
+                'AG4_Fr_1000_WL_fail_0415':'AG4_Fr_1000_Ind_Bd_0415c.gpkg'
+                },
+            'lpol_basedir':r'C:\Users\cefect\CanFlood\LMFRA\bs7\lpols',
+            'lfield':'p_fail2', 'event_rels':'indep'
+            },
         
         #=======================================================================
         # 'tut2a':{
@@ -295,26 +293,28 @@ if __name__ =="__main__":
         #      'evals_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\evals_4_tut2a.csv',
         #     },
         #=======================================================================
-         
-        'tut2b':{
-            'out_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\b01',
-            'crs_id':'EPSG:3005', 'cid':'xid', 'felv':'ground','validate':'dmg2',
-           
-            #'aoi_fp':r'C:\Users\cefect\CanFlood\LMFRA\bs7\aoi05.gpkg',
-             'finv_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\finv_cT2.gpkg',
-             'curves_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\CanFlood_curves_rfda_20200218.xls',
-            'raster_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\rlays',
-             'dtm_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\dtm_cT1.tif',
-             'evals_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\evals_4_tut2b.csv',
-                
-             #LikeSampler
-            'lpol_fn_d':{
-                'haz_1000yr_fail_A_cT4':'expoProbPoly_1000yr_A_T2d.gpkg',
-                },
-              
-            'lpol_basedir':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\lpols',
-            'lfield':'p_fail', 'event_rels':'mutEx'
-            },
+        #=======================================================================
+        #  
+        # 'tut2b':{
+        #     'out_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\b01',
+        #     'crs_id':'EPSG:3005', 'cid':'xid', 'felv':'ground','validate':'dmg2',
+        #    
+        #     #'aoi_fp':r'C:\Users\cefect\CanFlood\LMFRA\bs7\aoi05.gpkg',
+        #      'finv_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\finv_cT2.gpkg',
+        #      'curves_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\CanFlood_curves_rfda_20200218.xls',
+        #     'raster_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\rlays',
+        #      'dtm_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\dtm_cT1.tif',
+        #      'evals_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\evals_4_tut2b.csv',
+        #         
+        #      #LikeSampler
+        #     'lpol_fn_d':{
+        #         'haz_1000yr_fail_A_cT4':'expoProbPoly_1000yr_A_T2d.gpkg',
+        #         },
+        #       
+        #     'lpol_basedir':r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\2\lpols',
+        #     'lfield':'p_fail', 'event_rels':'mutEx'
+        #     },
+        #=======================================================================
 
         
         #=======================================================================
