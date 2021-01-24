@@ -31,11 +31,11 @@ risk3 = False
 
 [results_fps]
 attrimat02 = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\dmg2\attr02_tut2c_Tut2c.csv
-attrimat03 = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\dev\r2\attr03_tut2c_Tut2c.csv
-r2_passet = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\dev\r2\risk2_tut2c_Tut2c_r2_passet.csv
-r2_ttl = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\dev\r2\risk2_tut2c_Tut2c_ttl.csv
-eventypes = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\dev\r2\eventypes_Tut2c_tut2c.csv
-#'attrimat02' file path set from output_attr at 2021-01-23 17.04.23
+attrimat03 = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\r2_mutex\attr03_tut2c_Tut2c_mutEx.csv
+r2_passet = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\r2_mutex\risk2_tut2c_Tut2c_mutEx_r2_passet.csv
+r2_ttl = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\r2_mutex\risk2_tut2c_Tut2c_mutEx_ttl.csv
+eventypes = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\r2_mutex\eventypes_Tut2c_mutEx_tut2c.csv
+#'attrimat03' file path set from output_attr at 2021-01-23 17.20.39
 
 [plotting]
 color = red           #line color

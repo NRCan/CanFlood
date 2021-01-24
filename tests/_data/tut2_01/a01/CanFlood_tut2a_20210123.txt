@@ -31,11 +31,11 @@ risk3 = False
 
 [results_fps]
 attrimat02 = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\dmg2\attr02_tut2a_Tut2a.csv
-attrimat03 = #lvl3 attribution matrix fp (post risk model)
-r2_passet = #per_asset results from the risk2 model
-r2_ttl = #total results from risk2
-eventypes = #dataframe of aep, noFail, and rEventName
-#'attrimat02' file path set from output_attr at 2021-01-23 12.19.36
+attrimat03 = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\r2\attr03_tut2a_Tut2a.csv
+r2_passet = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\r2\risk2_tut2a_Tut2a_r2_passet.csv
+r2_ttl = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\r2\risk2_tut2a_Tut2a_ttl.csv
+eventypes = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\r2\eventypes_Tut2a_tut2a.csv
+#'attrimat03' file path set from output_attr at 2021-01-23 17.20.38
 
 [plotting]
 color = black           #line color

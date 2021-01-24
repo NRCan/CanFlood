@@ -131,6 +131,28 @@ if __name__ =="__main__":
     # run parameters
     #===========================================================================
     runpars_d={
+        'Tut2a':{
+             'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\CanFlood_tut2a_20210123.txt',
+             'out_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\r2',
+             }, 
+    
+        'Tut2b':{
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\b01\CanFlood_tut2b_20210123.txt',
+            'out_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\b01\r2',
+            },
+          
+        'Tut2c_mutEx':{
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\CanFlood_tut2c_20210123_mutEx.txt',
+            'out_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\r2_mutex',
+            },
+         
+        'Tut2c_max':{
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\CanFlood_tut2c_20210123_max.txt',
+            'out_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\r2_max',
+            }
+ 
+        
+        
    #============================================================================
    #      'Tut2a':{
    #           'cf_fp':r'C:\LS\03_TOOLS\CanFlood\tut_builds\2\a\CanFlood_tut2a.txt',
@@ -142,16 +164,18 @@ if __name__ =="__main__":
    #          'out_dir':r'C:\LS\03_TOOLS\CanFlood\tut_builds\2\b\dev\r2',
    #          },
    #============================================================================
-         
-        'Tut2c':{
-            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\tut_builds\2\c\CanFlood_tut2c.txt',
-            'out_dir':r'C:\LS\03_TOOLS\CanFlood\tut_builds\2\c\dev\r2',
-            },
-        
-        'Tut2c_max':{
-            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\tut_builds\2\c\CanFlood_tut2c_max.txt',
-            'out_dir':r'C:\LS\03_TOOLS\CanFlood\tut_builds\2\c\dev\r2_max',
-            }
+        #=======================================================================
+        #  
+        # 'Tut2c':{
+        #     'cf_fp':r'C:\LS\03_TOOLS\CanFlood\tut_builds\2\c\CanFlood_tut2c.txt',
+        #     'out_dir':r'C:\LS\03_TOOLS\CanFlood\tut_builds\2\c\dev\r2',
+        #     },
+        # 
+        # 'Tut2c_max':{
+        #     'cf_fp':r'C:\LS\03_TOOLS\CanFlood\tut_builds\2\c\CanFlood_tut2c_max.txt',
+        #     'out_dir':r'C:\LS\03_TOOLS\CanFlood\tut_builds\2\c\dev\r2_max',
+        #     }
+        #=======================================================================
  
         
         

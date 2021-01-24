@@ -12,14 +12,6 @@ lets use one 'TestCase' for each input
     with a 'test_main' method to perform the main check against the outputs
     can always add secondary tests on the non'run' functions that sure the setUp methods
     
-use a test suite to run all the tests on that model
-
-
-#===============================================================================
-# 2021-01-23
-#===============================================================================
-This is working ... but difficult to tell which test (in the suite loop) is failing
-also there are no class-level fixtures (i.e., all the data would have to be re-loaded for each test)
 
 '''
 
@@ -30,16 +22,15 @@ import pandas as pd
 import numpy as np
 
 
-from unittest import TestLoader
+
 
 from model.dmg2 import Dmg2
 
 
 """just using the default console logger"""
-mod_logger = logging.getLogger('testing')
 
 
-from .tModCom import tModel
+from tmodel.tModCom import tModel, get_suite
 
 
         
@@ -117,66 +108,68 @@ class tDmg(tModel): #worker for testing the damage model
 # results loading functions--------
 #===========================================================================
 """not called during tests"""
-def load_test_data(
-                   res_dir, #directory containing all the results files
-                   dataLoad_pars = {'attr02*':{'header':[0,1], 'index_col':0}, 
-                                    'dmgs*':{'index_col':0}}
-                    ):
-    
-    d = dict()
-    
-    #get all csv files in the folder
-    allfns_l = [e for e in os.listdir(res_dir) if e.endswith('.csv')]
-    
-    #loop and load for each search
-    for searchPattern, load_kwargs in dataLoad_pars.items():
-        match_l = fnmatch.filter(allfns_l, searchPattern) #get those matching the search
-        assert len(match_l)==1, 'got multiple matches for \'%s\''%searchPattern
-        
-        #load the data
-        fp = os.path.join(res_dir, match_l[0])
-        d[searchPattern[:-1]] = pd.read_csv(fp, **load_kwargs)
-        
-        print('loaded \'%s\'  w/ %s'%(searchPattern, str(d[searchPattern[:-1]].shape)))
-        
-    
-    return d
-        
-        
-
-        
-
-
-
-
-
-
-def get_suite(suitePars_d, #build the tDmg testing suite from a set of paramters
-              absolute_fp=True,
-              attribution=True,
-                ):
-    
-    suite = unittest.TestSuite() #start the suite container
-    
-    for testName, d in suitePars_d.items():
-
-        #setup the model to test
-        Model = Dmg2(d['cf_fp'], 
-                    out_dir=tempfile.mkdtemp(), #get a dummy temp directory
-                    logger=mod_logger.getChild(testName), 
-                    tag=testName, 
-                     absolute_fp=absolute_fp, attriMode=attribution,
-                     )._setup()
-                     
-        #load the check data
-        tdata_d = load_test_data(d['res_dir'])
-        
-        #build a test for each mathing method in the class
-        for tMethodName in TestLoader().getTestCaseNames(tDmg):
-            suite.addTest(tDmg(tMethodName, Model=Model, tdata_d=tdata_d))
-
-    print('built suites')
-    return suite
+#===============================================================================
+# def load_test_data(
+#                    res_dir, #directory containing all the results files
+#                    dataLoad_pars = {'attr02*':{'header':[0,1], 'index_col':0}, 
+#                                     'dmgs*':{'index_col':0}}
+#                     ):
+#     
+#     d = dict()
+#     
+#     #get all csv files in the folder
+#     allfns_l = [e for e in os.listdir(res_dir) if e.endswith('.csv')]
+#     
+#     #loop and load for each search
+#     for searchPattern, load_kwargs in dataLoad_pars.items():
+#         match_l = fnmatch.filter(allfns_l, searchPattern) #get those matching the search
+#         assert len(match_l)==1, 'got multiple matches for \'%s\''%searchPattern
+#         
+#         #load the data
+#         fp = os.path.join(res_dir, match_l[0])
+#         d[searchPattern[:-1]] = pd.read_csv(fp, **load_kwargs)
+#         
+#         print('loaded \'%s\'  w/ %s'%(searchPattern, str(d[searchPattern[:-1]].shape)))
+#         
+#     
+#     return d
+#         
+#         
+# 
+#         
+# 
+# 
+# 
+# 
+# 
+# 
+# def get_suite(suitePars_d, #build the tDmg testing suite from a set of paramters
+#               absolute_fp=True,
+#               attribution=True,
+#                 ):
+#     
+#     suite = unittest.TestSuite() #start the suite container
+#     
+#     for testName, d in suitePars_d.items():
+# 
+#         #setup the model to test
+#         Model = Dmg2(d['cf_fp'], 
+#                     out_dir=tempfile.mkdtemp(), #get a dummy temp directory
+#                     logger=mod_logger.getChild(testName), 
+#                     tag=testName, 
+#                      absolute_fp=absolute_fp, attriMode=attribution,
+#                      )._setup()
+#                      
+#         #load the check data
+#         tdata_d = load_test_data(d['res_dir'])
+#         
+#         #build a test for each mathing method in the class
+#         for tMethodName in TestLoader().getTestCaseNames(tDmg):
+#             suite.addTest(tDmg(tMethodName, Model=Model, tdata_d=tdata_d))
+# 
+#     print('built suites')
+#     return suite
+#===============================================================================
 
 
 
@@ -205,7 +198,12 @@ if __name__ == '__main__':
         #=======================================================================
         }
     
-    suite = get_suite(runpars_d)
+    suite = get_suite(runpars_d,
+                      Dmg2,tDmg,
+                      dataLoad_pars = {'attr02*':{'header':[0,1], 'index_col':0}, 
+                                    'dmgs*':{'index_col':0}},
+                      
+                      )
     
     print('executing tests \n\n')
     unittest.TextTestRunner(verbosity=3).run(suite)
