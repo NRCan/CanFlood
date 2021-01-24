@@ -43,7 +43,9 @@ class CanFlood:
     """
     called by __init__.py 's classFactor method
     """
-
+    menu_name = "&CanFlood"
+    act_menu_l = []
+    act_toolbar_l = []
 
     def __init__(self, iface):
         """Constructor.
@@ -71,9 +73,9 @@ class CanFlood:
 
         # Declare instance attributes
         """not sure how this gets populated
-        used by 'unload' to unload everything"""
-        self.actions = []
-        
+        used by 'unload' to unload everything
+        self.actions = []"""
+
 
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
@@ -153,11 +155,13 @@ class CanFlood:
         #=======================================================================
         #build the action
         icon = QIcon(os.path.dirname(__file__) + "/icons/download-cloud.png")
+        
         self.action_dl = QAction(QIcon(icon), 'Add Connections', self.iface.mainWindow())
         self.action_dl.triggered.connect(self.webConnect) #connect it
+        self.act_menu_l.append(self.action_dl) #add for cleanup
         
         #use helper method to add to the PLugins menu
-        self.iface.addPluginToMenu("&CanFlood", self.action_dl)
+        self.iface.addPluginToMenu(self.menu_name, self.action_dl)
         
         
         #=======================================================================
@@ -166,10 +170,11 @@ class CanFlood:
         #build the action
         icon = QIcon(os.path.dirname(__file__) + "/icons/rfda.png")
         self.action_rfda = QAction(QIcon(icon), 'RFDA Conversions', self.iface.mainWindow())
-        self.action_rfda.triggered.connect(self.showRFDA)
+        self.action_rfda.triggered.connect(self.dlg_rfda.show)
+        self.act_menu_l.append(self.action_rfda) #add for cleanup
         
         #add to the menu
-        self.iface.addPluginToMenu("&CanFlood", self.action_rfda)
+        self.iface.addPluginToMenu(self.menu_name, self.action_rfda)
         
 
     def showToolbarDataPrep(self):
@@ -182,9 +187,8 @@ class CanFlood:
     
     def showToolbarProjectResults(self):
         self.dlg3.show()
+
         
-    def showRFDA(self):
-        pass
         
     def webConnect(self):
         self.logger('pushed webConnect')
@@ -203,18 +207,27 @@ class CanFlood:
     
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI.
-        called when user unchecks the plugin?
+        called when user unchecks the plugin
         """
-        for action in self.actions: #loop through each action and unload it
-            #try and remove from plugin menu and toolbar
-
-            
-            self.iface.removeToolBarIcon(action)
-            
+        #=======================================================================
+        # unload toolbars
+        #=======================================================================
         
-        self.iface.removePluginMenu(
-                "&CanFlood",
-                self.action_dl)
+        """toolbar seems to unload without this
+        self.logger('attempting to unload %i actions from toolbar'%len(self.actions))
+        for action in self.actions: #loop through each action and unload it
+            self.iface.removeToolBarIcon(action) #try and remove from plugin menu and toolbar
+            """
+
+        #=======================================================================
+        # unload menu
+        #=======================================================================
+        """not sure if this is needed"""
+        for action in self.act_menu_l:
+            try:
+                self.iface.removePluginMenu( self.menu_name, action)
+            except Exception as e:
+                self.logger('failed to unload action w/ \n    %s'%e)
 
             
         self.logger('unloaded CanFlood')
