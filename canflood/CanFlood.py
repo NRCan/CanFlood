@@ -112,7 +112,7 @@ class CanFlood:
          
         self.button_build.setObjectName('Build')
         self.button_build.setCheckable(False)
-        self.button_build.triggered.connect(self.showToolbarDataPrep)
+        self.button_build.triggered.connect(self.dlg1.show)
         
         #add button to th etoolbar
         self.toolbar.addAction(self.button_build)
@@ -127,7 +127,7 @@ class CanFlood:
         
         self.button_model.setObjectName('Model')
         self.button_model.setCheckable(False)
-        self.button_model.triggered.connect(self.showToolbarProjectModelling)
+        self.button_model.triggered.connect(self.dlg2.show)
         
         #add it
         self.toolbar.addAction(self.button_model)
@@ -142,7 +142,7 @@ class CanFlood:
         
         self.button_results.setObjectName('button_results')
         self.button_results.setCheckable(False)
-        self.button_results.triggered.connect(self.showToolbarProjectResults)
+        self.button_results.triggered.connect(self.dlg3.show)
         
         #add
         self.toolbar.addAction(self.button_results)
@@ -177,16 +177,19 @@ class CanFlood:
         self.iface.addPluginToMenu(self.menu_name, self.action_rfda)
         
 
-    def showToolbarDataPrep(self):
-        # Using exec_() creating a blocking dialog, show creates a non-blocking dialog
-        #self.dlg1.exec_()
-        self.dlg1.show()
-    
-    def showToolbarProjectModelling(self):
-        self.dlg2.show()
-    
-    def showToolbarProjectResults(self):
-        self.dlg3.show()
+    #===========================================================================
+    # def showToolbarDataPrep(self):
+    #     
+    #     # Using exec_() creating a blocking dialog, show creates a non-blocking dialog
+    #     #self.dlg1.exec_()
+    #     self.dlg1.show()
+    # 
+    # def showToolbarProjectModelling(self):
+    #     self.dlg2.show()
+    # 
+    # def showToolbarProjectResults(self):
+    #     self.dlg3.show()
+    #===========================================================================
 
         
         
