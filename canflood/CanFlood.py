@@ -194,6 +194,7 @@ class CanFlood:
         
         
     def webConnect(self):
+        """no GUI here.. just executing a script"""
         self.logger('pushed webConnect')
         
         wc1 = WebConnect(
