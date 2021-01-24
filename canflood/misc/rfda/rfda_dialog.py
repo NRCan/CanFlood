@@ -94,6 +94,28 @@ class rDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.buttonBox.accepted.connect(self.reject) #back out of the dialog
         self.buttonBox.rejected.connect(self.reject)
         
+        self.logger.statusQlab=self.progressText #connect to the progress text above the bar
+        """
+        where does the progressBar get connected?
+        """
+        
+        #=======================================================================
+        # session controls
+        #=======================================================================
+        #Working Directory 
+        """default is set below.
+        doesn't seem to open the displayed directory on first click"""
+        def browse_wd():
+            return self.browse_button(self.lineEdit_wd, prompt='Select Working Directory',
+                                      qfd = QFileDialog.getExistingDirectory)
+            
+        self.pushButton_wd.clicked.connect(browse_wd) # SS. Working Dir. Browse
+        
+        #WD force open
+        def open_wd():
+            force_open_dir(self.lineEdit_wd.text())
+        
+        self.pushButton_wd_open.clicked.connect(open_wd)
         
         #======================================================================
         # RFDA
@@ -122,11 +144,9 @@ class rDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
 
     def convert_rfda(self): #Other.Rfda tab
-        """
-        TODO: move to drop down
-        """
+
         log = self.logger.getChild('convert_rfda')
-        tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
+        tag = 'rfda'
         
         #======================================================================
         # collect from  ui
