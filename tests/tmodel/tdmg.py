@@ -39,49 +39,11 @@ from model.dmg2 import Dmg2
 mod_logger = logging.getLogger('testing')
 
 
-
-
-class tModel(unittest.TestCase): #common model level testing methods
-    
-    def __init__(self, *args, 
-                 Model=None, #model object to test
-                 tdata_d = None, #container of data to test against
-
-                 **kwargs):
-
-        #=======================================================================
-        # attach
-        #=======================================================================
-        self.Model=Model
-        self.tdata_d = tdata_d
-        self.name=Model.tag
-
-        assert inspect.isclass(type(Model))
-        
-        print('init \'%s\' w/ \'%s\' \n    args: %s'%(
-            self.__class__.__name__, self.Model.tag,   args))
-        
-
-        super().__init__(*args, **kwargs) #initilzie the baseclass cascade
-        
-    #===========================================================================
-    # expected handler methods---------
-    #===========================================================================
-        
-    def setUp(self):
-        print('setting up %s (%s) %s'%(self.__class__.__name__, self.Model.tag, self._testMethodName))
-    def tearDown(self):
-        print('tearing down\n')
-        
-        
-    #===========================================================================
-    # test methods---------
-    #===========================================================================
+from .tModCom import tModel
 
 
         
-    
-#@tools.nottest
+
 class tDmg(tModel): #worker for testing the damage model
     
     
@@ -231,7 +193,17 @@ if __name__ == '__main__':
              'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\CanFlood_tut2a_20210123.txt',
              'res_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\dmg2',
              }, 
-             }
+        'tut2_01.c01.mutEx':{
+             'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\CanFlood_tut2c_20210123_mutEx.txt',
+             'res_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\dmg2',
+             },
+        #=======================================================================
+        # 'tut2_01.c01.max':{ #same as mutEx
+        #      'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\CanFlood_tut2c_20210123_max.txt',
+        #      'res_dir':r'CC:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\dmg2',
+        #      }
+        #=======================================================================
+        }
     
     suite = get_suite(runpars_d)
     

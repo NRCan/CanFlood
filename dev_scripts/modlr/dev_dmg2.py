@@ -77,19 +77,11 @@ def generic(runpars_d,
 
 if __name__ =="__main__": 
     
-    runpars_d={
-        'Tut2a':{
-             'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\CanFlood_tut2a_20210123.txt',
-             'out_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\dmg2',
-             }, 
-    
-        'Tut2b':{
-            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\b01\CanFlood_tut2b_20210123.txt',
-            'out_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\b01\dmg2',
+    runpars_d={        
+        'Tut2c':{
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\CanFlood_tut2c_20210123.txt',
+            'out_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\dmg2',
             },
-         
-
-
         
     #===========================================================================
     #     'Tut2a':{

@@ -1,0 +1,49 @@
+[parameters]
+name = tut2c
+cid = xid
+prec = 6                #float precision for calculations
+ground_water = True     #whether to allow wsl < gel
+felv = ground
+event_probs = ari
+ltail = extrapolate     #EAD extrapolation: left tail treatment code (low prob high damage)
+rtail = 0.5             #EAD extrapolation: right trail treatment (high prob low damage)
+drop_tails = False      #EAD extrapolation: whether to remove the extrapolated values before writing the per-asset results
+integrate = trapz       #integration method to apply: trapz, simps
+as_inun = False
+event_rels = max		#assumption for calculated expected value on complex events
+
+[dmg_fps]
+curves = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\CanFlood_curves_rfda_20200218.xls
+finv = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\finv_tut2c_finv_cT2.csv
+expos = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\expos_tut2c_6_32.csv
+gels = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\gels_tut2c_1_32.csv
+
+[risk_fps]
+dmgs = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\dmg2\dmgs_tut2c_Tut2c.csv
+exlikes = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\exlikes_tut2c.csv
+evals = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\evals_4_tut2c.csv
+
+[validation]
+risk1 = False
+dmg2 = True
+risk2 = True
+risk3 = False
+
+[results_fps]
+attrimat02 = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\dmg2\attr02_tut2c_Tut2c.csv
+attrimat03 = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\dev\r2\attr03_tut2c_Tut2c.csv
+r2_passet = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\dev\r2\risk2_tut2c_Tut2c_r2_passet.csv
+r2_ttl = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\dev\r2\risk2_tut2c_Tut2c_ttl.csv
+eventypes = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\dev\r2\eventypes_Tut2c_tut2c.csv
+#'attrimat02' file path set from output_attr at 2021-01-23 17.04.23
+
+[plotting]
+color = red           #line color
+linestyle = solid
+linewidth = 2
+alpha = 0.75            #0=transparent 1=opaque
+marker = o
+markersize = 4
+fillstyle = none        #marker fill style
+impactfmt_str = ,.0f     #python formatter to use for formatting the impact results values
+
