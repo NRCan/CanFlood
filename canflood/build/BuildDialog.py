@@ -41,6 +41,8 @@ import hlpr.plug
 from hlpr.basic import get_valid_filename, force_open_dir 
 from hlpr.exceptions import QError as Error
 
+from .vfunc_dialog import vDialog
+
 #===============================================================================
 # load UI file
 #===============================================================================
@@ -60,11 +62,31 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     
 
     def __init__(self, iface, parent=None):
+        #=======================================================================
+        # #init baseclass
+        #=======================================================================
         """these will only ini tthe first baseclass (QtWidgets.QDialog)
         
         required"""
+        
         super(DataPrep_Dialog, self).__init__(parent) #only calls QtWidgets.QDialog
 
+        #=======================================================================
+        # attachments
+        #=======================================================================
+
+        self.ras = []
+        self.ras_dict = {}
+        self.vec = None
+
+        self.iface = iface
+        
+        self.vDialog = vDialog(self.iface) #init and attach (connected below)
+        
+        #=======================================================================
+        # setup funcs
+        #=======================================================================
+        
         self.setupUi(self)
         
         # Set up the user interface from Designer through FORM_CLASS.
@@ -72,12 +94,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # self.<objectname>, and you can use autoconnect slots - see
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
-
-        self.ras = []
-        self.ras_dict = {}
-        self.vec = None
-
-        self.iface = iface
+        
         
         self.qproj_setup() #basic dialog worker setup
         
@@ -121,7 +138,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             
             see hlpr.plug.logger._loghlp()
         """
-        self.logger.statusQlab=self.progressText #connect to the progress text above the bar
+        self.logger.statusQlab=self.progressText #connect to the progress text
         #self.logger.statusQlab.setText('BuildDialog initialized')
                 
         #======================================================================
@@ -185,6 +202,18 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # TAB: INVENTORY------------
         #=======================================================================
+        
+        #=======================================================================
+        # vfunc
+        #=======================================================================
+        #give commmon widgets
+        self.vDialog.lineEdit_wd = self.lineEdit_wd #share the reference
+        self.vDialog.lineEdit_curve = self.lineEdit_curve
+        
+        #connect launcher button
+        self.pushButton_inv_vfunc.clicked.connect(self.vDialog.show)
+        
+
         #=======================================================================
         # Store IVlayer
         #=======================================================================
@@ -218,21 +247,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #connect button
         self.pushButton_Inv_store.clicked.connect(self.convert_finv)
         
-        """moved to standalone dialog
-        #======================================================================
-        # RFDA
-        #======================================================================
-        #Vulnerability Curve Set
-        def browse_rfda_crv():
-            return self.browse_button(self.lineEdit_wd_OthRf_cv, prompt='Select RFDA curve .xls',
-                                      qfd = QFileDialog.getOpenFileName)
-            
-        self.pushButton_wd_OthRf_cv.clicked.connect(browse_rfda_crv)
-            
-        self.mMapLayerComboBox_OthR_rinv.setFilters(QgsMapLayerProxyModel.PointLayer)
-        self.mMapLayerComboBox_OthR_rinv.setCurrentIndex(-1) #clear the selection
-        
-        self.pushButton_OthRfda.clicked.connect(self.convert_rfda)"""
         
         #=======================================================================
         # NRPI
@@ -243,6 +257,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         #connect the push button
         self.pushButton_inv_nrpi.clicked.connect(self.convert_npri)
+        
+        
 
 
 

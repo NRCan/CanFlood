@@ -1059,6 +1059,35 @@ p, li { white-space: pre-wrap; }
             </spacer>
            </item>
            <item>
+            <widget class="QGroupBox" name="groupBox_26">
+             <property name="title">
+              <string>Vulnerability Functions</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_6">
+              <item>
+               <widget class="QPushButton" name="pushButton_inv_vfunc">
+                <property name="text">
+                 <string>Select From Library</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_3">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
             <widget class="QGroupBox" name="groupBox_02finv">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -5366,9 +5395,9 @@ p, li { white-space: pre-wrap; }
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="buttonGroup_ELfmt"/>
-  <buttongroup name="buttonGroup_LS_rels"/>
   <buttongroup name="buttonGroup_S_filepaths"/>
+  <buttongroup name="buttonGroup_LS_rels"/>
+  <buttongroup name="buttonGroup_ELfmt"/>
   <buttongroup name="buttonGroup_EV_eventRels"/>
  </buttongroups>
 </ui>
