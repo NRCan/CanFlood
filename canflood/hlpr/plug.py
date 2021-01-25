@@ -384,7 +384,11 @@ class pandasModel(QAbstractTableModel):
 
     def headerData(self, col, orientation, role):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            return self._data.columns[col]
+            """expanded to handle empty dataframes"""
+            try:
+                return self._data.columns[col]
+            except:
+                return None
         return None
     
     

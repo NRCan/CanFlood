@@ -29,7 +29,7 @@ from PyQt5 import QtGui
 # custom imports
 #==============================================================================
 
-
+import hlpr.plug
 from hlpr.basic import get_valid_filename, force_open_dir, ComWrkr
 from hlpr.exceptions import QError as Error
 from hlpr.plug import MyFeedBackQ, QprojPlug, pandasModel
@@ -302,6 +302,8 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         fn = self.fsModel.fileName(indexItem)
         
         #wrap
+        if fp=='':
+            return None, None
         assert os.path.exists(fp), fp
         
 
@@ -380,10 +382,12 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #output
         ofp = wrkr.output_fig(fig)
         
-        try:
-            force_open_dir(os.path.split(ofp)[0])
-        except Exception as e:
-            log.warning('failed to open dir')
+        #=======================================================================
+        # try:
+        #     force_open_dir(os.path.split(ofp)[0])
+        # except Exception as e:
+        #     log.warning('failed to open dir')
+        #=======================================================================
         
         return
         
@@ -516,6 +520,8 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         """should be assigned by BuildDialog"""
         tag, out_dir = self._get_buildPars()
         
+        if not os.path.exists(out_dir):
+            log.error('selected working directory does not exist!')
         #=======================================================================
         # #get the selection
         #=======================================================================
@@ -536,7 +542,7 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         try:
             self.lineEdit_curve.setText(ofp)
         except Exception as e:
-            log.warning('failed ot fill lineEdit w/ %s'%e)
+            log.error('failed ot fill lineEdit w/ %s'%e)
                 
             
         
