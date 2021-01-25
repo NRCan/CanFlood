@@ -220,7 +220,7 @@ class RFDAconv(Qcoms):
                     logger=None,
                     ):
         """
-        converting rfda style residential curves into CanFlood
+        converting rfda style residential + nrp curves into CanFlood
         
         TODO: add for displacement stlye?
         """
