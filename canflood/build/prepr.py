@@ -29,15 +29,8 @@ from qgis.core import QgsVectorLayer, QgsWkbTypes
 #==============================================================================
 
 #standalone runs
-if __name__ =="__main__": 
-    from hlpr.logr import basic_logger
-    mod_logger = basic_logger()   
-    
-    from hlpr.exceptions import Error
-#plugin runs
-else:
-    #base_class = object
-    from hlpr.exceptions import QError as Error
+ 
+from hlpr.exceptions import QError as Error
     
 
 from hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata
@@ -121,6 +114,9 @@ class Preparor(Qcoms):
                      scenarioName=None,
                      curves_fp=None,
                      ):
+        """
+        todo: change this to accept kwargs
+        """
         #=======================================================================
         # defaults
         #=======================================================================
@@ -312,13 +308,7 @@ class Preparor(Qcoms):
         
         self.feedback.upd_prog(99)
         return  finv_vlay
-    
-    def test(self):
-        print('Preparor test')
-    
-
-
-
+ 
 
 
 

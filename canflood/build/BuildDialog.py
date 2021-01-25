@@ -3,33 +3,24 @@
 ui class for the BUILD toolset
 """
 #==============================================================================
-# imports
+# imports-----------
 #==============================================================================
+#python
 import sys, os, datetime, time
-import os.path
+
 from shutil import copyfile
+
+"""see __init__.py for dependency check"""
+import pandas as pd
+import numpy as np #assuming if pandas is fine, numpy will be fine
 
 #PyQt
 from PyQt5 import uic, QtWidgets
 from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
 
-#===============================================================================
-# from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QObject 
-# from qgis.PyQt.QtGui import QIcon
-#===============================================================================
-
+#qgis
 
 from qgis.core import *
-#from qgis.analysis import *
-#import qgis.utils
-#import processing
-#from processing.core.Processing import Processing
-
-
-#import resources
-
-import pandas as pd
-import numpy as np #Im assuming if pandas is fine, numpy will be fine
 
 
 #==============================================================================
@@ -38,7 +29,7 @@ import numpy as np #Im assuming if pandas is fine, numpy will be fine
 
 from build.rsamp import Rsamp
 from build.lisamp import LikeSampler
-from build.rfda import RFDAconv
+#from build.rfda import RFDAconv
 from build.prepr import Preparor
 from build.validator import Vali
 
@@ -50,11 +41,20 @@ import hlpr.plug
 from hlpr.basic import get_valid_filename, force_open_dir 
 from hlpr.exceptions import QError as Error
 
+from .vfunc_dialog import vDialog
+
+#===============================================================================
+# load UI file
+#===============================================================================
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 ui_fp = os.path.join(os.path.dirname(__file__), 'build.ui')
 assert os.path.exists(ui_fp), 'failed to find the ui file: \n    %s'%ui_fp
 FORM_CLASS, _ = uic.loadUiType(ui_fp)
 
+
+#===============================================================================
+# class objects-------
+#===============================================================================
 
 class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     
@@ -62,11 +62,31 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     
 
     def __init__(self, iface, parent=None):
+        #=======================================================================
+        # #init baseclass
+        #=======================================================================
         """these will only ini tthe first baseclass (QtWidgets.QDialog)
         
         required"""
+        
         super(DataPrep_Dialog, self).__init__(parent) #only calls QtWidgets.QDialog
 
+        #=======================================================================
+        # attachments
+        #=======================================================================
+
+        self.ras = []
+        self.ras_dict = {}
+        self.vec = None
+
+        self.iface = iface
+        
+        self.vDialog = vDialog(self.iface) #init and attach (connected below)
+        
+        #=======================================================================
+        # setup funcs
+        #=======================================================================
+        
         self.setupUi(self)
         
         # Set up the user interface from Designer through FORM_CLASS.
@@ -74,12 +94,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # self.<objectname>, and you can use autoconnect slots - see
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
-
-        self.ras = []
-        self.ras_dict = {}
-        self.vec = None
-
-        self.iface = iface
+        
         
         self.qproj_setup() #basic dialog worker setup
         
@@ -123,7 +138,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             
             see hlpr.plug.logger._loghlp()
         """
-        self.logger.statusQlab=self.progressText #connect to the progress text above the bar
+        self.logger.statusQlab=self.progressText #connect to the progress text
         #self.logger.statusQlab.setText('BuildDialog initialized')
                 
         #======================================================================
@@ -187,6 +202,24 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # TAB: INVENTORY------------
         #=======================================================================
+        
+        #=======================================================================
+        # vfunc
+        #=======================================================================
+        #give commmon widgets
+        self.vDialog.lineEdit_wd = self.lineEdit_wd #share the reference
+        self.vDialog.lineEdit_curve = self.lineEdit_curve
+        self.vDialog.linEdit_ScenTag = self.linEdit_ScenTag
+        
+        #connect launcher button
+        def vDia(): #helper to connect slots and 
+            """only executing setup once called to simplify initial loading"""
+            _ = self.vDialog._setup()
+            self.vDialog.show()
+            
+        self.pushButton_inv_vfunc.clicked.connect(vDia)
+        self.pushButton_Inv_curves.clicked.connect(self.store_curves)
+
         #=======================================================================
         # Store IVlayer
         #=======================================================================
@@ -221,21 +254,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.pushButton_Inv_store.clicked.connect(self.convert_finv)
         
         
-        #======================================================================
-        # RFDA
-        #======================================================================
-        #Vulnerability Curve Set
-        def browse_rfda_crv():
-            return self.browse_button(self.lineEdit_wd_OthRf_cv, prompt='Select RFDA curve .xls',
-                                      qfd = QFileDialog.getOpenFileName)
-            
-        self.pushButton_wd_OthRf_cv.clicked.connect(browse_rfda_crv)
-            
-        self.mMapLayerComboBox_OthR_rinv.setFilters(QgsMapLayerProxyModel.PointLayer)
-        self.mMapLayerComboBox_OthR_rinv.setCurrentIndex(-1) #clear the selection
-        
-        self.pushButton_OthRfda.clicked.connect(self.convert_rfda)
-        
         #=======================================================================
         # NRPI
         #=======================================================================
@@ -245,6 +263,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         #connect the push button
         self.pushButton_inv_nrpi.clicked.connect(self.convert_npri)
+        
+        
 
 
 
@@ -535,11 +555,14 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # #set some basics
         #=======================================================================
-        if not self.lineEdit_curve.text()=='':
-            curves_fp=self.lineEdit_curve.text()
-        else:
-            curves_fp = None
-        wrkr.upd_cf_first(scenarioName=self.linEdit_ScenTag.text(), curves_fp=curves_fp)
+        #=======================================================================
+        # if not self.lineEdit_curve.text()=='':
+        #     curves_fp=self.lineEdit_curve.text()
+        # else:
+        #     curves_fp = None
+        #=======================================================================
+            
+        wrkr.upd_cf_first(scenarioName=self.linEdit_ScenTag.text())
  
         log.info("default CanFlood model config file created :\n    %s"%cf_path)
         
@@ -560,6 +583,37 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         log.push('control file created for "\'%s\''%tag)
         self.feedback.upd_prog(None) #set the progress bar back down to zero
 
+    def store_curves(self): #write the curves_fp to the control file
+        
+        curves_fp=self.lineEdit_curve.text()
+        cf_fp = self.get_cf_fp()
+        self.feedback.upd_prog(10)
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert os.path.exists(curves_fp), 'bad curves_fp: %s'%curves_fp
+
+
+        #=======================================================================
+        # execute
+        #=======================================================================
+        #get a simple worker to handle the control file
+        wrkr = Preparor(logger=self.logger,  feedback=self.feedback,
+                       # out_dir=None, tag=tag, cid=cid, overwrite=self.overwrite
+                        cf_fp=cf_fp, 
+                        ) 
+        self.feedback.upd_prog(50)
+        wrkr.update_cf(
+            {
+            'dmg_fps':(
+                {'curves':curves_fp}, 
+                '#\'curves\' file path set from BuildDialog.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                ),
+             },
+            )
+        
+        self.feedback.upd_prog(95)
+        self.feedback.upd_prog(None)
         
     def convert_finv(self): #aoi slice and convert the finv vector to csv file
         
@@ -611,6 +665,11 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         out_fp = wrkr.finv_to_csv( vlay, felv=self.comboBox_SSelv.currentText(),
                                    logger=self.logger)
 
+        #try the curves
+        """user may think this button stores the curves also"""
+        try:
+            self.store_curves()
+        except: pass
         #=======================================================================
         # wrap
         #=======================================================================
@@ -620,66 +679,68 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         return 
     
     
-    def convert_rfda(self): #Other.Rfda tab
-        """
-        TODO: move to drop down
-        """
-        log = self.logger.getChild('convert_rfda')
-        tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
-        
-        #======================================================================
-        # collect from  ui
-        #======================================================================
-        rinv_vlay = self.mMapLayerComboBox_OthR_rinv.currentLayer()
-        crv_fp = self.lineEdit_wd_OthRf_cv.text()
-        bsmt_ht = self.lineEdit_OthRf_bht.text()
-        #cid = self.mFieldComboBox_cid.currentField() #user selected field
-        
-        #crs = self.qproj.crs()
-        out_dir = self.lineEdit_wd.text()
-        
-        try:
-            bsmt_ht = float(bsmt_ht)
-        except Exception as e:
-            raise Error('failed to convert bsmt_ht to float w/ \n    %s'%e)
-        
-        
-        #======================================================================
-        # input checks
-        #======================================================================
-        
-        wrkr = RFDAconv(logger=self.logger, out_dir=out_dir, tag=tag, bsmt_ht = bsmt_ht)
-        #======================================================================
-        # invnentory convert
-        #======================================================================
-        if isinstance(rinv_vlay, QgsVectorLayer):
-            
-            
-            finv_vlay = wrkr.to_finv(rinv_vlay)
-            
-            self.qproj.addMapLayer(finv_vlay)
-            log.info('added \'%s\' to canvas'%finv_vlay.name())
-            
-        #======================================================================
-        # curve convert
-        #======================================================================
-        if os.path.exists(crv_fp):
-            df_raw = pd.read_excel(crv_fp, header=None)
-            
-            df_d = wrkr.to_curveset(df_raw, logger=log)
-            
-            basefn = os.path.splitext(os.path.split(crv_fp)[1])[0]
-            
-            ofp = wrkr.output(df_d, basefn=basefn)
-            
-        else:
-            log.info('no valid crv_fp provided')
-            
-        #======================================================================
-        # wrap
-        #======================================================================
-        self.logger.push('finished')
-            
+    #===========================================================================
+    # def convert_rfda(self): #Other.Rfda tab
+    #     """
+    #     TODO: move to drop down
+    #     """
+    #     log = self.logger.getChild('convert_rfda')
+    #     tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
+    #     
+    #     #======================================================================
+    #     # collect from  ui
+    #     #======================================================================
+    #     rinv_vlay = self.mMapLayerComboBox_OthR_rinv.currentLayer()
+    #     crv_fp = self.lineEdit_wd_OthRf_cv.text()
+    #     bsmt_ht = self.lineEdit_OthRf_bht.text()
+    #     #cid = self.mFieldComboBox_cid.currentField() #user selected field
+    #     
+    #     #crs = self.qproj.crs()
+    #     out_dir = self.lineEdit_wd.text()
+    #     
+    #     try:
+    #         bsmt_ht = float(bsmt_ht)
+    #     except Exception as e:
+    #         raise Error('failed to convert bsmt_ht to float w/ \n    %s'%e)
+    #     
+    #     
+    #     #======================================================================
+    #     # input checks
+    #     #======================================================================
+    #     
+    #     wrkr = RFDAconv(logger=self.logger, out_dir=out_dir, tag=tag, bsmt_ht = bsmt_ht)
+    #     #======================================================================
+    #     # invnentory convert
+    #     #======================================================================
+    #     if isinstance(rinv_vlay, QgsVectorLayer):
+    #         
+    #         
+    #         finv_vlay = wrkr.to_finv(rinv_vlay)
+    #         
+    #         self.qproj.addMapLayer(finv_vlay)
+    #         log.info('added \'%s\' to canvas'%finv_vlay.name())
+    #         
+    #     #======================================================================
+    #     # curve convert
+    #     #======================================================================
+    #     if os.path.exists(crv_fp):
+    #         df_raw = pd.read_excel(crv_fp, header=None)
+    #         
+    #         df_d = wrkr.to_curveset(df_raw, logger=log)
+    #         
+    #         basefn = os.path.splitext(os.path.split(crv_fp)[1])[0]
+    #         
+    #         ofp = wrkr.output(df_d, basefn=basefn)
+    #         
+    #     else:
+    #         log.info('no valid crv_fp provided')
+    #         
+    #     #======================================================================
+    #     # wrap
+    #     #======================================================================
+    #     self.logger.push('finished')
+    #         
+    #===========================================================================
 
     def convert_npri(self):
         """

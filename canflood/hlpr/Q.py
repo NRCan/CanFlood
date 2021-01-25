@@ -2312,6 +2312,25 @@ class MyFeedBackQ(QgsProcessingFeedback):
 #==============================================================================
 # FUNCTIONS----------
 #==============================================================================
+
+def init_q(gui=False):
+    try:
+        
+        QgsApplication.setPrefixPath(r'C:/OSGeo4W64/apps/qgis-ltr', True)
+        
+        app = QgsApplication([], gui)
+        #   Update prefix path
+        #app.setPrefixPath(r"C:\OSGeo4W64\apps\qgis", True)
+        app.initQgis()
+        #logging.debug(QgsApplication.showSettings())
+        """ was throwing unicode error"""
+        print(u' QgsApplication.initQgis. version: %s, release: %s'%(
+            Qgis.QGIS_VERSION.encode('utf-8'), Qgis.QGIS_RELEASE_NAME.encode('utf-8')))
+        return app
+    
+    except:
+        raise Error('QGIS failed to initiate')
+        
 def vlay_check( #helper to check various expectations on the layer
                     vlay,
                     exp_fieldns = None, #raise error if these field names are OUT

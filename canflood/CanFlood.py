@@ -1,68 +1,51 @@
 # -*- coding: utf-8 -*-
 """
-second call
-test
+main plugin parent
 """
 #==============================================================================
-#import------------------------------------------------------------------ 
+#imports
 #==============================================================================
-from PyQt5.QtCore import QSettings, QTranslator, QCoreApplication, QObject
+#from PyQt5.QtCore import QSettings, QTranslator, QCoreApplication, QObject
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QMenu
 
 # Initialize Qt resources from file resources.py
 from .resources import *
-# Import the code for the dialog
 
-#from .canFlood_inPrep_dialog import CanFlood_inPrepDialog
+
+
 import os.path
-from qgis.core import QgsProject, Qgis, QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest
-
-# User defined imports
-from qgis.core import *
-from qgis.analysis import *
-import qgis.utils
-import processing
-from processing.core.Processing import Processing
-import sys, os, warnings, tempfile, logging, configparser
+from qgis.core import Qgis, QgsMessageLog
 
 
-import numpy as np
-import pandas as pd
+
+#===============================================================================
+# custom imports
+#===============================================================================
 """
-Tony's testing workaround?
-the absolute imports don't seem to work at this
+relative references seem to work in Qgis.. but IDE doesnt recognize
+"""
 
-there has to be a better way"""
-
-
-#file_dir = os.path.dirname(os.path.abspath(__file__))
-#sys.path.append(file_dir)
-
-
-
-
-#from canFlood_model import CanFlood_Model
 from .hlpr.exceptions import QError as Error
-from shutil import copyfile
+
 
 from .build.BuildDialog import DataPrep_Dialog
 from .model.ModelDialog import Modelling_Dialog
 from .results.ResultsDialog import Results_Dialog
 from .misc.wc import WebConnect
+from .misc.rfda import rfda_dialog
 
 
-
-"""QprojPlug classes will call this during init
-may want to connect some simpler objects here though"""
-#===============================================================================
-# imports for PluginReloader
-#===============================================================================
 
 
 
 class CanFlood:
-
+    """
+    called by __init__.py 's classFactor method
+    """
+    menu_name = "&CanFlood"
+    act_menu_l = []
+    act_toolbar_l = []
 
     def __init__(self, iface):
         """Constructor.
@@ -72,48 +55,27 @@ class CanFlood:
             application at run time.
         :type iface: QgsInterface
         """
-        # Save reference to the QGIS interface
-        #=======================================================================
-        # self.ras = []
-        # self.ras_dict = {}
-        # self.vec = None
-        # self.wd = None
-        # self.cf = None
-        #=======================================================================
+
         
         self.iface = iface
         
-        """ some unused initilization stuff Tony needed?
-        # initialize plugin directory
-        self.plugin_dir = os.path.dirname(__file__)
-        
-        
-        # initialize locale
-        locale = QSettings().value('locale/userLocale')[0:2]
-        locale_path = os.path.join(
-            self.plugin_dir,
-            'i18n',
-            'CanFlood_inPrep_{}.qm'.format(locale))
 
-        if os.path.exists(locale_path):
-            self.translator = QTranslator()
-            self.translator.load(locale_path)
-            QCoreApplication.installTranslator(self.translator)"""
 
         # Create the dialog (after translation) and keep reference
         self.dlg1 = DataPrep_Dialog(self.iface)
         self.dlg2 = Modelling_Dialog(self.iface)
         self.dlg3 = Results_Dialog(self.iface)
         
+        self.dlg_rfda = rfda_dialog.rDialog(self.iface)
+        
 
         
 
         # Declare instance attributes
-        """not sure how this gets populated"""
-        self.actions = []
-        
-        """old menu pointer?
-        self.menu = self.tr(u'&CanFlood_inPrep')"""
+        """not sure how this gets populated
+        used by 'unload' to unload everything
+        self.actions = []"""
+
 
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
@@ -121,20 +83,19 @@ class CanFlood:
         
         
         #start with an empty ref
-        self.canflood_menu = None
+        #self.canflood_menu = None
 
 
 
-    def initGui(self):
+    def initGui(self): #add UI elements to Qgis
         """
-        where is this called?
         called on Qgis Load?
-        add UI elements to Qgis
+        
         """
         
 
         #=======================================================================
-        # add toolbar
+        # toolbar--------
         #=======================================================================
         """Create the menu entries and toolbar icons inside the QGIS GUI."""  
         self.toolbar = self.iface.addToolBar('CanFlood') #build a QToolBar
@@ -151,64 +112,93 @@ class CanFlood:
          
         self.button_build.setObjectName('Build')
         self.button_build.setCheckable(False)
-        self.button_build.triggered.connect(self.showToolbarDataPrep)
+        self.button_build.triggered.connect(self.dlg1.show)
         
-        
+        #add button to th etoolbar
         self.toolbar.addAction(self.button_build)
 
         #=======================================================================
         # button 2: Model
         #=======================================================================
+        #build
         self.button_model = QAction(
             QIcon(':/plugins/canflood_inprep/icons/house_flood.png'),
             'Model', self.iface.mainWindow())
         
         self.button_model.setObjectName('Model')
         self.button_model.setCheckable(False)
-        self.button_model.triggered.connect(self.showToolbarProjectModelling)
+        self.button_model.triggered.connect(self.dlg2.show)
+        
+        #add it
         self.toolbar.addAction(self.button_model)
 
         #=======================================================================
         # button 3: Results
         #=======================================================================
+        #build
         self.button_results = QAction(
             QIcon(':/plugins/canflood_inprep/icons/eye_23x23.png'), 
             'Results', self.iface.mainWindow())
         
         self.button_results.setObjectName('button_results')
         self.button_results.setCheckable(False)
-        self.button_results.triggered.connect(self.showToolbarProjectResults)
+        self.button_results.triggered.connect(self.dlg3.show)
+        
+        #add
         self.toolbar.addAction(self.button_results)
         
         #=======================================================================
-        # add menus---------
+        # menus---------
+        #=======================================================================
+        #=======================================================================
+        # Add Connections
         #=======================================================================
         #build the action
         icon = QIcon(os.path.dirname(__file__) + "/icons/download-cloud.png")
+        
         self.action_dl = QAction(QIcon(icon), 'Add Connections', self.iface.mainWindow())
         self.action_dl.triggered.connect(self.webConnect) #connect it
+        self.act_menu_l.append(self.action_dl) #add for cleanup
         
         #use helper method to add to the PLugins menu
-        self.iface.addPluginToMenu("&CanFlood", self.action_dl)
+        self.iface.addPluginToMenu(self.menu_name, self.action_dl)
+        
+        
+        #=======================================================================
+        # rfda
+        #=======================================================================
+        #build the action
+        icon = QIcon(os.path.dirname(__file__) + "/icons/rfda.png")
+        self.action_rfda = QAction(QIcon(icon), 'RFDA Conversions', self.iface.mainWindow())
+        self.action_rfda.triggered.connect(self.dlg_rfda.show)
+        self.act_menu_l.append(self.action_rfda) #add for cleanup
+        
+        #add to the menu
+        self.iface.addPluginToMenu(self.menu_name, self.action_rfda)
         
 
-    def showToolbarDataPrep(self):
-        # Using exec_() creating a blocking dialog, show creates a non-blocking dialog
-        #self.dlg1.exec_()
-        self.dlg1.show()
-    
-    def showToolbarProjectModelling(self):
-        self.dlg2.show()
-    
-    def showToolbarProjectResults(self):
-        self.dlg3.show()
+    #===========================================================================
+    # def showToolbarDataPrep(self):
+    #     
+    #     # Using exec_() creating a blocking dialog, show creates a non-blocking dialog
+    #     #self.dlg1.exec_()
+    #     self.dlg1.show()
+    # 
+    # def showToolbarProjectModelling(self):
+    #     self.dlg2.show()
+    # 
+    # def showToolbarProjectResults(self):
+    #     self.dlg3.show()
+    #===========================================================================
+
+        
         
     def webConnect(self):
+        """no GUI here.. just executing a script"""
         self.logger('pushed webConnect')
         
         wc1 = WebConnect(
             iface = self.iface
-            #self.iface
             )
         
         newCons_d = wc1.addAll()
@@ -220,18 +210,27 @@ class CanFlood:
     
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI.
-        called when user unchecks the plugin?
+        called when user unchecks the plugin
         """
-        for action in self.actions: #loop through each action and unload it
-            #try and remove from plugin menu and toolbar
-
-            
-            self.iface.removeToolBarIcon(action)
-            
+        #=======================================================================
+        # unload toolbars
+        #=======================================================================
         
-        self.iface.removePluginMenu(
-                "&CanFlood",
-                self.action_dl)
+        """toolbar seems to unload without this
+        self.logger('attempting to unload %i actions from toolbar'%len(self.actions))
+        for action in self.actions: #loop through each action and unload it
+            self.iface.removeToolBarIcon(action) #try and remove from plugin menu and toolbar
+            """
+
+        #=======================================================================
+        # unload menu
+        #=======================================================================
+        """not sure if this is needed"""
+        for action in self.act_menu_l:
+            try:
+                self.iface.removePluginMenu( self.menu_name, action)
+            except Exception as e:
+                self.logger('failed to unload action w/ \n    %s'%e)
 
             
         self.logger('unloaded CanFlood')

@@ -23,16 +23,8 @@ from PyQt5.QtCore import QSettings
 # custom imports
 #==============================================================================
 
-#standalone runs
-if __name__ =="__main__": 
-    from hlpr.logr import basic_logger
-    mod_logger = basic_logger()   
-    
-    from hlpr.exceptions import Error
-#plugin runs
-else:
-    #base_class = object
-    from hlpr.exceptions import QError as Error
+
+from hlpr.exceptions import QError as Error
 
 
 #from hlpr.Q import *
@@ -42,6 +34,10 @@ from hlpr.plug import logger as plogger
 
 
 class WebConnect(ComWrkr):
+    """
+    constructed by CanFlood.py from the drop-down menu button
+        not sure if this is setup to run standalone any more
+    """
     allGroups = None
     
     def __init__(self,
@@ -53,16 +49,10 @@ class WebConnect(ComWrkr):
         
         self.iface=iface
         
-        #Qgis run
-        if iface is None:
-            self.logger = mod_logger
-            
-        #Standalone run 
-        else:
-            self.logger= plogger(self)
         
         
-        super().__init__(logger=self.logger, **kwargs) #initilzie teh baseclass
+        
+        super().__init__(logger=plogger(self), **kwargs) #initilzie teh baseclass
         
         #setup
         

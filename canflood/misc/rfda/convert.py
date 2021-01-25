@@ -11,14 +11,24 @@ converting from rfda formats
 # imports---------------------------
 #==============================================================================
 #python standards
-import os, logging
+import os, logging, datetime
 
 import pandas as pd
 import numpy as np
 
 #from scipy import interpolate, integrate
 
+#qgis
+from qgis.core import QgsVectorLayer
 
+#==============================================================================
+# custom imports
+#==============================================================================
+ 
+from hlpr.exceptions import QError as Error
+
+from hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata, vlay_new_df
+#from hlpr.basic import *
 
 #==============================================================================
 # parametessr
@@ -31,25 +41,7 @@ truefalse_d = {
     }
 
 
-#==============================================================================
-# custom imports
-#==============================================================================
 
-#standalone runs
-if __name__ =="__main__": 
-    from hlpr.logr import basic_logger
-    mod_logger = basic_logger()   
-    
-    from hlpr.exceptions import Error
-    
-#plugin runs
-else:
-    mod_logger = logging.getLogger('rfda') #get the root logger
-
-    from hlpr.exceptions import QError as Error
-
-from hlpr.Q import *
-from hlpr.basic import *
 
 mod_name = 'rfda'
 
@@ -66,7 +58,7 @@ class RFDAconv(Qcoms):
         
         self.bsmt_ht = bsmt_ht
         
-        mod_logger.info('RFDAconv.__init__ start')
+        #mod_logger.info('RFDAconv.__init__ start')
         super().__init__(**kwargs) #initilzie teh baseclass
         
     def to_finv(self, #converting rfda inventoryies
@@ -228,7 +220,9 @@ class RFDAconv(Qcoms):
                     logger=None,
                     ):
         """
-        converting rfda style curves into CanFlood
+        converting rfda style residential + nrp curves into CanFlood
+        
+        TODO: add for displacement stlye?
         """
         
         #=======================================================================
@@ -238,12 +232,12 @@ class RFDAconv(Qcoms):
         if bsmt_ht is None: bsmt_ht = self.bsmt_ht
         
         log = logger.getChild('to_curveset')
-        assert isinstance(bsmt_ht, float)
+        
         
         
         crve_d = {'tag':None,
                         'desc':'rfda converted curves',
-                        'source':'CanFlood.%s_%s_%s'%(mod_name, self.tag, datetime.datetime.now().strftime('%Y%m%d')),
+                        'source':'CanFlood.%s_%s_%s'%(mod_name, self.tag, datetime.datetime.today().strftime('%Y%m%d')),
                         'location':'?',
                         'date':'?',
                         'vuln_units':'?',
@@ -254,6 +248,14 @@ class RFDAconv(Qcoms):
                         'exposure':'impact'}
         
         
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert isinstance(df_raw, pd.DataFrame)
+        assert isinstance(bsmt_ht, float)
+        
+        log.debug('on %s'%str(df_raw.shape))
         #==============================================================================
         # load
         #==============================================================================
@@ -345,6 +347,9 @@ class RFDAconv(Qcoms):
         #==============================================================================
         #slice to this
         boolidx = df.loc[:, 24].isin(['MC', 'MS', 'BC', 'BS'])
+        
+        assert boolidx.any(), 'unable to find expected curve type keys in column 24'
+        
         df_res = df.loc[boolidx,:].dropna(axis=1, how='all')
         
         df_res = df_res.rename(columns = {24:'ctype'})
@@ -536,84 +541,3 @@ class RFDAconv(Qcoms):
         
         return ofp
         
-        
-
-
-if __name__ =="__main__": 
-    overwrite=True
-    out_dir = os.path.join(os.getcwd(),'build','other')
-
-    #==========================================================================
-    # dev data: curve conversion
-    #==========================================================================
-
-    crv_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\build\other\rfda\DamageCurves.xls'
-    tag = 'dev'
-     
-     
-    #==========================================================================
-    # load
-    #==========================================================================
-    assert os.path.exists(crv_fp)
-    df_raw = pd.read_excel(crv_fp, header=None)
-         
-    wrkr = RFDAconv(logger=mod_logger, out_dir=out_dir, tag=tag)
-    """ini_standalone?"""
-    #==========================================================================
-    # execute
-    #==========================================================================
-    log = mod_logger.getChild(tag)
-     
- 
-     
-     
-    df_d = wrkr.to_curveset(df_raw, bsmt_ht=1.8, logger=log)
-     
-    #==========================================================================
-    # output
-    #==========================================================================
-    basefn = os.path.splitext(os.path.split(crv_fp)[1])[0]
-    ofp = wrkr.output(df_d, basefn=basefn)
-
-    
-     
-    #===========================================================================
-    # #==========================================================================
-    # # inventory conversion
-    # #==========================================================================
-    # #==========================================================================
-    # # dev data
-    # #==========================================================================
-    # 
-    # inv_fp = r'C:\LS\03_TOOLS\CanFlood\_ins\build\other\rfda\HighRiverNONResDirect.gpkg'
-    # tag = 'dev'
-    # cid = 'xid'
-    #  
-    #  
-    #  
-    # #==========================================================================
-    # # load data
-    # #==========================================================================
-    # assert os.path.exists(inv_fp)
-    # rinv_vlay = load_vlay(inv_fp)
-    # #==========================================================================
-    # # execute
-    # #==========================================================================
-    # log = mod_logger.getChild(tag)
-    # wrkr = RFDAconv(logger=mod_logger, out_dir=out_dir, tag=tag, cid=cid)
-    #  
-    # finv_vlay = wrkr.to_finv(rinv_vlay)
-    #  
-    #  
-    # #==========================================================================
-    # # ouput
-    # #==========================================================================
-    #  
-    # vlay_write(finv_vlay, os.path.join(out_dir, finv_vlay.name()), logger=log, overwrite=overwrite)
-    #===========================================================================
-
-     
-    
-    force_open_dir(out_dir)
-
-    print('finished')
