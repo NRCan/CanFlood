@@ -147,7 +147,7 @@ class rDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
         log = self.logger.getChild('convert_rfda')
         tag = 'rfda'
-        
+        log.debug('start')
         #======================================================================
         # collect from  ui
         #======================================================================
@@ -164,12 +164,14 @@ class rDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         except Exception as e:
             raise Error('failed to convert bsmt_ht to float w/ \n    %s'%e)
         
+        self.feedback.setProgress(10)
         
         #======================================================================
         # input checks
         #======================================================================
         
         wrkr = RFDAconv(logger=self.logger, out_dir=out_dir, tag=tag, bsmt_ht = bsmt_ht)
+        self.feedback.setProgress(20)
         #======================================================================
         # invnentory convert
         #======================================================================
@@ -180,7 +182,7 @@ class rDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             
             self.qproj.addMapLayer(finv_vlay)
             log.info('added \'%s\' to canvas'%finv_vlay.name())
-            
+            self.feedback.setProgress(40)
         #======================================================================
         # curve convert
         #======================================================================
@@ -195,11 +197,12 @@ class rDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             
         else:
             log.info('no valid crv_fp provided')
-            
+        self.feedback.setProgress(99)
         #======================================================================
         # wrap
         #======================================================================
-        self.logger.push('finished')
+        log.push('finished rfda')
+        self.feedback.upd_prog(None) #set the progress bar back down to zero
             
 
     
