@@ -199,7 +199,6 @@ class CanFlood:
         
         wc1 = WebConnect(
             iface = self.iface
-            #self.iface
             )
         
         newCons_d = wc1.addAll()
