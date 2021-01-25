@@ -4,6 +4,11 @@ Created on Feb. 9, 2020
 @author: cefect
 
 plotting damage curves from the library
+
+not implemented in GUI yet
+
+
+TODO: Consolidate w/ riskPlot
 '''
 
 #==========================================================================
@@ -25,18 +30,8 @@ mod_name='curvePlot'
 #==============================================================================
 # # custom
 #==============================================================================
-#standalone runs
-if __name__ =="__main__": 
-    from hlpr.logr import basic_logger
-    mod_logger = basic_logger()   
-    
-    from hlpr.exceptions import Error
-    
 
-#plugin runs
-else:
-    #base_class = object
-    from hlpr.exceptions import QError as Error
+from hlpr.exceptions import QError as Error
     
 #===============================================================================
 # setup matplotlib
@@ -63,7 +58,7 @@ matplotlib.rcParams['figure.autolayout'] = False #use tight layout
     
 
 from hlpr.basic import ComWrkr
-import hlpr.basic
+#import hlpr.basic
 
 
 
@@ -413,119 +408,7 @@ class CurvePlotr(ComWrkr):
         return ax
                 
 
-if __name__ =="__main__": 
-    print('start')
 
-    
-    #===========================================================================
-    #nrp curves
-    #===========================================================================
-    data_dir = r'C:\LS\03_TOOLS\LML\_keeps2\nrp\nrpPer_20200517125446'
-    
-    runpars_d={
-        'inEq':{
-            'out_dir':os.path.join(data_dir, 'figs'),
-            'curves_fp':os.path.join(data_dir, 'curves_nrpPer_01_20200517_inEq.xls'),
-            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
-            },
-        'inStk':{
-            'out_dir':os.path.join(data_dir, 'figs'),
-            'curves_fp':os.path.join(data_dir, 'curves_nrpPer_01_20200517_inStk.xls'),
-            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
-            },
-        'outEq':{
-            'out_dir':os.path.join(data_dir, 'figs'),
-            'curves_fp':os.path.join(data_dir, 'curves_nrpPer_01_20200517_outEq.xls'),
-            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
-            },
-        'outStk':{
-            'out_dir':os.path.join(data_dir, 'figs'),
-            'curves_fp':os.path.join(data_dir, 'curves_nrpPer_01_20200517_outStk.xls'),
-            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
-            },
-        }
-    
-    #===========================================================================
-    #mbc curves
-    #===========================================================================
-    data_dir = r'C:\LS\03_TOOLS\LML\_keeps2\curves\mbc\curving\mbcC_20200519145845'
-    
-    runpars_d={
-        'f0':{
-            'out_dir':os.path.join(data_dir,'figs', 'f0'),
-            'curves_fp':os.path.join(data_dir, 'curves_mbcC_03_20200519_f0_29.xls'),
-            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
-            },
-        'f1':{
-            'out_dir':os.path.join(data_dir,'figs', 'f1'),
-            'curves_fp':os.path.join(data_dir, 'curves_mbcC_03_20200519_f1_54.xls'),
-            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
-            },
-        'gar':{
-            'out_dir':os.path.join(data_dir,'figs', 'gar'),
-            'curves_fp':os.path.join(data_dir, 'curves_mbcC_03_20200519_gar_17.xls'),
-            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
-            },
-        'gen':{
-            'out_dir':os.path.join(data_dir, 'figs','gen'),
-            'curves_fp':os.path.join(data_dir, 'curves_mbcC_03_20200519_gen_52.xls'),
-            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
-            },
-        'f1gen':{
-            'out_dir':os.path.join(data_dir, 'figs','f1gen'),
-            'curves_fp':os.path.join(data_dir, 'curves_mbcC_03_20200519_f1gen_54.xls'),
-            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
-            },
-        }
-    
-    #===========================================================================
-    # rfda curves
-    #===========================================================================
-    data_dir = r'C:\LS\02_WORK\IBI\201909_FBC\04_CALC\curves\rfda'
-    
-    runpars_d={
-        'cont':{
-            'out_dir':os.path.join(data_dir,'figs'),
-            'curves_fp':os.path.join(data_dir, 'CanFlood_curves_rfda_20200218.xls'),
-            #'dfmt':'{0:.0f}', 'y1lab':'impacts',
-            },
-        }
-    
-    for tag, pars in runpars_d.items():
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        log = logging.getLogger(tag)
-        out_dir, curves_fp = pars['out_dir'], pars['curves_fp']
-        #=======================================================================
-        # precheck
-        #=======================================================================
-        
-        #=======================================================================
-        # execute
-        #=======================================================================
-        wrkr = CurvePlotr(out_dir=out_dir, logger=log, tag=tag)
-        
-        #load data
-        curves_d = wrkr.load_data(curves_fp)
-        
-        """expects 'plot_f'  and 'plot_group' columns"""
-        res_d = wrkr.plotGroup(curves_d) 
-        
-        for cname, fig in res_d.items():
-            wrkr.output_fig(fig)
-
-
-        
-        log.info('finished')
-
-   
-        
-        
-    
-    hlpr.basic.force_open_dir(out_dir)
-    
-    print('finished')
     
 
     
