@@ -220,7 +220,9 @@ class RFDAconv(Qcoms):
                     logger=None,
                     ):
         """
-        converting rfda style curves into CanFlood
+        converting rfda style residential curves into CanFlood
+        
+        TODO: add for displacement stlye?
         """
         
         #=======================================================================
@@ -235,7 +237,7 @@ class RFDAconv(Qcoms):
         
         crve_d = {'tag':None,
                         'desc':'rfda converted curves',
-                        'source':'CanFlood.%s_%s_%s'%(mod_name, self.tag, datetime.datetime.now().strftime('%Y%m%d')),
+                        'source':'CanFlood.%s_%s_%s'%(mod_name, self.tag, datetime.datetime.today().strftime('%Y%m%d')),
                         'location':'?',
                         'date':'?',
                         'vuln_units':'?',
@@ -345,6 +347,9 @@ class RFDAconv(Qcoms):
         #==============================================================================
         #slice to this
         boolidx = df.loc[:, 24].isin(['MC', 'MS', 'BC', 'BS'])
+        
+        assert boolidx.any(), 'unable to find expected curve type keys in column 24'
+        
         df_res = df.loc[boolidx,:].dropna(axis=1, how='all')
         
         df_res = df_res.rename(columns = {24:'ctype'})
