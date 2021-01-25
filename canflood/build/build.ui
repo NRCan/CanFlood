@@ -1067,7 +1067,7 @@ p, li { white-space: pre-wrap; }
                  </widget>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="pushButton_Inv_store_2">
+                 <widget class="QPushButton" name="pushButton_Inv_curves">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                     <horstretch>0</horstretch>

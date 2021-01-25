@@ -29,15 +29,8 @@ from qgis.core import QgsVectorLayer, QgsWkbTypes
 #==============================================================================
 
 #standalone runs
-if __name__ =="__main__": 
-    from hlpr.logr import basic_logger
-    mod_logger = basic_logger()   
-    
-    from hlpr.exceptions import Error
-#plugin runs
-else:
-    #base_class = object
-    from hlpr.exceptions import QError as Error
+ 
+from hlpr.exceptions import QError as Error
     
 
 from hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata

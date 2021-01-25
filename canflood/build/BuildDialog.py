@@ -218,7 +218,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             self.vDialog.show()
             
         self.pushButton_inv_vfunc.clicked.connect(vDia)
-        self.pushButton_Inv_store_curves.clicked.connect(self.store_curves)
+        self.pushButton_Inv_curves.clicked.connect(self.store_curves)
 
         #=======================================================================
         # Store IVlayer
@@ -587,11 +587,11 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         curves_fp=self.lineEdit_curve.text()
         cf_fp = self.get_cf_fp()
-        
+        self.feedback.upd_prog(10)
         #=======================================================================
         # precheck
         #=======================================================================
-        assert os.path.exists(curves_fp), 'bad curves_fp: %s'%curves_fp)
+        assert os.path.exists(curves_fp), 'bad curves_fp: %s'%curves_fp
 
 
         #=======================================================================
@@ -602,7 +602,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                        # out_dir=None, tag=tag, cid=cid, overwrite=self.overwrite
                         cf_fp=cf_fp, 
                         ) 
-        
+        self.feedback.upd_prog(50)
         wrkr.update_cf(
             {
             'dmg_fps':(
@@ -611,6 +611,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                 ),
              },
             )
+        
+        self.feedback.upd_prog(95)
+        self.feedback.upd_prog(None)
         
     def convert_finv(self): #aoi slice and convert the finv vector to csv file
         
