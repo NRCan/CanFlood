@@ -206,7 +206,7 @@ p, li { white-space: pre-wrap; }
               <string extracomment="here is a toolTip"/>
              </property>
              <property name="title">
-              <string>Build Session Controls:</string>
+              <string>Session Controls:</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_24">
               <item>
@@ -298,7 +298,7 @@ p, li { white-space: pre-wrap; }
                  </size>
                 </property>
                 <property name="title">
-                 <string>Build Controls:</string>
+                 <string>File Behavior</string>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_27">
                  <item>
@@ -1500,12 +1500,6 @@ p, li { white-space: pre-wrap; }
                      </colorrole>
                     </disabled>
                    </palette>
-                  </property>
-                  <property name="font">
-                   <font>
-                    <weight>75</weight>
-                    <bold>true</bold>
-                   </font>
                   </property>
                   <property name="text">
                    <string>Update Control File</string>
