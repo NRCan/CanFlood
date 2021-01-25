@@ -110,6 +110,50 @@ class CurvePlotr(ComWrkr):
         
         return data_d
     
+    def plotAll(self, #plot everything in a single group
+                cLib_d, #container of functions
+                title=None,
+                logger=None,
+                **lineKwargs
+                ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        
+        
+        log = logger.getChild('plotAll')
+        log.info('plotting w/ %i'%len(cLib_d))
+        
+        if title is None: title='%s vFunc plot of %i curves'%(self.tag, len(cLib_d))
+        
+        #=======================================================================
+        # convert clib
+        #=======================================================================
+            
+        cLib_d = {k:df.set_index(0, drop=True).iloc[:,0].to_dict() for k, df in cLib_d.items()}
+
+        
+        #===============================================================
+        # loop and plot
+        #===============================================================
+        ax = None
+        
+        for cName, crv_d in cLib_d.items():
+            if cName.startswith('_'): continue #skip these
+
+            
+            ax = self.plotCurve(crv_d, ax=ax,**lineKwargs)
+            
+        #post format
+        fig = ax.figure
+        fig.suptitle(title)
+        ax.legend()
+        
+        return fig
+            
+
+    
     
     def plotGroup(self, #plot a group of figures w/ handles
                   cLib_d,

@@ -3,7 +3,7 @@ name = IBI_2020
 location = BCs LowerMainland
 creation_date = 2020
 asset_types = residential structures
-reference = IBI Group and Golder Associates. 2020. 'Flood Risk Assessment for BC’s Lower Mainland.' Fraser Basin Council.
+reference = IBI Group and Golder Associates. 2020. 'Flood Risk Assessment for BCs Lower Mainland.' Fraser Basin Council.
 original_platform = CanFlood
 
 [variables]

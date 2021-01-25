@@ -209,10 +209,16 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #give commmon widgets
         self.vDialog.lineEdit_wd = self.lineEdit_wd #share the reference
         self.vDialog.lineEdit_curve = self.lineEdit_curve
+        self.vDialog.linEdit_ScenTag = self.linEdit_ScenTag
         
         #connect launcher button
-        self.pushButton_inv_vfunc.clicked.connect(self.vDialog.show)
-        
+        def vDia(): #helper to connect slots and 
+            """only executing setup once called to simplify initial loading"""
+            _ = self.vDialog._setup()
+            self.vDialog.show()
+            
+        self.pushButton_inv_vfunc.clicked.connect(vDia)
+
 
         #=======================================================================
         # Store IVlayer

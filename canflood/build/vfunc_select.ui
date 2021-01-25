@@ -71,6 +71,13 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QTableView" name="tableView_bottomRight">
+        <property name="selectionMode">
+         <enum>QAbstractItemView::NoSelection</enum>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
@@ -117,7 +124,20 @@
          </sizepolicy>
         </property>
         <property name="text">
-         <string>Copy</string>
+         <string>Copy Set</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_PlotSet">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Plot Set</string>
         </property>
        </widget>
       </item>
