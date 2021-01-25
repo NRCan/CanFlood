@@ -218,7 +218,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             self.vDialog.show()
             
         self.pushButton_inv_vfunc.clicked.connect(vDia)
-
+        self.pushButton_Inv_store_curves.clicked.connect(self.store_curves)
 
         #=======================================================================
         # Store IVlayer
@@ -555,11 +555,14 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # #set some basics
         #=======================================================================
-        if not self.lineEdit_curve.text()=='':
-            curves_fp=self.lineEdit_curve.text()
-        else:
-            curves_fp = None
-        wrkr.upd_cf_first(scenarioName=self.linEdit_ScenTag.text(), curves_fp=curves_fp)
+        #=======================================================================
+        # if not self.lineEdit_curve.text()=='':
+        #     curves_fp=self.lineEdit_curve.text()
+        # else:
+        #     curves_fp = None
+        #=======================================================================
+            
+        wrkr.upd_cf_first(scenarioName=self.linEdit_ScenTag.text())
  
         log.info("default CanFlood model config file created :\n    %s"%cf_path)
         
@@ -580,6 +583,34 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         log.push('control file created for "\'%s\''%tag)
         self.feedback.upd_prog(None) #set the progress bar back down to zero
 
+    def store_curves(self): #write the curves_fp to the control file
+        
+        curves_fp=self.lineEdit_curve.text()
+        cf_fp = self.get_cf_fp()
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert os.path.exists(curves_fp), 'bad curves_fp: %s'%curves_fp)
+
+
+        #=======================================================================
+        # execute
+        #=======================================================================
+        #get a simple worker to handle the control file
+        wrkr = Preparor(logger=self.logger,  feedback=self.feedback,
+                       # out_dir=None, tag=tag, cid=cid, overwrite=self.overwrite
+                        cf_fp=cf_fp, 
+                        ) 
+        
+        wrkr.update_cf(
+            {
+            'dmg_fps':(
+                {'curves':curves_fp}, 
+                '#\'curves\' file path set from BuildDialog.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                ),
+             },
+            )
         
     def convert_finv(self): #aoi slice and convert the finv vector to csv file
         
@@ -631,6 +662,11 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         out_fp = wrkr.finv_to_csv( vlay, felv=self.comboBox_SSelv.currentText(),
                                    logger=self.logger)
 
+        #try the curves
+        """user may think this button stores the curves also"""
+        try:
+            self.store_curves()
+        except: pass
         #=======================================================================
         # wrap
         #=======================================================================

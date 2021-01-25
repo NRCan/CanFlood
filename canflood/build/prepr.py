@@ -121,6 +121,9 @@ class Preparor(Qcoms):
                      scenarioName=None,
                      curves_fp=None,
                      ):
+        """
+        todo: change this to accept kwargs
+        """
         #=======================================================================
         # defaults
         #=======================================================================
@@ -312,13 +315,7 @@ class Preparor(Qcoms):
         
         self.feedback.upd_prog(99)
         return  finv_vlay
-    
-    def test(self):
-        print('Preparor test')
-    
-
-
-
+ 
 
 
 
