@@ -1291,6 +1291,7 @@ class Model(ComWrkr,
         #=======================================================================
         assert self.attriMode
         #assert 'dmgs' in self.data_d, 'dmgs data set required with attrimat'
+        assert not fp=='', 'passed attriMode=True but got no value for \'%s\''%dtag
         assert os.path.exists(fp), '%s got invalid filepath \n    %s'%(dtag, fp)
         
         #assert isinstance(self.expcols, pd.Index), 'bad expcols'
