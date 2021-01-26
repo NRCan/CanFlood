@@ -134,11 +134,13 @@ class Risk2(Plotr, #This inherits 'Model'
         self.load_finv()
         self.load_evals()
         self.load_dmgs()
+        
         if not self.exlikes == '':
             self.load_exlikes()
 
             
         if self.attriMode:
+            """the control file parameter name changes depending on the model"""
             self.load_attrimat(dxcol_lvls=2)
             self.promote_attrim()
         
@@ -207,7 +209,7 @@ class Risk2(Plotr, #This inherits 'Model'
         #=======================================================================
         # #no duplicates. .just rename by aep
         #=======================================================================
-        else:
+        else:            
             ddf1 = ddf.rename(columns = aep_ser.to_dict()).sort_index(axis=1)
 
         #======================================================================
@@ -216,8 +218,9 @@ class Risk2(Plotr, #This inherits 'Model'
         ddf1 = ddf1.round(self.prec)
         
         #check the columns
-        assert np.array_equal(ddf1.columns.values, aep_ser.unique()), 'column name problem'
-        log.info('checking monotonoticy on %s'%str(ddf1.shape))
+        assert np.array_equal(ddf1.columns.values, aep_ser.unique()), \
+            'expect unique evals to match resolved damages'
+        log.debug('checking monotonoticy on %s'%str(ddf1.shape))
         _ = self.check_monot(ddf1)
         
         

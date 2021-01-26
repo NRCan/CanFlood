@@ -746,7 +746,7 @@ class Model(ComWrkr,
         aep_ser.name='aep'  
  
         #======================================================================
-        # check range
+        # check2
         #======================================================================
         #check all aeps are below 1
         boolar = np.logical_and(
@@ -755,6 +755,15 @@ class Model(ComWrkr,
         
         assert np.all(boolar), 'passed aeps out of range'
         
+        #check logic against whether this model considers failure
+        log.debug('\n%s'%aep_ser.to_frame().join(aep_ser.duplicated(keep=False).rename('dupes')))
+        if self.exlikes == '': #no failure
+            
+            assert len(aep_ser.unique())==len(aep_ser), \
+            'got duplicated \'evals\' but no \'exlikes\' data was provided.. see logger'
+        else:
+            assert len(aep_ser.unique())!=len(aep_ser), \
+            'got unique \'evals\' but \'exlikes\' data is provided... see logger'
         
         #=======================================================================
         # #assemble event type  frame

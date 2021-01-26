@@ -4,6 +4,8 @@ Created on Jan. 23, 2021
 @author: cefect
 
 unit tests for the Risk2 model
+
+TODO: add some tests for model builds that should FAIL?
 '''
 
 
