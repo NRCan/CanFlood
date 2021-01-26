@@ -236,20 +236,26 @@ class Preparor(Qcoms):
         return out_fp
             
     
-    def to_L1finv(self,
+    def to_finv(self, #clean a raw vlay an add some finv colums
                 in_vlay,
                 drop_colns=['ogc_fid', 'fid'], #optional columns to drop from df
-                new_data = {'f0_scale':1.0, 'f0_elv':0.0},
+                nestID = 0, 
+                new_data = {'scale':1.0, 'elv':0.0, 'tag':None, 'cap':None},
                 newLayname = 'finv_L1',
                 ):
         
-        log = self.logger.getChild('to_L1finv')
+        log = self.logger.getChild('to_finv')
         
         #=======================================================================
         # precheck
         #=======================================================================
         assert isinstance(in_vlay, QgsVectorLayer)
-        assert 'Point' in QgsWkbTypes().displayString(in_vlay.wkbType())
+        assert isinstance(nestID, int)
+        
+        miss_l = set(new_data.keys()).difference(['scale', 'elv', 'tag', 'cap'])
+        assert len(miss_l)==0, 'got some unrecognzied'
+        
+        #assert 'Point' in QgsWkbTypes().displayString(in_vlay.wkbType())
         dp = in_vlay.dataProvider()
         
         log.info('on %s w/ %i feats'%(in_vlay.name(), dp.featureCount()))
@@ -279,15 +285,31 @@ class Preparor(Qcoms):
         log.info('dropped %i empty columns'%(len(df1.columns) - len(df2.columns)))
         
         self.feedback.upd_prog(60)
+        
+        #=======================================================================
+        # prep input data
+        #=======================================================================
+        d = dict()
+        for kRaw, vRaw in new_data.items():
+            if vRaw is None:
+                if kRaw == 'tag':
+                    v = '' #get the right data type for empty tag fields?
+                else:
+                    v = np.nan
+            else:
+                v = vRaw
+                
+            d['f%i_%s'%(nestID, kRaw)] = v
+            
         #=======================================================================
         # add fields
         #=======================================================================
         #build the new data
-        log.info('adding field data:\n    %s'%new_data)
-        new_df = pd.DataFrame(index=df_raw.index, data=new_data)
+        log.info('adding field data:\n    %s'%d)
+ 
         
         #join the two
-        res_df = new_df.join(df2)
+        res_df = pd.DataFrame(index=df_raw.index, data=d).join(df2)
 
 
         self.feedback.upd_prog(70)
