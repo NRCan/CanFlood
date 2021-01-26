@@ -29,7 +29,7 @@ from tScripts import get_suite
 
         
 
-class tAtw(tRes): #worker for testing the damage model
+class tObj(tRes): #worker for testing the damage model
     """not testing any data... just making sure we get a figure"""
     
     modelClassObj = Cmpr
@@ -48,26 +48,7 @@ class tAtw(tRes): #worker for testing the damage model
         #=======================================================================
         # #run the model
         #=======================================================================
-        si_ttl = self.Model.get_slice_noFail()
-        """TODO: add data check?"""
-        self.assertTrue(len(si_ttl)>0, msg=self.name)
-        #=======================================================================
-        # plot
-        #=======================================================================
-        for y1lab in ['AEP', 'impacts']:
-            fig = self.Model.plot_slice(si_ttl, y1lab=y1lab)
-            self.assertIsInstance(fig, plt.Figure,  msg='%s'%self.name)
-            
-    def test_stacks(self):
-        print('test_stacks on \'%s\''%self.name)
-        stack_dxind, sEAD_ser = self.Model.get_stack()
-        
-        self.assertTrue(len(stack_dxind)>0, msg=self.name)
-        
-        #loop and check plots
-        for y1lab in ['impacts', 'AEP']:
-            fig = self.Model.plot_stackdRCurves(stack_dxind, sEAD_ser, y1lab=y1lab)
-            self.assertIsInstance(fig, plt.Figure,  msg='%s'%self.name)
+
 
         
 
@@ -89,7 +70,7 @@ def gen_suite(
 
     ):
     
-    return get_suite(runpars_d,tAtw,
+    return get_suite(runpars_d,tObj,
                       dataLoad_pars = {},
                       )
     

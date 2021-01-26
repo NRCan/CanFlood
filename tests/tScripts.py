@@ -89,7 +89,8 @@ def load_test_data(
     
     return d
 
-def get_suite(suitePars_d, #build the tDmg testing suite from a set of paramters
+def get_suite(
+            suitePars_d, #build the tDmg testing suite from a set of paramters
               testClassObj,
               dataLoad_pars={},
               absolute_fp=True,

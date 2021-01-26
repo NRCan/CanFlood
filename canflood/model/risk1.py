@@ -100,7 +100,7 @@ class Risk1(Plotr):
     y1lab = 'impacts'
     
     def __init__(self,
-                 cf_fp,
+                 cf_fp='',
                  **kwargs
                  ):
         

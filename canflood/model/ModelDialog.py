@@ -252,7 +252,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         # setup/execute
         #=======================================================================
-        model = Risk1(cf_fp, out_dir=out_dir, logger=self.logger, tag=tag,absolute_fp=absolute_fp,
+        model = Risk1(cf_fp=cf_fp, out_dir=out_dir, logger=self.logger, tag=tag,absolute_fp=absolute_fp,
                       feedback=self.feedback)._setup()
         
         res, res_df = model.run(res_per_asset=res_per_asset)
@@ -302,7 +302,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #======================================================================
         # #build/run model
         #======================================================================
-        model = Dmg2(cf_fp, out_dir = out_dir, logger = self.logger, tag=tag, 
+        model = Dmg2(cf_fp=cf_fp, out_dir = out_dir, logger = self.logger, tag=tag, 
                      absolute_fp=absolute_fp, feedback=self.feedback,
                      attriMode=self.checkBox_SS_attr.isChecked(),
                      )._setup()
@@ -356,7 +356,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #======================================================================
         # run the model
         #======================================================================
-        model = Risk2(cf_fp, out_dir=out_dir, logger=self.logger, tag=tag,absolute_fp=absolute_fp,
+        model = Risk2(cf_fp=cf_fp, out_dir=out_dir, logger=self.logger, tag=tag,absolute_fp=absolute_fp,
                       feedback=self.feedback, attriMode=self.checkBox_SS_attr.isChecked(),
                       )._setup()
         
