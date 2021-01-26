@@ -241,10 +241,13 @@ class Preparor(Qcoms):
                 drop_colns=['ogc_fid', 'fid'], #optional columns to drop from df
                 nestID = 0, 
                 new_data = {'scale':1.0, 'elv':0.0, 'tag':None, 'cap':None},
-                newLayname = 'finv_L1',
+                newLayname = None,
                 ):
-        
+        #=======================================================================
+        # defaults
+        #=======================================================================
         log = self.logger.getChild('to_finv')
+        if newLayname is None: newLayname = 'finv_%s'%in_vlay.name()
         
         #=======================================================================
         # precheck

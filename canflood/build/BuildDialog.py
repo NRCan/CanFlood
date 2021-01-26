@@ -258,8 +258,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # NRPI
         #=======================================================================
         #filter the vector layer
-        self.mMapLayerComboBox_inv_nrpi.setFilters(QgsMapLayerProxyModel.VectorLayer) 
-        self.mMapLayerComboBox_inv_nrpi.setCurrentIndex(-1) #clear the selection
+        self.mMapLayerComboBox_inv_finv.setFilters(QgsMapLayerProxyModel.VectorLayer) 
+        self.mMapLayerComboBox_inv_finv.setCurrentIndex(-1) #clear the selection
         
         #connect the push button
         self.pushButton_inv_const.clicked.connect(self.construct_finv)
@@ -752,7 +752,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         in_vlay = self.mMapLayerComboBox_inv_finv.currentLayer()
         out_dir = self.lineEdit_wd.text()
-        
+        nestID = int(self.spinBox_inv.value())
         new_data = dict()
         for dName, (lineEdit, reqType) in {
                                 'scale':(self.lineEdit_inv_scale, float),
@@ -788,7 +788,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # run converter
         #=======================================================================
-        finv_vlay = wrkr.to_finv(in_vlay_aoi, newLayname = 'finv_NPRI')
+        finv_vlay = wrkr.to_finv(in_vlay_aoi, newLayname = 'finv_%s'%in_vlay.name(),
+                                 nestID=nestID, new_data=new_data)
         
         #=======================================================================
         # wrap
@@ -800,7 +801,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         else:
             raise Error('ensure load results is checked!')
         
-        log.push('finished NPRI conversion')
+        log.push('finished building finv from %s'%in_vlay.name())
         self.feedback.upd_prog(None) #set the progress bar back down to zero
         
     def run_rPrep(self):

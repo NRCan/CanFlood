@@ -946,7 +946,7 @@ p, li { white-space: pre-wrap; }
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_31">
                  <item>
-                  <widget class="QgsMapLayerComboBox" name="mMapLayerComboBox_inv_nrpi">
+                  <widget class="QgsMapLayerComboBox" name="mMapLayerComboBox_inv_finv">
                    <property name="allowEmptyLayer">
                     <bool>true</bool>
                    </property>
@@ -1105,7 +1105,7 @@ p, li { white-space: pre-wrap; }
                </widget>
               </item>
               <item alignment="Qt::AlignHCenter">
-               <widget class="QPushButton" name="pushButton_inv_nrpi">
+               <widget class="QPushButton" name="pushButton_inv_const">
                 <property name="maximumSize">
                  <size>
                   <width>100</width>
