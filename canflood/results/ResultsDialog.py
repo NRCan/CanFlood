@@ -581,7 +581,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # init
         #=======================================================================
-        wrkr = results.compare.Cmpr(fps_l = list(fp_d.values()),
+        wrkr = results.compare.Cmpr(fp_d = fp_d,
                     out_dir=out_dir, tag=tag, logger=self.logger,
                     cf_fp = main_cf_fp)._setup()
     

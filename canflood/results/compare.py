@@ -48,7 +48,7 @@ class Cmpr(Plotr):
         )
 
     def __init__(self,
-                 fps_l = list(), #control file paths of scenario children to load
+                 fps_d = dict(), #control file paths of scenario children to load
                   *args, **kwargs):
         
         super().__init__(*args, **kwargs)
@@ -56,7 +56,7 @@ class Cmpr(Plotr):
         #=======================================================================
         # attachments
         #=======================================================================
-        self.fps_l = fps_l
+        self.fps_d = fps_d
         
         #=======================================================================
         # setup
@@ -79,24 +79,24 @@ class Cmpr(Plotr):
         return self
         
     def load_scenarios(self,
-                 fps_l=None, #container of filepaths 
+                 fps_d=None, #container of filepaths 
                  
                  ):
         #=======================================================================
         # defaults
         #=======================================================================
         log = self.logger.getChild('load_scenarios')
-        if fps_l is None: fps_l = self.fps_l
-        log.info('on %i scenarios'%len(fps_l))
+        if fps_d is None: fps_d = self.fps_d
+        log.info('on %i scenarios'%len(fps_d))
         
         
         #=======================================================================
         # precheck
         #=======================================================================
-        assert isinstance(fps_l, list)
-        assert len(fps_l)==len(set(fps_l)), 'non unique fps!'
+        assert isinstance(fps_d, dict)
+        assert len(fps_d.values())==len(set(fps_d.values())), 'non unique fps!'
         
-        for i, fp in enumerate(fps_l):
+        for k, fp in fps_d.items():
             assert isinstance(fp, str)
             assert os.path.exists(fp), 'bad filepath: %s'%(fp)
                 
@@ -108,8 +108,8 @@ class Cmpr(Plotr):
         """needs to be a strong reference or the workers die!"""
         d = dict() #start a weak reference container
         
-        for i, fp in enumerate(fps_l):
-            log.debug('loading %i/%i'%(i+1, len(fps_l)))
+        for i, fp in enumerate(fps_d.values()):
+            log.debug('loading %i/%i'%(i+1, len(fps_d)))
             # build/load the children
             sWrkr = Scenario(self, cf_fp=fp)
 
