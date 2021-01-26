@@ -24,7 +24,8 @@ from results.attribution import Attr
 
 
 
-from tRes.tResCom import get_suite, tRes
+from tRes.tResCom import tRes
+from tScripts import get_suite
 
         
 
@@ -41,7 +42,7 @@ class tAtw(tRes): #worker for testing the damage model
     def test_noFail(self, #testing the main output
 
                   ): 
-        print('test_main on \'%s\''%self.name)
+        print('test_noFail on \'%s\''%self.name)
         
 
         #=======================================================================
@@ -49,16 +50,25 @@ class tAtw(tRes): #worker for testing the damage model
         #=======================================================================
         si_ttl = self.Model.get_slice_noFail()
         """TODO: add data check?"""
-        self.assertIsInstance(si_ttl, pd.DataFrame)
+        self.assertTrue(len(si_ttl)>0, msg=self.name)
         #=======================================================================
         # plot
         #=======================================================================
         for y1lab in ['AEP', 'impacts']:
             fig = self.Model.plot_slice(si_ttl, y1lab=y1lab)
-            self.assertIsInstance(fig, plt.Figure)
+            self.assertIsInstance(fig, plt.Figure,  msg='%s'%self.name)
+            
+    def test_stacks(self):
+        print('test_stacks on \'%s\''%self.name)
+        stack_dxind, sEAD_ser = self.Model.get_stack()
         
+        self.assertTrue(len(stack_dxind)>0, msg=self.name)
+        
+        #loop and check plots
+        for y1lab in ['impacts', 'AEP']:
+            fig = self.Model.plot_stackdRCurves(stack_dxind, sEAD_ser, y1lab=y1lab)
+            self.assertIsInstance(fig, plt.Figure,  msg='%s'%self.name)
 
-        
         
 
         

@@ -24,7 +24,7 @@ mod_logger = logging.getLogger('testing')
 
 
 from tmodel.tModCom import tModel
-from tScripts import load_test_data, get_suite
+from tScripts import get_suite
 
 
         
