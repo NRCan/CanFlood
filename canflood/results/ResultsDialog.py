@@ -557,16 +557,6 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #clean it out
         fp_d = dict()
         for k1, rd in copy.copy(raw_d).items():
-            #===================================================================
-            # for k2, v in rd.items():
-            #     if v=='':
-            #         pass
-            #     else:
-            #         #add the page
-            #         if not k1 in parsG_d:
-            #             parsG_d[k1] = dict()
-            #         parsG_d[k1][k2]=v
-            #===================================================================
             
             if not rd['cf_fp']=='':
                 fp_d[k1] = rd['cf_fp']
@@ -591,17 +581,18 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # init
         #=======================================================================
-        wrkr = results.compare.Cmpr(out_dir=out_dir, tag=tag, logger=self.logger,
-                    cf_fp = main_cf_fp)
+        wrkr = results.compare.Cmpr(fps_l = list(fp_d.values()),
+                    out_dir=out_dir, tag=tag, logger=self.logger,
+                    cf_fp = main_cf_fp)._setup()
     
         #load
-        sWrkr_d = wrkr.load_scenarios(list(fp_d.values()))
+        #sWrkr_d = wrkr.load_scenarios(list(fp_d.values()))
         self.feedback.setProgress(20)
         #=======================================================================
         # #compare the control files
         #=======================================================================
         if self.checkBox_C_cf.isChecked():
-            mdf = wrkr.cf_compare(sWrkr_d)
+            mdf = wrkr.cf_compare()
             mdf.to_csv(os.path.join(out_dir, 'CFcompare_%s_%i.csv'%(tag, len(mdf.columns))))
         
         self.feedback.setProgress(60)
@@ -611,10 +602,10 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         if self.checkBox_C_rplot.isChecked():
             
             if self.checkBox_C_ari.isChecked():
-                fig = wrkr.riskCurves(sWrkr_d, y1lab='impacts')
+                fig = wrkr.riskCurves(y1lab='impacts')
                 wrkr.output_fig(fig)
             if self.checkBox_C_aep.isChecked():
-                fig = wrkr.riskCurves(sWrkr_d, y1lab='AEP')
+                fig = wrkr.riskCurves(y1lab='AEP')
                 wrkr.output_fig(fig)
                 
             

@@ -48,10 +48,15 @@ class Cmpr(Plotr):
         )
 
     def __init__(self,
-
+                 fps_l = list(), #control file paths of scenario children to load
                   *args, **kwargs):
         
         super().__init__(*args, **kwargs)
+        
+        #=======================================================================
+        # attachments
+        #=======================================================================
+        self.fps_l = fps_l
         
         #=======================================================================
         # setup
@@ -68,17 +73,20 @@ class Cmpr(Plotr):
         self.logger.debug('%s.__init__ w/ feedback \'%s\''%(
             self.__class__.__name__, type(self.feedback).__name__))
     
-    
+    def _setup(self):
+        """even though we only have one setup function... keeping this hear to match other workers"""
+        _ = self.load_scenarios()
+        return self
         
     def load_scenarios(self,
-                 fps_l, #container of filepaths 
+                 fps_l=None, #container of filepaths 
                  
                  ):
         #=======================================================================
         # defaults
         #=======================================================================
         log = self.logger.getChild('load_scenarios')
-        
+        if fps_l is None: fps_l = self.fps_l
         log.info('on %i scenarios'%len(fps_l))
         
         
@@ -120,7 +128,7 @@ class Cmpr(Plotr):
         return wdict(self.sWrkr_d)
         
     def riskCurves(self, #plot a risk curve comparing all the scenarios
-                   sWrkr_d, #container of scenario works to plot curve comparison
+                   sWrkr_d=None, #container of scenario works to plot curve comparison
                    logger=None,
                    
                    #plot keys
@@ -136,7 +144,7 @@ class Cmpr(Plotr):
         #=======================================================================
         if logger is None: logger=self.logger
         log = logger.getChild('riskCurves')
-        
+        if sWrkr_d is None: sWrkr_d = wdict(self.sWrkr_d)
         
         #=======================================================================
         # collect data from children
@@ -165,13 +173,13 @@ class Cmpr(Plotr):
                                      **plotKwargs)
         
     def cf_compare(self, #compare control file values between Scenarios
-                   sWrkr_d,
+                   sWrkr_d=None,
                    logger=None):
         
         
         if logger is None: logger=self.logger
         log = logger.getChild('cf_compare')
-        
+        if sWrkr_d is None: sWrkr_d = wdict(self.sWrkr_d)
         
         #=======================================================================
         # collect all the parameters from the children
