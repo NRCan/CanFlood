@@ -29,7 +29,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>CanFlood's Build Toolset</string>
+   <string>CanFlood Build Toolset</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_11">
    <item>
@@ -980,7 +980,7 @@ p, li { white-space: pre-wrap; }
                     </widget>
                    </item>
                    <item>
-                    <widget class="QSpinBox" name="spinBox">
+                    <widget class="QSpinBox" name="spinBox_inv">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                        <horstretch>0</horstretch>
