@@ -23,13 +23,14 @@ from model.risk2 import Risk2
 mod_logger = logging.getLogger('testing')
 
 
-from tmodel.tModCom import tModel, get_suite
+from tmodel.tModCom import tModel
+from tScripts import load_test_data, get_suite
 
 
         
 
 class tRisk(tModel): #worker for testing the damage model
-    
+    modelClassObj = Risk2
     
     
     def __init__(self, *args, **kwargs):
@@ -174,10 +175,11 @@ def gen_suite(    runpars_d={
 
 
     return get_suite(runpars_d,
-                      Risk2,tRisk,
+                      tRisk,
                    dataLoad_pars = {'attr03*':{'header':[0,1,2], 'index_col':0}, 
                                     '*passet.csv':{'index_col':0},
-                                    '*ttl.csv':{}}
+                                    '*ttl.csv':{}},
+                   attriMode=True, #always initilizing models in attribution mode
                       
                       )
 

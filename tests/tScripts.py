@@ -9,10 +9,11 @@ common scripts to share across testing modules
 # imports
 #===============================================================================
 import unittest, tempfile, inspect, logging, os, fnmatch, re
+from unittest import TestLoader
 import pandas as pd
 import numpy as np
 
-
+mod_logger = logging.getLogger('tModCom')
 #===============================================================================
 # classes
 #===============================================================================
@@ -62,7 +63,7 @@ def load_test_data(
                    dataLoad_pars = {},
                    ext='.csv'
                     ):
-    
+    if len(dataLoad_pars)==0: return dict()
     d = dict()
     assert os.path.exists(res_dir), res_dir
     #get all csv files in the folder
@@ -87,3 +88,32 @@ def load_test_data(
         
     
     return d
+
+def get_suite(suitePars_d, #build the tDmg testing suite from a set of paramters
+              testClassObj,
+              dataLoad_pars={},
+              absolute_fp=True,
+              **kwargsModel
+                ):
+    
+    suite = unittest.TestSuite() #start the suite container
+    
+    for testName, d in suitePars_d.items():
+
+        #setup the model to test
+        Model = testClassObj.modelClassObj(d['cf_fp'], 
+                    out_dir=tempfile.mkdtemp(), #get a dummy temp directory
+                    logger=mod_logger.getChild(testName), 
+                    tag=testName, 
+                     absolute_fp=absolute_fp, 
+                     **kwargsModel)._setup()
+                     
+        #load the check data
+        tdata_d = load_test_data(d['res_dir'],dataLoad_pars=dataLoad_pars)
+        
+        #build a test for each mathing method in the class
+        for tMethodName in TestLoader().getTestCaseNames(testClassObj):
+            suite.addTest(testClassObj(tMethodName, Model=Model, tdata_d=tdata_d))
+
+    print('built suites')
+    return suite
