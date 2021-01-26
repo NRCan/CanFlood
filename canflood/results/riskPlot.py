@@ -125,7 +125,7 @@ class Plotr(Model):
         
 
         
-        super().__init__(cf_fp, **kwargs) #initilzie teh baseclass
+        super().__init__(cf_fp=cf_fp, **kwargs) #initilzie teh baseclass
 
         #=======================================================================
         # attached passed        

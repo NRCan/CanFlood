@@ -67,7 +67,7 @@ class Attr(riskPlotr):
 
 
     def __init__(self,
-                 cf_fp,
+                 cf_fp='',
 
                   *args, **kwargs):
         
