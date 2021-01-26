@@ -1067,6 +1067,9 @@ p, li { white-space: pre-wrap; }
                        <height>16777215</height>
                       </size>
                      </property>
+                     <property name="text">
+                      <string>1.0</string>
+                     </property>
                     </widget>
                    </item>
                    <item>
@@ -1083,6 +1086,9 @@ p, li { white-space: pre-wrap; }
                        <width>50</width>
                        <height>16777215</height>
                       </size>
+                     </property>
+                     <property name="text">
+                      <string>0.0</string>
                      </property>
                     </widget>
                    </item>
@@ -3464,7 +3470,7 @@ p, li { white-space: pre-wrap; }
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>599</width>
+                   <width>98</width>
                    <height>500</height>
                   </rect>
                  </property>
