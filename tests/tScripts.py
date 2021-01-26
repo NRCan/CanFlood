@@ -102,7 +102,7 @@ def get_suite(
     for testName, d in suitePars_d.items():
 
         #setup the model to test
-        Model = testClassObj.modelClassObj(d['cf_fp'], 
+        Model = testClassObj.modelClassObj(cf_fp=d['cf_fp'], 
                     out_dir=tempfile.mkdtemp(), #get a dummy temp directory
                     logger=mod_logger.getChild(testName), 
                     tag=testName, 

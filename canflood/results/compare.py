@@ -48,11 +48,12 @@ class Cmpr(Plotr):
         )
 
     def __init__(self,
+                 cf_fp = '',
                  fps_d = dict(), #control file paths of scenario children to load
                     #not using keys yet
                   *args, **kwargs):
         
-        super().__init__(*args, **kwargs)
+        super().__init__(cf_fp=cf_fp, *args, **kwargs)
         
         #=======================================================================
         # attachments

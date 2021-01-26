@@ -64,7 +64,8 @@ def gen_suite(
                  'tut2_01.a01':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\CanFlood_tut2a_20210123.txt',
                  'tut2_01.b01':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\b01\CanFlood_tut2b_20210123.txt',
                 'tut2_01.c01.mutEx':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\CanFlood_tut2c_20210123_mutEx.txt',
-                }
+                },
+            'res_dir':{},
             }
         }
 
