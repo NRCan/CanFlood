@@ -258,11 +258,11 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # NRPI
         #=======================================================================
         #filter the vector layer
-        self.mMapLayerComboBox_inv_nrpi.setFilters(QgsMapLayerProxyModel.VectorLayer) 
-        self.mMapLayerComboBox_inv_nrpi.setCurrentIndex(-1) #clear the selection
+        self.mMapLayerComboBox_inv_finv.setFilters(QgsMapLayerProxyModel.VectorLayer) 
+        self.mMapLayerComboBox_inv_finv.setCurrentIndex(-1) #clear the selection
         
         #connect the push button
-        self.pushButton_inv_nrpi.clicked.connect(self.convert_npri)
+        self.pushButton_inv_const.clicked.connect(self.construct_finv)
         
         
 
@@ -742,24 +742,42 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     #         
     #===========================================================================
 
-    def convert_npri(self):
-        """
-        TODO: move this to a drop down menu
-        """
-        log = self.logger.getChild('convert_npri')
+    def construct_finv(self): #add some fields to a finv like vectoralyer
+
+        log = self.logger.getChild('construct_finv')
         tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
         
         #=======================================================================
         # collect from UI
         #=======================================================================
-        in_vlay = self.mMapLayerComboBox_inv_nrpi.currentLayer()
+        in_vlay = self.mMapLayerComboBox_inv_finv.currentLayer()
         out_dir = self.lineEdit_wd.text()
-        
+        nestID = int(self.spinBox_inv.value())
+        new_data = dict()
+        for dName, (lineEdit, reqType) in {
+                                'scale':(self.lineEdit_inv_scale, float),
+                                'elv':(self.lineEdit_inv_elv,float),
+                                'tag':(self.lineEdit_inv_tag, str),
+                                'cap':(self.lineEdit_inv_cap, float),            
+                                }.items():
+            
+            vRaw = lineEdit.text()
+            if vRaw == '':continue #blank.. ksipit
+            new_data[dName] = reqType(vRaw)
+            
+        log.debug('collected %i:  \n%s'%(len(new_data), new_data))
+        self.feedback.upd_prog(10)
         #=======================================================================
         # input checks
         #=======================================================================
-        wrkr = Preparor(logger=self.logger,  out_dir=out_dir, tag=tag)
         assert isinstance(in_vlay, QgsVectorLayer), 'no VectorLayer selected!'
+        assert os.path.exists(out_dir)
+        
+        #=======================================================================
+        # init
+        #=======================================================================
+        wrkr = Preparor(logger=self.logger,  out_dir=out_dir, tag=tag)
+        
         
         #=======================================================================
         # aoi slice
@@ -770,9 +788,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # run converter
         #=======================================================================
-        
-        
-        finv_vlay = wrkr.to_finv(in_vlay_aoi, newLayname = 'finv_NPRI')
+        finv_vlay = wrkr.to_finv(in_vlay_aoi, newLayname = 'finv_%s'%in_vlay.name(),
+                                 nestID=nestID, new_data=new_data)
         
         #=======================================================================
         # wrap
@@ -784,7 +801,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         else:
             raise Error('ensure load results is checked!')
         
-        log.push('finished NPRI conversion')
+        log.push('finished building finv from %s'%in_vlay.name())
         self.feedback.upd_prog(None) #set the progress bar back down to zero
         
     def run_rPrep(self):
