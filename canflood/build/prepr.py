@@ -258,9 +258,9 @@ class Preparor(Qcoms):
         #assert 'Point' in QgsWkbTypes().displayString(in_vlay.wkbType())
         dp = in_vlay.dataProvider()
         
-        log.info('on %s w/ %i feats'%(in_vlay.name(), dp.featureCount()))
+        log.info('on %s w/ %i feats and %i new colums'%(in_vlay.name(), dp.featureCount(), len(new_data)))
         
-        self.feedback.upd_prog(10)
+        self.feedback.upd_prog(20)
         #=======================================================================
         # extract data
         #=======================================================================
