@@ -528,8 +528,11 @@ class Plotr(Model):
                   figsize=None, logger=None, plotTag=None,
                   ):
         
-
-        
+        """
+        called by
+            Attr.plot_slice() #a data slice against the total
+            Cmpr.riskCurves() #a set of totals (scenarios)
+        """
         #======================================================================
         # defaults
         #======================================================================
@@ -608,9 +611,7 @@ class Plotr(Model):
         
         #axis setup
         ax1 = fig.add_subplot(111)
-        #ax2 = ax1.twinx()
-        
-        
+
         # axis label setup
         fig.suptitle(title)
         ax1.set_ylabel(y1lab)
@@ -623,32 +624,34 @@ class Plotr(Model):
         # fill the plot----
         #======================================================================
         first = True
-        ead_d=dict()
+        #ead_d=dict()
         for cName, cPars_d in parsG_d.items():
-            
             
             #pull values from container
             cdf = cPars_d['ttl_df'].copy()
             cdf = cdf.loc[cdf['plot'], :] #drop from handles
             
-            
-            
-            #defaults
+            #hatching
             if 'hatch_f' in cPars_d:
                 hatch_f=cPars_d['hatch_f']
             else:
                 hatch_f=False
                 
+            #labels
             if 'label' in cPars_d:
                 label = cPars_d['label']
             else:
-                label = cName
+                if 'ead_tot' in cPars_d:
+                    label = '\'%s\' annualized = '%cName + impactFmtFunc(float(cPars_d['ead_tot']))
+                else:
+                    label = cName
+                
             
             #add the line
             self._lineToAx(cdf, y1lab, ax1, impStyle_d=cPars_d['impStyle_d'],
                            hatch_f=hatch_f, lineLabel=label)
             
-            ead_d[label] = float(cPars_d['ead_tot'])
+            #ead_d[label] = float(cPars_d['ead_tot']) #add this for constructing the 
 
 
 
@@ -665,13 +668,13 @@ class Plotr(Model):
         
         #legend
         h1, l1 = ax1.get_legend_handles_labels()
-        legLab_d = {e:'\'%s\' annualized = '%e + impactFmtFunc(ead_d[e]) for e in l1}
+        #legLab_d = {e:'\'%s\' annualized = '%e + impactFmtFunc(ead_d[e]) for e in l1}
         val_str = self._get_val_str(val_str)
         #legendTitle = self._get_val_str('*default')
         
         self._postFmt(ax1, 
                       val_str=val_str, #putting in legend ittle 
-                      legendHandles=(h1, list(legLab_d.values())),
+                      legendHandles=(h1, l1),
                       #xLocScale=0.8, yLocScale=0.1,
                       legendTitle=legendTitle,
                       )

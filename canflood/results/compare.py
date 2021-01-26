@@ -119,7 +119,7 @@ class Cmpr(Plotr):
         
         return wdict(self.sWrkr_d)
         
-    def riskCurves(self,
+    def riskCurves(self, #plot a risk curve comparing all the scenarios
                    sWrkr_d, #container of scenario works to plot curve comparison
                    logger=None,
                    

@@ -379,12 +379,12 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.feedback.upd_prog(None) #set the progress bar back down to zero
         log.push('pStack finished')
         
-    def run_pNoFail(self):
+    def run_pNoFail(self): #plot split between totals and no-fail
         """
         similar to plotRisk for now... may choose to expand later
         """
-        log = self.logger.getChild('run_pStack')
-        log.info('user pushed \'run_pStack\'')
+        log = self.logger.getChild('run_pNoFail')
+        log.info('user pushed \'run_pNoFail\'')
         
         #=======================================================================
         # collect inputs
