@@ -24,6 +24,7 @@ suite = unittest.TestSuite() #start the suite container
 
 for packageName, modName_l in {
     'tmodel':['tRisk2', 'tDmg'],
+    'tRes':['tAttrib', 'tCompare'],
     }.items():
     #import the module
     for modName in modName_l:
