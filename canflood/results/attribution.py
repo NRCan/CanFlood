@@ -67,7 +67,7 @@ class Attr(riskPlotr):
 
 
     def __init__(self,
-                 cf_fp,
+                 cf_fp='',
 
                   *args, **kwargs):
         
@@ -205,9 +205,11 @@ class Attr(riskPlotr):
  
         assert len(miss_l)==0, 'event mismatch'
         
-        if not self.check_eDmg(df, dropna=False, logger=log):
-            raise Error('failed check')
-        
+        #=======================================================================
+        # if not self.check_eDmg(df, dropna=False, logger=log):
+        #     raise Error('failed check')
+        #=======================================================================
+        self.check_eDmg(df, dropna=False, logger=log)
         
         #=======================================================================
         # set it

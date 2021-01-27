@@ -86,7 +86,7 @@ class Dmg2(Model):
 
     
     def __init__(self,
-                 cf_fp,
+                 cf_fp='',
 
                  **kwargs
                  ):

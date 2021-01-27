@@ -22,14 +22,12 @@ from model.dmg2 import Dmg2
 """just using the default console logger"""
 
 
-from tmodel.tModCom import tModel, get_suite
-
-
-        
+from tmodel.tModCom import tModel
+from tScripts import load_test_data, get_suite
 
 class tDmg(tModel): #worker for testing the damage model
     
-    
+    modelClassObj = Dmg2
     
     def __init__(self, *args, **kwargs):
         """called for each test METHOD"""
@@ -137,9 +135,10 @@ def gen_suite(
     ):
     
     return get_suite(runpars_d,
-                      Dmg2,tDmg,
+                      tDmg,
                       dataLoad_pars = {'attr02*':{'header':[0,1], 'index_col':0}, 
                                     'dmgs*':{'index_col':0}},
+                      attriMode=True, #always initilizing models in attribution mode
                       )
     
 if __name__ == '__main__':

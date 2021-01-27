@@ -189,7 +189,7 @@ class Model(ComWrkr,
     
 
     def __init__(self,
-                 cf_fp, #control file path TODO: make this a kwarg
+                 cf_fp='', #control file path TODO: make this a kwarg
                     #note: this could also be attached by basic.ComWrkr.__init__()
                     #now that this is a parent... wish this was a kwarg
                  
@@ -252,6 +252,8 @@ class Model(ComWrkr,
         # load the control file
         #=======================================================================
         cf_fp = self.cf_fp
+        if cf_fp == '':
+            raise Error('passed an empty cf_fp!')
         assert os.path.exists(cf_fp), 'provided parameter file path does not exist \n    %s'%cf_fp
 
         self.pars = configparser.ConfigParser(inline_comment_prefixes='#')

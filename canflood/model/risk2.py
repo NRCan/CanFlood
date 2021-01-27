@@ -108,7 +108,7 @@ class Risk2(Plotr, #This inherits 'Model'
     
     
     def __init__(self,
-                 cf_fp,
+                 cf_fp='',
                  **kwargs
                  ):
         

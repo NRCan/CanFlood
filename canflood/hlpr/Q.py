@@ -30,15 +30,7 @@ import processing
 # customs
 #==============================================================================
 
-#standalone runs
-if __name__ =="__main__": 
-    from hlpr.logr import basic_logger
-    mod_logger = basic_logger()   
-
-    
-#plugin runs
-else:
-    mod_logger = logging.getLogger('Q') #get the root logger
+mod_logger = logging.getLogger('Q') #get the root logger
     
     
 
@@ -2015,10 +2007,12 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             
         algo_nm = 'gdal:warpreproject'
             
-        if crsOut is None: crs = self.crs #just take the project's
+        if crsOut is None: crsOut = self.crs #just take the project's
         #=======================================================================
         # precheck
         #=======================================================================
+        """the algo accepts 'None'... but not sure why we'd want to do this"""
+        assert isinstance(crsOut, QgsCoordinateReferenceSystem), 'bad crs type'
         assert isinstance(rlay_raw, QgsRasterLayer)
 
         assert rlay_raw.crs() != crsOut, 'layer already on this CRS!'
