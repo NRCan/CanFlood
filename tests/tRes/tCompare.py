@@ -45,13 +45,14 @@ class tObj(tRes): #worker for testing the damage model
         print('test_noFail on \'%s\''%self.name)
         
         mdf = self.Model.cf_compare()
+        self.assertEqual(mdf.shape[1], 4, msg=self.name)
         self.assertTrue(len(mdf)>0, msg=self.name)
 
         
     def test_riskCurves(self):
         for y1lab in ['AEP', 'impacts']:
             fig = self.Model.riskCurves(y1lab=y1lab)
-            self.Model.output_fig(fig)
+            self.assertIsInstance(fig, plt.Figure,  msg='%s'%self.name)
         
 
         

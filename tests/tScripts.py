@@ -91,6 +91,7 @@ def load_test_data(
 
 def get_suite(
             suitePars_d, #build the tDmg testing suite from a set of paramters
+                #any remaining pars will get passed to the model's init 
               testClassObj,
               dataLoad_pars={},
               absolute_fp=True,
