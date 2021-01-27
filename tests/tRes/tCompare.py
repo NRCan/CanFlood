@@ -39,17 +39,19 @@ class tObj(tRes): #worker for testing the damage model
         """called for each test METHOD"""
         super().__init__(*args, **kwargs) #init baseclass
     
-    def test_noFail(self, #testing the main output
+    def test_cf(self, #testing the main output
 
                   ): 
         print('test_noFail on \'%s\''%self.name)
         
+        mdf = self.Model.cf_compare()
+        self.assertTrue(len(mdf)>0, msg=self.name)
 
-        #=======================================================================
-        # #run the model
-        #=======================================================================
-
-
+        
+    def test_riskCurves(self):
+        for y1lab in ['AEP', 'impacts']:
+            fig = self.Model.riskCurves(y1lab=y1lab)
+            self.Model.output_fig(fig)
         
 
         

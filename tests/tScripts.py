@@ -100,17 +100,17 @@ def get_suite(
     suite = unittest.TestSuite() #start the suite container
     
     for testName, d in suitePars_d.items():
-
+        res_dir = d.pop('res_dir') #pop it out so we dont pass it to the model
         #setup the model to test
-        Model = testClassObj.modelClassObj(cf_fp=d['cf_fp'], 
+        Model = testClassObj.modelClassObj(cf_fp=d.pop('cf_fp'), 
                     out_dir=tempfile.mkdtemp(), #get a dummy temp directory
                     logger=mod_logger.getChild(testName), 
                     tag=testName, 
                      absolute_fp=absolute_fp, 
-                     **kwargsModel)._setup()
+                     **d, **kwargsModel)._setup()
                      
         #load the check data
-        tdata_d = load_test_data(d['res_dir'],dataLoad_pars=dataLoad_pars)
+        tdata_d = load_test_data(res_dir,dataLoad_pars=dataLoad_pars)
         
         #build a test for each mathing method in the class
         for tMethodName in TestLoader().getTestCaseNames(testClassObj):
