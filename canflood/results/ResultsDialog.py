@@ -555,20 +555,20 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             }
         
         #clean it out
-        fp_d = dict()
+        fps_d = dict()
         for k1, rd in copy.copy(raw_d).items():
             
             if not rd['cf_fp']=='':
-                fp_d[k1] = rd['cf_fp']
+                fps_d[k1] = rd['cf_fp']
             
     
-        log.debug('pars w/ %i keys'%(len(fp_d)))
+        log.debug('pars w/ %i keys'%(len(fps_d)))
         
         #=======================================================================
         # precheck
         #=======================================================================
         assert os.path.exists(main_cf_fp), 'bad filepath for main control file'
-        for k, v in fp_d.items(): assert os.path.exists(v), 'bad fp on %s'%k
+        for k, v in fps_d.items(): assert os.path.exists(v), 'bad fp on %s'%k
         
         self.feedback.setProgress(10)
         
@@ -581,7 +581,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # init
         #=======================================================================
-        wrkr = results.compare.Cmpr(fp_d = fp_d,
+        wrkr = results.compare.Cmpr(fps_d = fps_d,
                     out_dir=out_dir, tag=tag, logger=self.logger,
                     cf_fp = main_cf_fp)._setup()
     

@@ -59,7 +59,7 @@ class Cmpr(Plotr):
         # attachments
         #=======================================================================
         self.fps_d = fps_d
-        assert len(fps_d)>2
+        assert len(fps_d)>=2
         #=======================================================================
         # setup
         #=======================================================================
@@ -95,7 +95,7 @@ class Cmpr(Plotr):
         #=======================================================================
         # precheck
         #=======================================================================
-        assert len(fps_d)>2
+        assert len(fps_d)>=2
         assert isinstance(fps_d, dict)
         assert len(fps_d.values())==len(set(fps_d.values())), 'non unique fps!'
         
@@ -183,7 +183,7 @@ class Cmpr(Plotr):
         if logger is None: logger=self.logger
         log = logger.getChild('cf_compare')
         if sWrkr_d is None: sWrkr_d = wdict(self.sWrkr_d)
-        assert len(sWrkr_d)>2
+        assert len(sWrkr_d)>=2
         #=======================================================================
         # collect all the parameters from the children
         #=======================================================================
