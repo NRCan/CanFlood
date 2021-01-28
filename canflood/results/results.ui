@@ -46,7 +46,7 @@
         <x>0</x>
         <y>0</y>
         <width>680</width>
-        <height>612</height>
+        <height>603</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -2318,8 +2318,8 @@ p, li { white-space: pre-wrap; }
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>175</width>
-                <height>268</height>
+                <width>636</width>
+                <height>349</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -2999,7 +2999,7 @@ p, li { white-space: pre-wrap; }
    <item row="1" column="0">
     <widget class="QGroupBox" name="groupBox">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
@@ -3018,6 +3018,18 @@ p, li { white-space: pre-wrap; }
        <layout class="QVBoxLayout" name="verticalLayout_20">
         <item>
          <widget class="QLabel" name="progressText">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>22</height>
+           </size>
+          </property>
           <property name="maximumSize">
            <size>
             <width>16777215</width>
