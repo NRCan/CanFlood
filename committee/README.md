@@ -15,6 +15,8 @@ Option 1: Build your own model
 --Start small!
 Option 2: Tutorials 2b, 2c, and 5a
 
+Be sure to install the latest version!
+
 ## Meeting 1
 Thank you all for attending our first Committee meeting on Dec 12th!
 
