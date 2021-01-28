@@ -1,7 +1,7 @@
-# CanFlood
+﻿# CanFlood
 Flood Risk modelling toolbox for Canada
 
-## Beta 0.4.0 Release
+## Beta 0.4.2 Release
 
 Here are the working tools:
 
@@ -32,6 +32,9 @@ Happy flood risk modelling!
 6) In Qgis, Turn the plugin on (Plugins > Manage and Install ... > Installed > check 'CanFlood'). If a dependency error is thrown, see 'troubleshooting' below.  If successful, you should see the three CanFlood buttons on your toolbar.
 
 7) We recommend implementing the QGIS DEBUG logger for more detailed readouts and CanFlood model debugging. See [this post](https://stackoverflow.com/a/61669864/9871683) for insturctions.
+
+### tl;dr
+download the latest zip from [here](https://github.com/IBIGroupCanWest/CanFlood/tree/master/plugin_zips) and install in Qgis (Plugins > Manage and Install... > Install from Zip)
 
 ### Troubleshooting Installation
 
