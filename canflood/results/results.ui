@@ -185,7 +185,7 @@ p, li { white-space: pre-wrap; }
               </sizepolicy>
              </property>
              <property name="title">
-              <string>Control File (optional):</string>
+              <string>Main Control File:</string>
              </property>
              <layout class="QVBoxLayout" name="_31">
               <item>
@@ -193,7 +193,7 @@ p, li { white-space: pre-wrap; }
                 <item>
                  <widget class="QLineEdit" name="lineEdit_SS_cf">
                   <property name="placeholderText">
-                   <string>Select a Control File for single scenario analysis</string>
+                   <string>Select the main Control File</string>
                   </property>
                  </widget>
                 </item>
@@ -2318,8 +2318,8 @@ p, li { white-space: pre-wrap; }
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>636</width>
-                <height>358</height>
+                <width>175</width>
+                <height>268</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_14">
