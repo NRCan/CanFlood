@@ -2,6 +2,10 @@
 
 [Terms of Reference](https://github.com/IBIGroupCanWest/CanFlood/blob/master/committee/Terms%20of%20Reference%20CanFlood_EN.docx)
 
+## Task 2
+
+Here is a [link to the presentation](https://us02web.zoom.us/rec/share/Lbtw5Eg9CQvr6vcrz6orfbcJu2muYHS2TLpdkxDGIA2Yt8NRKuFv3E4YZNqT7vyx.WVboPi8y47VCwgeO) passcode: dV42t.mf
+
 ## Task 1
 Thank you all for attending our first Committee meeting on Dec 12th!
 
