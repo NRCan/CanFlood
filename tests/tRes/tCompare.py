@@ -45,7 +45,7 @@ class tObj(tRes): #worker for testing the damage model
         print('test_noFail on \'%s\''%self.name)
         
         mdf = self.Model.cf_compare()
-        self.assertEqual(mdf.shape[1], 4, msg=self.name)
+        self.assertEqual(mdf.columns[-1], 'compare', msg=self.name)
         self.assertTrue(len(mdf)>0, msg=self.name)
 
         
@@ -67,6 +67,14 @@ def gen_suite(
                  'tut2_01.a01':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\CanFlood_tut2a_20210123.txt',
                  'tut2_01.b01':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\b01\CanFlood_tut2b_20210123.txt',
                 'tut2_01.c01.mutEx':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\CanFlood_tut2c_20210123_mutEx.txt',
+                },
+            'res_dir':{},
+            },
+        'tut2_short':{ #nice to test only 2 control files
+            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\CanFlood_tut2a_20210123.txt',
+            'fps_d':{
+                 'tut2_01.a01':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\CanFlood_tut2a_20210123.txt',
+                 'tut2_01.b01':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\b01\CanFlood_tut2b_20210123.txt',
                 },
             'res_dir':{},
             }
