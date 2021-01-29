@@ -28,11 +28,7 @@ from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProj
 #==============================================================================
 # custom imports
 #==============================================================================
-
 from hlpr.exceptions import QError as Error
-
-
-#from hlpr.basic import 
 
 from hlpr.Q import view, Qcoms, vlay_get_fdf, vlay_get_fdata, vlay_new_df
 #==============================================================================

@@ -19,28 +19,24 @@ from PyQt5 import uic, QtWidgets
 from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
 
 #qgis
-
 from qgis.core import *
 
 
 #==============================================================================
 # custom imports
 #==============================================================================
-
-from build.rsamp import Rsamp
-from build.lisamp import LikeSampler
-#from build.rfda import RFDAconv
-from build.prepr import Preparor
-from build.validator import Vali
-
-
-
+#get hlpr funcs
 import hlpr.plug
-#from hlpr.Q import vlay_get_fdf
-
 from hlpr.basic import get_valid_filename, force_open_dir 
 from hlpr.exceptions import QError as Error
 
+#get sub-models
+from build.rsamp import Rsamp
+from build.lisamp import LikeSampler
+from build.prepr import Preparor
+from build.validator import Vali
+
+#get sub-dialogs
 from .vfunc_dialog import vDialog
 
 #===============================================================================

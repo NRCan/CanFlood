@@ -27,15 +27,7 @@ import numpy as np
 #==============================================================================
 # custom
 #==============================================================================
-#standalone runs
-if __name__ =="__main__": 
-    from hlpr.logr import basic_logger
-    mod_logger = basic_logger()   
-
-    
-#plugin runs
-else:
-    mod_logger = logging.getLogger('basic') #get the root logger
+mod_logger = logging.getLogger('basic') #get the root logger
 
 from hlpr.exceptions import QError as Error
 
@@ -668,9 +660,9 @@ def linr( #fancy check if left elements are in right elements
                       )
                     )
         if np.any(boolar):
-            logger.debug(msg)
+            log.debug(msg)
         elif result_type=='exact' and (not np.array_equal(l_ar, r_ar)):
-            logger.debug(msg)
+            log.debug(msg)
         
     #===========================================================================
     # reformat and return result

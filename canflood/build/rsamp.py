@@ -7,7 +7,7 @@ Created on Feb. 9, 2020
 #==========================================================================
 # logger setup-----------------------
 #==========================================================================
-import logging, configparser, datetime, shutil, gc
+import logging, configparser, datetime
 start = datetime.datetime.now()
 
 
@@ -20,7 +20,8 @@ import pandas as pd
 
 
 #Qgis imports
-from qgis.core import *
+from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject, \
+    QgsWkbTypes, QgsProcessingFeedback, QgsCoordinateTransform
     
 from qgis.analysis import QgsRasterCalculatorEntry, QgsRasterCalculator
 import processing
@@ -31,9 +32,9 @@ import processing
 from hlpr.exceptions import QError as Error
     
 
-#from hlpr.Q import *
+
 from hlpr.Q import Qcoms,vlay_get_fdf, vlay_get_fdata
-#import hlpr.basic as basic
+
 
 #==============================================================================
 # functions-------------------
