@@ -574,6 +574,7 @@ class Rsamp(Qcoms):
             assert psmp_stat in self.psmp_codes, 'unrecognized psmp_stat' 
             psmp_code = self.psmp_codes[psmp_stat] #sample each raster
             algo_nm = 'qgis:zonalstatistics'
+            """I think this is renamed in newer versions"""
             
             
         elif 'Point' in gtype:
@@ -620,8 +621,6 @@ class Rsamp(Qcoms):
             #=======================================================================
             elif 'Line' in gtype: 
                 finv = self.line_sample_stats(finv, rlay,[psmp_stat], logger=log)
-
-
             #======================================================================
             # sample.Points----------------
             #======================================================================
@@ -701,8 +700,6 @@ class Rsamp(Qcoms):
         assert 'Memory' in dp.storageType() #zonal stats makes direct edits
         assert 'Polygon' in gtype
 
-        
-        
         #=======================================================================
         # sample loop---------
         #=======================================================================
@@ -715,7 +712,6 @@ class Rsamp(Qcoms):
         for indxr, rlay in enumerate(raster_l):
             log = self.logger.getChild('samp_inun.%s'%rlay.name())
             ofnl = [field.name() for field in finv.fields()]
-
 
             #===================================================================
             # #get depth raster
@@ -730,7 +726,6 @@ class Rsamp(Qcoms):
             # get threshold
             #===================================================================
             #reduce to all values above depththreshold
-
             log.info('calculating %.2f threshold raster'%dthresh) 
             
             thr_rlay = self.grastercalculator(
@@ -757,8 +752,6 @@ class Rsamp(Qcoms):
             #execute the algo
             res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
             """this edits the finv in place"""
-            
-           
             #===================================================================
             # check/correct field names
             #===================================================================
@@ -795,11 +788,10 @@ class Rsamp(Qcoms):
         #add geometry fields
         finv = self.addgeometrycolumns(finv, logger = log)
         
+        #get data frame
         df_raw  = vlay_get_fdf(finv, logger=log)
-        
         df = df_raw.rename(columns=names_d)
 
-        
         #multiply each column by corresponding raster's cell size
         res_df = df.loc[:, names_d.values()].multiply(pd.Series(parea_d)).round(self.prec)
         res_df = res_df.rename(columns={coln:'%s_a'%coln for coln in res_df.columns})
@@ -842,11 +834,6 @@ class Rsamp(Qcoms):
         
         log.info('data assembed w/ %s: \n    %s'%(str(res_df.shape), res_df.columns.tolist()))
         
-        """
-        view(res_df)
-        """
-        
-        
         #=======================================================================
         # bundle back into vectorlayer
         #=======================================================================
@@ -859,7 +846,7 @@ class Rsamp(Qcoms):
         
         return res_vlay
 
-    def samp_inun_line(self, #inundation percent for polygons
+    def samp_inun_line(self, #inundation percent for lines
                   finv, raster_l, dtm_rlay, dthresh,
                    ):
         
@@ -1260,6 +1247,11 @@ class Rsamp(Qcoms):
                     ):
         """
         sampliung a raster layer with a line and a statistic
+        
+        TODO: check if using the following is faster:
+            Densify by Interval
+            Drape
+            Extract Z
         """
         if logger is None: logger=self.logger
         log=logger.getChild('line_sample_stats')
