@@ -592,12 +592,19 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         
         return out_fp
+    
+    def load_dtm(self, #convienece loader for assining the correct attribute 
+                 fp, 
+                 logger=None,
+                 **kwargs):
+        if logger is None: logger=self.logger
+        log=logger.getChild('load_dtm')
+        
+        self.dtm_rlay = self.load_rlay(fp, logger=log, **kwargs)
+        
+        return self.dtm_rlay
+        
 
-        
-        
-        
-    
-    
     #==========================================================================
     # GENERIC METHODS-----------------
     #==========================================================================
@@ -623,7 +630,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #=======================================================================
         # setup
         #=======================================================================
-        if crs is None: crs = self.crs
+        if crs is None: crs = self.qproj.crs()
         if logger is None: logger = self.logger
             
         log = logger.getChild('vlay_new_df')
