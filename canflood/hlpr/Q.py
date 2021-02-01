@@ -2164,6 +2164,76 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
           
         return res_rlay
     
+    #===========================================================================
+    # ALGOS - CUSTOM--------
+    #===========================================================================
+    def vlay_pts_dist(self, #get the distance between points in a given order
+        vlay_raw, 
+        ifn = 'fid', #fieldName to index by
+        request = None,
+        
+        result = 'vlay_append', #result type
+        logger=None):
+        #===========================================================================
+        # defaults
+        #===========================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('vlay_pts_dist')
+        
+        
+        if request is None: 
+            request =  QgsFeatureRequest(
+                ).addOrderBy(ifn, ascending=True
+                             ).setSubsetOfAttributes([ifn], vlay_raw.fields())
+                             
+        #===========================================================================
+        # precheck
+        #===========================================================================
+        assert 'Point' in QgsWkbTypes().displayString(vlay_raw.wkbType()), 'passed bad geo type'
+        
+        #see if indexer is unique
+        ifn_d = vlay_get_fdata(vlay_raw, fieldn=ifn, logger=log)
+        assert len(set(ifn_d.values()))==len(ifn_d)
+        #===========================================================================
+        # loop and calc
+        #===========================================================================
+        
+        d = dict()
+        first, geo_prev = True, None 
+        for i, feat in enumerate(vlay_raw.getFeatures(request)):
+            assert not feat.attribute(ifn) in d, 'indexer is not unique!'
+            geo = feat.geometry()
+            if first:
+                first=False
+            else:
+                d[feat.attribute(ifn)] = geo.distance(geo_prev)
+                
+            geo_prev = geo
+    
+        log.info('got %i distances using \"%s\''%(len(d), ifn))
+        #===========================================================================
+        # check
+        #===========================================================================
+        assert len(d) == (vlay_raw.dataProvider().featureCount() -1)
+        
+        
+        #===========================================================================
+        # results typing 
+        #===========================================================================
+        if result == 'dict': return d
+        elif result == 'vlay_append':
+            #data manip
+            ncoln = '%s_dist'%ifn
+            df_raw = vlay_get_fdf(vlay_raw, logger=log)
+            df = df_raw.join(pd.Series(d, name=ncoln), on=ifn)
+            
+            assert df[ncoln].isna().sum()==1, 'expected 1 null'
+            
+            #reassemble
+            geo_d = vlay_get_fdata(vlay_raw, geo_obj=True, logger=log)
+            return self.vlay_new_df2(df, geo_d=geo_d, logger=log,
+                                   layname='%s_%s'%(vlay_raw.name(), ncoln))
+    
     
     
     #==========================================================================
@@ -3842,6 +3912,7 @@ def vlay_key_convert(#convert a list of ids in one form to another
             
   
 
+        
 
 #==============================================================================
 # type checks-----------------

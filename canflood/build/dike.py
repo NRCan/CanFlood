@@ -22,7 +22,7 @@ import pandas as pd
 
 
 #Qgis imports
-from qgis.core import QgsVectorLayer, QgsWkbTypes, QgsMapLayerStore
+from qgis.core import QgsVectorLayer, QgsWkbTypes, QgsMapLayerStore, QgsFeatureRequest
 import processing
 #==============================================================================
 # custom imports
@@ -30,8 +30,10 @@ import processing
 from hlpr.exceptions import QError as Error
     
 
-from hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata, view, vlay_write, stat_pars_d
-from hlpr.basic import get_valid_filename
+from hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata, view, stat_pars_d, \
+    vlay_rename_fields
+    
+#from hlpr.basic import get_valid_filename
 
 #==============================================================================
 # functions-------------------
@@ -164,6 +166,7 @@ class Diker(Qcoms):
                     dens_int = None, #density of sample points along transect 
                     nullSamp = -999, #value for bad samples
                     write_tr = False, #wheter to output the unsampled transect layer
+                    calc_dist = True, #whether to calculate distance between transects
                     
                     #wsl sampling
                     #wsl_stat = 'Max', #for transect wsl zvals, stat to use for summary
@@ -236,7 +239,9 @@ class Diker(Qcoms):
         mstore.addMapLayer(tr_vlay)
         
 
-
+        #see if indexer is unique
+        ifn_d = vlay_get_fdata(tr_vlay, fieldn='TR_ID', logger=log)
+        assert len(set(ifn_d.values()))==len(ifn_d)
         #=======================================================================
         # densify
         #=======================================================================
@@ -260,11 +265,86 @@ class Diker(Qcoms):
         """
         
         #remove unwanted fields
+        """
+        the raw transects have a 'fid' based on the dike fid (which is now non-unique)
+        TR_ID is a new feature id (for the transects)
+        """
         dp = tr_vlay.dataProvider()
-        drop_l = set([f.name() for f in tr_vlay.fields()]).difference([sid, self.dikeID, self.segID])
+        drop_l = set([f.name() for f in tr_vlay.fields()]).difference(
+            [sid, self.dikeID, self.segID, 'TR_ID'])
         fdrop_l = [dp.fieldNameIndex(f) for f in drop_l] #get indexes
         dp.deleteAttributes(fdrop_l)
         tr_vlay.updateFields()
+        
+        # #rename field
+        tr_vlay  = vlay_rename_fields(tr_vlay, {'TR_ID':'fid_tr'})
+        
+        log.info('got %i transects'%tr_vlay.dataProvider().featureCount())
+        #=======================================================================
+        # crest el----
+        #=======================================================================
+        #===================================================================
+        # point on dike crest
+        #===================================================================
+        """gets a point for the vertex at the START of the line.
+        should work fine for right/left.. but not for 'BOTH'
+        
+        
+        """
+        """this is cleaner for handling transects on either side... 
+        but can result in MULTIPLE intersects for some geometries
+        
+        d = { 'INPUT' : tr_vlay, 'INPUT_FIELDS' : [], 'INTERSECT' : dvlay, 
+             'INTERSECT_FIELDS' : ['fid'], 'INTERSECT_FIELDS_PREFIX' : 'dike_',
+              'OUTPUT' : 'TEMPORARY_OUTPUT' }
+
+        algo_nm = 'native:lineintersections'"""
+        
+        
+        #get the head/tail point of the transect
+        d = { 'INPUT' : tr_vlay, 'OUTPUT' : 'TEMPORARY_OUTPUT', 
+             'VERTICES' : {'Left':'0', 'Right':'-1'}[tside] }  
+        
+        algo_nm = 'qgis:extractspecificvertices'
+        cPts_vlay = processing.run(algo_nm, d, feedback=self.feedback)['OUTPUT']
+        mstore.addMapLayer(cPts_vlay)
+        """
+        view(cPts_vlay)
+        """
+        #count check
+        assert tr_vlay.dataProvider().featureCount()==cPts_vlay.dataProvider().featureCount()
+        #===================================================================
+        # crest sample
+        #===================================================================
+        d = { 'COLUMN_PREFIX' : 'dtm', 'INPUT' : cPts_vlay, 'OUTPUT' : 'TEMPORARY_OUTPUT',
+          'RASTERCOPY' : dtm_rlay }
+        algo_nm = 'qgis:rastersampling'
+        cPts_vlay = processing.run(algo_nm, d, feedback=self.feedback)['OUTPUT']
+        #store.addMapLayer(cPts_vlay)
+        
+        #=======================================================================
+        # clean up
+        #=======================================================================
+        cPts_vlay  = vlay_rename_fields(cPts_vlay, {'dtm_1':'crest_el'})
+        cPts_vlay.setName('%s_cPts'%(tr_vlay.name()))
+        
+        """
+        self.vlay_write(cPts_vlay)
+        """
+        
+        #=======================================================================
+        # calc distance
+        #=======================================================================
+        if calc_dist:
+            cPts_vlay = self.vlay_pts_dist(cPts_vlay, ifn='fid_tr', logger=log)
+        
+        #=======================================================================
+        # join values back
+        #=======================================================================
+        
+            
+        
+
         
         #=======================================================================
         # output
@@ -305,29 +385,7 @@ class Diker(Qcoms):
             
             #get new fieldName
             wslField = list(set([f.name() for f in tri_vlay.fields()]).difference(ofnl))[0]
-            #===================================================================
-            # point on dike crest
-            #===================================================================
-            """gets a point for the vertex at the START of the line.
-            should work fine for right/left.. but not for 'BOTH'"""
-            d = { 'INPUT' : tri_vlay, 'INPUT_FIELDS' : [], 'INTERSECT' : dvlay, 
-                 'INTERSECT_FIELDS' : ['fid'], 'INTERSECT_FIELDS_PREFIX' : 'dike_',
-                  'OUTPUT' : 'TEMPORARY_OUTPUT' }
 
-            algo_nm = 'native:lineintersections'
-            cPts_vlay = processing.run(algo_nm, d, feedback=self.feedback)['OUTPUT']
-            mstore.addMapLayer(cPts_vlay)
-            """
-            view(cPts_vlay)
-            """
-            #===================================================================
-            # crest sample
-            #===================================================================
-            d = { 'COLUMN_PREFIX' : 'dtm', 'INPUT' : cPts_vlay, 'OUTPUT' : 'TEMPORARY_OUTPUT',
-              'RASTERCOPY' : dtm_rlay }
-            algo_nm = 'qgis:rastersampling'
-            cPts_vlay = processing.run(algo_nm, d, feedback=self.feedback)['OUTPUT']
-            mstore.addMapLayer(cPts_vlay)
             #===================================================================
             # collect----
             #===================================================================
@@ -374,6 +432,9 @@ class Diker(Qcoms):
         log.info('finished building exposure on %i events'%len(res_d))
         self.expo_vlay_d = res_d
         self.expo_dxcol = dxcol
+        """
+        view(dxcol)
+        """
             
         return self.expo_dxcol, self.expo_vlay_d
     
