@@ -754,7 +754,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                              list(feats_d.values()),
                              logger=log,
                              )
-        
+        self.createspatialindex(vlay, logger=log)
         #=======================================================================
         # post check
         #=======================================================================
@@ -893,8 +893,10 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                                            jlay_fieldn_l, 
                                            invert=False)
         
-        jgeot = vlay_get_bgeo_type(join_vlay)
-        mgeot = vlay_get_bgeo_type(self.vlay)
+        #=======================================================================
+        # jgeot = vlay_get_bgeo_type(join_vlay)
+        # mgeot = vlay_get_bgeo_type(self.vlay)
+        #=======================================================================
         
         mfcnt = self.vlay.dataProvider().featureCount()
         #jfcnt = join_vlay.dataProvider().featureCount()
@@ -905,6 +907,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #=======================================================================
         # geometry expectation prechecks
         #=======================================================================
+        """should take any geo
         if not (jgeot == 'polygon' or mgeot == 'polygon'):
             raise Error('one of the layres has to be a polygon')
         
@@ -932,6 +935,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         if not expect_j_overlap:
             if not method==0:
                 raise Error('for expect_j_overlap=False, method must = 0 (1:m) for validation')
+                """
 
                
         #=======================================================================
