@@ -67,6 +67,11 @@ npc_pytype_d = {'?':bool,
 
 type_qvar_py_d = {10:str, 2:int, 135:float, 6:float, 4:int, 1:bool, 16:datetime.datetime, 12:str} #QVariant.types to pythonic types
 
+#parameters for lots of statistic algos
+stat_pars_d = {'First': 0, 'Last': 1, 'Count': 2, 'Sum': 3, 'Mean': 4, 'Median': 5,
+                'St dev (pop)': 6, 'Minimum': 7, 'Maximum': 8, 'Range': 9, 'Minority': 10,
+                 'Majority': 11, 'Variety': 12, 'Q1': 13, 'Q3': 14, 'IQR': 15}
+
 #==============================================================================
 # classes -------------
 #==============================================================================
@@ -592,6 +597,89 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         
         return out_fp
+    
+    def vlay_write(self, #write  a VectorLayer
+        vlay,
+        out_fp=None, 
+
+        driverName='GPKG',
+        fileEncoding = "CP1250", 
+        opts = QgsVectorFileWriter.SaveVectorOptions(), #empty options object
+        overwrite=None,
+        logger=None):
+        """
+        help(QgsVectorFileWriter.SaveVectorOptions)
+        QgsVectorFileWriter.SaveVectorOptions.driverName='GPKG'
+        opt2 = QgsVectorFileWriter.BoolOption(QgsVectorFileWriter.CreateOrOverwriteFile)
+        help(QgsVectorFileWriter)
+
+        
+        """
+        
+        #==========================================================================
+        # defaults
+        #==========================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('vlay_write')
+        if overwrite is None: overwrite=self.overwrite
+        
+        if out_fp is None: out_fp = os.path.join(self.out_dir, '%s.gpkg'%vlay.name())
+        
+        #===========================================================================
+        # assemble options
+        #===========================================================================
+        opts.driverName = driverName
+        opts.fileEncoding = fileEncoding
+        
+        
+        #===========================================================================
+        # checks
+        #===========================================================================
+        #file extension
+        fhead, ext = os.path.splitext(out_fp)
+        
+        if not 'gpkg' in ext:
+            raise Error('unexpected extension: %s'%ext)
+        
+        if os.path.exists(out_fp):
+            msg = 'requested file path already exists!. overwrite=%s \n    %s'%(
+                overwrite, out_fp)
+            if overwrite:
+                log.warning(msg)
+                os.remove(out_fp) #workaround... should be away to overwrite with the QgsVectorFileWriter
+            else:
+                raise Error(msg)
+            
+        
+        if vlay.dataProvider().featureCount() == 0:
+            raise Error('\'%s\' has no features!'%(
+                vlay.name()))
+            
+        if not vlay.isValid():
+            Error('passed invalid layer')
+            
+        #=======================================================================
+        # write
+        #=======================================================================
+        
+        error = QgsVectorFileWriter.writeAsVectorFormatV2(
+                vlay, out_fp, 
+                QgsCoordinateTransformContext(),
+                opts,
+                )
+        
+        
+        #=======================================================================
+        # wrap and check
+        #=======================================================================
+          
+        if error[0] == QgsVectorFileWriter.NoError:
+            log.info('layer \' %s \' written to: \n     %s'%(vlay.name(),out_fp))
+            return out_fp
+         
+        raise Error('FAILURE on writing layer \' %s \'  with code:\n    %s \n    %s'%(vlay.name(),error, out_fp))
+        
+
     
     def load_dtm(self, #convienece loader for assining the correct attribute 
                  fp, 

@@ -30,7 +30,7 @@ import processing
 from hlpr.exceptions import QError as Error
     
 
-from hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata, view
+from hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata, view, vlay_write, stat_pars_d
 from hlpr.basic import get_valid_filename
 
 #==============================================================================
@@ -136,6 +136,7 @@ class Diker(Qcoms):
         log.info('loaded dike layer \'%s\'  w/ %i segments'%(vlay.name(), dp.featureCount()))
 
         self.dike_vlay = res_vlay
+        self.dikeID, self.segID = dikeID, segID
         
         """
         view(res_vlay)
@@ -155,12 +156,17 @@ class Diker(Qcoms):
                     #dike layer parameters
                     sid = 'sid', #global segment identifier
                     
-                    #cross profile parameters
-                    dist_line = 40, #distance along dike to draw perpindicular profiles
-                    dist_profile = 100, #half length of profile from dike CL
-                    dens_int = None,
+                    #cross profile (transect) parameters
+                    simp_dike = 2, #value to simplify dike cl by
+                    dist_dike = 40, #distance along dike to draw perpindicular profiles
+                    dist_trans = 100, #length (from dike cl) of transect 
+                    tside = 'Left', #side of dike line to draw transect
+                    dens_int = None, #density of sample points along transect 
                     nullSamp = -999, #value for bad samples
+                    write_tr = False, #wheter to output the unsampled transect layer
                     
+                    #wsl sampling
+                    #wsl_stat = 'Max', #for transect wsl zvals, stat to use for summary
                     
                     logger=None,
                     ): 
@@ -179,73 +185,99 @@ class Diker(Qcoms):
         #=======================================================================
         assert sid in [f.name() for f in dike_vlay.fields()], 'failed to get sid on dikes'
         
+        
+        #tside
+        tside_d = {'Left':0, 'Right':1, 'Both':2}
+        assert tside in tside_d, 'bad tside: \'%s\''%tside
+        assert not tside =='Both', 'Both not supported'
+        
+        #wsl sampling
+        #=======================================================================
+        # assert wsl_stat in stat_pars_d, 'bad wsl_stat: %s'%wsl_stat
+        # assert wsl_stat == 'Max', 'wsl_stat has to be maximum'
+        #=======================================================================
+        
         #=======================================================================
         # crossProfiles---
         #=======================================================================
         #=======================================================================
-        # get the raw
+        # simplify
         #=======================================================================
-        algo_nm='saga:crossprofiles'
-        d = {'DEM' : dtm_rlay, 
-             'DIST_LINE' : dist_line, 
-             'DIST_PROFILE' : dist_profile, 
-             'LINES' : dike_vlay, 
-             'NUM_PROFILE' : 3, #number of samples (we are not using the sample values.. just the geo
-             'PROFILES' : 'TEMPORARY_OUTPUT' }
+        """because transects draws at each vertex, we wanna reduce the number.
+        each vertex will still be on the original line"""
+        if simp_dike > 0:
+            d = { 'INPUT' : dike_vlay, 'METHOD' : 0, 'OUTPUT' : 'TEMPORARY_OUTPUT', 
+                 'TOLERANCE' : simp_dike}
+            algo_nm = 'native:simplifygeometries'
+            dvlay = processing.run(algo_nm, d, feedback=self.feedback)['OUTPUT']
+            mstore.addMapLayer(dvlay)
+        else:
+            dvlay = dike_vlay
+        #=======================================================================
+        # densify
+        #=======================================================================
+        #make sure we get at least the number of transects requested
+        d = { 'INPUT' : dvlay,'INTERVAL' : dist_dike, 'OUTPUT' : 'TEMPORARY_OUTPUT' }
         
-        res_d = processing.runAndLoadResults(algo_nm, d, feedback=self.feedback)
-        
-        #checks
-        assert os.path.exists(res_d['PROFILES']), '%s failed to generate a result'%algo_nm
-        
-        cp_vlay_raw = QgsVectorLayer(res_d['PROFILES'])
-        assert isinstance(cp_vlay_raw, QgsVectorLayer), '%s failed to get a vectorlayer'%algo_nm
-        
-        
-        self.createspatialindex(cp_vlay_raw)
-        
-        """
-        view(cp_vlay)
-        """
-        #drop some fields
+        algo_nm='native:densifygeometriesgivenaninterval'
+        dvlay = processing.run(algo_nm, d, feedback=self.feedback)['OUTPUT']
+        #mstore.addMapLayer(dvlay) #need to keep this alive for the intersect calc below
         
         #=======================================================================
-        # #retrieve the sid
+        # transects
         #=======================================================================
-        cp_vlay, new_fn_l, join_cnt = self.joinattributesbylocation(cp_vlay_raw, dike_vlay,
-                                                [sid], method=1, expect_all_hits=True, 
-                                                logger=log)
+        """draws perpindicular lines at vertex.
+        keeps all the fields and adds some new ones"""
+        d = { 'ANGLE' : 90, 'INPUT' :dvlay, 'LENGTH' : dist_trans, 'OUTPUT' : 'TEMPORARY_OUTPUT', 
+             'SIDE' : tside_d[tside]}
+
+        algo_nm="native:transect"
+        tr_vlay = processing.run(algo_nm, d, feedback=self.feedback)['OUTPUT']
+        mstore.addMapLayer(tr_vlay)
         
+
+
         #=======================================================================
         # densify
         #=======================================================================
         #add additional veritifies to improve the resolution of the wsl sample
-        if dens_int is None: desn_int = min(dist_line, dist_profile/2)
-        d = { 'INPUT' : cp_vlay,'INTERVAL' : desn_int, 'OUTPUT' : 'TEMPORARY_OUTPUT' }
-        
+        if dens_int is None: desn_int = min(dist_dike, dist_trans/2)
+        d = { 'INPUT' : tr_vlay,'INTERVAL' : desn_int, 'OUTPUT' : 'TEMPORARY_OUTPUT' }
         algo_nm='native:densifygeometriesgivenaninterval'
-        
-        cp_vlay = processing.run(algo_nm, d, feedback=self.feedback)['OUTPUT']
+        tr_vlay = processing.run(algo_nm, d, feedback=self.feedback)['OUTPUT']
+        mstore.addMapLayer(tr_vlay)
 
-        cp_vlay = self.fixgeometries(cp_vlay, logger=log)
+        tr_vlay = self.fixgeometries(tr_vlay, logger=log)
         
         #=======================================================================
         # #clean it up
         #=======================================================================
-        cp_vlay.setName('%s_cp'%dike_vlay.name())
+        tr_vlay.setName('%s_%s_transects'%(self.tag, dike_vlay.name()))
+        
+        """
+        view(tr_vlay)
+        vlay_write(tr_vlay, r'C:\LS\03_TOOLS\CanFlood\ins\MFRA\20210131\outs\tr_vlay.gpkg', overwrite=True)
+        """
         
         #remove unwanted fields
-        dp = cp_vlay.dataProvider()
-        drop_l = set([f.name() for f in cp_vlay.fields()]).difference([sid, 'ID'])
+        dp = tr_vlay.dataProvider()
+        drop_l = set([f.name() for f in tr_vlay.fields()]).difference([sid, self.dikeID, self.segID])
         fdrop_l = [dp.fieldNameIndex(f) for f in drop_l] #get indexes
         dp.deleteAttributes(fdrop_l)
-        cp_vlay.updateFields()
+        tr_vlay.updateFields()
+        
+        #=======================================================================
+        # output
+        #=======================================================================
+        if write_tr:
+            self.vlay_write(tr_vlay)
          
         #=======================================================================
         # get wsls----
         #=======================================================================
         res_d = dict()
         dxcol = None
+        
 
         log.info('building %i cross profile sets'%len(noFailr_d))
         for eTag, wsl_rlay in noFailr_d.items():
@@ -253,32 +285,43 @@ class Diker(Qcoms):
             #===================================================================
             # drape---
             #===================================================================
-            d = { 'BAND' : 1, 'INPUT' : cp_vlay, 'NODATA' : nullSamp, 
+            d = { 'BAND' : 1, 'INPUT' : tr_vlay, 'NODATA' : nullSamp, 
                  'OUTPUT' : 'TEMPORARY_OUTPUT', 'RASTER' : wsl_rlay,
-                  'SCALE' : 1,
-                   }
+                  'SCALE' : 1,}
             algo_nm = 'native:setzfromraster'
-            cpi_vlay = processing.run(algo_nm, d, feedback=self.feedback)['OUTPUT']
-            mstore.addMapLayer(cpi_vlay)
+            tri_vlay = processing.run(algo_nm, d, feedback=self.feedback)['OUTPUT']
+            mstore.addMapLayer(tri_vlay)
             #===================================================================
             # extract z
             #===================================================================
-            d = { 'COLUMN_PREFIX' : 'z_', 'INPUT' : cpi_vlay,
-                  'OUTPUT' : 'TEMPORARY_OUTPUT', 'SUMMARIES' : [8], #max
+            ofnl = [f.name() for f in tri_vlay.fields()]
+            """because of the nullvalue handling... we should only be looking for a maximum here"""
+            d = { 'COLUMN_PREFIX' : 'z_', 'INPUT' : tri_vlay,
+                  'OUTPUT' : 'TEMPORARY_OUTPUT', 'SUMMARIES' : [stat_pars_d['Maximum']], 
                    }
             algo_nm = 'native:extractzvalues'
-            cpi_vlay = processing.run(algo_nm, d, feedback=self.feedback)['OUTPUT']
-            mstore.addMapLayer(cpi_vlay)
+            tri_vlay = processing.run(algo_nm, d, feedback=self.feedback)['OUTPUT']
+            mstore.addMapLayer(tri_vlay)
             
+            #get new fieldName
+            wslField = list(set([f.name() for f in tri_vlay.fields()]).difference(ofnl))[0]
             #===================================================================
-            # centroids---
+            # point on dike crest
             #===================================================================
-            d = { 'ALL_PARTS' : False, 'INPUT' :cpi_vlay, 'OUTPUT' : 'TEMPORARY_OUTPUT' }
-            algo_nm = 'native:centroids'
+            """gets a point for the vertex at the START of the line.
+            should work fine for right/left.. but not for 'BOTH'"""
+            d = { 'INPUT' : tri_vlay, 'INPUT_FIELDS' : [], 'INTERSECT' : dvlay, 
+                 'INTERSECT_FIELDS' : ['fid'], 'INTERSECT_FIELDS_PREFIX' : 'dike_',
+                  'OUTPUT' : 'TEMPORARY_OUTPUT' }
+
+            algo_nm = 'native:lineintersections'
             cPts_vlay = processing.run(algo_nm, d, feedback=self.feedback)['OUTPUT']
             mstore.addMapLayer(cPts_vlay)
+            """
+            view(cPts_vlay)
+            """
             #===================================================================
-            # centroids - sample
+            # crest sample
             #===================================================================
             d = { 'COLUMN_PREFIX' : 'dtm', 'INPUT' : cPts_vlay, 'OUTPUT' : 'TEMPORARY_OUTPUT',
               'RASTERCOPY' : dtm_rlay }
@@ -288,15 +331,19 @@ class Diker(Qcoms):
             #===================================================================
             # collect----
             #===================================================================
-            df = vlay_get_fdf(cPts_vlay, logger=log).rename(columns={'dtm_1':'dtm', 'z_max':'wsl_max'})
+            df = vlay_get_fdf(cPts_vlay, logger=log
+                          ).rename(columns={'dtm_1':'crest_el', wslField:'wsl'}
+                                   ).drop('dike_fid', axis=1, errors='ignore')
             
             #clear out bad samples
-            boolidx = df['wsl_max']==nullSamp
-            df.loc[boolidx, 'wsl_max'] = np.nan
+            boolidx = df['wsl']==nullSamp
+            df.loc[boolidx, 'wsl'] = np.nan
             log.debug('\'%s\' droped %i (of %i) bad wsl samples'%(eTag, boolidx.sum(), len(boolidx)))
             
             #calc freeboard
-            df['freeboard'] = df['dtm'] - df['wsl_max']
+            df['freeboard'] = df['crest_el'] - df['wsl']
+            
+            df.loc[:, ('freeboard', 'crest_el', 'wsl')] = df.loc[:, ('freeboard', 'crest_el', 'wsl')].round(self.prec)
             
             #===================================================================
             # #re-assemble layer
@@ -325,32 +372,83 @@ class Diker(Qcoms):
         # wrap
         #=======================================================================
         log.info('finished building exposure on %i events'%len(res_d))
-        self.expo_cPts_vlay_d = res_d
+        self.expo_vlay_d = res_d
         self.expo_dxcol = dxcol
             
-        return self.expo_dxcol, self.expo_cPtsV_d
+        return self.expo_dxcol, self.expo_vlay_d
+    
+    #===========================================================================
+    # plot-----
+    #===========================================================================
+    def plot_profile(self):
+        pass
+
     
     #===========================================================================
     # outputs----------
     #===========================================================================
-    def output_expos(self,#convenience for outputting all the exposure data
+    def output_dxcol(self,#convenience for outputting all the exposure data
                      dxcol=None,
-                     vlay_d = None,
-                     logger=None,): 
+                     logger=None,
+                     overwrite=None,): 
         #=======================================================================
         # defaults
         #=======================================================================
+        if overwrite is None: overwrite=self.overwrite
         if logger is None: logger=self.logger
-        log=logger.getChild('output_expos')
+        log=logger.getChild('output_dxcol')
         if dxcol is None: dxcol = self.expo_dxcol
-        if vlay_d is None: vlay_d = self.expo_cPts_vlay_d
+
         #=======================================================================
         # dxcol
         #=======================================================================
-        ofp = os.path.join(self.out_dir, '%s_expo_dxcol_%i.csv'%(self.tag, len(1)))
+        ofp = os.path.join(self.out_dir, 
+                           '%s_expo_dxcol_%i.csv'%(self.tag, len(dxcol.columns.levels[0])))
+        if os.path.exists(ofp):
+            assert overwrite
+            
         dxcol.to_csv(ofp, header=True)
         
+        log.info('wrote expo_dxcol to %s'%ofp)
+        
+        return ofp
+        
+    def output_vlays(self,#convenience for outputting all the exposure data
+                     vlay_d = None,
+                     logger=None,
+                     overwrite=None,): 
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if overwrite is None: overwrite=self.overwrite
+        if logger is None: logger=self.logger
+        log=logger.getChild('output_vlays')
 
+        if vlay_d is None: vlay_d = self.expo_vlay_d
+        
+        #=======================================================================
+        # setup sub folder
+        #=======================================================================
+        out_dir = os.path.join(self.out_dir, 'expo_crest_pts')
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+        
+        #=======================================================================
+        # loop and write
+        #=======================================================================
+        d = dict()
+        log.info('writing %i vlays to file'%len(vlay_d))
+        for eTag, vlay in vlay_d.items():
+            ofp = os.path.join(out_dir, '%s_%s_expoPts_%i.gpkg'%(
+                self.tag, eTag, vlay.dataProvider().featureCount()))
+            
+            if os.path.exists(ofp): assert self.overwrite
+            
+            d[eTag] = self.vlay_write(vlay, out_fp=ofp, logger=log)
+            
+        log.debug('finished writing %i'%len(d))
+        return d
+            
                 
 
  
