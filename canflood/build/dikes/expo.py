@@ -41,7 +41,7 @@ from results.riskPlot import Plotr
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Expo(Qcoms, Plotr):
+class Dexpo(Qcoms, Plotr):
     """
 
     
@@ -164,8 +164,7 @@ class Expo(Qcoms, Plotr):
         
         return self.dike_vlay
     
-    def load_fcurves(self):
-        pass
+
     
     def get_dike_expo(self, #get exposure set for dikes
                     noFailr_d,
