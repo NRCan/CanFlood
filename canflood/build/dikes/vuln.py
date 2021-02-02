@@ -66,6 +66,7 @@ class Dvuln(Dcoms):
         #=======================================================================
         # #loop through each frame and build the func
         #=======================================================================
+        minDep_d = dict()
         for tabn, df in df_d.items():
             if tabn.startswith('_'):
                 log.warning('skipping dummy tab \'%s\''%tabn)
@@ -80,6 +81,9 @@ class Dvuln(Dcoms):
             #store it
             self.dfuncs_d[dfunc.tag] = dfunc
             
+            minDep_d[tabn] = dfunc.min_dep
+            
+            raise Error('stopped here')
 
     
     def load_expo(self, #load the exposure data
@@ -106,6 +110,7 @@ class FragFunc(ComWrkr,
     # user pars
     #==========================================================================
     tag = 'dfunc'
+    min_dep = 0
 
     pars_d = {}
     
