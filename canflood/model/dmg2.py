@@ -22,7 +22,7 @@ idx = pd.IndexSlice
 # custom imports
 #==============================================================================
 
-mod_logger = logging.getLogger('dmg2') #get the root logger
+#mod_logger = logging.getLogger('dmg2') #get the root logger
 
 from hlpr.exceptions import QError as Error
 
@@ -149,12 +149,10 @@ class Dmg2(Model):
         
         return self
          
-    def setup_dfuncs(self, # build curve workers
+    def setup_dfuncs(self, # build curve workers from loaded xlsx data
                  df_d, #{tab name: raw curve data
                  ):
-        """
-        consider only building curves found in the inventory
-        """
+ 
         #=======================================================================
         # defaults
         #=======================================================================
