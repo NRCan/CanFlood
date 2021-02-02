@@ -9,7 +9,7 @@ simple build routines
 #==========================================================================
 # logger setup-----------------------
 #==========================================================================
-import logging, configparser, datetime, shutil
+#import logging, configparser, datetime, shutil
 
 
 
@@ -22,8 +22,8 @@ import pandas as pd
 from pandas import IndexSlice as idx
 
 #Qgis imports
-from qgis.core import QgsVectorLayer, QgsWkbTypes, QgsMapLayerStore, QgsFeatureRequest, QgsProcessingParameterExpression,\
-    QgsExpression
+from qgis.core import QgsVectorLayer, QgsWkbTypes, QgsMapLayerStore
+ 
 import processing
 #==============================================================================
 # custom imports
@@ -35,14 +35,15 @@ from hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata, view, stat_pars_d, \
     vlay_rename_fields
     
  
-from build.dikes.dcoms import Dcoms
+
+from .dPlot import DPlotr
     
 #from hlpr.basic import get_valid_filename
 
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Dexpo(Qcoms, Dcoms):
+class Dexpo(Qcoms, DPlotr):
     """
 
     
@@ -88,22 +89,31 @@ class Dexpo(Qcoms, Dcoms):
         return d
     
     def load_dike(self, fp,
-                  dikeID = 'dikeID', #dike identifier field
-                  segID = 'segID', #segment identifier field
+                  dikeID = None, #dike identifier field
+                  segID = None, #segment identifier field
                    logger=None, **kwargs):
         
+        #=======================================================================
+        # defaults
+        #=======================================================================
         if logger is None: logger=self.logger
         log = logger.getChild('load_dikes')
-        
-        vlay = self.load_vlay(fp, **kwargs)
+        if dikeID is None: dikeID = self.dikeID
+        if segID is None: segID = self.segID
+        mstore = QgsMapLayerStore() #build a new map store
         
 
-        df = vlay_get_fdf(vlay, logger=log)
-
         #=======================================================================
-        # checks
+        # load it
         #=======================================================================
-        miss_l = set([dikeID, segID]).difference(df.columns)
+        vlay_raw = self.load_vlay(fp, **kwargs)
+        mstore.addMapLayer(vlay_raw)
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        fnl = [f.name() for f in vlay_raw.fields()]
+        miss_l =  set([dikeID, segID, 'f0_dtag']).difference(fnl)
         assert len(miss_l)==0, 'missing expected columns on dike layer: %s'%miss_l
         
         """try forcing
@@ -111,10 +121,23 @@ class Dexpo(Qcoms, Dcoms):
         assert 'int' in df[dikeID].dtype.name, 'bad dtype on dike layer %s'%dikeID"""
         
         #geometry
-        assert 'Line' in QgsWkbTypes().displayString(vlay.wkbType()), 'bad vector type on dike'
+        assert 'Line' in QgsWkbTypes().displayString(vlay_raw.wkbType()), 'bad vector type on dike'
         
-        dp = vlay.dataProvider()
-        
+        #=======================================================================
+        # add geometry data
+        #=======================================================================
+        d = { 'CALC_METHOD' : 0, 'INPUT' : vlay_raw,'OUTPUT' : 'TEMPORARY_OUTPUT' }
+
+        vlay = processing.run('qgis:exportaddgeometrycolumns', d, feedback=self.feedback)['OUTPUT']
+        mstore.addMapLayer(vlay)
+        #rename the vield
+        vlay = vlay_rename_fields(vlay, {'length':self.segln})
+        mstore.addMapLayer(vlay)
+        #=======================================================================
+        # pull data
+        #=======================================================================
+        df = vlay_get_fdf(vlay, logger=log)
+
         #=======================================================================
         # build global segment ids
         #=======================================================================
@@ -135,19 +158,22 @@ class Dexpo(Qcoms, Dcoms):
         # bundle back into vectorlayer
         geo_d = vlay_get_fdata(vlay, geo_obj=True, logger=log)
         res_vlay = self.vlay_new_df2(df, geo_d=geo_d, logger=log,
-                               layname=vlay.name())
-        
+                               layname='%s_dike_%s'%(self.tag, vlay_raw.name()))
         
         
         #=======================================================================
         # wrap
         #=======================================================================
-
+        dp = res_vlay.dataProvider()
         log.info('loaded dike layer \'%s\'  w/ %i segments'%(vlay.name(), dp.featureCount()))
 
         self.dike_vlay = res_vlay
-        self.dikeID, self.segID = dikeID, segID
+        self.dike_df = df
+        
+        """attching this again in case th user passes new values"""
+        self.dikeID, self.segID = dikeID, segID #done during init
         self.sid_vals = df[self.sid].unique().tolist()
+        mstore.removeAllMapLayers()
         
         """
         view(res_vlay)
@@ -264,7 +290,7 @@ class Dexpo(Qcoms, Dcoms):
         the raw transects have a 'fid' based on the dike fid (which is now non-unique)
         TR_ID is a new feature id (for the transects)
         """        
-        tr_colns = [sid, self.dikeID, self.segID, tr_fid, 'TR_SEGMENT']
+        tr_colns = [sid, self.dikeID, self.segID, tr_fid, self.segln, 'TR_SEGMENT']
         tr_vlay = self.deletecolumn(tr_vlay, tr_colns, logger=log, invert=True)
         
         #tr_vlay  = vlay_rename_fields(tr_vlay, {tr_fid:'fid_tr'})
@@ -382,7 +408,7 @@ class Dexpo(Qcoms, Dcoms):
         """        
         tr_vlay = self.deletecolumn(tr_vlay, tr_colns, logger=log, invert=True)
         mstore.addMapLayer(tr_vlay)
-        # #rename fields
+
         tr_vlay.setName('%s_%s_transects'%(self.tag, dike_vlay.name()))
                 
         log.info('got %i transects'%tr_vlay.dataProvider().featureCount())
@@ -476,7 +502,7 @@ class Dexpo(Qcoms, Dcoms):
         res_d = dict()
         dxcol = None
         
-        comColns = [self.sdistn, self.celn, self.segID, self.dikeID] #common columns
+        #comColns = [self.sdistn, self.celn, self.segID, self.dikeID] #common columns
         
         geo_d = vlay_get_fdata(cPts_vlay, rekey= tr_fid, geo_obj=True, logger=log)
 
@@ -584,6 +610,73 @@ class Dexpo(Qcoms, Dcoms):
             
         return self.expo_dxcol, self.expo_vlay_d
     
+    def get_fb_smry(self, #get a summary of the freeboard value for feeding to the curves 
+                      dxcol = None,
+                      stat = 'min', 
+                      logger=None,
+
+                      **kwargs
+                     ):
+        """
+        see 
+        """
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('get_smry_expo')
+        if dxcol is None: dxcol = self.expo_dxcol.copy()
+        
+        log.info("on %s"%str(dxcol.shape))
+        
+        assert hasattr(dxcol, stat), 'unreocgnized function \'%s\''%stat
+        
+        #=======================================================================
+        # get segment (common) attributes
+        #=======================================================================
+        cdf = dxcol.loc[:, idx['common', (self.dikeID, self.segID, self.sid, self.segln)]
+                        ].droplevel(level=0, axis=1)
+        
+        seg_df = cdf.groupby(self.sid).first()
+        
+        #join tags
+        """needed by vuln module"""
+        seg_df = seg_df.join(self.dike_df.loc[:, [self.sid, 'f0_dtag']].set_index(self.sid))
+        #=======================================================================
+        # loop and calc stat
+        #=======================================================================
+
+        
+        res_df = None
+        for eTag, edxcol in dxcol.drop('wsl', level=1, axis=1).groupby(level=0, axis=1):
+            if eTag == 'common': continue
+            
+            #get this frame (with the sid values attached)
+            edf = edxcol.droplevel(level=0, axis=1).join(cdf[self.sid])
+            
+            
+        
+            #get the stat (for each gruop)
+            f = getattr(edf.groupby(self.sid), stat)
+            esdf = f(**kwargs).rename(columns={self.fbn:eTag})
+
+            
+            #append result
+            if res_df is None:
+                res_df = seg_df.join(esdf)
+            else:
+                res_df = res_df.join(esdf)
+                
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        log.info('got summaries on %i events and %i segments'%(
+            len(res_df.columns)-3, len(res_df)))
+        
+        self.expo_df = res_df
+        return self.expo_df
+    
+
     def get_breach_vlays(self, #get vlays of breach points
                          vlay_d = None,
                          logger=None,
@@ -629,162 +722,11 @@ class Dexpo(Qcoms, Dcoms):
         """
         raise Error('not implemented')
     
-    #===========================================================================
-    # plot-----
-    #===========================================================================
-    def plot_seg_prof(self, #get a plot for a single segment 
-                      sidVal,
-                      dxcol_raw = None,
-                      
-                      sid = None,
-                      logger=None,
-                      
-                      #plot handles
-                      figsize=None,
-                      
-                      **kwargs
-                      ):
-        
-        plt, matplotlib = self.plt, self.matplotlib
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        if logger is None: logger=self.logger
-        log = logger.getChild('plot_seg_prof')
-        if dxcol_raw is None: dxcol_raw = self.expo_dxcol.copy()
-        if sid is None: sid=self.sid
-        if figsize is None: figsize    =    self.figsize
-        
-        #=======================================================================
-        # precheck
-        #=======================================================================
 
-        assert sidVal in dxcol_raw.loc[:, idx[:, sid]].values, 'requested %s not found: %s'%(sid, sidVal)
-        
-        miss_l = set([sid, self.sdistn,self.celn,self.wsln]).difference(dxcol_raw.columns.levels[1])
-        assert len(miss_l)==0, 'missing some expected columns: %s'%miss_l
-        
-        #=======================================================================
-        # data slice----
-        #=======================================================================\
-        boolidx = dxcol_raw.loc[:, idx[:, sid]].iloc[:, 0]==sidVal
-        dxcol = dxcol_raw.loc[boolidx, :]
-        
-        
-        #=======================================================================
-        # common data
-        #=======================================================================
-        
-        #extracting common info from first set
-        """ assuming the sid column is the same on all levels"""
-        dike_df = dxcol.loc[:, 'common']
-                            
-        
-        
-        #get labels
-        segIDVal = dike_df[self.segID].unique()[0]
-        dikeIDVal = dike_df[self.dikeID].unique()[0]
-        
-        dike_df = dike_df.drop([self.segID, self.dikeID], axis=1)
-        log.info('getting plot from %s'%str(dike_df.shape))
-        
-
-        
-        
-        #======================================================================
-        # labels
-        #======================================================================
-        y1lab = 'elv (datum m)'
-        xlab = 'profile distance (m)'
-        title = '%s dike %s-%s profiles'%(self.tag, dikeIDVal, segIDVal)
-
-
-        #=======================================================================
-        # figure setup
-        #=======================================================================
-        """
-        plt.show()
-        """
-        plt.close()
-        fig = plt.figure(figsize=figsize, constrained_layout = True)
-        
-        #axis setup
-        ax1 = fig.add_subplot(111)
-        #ax2 = ax1.twinx()
-        
-        # axis label setup
-        fig.suptitle(title)
-        ax1.set_ylabel(y1lab)
-        ax1.set_xlabel(xlab)
-        
-        #=======================================================================
-        # add crest
-        #=======================================================================
-        self._crest_toAx(ax1, dike_df)
-        
-        #=======================================================================
-        # add  wsl profiles
-        #=======================================================================
-        """
-        view(dxcol.columns.to_frame())
-        """
-        
-        
-        #dxcol1 = dxcol.loc[:, idx[:, (self.sdistn, self.wsln, self.fbn)]]
-        #loop over lvl0 values/subframes
-        for l0val, edxcol in dxcol.drop('common', axis=1, level=0).groupby(level=0, axis=1):
-            edf =  edxcol.droplevel(level=0, axis=1).join(dike_df[self.sdistn])
-            self._wsl_toAx(ax1,edf, label = '%s_%s'%(l0val, self.wsln))
-            
-        log.info('added %i \'%s\' plots'%(
-            len(dxcol.columns.levels[0])-1, self.wsln))
-            
-        
-        #=======================================================================
-        # post format
-        #=======================================================================
-        if self.grid: ax1.grid()
-        ax1.legend()
-        
-        return fig
-
-        
-    def _wsl_toAx(self,
-                 ax, df, style_d = {
-                             #'color':'blue',
-                              'marker':'v',
-                              'markeredgecolor':'blue',
-                              'linewidth':1,
-                              'fillstyle':'none',
-                              },
-                 label = None,
-                 ):
-        if label is None: label = self.wsln
-        
-        xar,  yar = df[self.sdistn].values, df[self.wsln].values
-        return ax.plot(xar,yar, label= label,
-                        **style_d)
-        
-        
-        
-    def _crest_toAx(self, #add the two lines to the plot
-                         ax, df, style_d = {
-                             'color':'orange',
-                              'marker':'+',
-                              }):
-        
-        xar,  yar = df[self.sdistn].values, df[self.celn].values
-        return ax.plot(xar,yar, label= self.celn,
-                        **style_d)
-
-        
-
-
-    
     #===========================================================================
     # outputs----------
     #===========================================================================
-    def output_dxcol(self,#convenience for outputting all the exposure data
+    def output_expo_dxcol(self,#convenience for outputting all the exposure data
                      dxcol=None,
                      logger=None,
                      overwrite=None,): 
@@ -809,6 +751,53 @@ class Dexpo(Qcoms, Dcoms):
         log.info('wrote expo_dxcol to %s'%ofp)
         
         return ofp
+    
+    def output_expo_df(self, #output the dike data (for the vuln calc
+                  df = None,
+                     vlay = None, #geometry to use for writing
+                     logger=None,
+                     overwrite=None,
+                     as_vlay = False, #option to vectorize the reuslts
+                     ): 
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if overwrite is None: overwrite=self.overwrite
+        if logger is None: logger=self.logger
+        log=logger.getChild('output_dikes_csv')
+        
+        if df is None: df = self.expo_df.copy()
+        if vlay is None: vlay = self.dike_vlay
+        
+        #=======================================================================
+        # tabular
+        #=======================================================================
+        ofp = os.path.join(self.out_dir, '%s_expo_%i_%i.csv'%(
+            self.tag, len(df.columns)-4,len(df) ))
+        
+        if os.path.exists(ofp):assert self.overwrite
+            
+        df.to_csv(ofp, index=True)
+        
+        log.info('wrote %s to file \n    %s'%(str(df.shape), ofp))
+        
+        #=======================================================================
+        # vectorized
+        #=======================================================================
+        if as_vlay:
+            
+            
+            geo_d = vlay_get_fdata(vlay, geo_obj=True, logger=log, rekey=self.sid)
+            res_vlay = self.vlay_new_df2(df, geo_d=geo_d, logger=log,
+                               layname=vlay.name())
+            
+            ofp = self.vlay_write(res_vlay, logger=log)
+
+            
+
+        
+        return ofp
+        
         
     def output_vlays(self,#convenience for outputting all the exposure data
                      vlay_d = None,

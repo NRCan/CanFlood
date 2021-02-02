@@ -14,6 +14,8 @@ impacts model 2
 #python standards
 import configparser, os, logging, datetime
 
+"""not sure what happened to the weak references..."""
+
 import pandas as pd
 import numpy as np
 #import math
@@ -215,6 +217,8 @@ class Dmg2(Model):
         
         log.info('finishe building %i curves \n    %s'%(
             len(self.dfuncs_d), list(self.dfuncs_d.keys())))
+        
+        return
         
         
     def check_ftags(self):
