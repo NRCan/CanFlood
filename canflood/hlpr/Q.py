@@ -884,13 +884,13 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #=======================================================================
         algo_nm = 'qgis:deletecolumn'
         if logger is None: logger=self.logger
-        log = self.logger.getChild('deletecolumn')
+        log = logger.getChild('deletecolumn')
         self.vlay = in_vlay
 
         #=======================================================================
         # field manipulations
         #=======================================================================
-        fieldn_l = self._field_handlr(in_vlay, fieldn_l,  invert=invert)
+        fieldn_l = self._field_handlr(in_vlay, fieldn_l,  invert=invert, logger=log)
         
             
 
@@ -2243,9 +2243,10 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                       vlay, #layer to check for field presence
                       fieldn_l, #list of fields to handle
                       invert = False,
+                      logger=None,
                       ):
-        
-        log = self.logger.getChild('_field_handlr')
+        if logger is None: logger=self.logger
+        log = logger.getChild('_field_handlr')
 
         #=======================================================================
         # all flag
@@ -2276,7 +2277,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
     
     
-        vlay_check(vlay, exp_fieldns=fieldn_l)
+        #vlay_check(vlay, exp_fieldns=fieldn_l)
         
         
         #=======================================================================
@@ -2288,7 +2289,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             #get the difference
             fieldn_l = list(big_fn_s.difference(set(fieldn_l)))
             
-            self.logger.debug('inverted selection from %i to %i fields'%
+            log.debug('inverted selection from %i to %i fields'%
                       (len(big_fn_s),  len(fieldn_l)))
             
             
