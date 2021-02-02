@@ -484,6 +484,8 @@ class Dexpo(Qcoms, Plotr):
         res_d = dict()
         dxcol = None
         
+        comColns = [self.sdistn, self.celn, self.segID, self.dikeID] #common columns
+        
         geo_d = vlay_get_fdata(cPts_vlay, rekey= tr_fid, geo_obj=True, logger=log)
 
         log.info('building %i cross profile sets'%len(noFailr_d))
@@ -547,7 +549,7 @@ class Dexpo(Qcoms, Plotr):
             #===================================================================
             # add to master data
             #===================================================================
-            dxi = pd.concat([df.T], keys=[eTag], names=['eTag']).T
+            dxi = pd.concat([df.loc[:,(self.fbn, self.wsln)].T], keys=[eTag], names=['eTag']).T
             
             """
             df.dtypes
@@ -562,14 +564,25 @@ class Dexpo(Qcoms, Plotr):
                 dxcol = dxcol.join(dxi)
             
         #=======================================================================
-        # wrap
+        # clean up data
         #=======================================================================
+        #join back in common columns
+        boolcol = df.columns.isin(dxcol.columns.levels[1])
+        dxcol = dxcol.join(pd.concat([df.loc[:, ~boolcol].T], keys=['common'], names=['eTag']).T)
+        
+        
         #typeset
         for coln, dtype in df.dtypes.to_dict().items():
             dxcol.loc[:, idx[:, coln]] = dxcol.loc[:, idx[:, coln]].astype(dtype)
 
+        """
+        view(dxcol)
+        """
+
         
-        
+        #=======================================================================
+        # wrap
+        #=======================================================================
         log.info('finished building exposure on %i events'%len(res_d))
         self.expo_vlay_d = res_d
         self.expo_dxcol = dxcol
@@ -613,6 +626,17 @@ class Dexpo(Qcoms, Plotr):
         self.breach_vlay_d = res_d
         return res_d
     
+    def get_breach_area(self):
+        """
+        this would be very tricky to automate....
+        
+        check:
+        SAGA 'fill sinks' for a simple dtm filler
+        SAGA 'Lake flood' for filling a dtm up to a specified depth
+        
+        """
+        raise Error('not implemented')
+    
     #===========================================================================
     # plot-----
     #===========================================================================
@@ -651,20 +675,17 @@ class Dexpo(Qcoms, Plotr):
         #=======================================================================
         # data slice----
         #=======================================================================\
-        
         boolidx = dxcol_raw.loc[:, idx[:, sid]].iloc[:, 0]==sidVal
-        
         dxcol = dxcol_raw.loc[boolidx, :]
         
         
         #=======================================================================
         # common data
         #=======================================================================
-        comColns = [self.sdistn, self.celn, self.segID, self.dikeID]
+        
         #extracting common info from first set
         """ assuming the sid column is the same on all levels"""
-        dike_df = dxcol.loc[:, idx[dxcol.columns.levels[0][0], comColns]
-                            ].droplevel(level=0, axis=1)
+        dike_df = dxcol.loc[:, 'common']
                             
         
         
@@ -715,14 +736,16 @@ class Dexpo(Qcoms, Plotr):
         """
         view(dxcol.columns.to_frame())
         """
-        dxcol1 = dxcol.loc[:, idx[:, (self.sdistn, self.wsln, self.fbn)]]
+        
+        
+        #dxcol1 = dxcol.loc[:, idx[:, (self.sdistn, self.wsln, self.fbn)]]
         #loop over lvl0 values/subframes
-        for l0val, edxcol in dxcol1.groupby(level=0, axis=1):
-            edf =  edxcol.droplevel(level=0, axis=1)
+        for l0val, edxcol in dxcol.drop('common', axis=1, level=0).groupby(level=0, axis=1):
+            edf =  edxcol.droplevel(level=0, axis=1).join(dike_df[self.sdistn])
             self._wsl_toAx(ax1,edf, label = '%s_%s'%(l0val, self.wsln))
             
         log.info('added %i \'%s\' plots'%(
-            len(dxcol1.columns.levels[0]), self.wsln))
+            len(dxcol.columns.levels[0])-1, self.wsln))
             
         
         #=======================================================================
@@ -763,8 +786,7 @@ class Dexpo(Qcoms, Plotr):
                         **style_d)
 
         
-    def plot_prof(self):
-        pass
+
 
     
     #===========================================================================

@@ -22,8 +22,7 @@ import pandas as pd
 from pandas import IndexSlice as idx
 
 #Qgis imports
-from qgis.core import QgsVectorLayer, QgsWkbTypes, QgsMapLayerStore, QgsFeatureRequest, QgsProcessingParameterExpression,\
-    QgsExpression
+
 import processing
 #==============================================================================
 # custom imports
@@ -31,9 +30,6 @@ import processing
 from hlpr.exceptions import QError as Error
     
 
-from hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata, view, stat_pars_d, \
-    vlay_rename_fields
-    
 from results.riskPlot import Plotr
     
 #from hlpr.basic import get_valid_filename
