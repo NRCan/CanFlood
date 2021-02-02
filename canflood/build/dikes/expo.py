@@ -34,14 +34,15 @@ from hlpr.exceptions import QError as Error
 from hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata, view, stat_pars_d, \
     vlay_rename_fields
     
-from results.riskPlot import Plotr
+ 
+from build.dikes.dcoms import Dcoms
     
 #from hlpr.basic import get_valid_filename
 
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Dexpo(Qcoms, Plotr):
+class Dexpo(Qcoms, Dcoms):
     """
 
     
@@ -49,23 +50,14 @@ class Dexpo(Qcoms, Plotr):
         a new instance of this should be spawned
         this way all the user variables can be freshley pulled
     """
-    #data labels
-    wsln = 'wsl'
-    celn = 'crest_el'
-    sdistn = 'seg_dist'
-    fbn = 'freeboard'
-    sid = 'sid' #global segment identifier
-    nullSamp = -999 #value for bad samples
+
 
     def __init__(self,
-                 figsize     = (10, 4),                  
+                 
                   *args,  **kwargs):
         
-        super().__init__(*args, figsize=figsize,**kwargs)
+        super().__init__(*args,**kwargs)
         
-        #=======================================================================
-        # attach
-        #=======================================================================
 
         
         self.logger.debug('Diker.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
