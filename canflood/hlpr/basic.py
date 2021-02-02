@@ -349,6 +349,7 @@ class ComWrkr(object): #common methods for all classes
     def check_curve(self, #validate the passed curve_d  
                     crv_d,
                     logger=None):
+        
         if logger is None: logger=self.logger
         log = logger.getChild('check_curve')
         
