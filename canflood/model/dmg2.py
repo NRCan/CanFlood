@@ -979,11 +979,11 @@ class DFunc(ComWrkr,
     
     def __init__(self,
                  tabn='damage_func', #optional tab name for logging
-                 montonic=True, #whether to expect function to be increasing
+                 monot=True, #whether to expect function to be increasing
                  **kwargs):
         
         self.tabn= tabn
-        self.montonic = montonic
+        self.monot = monot
         """
         todo: reconcile tabn vs tag
         """
@@ -1066,7 +1066,7 @@ class DFunc(ComWrkr,
         chk_ser = dd_df.apply(lambda x: x.is_monotonic_increasing)
         if not chk_ser.all():
             msg = '%s vals are decreasing'%chk_ser.index[~chk_ser].tolist()
-            if self.montonic:
+            if self.monot:
                 raise Error(msg)
             else:
                 log.debug(msg)
