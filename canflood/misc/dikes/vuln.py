@@ -75,7 +75,7 @@ class Dvuln(DPlotr):
         #=======================================================================
         # #loop through each frame and build the func
         #=======================================================================
-        minDep_d = dict()
+        maxFB_d, minFB_d = dict(), dict()
         for tabn, df in df_d.items():
             if tabn.startswith('_'):
                 log.warning('skipping dummy tab \'%s\''%tabn)
@@ -97,14 +97,16 @@ class Dvuln(DPlotr):
             #store it
             self.dfuncs_d[dfunc.tag] = dfunc
             
-            minDep_d[tabn] = dfunc.min_dep
+            #get extremes
+            """for fragility curves... negative = HIGHER exposure"""
+            maxFB_d[tabn], minFB_d[tabn] = dfunc.max_dep, dfunc.min_dep
  
         #=======================================================================
         # wrap
         #=======================================================================
         assert len(self.dfuncs_d)==len(self.dtag_l)
         
-        self.df_minD_d = minDep_d
+        self.maxFB_d, self.minFB_d = maxFB_d, minFB_d
         
         log.info('finished building %i fragility curves \n    %s'%(
             len(self.dfuncs_d), list(self.dfuncs_d.keys())))
@@ -118,6 +120,9 @@ class Dvuln(DPlotr):
                   dfuncs_d = None,
                   expo_df = None,
                   ): 
+        """
+        unlike the damage model... our 'inventory' and exposure data is on the same frame
+        """
         #=======================================================================
         # defaults
         #=======================================================================
@@ -126,6 +131,131 @@ class Dvuln(DPlotr):
         if expo_df is None: expo_df = self.expo_df.copy()
         
         log.info('on expo %s w/ %i dfuncs'%(str(expo_df.shape), len(dfuncs_d)))
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        tagCols = [c for c in expo_df.columns if c.endswith('_dtag')] #id tag columns
+        
+        assert len(tagCols) == 1, 'only 1 tag column is supported now'
+        """ TODO: expand to handle multiple functins per curve
+        (where we calc union or mutEx probability for the combination)"""
+        
+        tag_ser = expo_df[tagCols[0]]
+        #=======================================================================
+        # get valid exposure entries
+        #=======================================================================
+        edf = expo_df.loc[:, self.etag_l]
+        """
+        view(expo_df)
+        
+        TODO: consider filling in with boundary falues first
+        """
+        
+        vbooldf = pd.DataFrame(np.logical_and(
+            edf >= min(self.minFB_d.values()),
+            edf <= max(self.maxFB_d.values()),
+            ))
+        
+
+        
+        #=======================================================================
+        # calc loop
+        #=======================================================================
+        rdf = None
+        for indxr, (dtag, Dfunc) in enumerate(dfuncs_d.items()):
+            log.debug('on %s'%dtag)
+            
+            #===================================================================
+            # get calc data for this set
+            #===================================================================
+            #identify these entries
+            booldf1 = pd.DataFrame(np.tile(tag_ser==dtag, (len(vbooldf.columns),1)).T,
+                                   index=vbooldf.index, columns=vbooldf.columns)
+            
+            booldf = np.logical_and(
+                booldf1, #matching this tag
+                vbooldf) #valid exposures
+ 
+            if not booldf.any().any():
+                log.warning('%s got no valid calcs.. skipping'%dtag)
+                continue
+            
+            log.info('(%i/%i) calculating \'%s\' w/ %i assets (of %i)'%(
+                indxr+1, len(dfuncs_d), dtag, booldf.any(axis=1).sum(), len(booldf)))
+            
+            #===================================================================
+            # get exposure data
+            #===================================================================
+            
+            
+            #get just the unique depths that need calculating
+            """rounding done during loading"""
+            deps_ar = pd.Series(np.unique(np.ravel(edf[booldf].dropna(how='all')))
+                                ).dropna().values
+                                
+            #===================================================================
+            # execute curves
+            #===================================================================
+            #loop each depth through the damage function to get the result                
+            res_d = {dep:Dfunc.get_dmg(dep) for dep in deps_ar}
+            #==================================================================
+            # link these damages back to the results
+            #==================================================================
+            
+            ri_df = edf[booldf].replace(res_d)
+            
+            log.debug('%s got %i vals'%(dtag, ri_df.notna().sum().sum()))
+            #===================================================================
+            # update master
+            #===================================================================
+            if rdf is None:
+                rdf = ri_df
+            else:
+                rdf.update(ri_df, overwrite=False, errors='raise')
+
+            #===================================================================
+            # post checks
+            #===================================================================
+            assert rdf.max().max()<=1
+            assert rdf.min().min()>=0
+            
+        #=======================================================================
+        # fill boundary values-----
+        #=======================================================================
+        """
+        view(rdf)
+        """
+        log.info('filling %i (of %i) blanks'%(rdf.isna().sum().sum(), rdf.size))
+        
+        
+        assert np.array_equal(rdf.notna(), vbooldf), 'failed to fill all valid entries'
+        
+        #=======================================================================
+        # #minimumes
+        #=======================================================================
+        """
+        water is WELL above the crest (negative freeboard)
+        """
+        min_booldf = edf < min(self.minFB_d.values())
+        if min_booldf.any().any():
+            log.info('filling %i MIN vals (%.2f) w/ pFail=1.0'%(
+                min_booldf.sum().sum(),min(self.minFB_d.values()) ))
+            
+            rdf = rdf.where(~min_booldf, other=1.0)
+        
+        #=======================================================================
+        # maximums
+        #=======================================================================
+        max_booldf =   edf > max(self.maxFB_d.values())
+        if max_booldf.any().any():
+            log.info('filling %i MAX vals (%.2f) w/ pFail=0.0'%(
+                max_booldf.sum().sum(),max(self.maxFB_d.values())) )
+            
+            rdf = rdf.where(~max_booldf, other=0.0)
+
+            
+            
 
     
 from model.dmg2 import DFunc
@@ -134,7 +264,7 @@ class FragFunc(DFunc): #simple wrapper around DFunc
     def __init__(self, 
                  *args, **kwargs):
         
-        super().__init__(*args, **kwargs) #initilzie Model
+        super().__init__(*args,monotonic=False, **kwargs) #initilzie Model
         
         
 #===============================================================================

@@ -112,9 +112,9 @@ class Dcoms(ComWrkr):
         self.dtag_l = set([item for sublist in l1 for item in sublist])
         
         self.etag_l = etag_l
-        self.expo_df = df
+        self.expo_df = df.round(self.prec)
         
-        return df
+        return self.expo_df
         
         
         

@@ -442,8 +442,12 @@ class Dmg2(Model):
                 ).rename(columns={'index':'dep'})
                 
             #checks
-            assert np.array_equal(dep_dmg_df.dtypes.values, np.array([np.dtype('float64'), np.dtype('float64')], dtype=object))
-            assert dep_dmg_df.notna().all().all()
+            #assert np.array_equal(dep_dmg_df.dtypes.values, np.array([np.dtype('float64'), np.dtype('float64')], dtype=object))
+            #assert dep_dmg_df.notna().all().all()
+            
+            """"
+            TODO: look at using '.replace' instead
+            """
                 
                 
             for event in tddf.columns[dboolcol]:
@@ -975,10 +979,11 @@ class DFunc(ComWrkr,
     
     def __init__(self,
                  tabn='damage_func', #optional tab name for logging
-                 
+                 montonic=True, #whether to expect function to be increasing
                  **kwargs):
         
         self.tabn= tabn
+        self.montonic = montonic
         """
         todo: reconcile tabn vs tag
         """
@@ -1046,15 +1051,30 @@ class DFunc(ComWrkr,
         #typeset it
         dd_df.iloc[:,0:2] = dd_df.iloc[:,0:2].astype(float)
         
-       
-        ar = np.sort(np.array([dd_df.iloc[:,0].tolist(), dd_df.iloc[:,1].tolist()]), axis=1)
+        """
+        view(dd_df)
+        """
+        
+        ar = dd_df.T.values
+        """NO! leave unsorted
+        ar = np.sort(np.array([dd_df.iloc[:,0].tolist(), dd_df.iloc[:,1].tolist()]), axis=1)"""
         self.dd_ar = ar
         
+        #=======================================================================
+        # check
+        #=======================================================================
+        chk_ser = dd_df.apply(lambda x: x.is_monotonic_increasing)
+        if not chk_ser.all():
+            msg = '%s vals are decreasing'%chk_ser.index[~chk_ser].tolist()
+            if self.montonic:
+                raise Error(msg)
+            else:
+                log.debug(msg)
         #=======================================================================
         # get stats
         #=======================================================================
         self.min_dep = min(ar[0])
-        
+        self.max_dep = max(ar[0])
         #=======================================================================
         # wrap
         #=======================================================================
@@ -1067,6 +1087,10 @@ class DFunc(ComWrkr,
         
     def get_dmg(self, #get damage from depth using depth damage curve
                 depth):
+        """
+        self.tabn
+        view(pd.DataFrame(self.dd_ar))
+        """
         
         ar = self.dd_ar
         
