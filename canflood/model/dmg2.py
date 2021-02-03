@@ -1055,7 +1055,7 @@ class DFunc(ComWrkr,
         view(dd_df)
         """
         
-        ar = dd_df.T.values
+        ar = dd_df.sort_values('exposure').T.values
         """NO! leave unsorted
         ar = np.sort(np.array([dd_df.iloc[:,0].tolist(), dd_df.iloc[:,1].tolist()]), axis=1)"""
         self.dd_ar = ar
@@ -1063,13 +1063,18 @@ class DFunc(ComWrkr,
         #=======================================================================
         # check
         #=======================================================================
-        chk_ser = dd_df.apply(lambda x: x.is_monotonic_increasing)
-        if not chk_ser.all():
-            msg = '%s vals are decreasing'%chk_ser.index[~chk_ser].tolist()
+        """This is a requirement of the interp function"""
+        assert np.all(np.diff(ar[0])>0), 'exposure values must be increasing'
+        
+        #impact (y) vals
+        if not np.all(np.diff(ar[1])>=0):
+            msg = 'impact values are decreasing'
             if self.monot:
                 raise Error(msg)
             else:
                 log.debug(msg)
+            
+
         #=======================================================================
         # get stats
         #=======================================================================
@@ -1089,14 +1094,15 @@ class DFunc(ComWrkr,
                 depth):
         """
         self.tabn
+        pd.DataFrame(self.dd_ar).plot()
         view(pd.DataFrame(self.dd_ar))
         """
         
         ar = self.dd_ar
         
         dmg = np.interp(depth, #depth find damage on
-                        ar[0], #depths 
-                        ar[1], #damages
+                        ar[0], #depths (xcoords)
+                        ar[1], #damages (ycoords)
                         left=0, #depth below range
                         right=max(ar[1]), #depth above range
                         )
