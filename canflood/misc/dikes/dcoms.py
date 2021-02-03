@@ -53,7 +53,8 @@ class Dcoms(ComWrkr):
     sid = 'sid' #global segment identifier
     nullSamp = -999 #value for bad samples
     
-    
+    lfxn = 'lenfx_SF'
+    pfn = 'p_fail'
 
     
     #program containers
@@ -75,16 +76,24 @@ class Dcoms(ComWrkr):
         
         
     def load_expo(self, #load the dike segment exposure data
-                  fp):
+                  fp,
+                  prop_colns = None,
+                  logger=None):
+        """
+        TODO: make this more general (for dRes)
+        """
         
-        log = self.logger.getChild('load_expo')
+        if logger is None: logger=self.logger
+        
+        log = logger.getChild('load_expo')
         
         df = pd.read_csv(fp, header=0, index_col=0)
         
         #=======================================================================
         # precheck
         #=======================================================================
-        prop_colns = [self.dikeID, self.segID, self.segln]
+        if prop_colns is None:
+            prop_colns = [self.dikeID, self.segID, self.segln]
         miss_l = set(prop_colns).difference(df.columns)
         assert len(miss_l)==0, 'missing some expected colns: %s'%miss_l
         

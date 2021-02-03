@@ -309,7 +309,7 @@ class Dvuln(DPlotr):
         #=======================================================================
         # apply scale factors
         #=======================================================================
-        sf_ser.name = 'lenfx_SF'
+        sf_ser.name = self.lfxn
         
         rdf = pfail_df.multiply(sf_ser, axis=0).round(self.prec)
         
