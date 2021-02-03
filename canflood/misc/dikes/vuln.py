@@ -41,6 +41,12 @@ from hlpr.basic import ComWrkr, view
 #==============================================================================
 class Dvuln(DPlotr):
     """ not using config files for now.. just pass all parameteres explicity"""
+    
+    #===========================================================================
+    # program containers
+    #===========================================================================
+    pfL_df = None
+    pf_df = None
 
     def __init__(self,
                  
@@ -217,8 +223,7 @@ class Dvuln(DPlotr):
             #===================================================================
             # post checks
             #===================================================================
-            assert rdf.max().max()<=1
-            assert rdf.min().min()>=0
+
             
         #=======================================================================
         # fill boundary values-----
@@ -254,8 +259,124 @@ class Dvuln(DPlotr):
             
             rdf = rdf.where(~max_booldf, other=0.0)
             
+        #=======================================================================
+        # checks
+        #=======================================================================
         assert rdf.notna().all().all()
+        assert rdf.max().max()<=1
+        assert rdf.min().min()>=0
+        
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        smry_df = rdf.mean().to_frame().rename(columns={0:'mean'}).join(
+            rdf.max().to_frame().rename(columns={0:'max'})).join(
+                rdf.min().to_frame().rename(columns={0:'min'}))
+        
+        
+        log.info('finished calculating pfail %s  w/ \n%s'%(str(rdf.shape), smry_df))
+        
+        self.pf_df = rdf
+        
+        return self.pf_df
+    
+    def set_lenfx(self, #apply length effects to raw pfail data
+                  pfail_df=None, 
+                  expo_df = None,
+                  method = 'URS2007', #method for applying the length effect
+                  ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        log = self.logger.getChild('set_lenfx')
+        if pfail_df is None: pfail_df = self.pf_df.copy()
+        if expo_df is None: expo_df = self.expo_df.copy()
 
+        len_ser = expo_df[self.segln]
+        #=======================================================================
+        # get scale factors
+        #=======================================================================
+        if method == 'URS2007':
+            
+            sf_ser = 1+(len_ser-max(len_ser))/max(len_ser)
+            
+            
+        else:
+            raise Error('unrecognized method: \'%s\''%method)
+        
+        log.info('got %i lfx_SF from \'%s\'. min=%.4f, mean=%.4f, max=%.4f'%(
+            len(sf_ser), method, sf_ser.min(), sf_ser.mean(), sf_ser.max()))
+        #=======================================================================
+        # apply scale factors
+        #=======================================================================
+        sf_ser.name = 'lenfx_SF'
+        
+        rdf = pfail_df.multiply(sf_ser, axis=0).round(self.prec)
+        
+        #summary data
+        smry_df = rdf.mean().to_frame().rename(columns={0:'mean'}).join(
+            rdf.max().to_frame().rename(columns={0:'max'})).join(
+                rdf.min().to_frame().rename(columns={0:'min'}))
+        
+        #=======================================================================
+        # join back in metadat
+        #=======================================================================
+        df = rdf.join(sf_ser)
+        
+        l = set(expo_df.columns).difference(df.columns) #columns to add back
+        df = df.join(expo_df.loc[:, l])
+        
+        log.info('finished applying lfx_sf on %i segments w/ \n%s'%(
+            len(df), smry_df))
+            
+        self.pfL_df = df
+            
+        return self.pfL_df
+    
+    def output_vdfs(self, #output the dike data (for the vuln calc
+                  df = None, df_lfx = None,
+
+                     logger=None,
+                     overwrite=None,
+
+                     ): 
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if overwrite is None: overwrite=self.overwrite
+        if logger is None: logger=self.logger
+        log=logger.getChild('output_vuln_dfs')
+        
+        if df is None: df = self.pf_df
+        if df_lfx is None: df_lfx = self.pfL_df
+
+        
+        #=======================================================================
+        # raw tabular
+        #=======================================================================
+        ecnt = len(df.columns)
+        ofp = os.path.join(self.out_dir, '%s_pfail_%i_%i.csv'%(
+            self.tag, ecnt,len(df) ))
+        
+        if os.path.exists(ofp):assert self.overwrite
+            
+        df.to_csv(ofp, index=True)
+        
+        log.info('wrote %s to file \n    %s'%(str(df.shape), ofp))
+        
+        #=======================================================================
+        # length fx tabular
+        #=======================================================================
+        if not df_lfx is None:
+            df = df_lfx
+            ofp = os.path.join(self.out_dir, '%s_pfail_lfx_%i_%i.csv'%(
+                self.tag, ecnt,len(df)))
+        
+            if os.path.exists(ofp):assert self.overwrite
+                
+            df.to_csv(ofp, index=True)
+            
+            log.info('wrote %s to file \n    %s'%(str(df.shape), ofp))
             
             
 
