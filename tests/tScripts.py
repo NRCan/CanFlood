@@ -14,6 +14,8 @@ import pandas as pd
 import numpy as np
 
 mod_logger = logging.getLogger('tModCom')
+
+
 #===============================================================================
 # classes
 #===============================================================================
@@ -61,11 +63,25 @@ class tWorker(unittest.TestCase): #common model level testing methods
 def load_test_data(
                    res_dir, #directory containing all the results files
                    dataLoad_pars = {},
-                   ext='.csv'
+                   ext='.csv',
+                   
+
+              
                     ):
+    
+    
     if len(dataLoad_pars)==0: return dict()
-    d = dict()
+
+        
+        
     assert os.path.exists(res_dir), res_dir
+    
+    
+    #===========================================================================
+    # load data in passed folder    
+    #===========================================================================
+    d = dict()
+    
     #get all csv files in the folder
     allfns_l = [e for e in os.listdir(res_dir) if e.endswith(ext)]
     
@@ -94,16 +110,46 @@ def get_suite(
                 #any remaining pars will get passed to the model's init 
               testClassObj,
               dataLoad_pars={},
-              absolute_fp=True,
+              absolute_fp=False,
+              tdata_dir = None, #base directory for relative filepaths
               **kwargsModel
                 ):
+
+
+    #===========================================================================
+    # setup directories
+    #===========================================================================
+    if tdata_dir is None:
+        tdata_dir = os.path.join(os.path.dirname(__file__), '_data') #root directory for testing data
+        
+    if not absolute_fp:
+        assert os.path.exists(tdata_dir), 'test data dir does not exist: %s'%tdata_dir
+
     
+    #===========================================================================
+    # add each test onto the suite
+    #===========================================================================
     suite = unittest.TestSuite() #start the suite container
     
     for testName, d in suitePars_d.items():
+        #=======================================================================
+        # pull file paths
+        #=======================================================================
         res_dir = d.pop('res_dir') #pop it out so we dont pass it to the model
-        #setup the model to test
-        Model = testClassObj.modelClassObj(cf_fp=d.pop('cf_fp'), 
+        cf_fp=d.pop('cf_fp')
+            
+        #adjust relatives
+        if not absolute_fp:
+            if not res_dir is None:
+                res_dir = os.path.join(tdata_dir, res_dir)
+            if not cf_fp is None:
+                cf_fp = os.path.join(tdata_dir, cf_fp) 
+
+
+        #=======================================================================
+        # #setup the model to test
+        #=======================================================================
+        Model = testClassObj.modelClassObj(cf_fp=cf_fp, 
                     out_dir=tempfile.mkdtemp(), #get a dummy temp directory
                     logger=mod_logger.getChild(testName), 
                     tag=testName, 
@@ -119,3 +165,13 @@ def get_suite(
 
     print('built suites')
     return suite
+
+
+
+
+
+
+
+
+
+

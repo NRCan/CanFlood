@@ -194,7 +194,7 @@ class Model(ComWrkr,
                     #now that this is a parent... wish this was a kwarg
                  
                  split_key=None,#for checking monotonicy on exposure sets with duplicate events
-                 absolute_fp=True, #whether filepaths are absolute (False=Relative)
+                 absolute_fp=True, #whether filepaths in control file are absolute (False=Relative). 
                  attriMode = False, #flow control for some attribution matrix functions
                  
                  **kwargs):
