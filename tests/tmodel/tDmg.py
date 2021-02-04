@@ -96,39 +96,39 @@ def gen_suite(
 
     runpars_d={
         'tut2_01.b01':{
-             'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\b01\CanFlood_tut2b_20210123.txt',
-             'res_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\b01\dmg2',
+             'cf_fp':r'tut2_01\b01\CanFlood_tut2b_20210123.txt',
+             'res_dir':r'tut2_01\b01\dmg2',
              }, 
         'tut2_01.a01':{
-             'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\CanFlood_tut2a_20210123.txt',
-             'res_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\dmg2',
+             'cf_fp':r'tut2_01\a01\CanFlood_tut2a_20210123.txt',
+             'res_dir':r'tut2_01\a01\dmg2',
              }, 
         'tut2_01.c01.mutEx':{
-             'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\CanFlood_tut2c_20210123_mutEx.txt',
-             'res_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\dmg2',
+             'cf_fp':r'tut2_01\c01\CanFlood_tut2c_20210123_mutEx.txt',
+             'res_dir':r'tut2_01\c01\dmg2',
              },
         #=======================================================================
         # 'tut2_01.c01.max':{ #same as mutEx
-        #      'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\CanFlood_tut2c_20210123_max.txt',
-        #      'res_dir':r'CC:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\c01\dmg2',
+        #      'cf_fp':r'tut2_01\c01\CanFlood_tut2c_20210123_max.txt',
+        #      'res_dir':r'Ctut2_01\c01\dmg2',
         #      },
         #=======================================================================
         'LM_bs.b01':{
-            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b01\CanFlood_Lbs6.ind.txt',
-            'res_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b01\dmg'
+            'cf_fp':r'LM_bs\b01\CanFlood_Lbs6.ind.txt',
+            'res_dir':r'LM_bs\b01\dmg'
             },
         'LM_bs.b02':{
-            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b02\CanFlood_LML.bs7_b02_20210123.txt',
-            'res_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b02\dmg'
+            'cf_fp':r'LM_bs\b02\CanFlood_LML.bs7_b02_20210123.txt',
+            'res_dir':r'LM_bs\b02\dmg'
             },
         'LM_bs.b03_max':{
-            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b03\CanFlood_LML.bs7.b03_max_20210123.txt',
-            'res_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b03\dmg'
+            'cf_fp':r'LM_bs\b03\CanFlood_LML.bs7.b03_max_20210123.txt',
+            'res_dir':r'LM_bs\b03\dmg'
             },
         #=======================================================================
         # 'LM_bs.b02_mutEx':{ #same
-        #     'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b03\CanFlood_LML.bs7.b03_mutEx_20210123.txt',
-        #     'res_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b03\dmg'
+        #     'cf_fp':r'LM_bs\b03\CanFlood_LML.bs7.b03_mutEx_20210123.txt',
+        #     'res_dir':r'LM_bs\b03\dmg'
         #     },
         #=======================================================================
         }
