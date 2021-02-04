@@ -13,15 +13,15 @@ as_inun = False
 event_rels = max		#assumption for calculated expected value on complex events
 
 [dmg_fps]
-curves = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\curves_CFcc_20200608_sfd.xls
-finv = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b02\finv_LML.bs7_finv_tagSFD_20200608_pts.csv
-expos = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b02\expos_LML.bs7_15_13.csv
-gels = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b02\gels_LML.bs7_1_13.csv
+curves = LM_bs\curves_CFcc_20200608_sfd.xls
+finv = LM_bs\b02\finv_LML.bs7_finv_tagSFD_20200608_pts.csv
+expos = LM_bs\b02\expos_LML.bs7_15_13.csv
+gels = LM_bs\b02\gels_LML.bs7_1_13.csv
 
 [risk_fps]
-dmgs = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b02\dmg\dmgs_b02_bs7.b02.csv
-exlikes = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b02\exlikes_LML.bs7.csv
-evals = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\evals_fresh_20200603.csv
+dmgs = LM_bs\b02\dmg\dmgs_b02_bs7.b02.csv
+exlikes = LM_bs\b02\exlikes_LML.bs7.csv
+evals = LM_bs\evals_fresh_20200603.csv
 
 [validation]
 risk1 = False
@@ -30,11 +30,11 @@ risk2 = True
 risk3 = False
 
 [results_fps]
-attrimat02 = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b02\dmg\attr02_b02.csv
-r2_passet = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b02\r01\risk2_LML.bs7.b02_b02_r2_passet.csv
-r2_ttl = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b02\r01\risk2_LML.bs7.b02_b02_ttl.csv
-attrimat03 = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b02\r01\attr03_b02.csv
-eventypes = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b02\r01\eventypes_b02.csv
+attrimat02 = LM_bs\b02\dmg\attr02_b02.csv
+r2_passet = LM_bs\b02\r01\risk2_LML.bs7.b02_b02_r2_passet.csv
+r2_ttl = LM_bs\b02\r01\risk2_LML.bs7.b02_b02_ttl.csv
+attrimat03 = LM_bs\b02\r01\attr03_b02.csv
+eventypes = LM_bs\b02\r01\eventypes_b02.csv
 #'attrimat03' file path set from output_attr at 2021-01-15 20.50.05
 
 [plotting]

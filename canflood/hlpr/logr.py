@@ -15,20 +15,23 @@ class Error(Exception):
 
         mod_logger.error(msg)
 
-def basic_logger(): #for standalone loggers
+def basic_logger(root_lvl = logging.DEBUG): #attaches to a log file in the users directory per the parameter file
     """
-    should create 2 logger's in the users home directory:
-
-    
+    the control file generates a 'DEBUG' and a 'WARNING' filehandler
     """
 
+    #===========================================================================
+    # get filepaths
+    #===========================================================================
     base_dir = os.path.dirname(os.path.dirname(__file__)) #canflood
     logcfg_file = os.path.join(base_dir, '_pars', 'logger.conf')
     
     if not os.path.exists(logcfg_file):
         raise Error('logger config file does not exist:\n    %s'%logcfg_file)
     
-    #change path to users directory
+    #===========================================================================
+    # #change path to users directory
+    #===========================================================================
     new_wdir = os.path.join(os.path.expanduser('~'), 'CanFlood')
     
     if not os.path.exists(new_wdir):
@@ -39,23 +42,16 @@ def basic_logger(): #for standalone loggers
     
     print('changed current directory to: \n    %s'%os.getcwd())
     
-    
+    #===========================================================================
+    # build logger from file
+    #===========================================================================
     logger = logging.getLogger() #get the root logger
     logging.config.fileConfig(logcfg_file) #load the configuration file
     logger.info('root logger initiated and configured from file: %s'%(logcfg_file))
     
+    #override default level in the config file
+    logger.setLevel(root_lvl)
 
     
     return logger
 
-
-
-
-
-if __name__ =="__main__": 
-    log = basic_logger()
-    
-    log.push('test')
-
-        
-    

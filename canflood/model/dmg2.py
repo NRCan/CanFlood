@@ -55,6 +55,7 @@ class Dmg2(Model):
         'f0_elv':{'type':np.number},
         }
     
+    dfuncs_d = dict() #container for damage functions
     #===========================================================================
     # #expectations from parameter file
     #===========================================================================
@@ -97,10 +98,7 @@ class Dmg2(Model):
         
         #init the baseclass
         super().__init__(cf_fp, **kwargs) #initilzie Model
-       
-        self.dfuncs_d = dict() #container for damage functions
-
-
+        
         
         self.logger.debug('finished __init__ on Dmg2')
         

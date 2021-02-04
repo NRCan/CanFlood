@@ -13,15 +13,15 @@ as_inun = False
 event_rels = mutEx		#assumption for calculated expected value on complex events
 
 [dmg_fps]
-curves = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\curves_CFcc_20200608_sfd.xls
-finv = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b01\finv_Lbs6.ind_finv_tagSFD_20200608_pts.csv
-expos = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b01\expos_Lbs6.ind_15_96.csv
-gels = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b01\gels_Lbs6.ind_1_96.csv
+curves = LM_bs\curves_CFcc_20200608_sfd.xls
+finv = LM_bs\b01\finv_Lbs6.ind_finv_tagSFD_20200608_pts.csv
+expos = LM_bs\b01\expos_Lbs6.ind_15_96.csv
+gels = LM_bs\b01\gels_Lbs6.ind_1_96.csv
 
 [risk_fps]
-dmgs = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b01\dmg\dmgs_bs7_bs7.b01.csv
-exlikes = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b01\exlikes_Lbs6.ind.csv
-evals = C:\Users\cefect\CanFlood\LMFRA\bs7\evals_fresh_20200603.csv
+dmgs = LM_bs\b01\dmg\dmgs_bs7_bs7.b01.csv
+exlikes = LM_bs\b01\exlikes_Lbs6.ind.csv
+evals = LM_bs\evals_fresh_20200603.csv
 
 [validation]
 risk1 = False
@@ -30,11 +30,11 @@ risk2 = True
 risk3 = False
 
 [results_fps]
-attrimat02 = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b01\dmg\attr02_bs7.csv
-r2_ttl = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b01\r01\risk2_LML.bs7.b01_bs7_ttl.csv
-attrimat03 = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b01\r01\attr03_bs7.csv
-r2_passet = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b01\r01\risk2_LML.bs7.b01_bs7_r2_passet.csv
-eventypes = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b01\r01\eventypes_bs7.csv
+attrimat02 = LM_bs\b01\dmg\attr02_bs7.csv
+r2_ttl = LM_bs\b01\r01\risk2_LML.bs7.b01_bs7_ttl.csv
+attrimat03 = LM_bs\b01\r01\attr03_bs7.csv
+r2_passet = LM_bs\b01\r01\risk2_LML.bs7.b01_bs7_r2_passet.csv
+eventypes = LM_bs\b01\r01\eventypes_bs7.csv
 #'attrimat03' file path set from output_attr at 2021-01-15 20.50.04
 
 [plotting]
