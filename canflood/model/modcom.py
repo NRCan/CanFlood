@@ -195,6 +195,7 @@ class Model(ComWrkr,
                  
                  split_key=None,#for checking monotonicy on exposure sets with duplicate events
                  absolute_fp=True, #whether filepaths in control file are absolute (False=Relative). 
+                 base_dir =None, #for absolute_fp=False, base directory to use (defaults 
                  attriMode = False, #flow control for some attribution matrix functions
                  
                  **kwargs):
@@ -223,6 +224,10 @@ class Model(ComWrkr,
         
         """TODO: Consider moving this to ComWrkr so Build dialogs can access"""
         self.absolute_fp=absolute_fp
+        
+        if base_dir is None:
+            base_dir = os.path.split(cf_fp)[0]
+        self.base_dir = base_dir
         
         
         self.attriMode=attriMode
@@ -264,7 +269,7 @@ class Model(ComWrkr,
         #=======================================================================
         if not self.absolute_fp:
             log.info('converting relative filepaths')
-            self.pars = self._cf_relative(self.pars, os.path.split(cf_fp)[0])
+            self.pars = self._cf_relative(self.pars)
             """
             self.pars.__dict__
             """
@@ -573,14 +578,18 @@ class Model(ComWrkr,
     
     def  _cf_relative(self, #convert filepaths from relative to absolute
                       cpars, #config parser
-                      base_dir, #base directory to add
-                      sections=['dmg_fps', 'risk_fps'], #sections contaiing values to convert
+                      base_dir=None, #base directory to add
+                      sections=['dmg_fps', 'risk_fps', 'results_fps'], #sections contaiing values to convert
                       
                       ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if base_dir is None: base_dir=self.base_dir
         log = self.logger.getChild('_cf_relative')
         
         assert os.path.exists(base_dir)
-        
+
         #=======================================================================
         # #loop through parser and retireve then convert
         #=======================================================================
@@ -592,11 +601,19 @@ class Model(ComWrkr,
             for varName, valRaw in cpars[sectName].items():
                 if valRaw == '': continue #skip blanks
                 
-                #get the absolute filepath
-                fp = os.path.join(base_dir, valRaw)
-                """dont bother... some models may not use all the fps
-                better to let the check with handles catch things
-                assert os.path.exists(fp), '%s.%s not found'%(sectName, varName)"""
+                if os.path.exists(valRaw):
+                    
+                    raise Error('%s.%s passed aboslute_fp=False but fp exists \n    %s'%(
+                        sectName, varName, valRaw))
+                else:
+                
+                    #get the absolute filepath
+                    fp = os.path.join(base_dir, valRaw)
+                    """dont bother... some models may not use all the fps
+                    better to let the check with handles catch things
+                    assert os.path.exists(fp), '%s.%s not found'%(sectName, varName)"""
+                    if not os.path.exists(fp):
+                        log.debug('%s.%s got bad fp: %s'%(sectName, varName, fp))
                 
                 #set it
                 res_d[sectName][varName]=fp

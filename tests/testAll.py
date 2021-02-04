@@ -14,6 +14,12 @@ lets use one 'TestCase' for each input
     with a 'test_main' method to perform the main check against the outputs
     can always add secondary tests on the non'run' functions that sure the setUp methods
     
+    
+#===============================================================================
+# LOGGING
+#===============================================================================
+see tScripts to configure the logging level
+    
 '''
 
 import unittest, importlib

@@ -13,15 +13,15 @@ as_inun = False
 event_rels = mutEx		#assumption for calculated expected value on complex events
 
 [dmg_fps]
-curves = C:\Users\cefect\CanFlood\LMFRA\bs7\curves_CFcc_20200608_sfd.xls
-finv = C:\Users\cefect\CanFlood\LMFRA\bs7\b03\finv_LML.bs7_finv_tagSFD_20200608_pts.csv
-expos = C:\Users\cefect\CanFlood\LMFRA\bs7\b03\expos_LML.bs7_15_228.csv
-gels = C:\Users\cefect\CanFlood\LMFRA\bs7\b03\gels_LML.bs7_1_228.csv
+curves = LM_bs\curves_CFcc_20200608_sfd.xls
+finv = LM_bs\b03\finv_LML.bs7_finv_tagSFD_20200608_pts.csv
+expos = LM_bs\b03\expos_LML.bs7_15_228.csv
+gels = LM_bs\b03\gels_LML.bs7_1_228.csv
 
 [risk_fps]
-dmgs = C:\Users\cefect\CanFlood\LMFRA\bs7\b03\dmg\dmgs_b03_bs7.b03.csv
-exlikes = C:\Users\cefect\CanFlood\LMFRA\bs7\b03\exlikes_LML.bs7.csv
-evals = C:\Users\cefect\CanFlood\LMFRA\bs7\evals_fresh_20200603.csv
+dmgs = LM_bs\b03\dmg\dmgs_b03_bs7.b03.csv
+exlikes = LM_bs\b03\exlikes_LML.bs7.csv
+evals = LM_bs\evals_fresh_20200603.csv
 
 [validation]
 risk1 = False
@@ -30,11 +30,11 @@ risk2 = True
 risk3 = False
 
 [results_fps]
-attrimat02 = C:\Users\cefect\CanFlood\LMFRA\bs7\b03\dmg\attr02_b03.csv
-r2_ttl = C:\Users\cefect\CanFlood\LMFRA\bs7\b03\r02_mutEx\risk2_LML.bs7.b03.mutEx_b03_mutEx_ttl.csv
-eventypes = C:\Users\cefect\CanFlood\LMFRA\bs7\b03\r02_mutEx\eventypes_b03_mutEx.csv
-r2_passet = C:\Users\cefect\CanFlood\LMFRA\bs7\b03\r02_mutEx\risk2_LML.bs7.b03.mutEx_b03_mutEx_r2_passet.csv
-attrimat03 = C:\Users\cefect\CanFlood\LMFRA\bs7\b03\r02_mutEx\attr03_b03_mutEx.csv
+attrimat02 = LM_bs\b03\dmg\attr02_b03.csv
+r2_ttl = LM_bs\b03\r02_mutEx\risk2_LML.bs7.b03.mutEx_b03_mutEx_ttl.csv
+eventypes = LM_bs\b03\r02_mutEx\eventypes_b03_mutEx.csv
+r2_passet = LM_bs\b03\r02_mutEx\risk2_LML.bs7.b03.mutEx_b03_mutEx_r2_passet.csv
+attrimat03 = LM_bs\b03\r02_mutEx\attr03_b03_mutEx.csv
 #'attrimat03' file path set from output_attr at 2021-01-19 19.59.40
 
 [plotting]

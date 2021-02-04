@@ -13,15 +13,15 @@ as_inun = False
 event_rels = mutEx		#assumption for calculated expected value on complex events
 
 [dmg_fps]
-curves = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\CanFlood_curves_rfda_20200218.xls
-finv = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\finv_tut2a_finv_cT2.csv
-expos = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\expos_tut2a_6_32.csv
-gels = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\gels_tut2a_1_32.csv
+curves = tut2_01\CanFlood_curves_rfda_20200218.xls
+finv = tut2_01\a01\finv_tut2a_finv_cT2.csv
+expos = tut2_01\a01\expos_tut2a_6_32.csv
+gels = tut2_01\a01\gels_tut2a_1_32.csv
 
 [risk_fps]
-dmgs = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\dmg2\dmgs_tut2a_Tut2a.csv
+dmgs = tut2_01\a01\dmg2\dmgs_tut2a_Tut2a.csv
 exlikes = #secondary exposure likelihood data filepath
-evals = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\evals_4_tut2a.csv
+evals = tut2_01\evals_4_tut2a.csv
 
 [validation]
 risk1 = False
@@ -30,11 +30,11 @@ risk2 = True
 risk3 = False
 
 [results_fps]
-attrimat02 = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\dmg2\attr02_tut2a_Tut2a.csv
-attrimat03 = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\r2\attr03_tut2a_Tut2a.csv
-r2_passet = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\r2\risk2_tut2a_Tut2a_r2_passet.csv
-r2_ttl = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\r2\risk2_tut2a_Tut2a_ttl.csv
-eventypes = C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\a01\r2\eventypes_Tut2a_tut2a.csv
+attrimat02 = tut2_01\a01\dmg2\attr02_tut2a_Tut2a.csv
+attrimat03 = tut2_01\a01\r2\attr03_tut2a_Tut2a.csv
+r2_passet = tut2_01\a01\r2\risk2_tut2a_Tut2a_r2_passet.csv
+r2_ttl = tut2_01\a01\r2\risk2_tut2a_Tut2a_ttl.csv
+eventypes = tut2_01\a01\r2\eventypes_Tut2a_tut2a.csv
 #'attrimat03' file path set from output_attr at 2021-01-23 17.20.38
 
 [plotting]
