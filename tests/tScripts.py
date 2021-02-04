@@ -14,7 +14,7 @@ import pandas as pd
 import numpy as np
 
 from hlpr.logr import basic_logger
-mod_logger = basic_logger(logging.DEBUG)
+mod_logger = basic_logger(logging.WARNING)
 
 
 #===============================================================================
