@@ -13,7 +13,8 @@ from unittest import TestLoader
 import pandas as pd
 import numpy as np
 
-mod_logger = logging.getLogger('tModCom')
+from hlpr.logr import basic_logger
+mod_logger = basic_logger(logging.WARNING)
 
 
 #===============================================================================
@@ -154,6 +155,7 @@ def get_suite(
                     logger=mod_logger.getChild(testName), 
                     tag=testName, 
                      absolute_fp=absolute_fp, 
+                     base_dir=tdata_dir,
                      **d, **kwargsModel)._setup()
                      
         #load the check data
