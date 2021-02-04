@@ -579,7 +579,7 @@ class Model(ComWrkr,
     def  _cf_relative(self, #convert filepaths from relative to absolute
                       cpars, #config parser
                       base_dir=None, #base directory to add
-                      sections=['dmg_fps', 'risk_fps'], #sections contaiing values to convert
+                      sections=['dmg_fps', 'risk_fps', 'results_fps'], #sections contaiing values to convert
                       
                       ):
         #=======================================================================

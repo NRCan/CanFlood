@@ -82,13 +82,14 @@ class Cmpr(Plotr):
         
     def load_scenarios(self,
                  fps_d=None, #container of filepaths 
-                 
+                 base_dir=None, #base directory to add
                  ):
         #=======================================================================
         # defaults
         #=======================================================================
         log = self.logger.getChild('load_scenarios')
         if fps_d is None: fps_d = self.fps_d
+        if base_dir is None: base_dir=self.base_dir
         log.info('on %i scenarios'%len(fps_d))
         
         
@@ -98,6 +99,12 @@ class Cmpr(Plotr):
         assert len(fps_d)>=2
         assert isinstance(fps_d, dict)
         assert len(fps_d.values())==len(set(fps_d.values())), 'non unique fps!'
+        
+        #=======================================================================
+        # relatives
+        #=======================================================================
+        if not self.absolute_fp:
+            fps_d = {k:os.path.join(base_dir, v) for k,v in fps_d.items()}
         
         for k, fp in fps_d.items():
             assert isinstance(fp, str)
@@ -114,7 +121,7 @@ class Cmpr(Plotr):
         for i, fp in enumerate(fps_d.values()):
             log.debug('loading %i/%i'%(i+1, len(fps_d)))
             # build/load the children
-            sWrkr = Scenario(self, cf_fp=fp)
+            sWrkr = Scenario(self, cf_fp=fp, absolute_fp=self.absolute_fp, base_dir=base_dir)
 
 
             # add to family
