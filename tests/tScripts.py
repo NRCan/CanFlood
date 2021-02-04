@@ -140,8 +140,10 @@ def get_suite(
             
         #adjust relatives
         if not absolute_fp:
-            res_dir = os.path.join(tdata_dir, res_dir)
-            cf_fp = os.path.join(tdata_dir, cf_fp) 
+            if not res_dir is None:
+                res_dir = os.path.join(tdata_dir, res_dir)
+            if not cf_fp is None:
+                cf_fp = os.path.join(tdata_dir, cf_fp) 
 
 
         #=======================================================================
