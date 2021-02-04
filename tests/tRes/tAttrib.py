@@ -8,9 +8,8 @@ Created on Jan. 23, 2021
 '''
 
 
-import unittest, tempfile, inspect, logging, os, fnmatch
-
-import pandas as pd
+import unittest
+#import pandas as pd
 
 import matplotlib
 matplotlib.use('Qt5Agg') #sets the backend (case sensitive)
@@ -78,13 +77,13 @@ def gen_suite(
 
     runpars_d={
         'tut2_01.b01':{
-             'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\b01\CanFlood_tut2b_20210123.txt',
-             'res_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\tut2_01\b01\dmg2',
+             'cf_fp':r'tut2_01\b01\CanFlood_tut2b_20210123.txt',
+             'res_dir':r'tut2_01\b01\dmg2',
              }, 
 
         'LM_bs.b02':{
-            'cf_fp':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b02\CanFlood_LML.bs7_b02_20210123.txt',
-            'res_dir':r'C:\LS\03_TOOLS\CanFlood\_git\tests\_data\LM_bs\b02\dmg'
+            'cf_fp':r'LM_bs\b02\CanFlood_LML.bs7_b02_20210123.txt',
+            'res_dir':r'LM_bs\b02\dmg'
             },
         }
 
