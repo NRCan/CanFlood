@@ -103,20 +103,16 @@ class Dmg2(DFunc, Model):
         self.logger.debug('finished __init__ on Dmg2')
         
     def _setup(self):
-        
-        
-        
         #======================================================================
         # setup funcs
         #======================================================================
         self.init_model()
         self.resname = 'dmgs_%s_%s'%(self.name, self.tag)
         
-
         self.load_finv()
         
+        """evals are optional"""
         if not self.evals == '':
-            """evals are optional"""
             self.load_evals()
         else:
             self.expcols = pd.Series(dtype=np.object).index

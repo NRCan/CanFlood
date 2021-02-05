@@ -652,9 +652,12 @@ class Model(ComWrkr,
                    finv_exp_d = None, #finv expeectations
                    ):
         
+        #=======================================================================
+        # defaults
+        #=======================================================================
         log = self.logger.getChild('load_finv')
         if fp is None: fp = getattr(self, dtag)
-        if finv_exp_d is None: finv_exp_d = self.finv_exp_d
+        if finv_exp_d is None: finv_exp_d = self.finv_exp_d #minimum expecatations
         cid = self.cid
         
         #======================================================================
@@ -681,8 +684,11 @@ class Model(ComWrkr,
         #======================================================================
         # post check
         #======================================================================
+        """
+        this is only checking the first nest
+        """
         
-        #use expectation handles
+        #minimum use expectation handles
         for coln, hndl_d in finv_exp_d.items():
             assert isinstance(hndl_d, dict)
             assert coln in df.columns, \
