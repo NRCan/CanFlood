@@ -57,16 +57,16 @@ matplotlib.rcParams['axes.titlesize'] = 10 #set the figure title size
 matplotlib.rcParams['figure.autolayout'] = False #use tight layout
     
 
-from hlpr.basic import ComWrkr
+#from hlpr.basic import ComWrkr
 #import hlpr.basic
-
+from model.dmg2 import DFunc
 
 
 
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class CurvePlotr(ComWrkr):
+class CurvePlotr(DFunc):
     
     
     def __init__(self,
