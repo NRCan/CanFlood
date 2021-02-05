@@ -141,7 +141,7 @@ class Model(ComWrkr,
     integrate = 'trapz'
     as_inun = False
     event_rels = 'max'
-
+    impact_units = 'impacts'
 
     
     #[dmg_fps]
