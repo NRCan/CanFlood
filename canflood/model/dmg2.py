@@ -31,12 +31,12 @@ from hlpr.exceptions import QError as Error
 #from hlpr.Q import *
 from hlpr.basic import ComWrkr, view
 from model.modcom import Model
-
+from model.modcom import DFunc
 
 #==============================================================================
 # functions----------------------
 #==============================================================================
-class Dmg2(Model):
+class Dmg2(DFunc, Model):
     #==========================================================================
     # #program vars
     #==========================================================================
@@ -97,7 +97,7 @@ class Dmg2(Model):
 
         
         #init the baseclass
-        super().__init__(cf_fp, **kwargs) #initilzie Model
+        super().__init__(cf_fp=cf_fp, **kwargs) #initilzie Model
         
         
         self.logger.debug('finished __init__ on Dmg2')
@@ -185,7 +185,7 @@ class Dmg2(Model):
                 raise Error('unexpected type on tab \'%s\': %s'%(tabn, type(df)))
             
             #build it
-            dfunc = DFunc(tabn).build(df, log)
+            dfunc = DFunc(tabn, curves_fp=self.curves).build(df, log)
             
             #store it
             self.dfuncs_d[dfunc.tag] = dfunc
@@ -206,6 +206,11 @@ class Dmg2(Model):
         if not self.ground_water:
             if min(minDep_d.values())<0:
                 log.warning('ground_water=False but some dfuncs have negative depth values')
+                
+        #=======================================================================
+        # get the impact var
+        #=======================================================================
+        
         
         #=======================================================================
         # wrap
@@ -963,15 +968,5 @@ class Dmg2(Model):
                    
 
 
-if __name__ =="__main__": 
-
-    print('finished')
-    
-    
-    
-    
-    
-    
-    
     
     
