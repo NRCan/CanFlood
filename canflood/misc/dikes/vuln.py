@@ -412,14 +412,16 @@ class Dvuln(DPlotr):
         #=======================================================================
         if not df_lfx is None:
             df = df_lfx
-            ofp = os.path.join(self.out_dir, '%s_pfail_lfx_%i_%i.csv'%(
+            ofp1 = os.path.join(self.out_dir, '%s_pfail_lfx_%i_%i.csv'%(
                 self.tag, ecnt,len(df)))
         
-            if os.path.exists(ofp):assert self.overwrite
+            if os.path.exists(ofp1):assert self.overwrite
                 
-            df.to_csv(ofp, index=True)
+            df.to_csv(ofp1, index=True)
             
-            log.info('wrote %s to file \n    %s'%(str(df.shape), ofp))
+            log.info('wrote %s to file \n    %s'%(str(df.shape), ofp1))
+            
+        return ofp
             
             
 

@@ -286,7 +286,9 @@ class DRes(Qcoms, DPlotr):
             #duplicate the geometry on our keys
             geo_d = {sk:QgsGeometry(geoR_d[ik]) for sk, ik in sid_ifz_d2.items()}
             
-            res_d[eTag] = self.vlay_new_df2(idf, geo_d=geo_d, logger=log, 
+            
+            
+            res_d[eTag] = self.vlay_new_df2(idf, geo_d=geo_d, logger=log, index=True,
                                      layname='%s_%s_ifz'%(self.tag, eTag))
             
             log.debug('df %s'%str(idf.shape))

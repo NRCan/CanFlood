@@ -707,6 +707,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             
             layname='df',
             
+            index = False, #whether to include the index as a field
             logger=None, 
 
             ):
@@ -723,12 +724,25 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             
         log = logger.getChild('vlay_new_df')
         
-
+        
+        #=======================================================================
+        # index fix
+        #=======================================================================
+        df = df_raw.copy()
+        
+        if index:
+            if not df.index.name is None:
+                coln = df.index.name
+                df.index.name = None
+            else:
+                coln = 'index'
+                
+            df[coln] = df.index
             
         #=======================================================================
         # precheck
         #=======================================================================
-        df = df_raw.copy()
+        
         
         #make sure none of hte field names execeed the driver limitations
         max_len = self.fieldn_max_d[self.driverName]
