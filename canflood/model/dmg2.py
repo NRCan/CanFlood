@@ -14,6 +14,8 @@ impacts model 2
 #python standards
 import configparser, os, logging, datetime
 
+"""not sure what happened to the weak references..."""
+
 import pandas as pd
 import numpy as np
 #import math
@@ -29,12 +31,12 @@ from hlpr.exceptions import QError as Error
 #from hlpr.Q import *
 from hlpr.basic import ComWrkr, view
 from model.modcom import Model
-
+from model.modcom import DFunc
 
 #==============================================================================
 # functions----------------------
 #==============================================================================
-class Dmg2(Model):
+class Dmg2(DFunc, Model):
     #==========================================================================
     # #program vars
     #==========================================================================
@@ -95,7 +97,7 @@ class Dmg2(Model):
 
         
         #init the baseclass
-        super().__init__(cf_fp, **kwargs) #initilzie Model
+        super().__init__(cf_fp=cf_fp, **kwargs) #initilzie Model
         
         
         self.logger.debug('finished __init__ on Dmg2')
@@ -185,7 +187,7 @@ class Dmg2(Model):
                 raise Error('unexpected type on tab \'%s\': %s'%(tabn, type(df)))
             
             #build it
-            dfunc = DFunc(tabn).build(df, log)
+            dfunc = DFunc(tabn, curves_fp=self.curves).build(df, log)
             
             #store it
             self.dfuncs_d[dfunc.tag] = dfunc
@@ -206,6 +208,11 @@ class Dmg2(Model):
         if not self.ground_water:
             if min(minDep_d.values())<0:
                 log.warning('ground_water=False but some dfuncs have negative depth values')
+                
+        #=======================================================================
+        # get the impact var
+        #=======================================================================
+        
         
         #=======================================================================
         # wrap
@@ -215,6 +222,8 @@ class Dmg2(Model):
         
         log.info('finishe building %i curves \n    %s'%(
             len(self.dfuncs_d), list(self.dfuncs_d.keys())))
+        
+        return
         
         
     def check_ftags(self):
@@ -283,6 +292,14 @@ class Dmg2(Model):
         
         
         self.feedback.setProgress(90)
+        
+        #=======================================================================
+        # get labels
+        #=======================================================================
+        try:
+            self.impact_units = self.get_DF_att(attn='impact_units')
+        except Exception as e:
+            log.warning('failed to set \'impact_units\' w/ %s'%e)
         #=======================================================================
         # report
         #=======================================================================
@@ -438,8 +455,12 @@ class Dmg2(Model):
                 ).rename(columns={'index':'dep'})
                 
             #checks
-            assert np.array_equal(dep_dmg_df.dtypes.values, np.array([np.dtype('float64'), np.dtype('float64')], dtype=object))
-            assert dep_dmg_df.notna().all().all()
+            #assert np.array_equal(dep_dmg_df.dtypes.values, np.array([np.dtype('float64'), np.dtype('float64')], dtype=object))
+            #assert dep_dmg_df.notna().all().all()
+            
+            """"
+            TODO: look at using '.replace' instead
+            """
                 
                 
             for event in tddf.columns[dboolcol]:
@@ -913,7 +934,31 @@ class Dmg2(Model):
         log.info('finished w/ %s'%str(atr_dxcol.shape))
         return atr_dxcol
         
+    def get_DF_att(self, #get an attribute across all the dfuncs
+                       logger=None,
+                       attn = 'impact_units'
+                       ):
+        if logger is None: logger=self.logger
+        log = logger.getChild('get_DF_att')
         
+        d = self.dfuncs_d
+        
+        log.debug('on %i dfuncs'%len(d))
+        
+        attv_d = {k:getattr(w, attn).strip() for k,w in d.items() }
+        
+        attv_s = set(attv_d.values())
+        
+        attv = list(attv_s)[0]
+        if not len(attv_s)==1:
+            
+            log.warning('got %i \'%s\' (from %i DFuncs), taking first: %s'%(
+                len(attv_s), attn, len(d), attv))
+            
+        log.info('got \'%s\' = \'%s\''%(attn, attv))
+        
+        return attv
+
  
     def upd_cf(self, #update the control file 
                out_fp = None,
@@ -933,6 +978,10 @@ class Dmg2(Model):
         
         return self.update_cf(
             {
+            'parameters':(
+                {'impact_units':self.impact_units},
+                ),
+            
             'risk_fps':(
                 {'dmgs':out_fp}, 
                 '#\'dmgs\' file path set from dmg2.py at %s'%(
@@ -955,161 +1004,7 @@ class Dmg2(Model):
             
         
                    
-class DFunc(ComWrkr, 
-            ): #damage function
-    
-    #==========================================================================
-    # program pars
-    #==========================================================================
 
-    
-    dd_df = pd.DataFrame() #depth-damage data
-    
-    """lets just do columns by location
-    exp_coln = []"""
-    
-    #==========================================================================
-    # user pars
-    #==========================================================================
-    tag = 'dfunc'
-    min_dep = None
-    pars_d = {}
-    
-    def __init__(self,
-                 tabn='damage_func', #optional tab name for logging
-                 
-                 **kwargs):
-        
-        self.tabn= tabn
-        """
-        todo: reconcile tabn vs tag
-        """
-        
-        #init the baseclass
-        super().__init__(**kwargs) #initilzie Model
-        
-    
-    def build(self,
-              df_raw, #raw parameters to build the DFunc w/ 
-              logger):
-        
-        
-        
-        log = logger.getChild('%s'%self.tabn)
-        #======================================================================
-        # identify depth-damage data
-        #======================================================================
-        #slice and clean
-        df = df_raw.iloc[:, 0:2].dropna(axis=0, how='all')
-        
-        #validate the curve
-        self.check_curve(df.set_index(df.columns[0]).iloc[:,0].to_dict(),
-                         logger=log)
-        
-        #locate depth-damage data
-        boolidx = df.iloc[:,0]=='exposure' #locate
-        
-        assert boolidx.sum()==1, \
-            'got unepxected number of \'exposure\' values on %s'%(self.tabn)
-            
-        depth_loc = df.index[boolidx].tolist()[0]
-        
-        boolidx = df.index.isin(df.iloc[depth_loc:len(df), :].index)
-        
-        
-        #======================================================================
-        # attach other pars
-        #======================================================================
-        #get remainder of data
-        mser = df.loc[~boolidx, :].set_index(df.columns[0], drop=True ).iloc[:,0]
-        mser.index =  mser.index.str.strip() #strip the whitespace
-        pars_d = mser.to_dict()
-        
-        #check it
-        assert 'tag' in pars_d, '%s missing tag'%self.tabn
-        
-        assert pars_d['tag']==self.tabn, 'tag/tab mismatch (\'%s\', \'%s\')'%(
-            pars_d['tag'], self.tabn)
-        
-        for varnm, val in pars_d.items():
-            setattr(self, varnm, val)
-            
-        log.debug('attached %i parameters to Dfunc: \n    %s'%(len(pars_d), pars_d))
-        self.pars_d = pars_d.copy()
-        
-        #======================================================================
-        # extract depth-dmaage data
-        #======================================================================
-        #extract depth-damage data
-        dd_df = df.loc[boolidx, :].reset_index(drop=True)
-        dd_df.columns = dd_df.iloc[0,:].to_list()
-        dd_df = dd_df.drop(dd_df.index[0], axis=0).reset_index(drop=True) #drop the depth-damage row
-        
-        #typeset it
-        dd_df.iloc[:,0:2] = dd_df.iloc[:,0:2].astype(float)
-        
-       
-        ar = np.sort(np.array([dd_df.iloc[:,0].tolist(), dd_df.iloc[:,1].tolist()]), axis=1)
-        self.dd_ar = ar
-        
-        #=======================================================================
-        # get stats
-        #=======================================================================
-        self.min_dep = min(ar[0])
-        
-        #=======================================================================
-        # wrap
-        #=======================================================================
-        log.debug('\'%s\' built w/ dep min/max %.2f/%.2f and dmg min/max %.2f/%.2f'%(
-            self.tag, min(ar[0]), max(ar[0]), min(ar[1]), max(ar[1])
-            ))
-        
-        return self
-        
-        
-    def get_dmg(self, #get damage from depth using depth damage curve
-                depth):
-        
-        ar = self.dd_ar
-        
-        dmg = np.interp(depth, #depth find damage on
-                        ar[0], #depths 
-                        ar[1], #damages
-                        left=0, #depth below range
-                        right=max(ar[1]), #depth above range
-                        )
-#==============================================================================
-#         #check for depth outside bounds
-#         if depth < min(ar[0]):
-#             dmg = 0 #below curve
-# 
-#             
-#         elif depth > max(ar[0]):
-#             dmg = max(ar[1]) #above curve
-# 
-#         else:
-#             dmg = np.interp(depth, ar[0], ar[1])
-#==============================================================================
-            
-        return dmg
-    
-    
-    def get_stats(self): #get basic stats from the dfunc
-        deps = self.dd_ar[0]
-        dmgs = self.dd_ar[1]
-        return {**{'min_dep':min(deps), 'max_dep':max(deps), 
-                'min_dmg':min(dmgs), 'max_dmg':max(dmgs), 'dcnt':len(deps)},
-                **self.pars_d}
-
-if __name__ =="__main__": 
-
-    print('finished')
-    
-    
-    
-    
-    
-    
     
     
     

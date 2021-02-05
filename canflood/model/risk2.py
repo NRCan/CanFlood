@@ -71,7 +71,8 @@ class Risk2(Plotr, #This inherits 'Model'
              'integrate':   {'values':('trapz',)}, 
              'prec':        {'type':int}, 
              'as_inun':     {'type':bool},
-             'event_rels':   {'type':str, 'values':('max', 'mutEx', 'indep')}
+             'event_rels':   {'type':str, 'values':('max', 'mutEx', 'indep')},
+             
              },
             
         'dmg_fps':{
@@ -89,6 +90,9 @@ class Risk2(Plotr, #This inherits 'Model'
                 }
     
     exp_pars_op = {#optional expectations
+        'parameters':{
+            'impact_units': {'type':str}
+            },
         'risk_fps':{
             'exlikes':{'ext':('.csv',)},
                     },
@@ -257,7 +261,7 @@ class Risk2(Plotr, #This inherits 'Model'
         # #format total results for writing
         #=======================================================================
         res_ttl.index.name = 'aep'
-        res_ttl.columns = ['impacts']
+        res_ttl.columns = [self.impact_units]
         
         #add labels
         miss_l = set(self.extrap_vals_d.keys()).difference(res_ttl.index)
