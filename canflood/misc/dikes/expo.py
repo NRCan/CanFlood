@@ -631,7 +631,7 @@ class Dexpo(Qcoms, DPlotr):
                       **kwargs
                      ):
         """
-        see 
+        view(dxcol) 
         """
         #=======================================================================
         # defaults
@@ -659,8 +659,6 @@ class Dexpo(Qcoms, DPlotr):
         #=======================================================================
         # loop and calc stat
         #=======================================================================
-
-        
         res_df = None
         for eTag, edxcol in dxcol.drop('wsl', level=1, axis=1).groupby(level=0, axis=1):
             if eTag == 'common': continue
@@ -680,6 +678,17 @@ class Dexpo(Qcoms, DPlotr):
                 res_df = seg_df.join(esdf)
             else:
                 res_df = res_df.join(esdf)
+                
+        #=======================================================================
+        # crest summary
+        #=======================================================================
+        """
+        view(res_df)
+        """
+        for coln in [self.celn]:
+            """dont rename anything here.. makes column detection difficult"""
+            res_df = res_df.join(dxcol.loc[:, ('common', (self.sid, coln))].droplevel(level=0, axis=1
+                             ).groupby(self.sid).min())
                 
         #=======================================================================
         # wrap

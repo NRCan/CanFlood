@@ -94,7 +94,7 @@ class Dcoms(ComWrkr):
         # precheck
         #=======================================================================
         if prop_colns is None:
-            prop_colns = [self.dikeID, self.segID, self.segln, self.cbfn]
+            prop_colns = [self.dikeID, self.segID, self.segln, self.cbfn, self.celn]
         miss_l = set(prop_colns).difference(df.columns)
         assert len(miss_l)==0, 'missing some expected colns: %s'%miss_l
         

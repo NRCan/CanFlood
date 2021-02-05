@@ -152,12 +152,27 @@ class Dvuln(DPlotr):
         (where we calc union or mutEx probability for the combination)"""
         
         tag_ser = expo_df[tagCols[0]]
+        
+        #=======================================================================
+        # add crest buffers----------
+        #=======================================================================
+
+        edf = expo_df.loc[:, self.etag_l]
+        
+        cb_ser = expo_df[self.cbfn] #pull out buffer data
+        assert cb_ser.notna().all(), 'got nulls on %s data'%self.cbfn
+        if cb_ser.min()<0:
+            log.warning('%s got some negative values!!!'%self.cbfn)
+        
+        edf = edf = edf.add(cb_ser, axis=0)
+        
+        log.info('added %s values \n    %s'%(self.cbfn, cb_ser.to_dict()))
+        
         #=======================================================================
         # get valid exposure entries
         #=======================================================================
-        edf = expo_df.loc[:, self.etag_l]
         """
-        view(expo_df)
+        view(edf)
         
         TODO: consider filling in with boundary falues first
         """
@@ -288,13 +303,21 @@ class Dvuln(DPlotr):
         
         log.info('finished calculating pfail %s  w/ \n%s'%(str(rdf.shape), smry_df))
         
+        #=======================================================================
+        # join back in metadat
+        #=======================================================================
+
+        
+        l = set(expo_df.columns).difference(rdf.columns) #columns to add back
+        rdf = rdf.join(expo_df.loc[:, l])
+        
         self.pf_df = rdf
         
         return self.pf_df
     
     def set_lenfx(self, #apply length effects to raw pfail data
                   pfail_df=None, 
-                  expo_df = None,
+
                   method = 'URS2007', #method for applying the length effect
                   ):
         #=======================================================================
@@ -302,9 +325,15 @@ class Dvuln(DPlotr):
         #=======================================================================
         log = self.logger.getChild('set_lenfx')
         if pfail_df is None: pfail_df = self.pf_df.copy()
-        if expo_df is None: expo_df = self.expo_df.copy()
 
-        len_ser = expo_df[self.segln]
+
+        #=======================================================================
+        # pull out data
+        #=======================================================================
+        
+        len_ser = pfail_df[self.segln]
+        
+        pf_df = pfail_df.loc[:, self.etag_l] #just the results from get_faipP
         #=======================================================================
         # get scale factors
         #=======================================================================
@@ -323,7 +352,7 @@ class Dvuln(DPlotr):
         #=======================================================================
         sf_ser.name = self.lfxn
         
-        rdf = pfail_df.multiply(sf_ser, axis=0).round(self.prec)
+        rdf = pf_df.multiply(sf_ser, axis=0).round(self.prec)
         
         #summary data
         smry_df = rdf.mean().to_frame().rename(columns={0:'mean'}).join(
@@ -335,8 +364,8 @@ class Dvuln(DPlotr):
         #=======================================================================
         df = rdf.join(sf_ser)
         
-        l = set(expo_df.columns).difference(df.columns) #columns to add back
-        df = df.join(expo_df.loc[:, l])
+        l = set(pfail_df.columns).difference(df.columns) #columns to add back
+        df = df.join(pfail_df.loc[:, l])
         
         log.info('finished applying lfx_sf on %i segments w/ \n%s'%(
             len(df), smry_df))
