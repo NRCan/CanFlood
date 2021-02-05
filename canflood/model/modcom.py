@@ -3390,6 +3390,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
     def __init__(self,
                  tabn='damage_func', #optional tab name for logging
                  curves_fp = '', #filepath loaded from (for reporting)
+                 monot=True,
                  **kwargs):
         
         #=======================================================================
@@ -3401,6 +3402,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         todo: reconcile tabn vs tag
         """
         self.curves_fp = curves_fp
+        self.monot=monot
         
         #init the baseclass
         super().__init__(**kwargs) #initilzie Model
@@ -3475,36 +3477,58 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         #typeset it
         dd_df.iloc[:,0:2] = dd_df.iloc[:,0:2].astype(float)
         
-       
-        ar = np.sort(np.array([dd_df.iloc[:,0].tolist(), dd_df.iloc[:,1].tolist()]), axis=1)
+        """
+        view(dd_df)
+        """
+        
+        ar = dd_df.sort_values('exposure').T.values
+        """NO! leave unsorted
+        ar = np.sort(np.array([dd_df.iloc[:,0].tolist(), dd_df.iloc[:,1].tolist()]), axis=1)"""
         self.dd_ar = ar
         
+        #=======================================================================
+        # check
+        #=======================================================================
+        """This is a requirement of the interp function"""
+        assert np.all(np.diff(ar[0])>0), 'exposure values must be increasing'
+        
+        #impact (y) vals
+        if not np.all(np.diff(ar[1])>=0):
+            msg = 'impact values are decreasing'
+            if self.monot:
+                raise Error(msg)
+            else:
+                log.debug(msg)
+            
+
         #=======================================================================
         # get stats
         #=======================================================================
         self.min_dep = min(ar[0])
-        
+        self.max_dep = max(ar[0])
         #=======================================================================
         # wrap
         #=======================================================================
         log.debug('\'%s\' built w/ dep min/max %.2f/%.2f and dmg min/max %.2f/%.2f'%(
             self.tag, min(ar[0]), max(ar[0]), min(ar[1]), max(ar[1])
             ))
-        """
-        view(df_raw)
-        """
         
         return self
         
         
     def get_dmg(self, #get damage from depth using depth damage curve
                 depth):
+        """
+        self.tabn
+        pd.DataFrame(self.dd_ar).plot()
+        view(pd.DataFrame(self.dd_ar))
+        """
         
         ar = self.dd_ar
         
         dmg = np.interp(depth, #depth find damage on
-                        ar[0], #depths 
-                        ar[1], #damages
+                        ar[0], #depths (xcoords)
+                        ar[1], #damages (ycoords)
                         left=0, #depth below range
                         right=max(ar[1]), #depth above range
                         )
