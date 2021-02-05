@@ -149,10 +149,7 @@ class DPlotr(Dcoms, Plotr):
         ax1.set_ylabel(y1lab)
         ax1.set_xlabel(xlab)
         
-        #=======================================================================
-        # add crest
-        #=======================================================================
-        self._crest_toAx(ax1, dike_df)
+
         
         #=======================================================================
         # add  wsl profiles
@@ -161,16 +158,32 @@ class DPlotr(Dcoms, Plotr):
         view(dxcol.columns.to_frame())
         """
         
+        #get the data slice and sort it
+        dxcol1 = dxcol.drop('common', axis=1, level=0).sort_index(
+            axis=1, level=None, ascending=False)
         
-        #dxcol1 = dxcol.loc[:, idx[:, (self.sdistn, self.wsln, self.fbn)]]
         #loop over lvl0 values/subframes
-        for l0val, edxcol in dxcol.drop('common', axis=1, level=0).groupby(level=0, axis=1):
+        for l0val, edxcol in dxcol1.groupby(level=0, axis=1):
             edf =  edxcol.droplevel(level=0, axis=1).join(dike_df[self.sdistn])
             self._wsl_toAx(ax1,edf, label = '%s_%s'%(l0val, self.wsln))
             
         log.info('added %i \'%s\' plots'%(
             len(dxcol.columns.levels[0])-1, self.wsln))
+        
+        ymin, ymax = ax1.get_ylim()
+        #=======================================================================
+        # add crest
+        #=======================================================================
+        
+        self._crest_toAx(ax1, dike_df)
             
+        #=======================================================================
+        # limits
+        #=======================================================================
+        ax1.set_xlim(dike_df[self.sdistn].min(), dike_df[self.sdistn].max())
+        
+        ax1.set_ylim(ymin-1, ymax+1)
+        
         
         #=======================================================================
         # post format
@@ -178,15 +191,20 @@ class DPlotr(Dcoms, Plotr):
         if self.grid: ax1.grid()
         ax1.legend()
         
+
+        
+        
+        
         return fig
 
         
     def _wsl_toAx(self,
                  ax, df, style_d = {
                              #'color':'blue',
+
                               'marker':'v',
                               'markeredgecolor':'blue',
-                              'linewidth':1,
+                              'linewidth':.75,
                               'fillstyle':'none',
                               },
                  label = None,
@@ -200,15 +218,30 @@ class DPlotr(Dcoms, Plotr):
         
         
     def _crest_toAx(self, #add the two lines to the plot
-                         ax, df, style_d = {
-                             'color':'orange',
-                              'marker':'+',
-                              }):
+                     ax, df, 
+                     style_d = {
+                         'color':'brown',
+                          'marker':'+',
+                          'linewidth':1.5
+                          },
+                     
+                     #hatch pars
+                     hatch_f = True,
+                     hstyle_d = {
+                         'color':'orange',
+                         'alpha':0.1,
+                         'hatch':None,
+                         }
+                         ):
         
         xar,  yar = df[self.sdistn].values, df[self.celn].values
-        return ax.plot(xar,yar, label= self.celn,
+        lines =  ax.plot(xar,yar, label= self.celn,
                         **style_d)
         
+        if hatch_f:
+            polys = ax.fill_between(xar, yar, y2=0,**hstyle_d)
+        
+        return lines
         
     
 

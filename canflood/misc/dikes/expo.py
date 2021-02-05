@@ -66,6 +66,7 @@ class Dexpo(Qcoms, DPlotr):
         
     def load_rlays(self,
                    layfp_d,
+                   basedir=None,
                    logger=None,
                    **kwargs):
         #=======================================================================
@@ -76,12 +77,15 @@ class Dexpo(Qcoms, DPlotr):
         
         log.info('on %i layers'%len(layfp_d))
         
+        if not basedir is None: assert os.path.exists(basedir)
         #=======================================================================
         # load it
         #=======================================================================
         d = dict()
         
         for layTag, fp in layfp_d.items():
+            if not basedir is None:
+                fp = os.path.join(basedir, fp)
             d[layTag] = self.load_rlay(fp, logger=log, **kwargs)
             
         log.info('loaded %i layers'%len(d))
@@ -91,6 +95,7 @@ class Dexpo(Qcoms, DPlotr):
     def load_dike(self, fp,
                   dikeID = None, #dike identifier field
                   segID = None, #segment identifier field
+                  basedir=None,
                    logger=None, **kwargs):
         
         #=======================================================================
@@ -102,7 +107,9 @@ class Dexpo(Qcoms, DPlotr):
         if segID is None: segID = self.segID
         mstore = QgsMapLayerStore() #build a new map store
         
-
+        if not basedir is None: 
+            assert os.path.exists(basedir)
+            fp = os.path.join(basedir, fp)
         #=======================================================================
         # load it
         #=======================================================================
