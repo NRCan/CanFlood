@@ -92,6 +92,9 @@ class Model(ComWrkr,
                 #lower bound
             #indep: assume each event is independent (failure of one does not influence the other)
                 #upper bound
+                
+        impact_units -- value to label impacts axis with (generally set by Dmg2)
+
             
             
         
