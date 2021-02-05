@@ -264,7 +264,7 @@ class RFDAconv(DFunc, Qcoms):
         crve_d = self.crve_d.copy() #start with a copy
         for k,v in {**{ 
             'source':'CanFlood.%s_%s_%s'%(mod_name, self.tag, datetime.datetime.today().strftime('%Y%m%d')),
-            'bsmt_ht':bsmt_ht,
+            #'bsmt_ht':bsmt_ht,
             }, **metac_d}.items():
             crve_d[k] = v
         #==============================================================================
