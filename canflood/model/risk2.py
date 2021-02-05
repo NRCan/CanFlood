@@ -72,7 +72,7 @@ class Risk2(Plotr, #This inherits 'Model'
              'prec':        {'type':int}, 
              'as_inun':     {'type':bool},
              'event_rels':   {'type':str, 'values':('max', 'mutEx', 'indep')},
-             'impact_units': {'type':str}
+             
              },
             
         'dmg_fps':{
@@ -90,6 +90,9 @@ class Risk2(Plotr, #This inherits 'Model'
                 }
     
     exp_pars_op = {#optional expectations
+        'parameters':{
+            'impact_units': {'type':str}
+            },
         'risk_fps':{
             'exlikes':{'ext':('.csv',)},
                     },

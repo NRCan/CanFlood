@@ -335,7 +335,7 @@ class Model(ComWrkr,
         if not optional: assert len(chk_d)>0
         assert len(cpars)>0
         
-        
+        log.debug('\'%s\' optional=%s chk_d:\n    %s'%(self.__class__.__name__, optional, chk_d))
         #=======================================================================
         # #section check
         #=======================================================================
@@ -358,10 +358,13 @@ class Model(ComWrkr,
             #===================================================================
             miss_l = set(vchk_d.keys()).difference(list(csectName))
             if len(miss_l) > 0:
-                raise Error('\'%s\' missing %i (of %i) expected varirables: \n    %s'%(
+                """changed this to a warning for backwards compatability"""
+                log.warning('\'%s\' missing %i (of %i) expected varirables: \n    %s'%(
                     sectName, len(miss_l), len(vchk_d), miss_l))
                 
-                
+                vchk_d = {k:v for k,v in vchk_d.items() if k in list(csectName)}
+                if len(vchk_d)==0: continue
+
             #===================================================================
             # #check attributes with handles
             #===================================================================
