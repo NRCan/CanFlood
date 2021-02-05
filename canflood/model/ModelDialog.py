@@ -160,7 +160,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         self.checkBox_r2rpa_2.stateChanged.connect(tog_jg)
         
         #======================================================================
-        # impacts level 2
+        # impacts level 2--------
         #======================================================================
         self.pushButton_i2run.clicked.connect(self.run_impact2)
         
