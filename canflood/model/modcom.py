@@ -139,8 +139,6 @@ class Model(ComWrkr,
     as_inun = False
     event_rels = 'max'
 
-
-    
     #[dmg_fps]
     curves = ''
     finv = ''
@@ -270,12 +268,7 @@ class Model(ComWrkr,
         if not self.absolute_fp:
             log.info('converting relative filepaths')
             self.pars = self._cf_relative(self.pars)
-            """
-            self.pars.__dict__
-            """
-            
-            
-        
+ 
         #=======================================================================
         # check against expectations
         #=======================================================================
