@@ -1416,7 +1416,9 @@ class Model(ComWrkr,
     def build_exp_finv(self, #assemble the expanded finv
                     group_cnt = None, #number of groups to epxect per prefix
                     ):
-        
+        """
+        initial loading of the finv is done in load_finv()
+        """
         #======================================================================
         # defaults
         #======================================================================
@@ -1426,34 +1428,31 @@ class Model(ComWrkr,
         
         if group_cnt is None: group_cnt = self.group_cnt
         
+        bcolns = ['gels'] #columns to map back onto/copy over to each row of the expanded finv 
         #======================================================================
         # group_cnt defaults
         #======================================================================
         assert isinstance(group_cnt, int)
         
         exp_fcolns = [cid, 'fscale', 'felv']
-        if group_cnt == 2:
+        if group_cnt == 2: #Risk1
             pass
-            
-        elif group_cnt == 4:
+        elif group_cnt == 4: #Dmg2 and Risk2
             exp_fcolns = exp_fcolns + ['ftag', 'fcap']
             
         else:
             raise Error('bad group_cnt %i'%group_cnt)
-            
-        
-        
+
         #======================================================================
         # precheck
         #======================================================================
-        """do this in the loaders"""
         assert fdf.index.name == cid, 'bad index on fdf'
         
         #======================================================================
-        # get prefix values
+        # get prefix values (using elv columns)
         #======================================================================
         #pull all the elv columns
-        tag_coln_l = fdf.columns[fdf.columns.str.endswith('elv')].tolist()
+        tag_coln_l = fdf.columns[fdf.columns.str.endswith('_elv')].tolist()
         
         assert len(tag_coln_l) > 0, 'no \'elv\' columns found in inventory'
         assert tag_coln_l[0] == 'f0_elv', 'expected first tag column to be \'f0_elv\''
@@ -1461,87 +1460,60 @@ class Model(ComWrkr,
         #get nested prefix values
         prefix_l = [coln[:2] for coln in tag_coln_l]
         
-        log.info('got %i prefixes: %s'%(len(prefix_l), prefix_l))
+        log.info('got %i nests: %s'%(len(prefix_l), prefix_l))
         
+        #check
+        for e in prefix_l: 
+            assert e.startswith('f'), 'bad prefix: \'%s\'.. check field names'
         
         #======================================================================
         # expand: nested entries---------------
         #======================================================================
-        if len(prefix_l) > 1:
-        
-            #==================================================================
-            # #loop and collected nests
-            #==================================================================
-            bdf = None
-            
-            for prefix in prefix_l:
-                #identify prefix columns
-                pboolcol = fdf.columns.str.startswith(prefix) #columns w/ prefix
-                
-                assert pboolcol.sum()>=group_cnt, 'prefix \'%s\' group_cnt %i != %i'%(
-                    prefix, pboolcol.sum(), group_cnt)
-                
-                 
-                #get slice and clean
-                df = fdf.loc[:, pboolcol].dropna(axis=0, how='all').sort_index(axis=1)
-                
-                #get clean column names
-                df.columns = df.columns.str.replace('%s_'%prefix, 'f')
-                df = df.reset_index()
-                
-                df['nestID'] = prefix
-                
-                #add to main
-                if bdf is None:
-                    bdf = df
-                else:
-                    bdf = bdf.append(df, ignore_index=True, sort=False)
-                            
-                log.info('for \"%s\' got %s'%(prefix, str(df.shape)))
-                
-                
-            #==================================================================
-            # #add back in other needed columns
-            #==================================================================
-            boolcol = fdf.columns.isin(['gels']) #additional columns to pivot out
-            
-            if boolcol.any(): #if we are only linking in gels, these may not exist
-                bdf = bdf.merge(fdf.loc[:, boolcol], on=cid, how='left',validate='m:1')
-                
-                log.debug('joined back in %i columns: %s'%(
-                    boolcol.sum(), fdf.loc[:, boolcol].columns.tolist()))
-            
-            #wrap
-            log.info('expanded inventory from %i nest sets %s to finv %s'%(
-                len(prefix_l), str(fdf.shape), str(bdf.shape)))
-        #======================================================================
-        # expand: nothing nested
-        #======================================================================
-        elif len(prefix_l) == 1:
-            log.info('no nested columns. using raw inventory')
-            
 
-            #identify and check prefixes
-            prefix = prefix_l.pop(0)
+        bdf = None
+        
+        for prefix in prefix_l:
+            #identify prefix columns
             pboolcol = fdf.columns.str.startswith(prefix) #columns w/ prefix
             
-            assert pboolcol.sum() == group_cnt, 'prefix \'%s\' group_cnt %i != %i'%(
+            """group_cnt as a minimum here"""
+            assert pboolcol.sum()>=group_cnt, 'prefix \'%s\' group_cnt %i != %i'%(
                 prefix, pboolcol.sum(), group_cnt)
-                
-            #build dummy bdf
-            bdf = fdf.copy()
-            bdf[cid] = bdf.index #need to duplicate it
             
-            #fix the columns
-            bdf.columns = bdf.columns.str.replace('%s_'%prefix, 'f')
+             
+            #get slice and clean
+            df = fdf.loc[:, pboolcol].dropna(axis=0, how='all').sort_index(axis=1)
             
-            #reset the index
-            bdf = bdf.reset_index(drop=True)
+            #get clean column names
+            df.columns = df.columns.str.replace('%s_'%prefix, 'f')
+            df = df.reset_index()
             
-            bdf['nestID'] = 'f0'
+            df['nestID'] = prefix
             
-        else:
-            raise Error('bad prefix match')
+            #add to main
+            if bdf is None:
+                bdf = df
+            else:
+                bdf = bdf.append(df, ignore_index=True, sort=False)
+                        
+            log.info('for \"%s\' got %s'%(prefix, str(df.shape)))
+            
+            
+        #==================================================================
+        # #add back in other needed columns
+        #==================================================================
+        boolcol = fdf.columns.isin(bcolns) #additional columns to pivot out
+        
+        if boolcol.any(): #if we are only linking in gels, these may not exist
+            bdf = bdf.merge(fdf.loc[:, boolcol], on=cid, how='left',validate='m:1')
+            
+            log.debug('joined back in %i columns: %s'%(
+                boolcol.sum(), fdf.loc[:, boolcol].columns.tolist()))
+        
+        #wrap
+        log.info('expanded inventory from %i nest sets %s to finv %s'%(
+            len(prefix_l), str(fdf.shape), str(bdf.shape)))
+       
         
         #set indexers
         bdf[bid] = bdf.index
@@ -1551,12 +1523,15 @@ class Model(ComWrkr,
         # check
         #======================================================================
         miss_l = set(exp_fcolns).difference(bdf.columns)
-        assert len(miss_l) == 0
+        assert len(miss_l) == 0, miss_l
         
         
         #======================================================================
         # adjust fscale--------------
         #======================================================================
+        """
+        view(bdf)
+        """
         boolidx = bdf['fscale'].isna()
         if boolidx.any():
             log.info('setting %i null fscale values to 1'%boolidx.sum())
@@ -1582,7 +1557,7 @@ class Model(ComWrkr,
             #log.info('converted asset ground heights to datum elevations')
             s = bdf.loc[:, 'felv']
             
-            log.info('converted felv to \'datum\' \n    min=%.2f, mean=%.2f, max=%.2f'%(
+            log.info('converted felv from \'ground\' to \'datum\' \n    min=%.2f, mean=%.2f, max=%.2f'%(
                  s.min(), s.mean(), s.max()))
             
         elif self.felv=='datum':

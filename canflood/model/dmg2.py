@@ -135,7 +135,7 @@ class Dmg2(DFunc, Model):
         #======================================================================
         # checks
         #======================================================================
-        self.check_ftags()
+        self.check_ftags() #check dfuncs against the finv tags
         
         #======================================================================
         # wrap
@@ -222,7 +222,7 @@ class Dmg2(DFunc, Model):
         return
         
         
-    def check_ftags(self):
+    def check_ftags(self): #check fx_tag values against loaded dfuncs
         fdf = self.data_d['finv']
         
         #check all the tags are in the dfunc
