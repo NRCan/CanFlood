@@ -290,6 +290,14 @@ class Dmg2(DFunc, Model):
         
         
         self.feedback.setProgress(90)
+        
+        #=======================================================================
+        # get labels
+        #=======================================================================
+        try:
+            self.impact_units = self.get_DF_att(attn='impact_units')
+        except Exception as e:
+            log.warning('failed to set \'impact_units\' w/ %s'%e)
         #=======================================================================
         # report
         #=======================================================================
@@ -924,7 +932,31 @@ class Dmg2(DFunc, Model):
         log.info('finished w/ %s'%str(atr_dxcol.shape))
         return atr_dxcol
         
+    def get_DF_att(self, #get an attribute across all the dfuncs
+                       logger=None,
+                       attn = 'impact_units'
+                       ):
+        if logger is None: logger=self.logger
+        log = logger.getChild('get_DF_att')
         
+        d = self.dfuncs_d
+        
+        log.debug('on %i dfuncs'%len(d))
+        
+        attv_d = {k:getattr(w, attn).strip() for k,w in d.items() }
+        
+        attv_s = set(attv_d.values())
+        
+        attv = list(attv_s)[0]
+        if not len(attv_s)==1:
+            
+            log.warning('got %i \'%s\' (from %i DFuncs), taking first: %s'%(
+                len(attv_s), attn, len(d), attv))
+            
+        log.info('got \'%s\' = \'%s\''%(attn, attv))
+        
+        return attv
+
  
     def upd_cf(self, #update the control file 
                out_fp = None,
@@ -944,6 +976,10 @@ class Dmg2(DFunc, Model):
         
         return self.update_cf(
             {
+            'parameters':(
+                {'impact_units':self.impact_units},
+                ),
+            
             'risk_fps':(
                 {'dmgs':out_fp}, 
                 '#\'dmgs\' file path set from dmg2.py at %s'%(
