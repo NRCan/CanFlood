@@ -74,7 +74,7 @@ class DRes(Qcoms, DPlotr):
         log = self.logger.getChild('load_pfail_df')
         
         df = self.load_expo(fp, 
-                            prop_colns = [self.dikeID, self.segID, self.segln, self.lfxn],
+            prop_colns = [self.dikeID, self.segID, self.segln, self.lfxn, self.celn, self.cbfn],
                             logger=log)
         del self.expo_df #clear out this ref
         #=======================================================================
@@ -84,6 +84,7 @@ class DRes(Qcoms, DPlotr):
         assert (df.loc[:, self.etag_l] >=0.0).all().all()
         
         self.pfail_df = df
+        self.sid_l = df.index.values.tolist()
         return self.pfail_df
         
         
@@ -145,6 +146,18 @@ class DRes(Qcoms, DPlotr):
             #===================================================================
             assert self._check_ifz(vlay)
             
+            #===================================================================
+            # #check sid_ifz_d
+            #===================================================================
+            """
+            could force a symmetric_difference... 
+                but not a great reason to break when the user passes a map thats too big
+                
+                because some pfails may get filtered out... 
+                    we may not want to throw this error
+            """
+            miss_l = set(self.sid_l).difference(e_d['sid_ifz_d'])
+            assert len(miss_l)==0, '%s sid_ifz_d missing some %s keys: %s'%(eTag, self.sid, miss_l)
 
             #===================================================================
             # update the container
@@ -226,6 +239,7 @@ class DRes(Qcoms, DPlotr):
             vdf = vlay_get_fdf(vlay_raw, logger=log)
             geoR_d = vlay_get_fdata(vlay_raw, geo_obj=True, logger=log, rekey=self.ifidN)
             
+            log.debug("on \'%s\' w/ %i feats"%(vlay_raw.name(), len(geoR_d)))
             #===================================================================
             # #keys
             #===================================================================
@@ -255,8 +269,15 @@ class DRes(Qcoms, DPlotr):
                     boolidx.sum(), len(boolidx), self.pfn, pf_min))
                 idf = idf.loc[~boolidx, :]
             
+            #make sure all these keys are there
+            miss_l = set(idf.index.values).difference(sid_ifz_d.keys())
+            assert len(miss_l)==0, 'missing keys in sid_ifz_d: %s'%miss_l
+            
             #clean out keys
+            
+            
             sid_ifz_d2 = {k:v for k,v in sid_ifz_d.items() if k in idf.index.values}
+            assert len(sid_ifz_d2)==len(idf), 'failed to get the expected matches'
             #===================================================================
             # build new layer-----
             #===================================================================
@@ -264,8 +285,6 @@ class DRes(Qcoms, DPlotr):
 
             #duplicate the geometry on our keys
             geo_d = {sk:QgsGeometry(geoR_d[ik]) for sk, ik in sid_ifz_d2.items()}
-            
-
             
             res_d[eTag] = self.vlay_new_df2(idf, geo_d=geo_d, logger=log, 
                                      layname='%s_%s_ifz'%(self.tag, eTag))

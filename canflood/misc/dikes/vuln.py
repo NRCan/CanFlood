@@ -306,10 +306,12 @@ class Dvuln(DPlotr):
         #=======================================================================
         # join back in metadat
         #=======================================================================
-
-        
         l = set(expo_df.columns).difference(rdf.columns) #columns to add back
         rdf = rdf.join(expo_df.loc[:, l])
+        
+        #add dummy length effect values
+        """lets the user feed either set into results modules while keeping headers the same"""
+        rdf[self.lfxn] = 1.0 
         
         self.pf_df = rdf
         
@@ -324,7 +326,7 @@ class Dvuln(DPlotr):
         # defaults
         #=======================================================================
         log = self.logger.getChild('set_lenfx')
-        if pfail_df is None: pfail_df = self.pf_df.copy()
+        if pfail_df is None: pfail_df = self.pf_df.copy().drop(self.lfxn, axis=1, errors='ignore')
 
 
         #=======================================================================

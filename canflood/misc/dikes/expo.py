@@ -810,7 +810,13 @@ class Dexpo(Qcoms, DPlotr):
         if as_vlay:
             """unatural flow here... need to output the tabular data for scripting"""
             
+            
             geo_d = vlay_get_fdata(vlay, geo_obj=True, logger=log, rekey=self.sid)
+            
+            #add the index as a column so it gets into the layer
+            df.index.name=None
+            df[self.sid] = df.index
+            
             res_vlay = self.vlay_new_df2(df, geo_d=geo_d, logger=log,
                                layname=vlay.name())
             
