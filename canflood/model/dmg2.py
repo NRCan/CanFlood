@@ -14,6 +14,8 @@ impacts model 2
 #python standards
 import configparser, os, logging, datetime
 
+"""not sure what happened to the weak references..."""
+
 import pandas as pd
 import numpy as np
 #import math
@@ -221,6 +223,8 @@ class Dmg2(DFunc, Model):
         log.info('finishe building %i curves \n    %s'%(
             len(self.dfuncs_d), list(self.dfuncs_d.keys())))
         
+        return
+        
         
     def check_ftags(self):
         fdf = self.data_d['finv']
@@ -288,8 +292,6 @@ class Dmg2(DFunc, Model):
         
         
         self.feedback.setProgress(90)
-        
-
         #=======================================================================
         # report
         #=======================================================================
@@ -445,8 +447,12 @@ class Dmg2(DFunc, Model):
                 ).rename(columns={'index':'dep'})
                 
             #checks
-            assert np.array_equal(dep_dmg_df.dtypes.values, np.array([np.dtype('float64'), np.dtype('float64')], dtype=object))
-            assert dep_dmg_df.notna().all().all()
+            #assert np.array_equal(dep_dmg_df.dtypes.values, np.array([np.dtype('float64'), np.dtype('float64')], dtype=object))
+            #assert dep_dmg_df.notna().all().all()
+            
+            """"
+            TODO: look at using '.replace' instead
+            """
                 
                 
             for event in tddf.columns[dboolcol]:
