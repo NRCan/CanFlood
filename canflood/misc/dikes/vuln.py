@@ -47,6 +47,7 @@ class Dvuln(DPlotr):
     #===========================================================================
     pfL_df = None
     pf_df = None
+    pfmax = 0.999 #maximum failure probability to apply
 
     def __init__(self,
                  
@@ -106,7 +107,10 @@ class Dvuln(DPlotr):
             #get extremes
             """for fragility curves... negative = HIGHER exposure"""
             maxFB_d[tabn], minFB_d[tabn] = dfunc.max_dep, dfunc.min_dep
- 
+            
+            #check probability logic
+            assert dfunc.dd_ar[1].max() <=1.0
+            assert dfunc.dd_ar[1].max() >=0.0
         #=======================================================================
         # wrap
         #=======================================================================
@@ -157,11 +161,12 @@ class Dvuln(DPlotr):
         
         TODO: consider filling in with boundary falues first
         """
-        
+        #flag exposures outside boundary as False (also flags Nulls as false)
         vbooldf = pd.DataFrame(np.logical_and(
             edf >= min(self.minFB_d.values()),
             edf <= max(self.maxFB_d.values()),
             ))
+        
         
 
         
@@ -237,6 +242,13 @@ class Dvuln(DPlotr):
         assert np.array_equal(rdf.notna(), vbooldf), 'failed to fill all valid entries'
         
         #=======================================================================
+        # nulls
+        #=======================================================================
+        if edf.isna().any().any():
+            log.info('filling %i NULL vals w/ pFail = 0.0'%edf.isna().sum().sum())
+            rdf = rdf.where(~edf.isna(), other=0.0)
+        
+        #=======================================================================
         # #minimumes
         #=======================================================================
         """
@@ -247,7 +259,7 @@ class Dvuln(DPlotr):
             log.info('filling %i MIN vals (%.2f) w/ pFail=1.0'%(
                 min_booldf.sum().sum(),min(self.minFB_d.values()) ))
             
-            rdf = rdf.where(~min_booldf, other=1.0)
+            rdf = rdf.where(~min_booldf, other=self.pfmax)
         
         #=======================================================================
         # maximums

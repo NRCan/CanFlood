@@ -297,7 +297,7 @@ class Dexpo(Qcoms, DPlotr):
         the raw transects have a 'fid' based on the dike fid (which is now non-unique)
         TR_ID is a new feature id (for the transects)
         """        
-        tr_colns = [sid, self.dikeID, self.segID, tr_fid, self.segln, 'TR_SEGMENT']
+        tr_colns = [sid, self.dikeID, self.segID, tr_fid,  'TR_SEGMENT']
         tr_vlay = self.deletecolumn(tr_vlay, tr_colns, logger=log, invert=True)
         
         #tr_vlay  = vlay_rename_fields(tr_vlay, {tr_fid:'fid_tr'})
@@ -592,6 +592,11 @@ class Dexpo(Qcoms, DPlotr):
         # clean up data
         #=======================================================================
         #join back in common columns
+        """pulling from last loaded transect
+        
+        see get_fb_smry() for additional fields that we add to the summary results
+            (used by the vuln model)
+        """
         boolcol = df.columns.isin(dxcol.columns.levels[1])
         dxcol = dxcol.join(pd.concat([df.loc[:, ~boolcol].T], keys=['common'], names=['eTag']).T)
         
@@ -601,12 +606,13 @@ class Dexpo(Qcoms, DPlotr):
             dxcol.loc[:, idx[:, coln]] = dxcol.loc[:, idx[:, coln]].astype(dtype)
 
         """
+        view(df)
         view(dxcol)
         """
 
         
         #=======================================================================
-        # wrap
+        # wrap----
         #=======================================================================
         log.info('finished building exposure on %i events'%len(res_d))
         self.expo_vlay_d = res_d
@@ -641,14 +647,15 @@ class Dexpo(Qcoms, DPlotr):
         #=======================================================================
         # get segment (common) attributes
         #=======================================================================
-        cdf = dxcol.loc[:, idx['common', (self.dikeID, self.segID, self.sid, self.segln)]
+        cdf = dxcol.loc[:, idx['common', (self.dikeID, self.segID, self.sid)]
                         ].droplevel(level=0, axis=1)
         
         seg_df = cdf.groupby(self.sid).first()
         
         #join tags
+        jcolns = [self.sid, 'f0_dtag', self.cbfn, self.segln]
         """needed by vuln module"""
-        seg_df = seg_df.join(self.dike_df.loc[:, [self.sid, 'f0_dtag']].set_index(self.sid))
+        seg_df = seg_df.join(self.dike_df.loc[:, jcolns].set_index(self.sid))
         #=======================================================================
         # loop and calc stat
         #=======================================================================
@@ -678,7 +685,7 @@ class Dexpo(Qcoms, DPlotr):
         # wrap
         #=======================================================================
         log.info('got summaries on %i events and %i segments'%(
-            len(res_df.columns)-3, len(res_df)))
+            len(res_df.columns)-len(jcolns), len(res_df)))
         
         self.expo_df = res_df
         return self.expo_df
@@ -792,13 +799,14 @@ class Dexpo(Qcoms, DPlotr):
         # vectorized
         #=======================================================================
         if as_vlay:
-            
+            """unatural flow here... need to output the tabular data for scripting"""
             
             geo_d = vlay_get_fdata(vlay, geo_obj=True, logger=log, rekey=self.sid)
             res_vlay = self.vlay_new_df2(df, geo_d=geo_d, logger=log,
                                layname=vlay.name())
             
-            ofp = self.vlay_write(res_vlay, logger=log)
+            
+            _ = self.vlay_write(res_vlay, logger=log)
 
             
 

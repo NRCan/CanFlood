@@ -51,6 +51,7 @@ class Dcoms(ComWrkr):
     segln = 'sid_len'
     fbn = 'freeboard'
     sid = 'sid' #global segment identifier
+    cbfn = 'crest_buff' #crest buffer field name
     nullSamp = -999 #value for bad samples
     
     lfxn = 'lenfx_SF'
@@ -93,7 +94,7 @@ class Dcoms(ComWrkr):
         # precheck
         #=======================================================================
         if prop_colns is None:
-            prop_colns = [self.dikeID, self.segID, self.segln]
+            prop_colns = [self.dikeID, self.segID, self.segln, self.cbfn]
         miss_l = set(prop_colns).difference(df.columns)
         assert len(miss_l)==0, 'missing some expected colns: %s'%miss_l
         
