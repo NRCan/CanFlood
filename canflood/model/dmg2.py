@@ -955,8 +955,17 @@ class Dmg2(Model):
             
         
                    
-class DFunc(ComWrkr, 
-            ): #damage function
+class DFunc(ComWrkr, #damage function or DFunc handler
+            ): 
+    """
+    
+    """
+    #===========================================================================
+    # pars from data
+    #===========================================================================
+    """see crve_d below"""
+    impact_units = '' #units of impact prediction (used in axis labelling)
+    
     
     #==========================================================================
     # program pars
@@ -967,6 +976,22 @@ class DFunc(ComWrkr,
     
     """lets just do columns by location
     exp_coln = []"""
+    
+    #default variables for building new curves
+    """when DFunc is loaded from a curves.xlsx, these get assigned as attributes
+    only those used by functions are set as class attributes (see above)"""
+    crve_d = {'tag':'?',
+            'desc':'?',
+            'source':'?',
+            'location':'?',
+            'date':'?',
+            'scale_units':'m2',
+            'impact_units':'$CAD',
+            'exposure_units':'m',
+            'scale_var':'floor area',
+            'exposure_var':'flood depth above floor',
+            'impact_var':'damage',
+            'exposure':'impact'}
     
     #==========================================================================
     # user pars
@@ -1063,6 +1088,9 @@ class DFunc(ComWrkr,
         log.debug('\'%s\' built w/ dep min/max %.2f/%.2f and dmg min/max %.2f/%.2f'%(
             self.tag, min(ar[0]), max(ar[0]), min(ar[1]), max(ar[1])
             ))
+        """
+        view(df_raw)
+        """
         
         return self
         
