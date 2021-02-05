@@ -185,7 +185,7 @@ class Dmg2(DFunc, Model):
                 raise Error('unexpected type on tab \'%s\': %s'%(tabn, type(df)))
             
             #build it
-            dfunc = DFunc(tabn).build(df, log)
+            dfunc = DFunc(tabn, curves_fp=self.curves).build(df, log)
             
             #store it
             self.dfuncs_d[dfunc.tag] = dfunc
@@ -206,6 +206,11 @@ class Dmg2(DFunc, Model):
         if not self.ground_water:
             if min(minDep_d.values())<0:
                 log.warning('ground_water=False but some dfuncs have negative depth values')
+                
+        #=======================================================================
+        # get the impact var
+        #=======================================================================
+        
         
         #=======================================================================
         # wrap
@@ -283,6 +288,8 @@ class Dmg2(DFunc, Model):
         
         
         self.feedback.setProgress(90)
+        
+
         #=======================================================================
         # report
         #=======================================================================

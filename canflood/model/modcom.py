@@ -3376,6 +3376,10 @@ class DFunc(ComWrkr, #damage function or DFunc handler
             'impact_var':'damage',
             'exposure':'impact'}
     
+    cdf_chk_d = {'tag':str, #parameters for checking the raw df
+                 'exposure':str,
+                 'impact_units':str}
+    
     #==========================================================================
     # user pars
     #==========================================================================
@@ -3385,13 +3389,18 @@ class DFunc(ComWrkr, #damage function or DFunc handler
     
     def __init__(self,
                  tabn='damage_func', #optional tab name for logging
-                 
+                 curves_fp = '', #filepath loaded from (for reporting)
                  **kwargs):
         
+        #=======================================================================
+        # attach
+        #=======================================================================
         self.tabn= tabn
+        
         """
         todo: reconcile tabn vs tag
         """
+        self.curves_fp = curves_fp
         
         #init the baseclass
         super().__init__(**kwargs) #initilzie Model
@@ -3402,8 +3411,16 @@ class DFunc(ComWrkr, #damage function or DFunc handler
               logger):
         
         
-        
+        #=======================================================================
+        # defaults
+        #=======================================================================
         log = logger.getChild('%s'%self.tabn)
+        log.debug('on %s from %s'%(str(df_raw.shape), self.curves_fp))
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        self.check_cdf(df_raw)
+        
         #======================================================================
         # identify depth-damage data
         #======================================================================
@@ -3411,8 +3428,10 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         df = df_raw.iloc[:, 0:2].dropna(axis=0, how='all')
         
         #validate the curve
-        self.check_curve(df.set_index(df.columns[0]).iloc[:,0].to_dict(),
-                         logger=log)
+        #=======================================================================
+        # self.check_crvd(df.set_index(df.columns[0]).iloc[:,0].to_dict(),
+        #                  logger=log)
+        #=======================================================================
         
         #locate depth-damage data
         boolidx = df.iloc[:,0]=='exposure' #locate
@@ -3439,7 +3458,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         assert pars_d['tag']==self.tabn, 'tag/tab mismatch (\'%s\', \'%s\')'%(
             pars_d['tag'], self.tabn)
         
-        for varnm, val in pars_d.items():
+        for varnm, val in pars_d.items():  #loop and store on instance
             setattr(self, varnm, val)
             
         log.debug('attached %i parameters to Dfunc: \n    %s'%(len(pars_d), pars_d))
@@ -3511,6 +3530,46 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         return {**{'min_dep':min(deps), 'max_dep':max(deps), 
                 'min_dmg':min(dmgs), 'max_dmg':max(dmgs), 'dcnt':len(deps)},
                 **self.pars_d}
+        
+    def check_cdf(self, #convenience for checking the df as loaded
+                  df, **kwargs): 
+        """
+        because we deal with multiple forms of the curve data
+        """
+        
+        assert isinstance(df, pd.DataFrame)
+        assert len(df.columns)==2
+        
+        assert df.iloc[:, 0].is_unique
+        
+        crv_d = df.set_index(0, drop=True).dropna().iloc[:, 0].to_dict()
+        
+        self.check_crvd(crv_d)
+        
+
+    def check_crvd(self, #validate the passed curve_d  
+                    crv_d,
+                    logger=None):
+        
+        #=======================================================================
+        # if logger is None: logger=self.logger
+        # log = logger.getChild('check_crvd')
+        #=======================================================================
+        
+        assert isinstance(crv_d, dict)
+        
+        #log.debug('on %i'%len(crv_d))
+        
+        #check keys
+        miss_l = set(self.cdf_chk_d.keys()).difference(crv_d.keys())
+        if not len(miss_l)==0:
+            raise Error('\'%s\' missing keys: %s'%(self.tabn, miss_l))
+        
+        for k, v in self.cdf_chk_d.items():
+            assert k in crv_d, 'passed df for \'%s\' missing key \'%s\''%(self.tabn, k)
+            assert isinstance(crv_d[k], v), '%s got bad type on %s'%(self.tabn, k)
+
+        return True
 
     
     

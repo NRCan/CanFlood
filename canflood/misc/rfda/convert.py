@@ -519,7 +519,7 @@ class RFDAconv(DFunc, Qcoms):
         #==============================================================================
         df_d = dict()
         for cname, d in res_d.items():
-            self.check_curve(d)
+            self.check_crvd(d)
             df_d[cname] = pd.Series(d).to_frame()
             
         #======================================================================
