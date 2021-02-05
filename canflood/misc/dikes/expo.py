@@ -95,6 +95,8 @@ class Dexpo(Qcoms, DPlotr):
     def load_dike(self, fp,
                   dikeID = None, #dike identifier field
                   segID = None, #segment identifier field
+                  cbfn = None, #crest buffer
+                  
                   basedir=None,
                    logger=None, **kwargs):
         
@@ -103,8 +105,12 @@ class Dexpo(Qcoms, DPlotr):
         #=======================================================================
         if logger is None: logger=self.logger
         log = logger.getChild('load_dikes')
+        
         if dikeID is None: dikeID = self.dikeID
         if segID is None: segID = self.segID
+        if cbfn is None: cbfn = self.cbfn
+        
+        
         mstore = QgsMapLayerStore() #build a new map store
         
         if not basedir is None: 
@@ -120,7 +126,8 @@ class Dexpo(Qcoms, DPlotr):
         # precheck
         #=======================================================================
         fnl = [f.name() for f in vlay_raw.fields()]
-        miss_l =  set([dikeID, segID, 'f0_dtag']).difference(fnl)
+        #jcolns = [self.sid, 'f0_dtag', self.cbfn, self.segln]
+        miss_l =  set([dikeID, segID, 'f0_dtag', cbfn]).difference(fnl)
         assert len(miss_l)==0, 'missing expected columns on dike layer: %s'%miss_l
         
         """try forcing
@@ -178,7 +185,7 @@ class Dexpo(Qcoms, DPlotr):
         self.dike_df = df
         
         """attching this again in case th user passes new values"""
-        self.dikeID, self.segID = dikeID, segID #done during init
+        self.dikeID, self.segID, self.cbfn = dikeID, segID, cbfn #done during init
         self.sid_vals = df[self.sid].unique().tolist()
         mstore.removeAllMapLayers()
         
