@@ -59,7 +59,7 @@ matplotlib.rcParams['figure.autolayout'] = False #use tight layout
 
 #from hlpr.basic import ComWrkr
 #import hlpr.basic
-from model.dmg2 import DFunc
+from model.modcom import DFunc
 
 
 

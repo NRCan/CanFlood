@@ -30,7 +30,7 @@ from hlpr.exceptions import QError as Error
 from hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata, vlay_new_df
 #from hlpr.basic import *
 
-from model.dmg2 import DFunc
+from model.modcom import DFunc
 #==============================================================================
 # parametessr
 #==============================================================================

@@ -3333,21 +3333,185 @@ class Model(ComWrkr,
     
     
     
-#===============================================================================
-# def get_scenario_set(n):
-#     
-#     which = np.array(list(itertools.combinations(range(10), 2)))
-#     grid = np.zeros((len(which), 10), dtype="int8")
-#     
-#     # Magic
-#     grid[np.arange(len(which))[None].T, which] = 1
-#     
-#     
-#     return grid
-#===============================================================================
+class DFunc(ComWrkr, #damage function or DFunc handler
+            ): 
+    """
+    used by DFunc objects
+    also DFunc handlers:
+        model.dmg2.Dmg2
+        misc.curvePlot.CurvePlotr
+        misc.rfda.convert
+        
+    """
+    #===========================================================================
+    # pars from data
+    #===========================================================================
+    """see crve_d below"""
+    impact_units = '' #units of impact prediction (used in axis labelling)
     
     
+    #==========================================================================
+    # program pars
+    #==========================================================================
+
     
+    dd_df = pd.DataFrame() #depth-damage data
+    
+    """lets just do columns by location
+    exp_coln = []"""
+    
+    #default variables for building new curves
+    """when DFunc is loaded from a curves.xlsx, these get assigned as attributes
+    only those used by functions are set as class attributes (see above)"""
+    crve_d = {'tag':'?',
+            'desc':'?',
+            'source':'?',
+            'location':'?',
+            'date':'?',
+            'scale_units':'m2',
+            'impact_units':'$CAD',
+            'exposure_units':'m',
+            'scale_var':'floor area',
+            'exposure_var':'flood depth above floor',
+            'impact_var':'damage',
+            'exposure':'impact'}
+    
+    #==========================================================================
+    # user pars
+    #==========================================================================
+    tag = 'dfunc'
+    min_dep = None
+    pars_d = {}
+    
+    def __init__(self,
+                 tabn='damage_func', #optional tab name for logging
+                 
+                 **kwargs):
+        
+        self.tabn= tabn
+        """
+        todo: reconcile tabn vs tag
+        """
+        
+        #init the baseclass
+        super().__init__(**kwargs) #initilzie Model
+        
+    
+    def build(self,
+              df_raw, #raw parameters to build the DFunc w/ 
+              logger):
+        
+        
+        
+        log = logger.getChild('%s'%self.tabn)
+        #======================================================================
+        # identify depth-damage data
+        #======================================================================
+        #slice and clean
+        df = df_raw.iloc[:, 0:2].dropna(axis=0, how='all')
+        
+        #validate the curve
+        self.check_curve(df.set_index(df.columns[0]).iloc[:,0].to_dict(),
+                         logger=log)
+        
+        #locate depth-damage data
+        boolidx = df.iloc[:,0]=='exposure' #locate
+        
+        assert boolidx.sum()==1, \
+            'got unepxected number of \'exposure\' values on %s'%(self.tabn)
+            
+        depth_loc = df.index[boolidx].tolist()[0]
+        
+        boolidx = df.index.isin(df.iloc[depth_loc:len(df), :].index)
+        
+        
+        #======================================================================
+        # attach other pars
+        #======================================================================
+        #get remainder of data
+        mser = df.loc[~boolidx, :].set_index(df.columns[0], drop=True ).iloc[:,0]
+        mser.index =  mser.index.str.strip() #strip the whitespace
+        pars_d = mser.to_dict()
+        
+        #check it
+        assert 'tag' in pars_d, '%s missing tag'%self.tabn
+        
+        assert pars_d['tag']==self.tabn, 'tag/tab mismatch (\'%s\', \'%s\')'%(
+            pars_d['tag'], self.tabn)
+        
+        for varnm, val in pars_d.items():
+            setattr(self, varnm, val)
+            
+        log.debug('attached %i parameters to Dfunc: \n    %s'%(len(pars_d), pars_d))
+        self.pars_d = pars_d.copy()
+        
+        #======================================================================
+        # extract depth-dmaage data
+        #======================================================================
+        #extract depth-damage data
+        dd_df = df.loc[boolidx, :].reset_index(drop=True)
+        dd_df.columns = dd_df.iloc[0,:].to_list()
+        dd_df = dd_df.drop(dd_df.index[0], axis=0).reset_index(drop=True) #drop the depth-damage row
+        
+        #typeset it
+        dd_df.iloc[:,0:2] = dd_df.iloc[:,0:2].astype(float)
+        
+       
+        ar = np.sort(np.array([dd_df.iloc[:,0].tolist(), dd_df.iloc[:,1].tolist()]), axis=1)
+        self.dd_ar = ar
+        
+        #=======================================================================
+        # get stats
+        #=======================================================================
+        self.min_dep = min(ar[0])
+        
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        log.debug('\'%s\' built w/ dep min/max %.2f/%.2f and dmg min/max %.2f/%.2f'%(
+            self.tag, min(ar[0]), max(ar[0]), min(ar[1]), max(ar[1])
+            ))
+        """
+        view(df_raw)
+        """
+        
+        return self
+        
+        
+    def get_dmg(self, #get damage from depth using depth damage curve
+                depth):
+        
+        ar = self.dd_ar
+        
+        dmg = np.interp(depth, #depth find damage on
+                        ar[0], #depths 
+                        ar[1], #damages
+                        left=0, #depth below range
+                        right=max(ar[1]), #depth above range
+                        )
+#==============================================================================
+#         #check for depth outside bounds
+#         if depth < min(ar[0]):
+#             dmg = 0 #below curve
+# 
+#             
+#         elif depth > max(ar[0]):
+#             dmg = max(ar[1]) #above curve
+# 
+#         else:
+#             dmg = np.interp(depth, ar[0], ar[1])
+#==============================================================================
+            
+        return dmg
+    
+    
+    def get_stats(self): #get basic stats from the dfunc
+        deps = self.dd_ar[0]
+        dmgs = self.dd_ar[1]
+        return {**{'min_dep':min(deps), 'max_dep':max(deps), 
+                'min_dmg':min(dmgs), 'max_dmg':max(dmgs), 'dcnt':len(deps)},
+                **self.pars_d}
+
     
     
     
