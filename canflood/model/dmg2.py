@@ -79,6 +79,9 @@ class Dmg2(DFunc, Model):
                     }
     
     exp_pars_op = {#optional expectations
+        'parameters':{
+            'apply_miti':{'type':bool}
+            },
         'dmg_fps':{
             'gels':{'ext':('.csv',)},
                     },
@@ -252,6 +255,12 @@ class Dmg2(DFunc, Model):
         log = self.logger.getChild('run')
         
         self.feedback.setProgress(5)
+        
+        #=======================================================================
+        # adjust depths (for mitigations)
+        #=======================================================================
+        
+        
         #======================================================================
         # get damages
         #======================================================================

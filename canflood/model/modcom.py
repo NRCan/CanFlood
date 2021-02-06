@@ -94,6 +94,8 @@ class Model(ComWrkr,
                 #upper bound
                 
         impact_units -- value to label impacts axis with (generally set by Dmg2)
+        
+        apply_miti -- whether to apply mitigation algorthihims
 
             
             
@@ -143,6 +145,7 @@ class Model(ComWrkr,
     event_rels = 'max'
 
     impact_units = 'impacts'
+    apply_miti = False 
 
 
     #[dmg_fps]
@@ -1597,7 +1600,7 @@ class Model(ComWrkr,
         
         
         
-    def build_depths(self): #build the expanded depths data
+    def build_depths(self): #build the expanded depths data from the wsl data
         
         #======================================================================
         # defaults
@@ -1612,11 +1615,9 @@ class Model(ComWrkr,
         #======================================================================
         # expand
         #======================================================================
-        #get the indexers from the expanded finv
-        edx_df = self.bdf.loc[:, [bid, cid]]
-        
-        #pivot these out to bids
-        ddf = edx_df.join(wdf.round(self.prec),  on=cid
+        #add indexer columns expand w/ wsl data
+        """would have been easier with a multindex"""
+        ddf = self.bdf.loc[:, [bid, cid]].join(wdf.round(self.prec),  on=cid
                                           ).set_index(bid, drop=False)
                                           
         #=======================================================================
@@ -1639,6 +1640,8 @@ class Model(ComWrkr,
 
             """
             maintains nulls
+            
+            view(ddf)
             """
             
         log.debug('converted wsl to depth %s'%str(ddf.shape))
@@ -1664,7 +1667,7 @@ class Model(ComWrkr,
         if booldf.any().any():
             assert not self.as_inun
             """
-            note these are un-nesetd assets, so counts will be larger than expected
+            note these are expanded (un-nesetd) assets, so counts will be larger than expected
             """
             #user wants to ignore ground_water, set all negatives to zero
             if not self.ground_water:
@@ -1682,7 +1685,6 @@ class Model(ComWrkr,
         #======================================================================
         # post checks
         #======================================================================
-                
         assert np.array_equal(ddf.index, bdf.index)        
         assert bid in ddf.columns
         assert ddf.index.name == bid
