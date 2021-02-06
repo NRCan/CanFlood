@@ -270,35 +270,12 @@ class Dmg2(DFunc, Plotr):
         #======================================================================
         # #get damages per bid
         bres_df = self.bdmg_raw(ddf = ddf)
+        bres_df = self.bdmg_scaled(res_df = bres_df)
+        bres_df = self.bdmg_capped(res_df=bres_df)
+        bres_df, cres_df = self.bdmg_cleaned(res_df=bres_df)
         
         if bres_df is None:
             return None
-        
-        # recast as cid
-        cres_df = bres_df.groupby(self.cid).sum().drop(self.bid, axis=1)
-        
-        log.info('got damages for %i events and %i assets'%(
-            len(cres_df), len(cres_df.columns)))
-        
-        #=======================================================================
-        # clean
-        #=======================================================================
-        #drop _dmg suffix
-        d1 = pd.Series(self.events_df['dmg'].index, index=self.events_df['dmg']).to_dict()
-        cres_df = cres_df.rename(columns=d1)
-        
-        
-        #======================================================================
-        # checks
-        #======================================================================
-        
-        fdf = self.data_d['finv']
-        
-        miss_l = set(fdf.index.values).symmetric_difference(cres_df.index.values)
-        
-        assert len(miss_l) == 0, 'result inventory mismatch: \n    %s'%miss_l
-        assert np.array_equal(fdf.index, cres_df.index), 'index mismatch'
-        
         
         self.feedback.setProgress(90)
         
@@ -318,7 +295,7 @@ class Dmg2(DFunc, Plotr):
         log.info('finished w/ %s and TtlDmg = %.2f'%(
             str(cres_df.shape), cres_df.sum().sum()))
         
-        self.cres_df = cres_df.copy() #set for plotting
+        
         
         return cres_df
     
@@ -437,43 +414,7 @@ class Dmg2(DFunc, Plotr):
             log.info('marked %i (of %i) entries w/ excluded depths (<= %.2f or NULL)'%(
                 np.invert(dep_booldf).sum().sum(), dep_booldf.size, mdval))
         
-        #=======================================================================
-        # #id assets with ANY valid depths
-        # vboolidx =dep_booldf.any(axis=1)  
-        # 
-        # #check
-        # if not vboolidx.any():
-        #     log.warning('no valid depths!')
-        #     return None
-        # """
-        # np.array_equal(dep_booldf.any(axis=1), vboolidx)
-        # view(vboolidx)
-        # view(dep_booldf)
-        # view(ddf)
-        # """
-        #=======================================================================
-        #=======================================================================
-        # #get  valid dfunc tags
-        #=======================================================================
 
-        #=======================================================================
-        # valid_tags = bdf.loc[vboolidx, 'ftag'].unique().tolist() #all tags w/ valid depths
-        # 
-        # log.info('calculating for %i (of %i) ftags w/ positive depths: %s'%(
-        #     len(valid_tags), len(bdf.loc[:, 'ftag'].unique()), valid_tags))
-        # 
-        # #check keys
-        # miss_l = set(valid_tags).symmetric_difference(self.dfuncs_d.keys())
-        # assert len(miss_l)==0, 'mismatch on dfuncs and bid tags'
-        #=======================================================================
-        #=======================================================================
-        # #start results container
-        #=======================================================================
-        #=======================================================================
-        # res_df = bdf.loc[:, [bid, cid, 'ftag', 'fcap', 'fscale', 'nestID']].copy()
-        # """need this for the joiner to work (bid is ambigious)"""
-        # res_df.index.name = None
-        #=======================================================================
         
         #=======================================================================
         # build the events matrix
@@ -495,14 +436,6 @@ class Dmg2(DFunc, Plotr):
         for indxr, (ftag, dfunc) in enumerate(self.dfuncs_d.items()):
             log = self.logger.getChild('bdmg.%s'%ftag)
                        
-            #identify these entries
-            #===================================================================
-            # boolidx = np.logical_and(
-            #     bdf['ftag'] == ftag, #with the right ftag
-            #     vboolidx) #and in the valid set
-            # 
-            # assert boolidx.any()
-            #===================================================================
             #entries matching this tag
             tag_booldf = pd.DataFrame(np.tile(bdf['ftag']==ftag, (len(dep_booldf.columns),1)).T,
                                    index=dep_booldf.index, columns=dep_booldf.columns)
@@ -558,71 +491,39 @@ class Dmg2(DFunc, Plotr):
             else:
                 res_df.update(ri_df, overwrite=False, errors='raise')
                 
-            #==================================================================
-            # link these damages back to the results
-            #==================================================================
-#===============================================================================
-#             dep_dmg_df = pd.Series(res_d, name='dmg_raw').to_frame().reset_index(
-#                 ).rename(columns={'index':'dep'})
-#                 
-#             #checks
-#             #assert np.array_equal(dep_dmg_df.dtypes.values, np.array([np.dtype('float64'), np.dtype('float64')], dtype=object))
-#             #assert dep_dmg_df.notna().all().all()
-#             
-#             """"
-#             TODO: look at using '.replace' instead
-#             """
-#                 
-#                 
-#             for event in tddf.columns[dboolcol]:
-#                 
-#                 #get just the depths for this event and the bid
-#                 df = tddf.loc[:, [bid, event]].rename(columns={event: 'dep'}
-#                                                       ).dropna(subset=['dep'], how='all')
-#                 
-#                 #join damages to this
-#                 df = df.merge(dep_dmg_df, on='dep', how='left', validate='m:1')
-#                 
-#                 #give this column the correct name and slice down
-#                 df = df.loc[:, [bid, 'dmg_raw']].rename(
-#                         columns={'dmg_raw':events_df.loc[event, 'raw']}
-#                                     ).set_index(bid)
-#                 
-#                 #add these to the results
-#                 if first: #first time around.. add new columns
-#                     res_df = res_df.merge(df, on=bid, how='left', validate='1:1')
-#                 else: #second time around.. update the existing columns
-#                     res_df.update(df, overwrite=False, errors='raise')
-#                     
-#                 
-#                 log.debug('added %i (of %i) raw damage values from tag \"%s\' to event \'%s\''%(
-#                     len(df), len(res_df), ftag, event))
-#                 
-#                 
-#             #==================================================================
-#             # wrap
-#             #==================================================================
-# 
-#             # update progress variable
-#             self.feedback.upd_prog((indxr+1)/len(valid_tags)*60, method='raw')
-#             first = False
-#             log.debug('finished raw_damages for %i events'%dboolcol.sum())
-#===============================================================================
+            
          
         #=======================================================================
-        # wrap
+        # wrap-------
         #=======================================================================
         log = self.logger.getChild('bdmg')
         
         res_df.columns = ['%s_raw'%e for e in res_df.columns] #add the suffix
         
-        log.info('finished getting raw damages for %i dfuncs and %i events'%(
-            len(self.dfuncs_d),dboolcol.sum()))
-            
-        #======================================================================
-        # SCALED--------------
-        #======================================================================
-        #loop and add scaled damages
+        #attach
+        self.res_df = res_df
+        self.events_df = events_df
+        
+        
+        log.info('got raw impacts for %i dfuncs and %i events: \n    %s'%(
+            len(self.dfuncs_d),dboolcol.sum(), self._rdf_smry('_raw')))
+        
+        return res_df
+    
+    def bdmg_scaled(self,
+                    res_df = None,
+                    ):
+        log = self.logger.getChild('bdmg_scaled')
+        #=======================================================================
+        # get data
+        #=======================================================================
+        if res_df is None: res_df = self.res_df
+        events_df = self.events_df
+        
+        bdf = self.bdf
+        #=======================================================================
+        # #loop and add scaled damages
+        #=======================================================================
         """
         view(events_df)
         view(res_df)
@@ -645,35 +546,40 @@ class Dmg2(DFunc, Plotr):
             except Exception as e:
                 raise Error('failed w/ \n    %s'%e)
                 
-        log.info('scaled damages')
-        self.feedback.setProgress(70)
-        #======================================================================
-        #CAPPED------------
-        #======================================================================
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        self.res_df = res_df
+        log.info('got scaled impacts: \n    %s'%(self._rdf_smry('_scaled')))
+        return res_df
         
+        
+    def bdmg_capped(self,
+                    res_df = None,
+                    ):
+        
+        log = self.logger.getChild('bdmg_capped')
+        #=======================================================================
+        # get data
+        #=======================================================================
+        if res_df is None: res_df = self.res_df
+        events_df = self.events_df
+        
+        bdf = self.bdf
+        cid, bid = self.cid, self.bid
+
         #=======================================================================
         # start meta
         #=======================================================================
         meta_d = dict()
         cmeta_df =bdf.loc[:,[cid, bid, 'ftag', 'fcap', 'fscale', 'nestID']]
-        
-        
-        
+
         #=======================================================================
         # #loop and add scaled damages
         #=======================================================================
 
         for event, e_ser in events_df.iterrows():
 
-
-            #get teh scaled and the cap
-#===============================================================================
-#             boolcol =  np.logical_or(
-#                 res_df.columns == e_ser['scaled'],
-#                 res_df.columns == 'fcap')
-# 
-#             assert boolcol.sum() == 2, 'bad column match'
-#===============================================================================
             #join scaled values and cap values for easy comparison
             sc_df = res_df[e_ser['scaled']].to_frame().join(bdf['fcap'])
             
@@ -686,7 +592,7 @@ class Dmg2(DFunc, Plotr):
             #===================================================================
             # #meta
             #===================================================================
-            """written by bdmg_smry"""
+            
             #where the scaled values were capped
             mser = res_df.loc[boolidx, e_ser['scaled']] >bdf.loc[boolidx, 'fcap'] 
             cmeta_df= cmeta_df.join(mser.rename(event), how='left')
@@ -694,64 +600,116 @@ class Dmg2(DFunc, Plotr):
             #totals
             meta_d[event] = mser.sum()
                 
-        log.info('cappd %i events w/ bid cnts maxing out (of %i) \n    %s'%(
-            len(meta_d), len(res_df), meta_d))
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        """written by bdmg_smry"""
+        self.cmeta_df = cmeta_df
         
- 
-        self.feedback.setProgress(80)
         
+        self.res_df = res_df
+        log.info('cappd %i events w/ bid cnts maxing out (of %i) \n    %s\n    %s'%(
+            len(meta_d), len(res_df), meta_d, self._rdf_smry('_capped')))
+
+        return res_df
+    
+    def bdmg_cleaned(self, #fill nulls and build some results versions
+                     res_colg = 'capped', #column group to take as final results
+                    res_df = None,
+                    ):
         
-        #======================================================================
-        # DMG-------------
-        #======================================================================
-        #just duplicating the capped columns for now
-        for event, e_ser in events_df.iterrows():
-            boolcol = res_df.columns == e_ser['capped']
+        log = self.logger.getChild('bdmg_cleaned')
+        #=======================================================================
+        # get data
+        #=======================================================================
+        if res_df is None: res_df = self.res_df
+        events_df = self.events_df
+        
+        bdf = self.bdf
+        cid, bid = self.cid, self.bid
+        fdf = self.data_d['finv']
+        
+        #=======================================================================
+        # duplicate onto cleaned columns and fill nulls
+        #=======================================================================
+        for event, e_ser in self.events_df.iterrows():
+            boolcol = res_df.columns == e_ser[res_colg]
             res_df[e_ser['dmg']] = res_df.loc[:, boolcol].fillna(0)
             
-        log.debug('got final damages')
+      
         
-
         #=======================================================================
-        # post----
+        # join some other data
         #=======================================================================
+        assert np.array_equal(res_df.index, bdf.index), 'index mismatch'
         #join some info from the bdf (for later functions)
         res_df = bdf.loc[:, [bid, cid, 'nestID']].join(res_df) 
 
 
-        res_df1 = res_df.loc[:, [bid, cid]+events_df['dmg'].tolist()] #get clean version
+        #=======================================================================
+        # get cleaned version----
+        #=======================================================================
+        resC_df = res_df.loc[:, [bid, cid]+events_df['dmg'].tolist()] #just the dmg values
         
-        assert res_df1.notna().all().all(), 'got some nulls'
-        #======================================================================
-        # wrap------------
-        #======================================================================
+        #drop _dmg suffix
+        resC_df = resC_df.rename(columns={v:k for k,v in events_df['dmg'].to_dict().items()})
+        
+        #=======================================================================
+        # checks
+        #=======================================================================
+        
+        assert resC_df.notna().all().all(), 'got some nulls'
+        
+        #=======================================================================
+        # # recast as cid----
+        #=======================================================================
+        cres_df = resC_df.groupby(cid).sum().drop(bid, axis=1)
+        
+        log.info('got damages for %i events and %i assets'%(
+            len(cres_df), len(cres_df.columns)))
+        
+        
         #======================================================================
         # checks
         #======================================================================
-        assert np.array_equal(res_df.index, bdf.index), 'index mismatch'
-                
         
-                
+        miss_l = set(fdf.index.values).symmetric_difference(cres_df.index.values)
+        
+        assert len(miss_l) == 0, 'result inventory mismatch: \n    %s'%miss_l
+        assert np.array_equal(fdf.index, cres_df.index), 'index mismatch'
+        
 
-        
         #=======================================================================
-        # attachments
+        # wrap
         #=======================================================================
+
         #set these for use later
-        self.bdmg_df = res_df #raw... no columns dropped yet
-        self.events_df = events_df.copy()
-        self.cmeta_df = cmeta_df
+        self.res_df = res_df #needed for _rdf_smry
+        self.bdmgC_df = resC_df
+        self.cres_df = cres_df.copy() #set for plotting
         
         
-        log.info('finished w/ %s'%str(res_df1.shape))
-        self.feedback.setProgress(85)
-        return res_df1
-        """
-        self.resname
-        view(events_df)
-        view(res_df)
-        view(res_df1)
-        """
+        log.info('got cleaned impacts: \n    %s'%(self._rdf_smry('_dmg')))
+
+        return self.bdmgC_df, cres_df
+
+
+    def _rdf_smry(self, #get a summary string of the bid results data
+                          
+                          sfx,
+                          df_raw = None,
+                          ):
+        
+        if df_raw is None: df_raw = self.res_df
+        
+        boolcol = df_raw.columns.str.endswith(sfx) #id these columns
+        assert boolcol.any(), sfx
+        df = df_raw.loc[:, boolcol] #get just this data
+        
+        return 'count = %i, nulls = %i, min = %.2f, mean = %.2f, max = %.2f %s'%(
+            df.size, df.isna().sum().sum(), df.min().min(), df.mean().mean(), df.max().max(),
+            self.impact_units 
+            )
          
     def bdmg_smry(self, #generate summary of damages
                   res_df=None,  #built results
@@ -767,7 +725,7 @@ class Dmg2(DFunc, Plotr):
         #=======================================================================
         # defaults
         #=======================================================================
-        if res_df is None: res_df=self.bdmg_df
+        if res_df is None: res_df=self.res_df
         if events_df is None: events_df=self.events_df
         if cmeta_df is None: cmeta_df=self.cmeta_df
         if logger is None: logger=self.logger
@@ -993,7 +951,7 @@ class Dmg2(DFunc, Plotr):
         log = logger.getChild('get_attribution')
         cid = self.cid
         
-        if bdmg_df is None: bdmg_df=self.bdmg_df.copy()
+        if bdmg_df is None: bdmg_df=self.res_df.copy()
         if events_df is None: events_df = self.events_df.copy()
         
         #=======================================================================
@@ -1135,7 +1093,7 @@ class Dmg2(DFunc, Plotr):
         if ofn is None:
             ofn = 'dmgs_expnd_%s_%s'%(self.name, self.tag)
             
-        return self.output_df(self.bdmg_df, ofn)
+        return self.output_df(self.res_df, ofn)
     
     #===========================================================================
     # PLOTRS------
