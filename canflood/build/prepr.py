@@ -239,8 +239,7 @@ class Preparor(Qcoms):
     def to_finv(self, #clean a raw vlay an add some finv colums
                 in_vlay,
                 drop_colns=['ogc_fid', 'fid'], #optional columns to drop from df
-                nestID = 0, 
-                new_data = {'scale':1.0, 'elv':0.0, 'tag':None, 'cap':None},
+                new_data = {},
                 newLayname = None,
                 ):
         #=======================================================================
@@ -253,12 +252,8 @@ class Preparor(Qcoms):
         # precheck
         #=======================================================================
         assert isinstance(in_vlay, QgsVectorLayer)
-        assert isinstance(nestID, int)
-        
-        miss_l = set(new_data.keys()).difference(['scale', 'elv', 'tag', 'cap'])
-        assert len(miss_l)==0, 'got some unrecognzied'
-        
-        #assert 'Point' in QgsWkbTypes().displayString(in_vlay.wkbType())
+
+ 
         dp = in_vlay.dataProvider()
         
         log.info('on %s w/ %i feats and %i new colums'%(in_vlay.name(), dp.featureCount(), len(new_data)))
@@ -283,36 +278,19 @@ class Preparor(Qcoms):
         log.info('replaced %i (of %i) null values'%(df1.isna().sum().sum(), df1.size))
 
         #drop empty fields
-
         df2 = df1.dropna(axis=1, how='all')
         log.info('dropped %i empty columns'%(len(df1.columns) - len(df2.columns)))
         
         self.feedback.upd_prog(60)
-        
-        #=======================================================================
-        # prep input data
-        #=======================================================================
-        d = dict()
-        for kRaw, vRaw in new_data.items():
-            if vRaw is None:
-                if kRaw == 'tag':
-                    v = '' #get the right data type for empty tag fields?
-                else:
-                    v = np.nan
-            else:
-                v = vRaw
-                
-            d['f%i_%s'%(nestID, kRaw)] = v
-            
+
         #=======================================================================
         # add fields
         #=======================================================================
         #build the new data
-        log.info('adding field data:\n    %s'%d)
- 
-        
+        log.info('adding field data:\n    %s'%new_data)
+
         #join the two
-        res_df = pd.DataFrame(index=df_raw.index, data=d).join(df2)
+        res_df = pd.DataFrame(index=df_raw.index, data=new_data).join(df2)
 
 
         self.feedback.upd_prog(70)
@@ -333,6 +311,38 @@ class Preparor(Qcoms):
         
         self.feedback.upd_prog(99)
         return  finv_vlay
+    
+    def build_nest_data(self, #convert data to nest like
+                        nestID = 0, 
+                        d_raw = {'scale':1.0, 'elv':0.0, 'tag':None, 'cap':None},
+                        ):
+        
+        if len(d_raw)==0: return dict()
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert isinstance(nestID, int)
+        
+        miss_l = set(d_raw.keys()).difference(['scale', 'elv', 'tag', 'cap'])
+        assert len(miss_l)==0, 'got some unrecognzied'
+        
+        
+        #=======================================================================
+        # prep input data
+        #=======================================================================
+        d = dict()
+        for kRaw, vRaw in d_raw.items():
+            if vRaw is None:
+                if kRaw == 'tag':
+                    v = '' #get the right data type for empty tag fields?
+                else:
+                    v = np.nan
+            else:
+                v = vRaw
+                
+            d['f%i_%s'%(nestID, kRaw)] = v
+            
+        return d
  
 
 

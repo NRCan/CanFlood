@@ -744,25 +744,46 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
         
         #=======================================================================
-        # collect from UI
+        # collect from UI----
         #=======================================================================
         in_vlay = self.mMapLayerComboBox_inv_finv.currentLayer()
         out_dir = self.lineEdit_wd.text()
         nestID = int(self.spinBox_inv.value())
-        new_data = dict()
-        for dName, (lineEdit, reqType) in {
-                                'scale':(self.lineEdit_inv_scale, float),
-                                'elv':(self.lineEdit_inv_elv,float),
-                                'tag':(self.lineEdit_inv_tag, str),
-                                'cap':(self.lineEdit_inv_cap, float),            
-                                }.items():
+        
+        def get_data(d): #helper to pull data off widgets
+            new_d = dict()
+            for dName, (lineEdit, reqType) in d.items():
             
-            vRaw = lineEdit.text()
-            if vRaw == '':continue #blank.. ksipit
-            new_data[dName] = reqType(vRaw)
+                vRaw = lineEdit.text()
+                if vRaw == '':continue #blank.. ksipit
+                new_d[dName] = reqType(vRaw)
             
-        log.debug('collected %i:  \n%s'%(len(new_data), new_data))
+            log.debug('collected %i:  \n%s'%(len(new_d), new_d))
+            return new_d
+            
+        #=======================================================================
+        # nest data
+        #=======================================================================
+        nest_data = get_data({    
+                'scale':(self.lineEdit_inv_scale, float),
+                'elv':(self.lineEdit_inv_elv,float),
+                'tag':(self.lineEdit_inv_tag, str),
+                'cap':(self.lineEdit_inv_cap, float)}
+                        )
+        
         self.feedback.upd_prog(10)
+        
+        #=======================================================================
+        # mitigation data
+        #=======================================================================
+        miti_data = get_data({    
+                'mi_Lthresh':(self.lineEdit_inv_mi_Lthresh, float),
+                'mi_Uthresh':(self.lineEdit_inv_mi_Uthresh,float),
+                'mi_iScale':(self.lineEdit_inv_mi_iScale, str),
+                'mi_iVal':(self.lineEdit_inv_mi_iVal, float)}
+                        )
+        
+        
         #=======================================================================
         # input checks
         #=======================================================================
@@ -784,8 +805,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # run converter
         #=======================================================================
+        nest_data2 = wrkr.build_nest_data(nestID=nestID, d_raw = nest_data)
         finv_vlay = wrkr.to_finv(in_vlay_aoi, newLayname = 'finv_%s'%in_vlay.name(),
-                                 nestID=nestID, new_data=new_data)
+                                new_data={**nest_data2, **miti_data})
         
         #=======================================================================
         # wrap
