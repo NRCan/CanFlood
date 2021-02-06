@@ -991,7 +991,21 @@ class Dmg2(DFunc, Plotr):
         #=======================================================================
         # progression summary
         #=======================================================================
-        
+        """
+        view(events_df)
+        view(res_df)
+        """
+        p_df = None
+        for coln, cser in events_df.items():
+            rser = res_df.loc[:, cser.values].sum(axis=0)
+            rdf1 = pd.Series(rser, name=coln).to_frame().T.rename(
+                columns = {v:k for k,v in cser.items()})
+            if p_df is None:
+                p_df = rdf1
+            else:
+                p_df = p_df.append(rdf1)
+            
+
         
         
         #=======================================================================
@@ -1003,6 +1017,7 @@ class Dmg2(DFunc, Plotr):
         d = {**res_d, 
              'cap_cnts':cm_df1, 
              'cap_data':cmeta_df.fillna(False),
+             'progres':p_df.round(self.prec)
              }
    
         with pd.ExcelWriter(out_fp) as writer:
