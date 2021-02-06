@@ -260,7 +260,7 @@ class Dmg2(DFunc, Plotr):
         #=======================================================================
         # mitigation - apply lower depth threshold
         #=======================================================================
-        if self.apply_miti and 'mi_Lthresh' in self.finv_cdf.index:
+        if self.apply_miti and self.miLtcn in self.finv_cdf.columns:
             ddf = self.get_mitid()
         else:
             ddf = self.ddf
@@ -325,8 +325,11 @@ class Dmg2(DFunc, Plotr):
     def get_mitid(self, #adjust the depths using mitigation handles
                   ddf_raw = None,#expanded exposure set. depth at each bid. see build_depths()
                   fd_ser = None, #depth threshold to apply
-                  tcoln = 'mi_Lthresh'
+
                   ):
+        """
+        consider moving to common for Risk1
+        """
         #=======================================================================
         # defaults
         #=======================================================================
@@ -334,19 +337,16 @@ class Dmg2(DFunc, Plotr):
         cid, bid = self.cid, self.bid
         if ddf_raw is None: ddf_raw = self.ddf
         
+        
         if fd_ser is None:
             """check if this key is in the finv before calling"""
-            fd_ser = self.data_d['finv'][tcoln]
+            fd_ser = self.data_d['finv'][self.miLtcn]
         
 
         
         log.debug('on ddf %s'%(str(ddf_raw.shape)))
         
-        #=======================================================================
-        # precheck
-        #=======================================================================
-
-        
+       
         #=======================================================================
         # setup data
         #=======================================================================
@@ -370,8 +370,8 @@ class Dmg2(DFunc, Plotr):
         #make all these null
         cdf = cdf.where(~booldf, other=np.nan)
         
-        log.info('found %i (of %i) depths not exceeding \'%s\': \n    %s'%(
-            booldf.sum().sum(), booldf.size, tcoln, booldf.sum(axis=0).to_dict()))
+        log.info('nulled %i (of %i) depths not exceeding \'%s\': \n    %s'%(
+            booldf.sum().sum(), booldf.size, self.miLtcn, booldf.sum(axis=0).to_dict()))
         #=======================================================================
         # re-expand data
         #=======================================================================
@@ -415,13 +415,8 @@ class Dmg2(DFunc, Plotr):
         # adjust depths by exposure grade
         #======================================================================
         """
-        resserved for future dev
-        
-        one value per cid?
- 
+        see get_mitid()
         """
-
-        
         #======================================================================
         # setup-----
         #======================================================================
@@ -433,33 +428,35 @@ class Dmg2(DFunc, Plotr):
         else:
             mdval = 0
         
+        """this marks nulls as False"""
         dep_boolcol = ddf.loc[:, dboolcol] >= mdval
         
         #report those faling the check
         if not dep_boolcol.all().all():
-            log.warning('got %i (of %i) entries w/ invalid depths (<= %.2f)'%(
+            log.info('marked %i (of %i) entries w/ excluded depths (<= %.2f or NULL)'%(
                 np.invert(dep_boolcol).sum().sum(), dep_boolcol.size, mdval))
         
-        #combine
-        vboolidx = pd.DataFrame(np.logical_and(
-            dep_boolcol, #those exceeding min depth
-            ddf.loc[:,dboolcol].notna()) #real depths
-            ).any(axis=1)  
+        #id assets with ANY valid depths
+        vboolidx =dep_boolcol.any(axis=1)  
         
         #check
         if not vboolidx.any():
             log.warning('no valid depths!')
             return None
-        
+        """
+        np.array_equal(dep_boolcol.any(axis=1), vboolidx)
+        view(vboolidx)
+        view(dep_boolcol)
+        view(ddf)
+        """
         #=======================================================================
         # #get  valid dfunc tags
         #=======================================================================
-        """indexes shoul dmatchy"""
-        all_tags =  bdf.loc[:, 'ftag'].unique().tolist()
+
         valid_tags = bdf.loc[vboolidx, 'ftag'].unique().tolist() #all tags w/ valid depths
         
         log.info('calculating for %i (of %i) ftags w/ positive depths: %s'%(
-            len(valid_tags), len(all_tags), valid_tags))
+            len(valid_tags), len(bdf.loc[:, 'ftag'].unique()), valid_tags))
         
         #=======================================================================
         # #start results container

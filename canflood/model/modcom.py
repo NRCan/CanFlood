@@ -792,8 +792,8 @@ class Model(ComWrkr,
         #=======================================================================
         # remainders
         #=======================================================================
-        cdf.loc[:, 'ctype'] = cdf['ctype'].fillna('extra') #fill remainders
-        log.debug('mapped %i columns: \n%s'%(len(cdf), cdf))
+        cdf.loc['ctype', :] = cdf.loc['ctype', :].fillna('extra') #fill remainders
+        log.debug('mapped %i columns: \n%s'%(len(cdf.columns), cdf))
         #======================================================================
         # sets----
         #======================================================================
@@ -1500,7 +1500,7 @@ class Model(ComWrkr,
         
         self.data_d['finv'] = fdf
         
-        self.finv_cdf.loc['gels', 'ctype'] = 'gels'
+        self.finv_cdf.loc['ctype', 'gels'] = 'gels'
         
         return
             
@@ -1550,7 +1550,7 @@ class Model(ComWrkr,
 
         bdf = None
         
-        for prefix, fcolsi_df in finv_cdf.drop('ctype', axis=1).groupby('nestID'):
+        for prefix, fcolsi_df in finv_cdf.drop('ctype', axis=0).dropna(axis=1).T.groupby('nestID', axis=0):
 
 
             #get slice and clean
@@ -1584,7 +1584,7 @@ class Model(ComWrkr,
         
         #wrap
         log.info('expanded inventory from %i nest sets %s to finv %s'%(
-            len(finv_cdf['nestID'].dropna().unique()), str(fdf.shape), str(bdf.shape)))
+            len(finv_cdf.loc['nestID', :].dropna(axis=0).unique()), str(fdf.shape), str(bdf.shape)))
        
         
         #set indexers
