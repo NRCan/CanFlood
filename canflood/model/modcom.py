@@ -1448,6 +1448,7 @@ class Model(ComWrkr,
         #==================================================================
         #check length expectation
         assert 'gels' not in fdf.columns, 'gels already on fdf'
+        assert gdf.columns.tolist() == ['gels']
         
                 
         #======================================================================
@@ -1455,9 +1456,16 @@ class Model(ComWrkr,
         #======================================================================
         fdf = fdf.join(gdf)
         
+        #=======================================================================
+        # wrap
+        #=======================================================================
         log.debug('finished with %s'%str(fdf.shape))
         
         self.data_d['finv'] = fdf
+        
+        self.finv_cdf.loc['gels', 'ctype'] = 'gels'
+        
+        return
             
         
         

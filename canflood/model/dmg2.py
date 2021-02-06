@@ -260,13 +260,15 @@ class Dmg2(DFunc, Model):
         # adjust depths (for mitigations)
         #=======================================================================
         if self.apply_miti:
-            
+            ddf = self.get_mitid()
+        else:
+            ddf = self.ddf
         
         #======================================================================
         # get damages
         #======================================================================
         # #get damages per bid
-        bres_df = self.bdmg()
+        bres_df = self.bdmg(ddf = ddf)
         
         if bres_df is None:
             return None
@@ -316,11 +318,36 @@ class Dmg2(DFunc, Model):
             str(cres_df.shape), cres_df.sum().sum()))
         
         return cres_df
+    
+    def get_mitid(self, #adjust the depths using mitigation handles
+                  ddf_raw = None,#expanded exposure set. depth at each bid. see build_depths()
+                  fdf = None, #finv (not expanded)
+                  ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        log = self.logger.getChild('get_mitid')
+        
+        if ddf_raw is None: ddf_raw = self.ddf
+        if fdf is None: fdf = self.data_d['finv']
+        finv_cdf = self.finv_cdf.copy() #metadata for finv columns. see load_finv()
+        
+        log.debug('on ddf %s and fdf %s'%(str(ddf_raw.shape), str(fdf.shape)))
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        """
+        view(fdf)
+        """
+        miss_l = set(finv_cdf.index).symmetric_difference(fdf.columns)
+        assert len(miss_l)==0, 'finv column mismatch'
+        
         
     def bdmg(self, #get damages on expanded finv
              
             bdf = None, #expanded finv. see modcom.build_exp_finv(). each row has 1 ftag
-            ddf = None,  #expanded exposure set. depth at each bid. see build_depths()
+            ddf = None,  #expanded exposure set. depth at each bid. see build_depths() or get_mitid()
             ):
         #======================================================================
         # defaults
