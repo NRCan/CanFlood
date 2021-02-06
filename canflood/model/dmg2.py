@@ -255,7 +255,7 @@ class Dmg2(DFunc, Plotr):
         #======================================================================
         log = self.logger.getChild('run')
         
-        self.feedback.setProgress(5)
+        
         
         #=======================================================================
         # mitigation - apply lower depth threshold
@@ -264,20 +264,22 @@ class Dmg2(DFunc, Plotr):
             ddf = self.get_mitid()
         else:
             ddf = self.ddf
-        
+        self.feedback.upd_prog(5, method='portion')
         #======================================================================
         # get damages
         #======================================================================
         # #get damages per bid
         bres_df = self.bdmg_raw(ddf = ddf)
+        self.feedback.upd_prog(20, method='portion')
+        
         bres_df = self.bdmg_scaled(res_df = bres_df)
+        self.feedback.upd_prog(5, method='portion')
+        
         bres_df = self.bdmg_capped(res_df=bres_df)
+        self.feedback.upd_prog(5, method='portion')
+        
         bres_df, cres_df = self.bdmg_cleaned(res_df=bres_df)
-        
-        if bres_df is None:
-            return None
-        
-        self.feedback.setProgress(90)
+        self.feedback.upd_prog(5, method='portion')
         
         #=======================================================================
         # get labels
@@ -387,7 +389,7 @@ class Dmg2(DFunc, Plotr):
         
         log.info('running on %i assets and %i events'%(len(bdf), len(ddf.columns)-2))
         
-        self.feedback.setProgress(10)
+
         #======================================================================
         # adjust depths by exposure grade
         #======================================================================
@@ -461,11 +463,6 @@ class Dmg2(DFunc, Plotr):
                 
             todo: add check for max depth to improve performance
             """
-            
-            #===================================================================
-            # #get all  depths (per asset) matching this tag
-            # tddf = ddf.loc[boolidx, :]
-            #===================================================================
             
             #get just the unique depths that need calculating
             deps_ar = pd.Series(np.unique(np.ravel(edf[booldf].values))
