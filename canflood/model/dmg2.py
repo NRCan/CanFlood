@@ -259,12 +259,9 @@ class Dmg2(DFunc, Plotr):
         #=======================================================================
         # get impacts-----
         #=======================================================================
-
-        
         #======================================================================
-        # dfunc, scale, and cap
+        # dfunc, scale, and cap per bid
         #======================================================================
-        # #get damages per bid
         bres_df = self.bdmg_raw()
         self.feedback.upd_prog(20, method='portion')
         
@@ -278,14 +275,21 @@ class Dmg2(DFunc, Plotr):
         # mitigations
         #=======================================================================
         if self.apply_miti:
-            bres_df = self.bdmg_mitiT(res_df = bres_df)
-            self.feedback.upd_prog(5, method='portion')
+            """checking that one of thiese will trip in load_finv()"""
+            #lower depth threshold
+            if self.miLtcn in self.finv_cdf.columns:
+                bres_df = self.bdmg_mitiT(res_df = bres_df)
+                self.feedback.upd_prog(5, method='portion')
             
-            bres_df = self.bdmg_mitiS(res_df = bres_df)
-            self.feedback.upd_prog(5, method='portion')
+            #intermediate scale
+            if self.miScn in self.finv_cdf.columns:
+                bres_df = self.bdmg_mitiS(res_df = bres_df)
+                self.feedback.upd_prog(5, method='portion')
             
-            bres_df = self.bdmg_mitiV(res_df = bres_df)
-            self.feedback.upd_prog(5, method='portion')
+            #intermediate value
+            if self.miVcn in self.finv_cdf.columns:
+                bres_df = self.bdmg_mitiV(res_df = bres_df)
+                self.feedback.upd_prog(5, method='portion')
             res_colg = 'miti'
         else:
             res_colg = 'capped' #take the capped values as the final damages
@@ -649,6 +653,7 @@ class Dmg2(DFunc, Plotr):
     
     
     def bdmg_mitiT(self, #adjust the depths using mitigation handles
+                   res_df = None,
                   ddf_raw = None,#expanded exposure set. depth at each bid. see build_depths()
                   fd_ser = None, #depth threshold to apply
 
@@ -662,6 +667,7 @@ class Dmg2(DFunc, Plotr):
         log = self.logger.getChild('get_mitid')
         cid, bid = self.cid, self.bid
         if ddf_raw is None: ddf_raw = self.ddf
+        if res_df is None: res_df = self.res_df
         
         
         if fd_ser is None:

@@ -766,6 +766,9 @@ class Model(ComWrkr,
         
         #check these
         boolcol = cdf.loc['ctype', :]=='miti'
+        
+        if self.apply_miti: assert boolcol.any(), 'passed apply_miti=True but got no mitigation data'
+        
         if boolcol.any() and self.apply_miti:
             mdf = df.loc[:, boolcol]
             
