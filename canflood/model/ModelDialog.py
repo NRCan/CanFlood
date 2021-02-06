@@ -165,7 +165,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         self.pushButton_i2run.clicked.connect(self.run_impact2)
         
         #======================================================================
-        # risk level 2
+        # risk level 2----
         #======================================================================
         self.pushButton_r2Run.clicked.connect(self.run_risk2)
         
@@ -181,7 +181,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         self.checkBox_r2rpa.stateChanged.connect(tog_jg2)
         
         #======================================================================
-        # risk level 3
+        # risk level 3-----
         #======================================================================
         self.pushButton_r3Run.clicked.connect(self.run_risk3)
         
@@ -325,9 +325,18 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         if self.checkBox_SS_updCf.isChecked():
             model.upd_cf()
             
+        #calc summary
+        if self.checkBox_i2bSmry.isChecked():
+            _ = model.bdmg_smry()
+            
         #output expanded results
         if self.checkBox_i2_outExpnd.isChecked():
             _ = model.output_bdmg()
+            
+        #box plots
+        if self.checkBox_i2plot.isChecked():
+            fig = model.plot_boxes()
+            _ = model.output_fig(fig)
 
         self.logger.push('Impacts2 complete')
         self.feedback.upd_prog(None) #set the progress bar back down to zero
