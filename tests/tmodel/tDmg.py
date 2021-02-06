@@ -113,20 +113,18 @@ def gen_suite(
         #      'res_dir':r'Ctut2_01\c01\dmg2',
         #      },
         #=======================================================================
-        #=======================================================================
-        # 'LM_bs.b01':{
-        #     'cf_fp':r'LM_bs\b01\CanFlood_Lbs6.ind.txt',
-        #     'res_dir':r'LM_bs\b01\dmg'
-        #     },
-        # 'LM_bs.b02':{
-        #     'cf_fp':r'LM_bs\b02\CanFlood_LML.bs7_b02_20210123.txt',
-        #     'res_dir':r'LM_bs\b02\dmg'
-        #     },
-        # 'LM_bs.b03_max':{
-        #     'cf_fp':r'LM_bs\b03\CanFlood_LML.bs7.b03_max_20210123.txt',
-        #     'res_dir':r'LM_bs\b03\dmg'
-        #     },
-        #=======================================================================
+        'LM_bs.b01':{
+            'cf_fp':r'LM_bs\b01\CanFlood_Lbs6.ind.txt',
+            'res_dir':r'LM_bs\b01\dmg'
+            },
+        'LM_bs.b02':{
+            'cf_fp':r'LM_bs\b02\CanFlood_LML.bs7_b02_20210123.txt',
+            'res_dir':r'LM_bs\b02\dmg'
+            },
+        'LM_bs.b03_max':{
+            'cf_fp':r'LM_bs\b03\CanFlood_LML.bs7.b03_max_20210123.txt',
+            'res_dir':r'LM_bs\b03\dmg'
+            },
         #=======================================================================
         # 'LM_bs.b02_mutEx':{ #same
         #     'cf_fp':r'LM_bs\b03\CanFlood_LML.bs7.b03_mutEx_20210123.txt',
