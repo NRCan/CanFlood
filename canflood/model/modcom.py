@@ -646,12 +646,14 @@ class Model(ComWrkr,
     #===========================================================================
     # LOADERS------
     #===========================================================================
-    def load_finv(self,#loading expo data
+    def load_finv(self,#load asset inventory
                    fp = None,
                    dtag = 'finv',
                    finv_exp_d = None, #finv expeectations
                    ):
-        
+        """
+        see build_exp_finv() for construction of the expanded binv
+        """
         #=======================================================================
         # defaults
         #=======================================================================
@@ -709,11 +711,54 @@ class Model(ComWrkr,
                     assert cval in ser, '%s.%s should contain %s'%(dtag, coln, cval)
                 else:
                     raise Error('unexpected handle: %s'%hndl)
+                
+        #=======================================================================
+        # resolve column gruops----
+        #=======================================================================
+        """ this would have been easier with a dxcol"""
         
         #======================================================================
-        # set it
+        # get prefix values (using elv columns)
+        #======================================================================
+        #pull all the elv columns
+        tag_coln_l = df.columns[df.columns.str.endswith('_elv')].tolist()
+        
+        assert len(tag_coln_l) > 0, 'no \'elv\' columns found in inventory'
+        assert tag_coln_l[0] == 'f0_elv', 'expected first tag column to be \'f0_elv\''
+        
+        #get nested prefix values
+        prefix_l = [coln[:2] for coln in tag_coln_l]
+        
+        log.info('got %i nests: %s'%(len(prefix_l), prefix_l))
+        
+        #check
+        for e in prefix_l: 
+            assert e.startswith('f'), 'bad prefix: \'%s\'.. check field names'
+            
+        #=======================================================================
+        # add each nest column name
+        #=======================================================================   
+        cdf = pd.DataFrame(index=df.columns, columns=['ctype', 'nestID']) #upgrade to a series     
+        d = dict()
+        for pfx in prefix_l:
+            l = [e for e in df.columns if e.startswith('%s_'%pfx)]
+            
+            for e in l:
+                cdf.loc[e, 'nestID'] = pfx
+                cdf.loc[e, 'ctype'] = 'nest'
+            
+        #=======================================================================
+        # tag mitigations
+        #=======================================================================
+        cdf.loc[cdf.index.str.startswith('mi_'), 'ctype'] = 'miti'
+        
+        cdf.loc[:, 'ctype'] = cdf['ctype'].fillna('extra') #fill remainders
+        log.debug('mapped %i columns: \n%s'%(len(cdf), cdf))
+        #======================================================================
+        # sets----
         #======================================================================
         self.cindex = df.index.copy() #set this for checks later
+        self.finv_cdf = cdf
         self.data_d[dtag] = df
         
         log.info('finished loading %s as %s'%(dtag, str(df.shape)))
@@ -1424,6 +1469,7 @@ class Model(ComWrkr,
         #======================================================================
         log = self.logger.getChild('build_exp_finv')
         fdf = self.data_d['finv']
+        finv_cdf = self.finv_cdf.copy() #metadata for finv columns. see load_finv()
         cid, bid = self.cid, self.bid
         
         if group_cnt is None: group_cnt = self.group_cnt
@@ -1448,41 +1494,18 @@ class Model(ComWrkr,
         #======================================================================
         assert fdf.index.name == cid, 'bad index on fdf'
         
-        #======================================================================
-        # get prefix values (using elv columns)
-        #======================================================================
-        #pull all the elv columns
-        tag_coln_l = fdf.columns[fdf.columns.str.endswith('_elv')].tolist()
-        
-        assert len(tag_coln_l) > 0, 'no \'elv\' columns found in inventory'
-        assert tag_coln_l[0] == 'f0_elv', 'expected first tag column to be \'f0_elv\''
-        
-        #get nested prefix values
-        prefix_l = [coln[:2] for coln in tag_coln_l]
-        
-        log.info('got %i nests: %s'%(len(prefix_l), prefix_l))
-        
-        #check
-        for e in prefix_l: 
-            assert e.startswith('f'), 'bad prefix: \'%s\'.. check field names'
-        
+
         #======================================================================
         # expand: nested entries---------------
         #======================================================================
 
         bdf = None
         
-        for prefix in prefix_l:
-            #identify prefix columns
-            pboolcol = fdf.columns.str.startswith(prefix) #columns w/ prefix
-            
-            """group_cnt as a minimum here"""
-            assert pboolcol.sum()>=group_cnt, 'prefix \'%s\' group_cnt %i != %i'%(
-                prefix, pboolcol.sum(), group_cnt)
-            
-             
+        for prefix, fcolsi_df in finv_cdf.drop('ctype', axis=1).groupby('nestID'):
+
+
             #get slice and clean
-            df = fdf.loc[:, pboolcol].dropna(axis=0, how='all').sort_index(axis=1)
+            df = fdf.loc[:, fcolsi_df.index].dropna(axis=0, how='all').sort_index(axis=1)
             
             #get clean column names
             df.columns = df.columns.str.replace('%s_'%prefix, 'f')
@@ -1512,7 +1535,7 @@ class Model(ComWrkr,
         
         #wrap
         log.info('expanded inventory from %i nest sets %s to finv %s'%(
-            len(prefix_l), str(fdf.shape), str(bdf.shape)))
+            len(finv_cdf['nestID'].dropna().unique()), str(fdf.shape), str(bdf.shape)))
        
         
         #set indexers
