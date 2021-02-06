@@ -258,9 +258,9 @@ class Dmg2(DFunc, Plotr):
         self.feedback.setProgress(5)
         
         #=======================================================================
-        # adjust depths (for mitigations)
+        # mitigation - apply lower depth threshold
         #=======================================================================
-        if self.apply_miti and 'mi_dthresh' in self.finv_cdf.index:
+        if self.apply_miti and 'mi_Lthresh' in self.finv_cdf.index:
             ddf = self.get_mitid()
         else:
             ddf = self.ddf
@@ -325,6 +325,7 @@ class Dmg2(DFunc, Plotr):
     def get_mitid(self, #adjust the depths using mitigation handles
                   ddf_raw = None,#expanded exposure set. depth at each bid. see build_depths()
                   fd_ser = None, #depth threshold to apply
+                  tcoln = 'mi_Lthresh'
                   ):
         #=======================================================================
         # defaults
@@ -335,7 +336,7 @@ class Dmg2(DFunc, Plotr):
         
         if fd_ser is None:
             """check if this key is in the finv before calling"""
-            fd_ser = self.data_d['finv']['mi_dthresh']
+            fd_ser = self.data_d['finv'][tcoln]
         
 
         
@@ -355,7 +356,7 @@ class Dmg2(DFunc, Plotr):
         
         assert np.array_equal(cdf.index, fd_ser.index)
 
-        #expand to match shape
+        #expand thresholds to match shape
         dt_df = pd.DataFrame(
             np.tile(fd_ser, (len(cdf.columns), 1)).T,
             index = fd_ser.index,
@@ -369,8 +370,8 @@ class Dmg2(DFunc, Plotr):
         #make all these null
         cdf = cdf.where(~booldf, other=np.nan)
         
-        log.info('found %i (of %i) depths not exceeding threshold: \n    %s'%(
-            booldf.sum().sum(), booldf.size, booldf.sum(axis=0).to_dict()))
+        log.info('found %i (of %i) depths not exceeding \'%s\': \n    %s'%(
+            booldf.sum().sum(), booldf.size, tcoln, booldf.sum(axis=0).to_dict()))
         #=======================================================================
         # re-expand data
         #=======================================================================

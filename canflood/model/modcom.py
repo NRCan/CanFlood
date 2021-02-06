@@ -179,7 +179,7 @@ class Model(ComWrkr,
     #==========================================================================
     # program vars
     #==========================================================================
-    bid = 'bid' #indexer for expanded finv
+    
 
     #minimum inventory expectations
     finv_exp_d = {
@@ -193,6 +193,15 @@ class Model(ComWrkr,
     cplx_evn_d = None #complex event sets {aep: [exEventName1, exEventName1]}
     asset_cnt = 0 #for plotting
     scen_ar_d = dict() #container for empty scenario matrix
+    
+    #===========================================================================
+    # field names
+    #===========================================================================
+    bid = 'bid' #indexer for expanded finv
+    miLtcn = 'mi_Lthresh'
+    miUtcn = 'mi_Uthresh'
+    miVcn = 'mi_ival'
+    miScn = 'mi_iscale'
     
 
     def __init__(self,
@@ -741,20 +750,48 @@ class Model(ComWrkr,
         #=======================================================================
         # add each nest column name
         #=======================================================================   
-        cdf = pd.DataFrame(index=df.columns, columns=['ctype', 'nestID']) #upgrade to a series     
+        cdf = pd.DataFrame(columns=df.columns, index=['ctype', 'nestID']) #upgrade to a series     
         d = dict()
         for pfx in prefix_l:
             l = [e for e in df.columns if e.startswith('%s_'%pfx)]
             
             for e in l:
-                cdf.loc[e, 'nestID'] = pfx
-                cdf.loc[e, 'ctype'] = 'nest'
+                cdf.loc['nestID', e] = pfx
+                cdf.loc['ctype', e] = 'nest'
             
         #=======================================================================
-        # tag mitigations
+        # mitigations
         #=======================================================================
-        cdf.loc[cdf.index.str.startswith('mi_'), 'ctype'] = 'miti'
+        cdf.loc['ctype', cdf.columns.str.startswith('mi_')] = 'miti'
         
+        #check these
+        boolcol = cdf.loc['ctype', :]=='miti'
+        if boolcol.any():
+            mdf = df.loc[:, boolcol]
+            
+            #check names
+            miss_l = set(mdf.columns).difference([self.miLtcn, self.miUtcn, self.miVcn, self.miScn])
+            assert len(miss_l)==0, 'got some unrecognized mitigation column names on the finv:\n %s'%miss_l
+            
+            
+            #check types
+            assert np.array_equal(mdf.dtypes.unique(), 
+                      np.array([np.dtype('float64')], dtype=object)), \
+                      'bad type on finv \n%s'%mdf.dtypes
+            
+            #check threshold logic
+            if self.miLtcn in mdf.columns and self.miUtcn in mdf.columns:
+                boolidx = mdf[self.miLtcn]>mdf[self.miUtcn]
+                if boolidx.any():
+                    log.debug(mdf[boolidx])
+                    raise Error('got %i (of %i) mi_Lthresh > mi_Uthresh... see logger'%(
+                        boolidx.sum(), len(boolidx)))
+            
+        
+        
+        #=======================================================================
+        # remainders
+        #=======================================================================
         cdf.loc[:, 'ctype'] = cdf['ctype'].fillna('extra') #fill remainders
         log.debug('mapped %i columns: \n%s'%(len(cdf), cdf))
         #======================================================================
@@ -1474,6 +1511,7 @@ class Model(ComWrkr,
                     ):
         """
         initial loading of the finv is done in load_finv()
+            here we pivot out to 1nest on bids
         """
         #======================================================================
         # defaults
