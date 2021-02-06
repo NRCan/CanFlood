@@ -102,7 +102,7 @@ class Dmg2(DFunc, Plotr):
         
         #init the baseclass
         super().__init__(cf_fp=cf_fp, **kwargs) #initilzie Model
-        
+        self._init_plt() #setup matplotlib
         
         self.logger.debug('finished __init__ on Dmg2')
         
@@ -1082,50 +1082,39 @@ class Dmg2(DFunc, Plotr):
     def plot_boxes(self, #box plots for each event 
                    df=None, 
                       
+                    #labelling
+                    impact_name = None, 
+                    impactFmtFunc=None, #tick label format function for impact values
                     #figure parametrs
-                    figsize     = (6.5, 4), 
-
-                      
-                      ): #plot all the histograms stacked
+                    figsize=None, logger=None,  plotTag=None,        
+                    
+                    pkwargs = {},
+                      ): 
         
         """
         dont want to initiate matplotlib in the module...
             just using a nasty single f unction
         """
-        #=======================================================================
+        #======================================================================
         # defaults
-        #=======================================================================
-        log = self.logger.getChild('plot')
-        if df is None: df = self.cres_df
-        title = '%s Impact boxplots on %i events'%(self.tag, len(df.columns))
+        #======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('plot_boxes')
+        plt, matplotlib = self.plt, self.matplotlib
         
+        if df is None: df = self.cres_df.copy()
+        if figsize is None: figsize    =    self.figsize
+        if plotTag is None: plotTag=self.tag
+        if impact_name is None: impact_name=self.impact_units
+        if impactFmtFunc is None: impactFmtFunc=self.impactFmtFunc
+        
+        title = '%s Impact Boxplots on %i events'%(plotTag, len(df.columns))
         #=======================================================================
         # manipulate data
         #=======================================================================
         #get a collectio nof arrays from a dataframe's columns
         data = [ser.values for _, ser in df.items()]
-        #======================================================================
-        # setup
-        #======================================================================
-        
-        import matplotlib
-        matplotlib.use('Qt5Agg') #sets the backend (case sensitive)
-        import matplotlib.pyplot as plt
-        
-        #set teh styles
-        plt.style.use('default')
-        
-        #font
-        matplotlib_font = {
-                'family' : 'serif',
-                'weight' : 'normal',
-                'size'   : 8}
-        
-        matplotlib.rc('font', **matplotlib_font)
-        matplotlib.rcParams['axes.titlesize'] = 10 #set the figure title size
-        
-        #spacing parameters
-        matplotlib.rcParams['figure.autolayout'] = False #use tight layout
+
         
         
         
@@ -1133,22 +1122,18 @@ class Dmg2(DFunc, Plotr):
         # figure setup
         #======================================================================
         plt.close()
-        fig = plt.figure(figsize=figsize,
-                     tight_layout=False,
-                     constrained_layout = True,
-                     )
-        
+        fig = plt.figure(figsize=figsize, constrained_layout = True)
         #axis setup
         ax1 = fig.add_subplot(111)
         
         #aep units
-        ax1.set_ylim(0, 1.0)
+        #ax1.set_ylim(0, 1.0)
  
         
         # axis label setup
         fig.suptitle(title)
         ax1.set_xlabel('hazard layer')
-        ax1.set_ylabel('Pfail')
+        ax1.set_ylabel(impact_name)
         """
         plt.show()
         
@@ -1159,7 +1144,7 @@ class Dmg2(DFunc, Plotr):
         #=======================================================================
         # plot thie histogram
         #=======================================================================
-        boxRes_d = ax1.boxplot(data, whis=1.5)
+        boxRes_d = ax1.boxplot(data, whis=1.5, **pkwargs)
         
 
 
@@ -1167,16 +1152,23 @@ class Dmg2(DFunc, Plotr):
         # format axis labels
         #======================================================= ================
         #apply the new labels
-        ax1.set_xticklabels(df.columns, rotation=90, va='center', y=.5, color='red')
+        xfmtFunc = lambda idx:'%s = %s'%(df.columns[idx-1], impactFmtFunc(df.iloc[:, idx-1].sum()))
+        l = [xfmtFunc(value) for value in ax1.get_xticks()]
+        ax1.set_xticklabels(l, rotation=90, va='center', y=.5, color='red')
+        
+        
+        self._tickSet(ax1, yfmtFunc=impactFmtFunc)
         
         
         #=======================================================================
         # Add text string 'annot' to lower left of plot
         #=======================================================================
-        val_str = '%i assets \nevent_rels=\'%s\''%(len(df), self.event_rels)
+        val_str = '%i assets \napply_miti=\'%s\' \nground_water=%s \nfelv=\'%s\''%(
+            len(df), self.apply_miti, self.ground_water, self.felv)
+        
         xmin, xmax1 = ax1.get_xlim()
         ymin, ymax1 = ax1.get_ylim()
-        
+         
         x_text = xmin + (xmax1 - xmin)*.5 # 1/10 to the right of the left ax1is
         y_text = ymin + (ymax1 - ymin)*.8 #1/10 above the bottom ax1is
         anno_obj = ax1.text(x_text, y_text, val_str)
