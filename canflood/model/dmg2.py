@@ -563,6 +563,7 @@ class Dmg2(DFunc, Plotr):
         #=======================================================================
         """written by bdmg_smry"""
         self.cmeta_df = cmeta_df
+        self.res_colg = 'capped' #needed by  mitigation funcs
         
         
         self.res_df = res_df
@@ -571,91 +572,12 @@ class Dmg2(DFunc, Plotr):
 
         return res_df
     
-    def bdmg_cleaned(self, #fill nulls and build some results versions
-                     res_colg = 'capped', #column group to take as final results
-                    res_df = None,
-                    ):
-        
-        log = self.logger.getChild('bdmg_cleaned')
-        #=======================================================================
-        # get data
-        #=======================================================================
-        if res_df is None: res_df = self.res_df
-        events_df = self.events_df
-        
-        bdf = self.bdf
-        cid, bid = self.cid, self.bid
-        fdf = self.data_d['finv']
-        
-        #=======================================================================
-        # duplicate onto cleaned columns and fill nulls
-        #=======================================================================
-        for event, e_ser in self.events_df.iterrows():
-            boolcol = res_df.columns == e_ser[res_colg]
-            res_df[e_ser['dmg']] = res_df.loc[:, boolcol].fillna(0)
-            
-      
-        
-        #=======================================================================
-        # join some other data
-        #=======================================================================
-        assert np.array_equal(res_df.index, bdf.index), 'index mismatch'
-        #join some info from the bdf (for later functions)
-        res_df = bdf.loc[:, [bid, cid, 'nestID']].join(res_df) 
 
-
-        #=======================================================================
-        # get cleaned version----
-        #=======================================================================
-        resC_df = res_df.loc[:, [bid, cid]+events_df['dmg'].tolist()] #just the dmg values
-        
-        #drop _dmg suffix
-        resC_df = resC_df.rename(columns={v:k for k,v in events_df['dmg'].to_dict().items()})
-        
-        #=======================================================================
-        # checks
-        #=======================================================================
-        
-        assert resC_df.notna().all().all(), 'got some nulls'
-        
-        #=======================================================================
-        # # recast as cid----
-        #=======================================================================
-        cres_df = resC_df.groupby(cid).sum().drop(bid, axis=1)
-        
-        log.info('got damages for %i events and %i assets'%(
-            len(cres_df), len(cres_df.columns)))
-        
-        
-        #======================================================================
-        # checks
-        #======================================================================
-        
-        miss_l = set(fdf.index.values).symmetric_difference(cres_df.index.values)
-        
-        assert len(miss_l) == 0, 'result inventory mismatch: \n    %s'%miss_l
-        assert np.array_equal(fdf.index, cres_df.index), 'index mismatch'
-        
-
-        #=======================================================================
-        # wrap
-        #=======================================================================
-
-        #set these for use later
-        self.res_df = res_df #needed for _rdf_smry
-        self.bdmgC_df = resC_df
-        self.cres_df = cres_df.copy() #set for plotting
-        
-        
-        log.info('got cleaned impacts: \n    %s'%(self._rdf_smry('_dmg')))
-
-        return self.bdmgC_df, cres_df
-    
-    
     def bdmg_mitiT(self, #adjust the depths using mitigation handles
                    res_df = None,
                   ddf_raw = None,#expanded exposure set. depth at each bid. see build_depths()
                   fd_ser = None, #depth threshold to apply
+                  res_colg = None, #predecessor results column group to work off
 
                   ):
         """
@@ -664,15 +586,17 @@ class Dmg2(DFunc, Plotr):
         #=======================================================================
         # defaults
         #=======================================================================
-        log = self.logger.getChild('get_mitid')
+        log = self.logger.getChild('bdmg_mitiT')
         cid, bid = self.cid, self.bid
         if ddf_raw is None: ddf_raw = self.ddf
         if res_df is None: res_df = self.res_df
+        if res_colg is None: res_colg=self.res_colg
         
+        mcoln = self.miLtcn #mitigation data columns 
         
         if fd_ser is None:
             """check if this key is in the finv before calling"""
-            fd_ser = self.data_d['finv'][self.miLtcn]
+            fd_ser = self.data_d['finv'][mcoln]
         
 
         
@@ -755,6 +679,87 @@ class Dmg2(DFunc, Plotr):
             self.impact_units 
             )
          
+    def bdmg_cleaned(self, #fill nulls and build some results versions
+                     res_colg = 'capped', #column group to take as final results
+                    res_df = None,
+                    ):
+        
+        log = self.logger.getChild('bdmg_cleaned')
+        #=======================================================================
+        # get data
+        #=======================================================================
+        if res_df is None: res_df = self.res_df
+        events_df = self.events_df
+        
+        bdf = self.bdf
+        cid, bid = self.cid, self.bid
+        fdf = self.data_d['finv']
+        
+        #=======================================================================
+        # duplicate onto cleaned columns and fill nulls
+        #=======================================================================
+        for event, e_ser in self.events_df.iterrows():
+            boolcol = res_df.columns == e_ser[res_colg]
+            res_df[e_ser['dmg']] = res_df.loc[:, boolcol].fillna(0)
+            
+      
+        
+        #=======================================================================
+        # join some other data
+        #=======================================================================
+        assert np.array_equal(res_df.index, bdf.index), 'index mismatch'
+        #join some info from the bdf (for later functions)
+        res_df = bdf.loc[:, [bid, cid, 'nestID']].join(res_df) 
+
+
+        #=======================================================================
+        # get cleaned version----
+        #=======================================================================
+        resC_df = res_df.loc[:, [bid, cid]+events_df['dmg'].tolist()] #just the dmg values
+        
+        #drop _dmg suffix
+        resC_df = resC_df.rename(columns={v:k for k,v in events_df['dmg'].to_dict().items()})
+        
+        #=======================================================================
+        # checks
+        #=======================================================================
+        
+        assert resC_df.notna().all().all(), 'got some nulls'
+        
+        #=======================================================================
+        # # recast as cid----
+        #=======================================================================
+        cres_df = resC_df.groupby(cid).sum().drop(bid, axis=1)
+        
+        log.info('got damages for %i events and %i assets'%(
+            len(cres_df), len(cres_df.columns)))
+        
+        
+        #======================================================================
+        # checks
+        #======================================================================
+        
+        miss_l = set(fdf.index.values).symmetric_difference(cres_df.index.values)
+        
+        assert len(miss_l) == 0, 'result inventory mismatch: \n    %s'%miss_l
+        assert np.array_equal(fdf.index, cres_df.index), 'index mismatch'
+        
+
+        #=======================================================================
+        # wrap
+        #=======================================================================
+
+        #set these for use later
+        self.res_df = res_df #needed for _rdf_smry
+        self.bdmgC_df = resC_df
+        self.cres_df = cres_df.copy() #set for plotting
+        
+        
+        log.info('got cleaned impacts: \n    %s'%(self._rdf_smry('_dmg')))
+
+        return self.bdmgC_df, cres_df
+    
+    
     def bdmg_smry(self, #generate summary of damages
                   res_df_raw=None,  #built results
                   events_df=None,  #event name matrix
