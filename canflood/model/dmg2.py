@@ -259,20 +259,13 @@ class Dmg2(DFunc, Plotr):
         #=======================================================================
         # get impacts-----
         #=======================================================================
-        #=======================================================================
-        # mitigation - apply lower depth threshold
-        #=======================================================================
-        if self.apply_miti and self.miLtcn in self.finv_cdf.columns:
-            ddf = self.get_mitid()
-        else:
-            ddf = self.ddf
-        self.feedback.upd_prog(5, method='portion')
+
         
         #======================================================================
         # dfunc, scale, and cap
         #======================================================================
         # #get damages per bid
-        bres_df = self.bdmg_raw(ddf = ddf)
+        bres_df = self.bdmg_raw()
         self.feedback.upd_prog(20, method='portion')
         
         bres_df = self.bdmg_scaled(res_df = bres_df)
@@ -282,10 +275,18 @@ class Dmg2(DFunc, Plotr):
         self.feedback.upd_prog(5, method='portion')
         
         #=======================================================================
-        # mitigation - apply intermediate adjustments
+        # mitigations
         #=======================================================================
         if self.apply_miti:
-            res_colg = 'capped'
+            bres_df = self.bdmg_mitiT(res_df = bres_df)
+            self.feedback.upd_prog(5, method='portion')
+            
+            bres_df = self.bdmg_mitiS(res_df = bres_df)
+            self.feedback.upd_prog(5, method='portion')
+            
+            bres_df = self.bdmg_mitiV(res_df = bres_df)
+            self.feedback.upd_prog(5, method='portion')
+            res_colg = 'miti'
         else:
             res_colg = 'capped' #take the capped values as the final damages
         
@@ -318,68 +319,7 @@ class Dmg2(DFunc, Plotr):
         
         return cres_df
     
-    def get_mitid(self, #adjust the depths using mitigation handles
-                  ddf_raw = None,#expanded exposure set. depth at each bid. see build_depths()
-                  fd_ser = None, #depth threshold to apply
 
-                  ):
-        """
-        consider moving to common for Risk1
-        """
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        log = self.logger.getChild('get_mitid')
-        cid, bid = self.cid, self.bid
-        if ddf_raw is None: ddf_raw = self.ddf
-        
-        
-        if fd_ser is None:
-            """check if this key is in the finv before calling"""
-            fd_ser = self.data_d['finv'][self.miLtcn]
-        
-
-        
-        log.debug('on ddf %s'%(str(ddf_raw.shape)))
-        
-       
-        #=======================================================================
-        # setup data
-        #=======================================================================
-        #revert depth data back to cid index
-        cdf = ddf_raw.drop_duplicates(self.cid).drop('bid', axis=1
-                         ).set_index(self.cid, drop=True).sort_index()
-        
-        assert np.array_equal(cdf.index, fd_ser.index)
-
-        #expand thresholds to match shape
-        dt_df = pd.DataFrame(
-            np.tile(fd_ser, (len(cdf.columns), 1)).T,
-            index = fd_ser.index,
-            columns= cdf.columns)
-        #=======================================================================
-        # apply depth reductions-----
-        #=======================================================================
-        #find those meeting the threshold
-        booldf = cdf <=dt_df
-        
-        #make all these null
-        cdf = cdf.where(~booldf, other=np.nan)
-        
-        log.info('nulled %i (of %i) depths not exceeding \'%s\': \n    %s'%(
-            booldf.sum().sum(), booldf.size, self.miLtcn, booldf.sum(axis=0).to_dict()))
-        #=======================================================================
-        # re-expand data
-        #=======================================================================
-        ddf = ddf_raw.loc[:, [bid, cid]].join(cdf, on=cid)
-        """
-        view(ddf)
-        """
-        """make explicit?
-        self.ddf = ddf"""
-        return ddf
-        
-        
     def bdmg_raw(self, #get damages on expanded finv
              
             bdf = None, #expanded finv. see modcom.build_exp_finv(). each row has 1 ftag
@@ -706,7 +646,91 @@ class Dmg2(DFunc, Plotr):
         log.info('got cleaned impacts: \n    %s'%(self._rdf_smry('_dmg')))
 
         return self.bdmgC_df, cres_df
+    
+    
+    def bdmg_mitiT(self, #adjust the depths using mitigation handles
+                  ddf_raw = None,#expanded exposure set. depth at each bid. see build_depths()
+                  fd_ser = None, #depth threshold to apply
 
+                  ):
+        """
+        consider moving to common for Risk1
+        """
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        log = self.logger.getChild('get_mitid')
+        cid, bid = self.cid, self.bid
+        if ddf_raw is None: ddf_raw = self.ddf
+        
+        
+        if fd_ser is None:
+            """check if this key is in the finv before calling"""
+            fd_ser = self.data_d['finv'][self.miLtcn]
+        
+
+        
+        log.debug('on ddf %s'%(str(ddf_raw.shape)))
+        
+       
+        #=======================================================================
+        # setup data
+        #=======================================================================
+        #revert depth data back to cid index
+        cdf = ddf_raw.drop_duplicates(self.cid).drop('bid', axis=1
+                         ).set_index(self.cid, drop=True).sort_index()
+        
+        assert np.array_equal(cdf.index, fd_ser.index)
+
+        #expand thresholds to match shape
+        dt_df = pd.DataFrame(
+            np.tile(fd_ser, (len(cdf.columns), 1)).T,
+            index = fd_ser.index,
+            columns= cdf.columns)
+        #=======================================================================
+        # apply depth reductions-----
+        #=======================================================================
+        #find those meeting the threshold
+        booldf = cdf <=dt_df
+        
+        #make all these null
+        cdf = cdf.where(~booldf, other=np.nan)
+        
+        log.info('nulled %i (of %i) depths not exceeding \'%s\': \n    %s'%(
+            booldf.sum().sum(), booldf.size, self.miLtcn, booldf.sum(axis=0).to_dict()))
+        #=======================================================================
+        # re-expand data
+        #=======================================================================
+        ddf = ddf_raw.loc[:, [bid, cid]].join(cdf, on=cid)
+        """
+        view(ddf)
+        """
+        """make explicit?
+        self.ddf = ddf"""
+        return ddf
+        
+        
+    
+    def bdmg_mitiS(self, #apply mitigation scale values
+                    res_df = None,
+                    ):
+        
+        log = self.logger.getChild('bdmg_miti')
+        #=======================================================================
+        # get data
+        #=======================================================================
+        if res_df is None: res_df = self.res_df
+        events_df = self.events_df
+        
+        bdf = self.bdf
+        cid, bid = self.cid, self.bid
+        fdf = self.data_d['finv']
+
+    def bdmg_mitiV(self, # 
+                    res_df = None,
+                    ):
+        
+        pass
 
     def _rdf_smry(self, #get a summary string of the bid results data
                           
