@@ -576,8 +576,7 @@ class Dmg2(DFunc, Plotr):
 
     def bdmg_mitiT(self, #adjust the depths using mitigation handles
                    res_df = None,
-                  ddf = None,#expanded exposure set. depth at each bid. see build_depths()
-                  fd_ser = None, #depth threshold to apply
+
                   res_colg = None, #predecessor results column group to work off
 
                   ):
@@ -595,22 +594,10 @@ class Dmg2(DFunc, Plotr):
         mcoln = self.miLtcn #mitigation data columns 
         
         #datasets
-        if ddf is None: ddf = self.ddf
+
         if res_df is None: res_df = self.res_df
         events_df = self.events_df
         
-        if fd_ser is None:
-            """check if this key is in the finv before calling"""
-            fd_ser = self.data_d['finv'][mcoln] #cid keyed
-        
-
-        
-        log.debug('on ddf %s'%(str(ddf.shape)))
-        """
-        view(res_df)
-        view(ddf)
-        view(fd_ser)
-        """
         #=======================================================================
         # precheck
         #=======================================================================
@@ -619,16 +606,7 @@ class Dmg2(DFunc, Plotr):
         miss_l = set(events_df[res_colg].values).difference(res_df.columns)
         assert len(miss_l)==0, 'missing results columns: %s'%miss_l
         
-        #check the depth data
-        miss_l = set(events_df.index).difference(ddf.columns)
-        assert len(miss_l)==0, 'column mismatch on depth data: %s'%miss_l
-        
-        assert cid in ddf.columns
-        assert bid in ddf.columns
-        
-        
-        #threshold data
-        assert fd_ser.index.name == cid, 'bad index on mitigation data'
+
         
         #=======================================================================
         # setup results
@@ -642,24 +620,16 @@ class Dmg2(DFunc, Plotr):
         
 
         #=======================================================================
-        # expand threshold data
+        # retrieve expanded threshold data
         #=======================================================================
-        ddfc = ddf.drop([cid, bid], axis=1)
-
-        dt_ser = ddf[cid].to_frame().join(fd_ser, on=cid).drop(cid, axis=1).iloc[:,0] #expand to bids
-        
-       
-        #replicate across columns
-        dt_df = pd.DataFrame(
-            np.tile(dt_ser, (len(ddfc.columns), 1)).T,
-            index = dt_ser.index, columns= ddfc.columns)
+        ddf, dt_df = self._get_thresh(mcoln)
         
         #=======================================================================
         # apply threshold
         #=======================================================================
         
         #find those meeting the threshold
-        booldf = ddfc >=dt_df
+        booldf = ddf >=dt_df
         
         #raw results, with those not meeting the threshold as 0
         rdf = rdf_raw.where(booldf, other=0.0)
@@ -684,6 +654,8 @@ class Dmg2(DFunc, Plotr):
             self._rdf_smry(mcoln)))
 
         return self.res_df, mcoln
+    
+
         
         
     
@@ -704,12 +676,27 @@ class Dmg2(DFunc, Plotr):
         #column names
         cid, bid = self.cid, self.bid
         if res_colg is None: res_colg=self.res_colg
-        mcoln = self.miLtcn #mitigation data columns 
+        mcoln = self.miScn #mitigation data columns 
         
         #datasets
         if fdf is None: fdf = self.data_d['finv']
         if res_df is None: res_df = self.res_df
+
         events_df = self.events_df
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert mcoln in fdf.columns
+        assert self.miUtcn in fdf.columns
+        
+        
+        #=======================================================================
+        # retrieve expanded threshold data
+        #=======================================================================
+        ddf, dt_df = self._get_thresh(self.miUtcn, fdf=fdf, logger=log)
+        
+        booldf = ddf
         
 
 
@@ -718,6 +705,59 @@ class Dmg2(DFunc, Plotr):
                     ):
         
         pass
+    
+    def _get_thresh(self, #handling mitigation threshold data
+                    mcoln, #finv column with threshol dinfo
+                    ddf = None,
+                    fdf=None,
+                    logger=None,
+                    ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('get_thresh')
+        if ddf is None: ddf = self.ddf
+        if fdf is None: fdf=self.data_d['finv']
+        
+        cid, bid = self.cid, self.bid
+        
+        
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        
+        log.debug('on ddf %s'%(str(ddf.shape)))
+        
+        #check the depth data
+        miss_l = set(self.events_df.index).difference(ddf.columns)
+        assert len(miss_l)==0, 'column mismatch on depth data: %s'%miss_l
+        
+        assert cid in ddf.columns
+        assert bid in ddf.columns
+        
+        
+        assert mcoln in fdf.columns
+        fd_ser = fdf[mcoln] #cid keyed
+        #threshold data
+        assert fd_ser.index.name == cid, 'bad index on mitigation data'
+
+        #=======================================================================
+        # clean and expand
+        #=======================================================================
+        
+        ddfc = ddf.drop([cid, bid], axis=1)
+
+        dt_ser = ddf[cid].to_frame().join(fd_ser, on=cid).drop(cid, axis=1).iloc[:,0] #expand to bids
+        
+       
+        #replicate across columns
+        dt_df = pd.DataFrame(
+            np.tile(dt_ser, (len(ddfc.columns), 1)).T,
+            index = dt_ser.index, columns= ddfc.columns)
+        
+        return ddfc, dt_df
 
     def _rdf_smry(self, #get a summary string of the bid results data
                           
@@ -735,6 +775,8 @@ class Dmg2(DFunc, Plotr):
             df.size, df.isna().sum().sum(), df.min().min(), df.mean().mean(), df.max().max(),
             self.impact_units 
             )
+        
+        
          
     def bdmg_cleaned(self, #fill nulls and build some results versions
                      res_colg = 'capped', #column group to take as final results
