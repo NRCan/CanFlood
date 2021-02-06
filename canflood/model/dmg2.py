@@ -256,7 +256,9 @@ class Dmg2(DFunc, Plotr):
         log = self.logger.getChild('run')
         
         
-        
+        #=======================================================================
+        # get impacts-----
+        #=======================================================================
         #=======================================================================
         # mitigation - apply lower depth threshold
         #=======================================================================
@@ -265,8 +267,9 @@ class Dmg2(DFunc, Plotr):
         else:
             ddf = self.ddf
         self.feedback.upd_prog(5, method='portion')
+        
         #======================================================================
-        # get damages
+        # dfunc, scale, and cap
         #======================================================================
         # #get damages per bid
         bres_df = self.bdmg_raw(ddf = ddf)
@@ -278,9 +281,23 @@ class Dmg2(DFunc, Plotr):
         bres_df = self.bdmg_capped(res_df=bres_df)
         self.feedback.upd_prog(5, method='portion')
         
-        bres_df, cres_df = self.bdmg_cleaned(res_df=bres_df)
+        #=======================================================================
+        # mitigation - apply intermediate adjustments
+        #=======================================================================
+        if self.apply_miti:
+            res_colg = 'capped'
+        else:
+            res_colg = 'capped' #take the capped values as the final damages
+        
+        #=======================================================================
+        # finalize damages
+        #=======================================================================
+        bres_df, cres_df = self.bdmg_cleaned(res_df=bres_df, res_colg=res_colg)
         self.feedback.upd_prog(5, method='portion')
         
+        #=======================================================================
+        # wrap----
+        #=======================================================================
         #=======================================================================
         # get labels
         #=======================================================================

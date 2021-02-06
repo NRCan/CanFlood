@@ -200,8 +200,8 @@ class Model(ComWrkr,
     bid = 'bid' #indexer for expanded finv
     miLtcn = 'mi_Lthresh'
     miUtcn = 'mi_Uthresh'
-    miVcn = 'mi_ival'
-    miScn = 'mi_iscale'
+    miVcn = 'mi_iVal'
+    miScn = 'mi_iScale'
     
 
     def __init__(self,
@@ -760,13 +760,13 @@ class Model(ComWrkr,
                 cdf.loc['ctype', e] = 'nest'
             
         #=======================================================================
-        # mitigations
+        # mitigation----
         #=======================================================================
         cdf.loc['ctype', cdf.columns.str.startswith('mi_')] = 'miti'
         
         #check these
         boolcol = cdf.loc['ctype', :]=='miti'
-        if boolcol.any():
+        if boolcol.any() and self.apply_miti:
             mdf = df.loc[:, boolcol]
             
             #check names
@@ -786,9 +786,35 @@ class Model(ComWrkr,
                     log.debug(mdf[boolidx])
                     raise Error('got %i (of %i) mi_Lthresh > mi_Uthresh... see logger'%(
                         boolidx.sum(), len(boolidx)))
-            
-        
-        
+                    
+            #===================================================================
+            # #check intermediate requirements
+            #===================================================================
+            for coln in [self.miVcn, self.miScn]:
+                if not coln in mdf.columns: continue #not here.. dont check
+                
+                """requiring an upper threshold (height below which scale/vale is applied)
+                but no lower threshold"""
+                assert self.miUtcn in mdf.columns, 'for \'%s\'a \'%s\' is required'%(
+                    coln, self.miUtcn)
+                
+
+                #check everywhere we have a scale/value we also have a lower thres
+                boolidx_c = mdf[coln].notna()
+                boolidx = np.logical_and(
+                    boolidx_c, #scale/value is real
+                    mdf[self.miUtcn].notna() #real threshold
+                    )
+                
+                boolidx1 = np.invert(boolidx_c==boolidx)
+                if boolidx1.any():
+                    log.debug(mdf[boolidx1])
+                    raise Error('null mismatch for \"%s\' against \'%s\' for %i (of %i) assets...see logger'%(
+                        coln, self.miUtcn, boolidx1.sum(), len(boolidx1)))
+                                
+            log.debug('finished miti checks')
+
+
         #=======================================================================
         # remainders
         #=======================================================================
