@@ -30,13 +30,14 @@ from hlpr.exceptions import QError as Error
 
 #from hlpr.Q import *
 from hlpr.basic import ComWrkr, view
-from model.modcom import Model
+#from model.modcom import Model
+from results.riskPlot import Plotr
 from model.modcom import DFunc
 
 #==============================================================================
 # functions----------------------
 #==============================================================================
-class Dmg2(DFunc, Model):
+class Dmg2(DFunc, Plotr):
     #==========================================================================
     # #program vars
     #==========================================================================
@@ -259,7 +260,7 @@ class Dmg2(DFunc, Model):
         #=======================================================================
         # adjust depths (for mitigations)
         #=======================================================================
-        if self.apply_miti:
+        if self.apply_miti and 'mi_dthresh' in self.finv_cdf.index:
             ddf = self.get_mitid()
         else:
             ddf = self.ddf
@@ -317,31 +318,69 @@ class Dmg2(DFunc, Model):
         log.info('finished w/ %s and TtlDmg = %.2f'%(
             str(cres_df.shape), cres_df.sum().sum()))
         
+        self.cres_df = cres_df.copy() #set for plotting
+        
         return cres_df
     
     def get_mitid(self, #adjust the depths using mitigation handles
                   ddf_raw = None,#expanded exposure set. depth at each bid. see build_depths()
-                  fdf = None, #finv (not expanded)
+                  fd_ser = None, #depth threshold to apply
                   ):
         #=======================================================================
         # defaults
         #=======================================================================
         log = self.logger.getChild('get_mitid')
-        
+        cid, bid = self.cid, self.bid
         if ddf_raw is None: ddf_raw = self.ddf
-        if fdf is None: fdf = self.data_d['finv']
-        finv_cdf = self.finv_cdf.copy() #metadata for finv columns. see load_finv()
         
-        log.debug('on ddf %s and fdf %s'%(str(ddf_raw.shape), str(fdf.shape)))
+        if fd_ser is None:
+            """check if this key is in the finv before calling"""
+            fd_ser = self.data_d['finv']['mi_dthresh']
+        
+
+        
+        log.debug('on ddf %s'%(str(ddf_raw.shape)))
         
         #=======================================================================
         # precheck
         #=======================================================================
+
+        
+        #=======================================================================
+        # setup data
+        #=======================================================================
+        #revert depth data back to cid index
+        cdf = ddf_raw.drop_duplicates(self.cid).drop('bid', axis=1
+                         ).set_index(self.cid, drop=True).sort_index()
+        
+        assert np.array_equal(cdf.index, fd_ser.index)
+
+        #expand to match shape
+        dt_df = pd.DataFrame(
+            np.tile(fd_ser, (len(cdf.columns), 1)).T,
+            index = fd_ser.index,
+            columns= cdf.columns)
+        #=======================================================================
+        # apply depth reductions-----
+        #=======================================================================
+        #find those meeting the threshold
+        booldf = cdf <=dt_df
+        
+        #make all these null
+        cdf = cdf.where(~booldf, other=np.nan)
+        
+        log.info('found %i (of %i) depths not exceeding threshold: \n    %s'%(
+            booldf.sum().sum(), booldf.size, booldf.sum(axis=0).to_dict()))
+        #=======================================================================
+        # re-expand data
+        #=======================================================================
+        ddf = ddf_raw.loc[:, [bid, cid]].join(cdf, on=cid)
         """
-        view(fdf)
+        view(ddf)
         """
-        miss_l = set(finv_cdf.index).symmetric_difference(fdf.columns)
-        assert len(miss_l)==0, 'finv column mismatch'
+        """make explicit?
+        self.ddf = ddf"""
+        return ddf
         
         
     def bdmg(self, #get damages on expanded finv
@@ -994,7 +1033,9 @@ class Dmg2(DFunc, Model):
         
         return attv
 
- 
+    #===========================================================================
+    # OUTPUTRS-------------
+    #===========================================================================
     def upd_cf(self, #update the control file 
                out_fp = None,
                cf_fp = None,
@@ -1026,6 +1067,7 @@ class Dmg2(DFunc, Model):
              },
             cf_fp = cf_fp
             )
+    
         
     def output_bdmg(self, #short cut for saving the expanded reuslts
                     ofn = None):
@@ -1034,7 +1076,114 @@ class Dmg2(DFunc, Model):
             
         return self.output_df(self.bdmg_df, ofn)
     
+    #===========================================================================
+    # PLOTRS------
+    #===========================================================================
+    def plot_boxes(self, #box plots for each event 
+                   df=None, 
+                      
+                    #figure parametrs
+                    figsize     = (6.5, 4), 
 
+                      
+                      ): #plot all the histograms stacked
+        
+        """
+        dont want to initiate matplotlib in the module...
+            just using a nasty single f unction
+        """
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        log = self.logger.getChild('plot')
+        if df is None: df = self.cres_df
+        title = '%s Impact boxplots on %i events'%(self.tag, len(df.columns))
+        
+        #=======================================================================
+        # manipulate data
+        #=======================================================================
+        #get a collectio nof arrays from a dataframe's columns
+        data = [ser.values for _, ser in df.items()]
+        #======================================================================
+        # setup
+        #======================================================================
+        
+        import matplotlib
+        matplotlib.use('Qt5Agg') #sets the backend (case sensitive)
+        import matplotlib.pyplot as plt
+        
+        #set teh styles
+        plt.style.use('default')
+        
+        #font
+        matplotlib_font = {
+                'family' : 'serif',
+                'weight' : 'normal',
+                'size'   : 8}
+        
+        matplotlib.rc('font', **matplotlib_font)
+        matplotlib.rcParams['axes.titlesize'] = 10 #set the figure title size
+        
+        #spacing parameters
+        matplotlib.rcParams['figure.autolayout'] = False #use tight layout
+        
+        
+        
+        #======================================================================
+        # figure setup
+        #======================================================================
+        plt.close()
+        fig = plt.figure(figsize=figsize,
+                     tight_layout=False,
+                     constrained_layout = True,
+                     )
+        
+        #axis setup
+        ax1 = fig.add_subplot(111)
+        
+        #aep units
+        ax1.set_ylim(0, 1.0)
+ 
+        
+        # axis label setup
+        fig.suptitle(title)
+        ax1.set_xlabel('hazard layer')
+        ax1.set_ylabel('Pfail')
+        """
+        plt.show()
+        
+        pd.__version__
+        """
+
+        
+        #=======================================================================
+        # plot thie histogram
+        #=======================================================================
+        boxRes_d = ax1.boxplot(data, whis=1.5)
+        
+
+
+        #=======================================================================
+        # format axis labels
+        #======================================================= ================
+        #apply the new labels
+        ax1.set_xticklabels(df.columns, rotation=90, va='center', y=.5, color='red')
+        
+        
+        #=======================================================================
+        # Add text string 'annot' to lower left of plot
+        #=======================================================================
+        val_str = '%i assets \nevent_rels=\'%s\''%(len(df), self.event_rels)
+        xmin, xmax1 = ax1.get_xlim()
+        ymin, ymax1 = ax1.get_ylim()
+        
+        x_text = xmin + (xmax1 - xmin)*.5 # 1/10 to the right of the left ax1is
+        y_text = ymin + (ymax1 - ymin)*.8 #1/10 above the bottom ax1is
+        anno_obj = ax1.text(x_text, y_text, val_str)
+
+        
+        
+        return fig
             
             
         
