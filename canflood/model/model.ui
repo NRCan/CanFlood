@@ -1008,6 +1008,20 @@ p, li { white-space: pre-wrap; }
                </widget>
               </item>
               <item>
+               <widget class="QCheckBox" name="checkBox_i2bSmry">
+                <property name="text">
+                 <string>Output calculation summary (bdmg_smry)</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="checkBox_i2plot">
+                <property name="text">
+                 <string>Output impact box plots (plot_boxes)</string>
+                </property>
+               </widget>
+              </item>
+              <item>
                <widget class="QCheckBox" name="checkBox_i2RunRisk">
                 <property name="text">
                  <string>Run Risk (L2) upon completion (see 'Risk (L2)' tab for configuration)</string>

@@ -165,7 +165,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         self.pushButton_i2run.clicked.connect(self.run_impact2)
         
         #======================================================================
-        # risk level 2
+        # risk level 2----
         #======================================================================
         self.pushButton_r2Run.clicked.connect(self.run_risk2)
         
@@ -181,7 +181,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         self.checkBox_r2rpa.stateChanged.connect(tog_jg2)
         
         #======================================================================
-        # risk level 3
+        # risk level 3-----
         #======================================================================
         self.pushButton_r3Run.clicked.connect(self.run_risk3)
         
@@ -300,34 +300,53 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         absolute_fp = self._get_absolute_fp()
         
         #======================================================================
-        # #build/run model
+        # #build worker
         #======================================================================
         model = Dmg2(cf_fp=cf_fp, out_dir = out_dir, logger = self.logger, tag=tag, 
                      absolute_fp=absolute_fp, feedback=self.feedback,
                      attriMode=self.checkBox_SS_attr.isChecked(),
                      )._setup()
+        self.feedback.setProgress(5)
         
-        #run the model        
+        #=======================================================================
+        # #run the model        
+        #=======================================================================
         cres_df = model.run()
+        self.feedback.setProgress(70)
         
         #attribution
         if self.checkBox_SS_attr.isChecked():
             _ = model.get_attribution(cres_df)
             model.output_attr(upd_cf = self.checkBox_SS_updCf.isChecked())
         
-        self.feedback.setProgress(95)
+        self.feedback.setProgress(80)
         #======================================================================
         # save reuslts
         #======================================================================
         out_fp = model.output_df(cres_df, model.resname)
+        self.feedback.setProgress(85)
         
         #update parameter file
         if self.checkBox_SS_updCf.isChecked():
             model.upd_cf()
+        self.feedback.setProgress(90)
+            
+        #calc summary
+        if self.checkBox_i2bSmry.isChecked():
+            _ = model.bdmg_smry()
+        self.feedback.setProgress(92)
             
         #output expanded results
         if self.checkBox_i2_outExpnd.isChecked():
             _ = model.output_bdmg()
+        self.feedback.setProgress(95)
+            
+        #box plots
+        if self.checkBox_i2plot.isChecked():
+            fig = model.plot_boxes()
+            _ = model.output_fig(fig)
+            
+        self.feedback.setProgress(99)
 
         self.logger.push('Impacts2 complete')
         self.feedback.upd_prog(None) #set the progress bar back down to zero
