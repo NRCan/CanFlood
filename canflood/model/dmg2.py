@@ -1014,10 +1014,12 @@ class Dmg2(DFunc, Plotr):
         
         out_fp = os.path.join(self.out_dir, '%s_bdmg_smry_%s_%i.xls'%(self.tag, gCn, len(res_df)))
         
-        d = {**res_d, 
+        d = {
+            '_smry':p_df.round(self.prec),
+            **res_d, 
              'cap_cnts':cm_df1, 
              'cap_data':cmeta_df.fillna(False),
-             'progres':p_df.round(self.prec)
+             
              }
    
         with pd.ExcelWriter(out_fp) as writer:
