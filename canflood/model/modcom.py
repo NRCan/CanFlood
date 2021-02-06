@@ -816,10 +816,14 @@ class Model(ComWrkr,
                         coln, self.miUtcn, boolidx1.sum(), len(boolidx1)))
                                 
                 #check negativity
-                boolidx = mdf[coln]>0
-                if boolidx.any():
-                    log.warning('got %i (of %i) \'%s\' values above zero'%(
-                        boolidx.sum(), len(boolidx), coln))
+                if coln == self.miVcn:
+                    boolidx = mdf[coln]>0
+                    if boolidx.any():
+                        log.warning('got %i (of %i) \'%s\' values above zero'%(
+                            boolidx.sum(), len(boolidx), coln))
+                elif coln == self.miScn:
+                    boolidx = mdf[coln]<0
+                    assert not boolidx.any(), 'got %i negative %s vals'%(boolidx.sum(), coln)
             log.debug('finished miti checks')
 
 

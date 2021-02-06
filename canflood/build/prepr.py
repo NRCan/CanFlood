@@ -327,6 +327,10 @@ class Preparor(Qcoms):
         assert len(miss_l)==0, 'got some unrecognzied'
         
         
+        #chekc mandatory keys
+        miss_l = set(['scale', 'elv']).difference(d_raw.keys())
+        assert len(miss_l)==0, 'missing mandatory inventory columns: %s'%miss_l
+        
         #=======================================================================
         # prep input data
         #=======================================================================
@@ -341,6 +345,8 @@ class Preparor(Qcoms):
                 v = vRaw
                 
             d['f%i_%s'%(nestID, kRaw)] = v
+            
+        
             
         return d
  
