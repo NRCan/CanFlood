@@ -815,6 +815,11 @@ class Model(ComWrkr,
                     raise Error('null mismatch for \"%s\' against \'%s\' for %i (of %i) assets...see logger'%(
                         coln, self.miUtcn, boolidx1.sum(), len(boolidx1)))
                                 
+                #check negativity
+                boolidx = mdf[coln]>0
+                if boolidx.any():
+                    log.warning('got %i (of %i) \'%s\' values above zero'%(
+                        boolidx.sum(), len(boolidx), coln))
             log.debug('finished miti checks')
 
 
@@ -1666,11 +1671,68 @@ class Model(ComWrkr,
         else:
             raise Error('unrecognized felv=%s'%self.felv)
         
+        #=======================================================================
+        # add mitigation data---
+        #=======================================================================
+        if self.apply_miti:
+            #get data
+            bdf = bdf.join(fdf.loc[:, finv_cdf.columns[finv_cdf.loc['ctype', :]=='miti']],
+                     on=cid)
+        
         #======================================================================
         # wrap
         #======================================================================
         log.info('finished with %s'%str(bdf.shape))
         self.bdf = bdf
+        
+    def _get_fexpnd(self, #reshape some finv data to math exposure indicies
+                    mcoln, #finv column with threshol dinfo
+                    ddf = None,
+                    bdf=None,
+                    logger=None,
+                    ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('get_thresh')
+        if ddf is None: ddf = self.ddf
+        if bdf is None: bdf = self.bdf
+        
+        cid, bid = self.cid, self.bid
+        
+        
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        
+        log.debug('on ddf %s'%(str(ddf.shape)))
+        
+        #check the depth data
+        miss_l = set(self.events_df.index).difference(ddf.columns)
+        assert len(miss_l)==0, 'column mismatch on depth data: %s'%miss_l
+        
+        assert cid in ddf.columns
+        assert bid in ddf.columns
+        
+        
+        assert mcoln in bdf.columns
+        assert bdf.index.name == bid, 'bad index on expanded finv data'
+
+        #=======================================================================
+        # clean and expand
+        #=======================================================================
+        
+        ddfc = ddf.drop([cid, bid], axis=1)
+        
+       
+        #replicate across columns
+        dt_df = pd.DataFrame(
+            np.tile(bdf[mcoln], (len(ddfc.columns), 1)).T,
+            index = bdf[mcoln].index, columns= ddfc.columns)
+        
+        return ddfc, dt_df
         
         
         

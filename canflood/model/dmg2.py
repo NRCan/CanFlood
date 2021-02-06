@@ -57,6 +57,7 @@ class Dmg2(DFunc, Plotr):
         }
     
     dfuncs_d = dict() #container for damage functions
+    mi_meta_d = dict() #container for mitigation threshold counters
     #===========================================================================
     # #expectations from parameter file
     #===========================================================================
@@ -596,33 +597,18 @@ class Dmg2(DFunc, Plotr):
         #datasets
 
         if res_df is None: res_df = self.res_df
-        events_df = self.events_df
-        
-        #=======================================================================
-        # precheck
-        #=======================================================================
-        #check the results data
-        assert res_colg in events_df.columns
-        miss_l = set(events_df[res_colg].values).difference(res_df.columns)
-        assert len(miss_l)==0, 'missing results columns: %s'%miss_l
-        
 
         
         #=======================================================================
         # setup results
         #=======================================================================
-        
-        events_df[mcoln] = events_df.index + '_%s'%mcoln #update events metadata
-        
-        #raw results with names matching the events 
-        rdf_raw = res_df.loc[:, events_df[res_colg]].rename(
-            columns={v:k for k,v in events_df[res_colg].to_dict().items()})
-        
+        events_df, rdf_raw = self._mi_resSetup(res_df, mcoln, res_colg)
 
         #=======================================================================
         # retrieve expanded threshold data
         #=======================================================================
-        ddf, dt_df = self._get_thresh(mcoln)
+        ddf, dt_df = self._get_fexpnd(mcoln)
+
         
         #=======================================================================
         # apply threshold
@@ -643,17 +629,7 @@ class Dmg2(DFunc, Plotr):
         #=======================================================================
         # wrap
         #=======================================================================
-        #join these back onto the main results (and rename columns)
-        self.res_df = res_df.join(rdf.rename(
-            columns=events_df[mcoln].to_dict())) 
-
-        self.res_colg=mcoln #set for next
-        
-        log.info('got %i (of %i) below \'%s\': \n    %s \n    %s'%(
-            booldf.sum().sum(), booldf.size, mcoln, booldf.sum(axis=0).to_dict(),
-            self._rdf_smry(mcoln)))
-
-        return self.res_df, mcoln
+        return self._mi_wrap(rdf, events_df, mcoln, booldf, log)
     
 
         
@@ -661,7 +637,7 @@ class Dmg2(DFunc, Plotr):
     
     def bdmg_mitiS(self, #apply mitigation scale values
                    res_df = None,
-                  fdf = None, #inventory
+ 
                   res_colg = None, #predecessor results column group to work off
 
                   ):
@@ -674,90 +650,127 @@ class Dmg2(DFunc, Plotr):
         log = self.logger.getChild('bdmg_mitiT')
         
         #column names
-        cid, bid = self.cid, self.bid
         if res_colg is None: res_colg=self.res_colg
         mcoln = self.miScn #mitigation data columns 
         
         #datasets
-        if fdf is None: fdf = self.data_d['finv']
+        
         if res_df is None: res_df = self.res_df
-
-        events_df = self.events_df
+        bdf = self.bdf
         
         #=======================================================================
         # precheck
         #=======================================================================
-        assert mcoln in fdf.columns
-        assert self.miUtcn in fdf.columns
+        assert bdf[mcoln].notna().any(), 'got all nulls for %s'%mcoln
+
+        #=======================================================================
+        # setup results
+        #=======================================================================
+        events_df, rdf_raw = self._mi_resSetup(res_df, mcoln, res_colg)
         
         
         #=======================================================================
-        # retrieve expanded threshold data
+        # retrieve data
         #=======================================================================
-        ddf, dt_df = self._get_thresh(self.miUtcn, fdf=fdf, logger=log)
+        ddf, dt_df = self._get_fexpnd(self.miUtcn,logger=log)
         
-        booldf = ddf
+        #get scale data
+        
+        
+        #=======================================================================
+        # apply scales to threshold
+        #=======================================================================
+        #find those we want to apply teh scale to
+        booldf = np.logical_and(
+            ddf<=dt_df, #exposure less than threshold
+            np.logical_and( #nether set is null
+                ddf.notna(),
+                dt_df.notna())
+                )
+        
+        if not booldf.any().any():
+            log.warning('got no entries to apply %s to!'%mcoln)
+            return res_df, res_colg
+        
+        #get scaled results
+        scale_ser = bdf[mcoln].fillna(1.0) #replace nulls
+        rdf_S = rdf_raw.multiply(scale_ser, axis=0)
+        
+        #take scaled where selected... otherwise use the raw
+        rdf = rdf_S.where(booldf, other=rdf_raw)
+        
+        return self._mi_wrap(rdf, events_df, mcoln, booldf, log)
+        
         
 
 
-    def bdmg_mitiV(self, # 
-                    res_df = None,
-                    ):
-        
-        pass
-    
-    def _get_thresh(self, #handling mitigation threshold data
-                    mcoln, #finv column with threshol dinfo
-                    ddf = None,
-                    fdf=None,
-                    logger=None,
-                    ):
+    def bdmg_mitiV(self, #apply mitigation scale values
+                   res_df = None,
+ 
+                  res_colg = None, #predecessor results column group to work off
+
+                  ):
+        """
+        consider moving to common for Risk1
+        """
         #=======================================================================
         # defaults
         #=======================================================================
-        if logger is None: logger=self.logger
-        log = logger.getChild('get_thresh')
-        if ddf is None: ddf = self.ddf
-        if fdf is None: fdf=self.data_d['finv']
+        log = self.logger.getChild('bdmg_mitiT')
         
-        cid, bid = self.cid, self.bid
+        #column names
+        if res_colg is None: res_colg=self.res_colg
+        mcoln = self.miVcn #mitigation data columns 
         
+        #datasets
         
+        if res_df is None: res_df = self.res_df
+        bdf = self.bdf
         
         #=======================================================================
         # precheck
         #=======================================================================
-        
-        log.debug('on ddf %s'%(str(ddf.shape)))
-        
-        #check the depth data
-        miss_l = set(self.events_df.index).difference(ddf.columns)
-        assert len(miss_l)==0, 'column mismatch on depth data: %s'%miss_l
-        
-        assert cid in ddf.columns
-        assert bid in ddf.columns
-        
-        
-        assert mcoln in fdf.columns
-        fd_ser = fdf[mcoln] #cid keyed
-        #threshold data
-        assert fd_ser.index.name == cid, 'bad index on mitigation data'
+        assert bdf[mcoln].notna().any(), 'got all nulls for %s'%mcoln
 
         #=======================================================================
-        # clean and expand
+        # setup results
         #=======================================================================
+        events_df, rdf_raw = self._mi_resSetup(res_df, mcoln, res_colg)
         
-        ddfc = ddf.drop([cid, bid], axis=1)
+        
+        #=======================================================================
+        # retrieve data
+        #=======================================================================
+        ddf, dt_df = self._get_fexpnd(self.miUtcn,logger=log)
+        
+        #get scale data
+        
+        
+        #=======================================================================
+        # apply scales to threshold
+        #=======================================================================
+        #find those we want to apply teh scale to
+        booldf = np.logical_and(
+            ddf<=dt_df, #exposure less than threshold
+            np.logical_and( #nether set is null
+                ddf.notna(),
+                dt_df.notna())
+                )
+        
+        if not booldf.any().any():
+            log.warning('got no entries to apply %s to!'%mcoln)
+            return res_df, res_colg
+        
+        #get scaled results
+        mser = bdf[mcoln].fillna(0) #replace nulls
+        rdf_S = rdf_raw.add(mser, axis=0)
+        
+        #take new where selected... otherwise use the raw
+        rdf = rdf_S.where(booldf, other=rdf_raw)
+        
+        return self._mi_wrap(rdf, events_df, mcoln, booldf, log)
+    
 
-        dt_ser = ddf[cid].to_frame().join(fd_ser, on=cid).drop(cid, axis=1).iloc[:,0] #expand to bids
-        
-       
-        #replicate across columns
-        dt_df = pd.DataFrame(
-            np.tile(dt_ser, (len(ddfc.columns), 1)).T,
-            index = dt_ser.index, columns= ddfc.columns)
-        
-        return ddfc, dt_df
 
     def _rdf_smry(self, #get a summary string of the bid results data
                           
@@ -775,6 +788,51 @@ class Dmg2(DFunc, Plotr):
             df.size, df.isna().sum().sum(), df.min().min(), df.mean().mean(), df.max().max(),
             self.impact_units 
             )
+        
+    def _mi_resSetup(self, 
+                     res_df, mcoln, res_colg):
+        
+        events_df = self.events_df
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        #check the results data
+        assert res_colg in events_df.columns
+        miss_l = set(events_df[res_colg].values).difference(res_df.columns)
+        assert len(miss_l)==0, 'missing results columns: %s'%miss_l
+        
+        #=======================================================================
+        # setup data
+        #=======================================================================
+        events_df[mcoln] = events_df.index + '_%s'%mcoln #update events metadata
+        
+        #raw results with names matching the events 
+        rdf_raw = res_df.loc[:, events_df[res_colg]].rename(
+            columns={v:k for k,v in events_df[res_colg].to_dict().items()})
+        
+        return events_df, rdf_raw
+    
+    def _mi_wrap(self, #wrapper function for mitigation series 
+                 rdf, events_df, mcoln, booldf, log):
+        
+
+        #join these back onto the main results (and rename columns)
+        self.res_df = self.res_df.join(rdf.rename(
+            columns=events_df[mcoln].to_dict())) 
+
+        self.res_colg=mcoln #set for next
+        
+        
+        self.mi_meta_d[mcoln] = pd.Series(booldf.sum(axis=0), name='miti_hit_cnt')
+        #=======================================================================
+        # report
+        #=======================================================================
+        log.info('got %i (of %i) below \'%s\': \n    %s \n    %s'%(
+            booldf.sum().sum(), booldf.size, mcoln, booldf.sum(axis=0).to_dict(),
+            self._rdf_smry(mcoln)))
+
+        return self.res_df, mcoln
         
         
          
@@ -910,6 +968,10 @@ class Dmg2(DFunc, Plotr):
             rnm_d= dict(zip(rser.to_dict().values(), rser.to_dict().keys()))
             mdf =  rdf.dropna(how='all').groupby(gCn).sum().rename( columns=rnm_d)
             
+            #mitigation threshold counters
+            if rtName in self.mi_meta_d:
+                mdf = mdf.append(self.mi_meta_d[rtName])
+            
             #add count columns
             """
             groupBy needs a dummy column for count()
@@ -926,6 +988,9 @@ class Dmg2(DFunc, Plotr):
         cm_df1  = df.groupby(gCn).sum().astype(np.int)
         
 
+        #=======================================================================
+        # progression summary
+        #=======================================================================
         
         
         
