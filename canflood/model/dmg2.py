@@ -712,7 +712,7 @@ class Dmg2(DFunc, Plotr):
             )
          
     def bdmg_smry(self, #generate summary of damages
-                  res_df=None,  #built results
+                  res_df_raw=None,  #built results
                   events_df=None,  #event name matrix
                   cmeta_df=None, #cap by asset
                   gCn = 'ftag', #column name to group on
@@ -725,18 +725,30 @@ class Dmg2(DFunc, Plotr):
         #=======================================================================
         # defaults
         #=======================================================================
-        if res_df is None: res_df=self.res_df
+        if res_df_raw is None: res_df_raw=self.res_df.copy()
         if events_df is None: events_df=self.events_df
         if cmeta_df is None: cmeta_df=self.cmeta_df
         if logger is None: logger=self.logger
+        
+        bdf = self.bdf
+        cid = self.cid
+        
         log=logger.getChild('bdmg_smry')
         
         """
         view(events_df)
         view(res_df)
         """
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert gCn in bdf.columns, gCn
         #rename conversion
-
+        
+        #=======================================================================
+        # add some common cols
+        #=======================================================================
+        res_df = res_df_raw.join(bdf.loc[:,[gCn]])
         #=======================================================================
         # impact meta for each result type
         #=======================================================================
@@ -744,14 +756,17 @@ class Dmg2(DFunc, Plotr):
         for rtName, rser in events_df.items():
             
             #slice to results columns of this type
-            rdf = res_df.loc[:, [gCn]+ rser.values.tolist()].dropna(how='all')
+            rdf = res_df.loc[:, rser.values.tolist()+[gCn]]
             
             #group and get totals per dfunc
             rnm_d= dict(zip(rser.to_dict().values(), rser.to_dict().keys()))
-            mdf =  rdf.groupby(gCn).sum().rename( columns=rnm_d)
+            mdf =  rdf.dropna(how='all').groupby(gCn).sum().rename( columns=rnm_d)
             
             #add count columns
-            mdf['cnt'] = res_df.loc[:, [gCn, self.cid]].groupby(gCn).count()
+            """
+            groupBy needs a dummy column for count()
+            """
+            mdf['cnt'] = rdf.loc[:, gCn].to_frame().reset_index(drop=False).groupby(gCn).count()
             
             res_d[rtName] = mdf
             
@@ -770,7 +785,7 @@ class Dmg2(DFunc, Plotr):
         # write results
         #=======================================================================
         
-        out_fp = os.path.join(self.out_dir, '_smry_bdmg_%s_%s_%i.xls'%(gCn, self.tag, len(res_df)))
+        out_fp = os.path.join(self.out_dir, '%s_bdmg_smry_%s_%i.xls'%(self.tag, gCn, len(res_df)))
         
         d = {**res_d, 
              'cap_cnts':cm_df1, 
