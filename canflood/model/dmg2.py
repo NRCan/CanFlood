@@ -259,7 +259,8 @@ class Dmg2(DFunc, Model):
         #=======================================================================
         # adjust depths (for mitigations)
         #=======================================================================
-        
+        if self.apply_miti:
+            
         
         #======================================================================
         # get damages
@@ -317,17 +318,19 @@ class Dmg2(DFunc, Model):
         return cres_df
         
     def bdmg(self, #get damages on expanded finv
-
-
+             
+            bdf = None, #expanded finv. see modcom.build_exp_finv(). each row has 1 ftag
+            ddf = None,  #expanded exposure set. depth at each bid. see build_depths()
             ):
         #======================================================================
         # defaults
         #======================================================================
         log = self.logger.getChild('bdmg')
-        
-        #set some locals
-        bdf = self.bdf  #expanded finv. see modcom.build_exp_finv(). each row has 1 ftag
-        ddf = self.ddf #exposure set. wsl at each cid
+        #defaults
+        if ddf is None: ddf = self.ddf
+        if bdf is None: bdf = self.bdf
+  
+
         """ddf is appending _1 to column names"""
         cid, bid = self.cid, self.bid
         
