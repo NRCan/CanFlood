@@ -323,7 +323,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #======================================================================
         # save reuslts
         #======================================================================
-        out_fp = model.output_df(cres_df, model.resname)
+        out_fp = model.output_cdmg()
         self.feedback.setProgress(85)
         
         #update parameter file
@@ -340,6 +340,9 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         if self.checkBox_i2_outExpnd.isChecked():
             _ = model.output_bdmg()
         self.feedback.setProgress(95)
+        
+        if self.checkBox_i2_ddf.isChecked():
+            _=model.output_depths_df()
             
         #box plots
         if self.checkBox_i2plot.isChecked():

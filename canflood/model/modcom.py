@@ -200,8 +200,8 @@ class Model(ComWrkr,
     bid = 'bid' #indexer for expanded finv
     miLtcn = 'mi_Lthresh'
     miUtcn = 'mi_Uthresh'
-    miVcn = 'mi_ival'
-    miScn = 'mi_iscale'
+    miVcn = 'mi_iVal'
+    miScn = 'mi_iScale'
     
 
     def __init__(self,
@@ -760,13 +760,16 @@ class Model(ComWrkr,
                 cdf.loc['ctype', e] = 'nest'
             
         #=======================================================================
-        # mitigations
+        # mitigation----
         #=======================================================================
         cdf.loc['ctype', cdf.columns.str.startswith('mi_')] = 'miti'
         
         #check these
         boolcol = cdf.loc['ctype', :]=='miti'
-        if boolcol.any():
+        
+        if self.apply_miti: assert boolcol.any(), 'passed apply_miti=True but got no mitigation data'
+        
+        if boolcol.any() and self.apply_miti:
             mdf = df.loc[:, boolcol]
             
             #check names
@@ -786,9 +789,44 @@ class Model(ComWrkr,
                     log.debug(mdf[boolidx])
                     raise Error('got %i (of %i) mi_Lthresh > mi_Uthresh... see logger'%(
                         boolidx.sum(), len(boolidx)))
-            
-        
-        
+                    
+            #===================================================================
+            # #check intermediate requirements
+            #===================================================================
+            for coln in [self.miVcn, self.miScn]:
+                if not coln in mdf.columns: continue #not here.. dont check
+                
+                """requiring an upper threshold (height below which scale/vale is applied)
+                but no lower threshold"""
+                assert self.miUtcn in mdf.columns, 'for \'%s\'a \'%s\' is required'%(
+                    coln, self.miUtcn)
+                
+
+                #check everywhere we have a scale/value we also have a lower thres
+                boolidx_c = mdf[coln].notna()
+                boolidx = np.logical_and(
+                    boolidx_c, #scale/value is real
+                    mdf[self.miUtcn].notna() #real threshold
+                    )
+                
+                boolidx1 = np.invert(boolidx_c==boolidx)
+                if boolidx1.any():
+                    log.debug(mdf[boolidx1])
+                    raise Error('null mismatch for \"%s\' against \'%s\' for %i (of %i) assets...see logger'%(
+                        coln, self.miUtcn, boolidx1.sum(), len(boolidx1)))
+                                
+                #check negativity
+                if coln == self.miVcn:
+                    boolidx = mdf[coln]>0
+                    if boolidx.any():
+                        log.warning('got %i (of %i) \'%s\' values above zero'%(
+                            boolidx.sum(), len(boolidx), coln))
+                elif coln == self.miScn:
+                    boolidx = mdf[coln]<0
+                    assert not boolidx.any(), 'got %i negative %s vals'%(boolidx.sum(), coln)
+            log.debug('finished miti checks')
+
+
         #=======================================================================
         # remainders
         #=======================================================================
@@ -1637,11 +1675,68 @@ class Model(ComWrkr,
         else:
             raise Error('unrecognized felv=%s'%self.felv)
         
+        #=======================================================================
+        # add mitigation data---
+        #=======================================================================
+        if self.apply_miti:
+            #get data
+            bdf = bdf.join(fdf.loc[:, finv_cdf.columns[finv_cdf.loc['ctype', :]=='miti']],
+                     on=cid)
+        
         #======================================================================
         # wrap
         #======================================================================
         log.info('finished with %s'%str(bdf.shape))
         self.bdf = bdf
+        
+    def _get_fexpnd(self, #reshape some finv data to math exposure indicies
+                    mcoln, #finv column with threshol dinfo
+                    ddf = None,
+                    bdf=None,
+                    logger=None,
+                    ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('get_thresh')
+        if ddf is None: ddf = self.ddf
+        if bdf is None: bdf = self.bdf
+        
+        cid, bid = self.cid, self.bid
+        
+        
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        
+        log.debug('on ddf %s'%(str(ddf.shape)))
+        
+        #check the depth data
+        miss_l = set(self.events_df.index).difference(ddf.columns)
+        assert len(miss_l)==0, 'column mismatch on depth data: %s'%miss_l
+        
+        assert cid in ddf.columns
+        assert bid in ddf.columns
+        
+        
+        assert mcoln in bdf.columns
+        assert bdf.index.name == bid, 'bad index on expanded finv data'
+
+        #=======================================================================
+        # clean and expand
+        #=======================================================================
+        
+        ddfc = ddf.drop([cid, bid], axis=1)
+        
+       
+        #replicate across columns
+        dt_df = pd.DataFrame(
+            np.tile(bdf[mcoln], (len(ddfc.columns), 1)).T,
+            index = bdf[mcoln].index, columns= ddfc.columns)
+        
+        return ddfc, dt_df
         
         
         

@@ -57,6 +57,7 @@ class Dmg2(DFunc, Plotr):
         }
     
     dfuncs_d = dict() #container for damage functions
+    mi_meta_d = dict() #container for mitigation threshold counters
     #===========================================================================
     # #expectations from parameter file
     #===========================================================================
@@ -254,20 +255,13 @@ class Dmg2(DFunc, Plotr):
         log = self.logger.getChild('run')
         
         
-        
         #=======================================================================
-        # mitigation - apply lower depth threshold
+        # get impacts-----
         #=======================================================================
-        if self.apply_miti and self.miLtcn in self.finv_cdf.columns:
-            ddf = self.get_mitid()
-        else:
-            ddf = self.ddf
-        self.feedback.upd_prog(5, method='portion')
         #======================================================================
-        # get damages
+        # dfunc, scale, and cap per bid
         #======================================================================
-        # #get damages per bid
-        bres_df = self.bdmg_raw(ddf = ddf)
+        bres_df = self.bdmg_raw()
         self.feedback.upd_prog(20, method='portion')
         
         bres_df = self.bdmg_scaled(res_df = bres_df)
@@ -276,9 +270,39 @@ class Dmg2(DFunc, Plotr):
         bres_df = self.bdmg_capped(res_df=bres_df)
         self.feedback.upd_prog(5, method='portion')
         
-        bres_df, cres_df = self.bdmg_cleaned(res_df=bres_df)
+        #=======================================================================
+        # mitigations
+        #=======================================================================
+        res_colg = 'capped' #take the capped values as the final damages
+        if self.apply_miti:
+            """checking that one of thiese will trip in load_finv()"""
+            #lower depth threshold
+            if self.miLtcn in self.finv_cdf.columns:
+                bres_df, res_colg = self.bdmg_mitiT(res_df = bres_df, res_colg=res_colg)
+                self.feedback.upd_prog(5, method='portion')
+            
+            #intermediate scale
+            if self.miScn in self.finv_cdf.columns:
+                bres_df, res_colg = self.bdmg_mitiS(res_df = bres_df, res_colg=res_colg)
+                self.feedback.upd_prog(5, method='portion')
+            
+            #intermediate value
+            if self.miVcn in self.finv_cdf.columns:
+                bres_df, res_colg = self.bdmg_mitiV(res_df = bres_df, res_colg=res_colg)
+                self.feedback.upd_prog(5, method='portion')
+
+
+            
+        
+        #=======================================================================
+        # finalize damages
+        #=======================================================================
+        bres_df, cres_df = self.bdmg_cleaned(res_df=bres_df, res_colg=res_colg)
         self.feedback.upd_prog(5, method='portion')
         
+        #=======================================================================
+        # wrap----
+        #=======================================================================
         #=======================================================================
         # get labels
         #=======================================================================
@@ -299,68 +323,7 @@ class Dmg2(DFunc, Plotr):
         
         return cres_df
     
-    def get_mitid(self, #adjust the depths using mitigation handles
-                  ddf_raw = None,#expanded exposure set. depth at each bid. see build_depths()
-                  fd_ser = None, #depth threshold to apply
 
-                  ):
-        """
-        consider moving to common for Risk1
-        """
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        log = self.logger.getChild('get_mitid')
-        cid, bid = self.cid, self.bid
-        if ddf_raw is None: ddf_raw = self.ddf
-        
-        
-        if fd_ser is None:
-            """check if this key is in the finv before calling"""
-            fd_ser = self.data_d['finv'][self.miLtcn]
-        
-
-        
-        log.debug('on ddf %s'%(str(ddf_raw.shape)))
-        
-       
-        #=======================================================================
-        # setup data
-        #=======================================================================
-        #revert depth data back to cid index
-        cdf = ddf_raw.drop_duplicates(self.cid).drop('bid', axis=1
-                         ).set_index(self.cid, drop=True).sort_index()
-        
-        assert np.array_equal(cdf.index, fd_ser.index)
-
-        #expand thresholds to match shape
-        dt_df = pd.DataFrame(
-            np.tile(fd_ser, (len(cdf.columns), 1)).T,
-            index = fd_ser.index,
-            columns= cdf.columns)
-        #=======================================================================
-        # apply depth reductions-----
-        #=======================================================================
-        #find those meeting the threshold
-        booldf = cdf <=dt_df
-        
-        #make all these null
-        cdf = cdf.where(~booldf, other=np.nan)
-        
-        log.info('nulled %i (of %i) depths not exceeding \'%s\': \n    %s'%(
-            booldf.sum().sum(), booldf.size, self.miLtcn, booldf.sum(axis=0).to_dict()))
-        #=======================================================================
-        # re-expand data
-        #=======================================================================
-        ddf = ddf_raw.loc[:, [bid, cid]].join(cdf, on=cid)
-        """
-        view(ddf)
-        """
-        """make explicit?
-        self.ddf = ddf"""
-        return ddf
-        
-        
     def bdmg_raw(self, #get damages on expanded finv
              
             bdf = None, #expanded finv. see modcom.build_exp_finv(). each row has 1 ftag
@@ -600,6 +563,7 @@ class Dmg2(DFunc, Plotr):
         #=======================================================================
         """written by bdmg_smry"""
         self.cmeta_df = cmeta_df
+        self.res_colg = 'capped' #needed by  mitigation funcs
         
         
         self.res_df = res_df
@@ -608,6 +572,268 @@ class Dmg2(DFunc, Plotr):
 
         return res_df
     
+
+    def bdmg_mitiT(self, #adjust the depths using mitigation handles
+                   res_df = None,
+
+                  res_colg = None, #predecessor results column group to work off
+
+                  ):
+        """
+        consider moving to common for Risk1
+        """
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        log = self.logger.getChild('bdmg_mitiT')
+        
+        #column names
+        cid, bid = self.cid, self.bid
+        if res_colg is None: res_colg=self.res_colg
+        mcoln = self.miLtcn #mitigation data columns 
+        
+        #datasets
+
+        if res_df is None: res_df = self.res_df
+
+        
+        #=======================================================================
+        # setup results
+        #=======================================================================
+        events_df, rdf_raw = self._mi_resSetup(res_df, mcoln, res_colg)
+
+        #=======================================================================
+        # retrieve expanded threshold data
+        #=======================================================================
+        ddf, dt_df = self._get_fexpnd(mcoln)
+
+        
+        #=======================================================================
+        # apply threshold
+        #=======================================================================
+        
+        #find those meeting the threshold
+        booldf = ddf >=dt_df
+        
+        #raw results, with those not meeting the threshold as 0
+        rdf = rdf_raw.where(booldf, other=0.0)
+        
+        #retireve the nulls
+        """
+        user 0.0 as the threshold force.. but preserving nulls
+        """
+        rdf = rdf.where(rdf_raw.notna(), other=np.nan)
+        
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        return self._mi_wrap(rdf, events_df, mcoln, booldf, log)
+    
+
+        
+        
+    
+    def bdmg_mitiS(self, #apply mitigation scale values
+                   res_df = None,
+ 
+                  res_colg = None, #predecessor results column group to work off
+
+                  ):
+        """
+        consider moving to common for Risk1
+        """
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        log = self.logger.getChild('bdmg_mitiT')
+        
+        #column names
+        if res_colg is None: res_colg=self.res_colg
+        mcoln = self.miScn #mitigation data columns 
+        
+        #datasets
+        
+        if res_df is None: res_df = self.res_df
+        bdf = self.bdf
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert bdf[mcoln].notna().any(), 'got all nulls for %s'%mcoln
+
+        #=======================================================================
+        # setup results
+        #=======================================================================
+        events_df, rdf_raw = self._mi_resSetup(res_df, mcoln, res_colg)
+        
+        
+        #=======================================================================
+        # retrieve data
+        #=======================================================================
+        ddf, dt_df = self._get_fexpnd(self.miUtcn,logger=log)
+        
+        #get scale data
+        
+        
+        #=======================================================================
+        # apply scales to threshold
+        #=======================================================================
+        #find those we want to apply teh scale to
+        booldf = np.logical_and(
+            ddf<=dt_df, #exposure less than threshold
+            np.logical_and( #nether set is null
+                ddf.notna(),
+                dt_df.notna())
+                )
+        
+        if not booldf.any().any():
+            log.warning('got no entries to apply %s to!'%mcoln)
+            return res_df, res_colg
+        
+        #get scaled results
+        scale_ser = bdf[mcoln].fillna(1.0) #replace nulls
+        rdf_S = rdf_raw.multiply(scale_ser, axis=0)
+        
+        #take scaled where selected... otherwise use the raw
+        rdf = rdf_S.where(booldf, other=rdf_raw)
+        
+        return self._mi_wrap(rdf, events_df, mcoln, booldf, log)
+        
+        
+
+
+    def bdmg_mitiV(self, #apply mitigation scale values
+                   res_df = None,
+ 
+                  res_colg = None, #predecessor results column group to work off
+
+                  ):
+        """
+        consider moving to common for Risk1
+        """
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        log = self.logger.getChild('bdmg_mitiT')
+        
+        #column names
+        if res_colg is None: res_colg=self.res_colg
+        mcoln = self.miVcn #mitigation data columns 
+        
+        #datasets
+        
+        if res_df is None: res_df = self.res_df
+        bdf = self.bdf
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert bdf[mcoln].notna().any(), 'got all nulls for %s'%mcoln
+
+        #=======================================================================
+        # setup results
+        #=======================================================================
+        events_df, rdf_raw = self._mi_resSetup(res_df, mcoln, res_colg)
+        
+        
+        #=======================================================================
+        # retrieve data
+        #=======================================================================
+        ddf, dt_df = self._get_fexpnd(self.miUtcn,logger=log)
+        
+        #get scale data
+        
+        
+        #=======================================================================
+        # apply scales to threshold
+        #=======================================================================
+        #find those we want to apply teh scale to
+        booldf = np.logical_and(
+            ddf<=dt_df, #exposure less than threshold
+            np.logical_and( #nether set is null
+                ddf.notna(),
+                dt_df.notna())
+                )
+        
+        if not booldf.any().any():
+            log.warning('got no entries to apply %s to!'%mcoln)
+            return res_df, res_colg
+        
+        #get scaled results
+        mser = bdf[mcoln].fillna(0) #replace nulls
+        rdf_S = rdf_raw.add(mser, axis=0)
+        
+        #take new where selected... otherwise use the raw
+        rdf = rdf_S.where(booldf, other=rdf_raw)
+        
+        return self._mi_wrap(rdf, events_df, mcoln, booldf, log)
+    
+
+
+    def _rdf_smry(self, #get a summary string of the bid results data
+                          
+                          sfx,
+                          df_raw = None,
+                          ):
+        
+        if df_raw is None: df_raw = self.res_df
+        
+        boolcol = df_raw.columns.str.endswith(sfx) #id these columns
+        assert boolcol.any(), sfx
+        df = df_raw.loc[:, boolcol] #get just this data
+        
+        return 'count = %i, nulls = %i, min = %.2f, mean = %.2f, max = %.2f %s'%(
+            df.size, df.isna().sum().sum(), df.min().min(), df.mean().mean(), df.max().max(),
+            self.impact_units 
+            )
+        
+    def _mi_resSetup(self, 
+                     res_df, mcoln, res_colg):
+        
+        events_df = self.events_df
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        #check the results data
+        assert res_colg in events_df.columns
+        miss_l = set(events_df[res_colg].values).difference(res_df.columns)
+        assert len(miss_l)==0, 'missing results columns: %s'%miss_l
+        
+        #=======================================================================
+        # setup data
+        #=======================================================================
+        events_df[mcoln] = events_df.index + '_%s'%mcoln #update events metadata
+        
+        #raw results with names matching the events 
+        rdf_raw = res_df.loc[:, events_df[res_colg]].rename(
+            columns={v:k for k,v in events_df[res_colg].to_dict().items()})
+        
+        return events_df, rdf_raw
+    
+    def _mi_wrap(self, #wrapper function for mitigation series 
+                 rdf, events_df, mcoln, booldf, log):
+        
+
+        #join these back onto the main results (and rename columns)
+        self.res_df = self.res_df.join(rdf.rename(
+            columns=events_df[mcoln].to_dict())) 
+
+        self.res_colg=mcoln #set for next
+        
+        
+        self.mi_meta_d[mcoln] = pd.Series(booldf.sum(axis=0), name='miti_hit_cnt')
+        #=======================================================================
+        # report
+        #=======================================================================
+        log.info('got %i (of %i) below \'%s\': \n    %s \n    %s'%(
+            booldf.sum().sum(), booldf.size, mcoln, booldf.sum(axis=0).to_dict(),
+            self._rdf_smry(mcoln)))
+
+        return self.res_df, mcoln
+        
+        
+         
     def bdmg_cleaned(self, #fill nulls and build some results versions
                      res_colg = 'capped', #column group to take as final results
                     res_df = None,
@@ -687,25 +913,8 @@ class Dmg2(DFunc, Plotr):
         log.info('got cleaned impacts: \n    %s'%(self._rdf_smry('_dmg')))
 
         return self.bdmgC_df, cres_df
-
-
-    def _rdf_smry(self, #get a summary string of the bid results data
-                          
-                          sfx,
-                          df_raw = None,
-                          ):
-        
-        if df_raw is None: df_raw = self.res_df
-        
-        boolcol = df_raw.columns.str.endswith(sfx) #id these columns
-        assert boolcol.any(), sfx
-        df = df_raw.loc[:, boolcol] #get just this data
-        
-        return 'count = %i, nulls = %i, min = %.2f, mean = %.2f, max = %.2f %s'%(
-            df.size, df.isna().sum().sum(), df.min().min(), df.mean().mean(), df.max().max(),
-            self.impact_units 
-            )
-         
+    
+    
     def bdmg_smry(self, #generate summary of damages
                   res_df_raw=None,  #built results
                   events_df=None,  #event name matrix
@@ -747,6 +956,13 @@ class Dmg2(DFunc, Plotr):
         #=======================================================================
         # impact meta for each result type
         #=======================================================================
+        #move the 'dmg' colum to the end
+        if not events_df.columns[-1]=='dmg':
+            cols = events_df.columns.tolist()
+            cols.remove('dmg')
+            events_df = events_df.loc[:, cols + ['dmg']]
+        
+        
         res_d = dict() #container for meta
         for rtName, rser in events_df.items():
             
@@ -756,6 +972,10 @@ class Dmg2(DFunc, Plotr):
             #group and get totals per dfunc
             rnm_d= dict(zip(rser.to_dict().values(), rser.to_dict().keys()))
             mdf =  rdf.dropna(how='all').groupby(gCn).sum().rename( columns=rnm_d)
+            
+            #mitigation threshold counters
+            if rtName in self.mi_meta_d:
+                mdf = mdf.append(self.mi_meta_d[rtName])
             
             #add count columns
             """
@@ -773,18 +993,38 @@ class Dmg2(DFunc, Plotr):
         cm_df1  = df.groupby(gCn).sum().astype(np.int)
         
 
-        
+        #=======================================================================
+        # progression summary
+        #=======================================================================
+        """
+        view(events_df)
+        view(res_df)
+        """
+        p_df = None
+        for coln, cser in events_df.items():
+            rser = res_df.loc[:, cser.values].sum(axis=0)
+            rdf1 = pd.Series(rser, name=coln).to_frame().T.rename(
+                columns = {v:k for k,v in cser.items()})
+            if p_df is None:
+                p_df = rdf1
+            else:
+                p_df = p_df.append(rdf1)
+            
+
         
         
         #=======================================================================
         # write results
         #=======================================================================
         
-        out_fp = os.path.join(self.out_dir, '%s_bdmg_smry_%s_%i.xls'%(self.tag, gCn, len(res_df)))
+        out_fp = os.path.join(self.out_dir, 'dmg2_smry_%s_%s_%i.xls'%(self.tag, gCn, len(res_df)))
         
-        d = {**res_d, 
+        d = {
+            '_smry':p_df.round(self.prec),
+            **res_d, 
              'cap_cnts':cm_df1, 
              'cap_data':cmeta_df.fillna(False),
+             
              }
    
         with pd.ExcelWriter(out_fp) as writer:
@@ -1097,13 +1337,49 @@ class Dmg2(DFunc, Plotr):
             cf_fp = cf_fp
             )
     
+    def output_cdmg(self,
+                    ofn=None):
         
+        
+        
+        if ofn is None:
+            ofn = 'dmgs_%s_%s'%(self.name, self.tag)
+        
+        """
+        view(self.res_df)
+        """
+        #store for upd_cf
+        self.out_fp = self.output_df(self.cres_df, ofn, write_index=True)
+            
+        return self.out_fp
+    
+    
     def output_bdmg(self, #short cut for saving the expanded reuslts
                     ofn = None):
         if ofn is None:
-            ofn = 'dmgs_expnd_%s_%s'%(self.name, self.tag)
+            ofn = 'dmgs_expnd_%s_%s_%i_%i'%(self.name, self.tag, len(self.events_df), len(self.res_df))
+        
+        """
+        view(self.res_df)
+        
+        """
+        #get just the useful stuff off the expanded finv
+        l = set(self.bdf.columns).difference(self.res_df.columns)
+        bdf1 = self.bdf.loc[:, l]
+        bdf1.index.name = None
+                             
+        rdf = self.res_df.drop(self.bid, axis=1).join(bdf1)
+        rdf.index.name = self.bid
             
-        return self.output_df(self.res_df, ofn)
+        return self.output_df(rdf, ofn, write_index=True)
+    
+    def output_depths_df(self,
+                         ofn = None):
+        
+        if ofn is None: 
+            ofn = 'depths_%s_%s_%i_%i'%(self.name, self.tag, len(self.events_df), len(self.ddf))
+        
+        return self.output_df(self.ddf, ofn, write_index=False)
     
     #===========================================================================
     # PLOTRS------
@@ -1137,7 +1413,7 @@ class Dmg2(DFunc, Plotr):
         if impact_name is None: impact_name=self.impact_units
         if impactFmtFunc is None: impactFmtFunc=self.impactFmtFunc
         
-        title = '%s Impact Boxplots on %i events'%(plotTag, len(df.columns))
+        title = '%s %s Impact Boxplots on %i Events'%(plotTag, self.name, len(df.columns))
         #=======================================================================
         # manipulate data
         #=======================================================================
@@ -1161,7 +1437,7 @@ class Dmg2(DFunc, Plotr):
         
         # axis label setup
         fig.suptitle(title)
-        ax1.set_xlabel('hazard layer')
+        ax1.set_xlabel('hazard event raster')
         ax1.set_ylabel(impact_name)
         """
         plt.show()
@@ -1192,7 +1468,7 @@ class Dmg2(DFunc, Plotr):
         #=======================================================================
         # Add text string 'annot' to lower left of plot
         #=======================================================================
-        val_str = '%i assets \napply_miti=\'%s\' \nground_water=%s \nfelv=\'%s\''%(
+        val_str = '%i assets \napply_miti=%s \nground_water=%s \nfelv=\'%s\''%(
             len(df), self.apply_miti, self.ground_water, self.felv)
         
         xmin, xmax1 = ax1.get_xlim()

@@ -666,6 +666,18 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         try:
             self.store_curves()
         except: pass
+        
+        #=======================================================================
+        # secondary flags
+        #=======================================================================
+        if self.checkBox_inv_apMiti.isChecked():
+            wrkr.update_cf(
+                            {
+                    'parameters':(
+                        {'apply_miti':'True'},
+                                )
+                                },
+                        )
         #=======================================================================
         # wrap
         #=======================================================================
@@ -675,68 +687,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         return 
     
     
-    #===========================================================================
-    # def convert_rfda(self): #Other.Rfda tab
-    #     """
-    #     TODO: move to drop down
-    #     """
-    #     log = self.logger.getChild('convert_rfda')
-    #     tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
-    #     
-    #     #======================================================================
-    #     # collect from  ui
-    #     #======================================================================
-    #     rinv_vlay = self.mMapLayerComboBox_OthR_rinv.currentLayer()
-    #     crv_fp = self.lineEdit_wd_OthRf_cv.text()
-    #     bsmt_ht = self.lineEdit_OthRf_bht.text()
-    #     #cid = self.mFieldComboBox_cid.currentField() #user selected field
-    #     
-    #     #crs = self.qproj.crs()
-    #     out_dir = self.lineEdit_wd.text()
-    #     
-    #     try:
-    #         bsmt_ht = float(bsmt_ht)
-    #     except Exception as e:
-    #         raise Error('failed to convert bsmt_ht to float w/ \n    %s'%e)
-    #     
-    #     
-    #     #======================================================================
-    #     # input checks
-    #     #======================================================================
-    #     
-    #     wrkr = RFDAconv(logger=self.logger, out_dir=out_dir, tag=tag, bsmt_ht = bsmt_ht)
-    #     #======================================================================
-    #     # invnentory convert
-    #     #======================================================================
-    #     if isinstance(rinv_vlay, QgsVectorLayer):
-    #         
-    #         
-    #         finv_vlay = wrkr.to_finv(rinv_vlay)
-    #         
-    #         self.qproj.addMapLayer(finv_vlay)
-    #         log.info('added \'%s\' to canvas'%finv_vlay.name())
-    #         
-    #     #======================================================================
-    #     # curve convert
-    #     #======================================================================
-    #     if os.path.exists(crv_fp):
-    #         df_raw = pd.read_excel(crv_fp, header=None)
-    #         
-    #         df_d = wrkr.to_curveset(df_raw, logger=log)
-    #         
-    #         basefn = os.path.splitext(os.path.split(crv_fp)[1])[0]
-    #         
-    #         ofp = wrkr.output(df_d, basefn=basefn)
-    #         
-    #     else:
-    #         log.info('no valid crv_fp provided')
-    #         
-    #     #======================================================================
-    #     # wrap
-    #     #======================================================================
-    #     self.logger.push('finished')
-    #         
-    #===========================================================================
+   
 
     def construct_finv(self): #add some fields to a finv like vectoralyer
 
@@ -744,25 +695,46 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
         
         #=======================================================================
-        # collect from UI
+        # collect from UI----
         #=======================================================================
         in_vlay = self.mMapLayerComboBox_inv_finv.currentLayer()
         out_dir = self.lineEdit_wd.text()
         nestID = int(self.spinBox_inv.value())
-        new_data = dict()
-        for dName, (lineEdit, reqType) in {
-                                'scale':(self.lineEdit_inv_scale, float),
-                                'elv':(self.lineEdit_inv_elv,float),
-                                'tag':(self.lineEdit_inv_tag, str),
-                                'cap':(self.lineEdit_inv_cap, float),            
-                                }.items():
+        
+        def get_data(d): #helper to pull data off widgets
+            new_d = dict()
+            for dName, (lineEdit, reqType) in d.items():
             
-            vRaw = lineEdit.text()
-            if vRaw == '':continue #blank.. ksipit
-            new_data[dName] = reqType(vRaw)
+                vRaw = lineEdit.text()
+                if vRaw == '':continue #blank.. ksipit
+                new_d[dName] = reqType(vRaw)
             
-        log.debug('collected %i:  \n%s'%(len(new_data), new_data))
+            log.debug('collected %i:  \n%s'%(len(new_d), new_d))
+            return new_d
+            
+        #=======================================================================
+        # nest data
+        #=======================================================================
+        nest_data = get_data({    
+                'scale':(self.lineEdit_inv_scale, float),
+                'elv':(self.lineEdit_inv_elv,float),
+                'tag':(self.lineEdit_inv_tag, str),
+                'cap':(self.lineEdit_inv_cap, float)}
+                        )
+        
         self.feedback.upd_prog(10)
+        
+        #=======================================================================
+        # mitigation data
+        #=======================================================================
+        miti_data = get_data({    
+                'mi_Lthresh':(self.lineEdit_inv_mi_Lthresh, float),
+                'mi_Uthresh':(self.lineEdit_inv_mi_Uthresh,float),
+                'mi_iScale':(self.lineEdit_inv_mi_iScale, str),
+                'mi_iVal':(self.lineEdit_inv_mi_iVal, float)}
+                        )
+        
+        
         #=======================================================================
         # input checks
         #=======================================================================
@@ -784,8 +756,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # run converter
         #=======================================================================
+        nest_data2 = wrkr.build_nest_data(nestID=nestID, d_raw = nest_data)
         finv_vlay = wrkr.to_finv(in_vlay_aoi, newLayname = 'finv_%s'%in_vlay.name(),
-                                 nestID=nestID, new_data=new_data)
+                                new_data={**nest_data2, **miti_data})
         
         #=======================================================================
         # wrap
