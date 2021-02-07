@@ -1356,9 +1356,17 @@ class Dmg2(DFunc, Plotr):
         
         """
         view(self.res_df)
+        
         """
+        #get just the useful stuff off the expanded finv
+        l = set(self.bdf.columns).difference(self.res_df.columns)
+        bdf1 = self.bdf.loc[:, l]
+        bdf1.index.name = None
+                             
+        rdf = self.res_df.drop(self.bid, axis=1).join(bdf1)
+        rdf.index.name = self.bid
             
-        return self.output_df(self.res_df, ofn, write_index=False)
+        return self.output_df(rdf, ofn, write_index=True)
     
     def output_depths_df(self,
                          ofn = None):
