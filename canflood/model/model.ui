@@ -1001,13 +1001,6 @@ p, li { white-space: pre-wrap; }
              </property>
              <layout class="QVBoxLayout" name="verticalLayout">
               <item>
-               <widget class="QCheckBox" name="checkBox_i2_outExpnd">
-                <property name="text">
-                 <string>Output expanded component impacts (dmgs_expnd)</string>
-                </property>
-               </widget>
-              </item>
-              <item>
                <widget class="QCheckBox" name="checkBox_i2bSmry">
                 <property name="text">
                  <string>Output calculation summary (bdmg_smry)</string>
@@ -1015,9 +1008,23 @@ p, li { white-space: pre-wrap; }
                </widget>
               </item>
               <item>
+               <widget class="QCheckBox" name="checkBox_i2_outExpnd">
+                <property name="text">
+                 <string>Output expanded component impacts (dmgs_expnd)</string>
+                </property>
+               </widget>
+              </item>
+              <item>
                <widget class="QCheckBox" name="checkBox_i2plot">
                 <property name="text">
                  <string>Output impact box plots (plot_boxes)</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="checkBox_i2_ddf">
+                <property name="text">
+                 <string>Output depths (depths_df)</string>
                 </property>
                </widget>
               </item>

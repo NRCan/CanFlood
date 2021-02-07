@@ -1337,8 +1337,20 @@ class Dmg2(DFunc, Plotr):
                     ofn = None):
         if ofn is None:
             ofn = 'dmgs_expnd_%s_%s'%(self.name, self.tag)
+        
+        """
+        view(self.res_df)
+        """
             
-        return self.output_df(self.res_df, ofn)
+        return self.output_df(self.res_df, ofn, write_index=False)
+    
+    def output_depths_df(self,
+                         ofn = None):
+        
+        if ofn is None: 
+            ofn = 'depths_%s_%s_%i_%i'%(self.name, self.tag, len(self.events_df), len(self.ddf))
+        
+        return self.output_df(self.ddf, ofn, write_index=False)
     
     #===========================================================================
     # PLOTRS------
@@ -1427,7 +1439,7 @@ class Dmg2(DFunc, Plotr):
         #=======================================================================
         # Add text string 'annot' to lower left of plot
         #=======================================================================
-        val_str = '%i assets \napply_miti=\'%s\' \nground_water=%s \nfelv=\'%s\''%(
+        val_str = '%i assets \napply_miti=%s \nground_water=%s \nfelv=\'%s\''%(
             len(df), self.apply_miti, self.ground_water, self.felv)
         
         xmin, xmax1 = ax1.get_xlim()

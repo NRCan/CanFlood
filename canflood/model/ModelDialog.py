@@ -340,6 +340,9 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         if self.checkBox_i2_outExpnd.isChecked():
             _ = model.output_bdmg()
         self.feedback.setProgress(95)
+        
+        if self.checkBox_i2_ddf.isChecked():
+            _=model.output_depths_df()
             
         #box plots
         if self.checkBox_i2plot.isChecked():
