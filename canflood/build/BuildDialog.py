@@ -674,7 +674,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             wrkr.update_cf(
                             {
                     'parameters':(
-                        {'apply_miti':True},
+                        {'apply_miti':'True'},
                                 )
                                 },
                         )

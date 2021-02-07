@@ -290,7 +290,7 @@ class Preparor(Qcoms):
         log.info('adding field data:\n    %s'%new_data)
 
         #join the two
-        res_df = pd.DataFrame(index=df_raw.index, data=new_data).join(df2)
+        res_df = df2.join(pd.DataFrame(index=df_raw.index, data=new_data))
 
 
         self.feedback.upd_prog(70)
