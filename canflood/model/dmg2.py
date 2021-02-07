@@ -958,6 +958,13 @@ class Dmg2(DFunc, Plotr):
         #=======================================================================
         # impact meta for each result type
         #=======================================================================
+        #move the 'dmg' colum to the end
+        if not events_df.columns[-1]=='dmg':
+            cols = events_df.columns.tolist()
+            cols.remove('dmg')
+            events_df = events_df.loc[:, cols + ['dmg']]
+        
+        
         res_d = dict() #container for meta
         for rtName, rser in events_df.items():
             
@@ -1012,7 +1019,7 @@ class Dmg2(DFunc, Plotr):
         # write results
         #=======================================================================
         
-        out_fp = os.path.join(self.out_dir, '%s_bdmg_smry_%s_%i.xls'%(self.tag, gCn, len(res_df)))
+        out_fp = os.path.join(self.out_dir, 'dmg2_smry_%s_%s_%i.xls'%(self.tag, gCn, len(res_df)))
         
         d = {
             '_smry':p_df.round(self.prec),
