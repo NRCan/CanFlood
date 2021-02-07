@@ -1001,9 +1001,30 @@ p, li { white-space: pre-wrap; }
              </property>
              <layout class="QVBoxLayout" name="verticalLayout">
               <item>
+               <widget class="QCheckBox" name="checkBox_i2bSmry">
+                <property name="text">
+                 <string>Output calculation summary (bdmg_smry)</string>
+                </property>
+               </widget>
+              </item>
+              <item>
                <widget class="QCheckBox" name="checkBox_i2_outExpnd">
                 <property name="text">
                  <string>Output expanded component impacts (dmgs_expnd)</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="checkBox_i2plot">
+                <property name="text">
+                 <string>Output impact box plots (plot_boxes)</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="checkBox_i2_ddf">
+                <property name="text">
+                 <string>Output depths (depths_df)</string>
                 </property>
                </widget>
               </item>
@@ -1013,7 +1034,7 @@ p, li { white-space: pre-wrap; }
                  <string>Run Risk (L2) upon completion (see 'Risk (L2)' tab for configuration)</string>
                 </property>
                 <property name="checked">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -1515,7 +1536,10 @@ p, li { white-space: pre-wrap; }
               <item>
                <widget class="QCheckBox" name="checkBox_r2plot">
                 <property name="text">
-                 <string>Generate summary plot of total expected value (plot)</string>
+                 <string>Generate summary plot of total impacts EV (plot)</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -2009,7 +2033,7 @@ p, li { white-space: pre-wrap; }
            <item>
             <widget class="QLabel" name="label_4">
              <property name="text">
-              <string>Execute the SOFDA research model from a SOFDA control file (see SOFDA_UsersManual)</string>
+              <string>Execute the SOFDA research model from a SOFDA control file (see 'SOFDA_UsersManual')</string>
              </property>
             </widget>
            </item>

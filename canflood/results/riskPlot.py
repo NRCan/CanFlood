@@ -427,8 +427,7 @@ class Plotr(Model):
         if y1lab =='impacts':
             y1lab = self.impact_name
             
-        if impactFmtFunc is None:
-            impactFmtFunc=self.impactFmtFunc
+        if impactFmtFunc is None: impactFmtFunc=self.impactFmtFunc
             
         if res_ttl is None: res_ttl = self.data_d['ttl']
         if plotTag is None: plotTag=self.tag

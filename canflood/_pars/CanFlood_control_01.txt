@@ -12,6 +12,7 @@ integrate = trapz       #integration method to apply: trapz, simps
 as_inun = False         #flag whether to treat exposures as percent inundation
 event_rels = mutEx		#assumption for calculated expected value on complex events
 impact_units = impacts  #value to label impacts axis with (generally set by Dmg2)
+apply_miti = False		#whether to apply mitigation algorthihims
 
 [dmg_fps]
 curves =                #damage curve library filepath
