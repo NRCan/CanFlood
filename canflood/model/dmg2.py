@@ -1332,11 +1332,27 @@ class Dmg2(DFunc, Plotr):
             cf_fp = cf_fp
             )
     
+    def output_cdmg(self,
+                    ofn=None):
         
+        
+        
+        if ofn is None:
+            ofn = 'dmgs_%s_%s'%(self.name, self.tag)
+        
+        """
+        view(self.res_df)
+        """
+        #store for upd_cf
+        self.out_fp = self.output_df(self.cres_df, ofn, write_index=True)
+            
+        return self.out_fp
+    
+    
     def output_bdmg(self, #short cut for saving the expanded reuslts
                     ofn = None):
         if ofn is None:
-            ofn = 'dmgs_expnd_%s_%s'%(self.name, self.tag)
+            ofn = 'dmgs_expnd_%s_%s_%i_%i'%(self.name, self.tag, len(self.events_df), len(self.res_df))
         
         """
         view(self.res_df)
@@ -1384,7 +1400,7 @@ class Dmg2(DFunc, Plotr):
         if impact_name is None: impact_name=self.impact_units
         if impactFmtFunc is None: impactFmtFunc=self.impactFmtFunc
         
-        title = '%s Impact Boxplots on %i events'%(plotTag, len(df.columns))
+        title = '%s %s Impact Boxplots on %i Events'%(plotTag, self.name, len(df.columns))
         #=======================================================================
         # manipulate data
         #=======================================================================
@@ -1408,7 +1424,7 @@ class Dmg2(DFunc, Plotr):
         
         # axis label setup
         fig.suptitle(title)
-        ax1.set_xlabel('hazard layer')
+        ax1.set_xlabel('hazard event raster')
         ax1.set_ylabel(impact_name)
         """
         plt.show()

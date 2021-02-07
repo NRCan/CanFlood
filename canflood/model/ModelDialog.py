@@ -323,7 +323,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #======================================================================
         # save reuslts
         #======================================================================
-        out_fp = model.output_df(cres_df, model.resname)
+        out_fp = model.output_cdmg()
         self.feedback.setProgress(85)
         
         #update parameter file

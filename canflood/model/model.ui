@@ -1034,7 +1034,7 @@ p, li { white-space: pre-wrap; }
                  <string>Run Risk (L2) upon completion (see 'Risk (L2)' tab for configuration)</string>
                 </property>
                 <property name="checked">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -1537,6 +1537,9 @@ p, li { white-space: pre-wrap; }
                <widget class="QCheckBox" name="checkBox_r2plot">
                 <property name="text">
                  <string>Generate summary plot of total impacts EV (plot)</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
