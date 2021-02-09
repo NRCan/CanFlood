@@ -14,7 +14,7 @@ TODO: Consolidate w/ riskPlot
 #==========================================================================
 # logger setup-----------------------
 #==========================================================================
-import logging, configparser, datetime
+import logging, configparser, datetime, itertools
 
 
 
@@ -112,6 +112,7 @@ class CurvePlotr(DFunc):
     
     def plotAll(self, #plot everything in a single group
                 cLib_d, #container of functions
+                lib_as_df = True, #indicator for format of passed lib
                 title=None,
                 logger=None,
                 **lineKwargs
@@ -130,25 +131,34 @@ class CurvePlotr(DFunc):
         #=======================================================================
         # convert clib
         #=======================================================================
+        if lib_as_df:
+            cLib_d = {k:df.set_index(0, drop=True).iloc[:,0].to_dict() for k, df in cLib_d.items()}
             
-        cLib_d = {k:df.set_index(0, drop=True).iloc[:,0].to_dict() for k, df in cLib_d.items()}
+            """
+            for k,v in cLib_d.items():
+                print(k)
+            """
 
         
         #===============================================================
         # loop and plot
         #===============================================================
         ax = None
-        
+        marker = itertools.cycle(('+', '1', 'o', '2', 'x', '3', '4'))
+                                 
         for cName, crv_d in cLib_d.items():
             if cName.startswith('_'): continue #skip these
 
             
-            ax = self.plotCurve(crv_d, ax=ax,**lineKwargs)
+            ax = self.plotCurve(crv_d, ax=ax,
+                                marker=next(marker),
+                                **lineKwargs)
             
         #post format
         fig = ax.figure
         fig.suptitle(title)
         ax.legend()
+        ax.grid()
         
         return fig
             
@@ -365,21 +375,33 @@ class CurvePlotr(DFunc):
         # assemble parameters
         #=======================================================================
         pars_d = dict()
-        for par, cpar in {'ylab':'exposure_var', 
-                          'xlab':'impact_var',
-                          'color':'color'}.items():
-            
-            if cpar in crv_d:
-                pars_d[par]=crv_d[cpar]
-            else:
-                pars_d[par]=None
+        #=======================================================================
+        # for par, cpar in {'ylab':'exposure_units', 
+        #                   'xlab':'impact_var',
+        #                   'color':'color'}.items():
+        #     
+        #     if cpar in crv_d:
+        #         pars_d[par]=crv_d[cpar]
+        #     else:
+        #         pars_d[par]=None
+        #=======================================================================
+        
+        #add fillers
+        cd1 = crv_d.copy()
+        for k in ['exposure_var', 'exposure_units', 'impact_var', 'impact_units', 'color']:
+            if not k in cd1:
+                cd1[k] = None
+        
+        pars_d['ylab'] = '%s (%s)'%(cd1['exposure_var'], cd1['exposure_units'])
+        pars_d['xlab'] = '%s (%s)'%(cd1['impact_var'], cd1['impact_units'])
+        #pars_d['color'] = cd1['color']
                           
         
         return self.line(dser.values, dser.index.values,
                          
                          ylab=pars_d['ylab'],
                          xlab=pars_d['xlab'],
-                         color=pars_d['color'],
+                         #color=pars_d['color'],
                          label=crv_d['tag'],
                           **lineKwargs)
         
@@ -392,7 +414,10 @@ class CurvePlotr(DFunc):
                 title = None,
                 ylab=None,
                 xlab=None,
-                **kwargs):
+                
+
+                **kwargs, #splill over kwargs
+                ):
         
         #=======================================================================
         # defaults
@@ -442,7 +467,12 @@ class CurvePlotr(DFunc):
         #==========================================================================
         #log.debug('plotting \"%s\' w/ \n    %s \n    %s'%( title, xvals, yvals))
         
-        ax.plot(xvals, yvals, **kwargs)
+        ax.plot(xvals, yvals, 
+                #markerfacecolor='black',
+                #markersize=markersize, 
+                #fillstyle='full',
+
+                **kwargs)
         
         """
         plt.show()
