@@ -3710,9 +3710,16 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         
         
     def _get_smry(self, #get a summary tab on a library
-                  clib_d,
+                  clib_d, #{curveName: {k:v}}
+                  
+                  
+                  #library format
+                  clib_fmt_df = False, #whether the curve data is a dataframe or not
+                  
+                  
                   
                   #handle column names
+                  add_colns = [], #additional column names to include
                    pgCn='plot_group',
                   pfCn='plot_f',
                   
@@ -3722,13 +3729,25 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         if logger is None: logger=self.logger
         log = logger.getChild('_get_smry')
         
-
+        """
+        clib_d.keys()
+        """
+        #=======================================================================
+        # conversion
+        #=======================================================================
+        if clib_fmt_df:
+            clib_d = {k:df.iloc[:,0].to_dict() for k,df in clib_d.items()}
         
+        #=======================================================================
+        # build data
+        #=======================================================================
         df_raw = pd.DataFrame(clib_d).T
         
         cols = df_raw.columns
         
-        #location of depth values
+        #=======================================================================
+        # #location of depth values
+        #=======================================================================
         boolcol = cols[cols.get_loc('exposure')+1:]
         
         ddf = df_raw.loc[:, boolcol]
@@ -3747,6 +3766,18 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         sdf['dmg_mono']=pd.DataFrame(np.diff(ddf)>=0, index=sdf.index).all(axis=1)
         
         sdf['dep_mono']=pd.Series({i:np.all(np.diff(row.dropna().index.tolist())>0) for i, row in ddf.iterrows()})
+        
+        #=======================================================================
+        # additional columns
+        #=======================================================================
+        if len(add_colns)>0:
+            miss_l = set(add_colns).difference(cols)
+            if not len(miss_l)==0:
+                """letting this pass"""
+                log.warning('requested add_colns not in data: %s'%miss_l)
+            
+            log.debug('adding %s'%add_colns)
+            sdf = sdf.join(df_raw.loc[:, cols.isin(add_colns)])
         
         #=======================================================================
         # add handles

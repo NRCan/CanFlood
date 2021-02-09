@@ -30,11 +30,12 @@ from PyQt5 import QtGui
 #==============================================================================
 
 import hlpr.plug
-from hlpr.basic import get_valid_filename, force_open_dir, ComWrkr
+from hlpr.basic import get_valid_filename, view
 from hlpr.exceptions import QError as Error
 from hlpr.plug import MyFeedBackQ, QprojPlug, pandasModel
 from misc.curvePlot import CurvePlotr
 
+from model.modcom import DFunc
 
 #===============================================================================
 # logger
@@ -54,7 +55,7 @@ FORM_CLASS, _ = uic.loadUiType(ui_fp)
 # class objects-------
 #===============================================================================
 
-class vDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
+class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
     """
     constructed by  BuildDialog
     """
@@ -323,7 +324,12 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # build data for this
         #=======================================================================
-        df = pd.Series(self.vdata_d[self.libName]['curves_d'][fileName], name='values'
+        assert self.libName in self.vdata_d, self.libName
+        assert fileName in self.vdata_d[self.libName]['curves_d'], 'requested filename not found: %s'%filePath
+        
+        data = self.vdata_d[self.libName]['curves_d'][fileName]
+        
+        df = pd.Series(data, name='values'
                   ).to_frame().reset_index().rename(columns={'index':'var'})
 
 
@@ -392,8 +398,12 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         return
         
         
-    def get_libData(self,
-                    vfunc_dir=None):
+    def get_libData(self, #setup all the data for display
+                    vfunc_dir=None,
+                    
+                    #columns from curves to add in meta
+                    cs_colns = ['scale_var', 'exposure_var', 'impact_var'], 
+                    ):
         
         #=======================================================================
         # defaults
@@ -426,7 +436,7 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             
     
             #=======================================================================
-            # from meta  file
+            # from meta  file---
             #=======================================================================
             #open the file
             log.debug('loading from %s'%fp)
@@ -445,30 +455,55 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             #=======================================================================
             # data contents
             #=======================================================================
-            fns = [e for e in os.listdir(basedir) if e.endswith('.xls')]
-            d['curveSet_fns'] = fns
-            d['curveSet_cnt'] = len(fns)
+            #get all filepaths in folder tree
+            curve_fps = set()
+            for dirpath, _, fns in os.walk(basedir):
+                curve_fps.update([os.path.join(dirpath, e) for e in fns if e.endswith('.xls')])
+                
+            #fns = [e for e in os.listdir(basedir) if e.endswith('.xls')]
+            d['curveSet_fps'] = curve_fps
+            d['curveSet_cnt'] = len(curve_fps)
             
             #===================================================================
             # #curve set values
             #===================================================================
             """
-            display these on 
+            data to display when .xls is selected in the bottom window
+            curves_d is keyed by filename (filepath is bad for key lookup)
             """
             curves_d = dict()
-            for fn in fns:
-                fp = os.path.join(basedir, fn)
+            for fp in curve_fps:
                 assert os.path.exists(fp), fp
+                fn = os.path.basename(fp)
                 
                 cs_d = dict()
                 
                 
-                df_d_raw = pd.read_excel(fp, sheet_name=None, header=None, index_col=None)
+                clib_d_raw = pd.read_excel(fp, sheet_name=None, header=0, index_col=0)
                 
-                df_d = {k:v for k,v in df_d_raw.items() if not k.startswith('_')} #drop dummy tabs
+                clib_d = {k:v for k,v in clib_d_raw.items() if not k.startswith('_')} #drop dummy tabs
                 
-                cs_d['cnt'] = len(df_d)
-                cs_d['tags'] = list(df_d.keys())
+                cs_d['cnt'] = len(clib_d)
+                cs_d['tags'] = list(clib_d.keys())
+                
+                
+                """
+                clib_d1['nrpUgPark']
+                view(clib_d['nrpUgPark'])
+                view(smry_df)
+                """
+                #get additional meta from curve data
+                smry_df = self._get_smry(clib_d, 
+                                         add_colns=cs_colns,
+                                         clib_fmt_df=True, logger=log)
+                
+                """just taking first... not checking if its actually unique"""
+                smry_d = smry_df.loc[:, smry_df.columns.isin(cs_colns)
+                            ].drop_duplicates().iloc[0].to_dict()
+                            
+                cs_d = {**cs_d, **smry_d}
+                
+                #update
                 curves_d[fn] = cs_d
                 
             #summarize
