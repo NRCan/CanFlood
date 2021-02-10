@@ -3517,6 +3517,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
             'source':'?',
             'location':'?',
             'date':'?',
+            'file_conversion':'CanFlood',
             'scale_units':'m2',
             'impact_units':'$CAD',
             'exposure_units':'m',
@@ -3583,7 +3584,9 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         # self.check_crvd(df.set_index(df.columns[0]).iloc[:,0].to_dict(),
         #                  logger=log)
         #=======================================================================
-        
+        """"
+        todo: try 'get_loc'
+        """
         #locate depth-damage data
         boolidx = df.iloc[:,0]=='exposure' #locate
         
@@ -3704,6 +3707,103 @@ class DFunc(ComWrkr, #damage function or DFunc handler
                 'min_dmg':min(dmgs), 'max_dmg':max(dmgs), 'dcnt':len(deps)},
                 **self.pars_d}
         
+        
+        
+    def _get_smry(self, #get a summary tab on a library
+                  clib_d, #{curveName: {k:v}}
+                  
+                  
+                  #library format
+                  clib_fmt_df = False, #whether the curve data is a dataframe or not
+                  
+                  
+                  
+                  #handle column names
+                  add_colns = [], #additional column names to include
+                   pgCn='plot_group',
+                  pfCn='plot_f',
+                  
+                  
+                  logger=None,
+                  ):
+        if logger is None: logger=self.logger
+        log = logger.getChild('_get_smry')
+        
+        """
+        clib_d.keys()
+        """
+        #=======================================================================
+        # conversion
+        #=======================================================================
+        if clib_fmt_df:
+            clib_d = {k:df.iloc[:,0].to_dict() for k,df in clib_d.items()}
+        
+        #=======================================================================
+        # build data
+        #=======================================================================
+        df_raw = pd.DataFrame(clib_d).T
+        
+        cols = df_raw.columns
+        assert 'exposure' in cols
+        #=======================================================================
+        # #location of depth values
+        #=======================================================================
+        boolcol = cols[cols.get_loc('exposure')+1:]
+        
+        ddf = df_raw.loc[:, boolcol]
+        
+        #check it
+        try:
+            ddf.columns = ddf.columns.astype(np.float)
+            ddf = ddf.astype(np.float)
+        except Exception as e:
+            raise Error('got bad type on depth values w/ \n    %s'%e)
+
+        
+        #min max
+        sdf = pd.Series(ddf.min(axis=1), name='min').to_frame()
+        sdf['max'] = ddf.max(axis=1)
+
+        #depth-damage
+        sdf['depths'] = pd.Series({i:row.dropna().index.tolist() for i, row in ddf.iterrows()})
+        
+        sdf['dep_dmg'] = pd.Series({i:row.dropna().to_dict() for i, row in ddf.iterrows()})
+        
+        #check montonoticy  
+        """not sure how these do with variable lengths
+        
+        view(ddf)
+        """        
+        sdf['dmg_mono']=pd.DataFrame(np.diff(ddf)>=0, index=sdf.index).all(axis=1)
+        
+        sdf['dep_mono']=pd.Series({i:np.all(np.diff(row.dropna().index.tolist())>0) for i, row in ddf.iterrows()})
+        
+        #=======================================================================
+        # additional columns
+        #=======================================================================
+        if len(add_colns)>0:
+            miss_l = set(add_colns).difference(cols)
+            if not len(miss_l)==0:
+                """letting this pass"""
+                log.warning('requested add_colns not in data: %s'%miss_l)
+            
+            log.debug('adding %s'%add_colns)
+            sdf = sdf.join(df_raw.loc[:, cols.isin(add_colns)])
+        
+        #=======================================================================
+        # add handles
+        #=======================================================================
+        sdf[pgCn] = 'g1'
+        sdf[pfCn] = True
+        
+        log.info('finished w/ %s'%str(sdf.shape))
+        
+        """
+        view(sdf)
+        """
+        return sdf
+
+        
     def check_cdf(self, #convenience for checking the df as loaded
                   df, **kwargs): 
         """
@@ -3733,14 +3833,25 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         
         #log.debug('on %i'%len(crv_d))
         
-        #check keys
+        #=======================================================================
+        # #check key presence
+        #=======================================================================
         miss_l = set(self.cdf_chk_d.keys()).difference(crv_d.keys())
         if not len(miss_l)==0:
             raise Error('\'%s\' missing keys: %s'%(self.tabn, miss_l))
         
+        #=======================================================================
+        # value type
+        #=======================================================================
         for k, v in self.cdf_chk_d.items():
             assert k in crv_d, 'passed df for \'%s\' missing key \'%s\''%(self.tabn, k)
             assert isinstance(crv_d[k], v), '%s got bad type on %s'%(self.tabn, k)
+            
+        #=======================================================================
+        # order
+        #=======================================================================
+        """TODO: check order"""
+        
 
         return True
 
