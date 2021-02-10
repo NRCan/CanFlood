@@ -132,11 +132,11 @@ class CurvePlotr(DFunc):
         # convert clib
         #=======================================================================
         if lib_as_df:
-            cLib_d = {k:df.set_index(0, drop=True).iloc[:,0].to_dict() for k, df in cLib_d.items()}
+            cLib_d = {k:df.set_index(df.columns[0], drop=True).iloc[:,0].to_dict() for k, df in cLib_d.items()}
             
             """
             for k,v in cLib_d.items():
-                print(k)
+                print(k, type(v))
             """
 
         

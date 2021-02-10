@@ -19,6 +19,7 @@ import numpy as np
 from hlpr.logr import basic_logger
 mod_logger = basic_logger() 
 from hlpr.basic import force_open_dir, view
+from hlpr.exceptions import Error
 
 from misc.curvePlot import CurvePlotr
 #from model.modcom import DFunc
@@ -33,7 +34,7 @@ class NRconv(CurvePlotr):
     # program pars
     #===========================================================================
     ft_m = 0.3048
-    
+    dcoln = 'depth_m'
     res_d = dict() #container of each library created
     #===========================================================================
     # data labels
@@ -50,13 +51,26 @@ class NRconv(CurvePlotr):
     od_typer = 'ResType'
     od_type2 = 'Type2'
     od_depthFt = 'Depth ft'
+    
     od_dmgS = 'Damage St $'
     od_dmgC = 'Damage Cont $'
+    od_dmg_pct = 'Damage Total (% of Assessed Value)'
+    
+    
+    #tag cleaning
+    tag_cln_d = {
+        ' ':'',
+        'Agricultural':'Ag',
+        'buildings':'bldgs',
+        'Curve':'C'
+        }
     
     
     def __init__(self,
                  logger=None,
-                 out_dir=r'C:\LS\03_TOOLS\CanFlood\outs\misc\vfunc_conv',
+                 out_dir=None,
+                 prec=5, #precision
+
                  **kwargs
                  ):
         
@@ -64,6 +78,7 @@ class NRconv(CurvePlotr):
         if logger is None: logger=mod_logger
         
         super().__init__(logger=logger, out_dir=out_dir,
+                         prec=prec,
                          **kwargs) #initilzie teh baseclass
         
 
@@ -102,17 +117,36 @@ class NRconv(CurvePlotr):
         
         return df
 
-    def convert(self, #get CanFlood format on Acres group
+
+    def _get_tag(self, btag, ltype):
+        if ltype == 'total':
+            tag = btag
+        else:
+            tag = '%s_%s' % (btag, ltype)
+            
+            
+        #standard cleans
+        for k,v in self.tag_cln_d.items():
+            tag = tag.replace(k, v)
+            
+            
+        return tag.strip()
+
+    def convert(self, #get CanFlood format curve from Nickys spreadsheet
+                
+                      #search data
                       srch_str = 'Acres Ltd., Guidelines for analysis',
                       libName = 'Acres_1968', #name prefix for library
+                      
+                      #data handles
+                      as_pct = False, #whether curve is percent or absolute damages
                       df_raw = None,
+                      
+                      #meta info
+                      noMeta_colns = set(), #depth-damage also excluded
                       metac_d = {
                           'desc':'depth-damage curves for Residential, Commericial, and Inudstrial buildings in 1968 Galt, ON',
-                          'scale_units':'none',
-                          'impact_units':'$CAD',
-                          'exposure_units':'m'
-                          
-                          }, #function level defaults
+                          }, 
                       
                       lt_impactVal_d = {
                             'cont':'contents depreciated or repair value and some cleaning',
@@ -121,37 +155,61 @@ class NRconv(CurvePlotr):
                               
                       ):
         
-        log = self.logger.getChild('acres1968')
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        log = self.logger.getChild(libName)
         if df_raw is None: df_raw= self.df
         
+        dcoln = self.dcoln
+        #those we are NOT including in the meta reporting
+        dd_colns = [self.od_typer, self.od_type2]
         
-
-
+        if as_pct:
+            dd_colns = dd_colns + [self.od_dmg_pct]
+            subGroup_d = {'total':self.od_dmg_pct} #main divisor for curve librarries
+        else:
+            dd_colns = dd_colns + [self.od_dmgS, self.od_dmgC]
+            subGroup_d = {'cont':self.od_dmgC,'strc':self.od_dmgS}
+        
         
         #=======================================================================
         # clean1
         #=======================================================================
         df = self._get_source(srch_str, df_raw, logger=log).dropna(how='all', axis=1)
+    
+        #clean columns
+        df.columns = df.columns.str.strip()
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        miss_l = set(dd_colns).difference(df.columns)
+        assert len(miss_l)==0, 'missing requested data colns: %s'%miss_l
         
+        #impact descriptors matches subgruops
+        miss_l = set(lt_impactVal_d.keys()).symmetric_difference(subGroup_d.keys())
+        assert len(miss_l)==0, 'subgroup key mismatch: %s'%miss_l
+        
+        #meta columns
+        miss_l = set(noMeta_colns).difference(df.columns)
+        assert len(miss_l)==0, 'requested noMeta cols not in df: %s'%miss_l
         
         #=======================================================================
         # conversions
         #=======================================================================
         #to meteres
-        dcoln = 'depth_m'
+        
         df[dcoln] = df[self.od_depthFt]*self.ft_m
         df = df.drop(self.od_depthFt, axis=1) #remove for reporting
+        dd_colns.append(dcoln)
         
-        
+        #year
         df.loc[:, self.od_year] = df[self.od_year].astype(int)
         
         #=======================================================================
         # get default meta----
         #=======================================================================
-        #those we are NOT including in the meta reporting
-        dd_colns = [self.od_typer, self.od_type2, dcoln,
-                            self.od_dmgS, self.od_dmgC]
-        noMeta_colns = set(dd_colns)
+        noMeta_colns.update(dd_colns)
         
         crve_d = self.crve_d.copy() #start with a copy
         
@@ -175,11 +233,10 @@ class NRconv(CurvePlotr):
             'location':self.od_fplain,
             'source':self.od_source,
             }.items():
+            if mcoln in metac_d: continue #skip these... take users value
             
             #check its unique
             assert len(df[rcoln].unique())==1, '%s not unique: %s'%(rcoln, df[rcoln].duplicated(keep=False))
-            
-            
             crve_d[mcoln] = df[rcoln].unique()[0]
             
             noMeta_colns.add(rcoln) #make sure we dont report this one
@@ -189,6 +246,8 @@ class NRconv(CurvePlotr):
         #=======================================================================
         self.noMeta_colns = noMeta_colns.copy() #set for smry
         """some of these are redundant... but including for completeness"""
+        cols = df.columns[~df.columns.isin(noMeta_colns)]
+        log.info('collecting metadat from %i cols: %s'%(len(cols), cols.tolist()))
         
         for coln, cser in df.loc[:, ~df.columns.isin(noMeta_colns)].items():
             
@@ -202,24 +261,36 @@ class NRconv(CurvePlotr):
         #=======================================================================
         # assemble curves----
         #=======================================================================
+        #=======================================================================
+        # prep
+        #=======================================================================
         rlib = dict() #contents curves
-
+        
+        df.loc[:,self.od_type2] = df[self.od_type2].fillna(' ') #need this to pickup gruops
+        """
+        view(df)
+        """
 
                      
-        #group loop
+        #=======================================================================
+        # #group loop
+        #=======================================================================
         for (coln1, coln2), gdf in df.loc[:, dd_colns].groupby(by = [self.od_typer, self.od_type2]):
-            btag = '%s_%s'%(coln1, coln2)
+            #get tag (with dummy value handling)
+            if coln2==' ':
+                btag = coln1
+            else:
+                btag = '%s_%s'%(coln1, coln2)
             
             
             #build for each
-            for ltype, coln in {
-                'cont':self.od_dmgC,
-                'strc':self.od_dmgS,
-                }.items():
+            for ltype, coln in subGroup_d.items():
+                assert coln in gdf.columns, coln
                 if not ltype in rlib: rlib[ltype]=dict() #add the page
 
                 # meta
-                tag = '%s_%s'%(btag, ltype)
+                tag = self._get_tag(btag, ltype)
+                    
                 dcurve_d = crve_d.copy()
                 dcurve_d['tag']=tag
                 dcurve_d['impact_var'] = lt_impactVal_d[ltype]
@@ -239,14 +310,24 @@ class NRconv(CurvePlotr):
                     gdf1 = gdf.append(zser, ignore_index=True)
                 else:
                     gdf1 = gdf.copy() #dont want to cary over the value from last loop
+                    
+                """
+                view(gdf1)
+                """
                 
                 #sort and convert
-                dd_d = gdf1.loc[:, [dcoln, coln]].dropna(
+                gdf2 = gdf1.loc[:, [dcoln, coln]].dropna(
                     ).sort_values(dcoln, ascending=True
-                    ).set_index(dcoln, drop=True).dropna().iloc[:, 0].to_dict()
+                    ).round(self.prec).dropna(how='any', axis=0).astype(float)
+                    
+                """precision of indexes behaving unexpectedly"""
+
+                dd_d = {round(e[0], self.prec):e[1] for e in gdf2.values}
                 
+                #check first value
+                if not dd_d[list(dd_d.keys())[0]]==0.0:
+                    raise Error('bad zero value: %s'%dd_d[0])
                 
-                assert dd_d[0]==0.0, 'bad zero value: %s'%dd_d[0]
                 #assemble
                 dcurve_d = {**dcurve_d, **dd_d}
 
@@ -382,11 +463,49 @@ class NRconv(CurvePlotr):
                 df.to_excel(writer, sheet_name=tabnm, index=index, header=header)
             writer.save()
             
-            log.info('wrote %i sheets to file: \n    %s'%(len(d), ofn))
+            log.info('wrote %i sheets to file: \n    %s'%(len(d), ofp))
         
         return out_dir
         
+
+def run(set_d,
+        plot=True,
+        out_dir=r'C:\LS\03_TOOLS\CanFlood\outs\misc\vfunc_conv',
+        ):
+    
+    #===========================================================================
+    # setup
+    #===========================================================================
+    wrkr = NRconv(out_dir=out_dir, figsize = (10,10))
+    wrkr.load()
+    
+    #===========================================================================
+    # loop each set
+    #===========================================================================
+    for libName, d in set_d.items():
         
+        #get kwargs
+        kwargs = {k:v for k,v in d.items() if k in ['srch_str','as_pct', 'lt_impactVal_d', 'metac_d', 'noMeta_colns']}
+                
+        #run conversion
+        wrkr.convert(libName=libName,**kwargs)
+ 
+        #=======================================================================
+        # plots       
+        #=======================================================================
+        if plot:
+            fig_d = wrkr.plot_res()
+     
+            for k,v in fig_d.items():
+                wrkr.output_fig(v)
+                
+        #=======================================================================
+        # outputs
+        #=======================================================================
+            
+        out_dir = wrkr.output()
+        
+    return out_dir
         
         
         
@@ -394,28 +513,39 @@ class NRconv(CurvePlotr):
 if __name__=='__main__':
     
     
-    
-    
-    wrkr = NRconv()
-    wrkr.load()
-    
-    for libName, srch_str in {
-                              'Acres_1968':'Acres Ltd., Guidelines for analysis',
-                            }.items():
-    
-        wrkr.convert(libName=libName, srch_str=srch_str)
-    
-#===============================================================================
-#     #plots
-#     fig_d = wrkr.plot_res()
-# 
-#     
-#     #outputs
-#     for k,v in fig_d.items():
-#         wrkr.output_fig(v)
-#===============================================================================
+    out_dir = run(
+        {
+        #=======================================================================
+        # 'Acres_1968':{
+        #     'srch_str':'Acres Ltd., Guidelines for analysis',
+        #     'as_pct':False,
+        #     'metac_d':{
+        #                   'desc':'depth-damage functions for Residential, Commericial, and Inudstrial buildings in 1968 Galt, ON',
+        #             },
+        #             },
+        #=======================================================================
         
-    out_dir = wrkr.output()
+          'KGS_2000':{
+              'srch_str':'KGS Group, Red River',
+              'as_pct':True,
+              'metac_d':{
+                          'desc':'depth-damage functions for buildings and basements in 1997 Southern Manitoba',
+                          'location':'Red River Basin, MB',
+                          'scale_var':'total market value',
+                          'scale_units':'$CAD',
+                          'impact_units':'pct',
+                          'exposure_var':'flood depth above main floor',
+                          'empirical_synthetic':'semi-empirical',
+                          'cost_year':'1997',
+                    },
+              'lt_impactVal_d':{'total':'total foundation, structure components, and moveable losses'},
+              'noMeta_colns':{'Type', 'Notes on Depths', 'Notes2', '$ Year', 'Region/Floodplain', 'Coverage of Report'}
+             },
+        }
+        )
+
+    
+
 
     #===========================================================================
     # wrap
