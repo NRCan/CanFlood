@@ -4,7 +4,8 @@ creation_date = 1968
 location = Galt, ON
 
 [variables]
-reference = Acres Ltd., Guidelines for analysis:  streamflows, flood damages, secondary flood control benefits. 
+reference = Acres Limited. 1968. “Guidelines for Analysis - Volume 2 - Flood Damages.” Governments of Canada and Ontario.
+	
 asset_types1 = residential buildings
 asset_types2 = structure, contents
 classification_scheme = (Acres Limited 1968)

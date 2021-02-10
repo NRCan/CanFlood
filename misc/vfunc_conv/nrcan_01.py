@@ -21,21 +21,16 @@ mod_logger = basic_logger()
 from hlpr.basic import force_open_dir, view
 from hlpr.exceptions import Error
 
-from misc.curvePlot import CurvePlotr
+from vfunc_conv.vcoms import VfConv
 #from model.modcom import DFunc
 
 mod_name = 'misc.nrcan_01'
 today_str = datetime.datetime.today().strftime('%Y%m%d')
 
 
-class NRconv(CurvePlotr):
+class NRconv(VfConv):
     
-    #===========================================================================
-    # program pars
-    #===========================================================================
-    ft_m = 0.3048
-    dcoln = 'depth_m'
-    res_d = dict() #container of each library created
+
     #===========================================================================
     # data labels
     #===========================================================================
@@ -57,13 +52,7 @@ class NRconv(CurvePlotr):
     od_dmg_pct = 'Damage Total (% of Assessed Value)'
     
     
-    #tag cleaning
-    tag_cln_d = {
-        ' ':'',
-        'Agricultural':'Ag',
-        'buildings':'bldgs',
-        'Curve':'C'
-        }
+
     
     
     def __init__(self,

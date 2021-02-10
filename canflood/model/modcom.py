@@ -3744,13 +3744,21 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         df_raw = pd.DataFrame(clib_d).T
         
         cols = df_raw.columns
-        
+        assert 'exposure' in cols
         #=======================================================================
         # #location of depth values
         #=======================================================================
         boolcol = cols[cols.get_loc('exposure')+1:]
         
         ddf = df_raw.loc[:, boolcol]
+        
+        #check it
+        try:
+            ddf.columns = ddf.columns.astype(np.float)
+            ddf = ddf.astype(np.float)
+        except Exception as e:
+            raise Error('got bad type on depth values w/ \n    %s'%e)
+
         
         #min max
         sdf = pd.Series(ddf.min(axis=1), name='min').to_frame()
@@ -3762,7 +3770,10 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         sdf['dep_dmg'] = pd.Series({i:row.dropna().to_dict() for i, row in ddf.iterrows()})
         
         #check montonoticy  
-        """not sure how these do with variable lengths"""        
+        """not sure how these do with variable lengths
+        
+        view(ddf)
+        """        
         sdf['dmg_mono']=pd.DataFrame(np.diff(ddf)>=0, index=sdf.index).all(axis=1)
         
         sdf['dep_mono']=pd.Series({i:np.all(np.diff(row.dropna().index.tolist())>0) for i, row in ddf.iterrows()})

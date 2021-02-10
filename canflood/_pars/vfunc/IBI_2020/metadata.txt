@@ -5,10 +5,11 @@ location = Lower Mainland, BC
 
 [variables]
 reference = IBI Group. 2020. “Vulnerability Functions for Buildings and Facilities in BC’s Lower Mainland.” Fraser Basin Council.
+	
 asset_types1 = building structure
 asset_types2 = basement, common, garage, main floor
 original_platform = CanFlood
-classification_scheme = none
+classification_scheme = none (attribute based)
 impact_units = $CAD
 cost_year = 2020
 empirical_synthetic = synthetic

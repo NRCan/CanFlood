@@ -132,6 +132,7 @@ class CurvePlotr(DFunc):
         # convert clib
         #=======================================================================
         if lib_as_df:
+            assert isinstance(cLib_d[list(cLib_d.keys())[0]], pd.DataFrame), 'expected frame'
             cLib_d = {k:df.set_index(df.columns[0], drop=True).iloc[:,0].to_dict() for k, df in cLib_d.items()}
             
             """
