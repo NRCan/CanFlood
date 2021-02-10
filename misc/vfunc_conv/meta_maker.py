@@ -7,9 +7,9 @@ Created on Feb. 9, 2021
 
 from io import BytesIO
 
-import requests, os
+import requests, os, configparser
 import pandas as pd
-from hlpr.basic import view
+from hlpr.basic import view, force_open_dir
 
 """couldnt get this to work
 r = requests.get('https://docs.google.com/spreadsheets/d/1CwoGkVlY6YPF3zb67BlJTKjeNr09Mez0f6c7EjPOmNg/edit?usp=sharing')
@@ -22,17 +22,7 @@ df = pd.read_csv(BytesIO(data), index_col=0)"""
 #===============================================================================
 fp = r'C:\LS\03_TOOLS\CanFlood\ins\misc\vfunc_conv\CanFlood - Vulnerability Functions - libraries.csv'
 
-out_dir = r'C:\LS\03_TOOLS\CanFlood\ins\misc\vfunc_conv'
-
-#===============================================================================
-# load
-#===============================================================================
-df_raw = pd.read_csv(fp, header=1, index_col=None)
-
-
-df = df_raw.dropna(subset=['name'], how='any', axis=0).set_index('name', drop=False)
-
-df = df.dropna(axis=1, how='all')
+out_dir = r'C:\LS\03_TOOLS\CanFlood\outs\misc\vfunc_conv\meta'
 
 #description (main display)
 colnh_d = {
@@ -44,6 +34,30 @@ colnh_d = {
                'cost_year', 'empirical_synthetic'
                ]
        }
+
+#===============================================================================
+# load
+#===============================================================================
+df_raw = pd.read_csv(fp, header=1, index_col=None)
+
+
+#===============================================================================
+# clean
+#===============================================================================
+df = df_raw.dropna(subset=['name'], how='any', axis=0).set_index('name', drop=False)
+
+df = df.dropna(axis=1, how='all')
+
+#get just those in the library
+df.loc[:, 'vlib'] = df['vlib'].fillna(False)
+boolidx = df['vlib']
+
+print('%i of %i vlib=True'%(boolidx.sum(), len(boolidx)))
+df = df.loc[boolidx, :].drop('vlib', axis=1)
+
+"""
+df.columns
+"""
 #===============================================================================
 # prechecks
 #===============================================================================
@@ -52,18 +66,62 @@ for sname, l in colnh_d.items():
     assert len(miss_l)==0, '%s columns not found: %s'%(sname, miss_l)
     
 if not os.path.exists(out_dir):os.makedirs(out_dir)
+
+#===============================================================================
+# formatters
+#===============================================================================
+#df.loc[:,'creation_date'] =df['creation_date'].astype(int) 
+
+
 #===============================================================================
 # loop and build
 #===============================================================================
 print('on %s'%str(df.shape))
-for name, row in df.iterrows():
+
+for name, r_raw in df.iterrows():
     print('building \'%s\''%name)
+
+    
     #setup the container
     od = os.path.join(out_dir, name)
-    os.makedirs(od)
+    if not os.path.exists(od):os.makedirs(od)
+    
+    #===========================================================================
+    # prep data
+    #===========================================================================
+    row = r_raw.dropna()
+    
+    #format dates
+    for coln in ['cost_year', 'creation_date']:
+        if coln in row:
+            row[coln] = int(row[coln])
+    
+    #===========================================================================
+    # collect data
+    #===========================================================================
+    
+    lib_d = dict() #results container
+    
+    for sname, cols in colnh_d.items():
+        lib_d[sname] = row[row.index.isin(cols)].to_dict()
+        
+    #===========================================================================
+    # config file
+    #===========================================================================
+    
+    cPars = configparser.ConfigParser()
+    cPars.read_dict(lib_d)
+    
+    #write it
+    cfp = os.path.join(od, 'metadata.txt')
+    with open(cfp, 'w') as configFile:
+        cPars.write(configFile)
+        
+    print('    wrote to %s'%cfp)
     
     
-    
+force_open_dir(out_dir)
+
 
 
 """
