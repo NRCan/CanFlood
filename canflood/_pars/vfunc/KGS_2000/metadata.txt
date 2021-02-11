@@ -4,7 +4,7 @@ creation_date = 2000
 location = Red River Basin, Manitoba
 
 [variables]
-reference = KGS Group. 2000. “Red River Basin - Stage-Damage Curv·es Update and Preparation of Flood Damage Maps - Final Report.” 99-006–01.
+reference = KGS Group. 2000. 'Red River Basin - Stage-Damage Curves Update and Preparation of Flood Damage Maps - Final Report.' 99-006â€“01.
 	
 asset_types1 = buildings
 asset_types2 = foundation, structure components, and moveables

@@ -10,6 +10,7 @@ from io import BytesIO
 import requests, os, configparser
 import pandas as pd
 from hlpr.basic import view, force_open_dir
+from hlpr.exceptions import Error
 
 """couldnt get this to work
 r = requests.get('https://docs.google.com/spreadsheets/d/1CwoGkVlY6YPF3zb67BlJTKjeNr09Mez0f6c7EjPOmNg/edit?usp=sharing')
@@ -71,7 +72,7 @@ if not os.path.exists(out_dir):os.makedirs(out_dir)
 # formatters
 #===============================================================================
 #df.loc[:,'creation_date'] =df['creation_date'].astype(int) 
-
+raise Error('fix encoding on variables.reference')
 
 #===============================================================================
 # loop and build

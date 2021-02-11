@@ -4,7 +4,7 @@ creation_date = 1968
 location = Galt, ON
 
 [variables]
-reference = Acres Limited. 1968. “Guidelines for Analysis - Volume 2 - Flood Damages.” Governments of Canada and Ontario.
+reference = Acres Limited. 1968. 'Guidelines for Analysis - Volume 2 - Flood Damages.' Governments of Canada and Ontario.
 	
 asset_types1 = residential buildings
 asset_types2 = structure, contents

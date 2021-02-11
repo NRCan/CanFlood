@@ -4,7 +4,7 @@ creation_date = 2020
 location = Lower Mainland, BC
 
 [variables]
-reference = IBI Group. 2020. “Vulnerability Functions for Buildings and Facilities in BC’s Lower Mainland.” Fraser Basin Council.
+reference = IBI Group. 2020. 'Vulnerability Functions for Buildings and Facilities in BCs Lower Mainland.' Fraser Basin Council.
 	
 asset_types1 = building structure
 asset_types2 = basement, common, garage, main floor
