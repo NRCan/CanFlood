@@ -534,7 +534,7 @@ class LikeSampler(Plotr, Qcoms):
                       df=None,**kwargs): 
 
         if df is None: df=self.res_df
-        title = '%s Conditional P histogram on %i events'%(self.tag, len(df.columns))
+        title = '%s Conditional P Histogram on %i Events'%(self.tag, len(df.columns))
         
         val_str = '%i assets \nevent_rels=\'%s\''%(len(df), self.event_rels)
 
@@ -549,7 +549,7 @@ class LikeSampler(Plotr, Qcoms):
                       **kwargs): 
 
         if df is None: df=self.res_df
-        title = '%s Conditional P boxplots on %i events'%(self.tag, len(df.columns))
+        title = '%s Conditional P Boxplots on %i Events'%(self.tag, len(df.columns))
 
         val_str = '%i assets \nevent_rels=\'%s\''%(len(df), self.event_rels)
 
