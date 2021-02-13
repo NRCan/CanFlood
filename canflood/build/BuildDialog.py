@@ -1143,9 +1143,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                           out_dir = out_dir, fname='gels', cf_fp=cf_fp
                           )
         
-        
-
-        
         res_vlay = wrkr.run([rlay], finv, psmp_stat=psmp_stat)
         
         #check it
@@ -1265,6 +1262,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         if self.checkBox_LS_hist.isChecked():
             fig = wrkr.plot_hist()
             wrkr.output_fig(fig)
+
             
         if self.checkBox_LS_box.isChecked():
             fig = wrkr.plot_boxes()

@@ -530,19 +530,21 @@ class LikeSampler(Plotr, Qcoms):
             cf_fp = cf_fp
             )
         
+    #===========================================================================
+    # PLOTS-----
+    #===========================================================================
+        
     def plot_hist(self, #plot failure histogram of all layers
                       df=None,**kwargs): 
 
         if df is None: df=self.res_df
         title = '%s Conditional P Histogram on %i Events'%(self.tag, len(df.columns))
         
-        val_str = '%i assets \nevent_rels=\'%s\' \ndate=%s'%(
-            len(df), self.event_rels, self.today_str)
 
         return self.plot_impact_hist(df,
                      title=title, xlab = 'Pfail',
                      xlims_t = (0, 1.0),
-                     val_str=val_str, **kwargs)
+                     val_str=self._get_valstr(df), **kwargs)
         
 
     def plot_boxes(self, #plot boxplots of results
@@ -552,13 +554,15 @@ class LikeSampler(Plotr, Qcoms):
         if df is None: df=self.res_df
         title = '%s Conditional P Boxplots on %i Events'%(self.tag, len(df.columns))
 
-        val_str = '%i assets \nevent_rels=\'%s\' \ndate=%s'%(
-            len(df), self.event_rels, self.today_str)
 
         return self.plot_impact_boxes(df,
                      title=title, xlab = 'hazard layer', ylab = 'Pfail',
                      ylims_t = (0, 1.0),smry_method='mean',
-                     val_str=val_str,   **kwargs)
+                     val_str=self._get_valstr(df),   **kwargs)
+        
+    def _get_valstr(self, df):
+        return '%i assets \nevent_rels=\'%s\' \ndate=%s'%(
+            len(df), self.event_rels, self.today_str)
         
 
 
