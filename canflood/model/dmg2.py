@@ -1384,6 +1384,10 @@ class Dmg2(DFunc, Plotr):
     #===========================================================================
     # PLOTRS------
     #===========================================================================
+    def _get_valstr(self, df):
+        return 'asset count=%i \napply_miti=%s \nground_water=%s \nfelv=\'%s\' \ndate= %s'%(
+            len(df), self.apply_miti, self.ground_water, self.felv, self.today_str)
+        
     def plot_boxes(self, #box plots for each event 
                    df=None, 
                       
@@ -1402,13 +1406,32 @@ class Dmg2(DFunc, Plotr):
 
         title = '%s %s dmg2.Impact Boxplots on %i Events'%(plotTag, self.name, len(df.columns))
         
-        val_str = '%i assets \napply_miti=%s \nground_water=%s \nfelv=\'%s\' \ndate= %s'%(
-            len(df), self.apply_miti, self.ground_water, self.felv, self.today_str)
 
         return self.plot_impact_boxes(df,
-                      title=title, xlab = impact_name, ylab = 'hazard event raster',
-                       val_str=val_str, **kwargs)
+                      title=title, xlab = 'hazard event raster', ylab = impact_name,
+                       val_str=self._get_valstr(df), **kwargs)
             
+    def plot_hist(self, #box plots for each event 
+                   df=None, 
+                      
+                    #labelling
+                    impact_name = None, 
+
+                    #figure parametrs
+                     plotTag=None,        
+                    
+                    **kwargs
+                      ): 
+
+        if impact_name is None: impact_name=self.impact_units
+        if plotTag is None: plotTag=self.tag
+        if df is None: df = self.cres_df.copy()
+
+        title = '%s %s dmg2.Impact Histograms on %i Events'%(plotTag, self.name, len(df.columns))
+
+        return self.plot_impact_hist(df,
+                      title=title, xlab = impact_name,
+                       val_str=self._get_valstr(df), **kwargs)
             
         
                    
