@@ -143,6 +143,7 @@ class LikeSampler(Qcoms):
         if cid is  None: cid=self.cid
         if event_rels is None: event_rels=self.event_rels
         self.event_rels=event_rels #reset for plotting
+        assert isinstance(lpol_d, dict)
         #======================================================================
         # #check/load the data
         #======================================================================

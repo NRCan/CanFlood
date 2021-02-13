@@ -168,7 +168,7 @@ class Preparor(Qcoms):
             raise Error('user selected invalid cid \'%s\''%cid)  
         
         
-        assert cid in [field.name() for field in vlay.fields()]
+        assert cid in [field.name() for field in vlay.fields()], '%s missing cid %s'%(vlay.name(), cid)
 
         #=======================================================================
         # #extract data
@@ -187,7 +187,7 @@ class Preparor(Qcoms):
         if not cid in df.columns:
             raise Error('cid not found in finv_df')
         
-        assert df[cid].is_unique
+        assert df[cid].is_unique, '%s got non-unique cid \"%s\''%(vlay.name(), cid)
         assert 'int' in df[cid].dtypes.name, 'cid \'%s\' bad type'%cid
         
         self.feedback.upd_prog(50)

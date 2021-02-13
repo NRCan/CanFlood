@@ -69,7 +69,8 @@ class Rsamp(Qcoms):
                 }
     
 
-    
+    #container for depth rasters (for looped runs)
+    dep_rlay_d = dict()
     
     def __init__(self,
                  fname='expos', #prefix for file name
@@ -150,7 +151,9 @@ class Rsamp(Qcoms):
     def load_rlays(self, #shortcut for loading a set of rasters in a directory
                    
                    data_dir,
-                   rfn_l=None, 
+                   rfn_l=None,  #if None, loads all tifs in the directory
+                   
+                   aoi_vlay = None,
                    logger=None,
                    **kwargs
                    ):
@@ -185,7 +188,9 @@ class Rsamp(Qcoms):
         log.info('loading %i rlays'%len(rfp_d))
         rlay_d = dict()
         for fn, fp in rfp_d.items():
-            rlay_d[fn] = self.load_rlay(fp, logger=log, **kwargs)
+            rlay_d[fn] = self.load_rlay(fp, logger=log,aoi_vlay=aoi_vlay, **kwargs)
+            
+
             
             
         log.info('loaded %i'%len(rlay_d))
@@ -205,7 +210,7 @@ class Rsamp(Qcoms):
             
             #inundation sampling controls
             as_inun=False, #whether to sample for inundation (rather than wsl values)
-            dtm_rlay=None, #dtm raster
+            dtm_rlay=None, #dtm raster (for as_inun=True)
             dthresh = 0, #fordepth threshold
             clip_dtm=False,
             fname = None, #prefix for layer name
@@ -488,6 +493,7 @@ class Rsamp(Qcoms):
         #===================================================================
         # scale
         #===================================================================
+        
         if not float(scaleFactor) ==float(1.00):
             rlayScale = self.raster_mult(rlayTrim, scaleFactor, logger=log)
             
@@ -682,6 +688,7 @@ class Rsamp(Qcoms):
     def samp_inun(self, #inundation percent for polygons
                   finv, raster_l, dtm_rlay, dthresh,
                    ):
+
         #=======================================================================
         # defaults
         #=======================================================================
@@ -720,11 +727,7 @@ class Rsamp(Qcoms):
             #===================================================================
             # #get depth raster
             #===================================================================
-            log.info('calculating depth raster')
-
-            #using Qgis raster calculator constructor
-            dep_rlay = self.raster_subtract(rlay, dtm_rlay, logger=log,
-                                            out_dir = os.path.join(temp_dir, 'dep'))
+            dep_rlay = self._get_depr(dtm_rlay, log, temp_dir, rlay)
             
             #===================================================================
             # get threshold
@@ -732,6 +735,12 @@ class Rsamp(Qcoms):
             #reduce to all values above depththreshold
 
             log.info('calculating %.2f threshold raster'%dthresh) 
+            
+            """
+            TODO: speed this up somehow... super slow
+                native calculator?
+                
+            """
             
             thr_rlay = self.grastercalculator(
                                 'A*(A>%.2f)'%dthresh, #null if not above minval
@@ -859,7 +868,10 @@ class Rsamp(Qcoms):
         
         return res_vlay
 
-    def samp_inun_line(self, #inundation percent for polygons
+
+
+
+    def samp_inun_line(self, #inundation percent for Line
                   finv, raster_l, dtm_rlay, dthresh,
                    ):
         
@@ -916,18 +928,14 @@ class Rsamp(Qcoms):
         names_d = dict()
 
         for indxr, rlay in enumerate(raster_l):
-            log = self.logger.getChild('samp_inun.%s'%rlay.name())
+            log = self.logger.getChild('samp_inunL.%s'%rlay.name())
             ofnl = [field.name() for field in finv.fields()]
 
 
             #===================================================================
             # #get depth raster
             #===================================================================
-            log.info('calculating depth raster')
-
-            #using Qgis raster calculator constructor
-            dep_rlay = self.raster_subtract(rlay, dtm_rlay, logger=log,
-                                            out_dir = os.path.join(temp_dir, 'dep'))
+            dep_rlay = self._get_depr(dtm_rlay, log, temp_dir, rlay)
             
             #===============================================================
             # #convert to points
@@ -1045,6 +1053,18 @@ class Rsamp(Qcoms):
         """
 
         return finv
+    
+    def _get_depr(self, dtm_rlay, log, temp_dir, rlay):
+        dep_rlay_nm = '%s_%s' % (dtm_rlay.name(), rlay.name())
+        log.info('calculating depth raster \'%s\''%dep_rlay_nm)
+        if dep_rlay_nm in self.dep_rlay_d:
+            dep_rlay = self.dep_rlay_d[dep_rlay_nm]
+        else:
+            dep_rlay = self.raster_subtract(rlay, dtm_rlay, logger=log, 
+                out_dir=os.path.join(temp_dir, 'dep'), 
+                layname=dep_rlay_nm)
+            self.dep_rlay_d[dep_rlay_nm] = dep_rlay #using Qgis raster calculator constructor
+        return dep_rlay
     
     def raster_subtract(self, #performs raster calculator rlayBig - rlaySmall
                         rlayBig, rlaySmall,

@@ -400,7 +400,9 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
 
         return vlay
     
-    def load_rlay(self, fp, logger=None):
+    def load_rlay(self, fp, 
+                  aoi_vlay = None,
+                  logger=None):
         if logger is None: logger = self.logger
         log = logger.getChild('load_rlay')
         
@@ -417,19 +419,29 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         
         #===========================================================================
-        # wrap
+        # check
         #===========================================================================
         assert rlayer.isValid(), "Layer failed to load!"
         assert isinstance(rlayer, QgsRasterLayer), 'failed to get a QgsRasterLayer'
         
         if not rlayer.crs() == self.qproj.crs():
             log.warning('loaded layer \'%s\' crs mismatch!'%rlayer.name())
-        #assert rlayer.crs() == self.crs, 'crs mismatch'
 
-        
         log.debug('loaded \'%s\' from \n    %s'%(rlayer.name(), fp))
         
-        return rlayer
+        #=======================================================================
+        # aoi
+        #=======================================================================
+        if not aoi_vlay is None:
+            assert isinstance(aoi_vlay, QgsVectorLayer)
+            rlay2 = self.cliprasterwithpolygon(rlayer,aoi_vlay, logger=log)
+            mstore = QgsMapLayerStore() #build a new store
+            mstore.addMapLayers([rlayer]) #add the layers to the store
+            mstore.removeAllMapLayers() #remove all the layers
+        else:
+            rlay2 = rlayer
+        
+        return rlay2
     
     
     def write_rlay(self, #make a local copy of the passed raster layer
@@ -1153,7 +1165,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
           
         return res_rlay
     
-    def cliprasterwithpolygon2(self,
+    def cliprasterwithpolygon2(self, #with saga
                               rlay_raw,
                               poly_vlay,
                               ofp = None,
