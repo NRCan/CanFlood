@@ -701,28 +701,9 @@ class Model(ComWrkr,
         """
         this is only checking the first nest
         """
+        self.check_finv(df)
         
-        #minimum use expectation handles
-        for coln, hndl_d in finv_exp_d.items():
-            assert isinstance(hndl_d, dict)
-            assert coln in df.columns, \
-                '%s missing expected column \'%s\''%(dtag, coln)
-            ser = df[coln]
-            for hndl, cval in hndl_d.items():
-                
-                if hndl=='type':
-                    assert np.issubdtype(ser.dtype, cval), '%s.%s bad type: %s'%(dtag, coln, ser.dtype)
-                    
-                    """
-                    throwing  FutureWarning: Conversion of the second argument of issubdtype
-                    
-                    https://stackoverflow.com/questions/48340392/futurewarning-conversion-of-the-second-argument-of-issubdtype-from-float-to
-                    """
-                    
-                elif hndl == 'contains':
-                    assert cval in ser, '%s.%s should contain %s'%(dtag, coln, cval)
-                else:
-                    raise Error('unexpected handle: %s'%hndl)
+
                 
         #=======================================================================
         # resolve column gruops----
@@ -1682,6 +1663,18 @@ class Model(ComWrkr,
             #get data
             bdf = bdf.join(fdf.loc[:, finv_cdf.columns[finv_cdf.loc['ctype', :]=='miti']],
                      on=cid)
+            
+        #=======================================================================
+        # checks
+        #=======================================================================
+        for coln in ['ftag']:
+            bx =  bdf[coln].isna()
+            if bx.any():
+                log.debug('\n%s'%bdf.loc[bx, :])
+                raise Error('got %i \'%s\' nulls...see logger'%(bx.sum(), coln))
+            """
+            view(bdf)
+            """
         
         #======================================================================
         # wrap
@@ -3411,6 +3404,47 @@ class Model(ComWrkr,
             return False
         return True
     
+    def check_finv(self, #check finv logic
+                   df_raw,
+                   finv_exp_d =None,
+                   ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        dtag='finv'
+        if finv_exp_d is None: finv_exp_d=self.finv_exp_d
+        
+        df = df_raw.copy()
+        
+        
+        #=======================================================================
+        # #minimum use expectation handles
+        #=======================================================================
+        for coln, hndl_d in finv_exp_d.items():
+            assert isinstance(hndl_d, dict)
+            assert coln in df.columns, \
+                '%s missing expected column \'%s\''%(dtag, coln)
+            ser = df[coln]
+            for hndl, cval in hndl_d.items():
+                
+                if hndl=='type':
+                    assert np.issubdtype(ser.dtype, cval), '%s.%s bad type: %s'%(dtag, coln, ser.dtype)
+                    
+                    """
+                    throwing  FutureWarning: Conversion of the second argument of issubdtype
+                    
+                    https://stackoverflow.com/questions/48340392/futurewarning-conversion-of-the-second-argument-of-issubdtype-from-float-to
+                    """
+                    
+                elif hndl == 'contains':
+                    assert cval in ser, '%s.%s should contain %s'%(dtag, coln, cval)
+                else:
+                    raise Error('unexpected handle: %s'%hndl)
+        
+        
+        return True
+    
     #===========================================================================
     # OUTPUTS---------
     #===========================================================================
@@ -3608,6 +3642,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         
         #check it
         assert 'tag' in pars_d, '%s missing tag'%self.tabn
+        assert isinstance(pars_d['tag'], str), 'bad tag parameter type: %s'%type(pars_d['tag'])
         
         assert pars_d['tag']==self.tabn, 'tag/tab mismatch (\'%s\', \'%s\')'%(
             pars_d['tag'], self.tabn)
@@ -3817,8 +3852,13 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         
         crv_d = df.set_index(0, drop=True).dropna().iloc[:, 0].to_dict()
         
-        self.check_crvd(crv_d)
         
+        try:
+            self.check_crvd(crv_d)
+        except Exception as e:
+            """letting this pass for backwards compatability"""
+            self.logger.warning('curve failed check w/ \n    %s'%e)
+
 
     def check_crvd(self, #validate the passed curve_d  
                     crv_d,
@@ -3838,7 +3878,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         #=======================================================================
         miss_l = set(self.cdf_chk_d.keys()).difference(crv_d.keys())
         if not len(miss_l)==0:
-            raise Error('\'%s\' missing keys: %s'%(self.tabn, miss_l))
+            raise Error('dfunc \'%s\' missing keys: %s \n    %s'%(self.tabn, miss_l, self.curves_fp))
         
         #=======================================================================
         # value type

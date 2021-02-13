@@ -167,6 +167,9 @@ class Dmg2(DFunc, Plotr):
         #=======================================================================
         assert self.bdf['ftag'].dtype.char == 'O'
         ftags_valid = self.bdf['ftag'].unique().tolist()
+        
+        if np.nan in ftags_valid:
+            raise Error('got some nulls')
 
         log.info('loading for %i valid ftags in the finv'%len(ftags_valid))
         #=======================================================================
@@ -227,26 +230,7 @@ class Dmg2(DFunc, Plotr):
         return
         
         
-    def check_ftags(self): #check fx_tag values against loaded dfuncs
-        fdf = self.data_d['finv']
-        
-        #check all the tags are in the dfunc
-        
-        tag_boolcol = fdf.columns.str.contains('tag')
-        
-        f_ftags = pd.Series(pd.unique(fdf.loc[:, tag_boolcol].values.ravel())
-                            ).dropna().to_list()
 
-        c_ftags = list(self.dfuncs_d.keys())
-        
-        miss_l = set(f_ftags).difference(c_ftags)
-        
-        assert len(miss_l) == 0, '%i ftags in the finv not in the curves: \n    %s'%(
-            len(miss_l), miss_l)
-        
-        
-        #set this for later
-        self.f_ftags = f_ftags
 
     def run(self, #main runner fucntion
 
@@ -1301,6 +1285,30 @@ class Dmg2(DFunc, Plotr):
         log.info('got \'%s\' = \'%s\''%(attn, attv))
         
         return attv
+    
+    #===========================================================================
+    # VALIDATORS----
+    #===========================================================================
+    def check_ftags(self): #check fx_tag values against loaded dfuncs
+        fdf = self.data_d['finv']
+        
+        #check all the tags are in the dfunc
+        
+        tag_boolcol = fdf.columns.str.contains('tag')
+        
+        f_ftags = pd.Series(pd.unique(fdf.loc[:, tag_boolcol].values.ravel())
+                            ).dropna().to_list()
+
+        c_ftags = list(self.dfuncs_d.keys())
+        
+        miss_l = set(f_ftags).difference(c_ftags)
+        
+        assert len(miss_l) == 0, '%i ftags in the finv not in the curves: \n    %s'%(
+            len(miss_l), miss_l)
+        
+        
+        #set this for later
+        self.f_ftags = f_ftags
 
     #===========================================================================
     # OUTPUTRS-------------
