@@ -17,7 +17,7 @@ helper functions w/o qgis api
 # imports------------
 #==============================================================================
 #python
-import os, configparser, logging, re
+import os, configparser, logging, re, datetime
 import pandas as pd
 pd.set_option('display.max_rows',10)
 import numpy as np
@@ -92,6 +92,7 @@ class ComWrkr(object): #common methods for all classes
         self.out_dir = out_dir
         self.cf_fp = cf_fp
         self.prec = prec
+        self.today_str = datetime.datetime.now().strftime('%Y-%m-%d %H:%M') #nice for labelling plots
         
         #=======================================================================
         # feedback

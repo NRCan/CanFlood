@@ -536,7 +536,8 @@ class LikeSampler(Plotr, Qcoms):
         if df is None: df=self.res_df
         title = '%s Conditional P Histogram on %i Events'%(self.tag, len(df.columns))
         
-        val_str = '%i assets \nevent_rels=\'%s\''%(len(df), self.event_rels)
+        val_str = '%i assets \nevent_rels=\'%s\' \ndate=%s'%(
+            len(df), self.event_rels, self.today_str)
 
         return self.plot_impact_hist(df,
                      title=title, xlab = 'Pfail',
@@ -551,7 +552,8 @@ class LikeSampler(Plotr, Qcoms):
         if df is None: df=self.res_df
         title = '%s Conditional P Boxplots on %i Events'%(self.tag, len(df.columns))
 
-        val_str = '%i assets \nevent_rels=\'%s\''%(len(df), self.event_rels)
+        val_str = '%i assets \nevent_rels=\'%s\' \ndate=%s'%(
+            len(df), self.event_rels, self.today_str)
 
         return self.plot_impact_boxes(df,
                      title=title, xlab = 'hazard layer', ylab = 'Pfail',

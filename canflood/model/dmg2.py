@@ -1391,36 +1391,23 @@ class Dmg2(DFunc, Plotr):
                     impact_name = None, 
 
                     #figure parametrs
-                    logger=None,  plotTag=None,        
+                     plotTag=None,        
                     
                     **kwargs
                       ): 
-        
-        """
-        dont want to initiate matplotlib in the module...
-            just using a nasty single f unction
-        """
-        #======================================================================
-        # defaults
-        #======================================================================
-        if logger is None: logger=self.logger
 
         if impact_name is None: impact_name=self.impact_units
         if plotTag is None: plotTag=self.tag
-        
         if df is None: df = self.cres_df.copy()
 
         title = '%s %s dmg2.Impact Boxplots on %i Events'%(plotTag, self.name, len(df.columns))
         
-        
-        val_str = '%i assets \napply_miti=%s \nground_water=%s \nfelv=\'%s\''%(
-            len(df), self.apply_miti, self.ground_water, self.felv)
+        val_str = '%i assets \napply_miti=%s \nground_water=%s \nfelv=\'%s\' \ndate= %s'%(
+            len(df), self.apply_miti, self.ground_water, self.felv, self.today_str)
 
-        
-        
         return self.plot_impact_boxes(df,
                       title=title, xlab = impact_name, ylab = 'hazard event raster',
-                       val_str=val_str, logger=logger,  **kwargs)
+                       val_str=val_str, **kwargs)
             
             
         
