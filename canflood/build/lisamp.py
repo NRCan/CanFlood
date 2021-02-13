@@ -530,145 +530,33 @@ class LikeSampler(Plotr, Qcoms):
             cf_fp = cf_fp
             )
         
-    def plot_hist_all(self, df, #plot failure histogram of all layers
-                      
-                    #figure parametrs
-                    figsize     = (6.5, 4), 
-                    grid=True,
-                      
-                      ): #plot all the histograms stacked
-        
-        """
-        dont want to initiate matplotlib in the module...
-            just using a nasty single f unction
-        """
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        log = self.logger.getChild('plot')
+    def plot_hist(self, #plot failure histogram of all layers
+                      df=None,**kwargs): 
+
+        if df is None: df=self.res_df
         title = '%s Conditional P histogram on %i events'%(self.tag, len(df.columns))
         
-        #=======================================================================
-        # manipulate data
-        #=======================================================================
-        #get a collectio nof arrays from a dataframe's columns
-        data = [ser.values for _, ser in df.items()]
-        #======================================================================
-        # setup
-        #======================================================================
-        
-        import matplotlib
-        matplotlib.use('Qt5Agg') #sets the backend (case sensitive)
-        import matplotlib.pyplot as plt
-        
-        #set teh styles
-        plt.style.use('default')
-        
-        #font
-        matplotlib_font = {
-                'family' : 'serif',
-                'weight' : 'normal',
-                'size'   : 8}
-        
-        matplotlib.rc('font', **matplotlib_font)
-        matplotlib.rcParams['axes.titlesize'] = 10 #set the figure title size
-        
-        #spacing parameters
-        matplotlib.rcParams['figure.autolayout'] = False #use tight layout
-        
-        
-        
-        #======================================================================
-        # figure setup
-        #======================================================================
-        plt.close()
-        fig = plt.figure(figsize=figsize,
-                     tight_layout=False,
-                     constrained_layout = True,
-                     )
-        
-        #axis setup
-        ax1 = fig.add_subplot(111)
-        
-        #aep units
-        ax1.set_xlim(0, 1.0)
- 
-        
-        # axis label setup
-        fig.suptitle(title)
-        ax1.set_xlabel('Pfail')
-        ax1.set_ylabel('asset count')
-        """
-        plt.show()
-        
-        pd.__version__
-        """
-
-        
-        #=======================================================================
-        # plot thie histogram
-        #=======================================================================
-        histVals_ar, bins_ar, patches = ax1.hist(
-            data, bins='auto', stacked=False, label=df.columns.to_list(),
-            alpha=0.9)
-        
-        
-        #=======================================================================
-        # Add text string 'annot' to lower left of plot
-        #=======================================================================
         val_str = '%i assets \nevent_rels=\'%s\''%(len(df), self.event_rels)
-        xmin, xmax1 = ax1.get_xlim()
-        ymin, ymax1 = ax1.get_ylim()
-        
-        x_text = xmin + (xmax1 - xmin)*.5 # 1/10 to the right of the left ax1is
-        y_text = ymin + (ymax1 - ymin)*.5 #1/10 above the bottom ax1is
-        anno_obj = ax1.text(x_text, y_text, val_str)
-        
-        #=======================================================================
-        # post formatting
-        #=======================================================================
-        if grid: 
-            ax1.grid()
+
+        return self.plot_impact_hist(df,
+                     title=title, xlab = 'Pfail',
+                     xlims_t = (0, 1.0),
+                     val_str=val_str, **kwargs)
         
 
-        #legend
-        h1, l1 = ax1.get_legend_handles_labels() #pull legend handles from axis 1
-
-        ax1.legend(h1, l1, loc=1) #turn legend on with combined handles
-        
-        
-        return fig
-        
-
-    def plot_boxes(self, #plot failure histogram of all layers
+    def plot_boxes(self, #plot boxplots of results
                      df=None, 
-                      logger=None,
-                      
-                      **kwargs
-                      
-                      ): #plot all the histograms stacked
-        
- 
-        #=======================================================================
-        # defaults
-        #=======================================================================
+                      **kwargs): 
+
         if df is None: df=self.res_df
         title = '%s Conditional P boxplots on %i events'%(self.tag, len(df.columns))
-        
-
 
         val_str = '%i assets \nevent_rels=\'%s\''%(len(df), self.event_rels)
 
-        #=======================================================================
-        # plot it
-        #=======================================================================
-        fig = self.plot_impact_boxes(df,
+        return self.plot_impact_boxes(df,
                      title=title, xlab = 'hazard layer', ylab = 'Pfail',
                      ylims_t = (0, 1.0),smry_method='mean',
-                     val_str=val_str, logger=logger,  **kwargs)
-        
-
-        return fig
+                     val_str=val_str,   **kwargs)
         
 
 

@@ -967,8 +967,102 @@ class Plotr(Model):
         return fig
             
             
+    def plot_impact_hist(self, #stacked histograms for each column series
+                   df,  
+                      
+                    #labelling
+                    title = None,
+                    xlab=None,  ylab='asset count', val_str=None,
+                    impactFmtFunc=None, #tick label format function for impact values
+
+                    
+                    #figure parametrs
+                    figsize=None,
+                    grid=True,        
+                    xlims_t = None, #tuple of yaxis limits
+                    
+                    logger=None, 
+                    pkwargs = {},
+                      ): 
+        
+        """
+        todo: migrate these generic plotters to a more logical module
+
+        """
+        #======================================================================
+        # defaults
+        #======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('plot_impact_boxes')
+        plt, matplotlib = self.plt, self.matplotlib
         
 
+        if figsize is None: figsize    =    self.figsize
+        
+        
+        if impactFmtFunc is None: impactFmtFunc=self.impactFmtFunc
+        
+        if title is None:
+            title = 'Boxplots on %i events'%len(df.columns)
+        
+        #=======================================================================
+        # manipulate data
+        #=======================================================================
+        #get a collectio nof arrays from a dataframe's columns
+        data = [ser.values for _, ser in df.items()]
+
+        
+        #======================================================================
+        # figure setup
+        #======================================================================
+        plt.close()
+        fig = plt.figure(figsize=figsize, constrained_layout = True)
+        #axis setup
+        ax1 = fig.add_subplot(111)
+        
+        #aep units
+        if not xlims_t is None:
+            ax1.set_xlim(xlims_t[0], xlims_t[1])
+ 
+        
+        # axis label setup
+        fig.suptitle(title)
+        ax1.set_xlabel(xlab)
+        ax1.set_ylabel(ylab)
+        """
+        plt.show()
+        matplotlib.__version__ 
+        pd.__version__
+        """
+
+        
+        #=======================================================================
+        # plot thie histogram
+        #=======================================================================
+        histVals_ar, bins_ar, patches = ax1.hist(
+            data, bins='auto', stacked=False, label=df.columns.to_list(),
+            alpha=0.9,
+            **pkwargs)
+        
+
+        
+        
+        
+        
+        #=======================================================================
+        # post
+        #=======================================================================
+        self._tickSet(ax1, xfmtFunc=impactFmtFunc)
+        
+        self._postFmt(ax1, grid=grid, val_str=val_str,
+                      xLocScale=.5, yLocScale=.8,
+                      )
+
+        
+        
+        return fig
+            
+            
     def _lineToAx(self, #add a line to the axis
               res_ttl,
               y1lab,
