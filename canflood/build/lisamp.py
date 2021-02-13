@@ -51,8 +51,8 @@ class LikeSampler(Plotr, Qcoms):
     """
     event_rels = 'indep'
     
-    #formatting impact values on plots
-    impactfmt_str = '.2f'
+    
+    impactfmt_str = '.2f' #formatting impact values on plots
     
     
     def __init__(self, *args, **kwargs):
