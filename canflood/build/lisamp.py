@@ -31,10 +31,11 @@ from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProj
 from hlpr.exceptions import QError as Error
 
 from hlpr.Q import view, Qcoms, vlay_get_fdf, vlay_get_fdata, vlay_new_df
+from results.riskPlot import Plotr
 #==============================================================================
 # classes-------------
 #==============================================================================
-class LikeSampler(Qcoms):
+class LikeSampler(Plotr, Qcoms):
     """
     Generate conditional probability data set ('exlikes') for each asset
     
@@ -50,10 +51,17 @@ class LikeSampler(Qcoms):
     """
     event_rels = 'indep'
     
+    #formatting impact values on plots
+    impactfmt_str = '.2f'
+    
+    
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, 
+                        
+                         **kwargs)
         
         #self.resname = 'exlikes_%s'%self.tag
+        self._init_plt() #setup matplotlib
         
     def load_layers(self, #load data to project (for standalone runs)
                     lpol_fp_d, #{event name:polygon filepath}
@@ -388,8 +396,10 @@ class LikeSampler(Qcoms):
             
             log.info('finished w/ %s event_rels = \'%s\'.. see log'%(str(res_df.shape), event_rels))        
         except: log.error('logging error')
+        
+        self.res_df = res_df
 
-        return res_df #will have NaNs where there is no intersect
+        return self.res_df #will have NaNs where there is no intersect
     
     """
     view(res_df)
@@ -630,108 +640,34 @@ class LikeSampler(Qcoms):
         return fig
         
 
-    def plot_box_all(self, df, #plot failure histogram of all layers
+    def plot_boxes(self, #plot failure histogram of all layers
+                     df=None, 
+                      logger=None,
                       
-                    #figure parametrs
-                    figsize     = (6.5, 4), 
-                    grid=True,
+                      **kwargs
                       
                       ): #plot all the histograms stacked
         
-        """
-        dont want to initiate matplotlib in the module...
-            just using a nasty single f unction
-        """
+ 
         #=======================================================================
         # defaults
         #=======================================================================
-        log = self.logger.getChild('plot')
+        if df is None: df=self.res_df
         title = '%s Conditional P boxplots on %i events'%(self.tag, len(df.columns))
         
-        #=======================================================================
-        # manipulate data
-        #=======================================================================
-        #get a collectio nof arrays from a dataframe's columns
-        data = [ser.values for _, ser in df.items()]
-        #======================================================================
-        # setup
-        #======================================================================
-        
-        import matplotlib
-        matplotlib.use('Qt5Agg') #sets the backend (case sensitive)
-        import matplotlib.pyplot as plt
-        
-        #set teh styles
-        plt.style.use('default')
-        
-        #font
-        matplotlib_font = {
-                'family' : 'serif',
-                'weight' : 'normal',
-                'size'   : 8}
-        
-        matplotlib.rc('font', **matplotlib_font)
-        matplotlib.rcParams['axes.titlesize'] = 10 #set the figure title size
-        
-        #spacing parameters
-        matplotlib.rcParams['figure.autolayout'] = False #use tight layout
-        
-        
-        
-        #======================================================================
-        # figure setup
-        #======================================================================
-        plt.close()
-        fig = plt.figure(figsize=figsize,
-                     tight_layout=False,
-                     constrained_layout = True,
-                     )
-        
-        #axis setup
-        ax1 = fig.add_subplot(111)
-        
-        #aep units
-        ax1.set_ylim(0, 1.0)
- 
-        
-        # axis label setup
-        fig.suptitle(title)
-        ax1.set_xlabel('hazard layer')
-        ax1.set_ylabel('Pfail')
-        """
-        plt.show()
-        
-        pd.__version__
-        """
-
-        
-        #=======================================================================
-        # plot thie histogram
-        #=======================================================================
-        boxRes_d = ax1.boxplot(data, whis=1.5)
-        
 
 
-        #=======================================================================
-        # format axis labels
-        #======================================================= ================
-        #apply the new labels
-        ax1.set_xticklabels(df.columns, rotation=90, va='center', y=.5, color='red')
-        
-        
-        #=======================================================================
-        # Add text string 'annot' to lower left of plot
-        #=======================================================================
         val_str = '%i assets \nevent_rels=\'%s\''%(len(df), self.event_rels)
-        xmin, xmax1 = ax1.get_xlim()
-        ymin, ymax1 = ax1.get_ylim()
-        
-        x_text = xmin + (xmax1 - xmin)*.5 # 1/10 to the right of the left ax1is
-        y_text = ymin + (ymax1 - ymin)*.8 #1/10 above the bottom ax1is
-        anno_obj = ax1.text(x_text, y_text, val_str)
 
+        #=======================================================================
+        # plot it
+        #=======================================================================
+        fig = self.plot_impact_boxes(df,
+                     title=title, xlab = 'hazard layer', ylab = 'Pfail',
+                     ylims_t = (0, 1.0),smry_method='mean',
+                     val_str=val_str, logger=logger,  **kwargs)
         
-        
+
         return fig
         
 

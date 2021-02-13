@@ -29,7 +29,7 @@ mod_logger = logging.getLogger('dmg2') #get the root logger
 from hlpr.exceptions import QError as Error
 
 #from hlpr.Q import *
-from hlpr.basic import ComWrkr, view
+from hlpr.basic import view
 #from model.modcom import Model
 from results.riskPlot import Plotr
 from model.modcom import DFunc

@@ -306,6 +306,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
                      absolute_fp=absolute_fp, feedback=self.feedback,
                      attriMode=self.checkBox_SS_attr.isChecked(),
                      )._setup()
+                     
         self.feedback.setProgress(5)
         
         #=======================================================================

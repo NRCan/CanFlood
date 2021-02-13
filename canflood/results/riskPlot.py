@@ -114,6 +114,11 @@ class Plotr(Model):
                     h_alpha = 0.1,
                     
                     impactFmtFunc=None, #function for formatting the impact results
+                        #TODO: clean up options for building this
+                        #Option1: pass a raw function here
+                        #Option2: pass function to init_fmtFunc
+                        #Option3: use 'impactfmt_str' kwarg to have init_fmtFunc build
+                        #set by '_init_fmtFunc'
                         #lambda x:'{:,.0f}'.format(x)   #(thousands separator)
 
                  **kwargs
@@ -225,9 +230,9 @@ class Plotr(Model):
         
         return self
     
-    def _init_fmtFunc(self,
-                    impactFmtFunc=None,
-                  impactfmt_str=None, #used for building impactFmtFunc (if not passed)
+    def _init_fmtFunc(self, #setup impact formatting from two options
+                    impactFmtFunc=None, #raw function
+                  impactfmt_str=None, #ALTERNATIVE: python formatting string for building function
                   ):
         
         #=======================================================================
@@ -238,6 +243,7 @@ class Plotr(Model):
         if impactfmt_str is  None: impactfmt_str=self.impactfmt_str
         
         assert isinstance(impactfmt_str, str)
+        
         if not callable(impactFmtFunc):
             
             impactFmtFunc = lambda x, fmt=impactfmt_str:'{:>{fmt}}'.format(x, fmt=fmt)
@@ -852,10 +858,12 @@ class Plotr(Model):
                     title = None,
                     xlab=None,  ylab=None, val_str=None,
                     impactFmtFunc=None, #tick label format function for impact values
+                    smry_method = 'sum', #series method for summary providedin labels
                     
                     #figure parametrs
                     figsize=None,
                     grid=False,        
+                    ylims_t = None, #tuple of yaxis limits
                     
                     logger=None, 
                     pkwargs = {},
@@ -897,7 +905,8 @@ class Plotr(Model):
         ax1 = fig.add_subplot(111)
         
         #aep units
-        #ax1.set_ylim(0, 1.0)
+        if not ylims_t is None:
+            ax1.set_ylim(ylims_t[0], ylims_t[1])
  
         
         # axis label setup
@@ -922,10 +931,14 @@ class Plotr(Model):
         # format axis labels
         #======================================================= ================
         
-        
-        
+        f = lambda idx: getattr(df.iloc[:, idx-1], smry_method)()
+
+        """
+        f(1)
+        """
         #build new lables
-        xfmtFunc = lambda idx:'%s = %s'%(df.columns[idx-1], impactFmtFunc(df.iloc[:, idx-1].sum()))
+
+        xfmtFunc = lambda idx:'%s: %s=%s'%(smry_method, df.columns[idx-1], impactFmtFunc(f(idx)))
         l = [xfmtFunc(value) for value in ax1.get_xticks()]
         
         #adjust locations
@@ -933,9 +946,9 @@ class Plotr(Model):
         ax1.set_xticks(og_locs-0.3) 
         
         #apply new lables
-        Text_l = ax1.set_xticklabels(l, rotation=90, va='center', y=.5, color='red',
-                                     #bbox = {'facecolor':'red', 'alpha':0.5}
-                                     )
+        Text_l = ax1.set_xticklabels(l, rotation=90, va='center', y=.5, color='red',)
+
+                                     
 
         
         self._tickSet(ax1, yfmtFunc=impactFmtFunc)
