@@ -1267,7 +1267,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             wrkr.output_fig(fig)
             
         if self.checkBox_LS_box.isChecked():
-            fig = wrkr.plot_box_all(res_df)
+            fig = wrkr.plot_boxes()
             wrkr.output_fig(fig)
         
         #======================================================================
