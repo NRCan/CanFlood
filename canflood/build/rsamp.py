@@ -33,7 +33,7 @@ from hlpr.exceptions import QError as Error
     
 
 
-from hlpr.Q import Qcoms,vlay_get_fdf, vlay_get_fdata
+from hlpr.Q import Qcoms,vlay_get_fdf, vlay_get_fdata, view
 from results.riskPlot import Plotr
 
 #==============================================================================
@@ -232,8 +232,7 @@ class Rsamp(Plotr, Qcoms):
         if cid is None: cid = self.cid
         if fname is None: fname=self.fname
         self.as_inun = as_inun
-
-        
+        self.finv_name = finv_raw.name() #for plotters
         log.info('executing on %i rasters'%(len(rlayRaw_l)))
 
         #======================================================================
@@ -292,7 +291,7 @@ class Rsamp(Plotr, Qcoms):
 
         self.feedback.setProgress(40)
         #=======================================================================
-        # #inundation runs--------
+        #inundation runs--------
         #=======================================================================
         if as_inun:
             #===================================================================
@@ -332,7 +331,7 @@ class Rsamp(Plotr, Qcoms):
                 fname, self.tag, len(rlayRaw_l), res_vlay.dataProvider().featureCount(), dthresh)
         
         #=======================================================================
-        # #WSL value sampler------
+        #WSL value sampler------
         #=======================================================================
         else:
             res_vlay = self.samp_vals(finv,rlayRaw_l, psmp_stat)
@@ -343,7 +342,22 @@ class Rsamp(Plotr, Qcoms):
         # wrap
         #=======================================================================
         """TODO: harmonize output types for build modules"""
-        self.res_df = vlay_get_fdf(res_vlay, logger=log).set_index(cid, drop=True)
+        #get dataframe like results
+        try:
+            df = vlay_get_fdf(res_vlay, logger=log).set_index(cid, drop=True
+                                          ).rename(columns=self.names_d)
+            """
+            view(df)
+            d.keys()
+            """
+            #get sorted index by values
+            sum_ser = pd.Series({k:cser.dropna().sum() for k, cser in df.items()}).sort_values()
+            
+            #set this new index
+            self.res_df = df.loc[:, sum_ser.index]
+        
+        except Exception as e:
+            log.warning('failed to convert vlay to dataframe w/ \n    %s'%e)
         
         #max out the progress bar
         self.feedback.setProgress(90)
@@ -1469,6 +1483,12 @@ class Rsamp(Plotr, Qcoms):
 
         if df is None: 
             df=self.res_df
+            
+            
+            
+        """
+        view(df)
+        """
         title = '%s Raster Sample Boxplots on %i Events'%(self.tag, len(df.columns))
 
 
@@ -1478,8 +1498,8 @@ class Rsamp(Plotr, Qcoms):
                      val_str=self._get_valstr(df),   **kwargs)
         
     def _get_valstr(self, df):
-        return '%i assets \nevent_rels=\'%s\' \ndate=%s'%(
-            len(df), self.event_rels, self.today_str)
+        return 'finv_fcnt=%i \nfinv_name=\'%s\' \nas_inun=%s \ndate=%s'%(
+            len(df), self.finv_name, self.as_inun, self.today_str)
         
     
 

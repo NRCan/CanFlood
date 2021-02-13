@@ -544,24 +544,25 @@ class LikeSampler(Plotr, Qcoms):
         return self.plot_impact_hist(df,
                      title=title, xlab = 'Pfail',
                      xlims_t = (0, 1.0),
-                     val_str=self._get_valstr(df), **kwargs)
+                     val_str=self._get_valstrL(df), **kwargs)
         
 
     def plot_boxes(self, #plot boxplots of results
                      df=None, 
                       **kwargs): 
 
-        if df is None: df=self.res_df
+        if df is None: 
+            df=self.res_df.replace({0:np.nan})
         title = '%s Conditional P Boxplots on %i Events'%(self.tag, len(df.columns))
 
 
         return self.plot_impact_boxes(df,
                      title=title, xlab = 'hazard layer', ylab = 'Pfail',
                      ylims_t = (0, 1.0),smry_method='mean',
-                     val_str=self._get_valstr(df),   **kwargs)
+                     val_str=self._get_valstrL(df),   **kwargs)
         
-    def _get_valstr(self, df):
-        return '%i assets \nevent_rels=\'%s\' \ndate=%s'%(
+    def _get_valstrL(self, df):
+        return 'finv_fcnt=%i \nevent_rels=\'%s\' \ndate=%s'%(
             len(df), self.event_rels, self.today_str)
         
 

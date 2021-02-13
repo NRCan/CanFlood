@@ -434,7 +434,9 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #=======================================================================
         if not aoi_vlay is None:
             assert isinstance(aoi_vlay, QgsVectorLayer)
-            rlay2 = self.cliprasterwithpolygon(rlayer,aoi_vlay, logger=log)
+            rlay2 = self.cliprasterwithpolygon(rlayer,aoi_vlay, logger=log, layname=rlayer.name())
+            
+            #clean up
             mstore = QgsMapLayerStore() #build a new store
             mstore.addMapLayers([rlayer]) #add the layers to the store
             mstore.removeAllMapLayers() #remove all the layers

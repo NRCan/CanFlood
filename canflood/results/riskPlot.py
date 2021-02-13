@@ -929,7 +929,8 @@ class Plotr(Model):
         #======================================================= ================
         #build new lables
         f = lambda idx: getattr(df.iloc[:, idx-1], smry_method)()
-        xfmtFunc = lambda idx:'%s: %s=%s'%(df.columns[idx-1], smry_method, impactFmtFunc(f(idx)))
+        xfmtFunc = lambda idx:'%s (%i): %s=%s'%(
+            df.columns[idx-1], len(df.iloc[:, idx-1].dropna()), smry_method, impactFmtFunc(f(idx)))
         l = [xfmtFunc(value) for value in ax1.get_xticks()]
         
         #adjust locations
@@ -944,7 +945,7 @@ class Plotr(Model):
         # post
         #=======================================================================
         self._postFmt(ax1, grid=grid, val_str=val_str,
-                      xLocScale=.7, yLocScale=.8,
+                      xLocScale=.2, yLocScale=.8,
                       legendLoc=None, #boxplots do nt have legends
                       )
 
