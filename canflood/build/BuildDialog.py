@@ -969,7 +969,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         self.feedback.setProgress(10)
         #======================================================================
-        # execute
+        # execute----
         #======================================================================
         
         #build the sample
@@ -996,6 +996,17 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         #update ocntrol file
         wrkr.upd_cf(cf_fp)
+        
+        #=======================================================================
+        # plots
+        #=======================================================================
+        if self.checkBox_ras_pBox.isChecked():
+            fig = wrkr.plot_boxes()
+            wrkr.output_fig(fig)
+            
+        if self.checkBox_ras_pHist.isChecked():
+            fig = wrkr.plot_hist()
+            wrkr.output_fig(fig)
         
         #======================================================================
         # post---------
