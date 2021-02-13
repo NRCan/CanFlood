@@ -893,7 +893,7 @@ class Plotr(Model):
         # manipulate data
         #=======================================================================
         #get a collectio nof arrays from a dataframe's columns
-        data = [ser.values for _, ser in df.items()]
+        data = [ser.dropna().values for _, ser in df.items()]
 
         
         #======================================================================
@@ -924,20 +924,11 @@ class Plotr(Model):
         # plot thie histogram
         #=======================================================================
         boxRes_d = ax1.boxplot(data, whis=1.5, **pkwargs)
-        
-
-
         #=======================================================================
         # format axis labels
         #======================================================= ================
-        
-        f = lambda idx: getattr(df.iloc[:, idx-1], smry_method)()
-
-        """
-        f(1)
-        """
         #build new lables
-
+        f = lambda idx: getattr(df.iloc[:, idx-1], smry_method)()
         xfmtFunc = lambda idx:'%s: %s=%s'%(df.columns[idx-1], smry_method, impactFmtFunc(f(idx)))
         l = [xfmtFunc(value) for value in ax1.get_xticks()]
         
@@ -947,13 +938,8 @@ class Plotr(Model):
         
         #apply new lables
         Text_l = ax1.set_xticklabels(l, rotation=90, va='center', y=.5, color='red',)
-
-                                     
-
-        
         self._tickSet(ax1, yfmtFunc=impactFmtFunc)
-        
-        
+
         #=======================================================================
         # post
         #=======================================================================
@@ -1009,7 +995,7 @@ class Plotr(Model):
         # manipulate data
         #=======================================================================
         #get a collectio nof arrays from a dataframe's columns
-        data = [ser.values for _, ser in df.items()]
+        data = [ser.dropna().values for _, ser in df.items()]
 
         
         #======================================================================

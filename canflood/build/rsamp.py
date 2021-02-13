@@ -34,12 +34,12 @@ from hlpr.exceptions import QError as Error
 
 
 from hlpr.Q import Qcoms,vlay_get_fdf, vlay_get_fdata
-
+from results.riskPlot import Plotr
 
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Rsamp(Qcoms):
+class Rsamp(Plotr, Qcoms):
     """ sampling hazard rasters from the inventory
     
     METHODS:
@@ -86,6 +86,8 @@ class Rsamp(Qcoms):
         self.fname=fname
         #flip the codes
         self.psmp_codes = dict(zip(self.psmp_codes.values(), self.psmp_codes.keys()))
+        
+        self._init_plt() #setup matplotlib
         
         self.logger.info('Rsamp.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
 
@@ -341,7 +343,7 @@ class Rsamp(Qcoms):
         # wrap
         #=======================================================================
         """TODO: harmonize output types for build modules"""
-        self.res_df = vlay_get_fdf(res_vlay, logger=log)
+        self.res_df = vlay_get_fdf(res_vlay, logger=log).set_index(cid, drop=True)
         
         #max out the progress bar
         self.feedback.setProgress(90)
@@ -1465,7 +1467,8 @@ class Rsamp(Qcoms):
                      df=None, 
                       **kwargs): 
 
-        if df is None: df=self.res_df
+        if df is None: 
+            df=self.res_df
         title = '%s Raster Sample Boxplots on %i Events'%(self.tag, len(df.columns))
 
 
