@@ -1003,7 +1003,7 @@ class Plotr(Model):
         if impactFmtFunc is None: impactFmtFunc=self.impactFmtFunc
         
         if title is None:
-            title = 'Boxplots on %i events'%len(df.columns)
+            title = 'Histogram on %i Events'%len(df.columns)
         
         #=======================================================================
         # manipulate data
@@ -1044,18 +1044,13 @@ class Plotr(Model):
             alpha=0.9,
             **pkwargs)
         
-
-        
-        
-        
-        
         #=======================================================================
         # post
         #=======================================================================
         self._tickSet(ax1, xfmtFunc=impactFmtFunc)
         
         self._postFmt(ax1, grid=grid, val_str=val_str,
-                      xLocScale=.5, yLocScale=.8,
+                      xLocScale=.3, yLocScale=.8,
                       )
 
         

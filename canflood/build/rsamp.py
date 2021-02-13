@@ -338,6 +338,9 @@ class Rsamp(Qcoms):
         #=======================================================================
         # wrap
         #=======================================================================
+        """TODO: harmonize output types for build modules"""
+        self.res_df = vlay_get_fdf(res_vlay, logger=log)
+        
         #max out the progress bar
         self.feedback.setProgress(90)
 
@@ -1251,26 +1254,6 @@ class Rsamp(Qcoms):
         
         
 
-    def dtm_check(self, vlay):
-        
-        log = self.logger.getChild('dtm_check')
-        
-        df = vlay_get_fdf(vlay)
-        
-        boolidx = df.isna()
-        if boolidx.any().any():
-            log.error('got some nulls')
-        
-        log.info('passed checks')
-        
-        #======================================================================
-        # #check results
-        #======================================================================
-        #check results cid column matches set in finv
-        
-        #make sure there are no negative values
-        
-        #report on number of nulls
         
     def line_sample_stats(self, #get raster stats using a line
                     line_vlay, #line vectorylayer with geometry to sample from
@@ -1362,9 +1345,27 @@ class Rsamp(Qcoms):
 
         return line_vlay
         
+    #===========================================================================
+    # CHECKS--------
+    #===========================================================================
     def check(self):
         pass
+    
+    def dtm_check(self, vlay):
         
+        log = self.logger.getChild('dtm_check')
+        
+        df = vlay_get_fdf(vlay)
+        
+        boolidx = df.isna()
+        if boolidx.any().any():
+            log.error('got some nulls')
+        
+        log.info('passed checks')
+        
+    #===========================================================================
+    # OUTPUTS--------
+    #===========================================================================
     def write_res(self, #save expos dataset to file
                   vlay,
               out_dir = None, #directory for puts
@@ -1441,11 +1442,12 @@ class Rsamp(Qcoms):
              },
             cf_fp = cf_fp
             )
+        
+    #===========================================================================
+    # PLOTS-----
+    #===========================================================================
 
-    def test(self):
-        print('Rsamp test')
-    
-    
+
     
 
     
