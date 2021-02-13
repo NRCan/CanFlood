@@ -345,9 +345,15 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         if self.checkBox_i2_ddf.isChecked():
             _=model.output_depths_df()
             
-        #box plots
-        if self.checkBox_i2plot.isChecked():
+        #=======================================================================
+        # plots
+        #=======================================================================
+        if self.checkBox_i2_pbox.isChecked():
             fig = model.plot_boxes()
+            _ = model.output_fig(fig)
+            
+        if self.checkBox_i2_phist.isChecked():
+            fig = model.plot_hist()
             _ = model.output_fig(fig)
             
         self.feedback.setProgress(99)
