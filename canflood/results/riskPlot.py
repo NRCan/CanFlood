@@ -938,7 +938,7 @@ class Plotr(Model):
         """
         #build new lables
 
-        xfmtFunc = lambda idx:'%s: %s=%s'%(smry_method, df.columns[idx-1], impactFmtFunc(f(idx)))
+        xfmtFunc = lambda idx:'%s: %s=%s'%(df.columns[idx-1], smry_method, impactFmtFunc(f(idx)))
         l = [xfmtFunc(value) for value in ax1.get_xticks()]
         
         #adjust locations
