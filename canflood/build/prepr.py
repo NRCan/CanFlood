@@ -62,8 +62,10 @@ class Preparor(Qcoms):
         
         
     def copy_cf_template(self, #start a new control file by copying the template
-                  wdir,
-                  cf_fp=None,
+                  wdir=None, #optional build path to copy to
+                  cf_fp=None, #path to copy to
+                  
+                  cf_src = None, #template fiilepath
                   logger=None
                   ):
         
@@ -72,34 +74,35 @@ class Preparor(Qcoms):
         #=======================================================================
         if logger is None: logger=self.logger
         log = logger.getChild('copy_cf_template')
+
+
         
-        if cf_fp is None: cf_fp = os.path.join(wdir, 'CanFlood_%s.txt'%self.tag)
+        
         #=======================================================================
-        # copy control file template
+        # #get the default template from the program files
         #=======================================================================
-        
-        
-        #get the default template from the program files
-        cf_src = os.path.join(
-                os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                 '_pars/CanFlood_control_01.txt')
+        if cf_src is None:
+            cf_src = os.path.join(
+                    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                     '_pars/CanFlood_control_01.txt')
         
         assert os.path.exists(cf_src)
         
         
-        #get new file name
-        
-        
-        #see if this exists
-        if os.path.exists(cf_fp):
-            msg = 'generated control file already exists. overwrite=%s \n     %s'%(
-                self.overwrite, cf_fp)
-            if self.overwrite:
-                log.warning(msg)
-            else:
-                raise Error(msg)
+        #=======================================================================
+        # #get new file name
+        #=======================================================================
+        if cf_fp is None: 
+            if wdir is None: 
+                wdir=self.out_dir
+            assert os.path.exists(wdir)
+            cf_fp = os.path.join(wdir, 'CanFlood_%s.txt'%self.tag)
             
+        if os.path.exists(cf_fp):assert self.overwrite
             
+        #=======================================================================
+        # copy control file template
+        #=======================================================================
         #copy over the default template
         shutil.copyfile(cf_src, cf_fp)
         
