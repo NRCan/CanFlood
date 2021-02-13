@@ -845,6 +845,115 @@ class Plotr(Model):
         
         return fig
 
+    def plot_impact_boxes(self, #box plots for each event 
+                   df,  #frame with columns to turn into box plots
+                      
+                    #labelling
+                    title = None,
+                    xlab=None,  ylab=None, val_str=None,
+                    impactFmtFunc=None, #tick label format function for impact values
+                    
+                    #figure parametrs
+                    figsize=None,
+                    grid=False,        
+                    
+                    logger=None, 
+                    pkwargs = {},
+                      ): 
+        
+        """
+        todo: migrate these generic plotters to a more logical module
+
+        """
+        #======================================================================
+        # defaults
+        #======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('plot_impact_boxes')
+        plt, matplotlib = self.plt, self.matplotlib
+        
+
+        if figsize is None: figsize    =    self.figsize
+        
+        
+        if impactFmtFunc is None: impactFmtFunc=self.impactFmtFunc
+        
+        if title is None:
+            title = 'Boxplots on %i events'%len(df.columns)
+        
+        #=======================================================================
+        # manipulate data
+        #=======================================================================
+        #get a collectio nof arrays from a dataframe's columns
+        data = [ser.values for _, ser in df.items()]
+
+        
+        #======================================================================
+        # figure setup
+        #======================================================================
+        plt.close()
+        fig = plt.figure(figsize=figsize, constrained_layout = True)
+        #axis setup
+        ax1 = fig.add_subplot(111)
+        
+        #aep units
+        #ax1.set_ylim(0, 1.0)
+ 
+        
+        # axis label setup
+        fig.suptitle(title)
+        ax1.set_xlabel(xlab)
+        ax1.set_ylabel(ylab)
+        """
+        plt.show()
+        matplotlib.__version__ 
+        pd.__version__
+        """
+
+        
+        #=======================================================================
+        # plot thie histogram
+        #=======================================================================
+        boxRes_d = ax1.boxplot(data, whis=1.5, **pkwargs)
+        
+
+
+        #=======================================================================
+        # format axis labels
+        #======================================================= ================
+        
+        
+        
+        #build new lables
+        xfmtFunc = lambda idx:'%s = %s'%(df.columns[idx-1], impactFmtFunc(df.iloc[:, idx-1].sum()))
+        l = [xfmtFunc(value) for value in ax1.get_xticks()]
+        
+        #adjust locations
+        og_locs = ax1.get_xticks()
+        ax1.set_xticks(og_locs-0.3) 
+        
+        #apply new lables
+        Text_l = ax1.set_xticklabels(l, rotation=90, va='center', y=.5, color='red',
+                                     #bbox = {'facecolor':'red', 'alpha':0.5}
+                                     )
+
+        
+        self._tickSet(ax1, yfmtFunc=impactFmtFunc)
+        
+        
+        #=======================================================================
+        # post
+        #=======================================================================
+        self._postFmt(ax1, grid=grid, val_str=val_str,
+                      xLocScale=.7, yLocScale=.8,
+                      legendLoc=None, #boxplots do nt have legends
+                      )
+
+        
+        
+        return fig
+            
+            
         
 
     def _lineToAx(self, #add a line to the axis
@@ -949,15 +1058,16 @@ class Plotr(Model):
         #=======================================================================
         # #legend
         #=======================================================================
-        if legendHandles is None:
-            h1, l1 = ax.get_legend_handles_labels() #pull legend handles from axis 1
-        else:
-            assert isinstance(legendHandles, tuple)
-            assert len(legendHandles)==2
-            h1, l1 = legendHandles
-        #h2, l2 = ax2.get_legend_handles_labels()
-        #ax.legend(h1+h2, l1+l2, loc=2) #turn legend on with combined handles
-        ax.legend(h1, l1, loc=legendLoc, title=legendTitle) #turn legend on with combined handles
+        if isinstance(legendLoc, int):
+            if legendHandles is None:
+                h1, l1 = ax.get_legend_handles_labels() #pull legend handles from axis 1
+            else:
+                assert isinstance(legendHandles, tuple)
+                assert len(legendHandles)==2
+                h1, l1 = legendHandles
+            #h2, l2 = ax2.get_legend_handles_labels()
+            #ax.legend(h1+h2, l1+l2, loc=2) #turn legend on with combined handles
+            ax.legend(h1, l1, loc=legendLoc, title=legendTitle) #turn legend on with combined handles
         
         return ax
     

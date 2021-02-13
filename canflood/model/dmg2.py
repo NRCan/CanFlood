@@ -1389,11 +1389,11 @@ class Dmg2(DFunc, Plotr):
                       
                     #labelling
                     impact_name = None, 
-                    impactFmtFunc=None, #tick label format function for impact values
+
                     #figure parametrs
-                    figsize=None, logger=None,  plotTag=None,        
+                    logger=None,  plotTag=None,        
                     
-                    pkwargs = {},
+                    **kwargs
                       ): 
         
         """
@@ -1404,83 +1404,23 @@ class Dmg2(DFunc, Plotr):
         # defaults
         #======================================================================
         if logger is None: logger=self.logger
-        log = logger.getChild('plot_boxes')
-        plt, matplotlib = self.plt, self.matplotlib
+
+        if impact_name is None: impact_name=self.impact_units
+        if plotTag is None: plotTag=self.tag
         
         if df is None: df = self.cres_df.copy()
-        if figsize is None: figsize    =    self.figsize
-        if plotTag is None: plotTag=self.tag
-        if impact_name is None: impact_name=self.impact_units
-        if impactFmtFunc is None: impactFmtFunc=self.impactFmtFunc
-        
-        title = '%s %s Impact Boxplots on %i Events'%(plotTag, self.name, len(df.columns))
-        #=======================================================================
-        # manipulate data
-        #=======================================================================
-        #get a collectio nof arrays from a dataframe's columns
-        data = [ser.values for _, ser in df.items()]
 
+        title = '%s %s dmg2.Impact Boxplots on %i Events'%(plotTag, self.name, len(df.columns))
         
         
-        
-        #======================================================================
-        # figure setup
-        #======================================================================
-        plt.close()
-        fig = plt.figure(figsize=figsize, constrained_layout = True)
-        #axis setup
-        ax1 = fig.add_subplot(111)
-        
-        #aep units
-        #ax1.set_ylim(0, 1.0)
- 
-        
-        # axis label setup
-        fig.suptitle(title)
-        ax1.set_xlabel('hazard event raster')
-        ax1.set_ylabel(impact_name)
-        """
-        plt.show()
-        
-        pd.__version__
-        """
-
-        
-        #=======================================================================
-        # plot thie histogram
-        #=======================================================================
-        boxRes_d = ax1.boxplot(data, whis=1.5, **pkwargs)
-        
-
-
-        #=======================================================================
-        # format axis labels
-        #======================================================= ================
-        #apply the new labels
-        xfmtFunc = lambda idx:'%s = %s'%(df.columns[idx-1], impactFmtFunc(df.iloc[:, idx-1].sum()))
-        l = [xfmtFunc(value) for value in ax1.get_xticks()]
-        ax1.set_xticklabels(l, rotation=90, va='center', y=.5, color='red')
-        
-        
-        self._tickSet(ax1, yfmtFunc=impactFmtFunc)
-        
-        
-        #=======================================================================
-        # Add text string 'annot' to lower left of plot
-        #=======================================================================
         val_str = '%i assets \napply_miti=%s \nground_water=%s \nfelv=\'%s\''%(
             len(df), self.apply_miti, self.ground_water, self.felv)
-        
-        xmin, xmax1 = ax1.get_xlim()
-        ymin, ymax1 = ax1.get_ylim()
-         
-        x_text = xmin + (xmax1 - xmin)*.5 # 1/10 to the right of the left ax1is
-        y_text = ymin + (ymax1 - ymin)*.8 #1/10 above the bottom ax1is
-        anno_obj = ax1.text(x_text, y_text, val_str)
 
         
         
-        return fig
+        return self.plot_impact_boxes(df,
+                      title=title, xlab = impact_name, ylab = 'hazard event raster',
+                       val_str=val_str, logger=logger,  **kwargs)
             
             
         
