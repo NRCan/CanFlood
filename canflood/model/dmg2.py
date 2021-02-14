@@ -883,6 +883,11 @@ class Dmg2(DFunc, Plotr):
         assert len(miss_l) == 0, 'result inventory mismatch: \n    %s'%miss_l
         assert np.array_equal(fdf.index, cres_df.index), 'index mismatch'
         
+        #=======================================================================
+        # sort cres
+        #=======================================================================
+        
+        
 
         #=======================================================================
         # wrap
@@ -891,12 +896,12 @@ class Dmg2(DFunc, Plotr):
         #set these for use later
         self.res_df = res_df #needed for _rdf_smry
         self.bdmgC_df = resC_df
-        self.cres_df = cres_df.copy() #set for plotting
+        self.cres_df = cres_df.loc[:, cres_df.sum(axis=0).sort_values(ascending=True).index] #set for plotting
         
         
         log.info('got cleaned impacts: \n    %s'%(self._rdf_smry('_dmg')))
 
-        return self.bdmgC_df, cres_df
+        return self.bdmgC_df, self.cres_df
     
     
     def bdmg_smry(self, #generate summary of damages
@@ -1410,7 +1415,8 @@ class Dmg2(DFunc, Plotr):
 
         if impact_name is None: impact_name=self.impact_units
         if plotTag is None: plotTag=self.tag
-        if df is None: df = self.cres_df.copy()
+        if df is None: 
+            df = self.cres_df.replace({0.0:np.nan})
 
         title = '%s %s dmg2.Impact Boxplots on %i Events'%(plotTag, self.name, len(df.columns))
         
@@ -1433,7 +1439,7 @@ class Dmg2(DFunc, Plotr):
 
         if impact_name is None: impact_name=self.impact_units
         if plotTag is None: plotTag=self.tag
-        if df is None: df = self.cres_df.copy()
+        if df is None: df = self.cres_df.replace({0.0:np.nan})
 
         title = '%s %s dmg2.Impact Histograms on %i Events'%(plotTag, self.name, len(df.columns))
 
