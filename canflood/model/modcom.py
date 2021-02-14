@@ -1690,14 +1690,13 @@ class Model(ComWrkr,
         #=======================================================================
         # checks
         #=======================================================================
+        """check_finv does this now
         for coln in ['ftag']:
             bx =  bdf[coln].isna()
             if bx.any():
                 log.debug('\n%s'%bdf.loc[bx, :])
-                raise Error('got %i \'%s\' nulls...see logger'%(bx.sum(), coln))
-            """
-            view(bdf)
-            """
+                raise Error('got %i \'%s\' nulls...see logger'%(bx.sum(), coln))"""
+
         
         #======================================================================
         # wrap
@@ -2333,7 +2332,7 @@ class Model(ComWrkr,
                  df_raw, #xid: aep
                  ltail = None,
                  rtail = None,
-                 drop_tails = False, #whether to remove the dummy tail values from results
+                 drop_tails = None, #whether to remove the dummy tail values from results
                  dx = None, #damage step for integration (default:None)
                  logger = None
                  ):      
@@ -2362,6 +2361,8 @@ class Model(ComWrkr,
         log = logger.getChild('calc_ead')
         if ltail is None: ltail = self.ltail
         if rtail is None: rtail = self.rtail
+        if drop_tails is None: drop_tails=self.drop_tails
+        assert isinstance(drop_tails, bool)
         
         #format tail values
         assert not ltail is None

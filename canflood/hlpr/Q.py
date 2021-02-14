@@ -2643,7 +2643,7 @@ def vlay_write( #write  a VectorLayer
       
     if error[0] == QgsVectorFileWriter.NoError:
         log.info('layer \' %s \' written to: \n     %s'%(vlay.name(),out_fp))
-        return 
+        return out_fp
      
     raise Error('FAILURE on writing layer \' %s \'  with code:\n    %s \n    %s'%(vlay.name(),error, out_fp))
     
