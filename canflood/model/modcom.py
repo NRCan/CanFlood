@@ -195,7 +195,7 @@ class Model(ComWrkr,
     
     max_depth = 20 #maximum depth for throwing an error in build_depths()
     
-    extrap_vals_d = {} #extraploation used {aep:val}
+    
     cplx_evn_d = None #complex event sets {aep: [exEventName1, exEventName1]}
     asset_cnt = 0 #for plotting
     scen_ar_d = dict() #container for empty scenario matrix
@@ -258,6 +258,8 @@ class Model(ComWrkr,
         """moved to comWrkr
         self.data_d = dict() #dictionary for loaded data sets"""
         
+        """weird behavior on shared classes otherwise"""
+        self.extrap_vals_d = {} #extraploation used {aep:val}
         #=======================================================================
         # wrap
         #=======================================================================

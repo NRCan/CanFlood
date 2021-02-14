@@ -264,8 +264,11 @@ class Risk2(Plotr, #This inherits 'Model'
         res_ttl.columns = [self.impact_units]
         
         #add labels
+        """
+        self.rtail
+        """
         miss_l = set(self.extrap_vals_d.keys()).difference(res_ttl.index)
-        assert len(miss_l)==0
+        assert len(miss_l)==0, miss_l
 
 
         res_ttl = res_ttl.join(
