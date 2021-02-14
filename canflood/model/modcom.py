@@ -2702,6 +2702,48 @@ class Model(ComWrkr,
         df['ari'] = ar_ari.astype(np.int32)
         
         return 
+    
+    def _fmt_resTtl(self, 
+                    df_raw):
+        
+        df = df_raw.copy()
+        df.index.name = 'aep'
+        df.columns = [self.impact_units]
+        
+        
+        """
+        self.rtail
+        """
+        #check extrapolation value matching
+
+
+        #=======================================================================
+        # #add labels
+        #=======================================================================
+        #note from extrap
+        miss_l = set(self.extrap_vals_d.keys()).difference(df.index)
+        assert len(miss_l)==0, miss_l
+        
+        
+        df = df.join(
+            pd.Series(np.full(len(self.extrap_vals_d), 'extrap'), 
+                  index=self.extrap_vals_d, name='note')
+            )
+        
+        #label the results row
+        df.loc['ead', 'note'] = 'integration'
+        
+        #set the rest
+        df.loc[:, 'note'] = df.loc[:, 'note'].fillna('impact_sum')
+        
+        #plot lables
+        df['plot'] = True
+        df.loc['ead', 'plot'] = False
+        
+        df=df.reset_index(drop=False)
+        
+        return df
+        
             
     def force_monot(self, #forcing monotoncity on an exposure data set
                    df_raw,

@@ -148,7 +148,7 @@ class Risk2(Plotr, #This inherits 'Model'
             self.load_attrimat(dxcol_lvls=2)
             self.promote_attrim()
         
-
+        #activate plot styles
         self.upd_impStyle() 
         self._init_fmtFunc()
         
@@ -233,7 +233,7 @@ class Risk2(Plotr, #This inherits 'Model'
         # get ead per asset-----
         #======================================================================
         if res_per_asset:
-            res_df = self.calc_ead(ddf1, drop_tails=self.drop_tails, logger=log)
+            res_df = self.calc_ead(ddf1)
                         
         else:
             res_df = None
@@ -245,7 +245,6 @@ class Risk2(Plotr, #This inherits 'Model'
         res_ttl = self.calc_ead(
             ddf1.sum(axis=0).to_frame().T, #rounding at end of calc_ead()
             drop_tails=False, #handle beslow 
-            logger=log,
             ).T #1 column df
             
         #self.res_ser = res_ttl.iloc[:, 0].copy() #set for risk_plot()
@@ -260,30 +259,7 @@ class Risk2(Plotr, #This inherits 'Model'
         #=======================================================================
         # #format total results for writing
         #=======================================================================
-        res_ttl.index.name = 'aep'
-        res_ttl.columns = [self.impact_units]
-        
-        #add labels
-        """
-        self.rtail
-        """
-        miss_l = set(self.extrap_vals_d.keys()).difference(res_ttl.index)
-        assert len(miss_l)==0, miss_l
-
-
-        res_ttl = res_ttl.join(
-            pd.Series(np.full(len(self.extrap_vals_d), 'extrap'), 
-                  index=self.extrap_vals_d, name='note')
-            )
-        
-        res_ttl.loc['ead', 'note'] = 'integration'
-        res_ttl.loc[:, 'note'] = res_ttl.loc[:, 'note'].fillna('impact_sum')
-        
-        #plot lables
-        res_ttl['plot'] = True
-        res_ttl.loc['ead', 'plot'] = False
-        
-        res_ttl=res_ttl.reset_index(drop=False)
+        res_ttl = self._fmt_resTtl(res_ttl)
         
         #=======================================================================
         # wrap----
