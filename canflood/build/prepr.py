@@ -220,6 +220,11 @@ class Preparor(Model, Qcoms):
         # write to control file
         #=======================================================================
         assert os.path.exists(out_fp)
+        """
+        writing the filepath to the vector layer wont work...
+            often we're working with memory layers
+            the transition from spatial to non-spatial and back to spatial losses these connections
+        """
         
         self.update_cf(
             {
@@ -230,7 +235,12 @@ class Preparor(Model, Qcoms):
             'parameters':(
                 {'cid':str(cid),
                  'felv':felv},
-                )
+                ),
+            #===================================================================
+            # 'results_fps':(
+            #     {'finv_vlay_fp':0}
+            #     )
+            #===================================================================
              },
 
             )

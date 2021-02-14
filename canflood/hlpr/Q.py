@@ -189,9 +189,6 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         self.set_vdrivers()
         
         
-        
-        
-        
         if not self.proj_checks():
             raise Error('failed checks')
         

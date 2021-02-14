@@ -545,7 +545,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # #copy the template
         #=======================================================================
-        cf_path = wrkr.copy_cf_template(wdir, logger=self.logger)
+        cf_path = wrkr.copy_cf_template()
         self.feedback.upd_prog(75)
         
         #=======================================================================
