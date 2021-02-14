@@ -91,7 +91,7 @@ class Djoiner(Qcoms, Model):
         tag = self.tag
         if cid is None: cid = self.cid
         if data_fp is None: data_fp = self.r2_passet
-        if layname is None:  layname='%s_%s_r2'%(vlay_raw.name(), tag)
+        if layname is None:  layname='res_%s_%s'%(self.name, tag)
         
         #=======================================================================
         # precheck
