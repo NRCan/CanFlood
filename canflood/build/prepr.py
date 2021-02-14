@@ -36,10 +36,12 @@ from hlpr.exceptions import QError as Error
 from hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata
 from hlpr.basic import get_valid_filename
 
+from model.modcom import Model #for data checks
+
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Preparor(Qcoms):
+class Preparor(Model, Qcoms):
     """
 
     
@@ -186,13 +188,12 @@ class Preparor(Qcoms):
         for gindx in self.invalid_cids:   
             df = df.drop(gindx, axis=1, errors='ignore')
             
-        #more cid checks
-        if not cid in df.columns:
-            raise Error('cid not found in finv_df')
-        
-        assert df[cid].is_unique, '%s got non-unique cid \"%s\''%(vlay.name(), cid)
-        assert 'int' in df[cid].dtypes.name, 'cid \'%s\' bad type'%cid
-        
+        df = df.set_index(cid, drop=True)
+            
+        #=======================================================================
+        # post checks
+        #=======================================================================
+        self.check_finv(df, cid=cid, logger=log)
         self.feedback.upd_prog(50)
         
         #=======================================================================
@@ -210,7 +211,7 @@ class Preparor(Qcoms):
                 raise Error(msg)
             
             
-        df.to_csv(out_fp, index=False)  
+        df.to_csv(out_fp, index=True)  
         
         log.info("inventory csv written to file:\n    %s"%out_fp)
         
@@ -301,7 +302,10 @@ class Preparor(Qcoms):
         #=======================================================================
         # chekc data
         #=======================================================================
+        """" no? not for this intermediate function?
+        self.check_finv()
         
+        """
         #=======================================================================
         # reconstruct layer
         #=======================================================================

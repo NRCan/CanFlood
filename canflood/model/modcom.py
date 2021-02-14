@@ -183,8 +183,8 @@ class Model(ComWrkr,
 
     #minimum inventory expectations
     finv_exp_d = {
-        'f0_scale':{'type':np.number},
-        'f0_elv':{'type':np.number}
+        'scale':{'type':np.number},
+        'elv':{'type':np.number}
         }
     
     max_depth = 20 #maximum depth for throwing an error in build_depths()
@@ -661,7 +661,7 @@ class Model(ComWrkr,
     def load_finv(self,#load asset inventory
                    fp = None,
                    dtag = 'finv',
-                   finv_exp_d = None, #finv expeectations
+                   #finv_exp_d = None, #finv expeectations
                    ):
         """
         see build_exp_finv() for construction of the expanded binv
@@ -671,7 +671,7 @@ class Model(ComWrkr,
         #=======================================================================
         log = self.logger.getChild('load_finv')
         if fp is None: fp = getattr(self, dtag)
-        if finv_exp_d is None: finv_exp_d = self.finv_exp_d #minimum expecatations
+        #if finv_exp_d is None: finv_exp_d = self.finv_exp_d #minimum expecatations
         cid = self.cid
         
         #======================================================================
@@ -703,47 +703,16 @@ class Model(ComWrkr,
         """
         self.check_finv(df)
         
-
-                
         #=======================================================================
         # resolve column gruops----
         #=======================================================================
-        """ this would have been easier with a dxcol"""
-        
-        #======================================================================
-        # get prefix values (using elv columns)
-        #======================================================================
-        #pull all the elv columns
-        tag_coln_l = df.columns[df.columns.str.endswith('_elv')].tolist()
-        
-        assert len(tag_coln_l) > 0, 'no \'elv\' columns found in inventory'
-        assert tag_coln_l[0] == 'f0_elv', 'expected first tag column to be \'f0_elv\''
-        
-        #get nested prefix values
-        prefix_l = [coln[:2] for coln in tag_coln_l]
+        cdf, prefix_l = self._get_finv_cnest(df)
         
         log.info('got %i nests: %s'%(len(prefix_l), prefix_l))
-        
-        #check
-        for e in prefix_l: 
-            assert e.startswith('f'), 'bad prefix: \'%s\'.. check field names'
-            
-        #=======================================================================
-        # add each nest column name
-        #=======================================================================   
-        cdf = pd.DataFrame(columns=df.columns, index=['ctype', 'nestID']) #upgrade to a series     
-        d = dict()
-        for pfx in prefix_l:
-            l = [e for e in df.columns if e.startswith('%s_'%pfx)]
-            
-            for e in l:
-                cdf.loc['nestID', e] = pfx
-                cdf.loc['ctype', e] = 'nest'
-            
         #=======================================================================
         # mitigation----
         #=======================================================================
-        cdf.loc['ctype', cdf.columns.str.startswith('mi_')] = 'miti'
+        
         
         #check these
         boolcol = cdf.loc['ctype', :]=='miti'
@@ -821,9 +790,54 @@ class Model(ComWrkr,
         self.data_d[dtag] = df
         
         log.info('finished loading %s as %s'%(dtag, str(df.shape)))
-        
+        """
+        view(df)
+        """
 
+    def _get_finv_cnest(self, #resolve column group relations
+                        df, #finv data
+                        ):
+        
+        """ this would have been easier with a dxcol"""
+        
+        #======================================================================
+        # get prefix values (using elv columns)
+        #======================================================================
+        #pull all the elv columns
+        tag_coln_l = df.columns[df.columns.str.endswith('_elv')].tolist()
+        
+        assert len(tag_coln_l) > 0, 'no \'elv\' columns found in inventory'
+        assert tag_coln_l[0] == 'f0_elv', 'expected first tag column to be \'f0_elv\''
+        
+        #get nested prefix values
+        prefix_l = [coln[:2] for coln in tag_coln_l]
+        
+        
+        #check
+        for e in prefix_l: 
+            assert e.startswith('f'), 'bad prefix: \'%s\'.. check field names'
             
+        #=======================================================================
+        # add each nest column name
+        #=======================================================================   
+        cdf = pd.DataFrame(columns=df.columns, index=['ctype', 'nestID', 'bname']) #upgrade to a series
+        
+        """
+        view(cdf)
+        """     
+
+        for pfx in prefix_l:
+            l = [e for e in df.columns if e.startswith('%s_'%pfx)]
+            
+            for e in l:
+                cdf.loc['nestID', e] = pfx
+                cdf.loc['ctype', e] = 'nest'
+                cdf.loc['bname', e] = e.replace('%s_'%pfx, '')
+            
+        #set flag for mitigation columns
+        cdf.loc['ctype', cdf.columns.str.startswith('mi_')] = 'miti'
+        
+        return cdf, prefix_l
             
         
     def load_evals(self,#loading event probability data
@@ -3407,43 +3421,120 @@ class Model(ComWrkr,
     def check_finv(self, #check finv logic
                    df_raw,
                    finv_exp_d =None,
+                   cid=None,
+                   logger=None,
                    ):
         
         #=======================================================================
         # defaults
         #=======================================================================
-        dtag='finv'
+        if logger is None: logger=self.logger
+        log=logger.getChild('check_finv')
+        if cid is None: cid = self.cid
         if finv_exp_d is None: finv_exp_d=self.finv_exp_d
         
         df = df_raw.copy()
         
         
         #=======================================================================
-        # #minimum use expectation handles
+        # #cid checks
         #=======================================================================
-        for coln, hndl_d in finv_exp_d.items():
-            assert isinstance(hndl_d, dict)
-            assert coln in df.columns, \
-                '%s missing expected column \'%s\''%(dtag, coln)
-            ser = df[coln]
-            for hndl, cval in hndl_d.items():
+        if not df.index.name == cid:
+            if not cid in df.columns:
+                raise Error('cid not found in finv_df')
+            
+            assert df[cid].is_unique, 'got non-unique cid \"%s\''%(cid)
+            assert 'int' in df[cid].dtypes.name, 'cid \'%s\' bad type'%cid
+        
+        #=======================================================================
+        # nests
+        #=======================================================================
+        dxcol = self._get_finv_dxcol(df_raw)
+
+        """
+        df_raw.dtypes
+        view(dxcol)
+        dxcol.dtypes
+        """
+        #===================================================================
+        # loop and check each nest----
+        #===================================================================
+        for nestID, dfn in dxcol.groupby(level=0, axis=1):
+            dfn = dfn.droplevel(0, axis=1).dropna(how='all', axis=0)
                 
-                if hndl=='type':
-                    assert np.issubdtype(ser.dtype, cval), '%s.%s bad type: %s'%(dtag, coln, ser.dtype)
+            #===================================================================
+            # with handles
+            #===================================================================
+            for coln, hndl_d in finv_exp_d.items():
+                assert isinstance(hndl_d, dict)
+                assert coln in dfn.columns, \
+                    '%s missing expected column \'%s\''%(nestID, coln)
+                
+                #check for nulls
+                bx = dfn[coln].isna()
+                if bx.any():
+                    log.debug(dfn.loc[bx, :])
+                    raise Error('%s_%s got nulls... see logger'%(nestID, coln))    
+                
+                ser = dfn[coln]
+                for hndl, cval in hndl_d.items():
                     
-                    """
-                    throwing  FutureWarning: Conversion of the second argument of issubdtype
+                    if hndl=='type':
+                        assert np.issubdtype(ser.dtype, cval), '%s_%s bad type: %s'%(
+                            nestID, coln, ser.dtype)
+                        
+                        """
+                        throwing  FutureWarning: Conversion of the second argument of issubdtype
+                        
+                        https://stackoverflow.com/questions/48340392/futurewarning-conversion-of-the-second-argument-of-issubdtype-from-float-to
+                        """
+                        
+                    elif hndl == 'contains':
+                        assert cval in ser, '%s_%s should contain %s'%(nestID, coln, cval)
+                        
+                    elif hndl=='notna':
+                        assert ser.notna().all(), '%s_%s should be all real'%(nestID, coln)
+                    else:
+                        raise Error('unexpected handle: %s'%hndl)
                     
-                    https://stackoverflow.com/questions/48340392/futurewarning-conversion-of-the-second-argument-of-issubdtype-from-float-to
-                    """
-                    
-                elif hndl == 'contains':
-                    assert cval in ser, '%s.%s should contain %s'%(dtag, coln, cval)
-                else:
-                    raise Error('unexpected handle: %s'%hndl)
+            #===================================================================
+            # column logic
+            #===================================================================
         
         
         return True
+    
+    def _get_finv_dxcol(self, #get finv as a dxcol
+                             df):
+        """
+        todo: transition everything to dxcols
+        """
+        dtypes = df.dtypes
+        cdf, prefix_l = self._get_finv_cnest(df)
+        
+        df_c = cdf.append(df).dropna(subset=['nestID'], axis=1, how='any').drop('ctype')
+
+        
+        #get multindex from two rows
+        mdex = pd.MultiIndex.from_frame(df_c.loc[['nestID', 'bname'], :].T)
+        
+        #cut these rows out and add them back as multindex
+        df1 = df_c.drop(['nestID', 'bname'], axis=0)
+        
+        #remap old types
+        dt_d = {k:v for k,v in dtypes.items() if k in df1.columns}
+        df1 = df1.astype(dt_d)
+        
+        df1.columns = mdex
+        df1.index.name = df.index.name
+        
+        assert np.array_equal(df1.index, df.index)
+        """
+        view(df1)
+        df1.dtypes
+        """
+        
+        return df1
     
     #===========================================================================
     # OUTPUTS---------

@@ -51,9 +51,9 @@ class Dmg2(DFunc, Plotr):
     
     #minimum inventory expectations
     finv_exp_d = {
-        'f0_tag':{'type':np.object},
-        'f0_scale':{'type':np.number},
-        'f0_elv':{'type':np.number},
+        'tag':{'type':np.object},
+        'scale':{'type':np.number},
+        'elv':{'type':np.number},
         }
     
     dfuncs_d = dict() #container for damage functions

@@ -81,8 +81,8 @@ class Risk1(Plotr):
     
     #minimum inventory expectations
     finv_exp_d = {
-        'f0_scale':{'type':np.number},
-        'f0_elv':{'type':np.number}
+        'scale':{'type':np.number},
+        'elv':{'type':np.number}
         }
     """
     NOTE: for as_inun=True, 

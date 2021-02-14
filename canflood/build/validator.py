@@ -44,6 +44,8 @@ class Vali(Qcoms):
     model validator worker
     
     kept separate from the model workers to keep init sequences clean
+    
+     TODO: add some more data checks?
 
     """
     valid_par = None #validation parmater for control file writing
