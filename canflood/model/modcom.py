@@ -176,6 +176,12 @@ class Model(ComWrkr,
     #[plotting]
     """see Plotr"""
     
+    
+    #===========================================================================
+    # expectations (overwritten by parent)
+    #===========================================================================
+    valid_par = None
+    
     #==========================================================================
     # program vars
     #==========================================================================
@@ -315,9 +321,10 @@ class Model(ComWrkr,
         #=======================================================================
         # #check our validity tag
         #=======================================================================
-        if not getattr(self, self.valid_par):
-            raise Error('control file not validated for \'%s\'. please run InputValidator'%self.valid_par)
-        
+        if not self.valid_par is None:
+            if not getattr(self, self.valid_par):
+                raise Error('control file not validated for \'%s\'. please run InputValidator'%self.valid_par)
+            
         #wrap
         self.logger.debug('finished init_modelon Model')
         

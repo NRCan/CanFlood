@@ -274,7 +274,9 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         return
         
     def set_crs(self, #load, build, and set the project crs
-                authid =  None):
+                authid =  None, #integer
+                crs = None, #QgsCoordinateReferenceSystem
+                ):
         
         #=======================================================================
         # setup and defaults
@@ -284,16 +286,22 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         if authid is None: 
             authid = self.crsid_default
         
-        if not isinstance(authid, int):
-            raise IOError('expected integer for crs')
+        #=======================================================================
+        # if not isinstance(authid, int):
+        #     raise IOError('expected integer for crs')
+        #=======================================================================
         
         #=======================================================================
         # build it
         #=======================================================================
-        self.crs = QgsCoordinateReferenceSystem(authid)
+        if crs is None:
+            crs = QgsCoordinateReferenceSystem(authid)
+
+        assert isinstance(crs, QgsCoordinateReferenceSystem)
+        self.crs=crs #overwrite
         
         if not self.crs.isValid():
-            raise IOError('CRS built from %i is invalid'%authid)
+            raise IOError('CRS built from %i is invalid'%self.crs.authid())
         
         #=======================================================================
         # attach to project
@@ -303,7 +311,9 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         if not self.qproj.crs().description() == self.crs.description():
             raise Error('qproj crs does not match sessions')
         
-        log.info('Session crs set to EPSG: %i, \'%s\''%(authid, self.crs.description()))
+        log.info('Session crs set to EPSG: %s, \'%s\''%(self.crs.authid(), self.crs.description()))
+        
+        return self.crs
            
     def proj_checks(self):
         log = self.logger.getChild('proj_checks')
@@ -367,6 +377,10 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         """only add intermediate layers to store
         self.mstore.addMapLayer(vlay_raw)"""
+        
+        if not vlay_raw.crs()==self.qproj.crs():
+            log.warning('crs mismatch: \n    %s\n    %s'%(
+            vlay_raw.crs(), self.qproj.crs()))
         
         #=======================================================================
         # aoi slice

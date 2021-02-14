@@ -451,10 +451,14 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         tag = self.linEdit_Stag.text() #set the secnario tag from user provided name
         
+        cf_fp = self.lineEdit_SS_cf.text()
+        
         #local
+        """pulling from cf_fp now
         cid = self.mFieldComboBox_JGfinv.currentField() #user selected field
+        data_fp = self.lineEdit_JG_resfp.text()"""
+        
         geo_vlay = self.comboBox_JGfinv.currentLayer()
-        data_fp = self.lineEdit_JG_resfp.text()
         res_style_fp = self.comboBox_JG_style.currentText()
         
         #=======================================================================
@@ -467,36 +471,31 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         assert isinstance(geo_vlay, QgsVectorLayer)
         
         #check cid
-        assert isinstance(cid, str), 'bad index FieldName passed'
-        if cid == '' or cid in self.invalid_cids:
-            raise Error('user selected index FieldName \'%s\''%cid)
+        #=======================================================================
+        # assert isinstance(cid, str), 'bad index FieldName passed'
+        # if cid == '' or cid in self.invalid_cids:
+        #     raise Error('user selected index FieldName \'%s\''%cid)
+        # 
+        # assert cid in [field.name() for field in geo_vlay.fields()] 
+        #=======================================================================
         
-        assert cid in [field.name() for field in geo_vlay.fields()] 
-        
-        assert os.path.exists(data_fp), 'invalid data_fp'
+        #assert os.path.exists(data_fp), 'invalid data_fp'
         
         assert isinstance(res_style_fp, str), 'bad style var'
          
-        
-        #=======================================================================
-        # working dir
-        #=======================================================================
-        if not os.path.exists(wd):
-            os.makedirs(wd)
-            log.info('built working directory: %s'%wd)
-        
-        
+
         #=======================================================================
         # execute
         #=======================================================================
         #setup
         wrkr = results.djoin.Djoiner(logger=self.logger, 
-                                     tag = tag,
+                                     tag = tag, cf_fp=cf_fp,
                                      feedback=self.feedback,
-                                     cid=cid, 
+                                     #cid=cid, 
                                      out_dir=wd)
         #execute
-        res_vlay = wrkr.run(geo_vlay, data_fp, cid,
+        res_vlay = wrkr.run(geo_vlay, 
+                            #data_fp, 
                  keep_fnl='all', #todo: setup a dialog to allow user to select any of the fields
                  )
         
