@@ -148,9 +148,9 @@ class Risk2(Plotr, #This inherits 'Model'
             self.load_attrimat(dxcol_lvls=2)
             self.promote_attrim()
         
-        """consider makeing riskPloter a child of modcom?"""    
+
         self.upd_impStyle() 
-        
+        self._init_fmtFunc()
         
         self.logger.debug('finished _setup() on Risk2')
         
@@ -298,8 +298,8 @@ class Risk2(Plotr, #This inherits 'Model'
     def _get_valstr(self):
         
                 #plotting string
-        return 'annualized impacts = %s \nltail=\'%s\' \nrtail=\'%s\''%(
-            self.impactFmtFunc(self.ead_tot), self.ltail, self.rtail) + \
+        return 'annualized impacts = %s %s \nltail=\'%s\' \nrtail=\'%s\''%(
+            self.impactFmtFunc(self.ead_tot), self.impact_units, self.ltail, self.rtail) + \
             '\nassets = %i\nevent_rels = \'%s\'\nprec = %i'%(
                 self.asset_cnt, self.event_rels, self.prec)
     

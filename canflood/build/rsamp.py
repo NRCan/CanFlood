@@ -88,6 +88,7 @@ class Rsamp(Plotr, Qcoms):
         self.psmp_codes = dict(zip(self.psmp_codes.values(), self.psmp_codes.keys()))
         
         self._init_plt() #setup matplotlib
+        self._init_fmtFunc()
         
         self.logger.info('Rsamp.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
 

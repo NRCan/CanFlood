@@ -68,6 +68,7 @@ class Cmpr(Plotr):
         
         
         self.upd_impStyle() #upldate your group plot style container
+        self._init_fmtFunc()
         #=======================================================================
         # wrap
         #=======================================================================

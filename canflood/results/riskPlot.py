@@ -162,7 +162,7 @@ class Plotr(Model):
         self._init_plt()"""
         
     def _setup(self):
-        """attribution has its own _setup function which will overwrite this"""
+        """parent classes should overwrite this"""
         log = self.logger.getChild('setup')
         
         
@@ -171,6 +171,7 @@ class Plotr(Model):
         
         #upldate your group plot style container
         self.upd_impStyle()
+        self._init_fmtFunc()
         
         #load and prep the total results
         _ = self.load_ttl(logger=log)
@@ -220,14 +221,7 @@ class Plotr(Model):
         
         self.plt, self.matplotlib = plt, matplotlib
         
-        #=======================================================================
-        # #value formatter
-        #=======================================================================
-        self._init_fmtFunc(**kwargs)
 
-        
-
-        
         return self
     
     def _init_fmtFunc(self, #setup impact formatting from two options
@@ -420,6 +414,7 @@ class Plotr(Model):
         
         This is similar to what's  on modcom.risk_plot()
         
+        self.impactfmt_str
         """
         
         #======================================================================
@@ -484,19 +479,24 @@ class Plotr(Model):
         #=======================================================================
         # add the line
         #=======================================================================
-        self._lineToAx(res_ttl, y1lab, ax1)
+        self._lineToAx(res_ttl, y1lab, ax1, lineLabel=self.name)
         
         #set limits
         if y1lab == 'AEP':
             ax1.set_xlim(0, max(res_ttl['impacts'])) #aep limits 
             ax1.set_ylim(0, max(res_ttl['aep'])*1.1)
+            xLocScale, yLocScale = 0.3,0.6
+            
         elif y1lab == self.impact_name:
             ax1.set_xlim(max(res_ttl['ari']), 1) #aep limits 
-        
+            xLocScale, yLocScale = 0.2,0.1
+        else:
+            log.warning('unrecognized y1lab: %s'%y1lab)
+            xLocScale, yLocScale = 0.1,0.1
         #=======================================================================
         # post format
         #=======================================================================
-        self._postFmt(ax1, val_str=val_str)
+        self._postFmt(ax1, val_str=val_str, xLocScale=xLocScale, yLocScale=yLocScale)
         
         #assign tick formatter functions
         if y1lab == 'AEP':
@@ -552,7 +552,7 @@ class Plotr(Model):
             
         if impactFmtFunc is None:
             impactFmtFunc=self.impactFmtFunc
-        
+        assert callable(impactFmtFunc)
         if plotTag is None: plotTag=self.tag
         
         
@@ -888,7 +888,10 @@ class Plotr(Model):
         
         if title is None:
             title = 'Boxplots on %i events'%len(df.columns)
-        
+        #=======================================================================
+        # check
+        #=======================================================================
+        assert callable(impactFmtFunc)
         #=======================================================================
         # manipulate data
         #=======================================================================

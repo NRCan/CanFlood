@@ -137,6 +137,13 @@ class Dmg2(DFunc, Plotr):
         
         self.setup_dfuncs(self.data_d['curves'])
         
+        #=======================================================================
+        # plot setup
+        #=======================================================================
+  
+        self.upd_impStyle() 
+        self._init_fmtFunc()
+        
         #======================================================================
         # checks
         #======================================================================
@@ -233,7 +240,7 @@ class Dmg2(DFunc, Plotr):
 
 
     def run(self, #main runner fucntion
-
+            set_impactUnits=True, #set impact_units from the dfunc
             ):
         #======================================================================
         # defaults
@@ -290,10 +297,19 @@ class Dmg2(DFunc, Plotr):
         #=======================================================================
         # get labels
         #=======================================================================
-        try:
-            self.impact_units = self.get_DF_att(attn='impact_units')
-        except Exception as e:
-            log.warning('failed to set \'impact_units\' w/ %s'%e)
+        if set_impactUnits:
+            """
+            if user wants to use the value in the c ontrol file.. pass set_impactUnits=False
+            otherwise we attempt to read from control file
+            
+            both should default to the modcom.Model.impact_units=impacts
+            """
+            try:
+                dFunc_iu = self.get_DF_att(attn='impact_units')
+                if not dFunc_iu == '' or dFunc_iu is None:
+                    self.impact_units = dFunc_iu
+            except Exception as e:
+                log.warning('failed to set \'impact_units\' w/ %s'%e)
         #=======================================================================
         # report
         #=======================================================================
