@@ -87,6 +87,7 @@ class Attr(riskPlotr):
         
         #upldate your group plot style container
         self.upd_impStyle()
+        self._init_fmtFunc()
         
         #load and prep the total results
         _ = self.load_ttl(logger=log)
