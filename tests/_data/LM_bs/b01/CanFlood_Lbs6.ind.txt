@@ -31,9 +31,9 @@ risk3 = False
 
 [results_fps]
 attrimat02 = LM_bs\b01\dmg\attr02_bs7.csv
-r2_ttl = LM_bs\b01\r01\risk2_LML.bs7.b01_bs7_ttl.csv
+r_ttl = LM_bs\b01\r01\risk2_LML.bs7.b01_bs7_ttl.csv
 attrimat03 = LM_bs\b01\r01\attr03_bs7.csv
-r2_passet = LM_bs\b01\r01\risk2_LML.bs7.b01_bs7_r2_passet.csv
+r_passet = LM_bs\b01\r01\risk2_LML.bs7.b01_bs7_r2_passet.csv
 eventypes = LM_bs\b01\r01\eventypes_bs7.csv
 #'attrimat03' file path set from output_attr at 2021-01-15 20.50.04
 

@@ -32,8 +32,8 @@ risk3 = False
 [results_fps]
 attrimat02 = tut2_01\c01\dmg2\attr02_tut2c_Tut2c.csv
 attrimat03 = tut2_01\c01\r2_max\attr03_tut2c_Tut2c_max.csv
-r2_passet = tut2_01\c01\r2_max\risk2_tut2c_Tut2c_max_r2_passet.csv
-r2_ttl = tut2_01\c01\r2_max\risk2_tut2c_Tut2c_max_ttl.csv
+r_passet = tut2_01\c01\r2_max\risk2_tut2c_Tut2c_max_r2_passet.csv
+r_ttl = tut2_01\c01\r2_max\risk2_tut2c_Tut2c_max_ttl.csv
 eventypes = tut2_01\c01\r2_max\eventypes_Tut2c_max_tut2c.csv
 #'attrimat03' file path set from output_attr at 2021-01-23 17.20.40
 
