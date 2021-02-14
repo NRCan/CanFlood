@@ -55,8 +55,8 @@ class Attr(riskPlotr):
     exp_pars_md = {
         'results_fps':{
              'attrimat03':{'ext':('.csv',)},
-             'r2_ttl':{'ext':('.csv',)},
-             'r2_passet':{'ext':('.csv',)},
+             'r_ttl':{'ext':('.csv',)},
+             'r_passet':{'ext':('.csv',)},
              'eventypes':{'ext':('.csv',)}
              }
         }
@@ -153,7 +153,7 @@ class Attr(riskPlotr):
         
     def load_passet(self, #load the per-asset results
                    fp = None,
-                   dtag = 'r2_passet',
+                   dtag = 'r_passet',
 
                    logger=None,
                     
@@ -305,7 +305,7 @@ class Attr(riskPlotr):
         view(s1_dxcol)
         view(s1i_ttl)
         self.data_d['ttl']
-        view(self.data_d['r2_passet'])
+        view(self.data_d['r_passet'])
         """
         #multiply by impacts
         s1i_dxcol = self.get_mult(s1_dxcol, logger=log)
@@ -396,7 +396,7 @@ class Attr(riskPlotr):
         #=======================================================================
         if logger is None: logger=self.logger
         log=logger.getChild('get_ttl')
-        rp_df = self.data_d['r2_passet'].copy()
+        rp_df = self.data_d['r_passet'].copy()
         
         #=======================================================================
         # precheck

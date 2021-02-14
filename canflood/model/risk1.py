@@ -294,69 +294,13 @@ class Risk1(Plotr):
         #=======================================================================
         # wrap
         #=======================================================================
-        
 
-        #=======================================================================
-        # #format resul series
-        # res = res_ser.to_frame()
-        # res.index.name = 'aep'
-        # res.columns = ['impacts']
-        # 
-        # #remove tails
-        # if self.drop_tails:
-        #     res = res.iloc[1:-2,:] #slice of ends 
-        #     res.loc['ead'] = res_ser['ead'] #add ead back
-        #=======================================================================
         
         self.feedback.setProgress(95)
         log.info('finished')
 
 
         return res_ttl, res_df
-    
-    def output_ttl(self,  #helper to o utput the total results file
-                    dtag='r2_ttl',
-                   ofn=None,
-                   upd_cf= True,
-                   logger=None,
-                   ):
- 
-        if ofn is None:
-            ofn = '%s_%s'%(self.resname, 'ttl') 
-            
-        out_fp = self.output_df(self.res_ttl, ofn, write_index=False, logger=logger)
-        
-        if upd_cf:
-            self.update_cf( {
-                    'results_fps':(
-                        {dtag:out_fp}, 
-                        '#\'%s\' file path set from output_ttl at %s'%(
-                            dtag, datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
-                        ), }, cf_fp = self.cf_fp )
-        
-        return out_fp
-    
-    def output_passet(self,  #helper to o utput the total results file
-                      dtag='r2_passet',
-                   ofn=None,
-                   upd_cf= True,
-                   logger=None,
-                   ):
-        """using these to help with control file writing"""
-        if ofn is None:
-            ofn = '%s_%s'%(self.resname, dtag)
-            
-        out_fp = self.output_df(self.res_df, ofn, logger=logger)
-        
-        if upd_cf:
-            self.update_cf( {
-                    'results_fps':(
-                        {dtag:out_fp}, 
-                        '#\'%s\' file path set from output_passet at %s'%(
-                            dtag, datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
-                        ), }, cf_fp = self.cf_fp )
-        
-        return out_fp
     
 
 if __name__ =="__main__": 

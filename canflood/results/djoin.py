@@ -51,7 +51,7 @@ class Djoiner(Qcoms, Model):
             'cid':{'type':str}
             },
         'results_fps':{
-             'r2_passet':{'ext':('.csv',)},
+             'r_passet':{'ext':('.csv',)},
              }
         }
     
@@ -90,7 +90,7 @@ class Djoiner(Qcoms, Model):
         log = self.logger.getChild('djoin')
         tag = self.tag
         if cid is None: cid = self.cid
-        if data_fp is None: data_fp = self.r2_passet
+        if data_fp is None: data_fp = self.r_passet
         if layname is None:  layname='res_%s_%s'%(self.name, tag)
         
         #=======================================================================

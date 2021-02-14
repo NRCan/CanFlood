@@ -117,8 +117,8 @@ class Model(ComWrkr,
     [results_fps]
         attrimat02 -- lvl2 attribution matrix fp (post dmg model)
         attrimat03 -- lvl3 attribution matrix fp (post risk model)
-        r2_passet -- per_asset results from the risk2 model
-        r2_ttl  -- total results from risk2
+        r_passet -- per_asset results from the risk2 model
+        r_ttl  -- total results from risk2
         eventypes -- df of aep, noFail, and rEventName
     
     
@@ -169,8 +169,8 @@ class Model(ComWrkr,
     #[results_fps]
     attrimat02=''
     attrimat03=''
-    r2_passet=''
-    r2_ttl =''
+    r_passet=''
+    r_ttl =''
     eventypes=''
     
     #[plotting]
@@ -3655,7 +3655,49 @@ class Model(ComWrkr,
         return out_fp
             
 
-
+    def output_ttl(self,  #helper to o utput the total results file
+                    dtag='r_ttl',
+                   ofn=None,
+                   upd_cf= True,
+                   logger=None,
+                   ):
+ 
+        if ofn is None:
+            ofn = '%s_%s'%(self.resname, 'ttl') 
+            
+        out_fp = self.output_df(self.res_ttl, ofn, write_index=False, logger=logger)
+        
+        if upd_cf:
+            self.update_cf( {
+                    'results_fps':(
+                        {dtag:out_fp}, 
+                        '#\'%s\' file path set from output_ttl at %s'%(
+                            dtag, datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                        ), }, cf_fp = self.cf_fp )
+        
+        return out_fp
+    
+    def output_passet(self,  #helper to o utput the total results file
+                      dtag='r_passet',
+                   ofn=None,
+                   upd_cf= True,
+                   logger=None,
+                   ):
+        """using these to help with control file writing"""
+        if ofn is None:
+            ofn = '%s_%s'%(self.resname, dtag)
+            
+        out_fp = self.output_df(self.res_df, ofn, logger=logger)
+        
+        if upd_cf:
+            self.update_cf( {
+                    'results_fps':(
+                        {dtag:out_fp}, 
+                        '#\'%s\' file path set from output_passet at %s'%(
+                            dtag, datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                        ), }, cf_fp = self.cf_fp )
+        
+        return out_fp
     
     
     

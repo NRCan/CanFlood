@@ -57,13 +57,13 @@ class Plotr(Model):
     #===========================================================================
     exp_pars_md = {
         'results_fps':{
-             'r2_ttl':{'ext':('.csv',)},
+             'r_ttl':{'ext':('.csv',)},
              }
         }
     
     exp_pars_op={
         'results_fps':{
-             'r2_passet':{'ext':('.csv',)},
+             'r_passet':{'ext':('.csv',)},
              }
         }
     
@@ -286,7 +286,7 @@ class Plotr(Model):
         #=======================================================================
         if logger is None: logger=self.logger
         log = logger.getChild('load_data')
-        if fp is None: fp=self.r2_ttl
+        if fp is None: fp=self.r_ttl
         
         #=======================================================================
         # #precheck
