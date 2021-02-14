@@ -2892,9 +2892,9 @@ class Model(ComWrkr,
         # labels
         #======================================================================\
         
-        val_str = 'annualized impacts = %s \nltail=\'%s\',  rtail=\'%s\''%(
+        val_str = 'annualized impacts = %s \nltail=\'%s\',  \nrtail=\'%s\''%(
             dfmt.format(ead_tot/basev), self.ltail, self.rtail) + \
-            '\nassets = %i, event_rels = \'%s\', prec = %i'%(
+            '\nfinv_cnt = %i, \nevent_rels = \'%s\', \nprec = %i'%(
                 self.asset_cnt, self.event_rels, self.prec)
         
         title = '%s.%s Impact-%s plot on %i events'%(self.name,self.tag, xlab, len(dmg_ser1))

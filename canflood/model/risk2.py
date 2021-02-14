@@ -285,11 +285,7 @@ class Risk2(Plotr, #This inherits 'Model'
         #=======================================================================
         # wrap----
         #=======================================================================
-        #plotting string
-        self.val_str = 'annualized impacts = %s \nltail=\'%s\',  rtail=\'%s\''%(
-            self.impactFmtFunc(self.ead_tot), self.ltail, self.rtail) + \
-            '\nassets = %i, event_rels = \'%s\', prec = %i'%(
-                self.asset_cnt, self.event_rels, self.prec)
+        self.val_str = self._get_valstr()
             
         
         self.res_ttl=res_ttl #for convenioence outputters
@@ -298,6 +294,14 @@ class Risk2(Plotr, #This inherits 'Model'
 
 
         return res_ttl, res_df
+    
+    def _get_valstr(self):
+        
+                #plotting string
+        return 'annualized impacts = %s \nltail=\'%s\' \nrtail=\'%s\''%(
+            self.impactFmtFunc(self.ead_tot), self.ltail, self.rtail) + \
+            '\nassets = %i\nevent_rels = \'%s\'\nprec = %i'%(
+                self.asset_cnt, self.event_rels, self.prec)
     
     def output_ttl(self,  #helper to o utput the total results file
                     dtag='r2_ttl',
