@@ -139,7 +139,7 @@ class Preparor(Model, Qcoms):
             new_pars_d['dmg_fps'] = ({'curves':curves_fp},)
         
         
-        return self.update_cf(new_pars_d)
+        return self.set_cf_pars(new_pars_d)
         
     def finv_to_csv(self, #convert the finv to csv
                     vlay,
@@ -226,7 +226,7 @@ class Preparor(Model, Qcoms):
             the transition from spatial to non-spatial and back to spatial losses these connections
         """
         
-        self.update_cf(
+        self.set_cf_pars(
             {
             'dmg_fps':(
                 {'finv':out_fp}, 

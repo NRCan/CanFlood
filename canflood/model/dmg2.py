@@ -1336,7 +1336,7 @@ class Dmg2(Model, DFunc, Plotr):
     #===========================================================================
     # OUTPUTRS-------------
     #===========================================================================
-    def upd_cf(self, #update the control file 
+    def update_cf(self, #update the control file 
                out_fp = None,
                cf_fp = None,
                ):
@@ -1352,7 +1352,7 @@ class Dmg2(Model, DFunc, Plotr):
         if not self.absolute_fp:
             out_fp = os.path.split(out_fp)[1]
         
-        return self.update_cf(
+        return self.set_cf_pars(
             {
             'parameters':(
                 {'impact_units':self.impact_units},

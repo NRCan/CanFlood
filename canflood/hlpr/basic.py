@@ -200,12 +200,12 @@ class ComWrkr(object): #common methods for all classes
 
         
         
-    def update_cf(self, #update one parameter  control file 
+    def set_cf_pars(self, #update one parameter  control file 
                   new_pars_d, #new paraemeters 
                     # {section : ({valnm : value } OR string (for notes)})
                   cf_fp = None):
         
-        log = self.logger.getChild('update_cf')
+        log = self.logger.getChild('set_cf_pars')
         
         #get defaults
         if cf_fp is None: cf_fp = self.cf_fp

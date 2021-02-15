@@ -520,8 +520,8 @@ class LikeSampler(Plotr, Qcoms):
         if ofn is None: ofn = 'exlikes_%s'%self.tag
         return self.output_df(res_df, ofn,write_index=True, **kwargs)
     
-    def upd_cf(self, cf_fp): #configured control file updater
-        return self.update_cf(
+    def update_cf(self, cf_fp): #configured control file updater
+        return self.set_cf_pars(
             {'risk_fps':(
                 {'exlikes':self.out_fp}, 
                 '#\'exlikes\' file path set from lisamp.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),

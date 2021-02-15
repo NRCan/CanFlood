@@ -1432,9 +1432,9 @@ class Rsamp(Plotr, Qcoms):
         return 
 
 
-    def upd_cf(self, cf_fp): #configured control file updater
+    def update_cf(self, cf_fp): #configured control file updater
         """make sure you write the file first"""
-        return self.update_cf(
+        return self.set_cf_pars(
             {
             'dmg_fps':(
                 {'expos':self.out_fp}, 
@@ -1449,7 +1449,7 @@ class Rsamp(Plotr, Qcoms):
         
         
     def upd_cf_dtm(self, cf_fp=None):
-        return self.update_cf(
+        return self.set_cf_pars(
             {
             'dmg_fps':(
                 {'gels':self.out_fp},

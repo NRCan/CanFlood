@@ -130,7 +130,7 @@ class Vali(Qcoms):
         #=======================================================================
         # write result to control file
         #=======================================================================
-        self.update_cf(
+        self.set_cf_pars(
             {
                 'validation':({valid_par:str(self.valid)},
                 '# \'%s\' validated by validator.py at %s'%(

@@ -330,7 +330,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         
         #update parameter file
         if self.checkBox_SS_updCf.isChecked():
-            model.upd_cf()
+            model.update_cf()
         self.feedback.setProgress(90)
             
         #calc summary

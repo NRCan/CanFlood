@@ -599,7 +599,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                         cf_fp=cf_fp, 
                         ) 
         self.feedback.upd_prog(50)
-        wrkr.update_cf(
+        wrkr.set_cf_pars(
             {
             'dmg_fps':(
                 {'curves':curves_fp}, 
@@ -671,7 +671,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # secondary flags
         #=======================================================================
         if self.checkBox_inv_apMiti.isChecked():
-            wrkr.update_cf(
+            wrkr.set_cf_pars(
                             {
                     'parameters':(
                         {'apply_miti':'True'},
@@ -995,7 +995,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         wrkr.write_res(res_vlay, )
         
         #update ocntrol file
-        wrkr.upd_cf(cf_fp)
+        wrkr.update_cf(cf_fp)
         
         #=======================================================================
         # plots
@@ -1265,7 +1265,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         wrkr.write_res(res_df, out_dir = out_dir)
         
         #update ocntrol file
-        wrkr.upd_cf(cf_fp)
+        wrkr.update_cf(cf_fp)
         
         #=======================================================================
         # summary plots
@@ -1377,7 +1377,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
         # update the control file
         #======================================================================
-        wrkr.update_cf(
+        wrkr.set_cf_pars(
             {
                 'parameters':({
                     'event_probs':event_probs, 'event_rels':event_rels},),
