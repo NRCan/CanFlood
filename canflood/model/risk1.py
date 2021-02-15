@@ -269,7 +269,7 @@ class Risk1(Plotr):
                         
         else:
             res_df = None
-        
+        self.res_df = res_df
         self.feedback.setProgress(90)
         #======================================================================
         # totals
@@ -288,7 +288,7 @@ class Risk1(Plotr):
         #=======================================================================
         # #format total results for writing
         #=======================================================================
-        res_ttl = self._fmt_resTtl(res_ttl)
+        self.res_ttl = self._fmt_resTtl(res_ttl)
             
         
         #=======================================================================
@@ -300,7 +300,7 @@ class Risk1(Plotr):
         log.info('finished')
 
 
-        return res_ttl, res_df
+        return self.res_ttl, self.res_df
     
 
 if __name__ =="__main__": 
