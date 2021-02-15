@@ -74,7 +74,7 @@ class Plotr(ComWrkr):
     
     
     def __init__(self,
-                 cf_fp='',
+
                  name='Results',
                  impStyle_d=None,
                    #labels
@@ -105,7 +105,7 @@ class Plotr(ComWrkr):
 
 
         
-        super().__init__(cf_fp=cf_fp, **kwargs) #initilzie teh baseclass
+        super().__init__( **kwargs) #initilzie teh baseclass
 
         #=======================================================================
         # attached passed        

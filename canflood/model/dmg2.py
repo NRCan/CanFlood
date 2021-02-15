@@ -32,12 +32,12 @@ from hlpr.exceptions import QError as Error
 from hlpr.basic import view
 #from model.modcom import Model
 from results.riskPlot import Plotr
-from model.modcom import DFunc
+from model.modcom import DFunc, Model
 
 #==============================================================================
 # functions----------------------
 #==============================================================================
-class Dmg2(DFunc, Plotr):
+class Dmg2(Model, DFunc, Plotr):
     #==========================================================================
     # #program vars
     #==========================================================================
@@ -1463,7 +1463,7 @@ class Dmg2(DFunc, Plotr):
         self._set_valstr(df) 
         return self.plot_impact_hist(df,
                       title=title, xlab = impact_name,
-                       val_str=self.val_str(df), **kwargs)
+                       val_str=self.val_str, **kwargs)
             
         
                    

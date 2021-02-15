@@ -331,7 +331,9 @@ class Model(ComWrkr,
         #wrap
         self.logger.debug('finished init_modelon Model')
         
-        
+    #===========================================================================
+    # CONTROL FILE------
+    #===========================================================================
     def cf_chk_pars(self,
                    cpars,
                    chk_d,
@@ -1870,306 +1872,7 @@ class Model(ComWrkr,
     # CALCULATORS-------
     #===========================================================================
         
-    def ev_multis(self, #calculate (discrete) expected value from events w/ multiple exposure sets
-           ddf, #damages per exposure set (
-           edf, #secondary liklihoods per exposure set ('exlikes'). see load_exlikes()
-                # nulls were replaced by 0.0 (e.g., asset not provided a secondary probability)
-                # missing colums were replaced by 1.0 (e.g., non-failure events)
-            
-           aep_ser,
-           event_rels=None, #ev calculation method
-                #max:  maximum expected value of impacts per asset from the duplicated events
-                    #resolved damage = max(damage w/o fail, damage w/ fail * fail prob)
-                    #default til 2020-12-30
-                #mutEx: assume each event is mutually exclusive (only one can happen)
-                    #lower bound
-                #indep: assume each event is independent (failure of one does not influence the other)
-                    #upper bound
-           logger=None,
-                       ):
-        """
-        
-        we accept multiple exposure sets for a single event  
-            e.g. 'failure' raster and 'no fail'
-            
-            where each exposure set is assigned a conditional probability in 'exlikes' (edf)
-                e.g. exlikes=1.0  means only one exposure set
-        
-        
-        for resolving conditional probabilities for a single exposure set:
-            see build.lisamp.LikeSampler.run()
-            (no impacts)
-        
-        view(edf)
-        """
-        #======================================================================
-        # defaults
-        #======================================================================
-        if logger is None: logger=self.logger
-        log = logger.getChild('ev_multis')
-        cplx_evn_d = self.cplx_evn_d #{aep: [eventName1, eventName2,...]}
-        if event_rels is None: event_rels = self.event_rels
 
-        #======================================================================
-        # precheck
-        #======================================================================
-        assert isinstance(cplx_evn_d, dict)
-        assert len(cplx_evn_d)>0
-        assert (edf.max(axis=1)<=1).all(), 'got probs exceeding 1'
-        assert (edf.min(axis=1)>=0).all(), 'got negative probs'
-        
-        assert ddf.shape == edf.shape, 'shape mismatch'
-        """where edf > 0 ddf should also be > 0
-        but leave this check for the input validator"""
-        #======================================================================
-        # get expected values of all damages
-        #======================================================================
-        """ skip this based on event_rels?"""
-        evdf = ddf*edf
-        
-        log.info('resolving EV w/ %s, %i event sets, and event_rels=\'%s\''%(
-            str(evdf.shape), len(cplx_evn_d), event_rels))
-        assert not evdf.isna().any().any()
-        assert evdf.min(axis=1).min()>=0
-        #======================================================================
-        # loop by unique aep and resolve-----
-        #======================================================================
-        res_df = pd.DataFrame(index=evdf.index, columns = aep_ser.unique().tolist())
-        meta_d = dict()
-
-        #for indxr, aep in enumerate(aep_ser.unique().tolist()):
-        for indxr, (aep, exn_l) in enumerate(cplx_evn_d.items()):
-            self.exn_max = max(self.exn_max, len(exn_l)) #use don plot
-            #===================================================================
-            # setup
-            #===================================================================
-            self.feedback.setProgress((indxr/len(aep_ser.unique())*80))
-            assert isinstance(aep, float)
-            
-            if not event_rels=='max':
-                if not (edf.loc[:, exn_l].sum(axis=1).round(self.prec) == 1.0).all():
- 
-                    raise Error('aep %.4f probabilities fail to sum'%aep)
-            
-            log.debug('resolving aep %.4f w/ %i event names: %s'%(aep, len(exn_l), exn_l))
-            
-            """
-            view(self.att_df)
-            """
-            #===================================================================
-            # simple events.. nothing to resolve----
-            #===================================================================
-            if len(exn_l) == 1:
-                """
-                where hazard layer doesn't have a corresponding failure layer
-                """
-                res_df.loc[:, aep] =  evdf.loc[:, exn_l].iloc[:, 0]
-                meta_d[aep] = 'simple noFail'
-                
-                """no attribution modification required"""
-                
-            #===================================================================
-            # one failure possibility-----
-            #===================================================================
-            elif len(exn_l) == 2:
-                
-                if event_rels == 'max':
-                    """special legacy method... see below"""
-                    res_df.loc[:, aep] = evdf.loc[:, exn_l].max(axis=1)
-
-                else:
-                    """where we only have one failure event
-                        events are mutually exclusive by default"""
-                    res_df.loc[:, aep] = evdf.loc[:, exn_l].sum(axis=1)
-                meta_d[aep] = '1 fail'
-            #===================================================================
-            # complex events (more than 2 failure event)----
-            #===================================================================
-            else:
-
-                """
-                view(edf.loc[:, exn_l])
-                view(ddf.loc[:, exn_l])
-                view(evdf.loc[:, exn_l])
-                """
-                
-                log.info('resolving alternate damages for aep %.2e from %i events: \n    %s'%(
-                    aep, len(exn_l), exn_l))
-                
-                #===============================================================
-                # max
-                #===============================================================
-                if event_rels == 'max':
-                    """
-                    matching 2020 function
-                    taking the max EV on each asset
-                        where those rasters w/o exlikes P=1 (see load_exlikes())
-                        
-                    WARNING: this violates probability logic
-                    
-                    """
-                    
-                    res_df.loc[:, aep] = evdf.loc[:, exn_l].max(axis=1)
-                    
-                #===============================================================
-                # mutex
-                #===============================================================
-                elif event_rels == 'mutEx':
-                    res_df.loc[:, aep] = evdf.loc[:, exn_l].sum(axis=1)
-
-                #===============================================================
-                # independent
-                #===============================================================
-                elif event_rels == 'indep':
-                    """
-                    NOTE: this is a very slow routine
-                    TODO: parallel processing
-                    """
-                    
-                    #identify those worth calculating
-                    bx = np.logical_and(
-                        (edf.loc[:, exn_l]>0).sum(axis=1)>1, #with multiple real probabilities
-                        ddf.loc[:,exn_l].sum(axis=1).round(self.prec)>0  #with some damages
-                        )
-                    
-                    #build the event type flags
-                    etype_df = pd.Series(index=exn_l, dtype=np.bool, name='mutEx').to_frame()
-
-                    #mark the failure event
-                    etype_df.loc[etype_df.index.isin(self.noFailExn_d.values()), 'mutEx']=True
-                    assert etype_df.iloc[:,0].sum()==1
-
-                    """todo: consider using 'apply'
-                    tricky w/ multiple data frames...."""
-                    log.info('aep %.4f calculating %i (of %i) EVs from %i events w/ indepedence'%(
-                        aep, bx.sum(), len(bx), len(exn_l)))
-                    
-                    #loop and resolve each asset
-                    for cindx, pser in edf.loc[bx, exn_l].iterrows():
-                   
-                        #assemble the prob/consq set for this asset
-                        inde_df = pser.rename('prob').to_frame().join(
-                            ddf.loc[cindx, exn_l].rename('consq').to_frame()
-                            ).join(etype_df)
-                            
-                        #resolve for this asset
-                        res_df.loc[cindx, aep] = self._get_indeEV(inde_df)
-                        
-                    #fill in remainderes
-                    assert res_df.loc[~bx, aep].isna().all()
-                    res_df.loc[~bx, aep] = evdf.loc[~bx, exn_l].max(axis=1)
-                        
-                        
-                        
-                else: raise Error('bad event_rels: %s'%event_rels)
-                #===============================================================
-                # wrap complex
-                #===============================================================
-                meta_d[aep] = 'complex fail'
-                
-
-            #===================================================================
-            # wrap this aep
-            #===================================================================
-            if res_df[aep].isna().any():
-                raise Error('got nulls on %s'%aep)
-                
-        #=======================================================================
-        # # check
-        #=======================================================================
-        assert res_df.min(axis=1).min()>=0
-        if not res_df.notna().all().all():
-            raise Error('got %i nulls'%res_df.isna().sum().sum())
-        #=======================================================================
-        # attribution------
-        #=======================================================================
-        if self.attriMode:
-            atr_dxcol_raw = self.att_df.copy()
-            mdex = atr_dxcol_raw.columns
-            nameRank_d= {lvlName:i for i, lvlName in enumerate(mdex.names)}
-            edf = edf.sort_index(axis=1, ascending=False)
-            """
-            view(edf)
-            view(atr_dxcol_raw)
-            view(atr_dxcol)
-            view(bool_dxcol)
-            view(mult_dxcol)
-            pd.__version__
-            """
-            if event_rels == 'max':
-                """                
-                turns out we need to get the ACTUAL expected value matrix
-                    here we reconstruct by gettin a max=0, no=1, shared=0.5 matrix
-                    then mutiplyling that by the evdf to get the ACTUAL ev matrix"""
-                
-                #===============================================================
-                # build multipler (boolean based on max)
-                #===============================================================
-                mbdxcol=None
-                for aep, gdf in atr_dxcol_raw.groupby(level=0, axis=1):
-                    #get events on this aep
-                    exn_l = gdf.columns.remove_unused_levels().levels[nameRank_d['rEventName']]
-                    
-                    #identify maximums
-                    booldf = evdf.loc[:, exn_l].isin(evdf.loc[:, exn_l].max(axis=1)).astype(int)
-                    
-                    #handle duplicates (assign equal portion)
-                    if len(exn_l)>1:
-                        boolidx =  booldf.eq(booldf.iloc[:,0], axis=0).all(axis=1)
-                        booldf.loc[boolidx, :] = float(1/len(exn_l))
-
-                    #add in the dummy lvl0 aep
-                    bdxcol = pd.concat([booldf], keys=[aep], axis=1)
-
-                    if mbdxcol is None:
-                        mbdxcol = bdxcol
-                    else:
-                        mbdxcol = mbdxcol.merge(bdxcol, how='outer', left_index=True, right_index=True)
-                        
-                    log.debug('%.4f: got %s'%(aep, str(mbdxcol.shape)))
-                    
-                #check it
-                self.check_attrimat(atr_dxcol=mbdxcol, logger=log)
-
-
-                #===============================================================
-                # apply multiplication
-                #===============================================================
-                #get EV from this
-                evdf1 = mbdxcol.multiply(evdf, axis='column', level=1).droplevel(level=0, axis=1)
-                
-
-                    
-            elif event_rels=='mutEx':
- 
-                evdf1=evdf
-
-            elif event_rels=='indep':
-                raise Error('attribution not implemented for event_rels=\'indep\'')
-            else: raise Error('bad evnet-Rels')
-            
-            #===================================================================
-            # common
-            #===================================================================
-            #multiply thorugh to get all the expected value components 
-            i_dxcol = atr_dxcol_raw.multiply(evdf1, axis='columns', level=1)
-                
-            #divide by the event totals to get ratios back
-            atr_dxcol = i_dxcol.divide(res_df, axis='columns', level='aep')
-            
-            #apportion null values
-            atr_dxcol = self._attriM_nulls(res_df, atr_dxcol, logger=log)
-            
-            self.att_df = atr_dxcol
-        #======================================================================
-        # wrap
-        #======================================================================
-
-        
-        log.info('resolved to %i unique event damages'%len(res_df.columns))
-        
-        return res_df.sort_index(axis=1)
-    
     def _attriM_nulls(self, #handle nulls in an attribution matrix
                      idf, #impact values (of which we are calculating attributions)
                      aRaw_dxcol, #attribution matrix w/ nulls (that need filling)
@@ -2260,406 +1963,8 @@ class Model(ComWrkr,
         
         return dxcol
     
-    def _get_indeEV(self,
-                    inde_df #prob, consq, mutual exclusivity flag for each exposure event 
-                    ):
-        
-        """
-        get the expected value at an asset with 
-            n>1 indepednet failure events (w/ probabilities)
-            and 1 noFail event
-        """
-        
-        #=======================================================================
-        # prechecks  
-        #=======================================================================
-        #check the columns
-        miss_l = set(['prob', 'consq', 'mutEx']).symmetric_difference(inde_df.columns)
-        assert len(miss_l)==0
-        
-        #=======================================================================
-        # failures---------
-        #=======================================================================
-        bxf = ~inde_df['mutEx']
-        #=======================================================================
-        # assemble complete scenario matrix
-        #=======================================================================
-        n = len(inde_df[bxf])
-        
-        #build it
-        if not n in self.scen_ar_d:
-            scenFail_ar = np.array([i for i in itertools.product(['yes','no'], repeat=n)])
-            self.scen_ar_d[n] = copy.copy(scenFail_ar)
-        
-        #retrieve pre-built
-        else:
-            scenFail_ar = copy.copy(self.scen_ar_d[n])
-
-        
-        #=======================================================================
-        #  probs
-        #=======================================================================
-        sFailP_df = pd.DataFrame(scenFail_ar, columns=inde_df[bxf].index)
-        
-        #expand probabilities to mathc size
-        prob_ar  = np.tile(inde_df.loc[bxf, 'prob'].to_frame().T.values, (len(sFailP_df), 1))
-        
-        #swap in positives
-        sFailP_df = sFailP_df.where(
-            np.invert(sFailP_df=='yes'), 
-            prob_ar, inplace=False)
-        
-        #swap in negatives
-        sFailP_df = sFailP_df.where(
-            np.invert(sFailP_df=='no'), 
-            1-prob_ar, inplace=False).astype(np.float64)
-        
-        #combine
-        sFailP_df['pTotal'] = sFailP_df.prod(axis=1)
-        assert round(sFailP_df['pTotal'].sum(), self.prec)==1, inde_df
-        
-        #=======================================================================
-        # consequences
-        #=======================================================================
-        sFailC_df = pd.DataFrame(scenFail_ar, columns=inde_df[bxf].index).replace(
-            {'yes':1.0, 'no':0.0}).astype(np.float64)
-        
-        #add in consequences
-        sFailC_df = sFailC_df.multiply(inde_df.loc[bxf, 'consq'])
-        
-        #get maximums
-        sFailC_df['cTotal'] = sFailC_df.max(axis=1)
-        
-        #=======================================================================
-        # expected values
-        #=======================================================================
-        evFail_ser = sFailP_df['pTotal']*sFailC_df['cTotal']
-        
-        #=======================================================================
-        # total-------
-        #=======================================================================
-        noFail_ar = inde_df.loc[~bxf, ['prob', 'consq']].iloc[0, :].values
-        
-        return evFail_ser.sum() + noFail_ar[0]*noFail_ar[1]
 
 
-
-    def calc_ead(self, #get EAD from a set of impacts per event
-                 df_raw, #xid: aep
-                 ltail = None,
-                 rtail = None,
-                 drop_tails = None, #whether to remove the dummy tail values from results
-                 dx = None, #damage step for integration (default:None)
-                 logger = None
-                 ):      
-        
-        """
-        #======================================================================
-        # inputs
-        #======================================================================
-        ltail: left tail treatment code (low prob high damage)
-            flat: extend the max damage to the zero probability event
-            extrapolate: extend the fucntion to the zero aep value (interp1d)
-            float: extend the function to this damage value (must be greater than max)
-            none: don't extend the tail (not recommended)
-            
-        rtail: right trail treatment (high prob low damage)
-            extrapolate: extend the function to the zero damage value
-            float: extend the function to this aep
-            none: don't extend (not recommended)
-
-        
-        """
-        #======================================================================
-        # setups and defaults
-        #======================================================================
-        if logger is None: logger = self.logger
-        log = logger.getChild('calc_ead')
-        if ltail is None: ltail = self.ltail
-        if rtail is None: rtail = self.rtail
-        if drop_tails is None: drop_tails=self.drop_tails
-        assert isinstance(drop_tails, bool)
-        
-        #format tail values
-        assert not ltail is None
-        assert not rtail is None
-        
-        if not ltail in ['flat', 'extrapolate', 'none']:
-            try:
-                ltail  = float(ltail)
-            except Exception as e:
-                raise Error('failed to convert \'ltail\'=\'%s\' to numeric \n    %s'%(ltail, e))
-            
-        if not rtail in ['extrapolate', 'none']:
-            rtail = float(rtail)
-            
-        log.info('getting ead on %s w/ ltail=\'%s\' and rtail=\'%s\''%(
-            str(df_raw.shape), ltail, rtail))
-        
-
-        #=======================================================================
-        # get tail values-----
-        #=======================================================================
-        df = df_raw.copy().sort_index(axis=1, ascending=False)
-        
-        #identify columns to calc ead for
-        bx = (df > 0).any(axis=1) #only want those with some real damages
-        
-        assert bx.any(), 'no valid results on %s'%str(df.shape)
-        #=======================================================================
-        # precheck
-        #=======================================================================
-        self.check_eDmg(df, dropna=True, logger=log)
-
-        #======================================================================
-        # left tail
-        #======================================================================
-        
-        #flat projection
-        if ltail == 'flat':
-            df.loc[:,0] = df.iloc[:,0] 
-            
-            if len(df)==1: 
-                self.extrap_vals_d[0] = df.loc[:,0].mean().round(self.prec) #store for later
-            
-        elif ltail == 'extrapolate': #DEFAULT
-            df.loc[bx,0] = df.loc[bx, :].apply(self._extrap_rCurve, axis=1, left=True)
-            
-            #extrap vqalue will be different for each entry
-            if len(df)==1: 
-                self.extrap_vals_d[0] = df.loc[:,0].mean().round(self.prec) #store for later
-
-        elif isinstance(ltail, float):
-            """this cant be a good idea...."""
-            df.loc[bx,0] = ltail
-            
-            self.extrap_vals_d[0] = ltail #store for later
-            
-        elif ltail == 'none':
-            pass
-        else:
-            raise Error('unexected ltail key'%ltail)
-        
-        
-        #======================================================================
-        # right tail
-        #======================================================================
-        if rtail == 'extrapolate':
-            """just using the average for now...
-            could extraploate for each asset but need an alternate method"""
-            aep_ser = df.loc[bx, :].apply(
-                self._extrap_rCurve, axis=1, left=False)
-            
-            aep_val = round(aep_ser.mean(), 5)
-            
-            assert aep_val > df.columns.max()
-            
-            df.loc[bx, aep_val] = 0
-            
-            log.info('using right intersection of aep= %.2e from average extraploation'%(
-                aep_val))
-            
-            
-            self.extrap_vals_d[aep_val] = 0 #store for later 
-            
-        
-        elif isinstance(rtail, float): #DEFAULT
-            aep_val = round(rtail, 5)
-            assert aep_val > df.columns.max(), 'passed rtail value (%.2f) not > max aep (%.2f)'%(
-                aep_val, df.columns.max())
-            
-            df.loc[bx, aep_val] = 0
-            
-            log.debug('setting ZeroDamage event from user passed \'rtail\' aep=%.7f'%(
-                aep_val))
-            
-            self.extrap_vals_d[aep_val] = 0 #store for later 
-
-        elif rtail == 'flat':
-            #set the zero damage year as the lowest year in the model (with a small buffer) 
-            aep_val = max(df.columns.tolist())*(1+10**-(self.prec+2))
-            df.loc[bx, aep_val] = 0
-            
-            log.info('rtail=\'flat\' setting ZeroDamage event as aep=%.7f'%aep_val)
-            
-        elif rtail == 'none':
-            log.warning('no rtail extrapolation specified! leads to invalid integration bounds!')
-        
-        else:
-            raise Error('unexpected rtail %s'%rtail)
-            
-        #re-arrange columns so x is ascending
-        df = df.sort_index(ascending=False, axis=1)
-        #======================================================================
-        # check  again
-        #======================================================================
-        self.check_eDmg(df, dropna=True, logger=log)
-
-        #======================================================================
-        # calc EAD-----------
-        #======================================================================
-        #get reasonable dx (integration step along damage axis)
-        """todo: allow the user to set t his"""
-        if dx is None:
-            dx = df.max().max()/100
-        assert isinstance(dx, float)
-        
-
-        
-        #apply the ead func
-        df.loc[bx, 'ead'] = df.loc[bx, :].apply(
-            self._get_ev, axis=1, dx=dx)
-        
-        
-        df.loc[:, 'ead'] = df['ead'].fillna(0) #fill remander w/ zeros
-        
-        #======================================================================
-        # check it
-        #======================================================================
-        boolidx = df['ead'] < 0
-        if boolidx.any():
-            log.warning('got %i (of %i) negative eads'%( boolidx.sum(), len(boolidx)))
-        
-        """
-        df.columns.dtype
-        """
-        #======================================================================
-        # clean results
-        #======================================================================
-        if drop_tails:
-            #just add the results values onto the raw
-            res_df = df_raw.join(df['ead']).round(self.prec)
-        else:
-            #take everything
-            res_df = df.round(self.prec)
-            
-        #final check
-        """nasty conversion because we use aep as a column name..."""
-        cdf = res_df.drop('ead', axis=1)
-        cdf.columns = cdf.columns.astype(float)
-            
-        self.check_eDmg(cdf, dropna=True, logger=log)
-            
-        return res_df
-
-
-    def _extrap_rCurve(self,  #extraploating EAD curve data
-               ser, #row of dmages (y values) from big df
-               left=True, #whether to extraploate left or right
-               ):
-        
-        """
-        
-        #=======================================================================
-        # plot helper
-        #=======================================================================
-        from matplotlib import pyplot as plt
-
-        plt.close()
-        
-        fig = plt.figure()
-        ax = fig.add_subplot()
-        
-        ax.plot(ser.index.values,  ser.values, 
-            linestyle='None', marker="o")
-            
-        ax.plot(0, f(0), marker='x', color='red')
-
-        ax.grid()
-        plt.show()
-        
-
-        """
-        
-        #build interpolation function from data
-        if left:
-            """
-            typically this just extends the line from the previous 2 extreme impacts
-            shouldnt effect results much when modeled extremes are 'extreme'
-            
-            theres probably a better function to use since we're only using the 'extrapolate' bit
-            """
-            f = interpolate.interp1d(
-                ser.index.values, #xvals: aep
-                ser.values, #yvals: impacts 
-                 fill_value='extrapolate', #all we're using
-                 )
-            
-        else:
-            #xvalues = damages
-            f = interpolate.interp1d(ser.values, ser.index.values,
-                                     fill_value='extrapolate')
-            
-        
-        #calculate new y value by applying interpolation function
-        result = float(f(0)) #y value at x=0
-        
-        if not result >=0:
-            raise Error('got negative extrapolation: %.2f'%result)
-        
-        return result 
-    
-    def _get_ev(self, #integration caller
-               ser, #row from damage results
-               dx = 0.1,
-               ):
-        """
-        should integrate along the damage axis (0 - infinity)
-        """
-        
-        
-        #print('%i.%s    %s'%(self.cnt, ser.name, ser.to_dict()))
-        
-        x = ser.tolist() #impacts
-        y = ser.index.values.round(self.prec+2).tolist() #AEPs
-        
-        """
-        from matplotlib import pyplot as plt
-        #build plot
-        lines = plt.plot(x, y)
-        #lines = plt.semilogx(x, y)
-        
-        #format
-        ax = plt.gca()
-        ax.grid()
-        ax.set_xlim(1, max(x)) #aep limits
-        ax.set_ylabel('AEP')
-        ax.set_xlabel('impacts')
-        
-        
-        plt.show()
-        
-        self.rtail
-        """
-        
-        #======================================================================
-        # ser_inv = ser.sort_index(ascending=False)
-        # 
-        # x = ser_inv.tolist()
-        # y = ser_inv.index.tolist()
-        # 
-        #======================================================================
-        if self.integrate == 'trapz':
-        
-            ead_tot = integrate.trapz(
-                y, #yaxis - aeps
-                x=x, #xaxis = damages 
-                dx = dx)
-            
-        elif self.integrate == 'simps':
-            self.logger.warning('integration method not tested')
-            
-            ead_tot = integrate.simps(
-                y, #yaxis - aeps
-                x=x, #xaxis = damages 
-                dx = dx)
-            
-        else:
-            raise Error('integration method \'%s\' not recognized'%self.integrate)
-            
-
-        return round(ead_tot, self.prec)
-    
     def _conv_expo_aep(self, #converting exposure data set to aep column values 
                       df, 
                       aep_ser,
@@ -2880,397 +2185,7 @@ class Model(ComWrkr,
         
         return res_df.rename(columns=rename_d)
     
-    #===========================================================================
-    # PLOTTING-------
-    #===========================================================================
-    
 
-            
-    def risk_plot(self, #impacts vs ARI 
-                  dmg_ser = None,
-                  
-                  #labels
-                  xlab='ARI', y1lab=None, y2lab='AEP',
-                  
-                  #format controls
-                  grid = True, logx = False, 
-                  basev = 1, #base value for dividing damage values
-                  dfmt = None, #formatting of damage values 
-                  
-                  
-                  #figure parametrs
-                figsize     = (6.5, 4), 
-                    
-                #hatch pars
-                    hatch =  None,
-                    h_color = 'blue',
-                    h_alpha = 0.1,
-                  ):
-        
-
-        """
-        TODO: harmonize w/ riskPlot()
-        """
-        #======================================================================
-        # defaults
-        #======================================================================
-        log = self.logger.getChild('risk_plot')
-        log.warning('depreciated!!')
-        if dmg_ser is None: dmg_ser = self.res_ser.copy()
-        if dfmt is None: dfmt = self.plot_fmt
-        if y1lab is None: y1lab = self.y1lab
-        #======================================================================
-        # precheck
-        #======================================================================
-        assert isinstance(dmg_ser, pd.Series)
-        assert 'ead' in dmg_ser.index, 'dmg_ser missing ead index'
-        #======================================================================
-        # setup
-        #======================================================================
-        """todo: move this up"""
-        import matplotlib
-        matplotlib.use('Qt5Agg') #sets the backend (case sensitive)
-        import matplotlib.pyplot as plt
-        
-        #set teh styles
-        plt.style.use('default')
-        
-        #font
-        matplotlib_font = {
-                'family' : 'serif',
-                'weight' : 'normal',
-                'size'   : 8}
-        
-        matplotlib.rc('font', **matplotlib_font)
-        matplotlib.rcParams['axes.titlesize'] = 10 #set the figure title size
-        
-        #spacing parameters
-        matplotlib.rcParams['figure.autolayout'] = False #use tight layout
-        
-        #======================================================================
-        # data manipulations
-        #======================================================================
-        #get ead
-        ead_tot, dmg_ser1 = self.fmt_dmg_plot(dmg_ser)
-                
-        
-        #get aep series
-        aep_ser = dmg_ser1.copy()
-        aep_ser.loc[:] = 1/dmg_ser1.index
-        
-        
-        #======================================================================
-        # labels
-        #======================================================================\
-        
-        val_str = 'annualized impacts = %s \nltail=\'%s\',  \nrtail=\'%s\''%(
-            dfmt.format(ead_tot/basev), self.ltail, self.rtail) + \
-            '\nfinv_cnt = %i, \nevent_rels = \'%s\', \nprec = %i'%(
-                self.asset_cnt, self.event_rels, self.prec)
-        
-        title = '%s.%s Impact-%s plot on %i events'%(self.name,self.tag, xlab, len(dmg_ser1))
-        
-        #======================================================================
-        # figure setup
-        #======================================================================
-        plt.close()
-        fig = plt.figure(figsize=figsize,
-                     tight_layout=False,
-                     constrained_layout = True,
-                     )
-
-        
-        #axis setup
-        ax1 = fig.add_subplot(111)
-        ax2 = ax1.twinx()
-        ax1.set_xlim(max(aep_ser.index), 1) #aep limits 
-        
-        # axis label setup
-        fig.suptitle(title)
-        ax1.set_ylabel(y1lab)
-        ax2.set_ylabel(y2lab)
-        ax1.set_xlabel(xlab)
-        
-        #======================================================================
-        # fill the plot
-        #======================================================================
-        #damage plot
-        xar,  yar = dmg_ser1.index.values, dmg_ser1.values
-        pline1 = ax1.semilogx(xar,yar,
-                            label       = y1lab,
-                            color       = self.color,
-                            linestyle   = self.linestyle,
-                            linewidth   = self.linewidth,
-                            alpha       = self.alpha,
-                            marker      = self.marker,
-                            markersize  = self.markersize,
-                            fillstyle   = self.fillstyle, #marker fill style
-                            )
-        
-        #add a hatch
-        polys = ax1.fill_between(xar, yar, y2=0, 
-                                color       = h_color, 
-                                alpha       = h_alpha,
-                                hatch       = hatch)
-        
-        #aep plot
-        xar,  yar = aep_ser.index.values, aep_ser.values
-        pline2 = ax2.semilogx(xar,yar,
-                            label       = y2lab,
-                            color       = 'blue',
-                            linestyle   = 'dashed',
-                            linewidth   = 1,
-                            alpha       = 1,
-                            marker      = 'x',
-                            markersize  = 0,
-                            )
-
-        #=======================================================================
-        # Add text string 'annot' to lower left of plot
-        #=======================================================================
-        xmin, xmax1 = ax1.get_xlim()
-        ymin, ymax1 = ax1.get_ylim()
-        
-        x_text = xmin + (xmax1 - xmin)*.1 # 1/10 to the right of the left ax1is
-        y_text = ymin + (ymax1 - ymin)*.2 #1/10 above the bottom ax1is
-        anno_obj = ax1.text(x_text, y_text, val_str)
-        
-        #=======================================================================
-        # format axis labels
-        #======================================================= ================
-        #damage values (yaxis for ax1)
-        old_tick_l = ax1.get_yticks() #get teh old labels
-         
-        # build the new ticks
-        l = [dfmt.format(value/basev) for value in old_tick_l]
-              
-        #apply the new labels
-        ax1.set_yticklabels(l)
-
-        #ARI (xaxis for ax1)
-        ax1.get_xaxis().set_major_formatter(
-                matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
-        
-        #=======================================================================
-        # post formatting
-        #=======================================================================
-        if grid: 
-            ax1.grid()
-        
-
-        #legend
-        h1, l1 = ax1.get_legend_handles_labels() #pull legend handles from axis 1
-        h2, l2 = ax2.get_legend_handles_labels()
-        ax1.legend(h1+h2, l1+l2, loc=1) #turn legend on with combined handles
-        
-        return fig
-    """
-    plt.show()
-    """
-    
-    def plot_aep(self, #AEP vs impacts
-                  dmg_ser = None,
-                  
-                  #labels
-                  y1lab='AEP',   xlab=None, 
-                  
-                  #format controls
-                  grid = True, 
-                  basev = 1, #base value for dividing damage values
-                  dfmt = None, #formatting of damage values 
-                  
-                  
-                  #figure parametrs
-                  figsize     = (6.5, 4), 
-                    
-                    #hatch pars
-                    hatch =  None,
-                    h_color = 'red',
-                    h_alpha = 0.1,
-                    
-                    xlrot = 45, #rotration for xlabels
-                  ):
-        
-
-        
-        #======================================================================
-        # defaults
-        #======================================================================
-        log = self.logger.getChild('plot_aep')
-        log.warning('depreciated!!')
-        if dmg_ser is None: dmg_ser = self.res_ser.copy()
-        if dfmt is None: dfmt = self.plot_fmt
-        if xlab is None: xlab = self.y1lab #pull from risk_plot notation
-
-        #======================================================================
-        # precheck
-        #======================================================================
-        assert isinstance(dmg_ser, pd.Series)
-        assert 'ead' in dmg_ser.index, 'dmg_ser missing ead index'
-        
-        log.info('on %i events \n    %s'%(len(dmg_ser), dmg_ser.to_dict()))
-        #======================================================================
-        # setup
-        #======================================================================
-        
-        import matplotlib
-        matplotlib.use('Qt5Agg') #sets the backend (case sensitive)
-        import matplotlib.pyplot as plt
-        
-        #set teh styles
-        plt.style.use('default')
-        
-        #font
-        matplotlib_font = {
-                'family' : 'serif',
-                'weight' : 'normal',
-                'size'   : 8}
-        
-        matplotlib.rc('font', **matplotlib_font)
-        matplotlib.rcParams['axes.titlesize'] = 10 #set the figure title size
-        
-        #spacing parameters
-        matplotlib.rcParams['figure.autolayout'] = False #use tight layout
-        
-        #======================================================================
-        # data manipulations
-        #======================================================================
-        aep_ser = dmg_ser.drop('ead')
-        ead_tot = dmg_ser['ead']
-                
-        #======================================================================
-        # labels
-        #======================================================================\
-        
-        val_str = 'annualized impacts = %s \nltail=\"%s\',  rtail=\'%s\''%(
-            dfmt.format(ead_tot/basev), self.ltail, self.rtail)
-        
-        title = '%s.%s Impact-%s plot on %i events'%(self.name,self.tag, y1lab, len(aep_ser))
-        
-        #======================================================================
-        # figure setup
-        #======================================================================
-        plt.close()
-        fig = plt.figure(figsize=figsize,
-                     tight_layout=False,
-                     constrained_layout = True,
-                     )
-
-        
-        #axis setup
-        ax1 = fig.add_subplot(111)
-        
-        #aep units
-        ax1.set_xlim(0, max(aep_ser)) #aep limits 
-        ax1.set_ylim(0, max(aep_ser.index)*1.1)
-        
-        """I think we need to use a label formatter instead
-        #ari units
-        ax2 = ax1.twiny()
-        ax2.set_xlabel(x2lab)
-        ax2.set_xlim(99999999, 1/max(aep_ser.index))"""
-        
-        # axis label setup
-        fig.suptitle(title)
-        ax1.set_ylabel(y1lab)
-
-        ax1.set_xlabel(xlab)
-        """
-        plt.close()
-        plt.show()
-        """
-        #======================================================================
-        # fill the plot
-        #======================================================================
-        #damage plot
-        xar,  yar = aep_ser.values.astype(np.float), aep_ser.index.values
-        pline1 = ax1.plot(xar,yar,
-                            label       = y1lab,
-                            color       = self.color,
-                            linestyle   = self.linestyle,
-                            linewidth   = self.linewidth,
-                            alpha       = self.alpha,
-                            marker      = self.marker,
-                            markersize  = self.markersize,
-                            fillstyle   = self.fillstyle, #marker fill style
-                            )
-        
-        #add a hatch
-
-        polys = ax1.fill_betweenx(yar.astype(np.float), x1=xar, x2=0, 
-                                color       = h_color, 
-                                alpha       = h_alpha,
-                                hatch       = hatch)
-        
-
-
-        #=======================================================================
-        # Add text string 'annot' to lower left of plot
-        #=======================================================================
-        xmin, xmax1 = ax1.get_xlim()
-        ymin, ymax1 = ax1.get_ylim()
-        
-        x_text = xmin + (xmax1 - xmin)*.5 # 1/10 to the right of the left ax1is
-        y_text = ymin + (ymax1 - ymin)*.2 #1/10 above the bottom ax1is
-        anno_obj = ax1.text(x_text, y_text, val_str)
-        
-        #=======================================================================
-        # format axis labels
-        #======================================================= ================
-        #damage values (xaxis)
-        old_tick_l = ax1.get_xticks() #get teh old labels
-         
-        # build the new ticks
-        l = [dfmt.format(value/basev) for value in old_tick_l]
-              
-        #apply the new labels
-        ax1.set_xticklabels(l, rotation=xlrot)
-
-        #=======================================================================
-        # #ARI (xaxis for ax1)
-        # ax1.get_xaxis().set_major_formatter(
-        #         matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
-        #=======================================================================
-        
-        #=======================================================================
-        # post formatting
-        #=======================================================================
-        if grid: 
-            ax1.grid()
-        
-
-        #legend
-        h1, l1 = ax1.get_legend_handles_labels() #pull legend handles from axis 1
-
-        ax1.legend(h1, l1, loc=2) #turn legend on with combined handles
-        
-        return fig
-    """
-    plt.show()
-    """
-    
-    def fmt_dmg_plot(self,#formatting damages for plotting
-                     dmg_ser_raw): 
-        
-        #get ead
-        dmg_ser = dmg_ser_raw.copy()
-        ead_tot = dmg_ser['ead']
-        del dmg_ser['ead'] #remove it from plotter values
-        
-        
-        #get damage series to plot
-        ar = np.array([dmg_ser.index, dmg_ser.values]) #convert to array
-        
-        #invert aep (w/ zero handling)
-        ar[0] = 1/np.where(ar[0]==0, #replaced based on zero value
-                           sorted(ar[0])[1]/10, #dummy value for zero (take the second smallest value and divide by 10)
-                           ar[0]) 
-        
-        dmg_ser1 = pd.Series(ar[1], index=ar[0], dtype=float) #back into series
-        dmg_ser1.index = dmg_ser1.index.astype(int) #format it
-        
-        return ead_tot, dmg_ser1
-        
     
    
 
@@ -3674,6 +2589,720 @@ class Model(ComWrkr,
         return out_fp
             
 
+
+class RiskModel(Plotr, Model): #common methods for risk1 and risk2
+    
+    exp_ttl_colns = ('note', 'plot', 'aep')
+    ead_tot=''
+    
+
+    #===========================================================================
+    # CALCULATORS-------
+    #===========================================================================
+    def ev_multis(self, #calculate (discrete) expected value from events w/ multiple exposure sets
+           ddf, #damages per exposure set (
+           edf, #secondary liklihoods per exposure set ('exlikes'). see load_exlikes()
+                # nulls were replaced by 0.0 (e.g., asset not provided a secondary probability)
+                # missing colums were replaced by 1.0 (e.g., non-failure events)
+            
+           aep_ser,
+           event_rels=None, #ev calculation method
+                #max:  maximum expected value of impacts per asset from the duplicated events
+                    #resolved damage = max(damage w/o fail, damage w/ fail * fail prob)
+                    #default til 2020-12-30
+                #mutEx: assume each event is mutually exclusive (only one can happen)
+                    #lower bound
+                #indep: assume each event is independent (failure of one does not influence the other)
+                    #upper bound
+           logger=None,
+                       ):
+        """
+        
+        we accept multiple exposure sets for a single event  
+            e.g. 'failure' raster and 'no fail'
+            
+            where each exposure set is assigned a conditional probability in 'exlikes' (edf)
+                e.g. exlikes=1.0  means only one exposure set
+        
+        
+        for resolving conditional probabilities for a single exposure set:
+            see build.lisamp.LikeSampler.run()
+            (no impacts)
+        
+        view(edf)
+        """
+        #======================================================================
+        # defaults
+        #======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('ev_multis')
+        cplx_evn_d = self.cplx_evn_d #{aep: [eventName1, eventName2,...]}
+        if event_rels is None: event_rels = self.event_rels
+
+        #======================================================================
+        # precheck
+        #======================================================================
+        assert isinstance(cplx_evn_d, dict)
+        assert len(cplx_evn_d)>0
+        assert (edf.max(axis=1)<=1).all(), 'got probs exceeding 1'
+        assert (edf.min(axis=1)>=0).all(), 'got negative probs'
+        
+        assert ddf.shape == edf.shape, 'shape mismatch'
+        """where edf > 0 ddf should also be > 0
+        but leave this check for the input validator"""
+        #======================================================================
+        # get expected values of all damages
+        #======================================================================
+        """ skip this based on event_rels?"""
+        evdf = ddf*edf
+        
+        log.info('resolving EV w/ %s, %i event sets, and event_rels=\'%s\''%(
+            str(evdf.shape), len(cplx_evn_d), event_rels))
+        assert not evdf.isna().any().any()
+        assert evdf.min(axis=1).min()>=0
+        #======================================================================
+        # loop by unique aep and resolve-----
+        #======================================================================
+        res_df = pd.DataFrame(index=evdf.index, columns = aep_ser.unique().tolist())
+        meta_d = dict()
+
+        #for indxr, aep in enumerate(aep_ser.unique().tolist()):
+        for indxr, (aep, exn_l) in enumerate(cplx_evn_d.items()):
+            self.exn_max = max(self.exn_max, len(exn_l)) #use don plot
+            #===================================================================
+            # setup
+            #===================================================================
+            self.feedback.setProgress((indxr/len(aep_ser.unique())*80))
+            assert isinstance(aep, float)
+            
+            if not event_rels=='max':
+                if not (edf.loc[:, exn_l].sum(axis=1).round(self.prec) == 1.0).all():
+ 
+                    raise Error('aep %.4f probabilities fail to sum'%aep)
+            
+            log.debug('resolving aep %.4f w/ %i event names: %s'%(aep, len(exn_l), exn_l))
+            
+            """
+            view(self.att_df)
+            """
+            #===================================================================
+            # simple events.. nothing to resolve----
+            #===================================================================
+            if len(exn_l) == 1:
+                """
+                where hazard layer doesn't have a corresponding failure layer
+                """
+                res_df.loc[:, aep] =  evdf.loc[:, exn_l].iloc[:, 0]
+                meta_d[aep] = 'simple noFail'
+                
+                """no attribution modification required"""
+                
+            #===================================================================
+            # one failure possibility-----
+            #===================================================================
+            elif len(exn_l) == 2:
+                
+                if event_rels == 'max':
+                    """special legacy method... see below"""
+                    res_df.loc[:, aep] = evdf.loc[:, exn_l].max(axis=1)
+
+                else:
+                    """where we only have one failure event
+                        events are mutually exclusive by default"""
+                    res_df.loc[:, aep] = evdf.loc[:, exn_l].sum(axis=1)
+                meta_d[aep] = '1 fail'
+            #===================================================================
+            # complex events (more than 2 failure event)----
+            #===================================================================
+            else:
+
+                """
+                view(edf.loc[:, exn_l])
+                view(ddf.loc[:, exn_l])
+                view(evdf.loc[:, exn_l])
+                """
+                
+                log.info('resolving alternate damages for aep %.2e from %i events: \n    %s'%(
+                    aep, len(exn_l), exn_l))
+                
+                #===============================================================
+                # max
+                #===============================================================
+                if event_rels == 'max':
+                    """
+                    matching 2020 function
+                    taking the max EV on each asset
+                        where those rasters w/o exlikes P=1 (see load_exlikes())
+                        
+                    WARNING: this violates probability logic
+                    
+                    """
+                    
+                    res_df.loc[:, aep] = evdf.loc[:, exn_l].max(axis=1)
+                    
+                #===============================================================
+                # mutex
+                #===============================================================
+                elif event_rels == 'mutEx':
+                    res_df.loc[:, aep] = evdf.loc[:, exn_l].sum(axis=1)
+
+                #===============================================================
+                # independent
+                #===============================================================
+                elif event_rels == 'indep':
+                    """
+                    NOTE: this is a very slow routine
+                    TODO: parallel processing
+                    """
+                    
+                    #identify those worth calculating
+                    bx = np.logical_and(
+                        (edf.loc[:, exn_l]>0).sum(axis=1)>1, #with multiple real probabilities
+                        ddf.loc[:,exn_l].sum(axis=1).round(self.prec)>0  #with some damages
+                        )
+                    
+                    #build the event type flags
+                    etype_df = pd.Series(index=exn_l, dtype=np.bool, name='mutEx').to_frame()
+
+                    #mark the failure event
+                    etype_df.loc[etype_df.index.isin(self.noFailExn_d.values()), 'mutEx']=True
+                    assert etype_df.iloc[:,0].sum()==1
+
+                    """todo: consider using 'apply'
+                    tricky w/ multiple data frames...."""
+                    log.info('aep %.4f calculating %i (of %i) EVs from %i events w/ indepedence'%(
+                        aep, bx.sum(), len(bx), len(exn_l)))
+                    
+                    #loop and resolve each asset
+                    for cindx, pser in edf.loc[bx, exn_l].iterrows():
+                   
+                        #assemble the prob/consq set for this asset
+                        inde_df = pser.rename('prob').to_frame().join(
+                            ddf.loc[cindx, exn_l].rename('consq').to_frame()
+                            ).join(etype_df)
+                            
+                        #resolve for this asset
+                        res_df.loc[cindx, aep] = self._get_indeEV(inde_df)
+                        
+                    #fill in remainderes
+                    assert res_df.loc[~bx, aep].isna().all()
+                    res_df.loc[~bx, aep] = evdf.loc[~bx, exn_l].max(axis=1)
+                        
+                        
+                        
+                else: raise Error('bad event_rels: %s'%event_rels)
+                #===============================================================
+                # wrap complex
+                #===============================================================
+                meta_d[aep] = 'complex fail'
+                
+
+            #===================================================================
+            # wrap this aep
+            #===================================================================
+            if res_df[aep].isna().any():
+                raise Error('got nulls on %s'%aep)
+                
+        #=======================================================================
+        # # check
+        #=======================================================================
+        assert res_df.min(axis=1).min()>=0
+        if not res_df.notna().all().all():
+            raise Error('got %i nulls'%res_df.isna().sum().sum())
+        #=======================================================================
+        # attribution------
+        #=======================================================================
+        if self.attriMode:
+            atr_dxcol_raw = self.att_df.copy()
+            mdex = atr_dxcol_raw.columns
+            nameRank_d= {lvlName:i for i, lvlName in enumerate(mdex.names)}
+            edf = edf.sort_index(axis=1, ascending=False)
+            """
+            view(edf)
+            view(atr_dxcol_raw)
+            view(atr_dxcol)
+            view(bool_dxcol)
+            view(mult_dxcol)
+            pd.__version__
+            """
+            if event_rels == 'max':
+                """                
+                turns out we need to get the ACTUAL expected value matrix
+                    here we reconstruct by gettin a max=0, no=1, shared=0.5 matrix
+                    then mutiplyling that by the evdf to get the ACTUAL ev matrix"""
+                
+                #===============================================================
+                # build multipler (boolean based on max)
+                #===============================================================
+                mbdxcol=None
+                for aep, gdf in atr_dxcol_raw.groupby(level=0, axis=1):
+                    #get events on this aep
+                    exn_l = gdf.columns.remove_unused_levels().levels[nameRank_d['rEventName']]
+                    
+                    #identify maximums
+                    booldf = evdf.loc[:, exn_l].isin(evdf.loc[:, exn_l].max(axis=1)).astype(int)
+                    
+                    #handle duplicates (assign equal portion)
+                    if len(exn_l)>1:
+                        boolidx =  booldf.eq(booldf.iloc[:,0], axis=0).all(axis=1)
+                        booldf.loc[boolidx, :] = float(1/len(exn_l))
+
+                    #add in the dummy lvl0 aep
+                    bdxcol = pd.concat([booldf], keys=[aep], axis=1)
+
+                    if mbdxcol is None:
+                        mbdxcol = bdxcol
+                    else:
+                        mbdxcol = mbdxcol.merge(bdxcol, how='outer', left_index=True, right_index=True)
+                        
+                    log.debug('%.4f: got %s'%(aep, str(mbdxcol.shape)))
+                    
+                #check it
+                self.check_attrimat(atr_dxcol=mbdxcol, logger=log)
+
+
+                #===============================================================
+                # apply multiplication
+                #===============================================================
+                #get EV from this
+                evdf1 = mbdxcol.multiply(evdf, axis='column', level=1).droplevel(level=0, axis=1)
+                
+
+                    
+            elif event_rels=='mutEx':
+ 
+                evdf1=evdf
+
+            elif event_rels=='indep':
+                raise Error('attribution not implemented for event_rels=\'indep\'')
+            else: raise Error('bad evnet-Rels')
+            
+            #===================================================================
+            # common
+            #===================================================================
+            #multiply thorugh to get all the expected value components 
+            i_dxcol = atr_dxcol_raw.multiply(evdf1, axis='columns', level=1)
+                
+            #divide by the event totals to get ratios back
+            atr_dxcol = i_dxcol.divide(res_df, axis='columns', level='aep')
+            
+            #apportion null values
+            atr_dxcol = self._attriM_nulls(res_df, atr_dxcol, logger=log)
+            
+            self.att_df = atr_dxcol
+        #======================================================================
+        # wrap
+        #======================================================================
+
+        
+        log.info('resolved to %i unique event damages'%len(res_df.columns))
+        
+        return res_df.sort_index(axis=1)
+    
+    def calc_ead(self, #get EAD from a set of impacts per event
+                 df_raw, #xid: aep
+                 ltail = None,
+                 rtail = None,
+                 drop_tails = None, #whether to remove the dummy tail values from results
+                 dx = None, #damage step for integration (default:None)
+                 logger = None
+                 ):      
+        
+        """
+        #======================================================================
+        # inputs
+        #======================================================================
+        ltail: left tail treatment code (low prob high damage)
+            flat: extend the max damage to the zero probability event
+            extrapolate: extend the fucntion to the zero aep value (interp1d)
+            float: extend the function to this damage value (must be greater than max)
+            none: don't extend the tail (not recommended)
+            
+        rtail: right trail treatment (high prob low damage)
+            extrapolate: extend the function to the zero damage value
+            float: extend the function to this aep
+            none: don't extend (not recommended)
+
+        
+        """
+        #======================================================================
+        # setups and defaults
+        #======================================================================
+        if logger is None: logger = self.logger
+        log = logger.getChild('calc_ead')
+        if ltail is None: ltail = self.ltail
+        if rtail is None: rtail = self.rtail
+        if drop_tails is None: drop_tails=self.drop_tails
+        assert isinstance(drop_tails, bool)
+        
+        #format tail values
+        assert not ltail is None
+        assert not rtail is None
+        
+        if not ltail in ['flat', 'extrapolate', 'none']:
+            try:
+                ltail  = float(ltail)
+            except Exception as e:
+                raise Error('failed to convert \'ltail\'=\'%s\' to numeric \n    %s'%(ltail, e))
+            
+        if not rtail in ['extrapolate', 'none']:
+            rtail = float(rtail)
+            
+        log.info('getting ead on %s w/ ltail=\'%s\' and rtail=\'%s\''%(
+            str(df_raw.shape), ltail, rtail))
+        
+
+        #=======================================================================
+        # get tail values-----
+        #=======================================================================
+        df = df_raw.copy().sort_index(axis=1, ascending=False)
+        
+        #identify columns to calc ead for
+        bx = (df > 0).any(axis=1) #only want those with some real damages
+        
+        assert bx.any(), 'no valid results on %s'%str(df.shape)
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        self.check_eDmg(df, dropna=True, logger=log)
+
+        #======================================================================
+        # left tail
+        #======================================================================
+        
+        #flat projection
+        if ltail == 'flat':
+            df.loc[:,0] = df.iloc[:,0] 
+            
+            if len(df)==1: 
+                self.extrap_vals_d[0] = df.loc[:,0].mean().round(self.prec) #store for later
+            
+        elif ltail == 'extrapolate': #DEFAULT
+            df.loc[bx,0] = df.loc[bx, :].apply(self._extrap_rCurve, axis=1, left=True)
+            
+            #extrap vqalue will be different for each entry
+            if len(df)==1: 
+                self.extrap_vals_d[0] = df.loc[:,0].mean().round(self.prec) #store for later
+
+        elif isinstance(ltail, float):
+            """this cant be a good idea...."""
+            df.loc[bx,0] = ltail
+            
+            self.extrap_vals_d[0] = ltail #store for later
+            
+        elif ltail == 'none':
+            pass
+        else:
+            raise Error('unexected ltail key'%ltail)
+        
+        
+        #======================================================================
+        # right tail
+        #======================================================================
+        if rtail == 'extrapolate':
+            """just using the average for now...
+            could extraploate for each asset but need an alternate method"""
+            aep_ser = df.loc[bx, :].apply(
+                self._extrap_rCurve, axis=1, left=False)
+            
+            aep_val = round(aep_ser.mean(), 5)
+            
+            assert aep_val > df.columns.max()
+            
+            df.loc[bx, aep_val] = 0
+            
+            log.info('using right intersection of aep= %.2e from average extraploation'%(
+                aep_val))
+            
+            
+            self.extrap_vals_d[aep_val] = 0 #store for later 
+            
+        
+        elif isinstance(rtail, float): #DEFAULT
+            aep_val = round(rtail, 5)
+            assert aep_val > df.columns.max(), 'passed rtail value (%.2f) not > max aep (%.2f)'%(
+                aep_val, df.columns.max())
+            
+            df.loc[bx, aep_val] = 0
+            
+            log.debug('setting ZeroDamage event from user passed \'rtail\' aep=%.7f'%(
+                aep_val))
+            
+            self.extrap_vals_d[aep_val] = 0 #store for later 
+
+        elif rtail == 'flat':
+            #set the zero damage year as the lowest year in the model (with a small buffer) 
+            aep_val = max(df.columns.tolist())*(1+10**-(self.prec+2))
+            df.loc[bx, aep_val] = 0
+            
+            log.info('rtail=\'flat\' setting ZeroDamage event as aep=%.7f'%aep_val)
+            
+        elif rtail == 'none':
+            log.warning('no rtail extrapolation specified! leads to invalid integration bounds!')
+        
+        else:
+            raise Error('unexpected rtail %s'%rtail)
+            
+        #re-arrange columns so x is ascending
+        df = df.sort_index(ascending=False, axis=1)
+        #======================================================================
+        # check  again
+        #======================================================================
+        self.check_eDmg(df, dropna=True, logger=log)
+
+        #======================================================================
+        # calc EAD-----------
+        #======================================================================
+        #get reasonable dx (integration step along damage axis)
+        """todo: allow the user to set t his"""
+        if dx is None:
+            dx = df.max().max()/100
+        assert isinstance(dx, float)
+        
+
+        
+        #apply the ead func
+        df.loc[bx, 'ead'] = df.loc[bx, :].apply(
+            self._get_ev, axis=1, dx=dx)
+        
+        
+        df.loc[:, 'ead'] = df['ead'].fillna(0) #fill remander w/ zeros
+        
+        #======================================================================
+        # check it
+        #======================================================================
+        boolidx = df['ead'] < 0
+        if boolidx.any():
+            log.warning('got %i (of %i) negative eads'%( boolidx.sum(), len(boolidx)))
+        
+        """
+        df.columns.dtype
+        """
+        #======================================================================
+        # clean results
+        #======================================================================
+        if drop_tails:
+            #just add the results values onto the raw
+            res_df = df_raw.join(df['ead']).round(self.prec)
+        else:
+            #take everything
+            res_df = df.round(self.prec)
+            
+        #final check
+        """nasty conversion because we use aep as a column name..."""
+        cdf = res_df.drop('ead', axis=1)
+        cdf.columns = cdf.columns.astype(float)
+            
+        self.check_eDmg(cdf, dropna=True, logger=log)
+            
+        return res_df
+
+    def _get_indeEV(self,
+                    inde_df #prob, consq, mutual exclusivity flag for each exposure event 
+                    ):
+        
+        """
+        get the expected value at an asset with 
+            n>1 indepednet failure events (w/ probabilities)
+            and 1 noFail event
+        """
+        
+        #=======================================================================
+        # prechecks  
+        #=======================================================================
+        #check the columns
+        miss_l = set(['prob', 'consq', 'mutEx']).symmetric_difference(inde_df.columns)
+        assert len(miss_l)==0
+        
+        #=======================================================================
+        # failures---------
+        #=======================================================================
+        bxf = ~inde_df['mutEx']
+        #=======================================================================
+        # assemble complete scenario matrix
+        #=======================================================================
+        n = len(inde_df[bxf])
+        
+        #build it
+        if not n in self.scen_ar_d:
+            scenFail_ar = np.array([i for i in itertools.product(['yes','no'], repeat=n)])
+            self.scen_ar_d[n] = copy.copy(scenFail_ar)
+        
+        #retrieve pre-built
+        else:
+            scenFail_ar = copy.copy(self.scen_ar_d[n])
+
+        
+        #=======================================================================
+        #  probs
+        #=======================================================================
+        sFailP_df = pd.DataFrame(scenFail_ar, columns=inde_df[bxf].index)
+        
+        #expand probabilities to mathc size
+        prob_ar  = np.tile(inde_df.loc[bxf, 'prob'].to_frame().T.values, (len(sFailP_df), 1))
+        
+        #swap in positives
+        sFailP_df = sFailP_df.where(
+            np.invert(sFailP_df=='yes'), 
+            prob_ar, inplace=False)
+        
+        #swap in negatives
+        sFailP_df = sFailP_df.where(
+            np.invert(sFailP_df=='no'), 
+            1-prob_ar, inplace=False).astype(np.float64)
+        
+        #combine
+        sFailP_df['pTotal'] = sFailP_df.prod(axis=1)
+        assert round(sFailP_df['pTotal'].sum(), self.prec)==1, inde_df
+        
+        #=======================================================================
+        # consequences
+        #=======================================================================
+        sFailC_df = pd.DataFrame(scenFail_ar, columns=inde_df[bxf].index).replace(
+            {'yes':1.0, 'no':0.0}).astype(np.float64)
+        
+        #add in consequences
+        sFailC_df = sFailC_df.multiply(inde_df.loc[bxf, 'consq'])
+        
+        #get maximums
+        sFailC_df['cTotal'] = sFailC_df.max(axis=1)
+        
+        #=======================================================================
+        # expected values
+        #=======================================================================
+        evFail_ser = sFailP_df['pTotal']*sFailC_df['cTotal']
+        
+        #=======================================================================
+        # total-------
+        #=======================================================================
+        noFail_ar = inde_df.loc[~bxf, ['prob', 'consq']].iloc[0, :].values
+        
+        return evFail_ser.sum() + noFail_ar[0]*noFail_ar[1]
+
+
+
+
+    def _extrap_rCurve(self,  #extraploating EAD curve data
+               ser, #row of dmages (y values) from big df
+               left=True, #whether to extraploate left or right
+               ):
+        
+        """
+        
+        #=======================================================================
+        # plot helper
+        #=======================================================================
+        from matplotlib import pyplot as plt
+
+        plt.close()
+        
+        fig = plt.figure()
+        ax = fig.add_subplot()
+        
+        ax.plot(ser.index.values,  ser.values, 
+            linestyle='None', marker="o")
+            
+        ax.plot(0, f(0), marker='x', color='red')
+
+        ax.grid()
+        plt.show()
+        
+
+        """
+        
+        #build interpolation function from data
+        if left:
+            """
+            typically this just extends the line from the previous 2 extreme impacts
+            shouldnt effect results much when modeled extremes are 'extreme'
+            
+            theres probably a better function to use since we're only using the 'extrapolate' bit
+            """
+            f = interpolate.interp1d(
+                ser.index.values, #xvals: aep
+                ser.values, #yvals: impacts 
+                 fill_value='extrapolate', #all we're using
+                 )
+            
+        else:
+            #xvalues = damages
+            f = interpolate.interp1d(ser.values, ser.index.values,
+                                     fill_value='extrapolate')
+            
+        
+        #calculate new y value by applying interpolation function
+        result = float(f(0)) #y value at x=0
+        
+        if not result >=0:
+            raise Error('got negative extrapolation: %.2f'%result)
+        
+        return result 
+    
+
+    def _get_ev(self, #integration caller
+               ser, #row from damage results
+               dx = 0.1,
+               ):
+        """
+        should integrate along the damage axis (0 - infinity)
+        """
+        
+        
+        #print('%i.%s    %s'%(self.cnt, ser.name, ser.to_dict()))
+        
+        x = ser.tolist() #impacts
+        y = ser.index.values.round(self.prec+2).tolist() #AEPs
+        
+        """
+        from matplotlib import pyplot as plt
+        #build plot
+        lines = plt.plot(x, y)
+        #lines = plt.semilogx(x, y)
+        
+        #format
+        ax = plt.gca()
+        ax.grid()
+        ax.set_xlim(1, max(x)) #aep limits
+        ax.set_ylabel('AEP')
+        ax.set_xlabel('impacts')
+        
+        
+        plt.show()
+        
+        self.rtail
+        """
+        
+        #======================================================================
+        # ser_inv = ser.sort_index(ascending=False)
+        # 
+        # x = ser_inv.tolist()
+        # y = ser_inv.index.tolist()
+        # 
+        #======================================================================
+        if self.integrate == 'trapz':
+        
+            ead_tot = integrate.trapz(
+                y, #yaxis - aeps
+                x=x, #xaxis = damages 
+                dx = dx)
+            
+        elif self.integrate == 'simps':
+            self.logger.warning('integration method not tested')
+            
+            ead_tot = integrate.simps(
+                y, #yaxis - aeps
+                x=x, #xaxis = damages 
+                dx = dx)
+            
+        else:
+            raise Error('integration method \'%s\' not recognized'%self.integrate)
+            
+
+        return round(ead_tot, self.prec)
+    
+    #===========================================================================
+    # OUTPUTTERS------
+    #===========================================================================
     def output_ttl(self,  #helper to o utput the total results file
                     dtag='r_ttl',
                    ofn=None,
@@ -3717,12 +3346,9 @@ class Model(ComWrkr,
                         ), }, cf_fp = self.cf_fp )
         
         return out_fp
-
-class RiskModel(Plotr, Model): #common methods for risk1 and risk2
-    
-    exp_ttl_colns = ('note', 'plot', 'aep')
-    ead_tot=''
-    
+    #===========================================================================
+    # PLOTTING----------
+    #===========================================================================
     def prep_ttl(self, # prep the raw results for plotting
                  tlRaw_df=None, #raw total results info
                  logger=None,
@@ -3799,6 +3425,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         
         return ttl_df
     
+
     def plot_riskCurve(self, #risk plot
                   res_ttl=None,
                   y1lab='AEP', #yaxis label and plot type c ontrol
@@ -3984,8 +3611,8 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         #plotting string
         self.val_str =  'annualized impacts = %s %s \nltail=\'%s\' \nrtail=\'%s\''%(
             self.impactFmtFunc(self.ead_tot), self.impact_units, self.ltail, self.rtail) + \
-            '\nassets = %i\nevent_rels = \'%s\'\nprec = %i \nmax_fails=%i'%(
-                self.asset_cnt, self.event_rels, self.prec, self.exn_max)
+            '\nassets = %i\nevent_rels = \'%s\'\nprec = %i \nmax_fails=%i \ndate=%s'%(
+                self.asset_cnt, self.event_rels, self.prec, self.exn_max, self.today_str)
     
     
 class DFunc(ComWrkr, #damage function or DFunc handler
