@@ -27,6 +27,7 @@ mod_logger = logging.getLogger('common') #get the root logger
 from hlpr.exceptions import QError as Error
     
 from hlpr.basic import ComWrkr, view
+from hlpr.plot import Plotr
 
 #==============================================================================
 # class-----------
@@ -199,7 +200,7 @@ class Model(ComWrkr,
     cplx_evn_d = None #complex event sets {aep: [exEventName1, exEventName1]}
     asset_cnt = 0 #for plotting
     scen_ar_d = dict() #container for empty scenario matrix
-    
+    exn_max = 0 #for models w/ failre.. maximum complex count. see ev_multis()
     #===========================================================================
     # field names
     #===========================================================================
@@ -721,8 +722,6 @@ class Model(ComWrkr,
         #=======================================================================
         # mitigation----
         #=======================================================================
-        
-        
         #check these
         boolcol = cdf.loc['ctype', :]=='miti'
         
@@ -794,6 +793,7 @@ class Model(ComWrkr,
         #======================================================================
         # sets----
         #======================================================================
+        self.asset_cnt = len(df) #used by risk plotters
         self.cindex = df.index.copy() #set this for checks later
         self.finv_cdf = cdf
         self.data_d[dtag] = df
@@ -1423,7 +1423,7 @@ class Model(ComWrkr,
         
         log.info('finished loading %s as %s'%(dtag, str(df.shape)))
         
-        self.asset_cnt=len(df) #for plotting
+
 
     def load_attrimat(self,
                       dxcol_lvls=2, #levels present in passed data
@@ -1935,10 +1935,11 @@ class Model(ComWrkr,
         # loop by unique aep and resolve-----
         #======================================================================
         res_df = pd.DataFrame(index=evdf.index, columns = aep_ser.unique().tolist())
-        meta_d = dict() 
+        meta_d = dict()
+
         #for indxr, aep in enumerate(aep_ser.unique().tolist()):
         for indxr, (aep, exn_l) in enumerate(cplx_evn_d.items()):
-            
+            self.exn_max = max(self.exn_max, len(exn_l)) #use don plot
             #===================================================================
             # setup
             #===================================================================
@@ -1963,7 +1964,7 @@ class Model(ComWrkr,
                 where hazard layer doesn't have a corresponding failure layer
                 """
                 res_df.loc[:, aep] =  evdf.loc[:, exn_l].iloc[:, 0]
-                meta_d[aep] = 'simple event'
+                meta_d[aep] = 'simple noFail'
                 
                 """no attribution modification required"""
                 
@@ -1975,13 +1976,12 @@ class Model(ComWrkr,
                 if event_rels == 'max':
                     """special legacy method... see below"""
                     res_df.loc[:, aep] = evdf.loc[:, exn_l].max(axis=1)
+
                 else:
                     """where we only have one failure event
                         events are mutually exclusive by default"""
                     res_df.loc[:, aep] = evdf.loc[:, exn_l].sum(axis=1)
-                    
-
-            
+                meta_d[aep] = '1 fail'
             #===================================================================
             # complex events (more than 2 failure event)----
             #===================================================================
@@ -1996,6 +1996,9 @@ class Model(ComWrkr,
                 log.info('resolving alternate damages for aep %.2e from %i events: \n    %s'%(
                     aep, len(exn_l), exn_l))
                 
+                #===============================================================
+                # max
+                #===============================================================
                 if event_rels == 'max':
                     """
                     matching 2020 function
@@ -2008,9 +2011,15 @@ class Model(ComWrkr,
                     
                     res_df.loc[:, aep] = evdf.loc[:, exn_l].max(axis=1)
                     
+                #===============================================================
+                # mutex
+                #===============================================================
                 elif event_rels == 'mutEx':
                     res_df.loc[:, aep] = evdf.loc[:, exn_l].sum(axis=1)
 
+                #===============================================================
+                # independent
+                #===============================================================
                 elif event_rels == 'indep':
                     """
                     NOTE: this is a very slow routine
@@ -2053,8 +2062,15 @@ class Model(ComWrkr,
                         
                         
                 else: raise Error('bad event_rels: %s'%event_rels)
-
+                #===============================================================
+                # wrap complex
+                #===============================================================
+                meta_d[aep] = 'complex fail'
                 
+
+            #===================================================================
+            # wrap this aep
+            #===================================================================
             if res_df[aep].isna().any():
                 raise Error('got nulls on %s'%aep)
                 
@@ -2867,6 +2883,9 @@ class Model(ComWrkr,
     #===========================================================================
     # PLOTTING-------
     #===========================================================================
+    
+
+            
     def risk_plot(self, #impacts vs ARI 
                   dmg_ser = None,
                   
@@ -3698,7 +3717,275 @@ class Model(ComWrkr,
                         ), }, cf_fp = self.cf_fp )
         
         return out_fp
+
+class RiskModel(Plotr, Model): #common methods for risk1 and risk2
     
+    exp_ttl_colns = ('note', 'plot', 'aep')
+    ead_tot=''
+    
+    def prep_ttl(self, # prep the raw results for plotting
+                 tlRaw_df=None, #raw total results info
+                 logger=None,
+                 ):
+        """
+        when ttl is output, we add the EAD data, drop ARI, and add plotting handles
+            which is not great for data manipulation
+        here we clean it up and only take those for plotting
+        
+        see also Artr.get_ttl()
+        """
+        
+        if tlRaw_df is None: tlRaw_df = self.tlRaw_df
+        if logger is None: logger=self.logger
+        log = logger.getChild('prep_ttl')
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert isinstance(tlRaw_df, pd.DataFrame)
+        
+        #=======================================================================
+        # column labling
+        #=======================================================================
+        """letting the user pass whatever label for the impacts
+            then reverting"""
+        df1 = tlRaw_df.copy()
+        
+        self.impact_name = list(df1.columns)[1] #get the label for the impacts
+        
+        newColNames = list(df1.columns)
+        newColNames[1] = 'impacts'
+        
+        df1.columns = newColNames
+
+        #=======================================================================
+        # #get ead
+        #=======================================================================
+        bx = df1['aep'] == 'ead' #locate the ead row
+        assert bx.sum()==1
+
+        self.ead_tot = df1.loc[bx, 'impacts'].values[0]
+        
+        assert not pd.isna(self.ead_tot)
+        assert isinstance(self.ead_tot, float)
+        
+        #=======================================================================
+        # #get plot values
+        #=======================================================================
+        df2 = df1.loc[df1['plot'], :].copy() #drop those not flagged for plotting
+        
+        #typeset aeps
+        df2.loc[:, 'aep'] = df2['aep'].astype(np.float64).round(self.prec)
+
+        #=======================================================================
+        # #invert aep (w/ zero handling)
+        #=======================================================================
+        self._get_ttl_ari(df2)
+
+        #=======================================================================
+        # re-order
+        #=======================================================================
+        log.info('finished w/ %s'%str(df2.shape))
+        
+        ttl_df = df2.loc[:, sorted(df2.columns)].sort_values('ari', ascending=True)
+        self.data_d['ttl'] = ttl_df.copy()
+        
+        #shortcut for datachecks
+        df1 = ttl_df.loc[:, ('aep', 'note')]
+        df1['extrap']= df1['note']=='extrap'
+
+        self.aep_df = df1.drop('note', axis=1)  #for checking
+        
+        
+        return ttl_df
+    
+    def plot_riskCurve(self, #risk plot
+                  res_ttl=None,
+                  y1lab='AEP', #yaxis label and plot type c ontrol
+                    #'impacts': impacts vs. ARI (use self.impact_name)
+                    #'AEP': AEP vs. impacts 
+                    
+                    impactFmtFunc=None, #tick label format function for impact values
+                    #lambda x:'{:,.0f}'.format(x) #thousands comma
+                    
+                    val_str=None, #text to write on plot. see _get_val_str()
+                    figsize=None, logger=None,  plotTag=None,                
+                  ):
+        
+        """
+        summary risk results plotter
+        
+        This is similar to what's  on modcom.risk_plot()
+        
+        self.impactfmt_str
+        """
+        
+        #======================================================================
+        # defaults
+        #======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('plot_riskCurve')
+        plt, matplotlib = self.plt, self.matplotlib
+        if figsize is None: figsize    =    self.figsize
+
+        if y1lab =='impacts':
+            y1lab = self.impact_name
+            
+        if impactFmtFunc is None: impactFmtFunc=self.impactFmtFunc
+            
+        if res_ttl is None: res_ttl = self.data_d['ttl']
+        if plotTag is None: plotTag=self.tag
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        assert isinstance(res_ttl, pd.DataFrame)
+        miss_l = set(['aep', 'ari', 'impacts']).difference(res_ttl.columns)
+        assert len(miss_l)==0, miss_l
+        
+
+        #======================================================================
+        # labels
+        #======================================================================
+        val_str = self._get_val_str(val_str, impactFmtFunc)
+        
+        
+        if y1lab == 'AEP':
+            title = '%s %s AEP-Impacts plot for %i events'%(self.name, plotTag, len(res_ttl))
+            xlab=self.impact_name
+        elif y1lab == self.impact_name:
+            title = '%s %s Impacts-ARI plot for %i events'%(self.name, plotTag, len(res_ttl))
+            xlab='ARI'
+        else:
+            raise Error('bad y1lab: %s'%y1lab)
+            
+ 
+        #=======================================================================
+        # figure setup
+        #=======================================================================
+        """
+        plt.show()
+        """
+        plt.close()
+        fig = plt.figure(figsize=figsize, constrained_layout = True)
+        
+        #axis setup
+        ax1 = fig.add_subplot(111)
+        #ax2 = ax1.twinx()
+        
+        
+        # axis label setup
+        fig.suptitle(title)
+        ax1.set_ylabel(y1lab)
+
+        ax1.set_xlabel(xlab)
+        
+        #=======================================================================
+        # add the line
+        #=======================================================================
+        self._lineToAx(res_ttl, y1lab, ax1, lineLabel=self.name)
+        
+        #set limits
+        if y1lab == 'AEP':
+            ax1.set_xlim(0, max(res_ttl['impacts'])) #aep limits 
+            ax1.set_ylim(0, max(res_ttl['aep'])*1.1)
+            xLocScale, yLocScale = 0.3,0.6
+            
+        elif y1lab == self.impact_name:
+            ax1.set_xlim(max(res_ttl['ari']), 1) #aep limits 
+            xLocScale, yLocScale = 0.2,0.1
+        else:
+            log.warning('unrecognized y1lab: %s'%y1lab)
+            xLocScale, yLocScale = 0.1,0.1
+        #=======================================================================
+        # post format
+        #=======================================================================
+        self._postFmt(ax1, val_str=val_str, xLocScale=xLocScale, yLocScale=yLocScale)
+        
+        #assign tick formatter functions
+        if y1lab == 'AEP':
+            xfmtFunc = impactFmtFunc
+            yfmtFunc=lambda x:'%.4f'%x
+        elif y1lab==self.impact_name:
+            xfmtFunc = lambda x:'{:,.0f}'.format(x) #thousands separatro
+            yfmtFunc=impactFmtFunc
+            
+        self._tickSet(ax1, xfmtFunc=xfmtFunc, yfmtFunc=yfmtFunc)
+        
+        return fig
+    
+    def _lineToAx(self, #add a line to the axis
+              res_ttl,
+              y1lab,
+              ax,
+              lineLabel=None,
+              impStyle_d=None,
+              hatch_f=True,
+              h_color=None, h_alpha=None, hatch=None,
+              ): #add a line to an axis
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        plt, matplotlib = self.plt, self.matplotlib
+        if impStyle_d is None: impStyle_d = self.impStyle_d
+        
+        if h_color is None: h_color=self.h_color
+        if h_alpha is None: h_alpha=self.h_alpha
+        if hatch is None: hatch=self.hatch
+        if lineLabel is  None: lineLabel=self.tag
+
+        """
+        plt.show()
+        """
+        #======================================================================
+        # fill the plot
+        #======================================================================
+        if y1lab == self.impact_name:
+            xar,  yar = res_ttl['ari'].values, res_ttl['impacts'].values
+            pline1 = ax.semilogx(xar,yar,
+                                label       = lineLabel,
+                                **impStyle_d
+                                )
+            #add a hatch
+            if hatch_f:
+                polys = ax.fill_between(xar, yar, y2=0, 
+                                        color       = h_color, 
+                                        alpha       = h_alpha,
+                                        hatch       = hatch)
+        
+        elif y1lab == 'AEP':
+            xar,  yar = res_ttl['impacts'].values, res_ttl['aep'].values
+            pline1 = ax.plot(xar,yar,
+                            label       = lineLabel,
+                            **impStyle_d
+                            )
+                    
+            if hatch_f:
+                polys = ax.fill_betweenx(yar.astype(np.float), x1=xar, x2=0, 
+                                    color       = h_color, 
+                                    alpha       = h_alpha,
+                                    hatch       = hatch)
+        else:
+            raise Error('bad yl1ab: %s'%y1lab)
+            
+        
+        return ax
+            
+        
+    
+        
+        
+    
+    def _set_valstr(self): 
+        """"
+        only the risk models should 
+        """
+        
+        #plotting string
+        self.val_str =  'annualized impacts = %s %s \nltail=\'%s\' \nrtail=\'%s\''%(
+            self.impactFmtFunc(self.ead_tot), self.impact_units, self.ltail, self.rtail) + \
+            '\nassets = %i\nevent_rels = \'%s\'\nprec = %i \nmax_fails=%i'%(
+                self.asset_cnt, self.event_rels, self.prec, self.exn_max)
     
     
 class DFunc(ComWrkr, #damage function or DFunc handler

@@ -17,7 +17,7 @@ import os, logging
 import pandas as pd
 import numpy as np
 
-from scipy import interpolate, integrate
+#from scipy import interpolate, integrate
 
 #==============================================================================
 # custom imports
@@ -30,11 +30,12 @@ from hlpr.exceptions import QError as Error
 
 #from hlpr.Q import *
 #from hlpr.basic import *
-from results.riskPlot import Plotr
+#from results.riskPlot import Plotr
+from model.modcom import RiskModel
 
 
 
-class Risk1(Plotr):
+class Risk1(RiskModel):
     """
     model for summarizing inundation counts (positive depths)
     """
@@ -307,13 +308,7 @@ class Risk1(Plotr):
 
         return self.res_ttl, self.res_df
     
-    def _set_valstr(self):
-        
-        #plotting string
-        self.val_str =  'annualized impacts = %s %s \nltail=\'%s\' \nrtail=\'%s\''%(
-            self.impactFmtFunc(self.ead_tot), self.impact_units, self.ltail, self.rtail) + \
-            '\nassets = %i\nevent_rels = \'%s\'\nprec = %i'%(
-                self.asset_cnt, self.event_rels, self.prec)
+
     
 
 if __name__ =="__main__": 

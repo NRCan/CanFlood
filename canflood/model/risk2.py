@@ -27,12 +27,12 @@ from hlpr.exceptions import QError as Error
 #from hlpr.Q import *
 from hlpr.basic import view
 #from model.modcom import Model
-from results.riskPlot import Plotr
-
+#from results.riskPlot import Plotr
+from model.modcom import RiskModel
 #==============================================================================
 # functions----------------------
 #==============================================================================
-class Risk2(Plotr, #This inherits 'Model'
+class Risk2(RiskModel, #This inherits 'Model'
              
             ):
     """Risk T2 tool for calculating expected value for a set of events from impact results
@@ -273,14 +273,7 @@ class Risk2(Plotr, #This inherits 'Model'
 
 
         return res_ttl, res_df
-    
-    def _set_valstr(self):
-        
-        #plotting string
-        self.val_str =  'annualized impacts = %s %s \nltail=\'%s\' \nrtail=\'%s\''%(
-            self.impactFmtFunc(self.ead_tot), self.impact_units, self.ltail, self.rtail) + \
-            '\nassets = %i\nevent_rels = \'%s\'\nprec = %i'%(
-                self.asset_cnt, self.event_rels, self.prec)
+
     
 
         
