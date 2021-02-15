@@ -1471,35 +1471,30 @@ class Rsamp(Plotr, Qcoms):
         if df is None: df=self.res_df
         title = '%s Raster Sample Histogram on %i Events'%(self.tag, len(df.columns))
         
-
+        self._set_valstr(df)
         return self.plot_impact_hist(df,
                      title=title, xlab = 'raster value',
 
-                     val_str=self._get_valstr(df), **kwargs)
+                     val_str=self.val_str, **kwargs)
         
 
     def plot_boxes(self, #plot boxplots of results
                      df=None, 
                       **kwargs): 
 
-        if df is None: 
-            df=self.res_df
-            
-            
-            
-        """
-        view(df)
-        """
+        if df is None:df=self.res_df
+
         title = '%s Raster Sample Boxplots on %i Events'%(self.tag, len(df.columns))
 
-
+        self._set_valstr(df)
+        
         return self.plot_impact_boxes(df,
                      title=title, xlab = 'hazard layer', ylab = 'raster value',
                      smry_method='mean',
-                     val_str=self._get_valstr(df),   **kwargs)
+                     val_str=self.val_str,   **kwargs)
         
-    def _get_valstr(self, df):
-        return 'finv_fcnt=%i \nfinv_name=\'%s\' \nas_inun=%s \ndate=%s'%(
+    def _set_valstr(self, df):
+        self.val_str= 'finv_fcnt=%i \nfinv_name=\'%s\' \nas_inun=%s \ndate=%s'%(
             len(df), self.finv_name, self.as_inun, self.today_str)
         
     

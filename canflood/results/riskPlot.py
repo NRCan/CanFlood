@@ -1197,6 +1197,10 @@ class Plotr(Model):
                      val_str, #cant be a kwarg.. allowing None
                      impactFmtFunc=None,
                      ):
+        """
+        generally just returns the val_str
+            but also provides some special handles
+        """
         #=======================================================================
         # defaults
         #=======================================================================

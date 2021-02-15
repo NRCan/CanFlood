@@ -264,7 +264,7 @@ class Risk2(Plotr, #This inherits 'Model'
         #=======================================================================
         # wrap----
         #=======================================================================
-        self.val_str = self._get_valstr()
+        self._set_valstr()
             
         
         self.res_ttl=res_ttl #for convenioence outputters
@@ -274,10 +274,10 @@ class Risk2(Plotr, #This inherits 'Model'
 
         return res_ttl, res_df
     
-    def _get_valstr(self):
+    def _set_valstr(self):
         
-                #plotting string
-        return 'annualized impacts = %s %s \nltail=\'%s\' \nrtail=\'%s\''%(
+        #plotting string
+        self.val_str =  'annualized impacts = %s %s \nltail=\'%s\' \nrtail=\'%s\''%(
             self.impactFmtFunc(self.ead_tot), self.impact_units, self.ltail, self.rtail) + \
             '\nassets = %i\nevent_rels = \'%s\'\nprec = %i'%(
                 self.asset_cnt, self.event_rels, self.prec)

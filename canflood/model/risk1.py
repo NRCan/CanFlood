@@ -67,6 +67,9 @@ class Risk1(Plotr):
          }
     
     exp_pars_op = {#optional expectations
+       'parameters':{
+            'impact_units': {'type':str}
+            },
         'dmg_fps':{
             'gels':{'ext':('.csv',)},
                  },
@@ -96,8 +99,10 @@ class Risk1(Plotr):
     #==========================================================================
     # plot controls
     #==========================================================================
-    plot_fmt = '{0:.0f}' #floats w/ 2 decimal
-    y1lab = 'impacts'
+    #===========================================================================
+    # plot_fmt = '{0:.0f}' #floats w/ 2 decimal
+    # y1lab = 'impacts'
+    #===========================================================================
     
     def __init__(self,
                  cf_fp='',
@@ -294,13 +299,21 @@ class Risk1(Plotr):
         #=======================================================================
         # wrap
         #=======================================================================
-
+        self._set_valstr()
         
         self.feedback.setProgress(95)
         log.info('finished')
 
 
         return self.res_ttl, self.res_df
+    
+    def _set_valstr(self):
+        
+        #plotting string
+        self.val_str =  'annualized impacts = %s %s \nltail=\'%s\' \nrtail=\'%s\''%(
+            self.impactFmtFunc(self.ead_tot), self.impact_units, self.ltail, self.rtail) + \
+            '\nassets = %i\nevent_rels = \'%s\'\nprec = %i'%(
+                self.asset_cnt, self.event_rels, self.prec)
     
 
 if __name__ =="__main__": 

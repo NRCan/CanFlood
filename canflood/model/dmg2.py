@@ -310,6 +310,8 @@ class Dmg2(DFunc, Plotr):
                     self.impact_units = dFunc_iu
             except Exception as e:
                 log.warning('failed to set \'impact_units\' w/ %s'%e)
+                
+        #for plotting
         #=======================================================================
         # report
         #=======================================================================
@@ -1413,8 +1415,8 @@ class Dmg2(DFunc, Plotr):
     #===========================================================================
     # PLOTRS------
     #===========================================================================
-    def _get_valstr(self, df):
-        return 'asset count=%i \napply_miti=%s \nground_water=%s \nfelv=\'%s\' \ndate= %s'%(
+    def _set_valstr(self, df):
+        self.val_str = 'asset count=%i \napply_miti=%s \nground_water=%s \nfelv=\'%s\' \ndate= %s'%(
             len(df), self.apply_miti, self.ground_water, self.felv, self.today_str)
         
     def plot_boxes(self, #box plots for each event 
@@ -1435,11 +1437,11 @@ class Dmg2(DFunc, Plotr):
             df = self.cres_df.replace({0.0:np.nan})
 
         title = '%s %s dmg2.Impact Boxplots on %i Events'%(plotTag, self.name, len(df.columns))
-        
+        self._set_valstr(df) 
 
         return self.plot_impact_boxes(df,
                       title=title, xlab = 'hazard event raster', ylab = impact_name,
-                       val_str=self._get_valstr(df), **kwargs)
+                       val_str=self.val_str, **kwargs)
             
     def plot_hist(self, #box plots for each event 
                    df=None, 
@@ -1458,10 +1460,10 @@ class Dmg2(DFunc, Plotr):
         if df is None: df = self.cres_df.replace({0.0:np.nan})
 
         title = '%s %s dmg2.Impact Histograms on %i Events'%(plotTag, self.name, len(df.columns))
-
+        self._set_valstr(df) 
         return self.plot_impact_hist(df,
                       title=title, xlab = impact_name,
-                       val_str=self._get_valstr(df), **kwargs)
+                       val_str=self.val_str(df), **kwargs)
             
         
                    

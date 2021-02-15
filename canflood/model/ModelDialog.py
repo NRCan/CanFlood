@@ -255,25 +255,38 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         model = Risk1(cf_fp=cf_fp, out_dir=out_dir, logger=self.logger, tag=tag,absolute_fp=absolute_fp,
                       feedback=self.feedback)._setup()
         
-        res, res_df = model.run(res_per_asset=res_per_asset)
+        res_ttl, res_df = model.run(res_per_asset=res_per_asset)
         
         log.info('user pressed RunRisk1')
         #======================================================================
-        # plot
+        # plots
         #======================================================================
-        if self.checkBox_r2ep_2.isChecked():
-            fig = model.risk_plot()
+
+            
+        ttl_df = None
+        for y1lab, cbox in {
+                    'AEP':self.checkBox_r1_aep,
+                    'impacts':self.checkBox_r1_ari,
+                            }.items():
+            if not cbox.isChecked(): continue 
+            
+            if ttl_df is None: #load data
+                ttl_df = model.prep_ttl(tlRaw_df=res_ttl)
+            
+            #plot it
+            fig = model.plot_riskCurve(ttl_df, y1lab=y1lab)
             _ = model.output_fig(fig)
             
         
         #==========================================================================
         # output
         #==========================================================================
-        out_fp = model.output_df(res, '%s_%s'%(model.resname, 'ttl'))
+        model.output_ttl()
+        model.output_etype()
         
         out_fp2 = None
         if not res_df is None:
-            out_fp2 = model.output_df(res_df, '%s_%s'%(model.resname, 'passet'))
+            out_fp2 = model.output_passet()
             
         self.logger.push('Risk1 Complete')
         self.feedback.upd_prog(None) #set the progress bar back down to zero
