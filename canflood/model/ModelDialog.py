@@ -253,7 +253,9 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         # setup/execute
         #=======================================================================
         model = Risk1(cf_fp=cf_fp, out_dir=out_dir, logger=self.logger, tag=tag,absolute_fp=absolute_fp,
-                      feedback=self.feedback)._setup()
+                      feedback=self.feedback,
+                      upd_cf = self.checkBox_SS_updCf.isChecked(),
+                      )._setup()
         
         res_ttl, res_df = model.run(res_per_asset=res_per_asset)
         
@@ -303,6 +305,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         model = Dmg2(cf_fp=cf_fp, out_dir = out_dir, logger = self.logger, tag=tag, 
                      absolute_fp=absolute_fp, feedback=self.feedback,
                      attriMode=self.checkBox_SS_attr.isChecked(),
+                     upd_cf = self.checkBox_SS_updCf.isChecked(),
                      )._setup()
                      
         self.feedback.setProgress(5)
@@ -385,6 +388,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #======================================================================
         model = Risk2(cf_fp=cf_fp, out_dir=out_dir, logger=self.logger, tag=tag,absolute_fp=absolute_fp,
                       feedback=self.feedback, attriMode=self.checkBox_SS_attr.isChecked(),
+                      upd_cf = self.checkBox_SS_updCf.isChecked(),
                       )._setup()
         
         res_ttl, res_df = model.run(res_per_asset=res_per_asset)
@@ -399,21 +403,22 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         # output
         #=======================================================================
-        #risk results
-        model.output_ttl(upd_cf = self.checkBox_SS_updCf.isChecked())
+        
+        model.output_ttl() #risk results
+        model.output_etype() #event metadata
         
         out_fp2=''
         if not res_df is None:
-            out_fp2= model.output_passet(upd_cf = self.checkBox_SS_updCf.isChecked())
+            out_fp2= model.output_passet()
             
 
             
         #attribution
         if self.checkBox_SS_attr.isChecked():
-            model.output_attr(upd_cf = self.checkBox_SS_updCf.isChecked())
+            model.output_attr()
         
-        #event metadata
-        model.output_etype(upd_cf = self.checkBox_SS_updCf.isChecked())
+        
+        
         #=======================================================================
         # wrap
         #=======================================================================
