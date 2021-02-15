@@ -257,27 +257,12 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         
         res_ttl, res_df = model.run(res_per_asset=res_per_asset)
         
-        log.info('user pressed RunRisk1')
         #======================================================================
         # plots
         #======================================================================
-
-            
-        ttl_df = None
-        for y1lab, cbox in {
-                    'AEP':self.checkBox_r1_aep,
-                    'impacts':self.checkBox_r1_ari,
-                            }.items():
-            if not cbox.isChecked(): continue 
-            
-            if ttl_df is None: #load data
-                ttl_df = model.prep_ttl(tlRaw_df=res_ttl)
-            
-            #plot it
-            fig = model.plot_riskCurve(ttl_df, y1lab=y1lab)
-            _ = model.output_fig(fig)
-            
-        
+        self._risk_plots(model, res_ttl,
+            {'AEP':self.checkBox_r1_aep,'impacts':self.checkBox_r1_ari},
+            )
         #==========================================================================
         # output
         #==========================================================================
@@ -405,13 +390,11 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         res_ttl, res_df = model.run(res_per_asset=res_per_asset)
         
         #======================================================================
-        # plot
+        # plots
         #======================================================================
-        if self.checkBox_r2plot.isChecked():
-            ttl_df = model.prep_ttl(tlRaw_df=res_ttl)
-            """just giving one curve here"""
-            fig = model.plot_riskCurve(ttl_df, y1lab='impacts')
-            _ = model.output_fig(fig)
+        self._risk_plots(model, res_ttl,
+            {'AEP':self.checkBox_r2_aep,'impacts':self.checkBox_r2_ari},
+            )
        
         #=======================================================================
         # output
@@ -446,6 +429,19 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
 
 
         return
+    
+    def _risk_plots(self,model, res_ttl,d):
+        
+        ttl_df = None
+        for y1lab, cbox in d.items():
+            if not cbox.isChecked(): continue 
+            
+            if ttl_df is None: #load data
+                ttl_df = model.prep_ttl(tlRaw_df=res_ttl)
+            
+            #plot it
+            fig = model.plot_riskCurve(ttl_df, y1lab=y1lab)
+            _ = model.output_fig(fig)
 
     def run_risk3(self):
         

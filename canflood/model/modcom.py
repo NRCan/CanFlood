@@ -220,6 +220,7 @@ class Model(ComWrkr,
                  absolute_fp=True, #whether filepaths in control file are absolute (False=Relative). 
                  base_dir =None, #for absolute_fp=False, base directory to use (defaults 
                  attriMode = False, #flow control for some attribution matrix functions
+                 upd_cf = True, #control ssome updating of control file writes
                  
                  **kwargs):
         
@@ -254,6 +255,7 @@ class Model(ComWrkr,
         
         
         self.attriMode=attriMode
+        self.upd_cf=upd_cf
 
 
         """moved to comWrkr
@@ -2528,13 +2530,15 @@ class Model(ComWrkr,
     def output_attr(self, #short cut for saving the expanded reuslts
                     dtag=None,
                     ofn = None,
-                    upd_cf= True,
+                    upd_cf= None,
                     logger=None,
                     ):
+        
         assert self.attriMode
         #=======================================================================
         # defaults
         #=======================================================================
+        if upd_cf is None: upd_cf = self.upd_cf
         if ofn is None:
             ofn = 'attr%02d_%s_%s'%(self.att_df.columns.nlevels, self.name, self.tag)
         if dtag is None: dtag = self.attrdtag_out
@@ -2555,38 +2559,7 @@ class Model(ComWrkr,
                 )
         return out_fp
     
-    def output_etype(self,
-                     df = None,
-                     dtag='eventypes',
-                     ofn=None,
-                     upd_cf=True,
-                     logger=None):
-        
-        
-        
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        if df is None: df = self.eventType_df
-        if ofn is None:
-            ofn = '%s_%s_%s'%(dtag, self.tag, self.name)
 
-            
-        out_fp = self.output_df(df, ofn, logger=logger, write_index=False)
-        
-        #update the control file
-        if upd_cf:
-            self.update_cf(
-                    {
-                    'results_fps':(
-                        {dtag:out_fp}, 
-                        '#\'%s\' file path set from output_etype at %s'%(
-                            dtag, datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
-                        ),
-                     },
-                    cf_fp = self.cf_fp
-                )
-        return out_fp
             
 
 
@@ -3306,12 +3279,15 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
     def output_ttl(self,  #helper to o utput the total results file
                     dtag='r_ttl',
                    ofn=None,
-                   upd_cf= True,
+                   upd_cf= None,
                    logger=None,
                    ):
  
-        if ofn is None:
-            ofn = '%s_%s'%(self.resname, 'ttl') 
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if upd_cf is None: upd_cf = self.upd_cf
+        if ofn is None: ofn = '%s_%s'%(self.resname, 'ttl') 
             
         out_fp = self.output_df(self.res_ttl, ofn, write_index=False, logger=logger)
         
@@ -3328,12 +3304,13 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
     def output_passet(self,  #helper to o utput the total results file
                       dtag='r_passet',
                    ofn=None,
-                   upd_cf= True,
+                   upd_cf= None,
                    logger=None,
                    ):
         """using these to help with control file writing"""
         if ofn is None:
             ofn = '%s_%s'%(self.resname, dtag)
+        if upd_cf is None: upd_cf = self.upd_cf
             
         out_fp = self.output_df(self.res_df, ofn, logger=logger)
         
@@ -3345,6 +3322,40 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
                             dtag, datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
                         ), }, cf_fp = self.cf_fp )
         
+        return out_fp
+    
+    def output_etype(self, #save event t ypes
+                     df = None,
+                     dtag='eventypes',
+                     ofn=None,
+                     upd_cf=None,
+                     logger=None):
+        
+        
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if upd_cf is None: upd_cf = self.upd_cf
+        if df is None: df = self.eventType_df
+        if ofn is None:
+            ofn = '%s_%s_%s'%(dtag, self.tag, self.name)
+
+            
+        out_fp = self.output_df(df, ofn, logger=logger, write_index=False)
+        
+        #update the control file
+        if upd_cf:
+            self.update_cf(
+                    {
+                    'results_fps':(
+                        {dtag:out_fp}, 
+                        '#\'%s\' file path set from output_etype at %s'%(
+                            dtag, datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                        ),
+                     },
+                    cf_fp = self.cf_fp
+                )
         return out_fp
     #===========================================================================
     # PLOTTING----------
