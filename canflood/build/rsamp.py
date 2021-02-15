@@ -34,7 +34,7 @@ from hlpr.exceptions import QError as Error
 
 
 from hlpr.Q import Qcoms,vlay_get_fdf, vlay_get_fdata, view
-from results.riskPlot import Plotr
+from hlpr.plot import Plotr
 
 #==============================================================================
 # functions-------------------
