@@ -34,12 +34,12 @@ from hlpr.exceptions import QError as Error
 #===============================================================================
 from hlpr.basic import view
 #from model.modcom import Model
-from results.riskPlot import Plotr
+from results.riskPlot import RiskPlotr
 
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Cmpr(Plotr):
+class Cmpr(RiskPlotr):
  
     
     #keys to expect on the sub co ntainers
@@ -241,7 +241,7 @@ class Cmpr(Plotr):
         return mdf
                     
  
-class Scenario(Plotr): #simple class for a scenario
+class Scenario(RiskPlotr): #simple class for a scenario
     
     name=None
     
@@ -276,6 +276,7 @@ class Scenario(Plotr): #simple class for a scenario
         self.upd_impStyle() #update plot style dict w/ parameters from control file
         
         """note these also store on the instance"""
+        assert os.path.exists(self.r_ttl), '%s got bad \'r_ttl\': %s'%(self.name, self.r_ttl)
         tlRaw_df = self.load_ttl()
         ttl_df = self.prep_ttl(tlRaw_df)
         
@@ -289,50 +290,7 @@ class Scenario(Plotr): #simple class for a scenario
         #=======================================================================
         log.info('finished _init_')
 
-        
-    def xxxload_cf(self, #load the control file
-                ):
-        """
-        this is a simplified version of whats on Model.init_model()
-        
-        TODO: Consider just using the full function
-        """
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        log = self.logger.getChild('load_cf')
-        
-        cf_fp = self.cf_fp
-        assert os.path.exists(cf_fp)
-        #=======================================================================
-        # init the config parser
-        #=======================================================================
-        cfParsr = configparser.ConfigParser(inline_comment_prefixes='#')
-        log.info('reading parameters from \n     %s'%cfParsr.read(cf_fp))
-        
-        
-        #self.cfParsr=cfParsr
-        #=======================================================================
-        # check values
-        #=======================================================================
-        """just for information I guess....
-        self.cf_chk_pars(cfParsr, copy.copy(self.exp_pars_md), optional=False)"""
-        
-        #=======================================================================
-        # load/attach parameters
-        #=======================================================================
-        """this will set a 'name' property"""
-        self.cfPars_d = self.cf_attach_pars(cfParsr, setAttr=True)
-        assert isinstance(self.name, str)
-        
 
-        log.debug('finished w/ %i pars loaded'%len(self.cfPars_d))
-        
-        return
-    
-
-                
-    
 
         
         

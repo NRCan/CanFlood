@@ -31,13 +31,17 @@ from hlpr.exceptions import QError as Error
 
 from hlpr.basic import view
 from model.modcom import RiskModel
-from hlpr.plot import Plotr
+#from hlpr.plot import Plotr
 
 #==============================================================================
 # functions-------------------
 #==============================================================================
 class RiskPlotr(RiskModel): #expanded plotting for risk models
-    
+    """
+    inherited by 
+        results.compare.Cmpr
+        results.attribution.Attr
+    """
 
     #===========================================================================
     # expectations from parameter file
@@ -63,10 +67,6 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
     # defaults
     #===========================================================================
 
-    
-
-    
-    
     def __init__(self,*args, **kwargs):
         
         """inherited by the dialog.
@@ -80,7 +80,9 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
 
         
     def _setup(self):
-        """parent classes should overwrite this"""
+        """
+        only calling for direct risk plotting calls
+        parent classes should overwrite this"""
         log = self.logger.getChild('setup')
         
         
@@ -96,12 +98,15 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
         _ = self.prep_ttl(logger=log)
         
         #set default plot text
-        try:
-            self.val_str =  'annualized impacts = %s \nltail=\'%s\',  rtail=\'%s\''%(
-                self.impactFmtFunc(self.ead_tot), self.ltail, self.rtail) + \
-                '\naevent_rels = \'%s\', prec = %i'%(self.event_rels, self.prec)
-        except Exception as e:
-            log.warning('failed to set default plot string w/ \n    %s'%e)
+        self._set_valstr()
+        #=======================================================================
+        # try:
+        #     self.val_str =  'annualized impacts = %s \nltail=\'%s\',  rtail=\'%s\''%(
+        #         self.impactFmtFunc(self.ead_tot), self.ltail, self.rtail) + \
+        #         '\naevent_rels = \'%s\', prec = %i'%(self.event_rels, self.prec)
+        # except Exception as e:
+        #     log.warning('failed to set default plot string w/ \n    %s'%e)
+        #=======================================================================
             
    
         
@@ -123,7 +128,7 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
         # #precheck
         #=======================================================================
         assert isinstance(fp, str)
-        assert os.path.exists(fp), 'bad fp: %s'%fp
+        assert os.path.exists(fp), 'bad \'r_ttl\' fp: %s'%fp
         
         #=======================================================================
         # load
@@ -492,6 +497,18 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
         self._tickSet(ax1, xfmtFunc=xfmtFunc, yfmtFunc=yfmtFunc)
         
         return fig
+    
+    def _set_valstr(self): 
+        """"
+        similar to whats on modcom.RiskModel
+            but removing some attributes set during run loops
+        """
+        
+        #plotting string
+        self.val_str =  'annualized impacts = %s %s \nltail=\'%s\' \nrtail=\'%s\''%(
+            self.impactFmtFunc(self.ead_tot), self.impact_units, self.ltail, self.rtail) +\
+            '\nnevent_rels = \'%s\'\nprec = %i\ndate=%s'%(
+                self.event_rels, self.prec, self.today_str)
 
 
 

@@ -34,13 +34,13 @@ from hlpr.exceptions import QError as Error
 # non-Qgis
 #===============================================================================
 
-from results.riskPlot import Plotr as riskPlotr
+from results.riskPlot import RiskPlotr
 from hlpr.basic import view
 
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Attr(riskPlotr):
+class Attr(RiskPlotr):
     
     #===========================================================================
     # program vars
@@ -66,12 +66,9 @@ class Attr(riskPlotr):
     
 
 
-    def __init__(self,
-                 cf_fp='',
-
-                  *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         
-        super().__init__(cf_fp, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         
         self.attriMode=True #always for this worker
         

@@ -3598,11 +3598,6 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         
         return ax
             
-        
-    
-        
-        
-    
     def _set_valstr(self): 
         """"
         only the risk models should 
