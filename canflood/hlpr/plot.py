@@ -263,6 +263,8 @@ class Plotr(ComWrkr):
         
         if title is None:
             title = 'Boxplots on %i events'%len(df.columns)
+        
+        log.debug('on %s'%str(df.shape))
         #=======================================================================
         # check
         #=======================================================================
@@ -370,6 +372,7 @@ class Plotr(ComWrkr):
         if title is None:
             title = 'Histogram on %i Events'%len(df.columns)
         
+        log.debug('on %s'%str(df.shape))
         #=======================================================================
         # manipulate data
         #=======================================================================
@@ -408,6 +411,7 @@ class Plotr(ComWrkr):
             data, bins='auto', stacked=False, label=df.columns.to_list(),
             alpha=0.9,
             **pkwargs)
+        
         
         #=======================================================================
         # post
@@ -537,4 +541,57 @@ class Plotr(ComWrkr):
                 raise Error('unrecognized val_str: %s'%val_str)
                 
         return val_str
+    
+    #===========================================================================
+    # OUTPUTTRS------
+    #===========================================================================
+    def output_fig(self, fig,
+                   out_dir = None, overwrite=None,
+                   
+                   #figure file controls
+                 fmt='svg', 
+                  transparent=True, 
+                  dpi = 150,
+                  fname = None, #filename
+                  ):
+        #======================================================================
+        # defaults
+        #======================================================================
+        if out_dir is None: out_dir = self.out_dir
+        if overwrite is None: overwrite = self.overwrite
+        log = self.logger.getChild('output_fig')
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        
+        assert isinstance(fig, self.matplotlib.figure.Figure)
+        log.debug('on %s'%fig)
+        #======================================================================
+        # output
+        #======================================================================
+        #file setup
+        if fname is None:
+            try:
+                fname = fig._suptitle.get_text()
+            except:
+                fname = self.name
+            
+        out_fp = os.path.join(out_dir, '%s.%s'%(fname, fmt))
+            
+        if os.path.exists(out_fp):
+            msg = 'passed output file path already esists :\n    %s'%out_fp
+            if overwrite: 
+                log.warning(msg)
+            else: 
+                raise Error(msg)
+            
+        #write the file
+        try: 
+            fig.savefig(out_fp, dpi = dpi, format = fmt, transparent=transparent)
+            log.info('saved figure to file:   %s'%out_fp)
+        except Exception as e:
+            raise Error('failed to write figure to file w/ \n    %s'%e)
+        
+        return out_fp
     

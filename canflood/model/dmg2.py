@@ -178,7 +178,7 @@ class Dmg2(Model, DFunc, Plotr):
         if np.nan in ftags_valid:
             raise Error('got some nulls')
 
-        log.info('loading for %i valid ftags in the finv'%len(ftags_valid))
+        log.debug('loading for %i valid ftags in the finv'%len(ftags_valid))
         #=======================================================================
         # #loop through each frame and build the func
         #=======================================================================
@@ -315,7 +315,7 @@ class Dmg2(Model, DFunc, Plotr):
         #=======================================================================
         # report
         #=======================================================================
-        log.info('maxes:\n%s'%(
+        log.debug('maxes:\n%s'%(
             cres_df.max()))
         
         log.info('finished w/ %s and TtlDmg = %.2f'%(
@@ -350,7 +350,7 @@ class Dmg2(Model, DFunc, Plotr):
         #identifier for depth columns
         dboolcol = ~ddf.columns.isin([cid, bid])
         
-        log.info('running on %i assets and %i events'%(len(bdf), len(ddf.columns)-2))
+        log.debug('running on %i assets and %i events'%(len(bdf), len(ddf.columns)-2))
         
 
         #======================================================================
@@ -376,7 +376,7 @@ class Dmg2(Model, DFunc, Plotr):
         
         #report those faling the check
         if not dep_booldf.all().all():
-            log.info('marked %i (of %i) entries w/ excluded depths (<= %.2f or NULL)'%(
+            log.debug('marked %i (of %i) entries w/ excluded depths (<= %.2f or NULL)'%(
                 np.invert(dep_booldf).sum().sum(), dep_booldf.size, mdval))
         
 
@@ -1305,7 +1305,7 @@ class Dmg2(Model, DFunc, Plotr):
             log.warning('got %i \'%s\' (from %i DFuncs), taking first: %s'%(
                 len(attv_s), attn, len(d), attv))
             
-        log.info('got \'%s\' = \'%s\''%(attn, attv))
+        log.debug('got \'%s\' = \'%s\''%(attn, attv))
         
         return attv
     

@@ -137,6 +137,10 @@ class Cmpr(RiskPlotr):
         
         
         return wdict(self.sWrkr_d)
+    
+    #===========================================================================
+    # comparisons--------
+    #===========================================================================
         
     def riskCurves(self, #plot a risk curve comparing all the scenarios
                    sWrkr_d=None, #container of scenario works to plot curve comparison
@@ -239,7 +243,85 @@ class Cmpr(RiskPlotr):
             mdf['compare'].sum(), len(mdf.index), len(mdf.columns)))
         
         return mdf
+    
+    #===========================================================================
+    # aggregators
+    #===========================================================================
+    def collect_ttls(self,
+                    sWrkr_d=None, #container of scenario works to plot curve comparison
+                    ):
+        
+        log = self.logger.getChild('collect_ttls')
+        if sWrkr_d is None: sWrkr_d = wdict(self.sWrkr_d)
+       
+        #more logicla for single plots
+        self.name=self.tag
+        
+        mdf = None
+        ead_d = dict()
+        for childName, sWrkr in sWrkr_d.items():
+            dfi_raw = sWrkr.data_d['ttl'].copy()
+            dfi = dfi_raw.loc[:, 'impacts'].rename(childName).astype(float).to_frame()
+            
+            ead_d[childName] = sWrkr.ead_tot
+            
+            if mdf is None:
+                self.impact_name = sWrkr.impact_name
+                mindex = pd.MultiIndex.from_frame(
+                    dfi_raw.loc[:, ['aep', 'ari', 'note', 'plot']])
+                
+                #dxcol = pd.concat([dfi.T], keys=[childName], names=['childName']).T
+                mdf = dfi
+                
+                
+            else:
+                mdf = mdf.join(dfi)
+                
+        
+        
+        mdf.index = mindex
+        log.info('collected %i'%len(mdf.columns))
+        self.cdxind = mdf
+        self.ead_d = ead_d
+        self.ead_tot = sum(ead_d.values())
+        return self.cdxind
+    
+    def plot_rCurve_combine(self, #plot a risk curve comparing all the scenarios
+                   dxind_raw=None, #container of scenario works to plot curve comparison
+                   logger=None,
+
+                   
+                   #plot formatters
+                   val_str='*no',
+                   **plotKwargs
+                   ): 
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('plot_rCurve_combine')
+        if dxind_raw is None: dxind_raw = self.cdxind.copy()
+        
+        #promomite mindex to columns 
+        df = dxind_raw.index.to_frame().join(dxind_raw.sum(axis=1).rename('impacts')
+                                ).reset_index(drop=True)
+
+        log.info('on %s'%str(df.shape))
+        #=======================================================================
+        # return self.plot_riskCurve(df,
+        #                            val_str=val_str, plotTag='',
+        #                              logger=log,
+        #                              **plotKwargs)
+        #=======================================================================
+        
+        dxind = dxind_raw.droplevel(axis=0, level=['note', 'plot'])
+
                     
+        return self.plot_stackdRCurves(dxind,
+                                       pd.Series(self.ead_d),
+                                       val_str=val_str,plotTag='',
+                                       **plotKwargs,)
  
 class Scenario(RiskPlotr): #simple class for a scenario
     
@@ -249,6 +331,7 @@ class Scenario(RiskPlotr): #simple class for a scenario
     
     #plotting variables
     """
+    plt.show()
     moved to Model
     """
 

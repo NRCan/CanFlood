@@ -32,7 +32,7 @@ from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProj
 from hlpr.exceptions import QError as Error
     
 
-from hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata
+from hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata, view
 #from hlpr.basic import *
 from model.modcom import Model
 
@@ -80,7 +80,7 @@ class Djoiner(Qcoms, Model):
               ): 
         """
         todo: clean this up and switch over to joinattributestable algo
-        TODO: inherit cid from parent
+ 
         """
         
         #=======================================================================
@@ -109,7 +109,9 @@ class Djoiner(Qcoms, Model):
                               
         df_raw['fid'] = df_raw.index
         
-        
+        """
+        view(df_raw)
+        """
         #======================================================================
         # drop to keeper fields
         #======================================================================
@@ -144,35 +146,17 @@ class Djoiner(Qcoms, Model):
         #=======================================================================
         # get the join table
         #=======================================================================     
-        basefn = os.path.splitext(os.path.split(data_fp)[1])[0]                          
-        lkp_df1 = pd.read_csv(data_fp, index_col=None)
-        
-        # cleaning
-        lkp_df = lkp_df1.dropna(axis = 'columns', how='all').dropna(axis = 'index', how='all')
+        #basefn = os.path.splitext(os.path.split(data_fp)[1])[0]                          
+        lkp_df = pd.read_csv(data_fp, index_col=None).dropna(axis = 'columns', how='all').dropna(axis = 'index', how='all')
         
 
-        
-        
-        #=======================================================================
-        # layer name
-        #=======================================================================
-
-        
         #===========================================================================
         # chcek link column
         #===========================================================================
-        boolcol = np.isin(df1.columns, lkp_df.columns) #find the column intersection
         
-        if not np.any(boolcol):
-            raise IOError('no intersecting columns in the loaded sets!')
+
         
-        pos_cols = df1.columns[boolcol].tolist() #get these
-        
-        if len(pos_cols) == 0:
-            raise Error('no overlapping columns/field names!')
-        
-        if not cid in lkp_df.columns:
-            raise Error('requested link field \'%s\' not in the csv data!'%cid)
+        assert cid in lkp_df.columns, 'requested link field \'%s\' not in the csv data!'%cid
         
         """always expect a 1:1 on these"""
         if not lkp_df[cid].is_unique:
@@ -197,10 +181,25 @@ class Djoiner(Qcoms, Model):
             
             raise Error('%i (of %i) \'%s\' entries in the results not found in the finv_vlay \'%s\'.. .see logger: \n    %s'%(
             len(l), len(lkp_df), cid, vlay_raw.name(), l))
+            
+        #=======================================================================
+        # column intersect
+        #=======================================================================
+        icols = set(lkp_df.columns).union(df1.columns)
+        icols.remove(cid)
+        
+        if len(icols)>0:
+            log.warning('got %i overlapping columns...taking data from vlay \n    %s'%(len(icols), icols))
         
         #===========================================================================
         # do the lookup
         #===========================================================================
+        """
+        view(lkp_df)
+        view(res_df)
+        view(res_vlay)
+        res_df.columns
+        """
         boolidx = df1[cid].isin(lkp_df[cid].values)
         
         res_df = df1.loc[boolidx, :].merge(lkp_df, 
@@ -210,36 +209,24 @@ class Djoiner(Qcoms, Model):
                                indicator=False, #flag where the rows came from (_merge)
                                )
         
-        assert len(res_df) == len(lkp_df)
+
+        assert res_df.columns.is_unique
+        #reset index
+        assert res_df['fid'].is_unique
+        res_df = res_df.set_index('fid', drop=True).sort_index(axis=0)
+        
+
+        assert np.array_equal(res_df.index, df_raw.index)
         
         log.info('merged %s w/ %s to get %s'%(
             str(df1.shape), str(lkp_df.shape), str(res_df.shape)))    
         
-
-        
         #=======================================================================
         # generate hte new layer     
         #=======================================================================
-        #get the raw goemetry
         geo_d = vlay_get_fdata(vlay_raw, geo_obj=True, logger=log)
-        
-        #expand it
-        """shouldnt be necessary for 1:1"""
-        if not res_df['fid'].is_unique:
-            raise Error('bad link')
-            #==================================================================
-            # log.info('non unique keys (1:m) join... expanding geometry')
-            # rfid_geo_d = hp_basic.expand_dict(geo_d, res_df['fid'].to_dict(),
-            #                                   constructor=QgsGeometry)
-            # res_df= res_df.drop('fid', axis=1)
-            #==================================================================
-        else:
-            rfid_geo_d = geo_d
-            res_df = res_df.set_index('fid', drop=True)
-        
-        
-        
-        res_vlay = self.vlay_new_df2(res_df, geo_d=rfid_geo_d, crs = vlay_raw.crs(),
+
+        res_vlay = self.vlay_new_df2(res_df, geo_d=geo_d, crs = vlay_raw.crs(),
                                     layname=layname, logger=log)
         
         

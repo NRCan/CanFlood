@@ -2547,7 +2547,7 @@ class Model(ComWrkr,
         
         #update the control file
         if upd_cf:
-            self.update_cf(
+            self.set_cf_pars(
                     {
                     'results_fps':(
                         {dtag:out_fp}, 
@@ -3292,7 +3292,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         out_fp = self.output_df(self.res_ttl, ofn, write_index=False, logger=logger)
         
         if upd_cf:
-            self.update_cf( {
+            self.set_cf_pars( {
                     'results_fps':(
                         {dtag:out_fp}, 
                         '#\'%s\' file path set from output_ttl at %s'%(
@@ -3315,7 +3315,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         out_fp = self.output_df(self.res_df, ofn, logger=logger)
         
         if upd_cf:
-            self.update_cf( {
+            self.set_cf_pars( {
                     'results_fps':(
                         {dtag:out_fp}, 
                         '#\'%s\' file path set from output_passet at %s'%(
@@ -3346,7 +3346,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         
         #update the control file
         if upd_cf:
-            self.update_cf(
+            self.set_cf_pars(
                     {
                     'results_fps':(
                         {dtag:out_fp}, 
@@ -3438,7 +3438,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
     
 
     def plot_riskCurve(self, #risk plot
-                  res_ttl=None,
+                  res_ttl=None, #dataframe(columns=['aep','ari','impacts']
                   y1lab='AEP', #yaxis label and plot type c ontrol
                     #'impacts': impacts vs. ARI (use self.impact_name)
                     #'AEP': AEP vs. impacts 
