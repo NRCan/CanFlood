@@ -40,6 +40,7 @@ class VfConv(CurvePlotr):
         'Curve':'C'
         }
     
+    exposure_units = 'meters'
     
     def __init__(self,
 
