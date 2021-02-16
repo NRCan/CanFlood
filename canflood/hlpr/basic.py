@@ -17,7 +17,7 @@ helper functions w/o qgis api
 # imports------------
 #==============================================================================
 #python
-import os, configparser, logging, re
+import os, configparser, logging, re, datetime
 import pandas as pd
 pd.set_option('display.max_rows',10)
 import numpy as np
@@ -92,6 +92,7 @@ class ComWrkr(object): #common methods for all classes
         self.out_dir = out_dir
         self.cf_fp = cf_fp
         self.prec = prec
+        self.today_str = datetime.datetime.now().strftime('%Y-%m-%d %H:%M') #nice for labelling plots
         
         #=======================================================================
         # feedback
@@ -199,16 +200,16 @@ class ComWrkr(object): #common methods for all classes
 
         
         
-    def update_cf(self, #update one parameter  control file 
+    def set_cf_pars(self, #update one parameter  control file 
                   new_pars_d, #new paraemeters 
                     # {section : ({valnm : value } OR string (for notes)})
                   cf_fp = None):
         
-        log = self.logger.getChild('update_cf')
+        log = self.logger.getChild('set_cf_pars')
         
         #get defaults
         if cf_fp is None: cf_fp = self.cf_fp
-        
+        assert isinstance(cf_fp, str), '%s got bad cf_fp type: %s'%(self.name, type(cf_fp))
         assert os.path.exists(cf_fp), 'bad cf_fp: \n    %s'%cf_fp
         
         #initiliae the parser
@@ -299,49 +300,7 @@ class ComWrkr(object): #common methods for all classes
         
         return out_fp
     
-    def output_fig(self, fig,
-                   out_dir = None, overwrite=None,
-                   
-                   #figure file controls
-                 fmt='svg', 
-                  transparent=True, 
-                  dpi = 150,
-                  fname = None, #filename
-                  ):
-        #======================================================================
-        # defaults
-        #======================================================================
-        if out_dir is None: out_dir = self.out_dir
-        if overwrite is None: overwrite = self.overwrite
-        log = self.logger.getChild('output')
-        
-        #======================================================================
-        # output
-        #======================================================================
-        #file setup
-        if fname is None:
-            try:
-                fname = fig._suptitle.get_text()
-            except:
-                fname = self.name
-            
-        out_fp = os.path.join(out_dir, '%s.%s'%(fname, fmt))
-            
-        if os.path.exists(out_fp):
-            msg = 'passed output file path already esists :\n    %s'%out_fp
-            if overwrite: 
-                log.warning(msg)
-            else: 
-                raise Error(msg)
-            
-        #write the file
-        try: 
-            fig.savefig(out_fp, dpi = dpi, format = fmt, transparent=transparent)
-            log.info('saved figure to file:   %s'%out_fp)
-        except Exception as e:
-            raise Error('failed to write figure to file w/ \n    %s'%e)
-        
-        return out_fp
+
     
 
     

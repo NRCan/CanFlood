@@ -34,13 +34,13 @@ from hlpr.exceptions import QError as Error
 # non-Qgis
 #===============================================================================
 
-from results.riskPlot import Plotr as riskPlotr
+from results.riskPlot import RiskPlotr
 from hlpr.basic import view
 
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Attr(riskPlotr):
+class Attr(RiskPlotr):
     
     #===========================================================================
     # program vars
@@ -55,8 +55,8 @@ class Attr(riskPlotr):
     exp_pars_md = {
         'results_fps':{
              'attrimat03':{'ext':('.csv',)},
-             'r2_ttl':{'ext':('.csv',)},
-             'r2_passet':{'ext':('.csv',)},
+             'r_ttl':{'ext':('.csv',)},
+             'r_passet':{'ext':('.csv',)},
              'eventypes':{'ext':('.csv',)}
              }
         }
@@ -66,12 +66,9 @@ class Attr(riskPlotr):
     
 
 
-    def __init__(self,
-                 cf_fp='',
-
-                  *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         
-        super().__init__(cf_fp, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         
         self.attriMode=True #always for this worker
         
@@ -87,6 +84,7 @@ class Attr(riskPlotr):
         
         #upldate your group plot style container
         self.upd_impStyle()
+        self._init_fmtFunc()
         
         #load and prep the total results
         _ = self.load_ttl(logger=log)
@@ -152,7 +150,7 @@ class Attr(riskPlotr):
         
     def load_passet(self, #load the per-asset results
                    fp = None,
-                   dtag = 'r2_passet',
+                   dtag = 'r_passet',
 
                    logger=None,
                     
@@ -304,7 +302,7 @@ class Attr(riskPlotr):
         view(s1_dxcol)
         view(s1i_ttl)
         self.data_d['ttl']
-        view(self.data_d['r2_passet'])
+        view(self.data_d['r_passet'])
         """
         #multiply by impacts
         s1i_dxcol = self.get_mult(s1_dxcol, logger=log)
@@ -395,7 +393,7 @@ class Attr(riskPlotr):
         #=======================================================================
         if logger is None: logger=self.logger
         log=logger.getChild('get_ttl')
-        rp_df = self.data_d['r2_passet'].copy()
+        rp_df = self.data_d['r_passet'].copy()
         
         #=======================================================================
         # precheck

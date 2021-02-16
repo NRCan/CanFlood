@@ -55,7 +55,7 @@ class tDmg(tModel): #worker for testing the damage model
         
         self.assertEqual(res_df.shape, chk_df.shape, msg='%s'%self.name)
         
-        self.assertEqual(res_df.sum().sum(), chk_df.sum().sum(),  
+        self.assertEqual(round(res_df.sum().sum(), self.prec), round(chk_df.sum().sum(), self.prec),  
                          msg='%s data failed to sum'%self.name)
         
         

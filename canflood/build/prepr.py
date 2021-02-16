@@ -36,10 +36,12 @@ from hlpr.exceptions import QError as Error
 from hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata
 from hlpr.basic import get_valid_filename
 
+from model.modcom import Model #for data checks
+
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Preparor(Qcoms):
+class Preparor(Model, Qcoms):
     """
 
     
@@ -62,8 +64,10 @@ class Preparor(Qcoms):
         
         
     def copy_cf_template(self, #start a new control file by copying the template
-                  wdir,
-                  cf_fp=None,
+                  wdir=None, #optional build path to copy to
+                  cf_fp=None, #path to copy to
+                  
+                  cf_src = None, #template fiilepath
                   logger=None
                   ):
         
@@ -72,34 +76,35 @@ class Preparor(Qcoms):
         #=======================================================================
         if logger is None: logger=self.logger
         log = logger.getChild('copy_cf_template')
+
+
         
-        if cf_fp is None: cf_fp = os.path.join(wdir, 'CanFlood_%s.txt'%self.tag)
+        
         #=======================================================================
-        # copy control file template
+        # #get the default template from the program files
         #=======================================================================
-        
-        
-        #get the default template from the program files
-        cf_src = os.path.join(
-                os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                 '_pars/CanFlood_control_01.txt')
+        if cf_src is None:
+            cf_src = os.path.join(
+                    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                     '_pars/CanFlood_control_01.txt')
         
         assert os.path.exists(cf_src)
         
         
-        #get new file name
-        
-        
-        #see if this exists
-        if os.path.exists(cf_fp):
-            msg = 'generated control file already exists. overwrite=%s \n     %s'%(
-                self.overwrite, cf_fp)
-            if self.overwrite:
-                log.warning(msg)
-            else:
-                raise Error(msg)
+        #=======================================================================
+        # #get new file name
+        #=======================================================================
+        if cf_fp is None: 
+            if wdir is None: 
+                wdir=self.out_dir
+            assert os.path.exists(wdir)
+            cf_fp = os.path.join(wdir, 'CanFlood_%s.txt'%self.tag)
             
+        if os.path.exists(cf_fp):assert self.overwrite
             
+        #=======================================================================
+        # copy control file template
+        #=======================================================================
         #copy over the default template
         shutil.copyfile(cf_src, cf_fp)
         
@@ -134,7 +139,7 @@ class Preparor(Qcoms):
             new_pars_d['dmg_fps'] = ({'curves':curves_fp},)
         
         
-        return self.update_cf(new_pars_d)
+        return self.set_cf_pars(new_pars_d)
         
     def finv_to_csv(self, #convert the finv to csv
                     vlay,
@@ -168,7 +173,7 @@ class Preparor(Qcoms):
             raise Error('user selected invalid cid \'%s\''%cid)  
         
         
-        assert cid in [field.name() for field in vlay.fields()]
+        assert cid in [field.name() for field in vlay.fields()], '%s missing cid %s'%(vlay.name(), cid)
 
         #=======================================================================
         # #extract data
@@ -183,13 +188,12 @@ class Preparor(Qcoms):
         for gindx in self.invalid_cids:   
             df = df.drop(gindx, axis=1, errors='ignore')
             
-        #more cid checks
-        if not cid in df.columns:
-            raise Error('cid not found in finv_df')
-        
-        assert df[cid].is_unique
-        assert 'int' in df[cid].dtypes.name, 'cid \'%s\' bad type'%cid
-        
+        df = df.set_index(cid, drop=True)
+            
+        #=======================================================================
+        # post checks
+        #=======================================================================
+        self.check_finv(df, cid=cid, logger=log)
         self.feedback.upd_prog(50)
         
         #=======================================================================
@@ -207,7 +211,7 @@ class Preparor(Qcoms):
                 raise Error(msg)
             
             
-        df.to_csv(out_fp, index=False)  
+        df.to_csv(out_fp, index=True)  
         
         log.info("inventory csv written to file:\n    %s"%out_fp)
         
@@ -216,8 +220,13 @@ class Preparor(Qcoms):
         # write to control file
         #=======================================================================
         assert os.path.exists(out_fp)
+        """
+        writing the filepath to the vector layer wont work...
+            often we're working with memory layers
+            the transition from spatial to non-spatial and back to spatial losses these connections
+        """
         
-        self.update_cf(
+        self.set_cf_pars(
             {
             'dmg_fps':(
                 {'finv':out_fp}, 
@@ -226,7 +235,12 @@ class Preparor(Qcoms):
             'parameters':(
                 {'cid':str(cid),
                  'felv':felv},
-                )
+                ),
+            #===================================================================
+            # 'results_fps':(
+            #     {'finv_vlay_fp':0}
+            #     )
+            #===================================================================
              },
 
             )
@@ -294,6 +308,14 @@ class Preparor(Qcoms):
 
 
         self.feedback.upd_prog(70)
+        
+        #=======================================================================
+        # chekc data
+        #=======================================================================
+        """" no? not for this intermediate function?
+        self.check_finv()
+        
+        """
         #=======================================================================
         # reconstruct layer
         #=======================================================================

@@ -67,7 +67,7 @@
          <property name="currentIndex">
           <number>0</number>
          </property>
-         <widget class="QWidget" name="tab">
+         <widget class="QWidget" name="tab_wel">
           <attribute name="title">
            <string>Welcome!</string>
           </attribute>
@@ -118,7 +118,7 @@ p, li { white-space: pre-wrap; }
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="tab_2">
+         <widget class="QWidget" name="tab_setup">
           <attribute name="title">
            <string>Setup</string>
           </attribute>
@@ -467,7 +467,7 @@ p, li { white-space: pre-wrap; }
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="tab_proj">
+         <widget class="QWidget" name="tab_r1">
           <attribute name="title">
            <string>Risk (L1)</string>
           </attribute>
@@ -502,13 +502,6 @@ p, li { white-space: pre-wrap; }
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_9">
               <item>
-               <widget class="QCheckBox" name="checkBox_r2ep_2">
-                <property name="text">
-                 <string>Generate summary plot of total annualized impacts (plot)</string>
-                </property>
-               </widget>
-              </item>
-              <item>
                <widget class="QCheckBox" name="checkBox_r2ires_2">
                 <property name="enabled">
                  <bool>false</bool>
@@ -519,6 +512,52 @@ p, li { white-space: pre-wrap; }
                 <property name="checkable">
                  <bool>true</bool>
                 </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QGroupBox" name="groupBox_10">
+                <property name="title">
+                 <string>Plot Controls</string>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_15">
+                 <item>
+                  <layout class="QHBoxLayout" name="horizontalLayout_11">
+                   <item>
+                    <widget class="QCheckBox" name="checkBox_r1_ari">
+                     <property name="text">
+                      <string>ARI vs. Impacts</string>
+                     </property>
+                     <property name="checked">
+                      <bool>false</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QCheckBox" name="checkBox_r1_aep">
+                     <property name="text">
+                      <string>Impacts vs. AEP</string>
+                     </property>
+                     <property name="checked">
+                      <bool>false</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <spacer name="horizontalSpacer_4">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>40</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
                </widget>
               </item>
              </layout>
@@ -982,7 +1021,7 @@ p, li { white-space: pre-wrap; }
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="tab_3">
+         <widget class="QWidget" name="tab_i2">
           <attribute name="title">
            <string>Impacts (L2)</string>
           </attribute>
@@ -990,7 +1029,7 @@ p, li { white-space: pre-wrap; }
            <item>
             <widget class="QLabel" name="label_2">
              <property name="text">
-              <string>Exposure per event calculated with vulnerability functions</string>
+              <string>Impacts per event calculated with vulnerability functions</string>
              </property>
             </widget>
            </item>
@@ -1015,13 +1054,6 @@ p, li { white-space: pre-wrap; }
                </widget>
               </item>
               <item>
-               <widget class="QCheckBox" name="checkBox_i2plot">
-                <property name="text">
-                 <string>Output impact box plots (plot_boxes)</string>
-                </property>
-               </widget>
-              </item>
-              <item>
                <widget class="QCheckBox" name="checkBox_i2_ddf">
                 <property name="text">
                  <string>Output depths (depths_df)</string>
@@ -1035,6 +1067,35 @@ p, li { white-space: pre-wrap; }
                 </property>
                 <property name="checked">
                  <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_9">
+             <property name="title">
+              <string>Summary Plots:</string>
+             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_10">
+              <item>
+               <widget class="QCheckBox" name="checkBox_i2_phist">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Histograms</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="checkBox_i2_pbox">
+                <property name="text">
+                 <string>Box Plots</string>
                 </property>
                </widget>
               </item>
@@ -1499,7 +1560,7 @@ p, li { white-space: pre-wrap; }
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="tab_4">
+         <widget class="QWidget" name="tab_r2">
           <attribute name="title">
            <string>Risk (L2)</string>
           </attribute>
@@ -1534,16 +1595,6 @@ p, li { white-space: pre-wrap; }
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_4">
               <item>
-               <widget class="QCheckBox" name="checkBox_r2plot">
-                <property name="text">
-                 <string>Generate summary plot of total impacts EV (plot)</string>
-                </property>
-                <property name="checked">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item>
                <widget class="QCheckBox" name="checkBox_r2ires">
                 <property name="enabled">
                  <bool>false</bool>
@@ -1551,6 +1602,52 @@ p, li { white-space: pre-wrap; }
                 <property name="text">
                  <string>Run 'Results - Join Geo' upon completion (set Vector Geometry on the 'Setup' tab)</string>
                 </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QGroupBox" name="groupBox_11">
+                <property name="title">
+                 <string>Plot Controls</string>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_16">
+                 <item>
+                  <layout class="QHBoxLayout" name="horizontalLayout_12">
+                   <item>
+                    <widget class="QCheckBox" name="checkBox_r2_ar">
+                     <property name="text">
+                      <string>ARI vs. Impacts</string>
+                     </property>
+                     <property name="checked">
+                      <bool>false</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QCheckBox" name="checkBox_r2_aep">
+                     <property name="text">
+                      <string>Impacts vs. AEP</string>
+                     </property>
+                     <property name="checked">
+                      <bool>false</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <spacer name="horizontalSpacer_5">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>40</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
                </widget>
               </item>
              </layout>

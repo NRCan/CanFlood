@@ -34,12 +34,12 @@ from hlpr.exceptions import QError as Error
 #===============================================================================
 from hlpr.basic import view
 #from model.modcom import Model
-from results.riskPlot import Plotr
+from results.riskPlot import RiskPlotr
 
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Cmpr(Plotr):
+class Cmpr(RiskPlotr):
  
     
     #keys to expect on the sub co ntainers
@@ -68,6 +68,7 @@ class Cmpr(Plotr):
         
         
         self.upd_impStyle() #upldate your group plot style container
+        self._init_fmtFunc()
         #=======================================================================
         # wrap
         #=======================================================================
@@ -136,6 +137,10 @@ class Cmpr(Plotr):
         
         
         return wdict(self.sWrkr_d)
+    
+    #===========================================================================
+    # comparisons--------
+    #===========================================================================
         
     def riskCurves(self, #plot a risk curve comparing all the scenarios
                    sWrkr_d=None, #container of scenario works to plot curve comparison
@@ -238,9 +243,99 @@ class Cmpr(Plotr):
             mdf['compare'].sum(), len(mdf.index), len(mdf.columns)))
         
         return mdf
+    
+    #===========================================================================
+    # aggregators
+    #===========================================================================
+    def collect_ttls(self,
+                    sWrkr_d=None, #container of scenario works to plot curve comparison
+                    ):
+        
+        log = self.logger.getChild('collect_ttls')
+        if sWrkr_d is None: sWrkr_d = wdict(self.sWrkr_d)
+       
+        #more logicla for single plots
+        self.name=self.tag
+        
+        mdf = None
+        ead_d = dict()
+        for childName, sWrkr in sWrkr_d.items():
+            dfi_raw = sWrkr.data_d['ttl'].copy()
+            dfi = dfi_raw.loc[:, 'impacts'].rename(childName).astype(float).to_frame()
+            
+            ead_d[childName] = sWrkr.ead_tot
+            
+            if mdf is None:
+                self.impact_name = sWrkr.impact_name
+                mindex = pd.MultiIndex.from_frame(
+                    dfi_raw.loc[:, ['aep', 'ari', 'note', 'plot']])
+                
+                #dxcol = pd.concat([dfi.T], keys=[childName], names=['childName']).T
+                mdf = dfi
+                
+                
+            else:
+                mdf = mdf.join(dfi)
+                
+        
+        
+        mdf.index = mindex
+        log.info('collected %i'%len(mdf.columns))
+        self.cdxind = mdf
+        self.ead_d = ead_d
+        self.ead_tot = sum(ead_d.values())
+        return self.cdxind
+    
+    def plot_rCurveStk_comb(self, #plot a risk curve comparing all the scenarios
+                   dxind_raw=None, #container of scenario works to plot curve comparison
+                   logger=None,
+
+                   
+                   #plot formatters
+                   val_str='*no',
+                   **plotKwargs
+                   ): 
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('plot_rCurveStk_comb')
+        if dxind_raw is None: dxind_raw = self.cdxind.copy()
+        
+
+
+        
+        dxind = dxind_raw.droplevel(axis=0, level=['note', 'plot'])
+        log.info('on %i'%len(dxind))
                     
+        return self.plot_stackdRCurves(dxind,
+                                       pd.Series(self.ead_d),
+                                       val_str=val_str,plotTag='',
+                                       **plotKwargs,)
+        
+    def plot_rCurve_comb(self, #plot a risk curve comparing all the scenarios
+                   dxind_raw=None, #container of scenario works to plot curve comparison
+                   logger=None,
+
+                   
+                   #plot formatters
+                   val_str='*no',
+                   **plotKwargs
+                   ): 
+        log = logger.getChild('plot_rCurve_comb')
+        #promomite mindex to columns 
+        df = dxind_raw.index.to_frame().join(dxind_raw.sum(axis=1).rename('impacts')
+                                ).reset_index(drop=True)
+
+        log.info('on %s'%str(df.shape))
+        
+        return self.plot_riskCurve(df,
+                                   val_str=val_str, plotTag='',
+                                     logger=log,
+                                     **plotKwargs)
  
-class Scenario(Plotr): #simple class for a scenario
+class Scenario(RiskPlotr): #simple class for a scenario
     
     name=None
     
@@ -248,6 +343,7 @@ class Scenario(Plotr): #simple class for a scenario
     
     #plotting variables
     """
+    plt.show()
     moved to Model
     """
 
@@ -275,6 +371,7 @@ class Scenario(Plotr): #simple class for a scenario
         self.upd_impStyle() #update plot style dict w/ parameters from control file
         
         """note these also store on the instance"""
+        assert os.path.exists(self.r_ttl), '%s got bad \'r_ttl\': %s'%(self.name, self.r_ttl)
         tlRaw_df = self.load_ttl()
         ttl_df = self.prep_ttl(tlRaw_df)
         
@@ -288,50 +385,7 @@ class Scenario(Plotr): #simple class for a scenario
         #=======================================================================
         log.info('finished _init_')
 
-        
-    def xxxload_cf(self, #load the control file
-                ):
-        """
-        this is a simplified version of whats on Model.init_model()
-        
-        TODO: Consider just using the full function
-        """
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        log = self.logger.getChild('load_cf')
-        
-        cf_fp = self.cf_fp
-        assert os.path.exists(cf_fp)
-        #=======================================================================
-        # init the config parser
-        #=======================================================================
-        cfParsr = configparser.ConfigParser(inline_comment_prefixes='#')
-        log.info('reading parameters from \n     %s'%cfParsr.read(cf_fp))
-        
-        
-        #self.cfParsr=cfParsr
-        #=======================================================================
-        # check values
-        #=======================================================================
-        """just for information I guess....
-        self.cf_chk_pars(cfParsr, copy.copy(self.exp_pars_md), optional=False)"""
-        
-        #=======================================================================
-        # load/attach parameters
-        #=======================================================================
-        """this will set a 'name' property"""
-        self.cfPars_d = self.cf_attach_pars(cfParsr, setAttr=True)
-        assert isinstance(self.name, str)
-        
 
-        log.debug('finished w/ %i pars loaded'%len(self.cfPars_d))
-        
-        return
-    
-
-                
-    
 
         
         

@@ -1993,6 +1993,42 @@ p, li { white-space: pre-wrap; }
                   </item>
                  </layout>
                 </item>
+                <item>
+                 <widget class="QGroupBox" name="groupBox_7">
+                  <property name="title">
+                   <string>Summary Plots</string>
+                  </property>
+                  <layout class="QVBoxLayout" name="verticalLayout_7">
+                   <item>
+                    <widget class="QCheckBox" name="checkBox_ras_pBox">
+                     <property name="text">
+                      <string>Box plots</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QCheckBox" name="checkBox_ras_pHist">
+                     <property name="text">
+                      <string>Histograms</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <spacer name="verticalSpacer_6">
+                     <property name="orientation">
+                      <enum>Qt::Vertical</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>20</width>
+                       <height>40</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                  </layout>
+                 </widget>
+                </item>
                </layout>
               </item>
               <item>
@@ -5634,8 +5670,8 @@ p, li { white-space: pre-wrap; }
  <connections/>
  <buttongroups>
   <buttongroup name="buttonGroup_LS_rels"/>
+  <buttongroup name="buttonGroup_S_filepaths"/>
   <buttongroup name="buttonGroup_EV_eventRels"/>
   <buttongroup name="buttonGroup_ELfmt"/>
-  <buttongroup name="buttonGroup_S_filepaths"/>
  </buttongroups>
 </ui>

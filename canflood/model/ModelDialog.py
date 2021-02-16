@@ -253,27 +253,27 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         # setup/execute
         #=======================================================================
         model = Risk1(cf_fp=cf_fp, out_dir=out_dir, logger=self.logger, tag=tag,absolute_fp=absolute_fp,
-                      feedback=self.feedback)._setup()
+                      feedback=self.feedback,
+                      upd_cf = self.checkBox_SS_updCf.isChecked(),
+                      )._setup()
         
-        res, res_df = model.run(res_per_asset=res_per_asset)
+        res_ttl, res_df = model.run(res_per_asset=res_per_asset)
         
-        log.info('user pressed RunRisk1')
         #======================================================================
-        # plot
+        # plots
         #======================================================================
-        if self.checkBox_r2ep_2.isChecked():
-            fig = model.risk_plot()
-            _ = model.output_fig(fig)
-            
-        
+        self._risk_plots(model, res_ttl,
+            {'AEP':self.checkBox_r1_aep,'impacts':self.checkBox_r1_ari},
+            )
         #==========================================================================
         # output
         #==========================================================================
-        out_fp = model.output_df(res, '%s_%s'%(model.resname, 'ttl'))
+        model.output_ttl()
+        model.output_etype()
         
         out_fp2 = None
         if not res_df is None:
-            out_fp2 = model.output_df(res_df, '%s_%s'%(model.resname, 'passet'))
+            out_fp2 = model.output_passet()
             
         self.logger.push('Risk1 Complete')
         self.feedback.upd_prog(None) #set the progress bar back down to zero
@@ -305,7 +305,9 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         model = Dmg2(cf_fp=cf_fp, out_dir = out_dir, logger = self.logger, tag=tag, 
                      absolute_fp=absolute_fp, feedback=self.feedback,
                      attriMode=self.checkBox_SS_attr.isChecked(),
+                     upd_cf = self.checkBox_SS_updCf.isChecked(),
                      )._setup()
+                     
         self.feedback.setProgress(5)
         
         #=======================================================================
@@ -328,7 +330,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         
         #update parameter file
         if self.checkBox_SS_updCf.isChecked():
-            model.upd_cf()
+            model.update_cf()
         self.feedback.setProgress(90)
             
         #calc summary
@@ -344,9 +346,15 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         if self.checkBox_i2_ddf.isChecked():
             _=model.output_depths_df()
             
-        #box plots
-        if self.checkBox_i2plot.isChecked():
+        #=======================================================================
+        # plots
+        #=======================================================================
+        if self.checkBox_i2_pbox.isChecked():
             fig = model.plot_boxes()
+            _ = model.output_fig(fig)
+            
+        if self.checkBox_i2_phist.isChecked():
+            fig = model.plot_hist()
             _ = model.output_fig(fig)
             
         self.feedback.setProgress(99)
@@ -380,37 +388,37 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #======================================================================
         model = Risk2(cf_fp=cf_fp, out_dir=out_dir, logger=self.logger, tag=tag,absolute_fp=absolute_fp,
                       feedback=self.feedback, attriMode=self.checkBox_SS_attr.isChecked(),
+                      upd_cf = self.checkBox_SS_updCf.isChecked(),
                       )._setup()
         
         res_ttl, res_df = model.run(res_per_asset=res_per_asset)
         
         #======================================================================
-        # plot
+        # plots
         #======================================================================
-        if self.checkBox_r2plot.isChecked():
-            ttl_df = model.prep_ttl(tlRaw_df=res_ttl)
-            """just giving one curve here"""
-            fig = model.plot_riskCurve(ttl_df, y1lab='impacts')
-            _ = model.output_fig(fig)
+        self._risk_plots(model, res_ttl,
+            {'AEP':self.checkBox_r2_aep,'impacts':self.checkBox_r2_ari},
+            )
        
         #=======================================================================
         # output
         #=======================================================================
-        #risk results
-        model.output_ttl(upd_cf = self.checkBox_SS_updCf.isChecked())
+        
+        model.output_ttl() #risk results
+        model.output_etype() #event metadata
         
         out_fp2=''
         if not res_df is None:
-            out_fp2= model.output_passet(upd_cf = self.checkBox_SS_updCf.isChecked())
+            out_fp2= model.output_passet()
             
 
             
         #attribution
         if self.checkBox_SS_attr.isChecked():
-            model.output_attr(upd_cf = self.checkBox_SS_updCf.isChecked())
+            model.output_attr()
         
-        #event metadata
-        model.output_etype(upd_cf = self.checkBox_SS_updCf.isChecked())
+        
+        
         #=======================================================================
         # wrap
         #=======================================================================
@@ -426,6 +434,19 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
 
 
         return
+    
+    def _risk_plots(self,model, res_ttl,d):
+        
+        ttl_df = None
+        for y1lab, cbox in d.items():
+            if not cbox.isChecked(): continue 
+            
+            if ttl_df is None: #load data
+                ttl_df = model.prep_ttl(tlRaw_df=res_ttl)
+            
+            #plot it
+            fig = model.plot_riskCurve(ttl_df, y1lab=y1lab)
+            _ = model.output_fig(fig)
 
     def run_risk3(self):
         
