@@ -286,7 +286,7 @@ class Cmpr(RiskPlotr):
         self.ead_tot = sum(ead_d.values())
         return self.cdxind
     
-    def plot_rCurve_combine(self, #plot a risk curve comparing all the scenarios
+    def plot_rCurveStk_comb(self, #plot a risk curve comparing all the scenarios
                    dxind_raw=None, #container of scenario works to plot curve comparison
                    logger=None,
 
@@ -300,28 +300,40 @@ class Cmpr(RiskPlotr):
         # defaults
         #=======================================================================
         if logger is None: logger=self.logger
-        log = logger.getChild('plot_rCurve_combine')
+        log = logger.getChild('plot_rCurveStk_comb')
         if dxind_raw is None: dxind_raw = self.cdxind.copy()
         
-        #promomite mindex to columns 
-        df = dxind_raw.index.to_frame().join(dxind_raw.sum(axis=1).rename('impacts')
-                                ).reset_index(drop=True)
 
-        log.info('on %s'%str(df.shape))
-        #=======================================================================
-        # return self.plot_riskCurve(df,
-        #                            val_str=val_str, plotTag='',
-        #                              logger=log,
-        #                              **plotKwargs)
-        #=======================================================================
+
         
         dxind = dxind_raw.droplevel(axis=0, level=['note', 'plot'])
-
+        log.info('on %i'%len(dxind))
                     
         return self.plot_stackdRCurves(dxind,
                                        pd.Series(self.ead_d),
                                        val_str=val_str,plotTag='',
                                        **plotKwargs,)
+        
+    def plot_rCurve_comb(self, #plot a risk curve comparing all the scenarios
+                   dxind_raw=None, #container of scenario works to plot curve comparison
+                   logger=None,
+
+                   
+                   #plot formatters
+                   val_str='*no',
+                   **plotKwargs
+                   ): 
+        log = logger.getChild('plot_rCurve_comb')
+        #promomite mindex to columns 
+        df = dxind_raw.index.to_frame().join(dxind_raw.sum(axis=1).rename('impacts')
+                                ).reset_index(drop=True)
+
+        log.info('on %s'%str(df.shape))
+        
+        return self.plot_riskCurve(df,
+                                   val_str=val_str, plotTag='',
+                                     logger=log,
+                                     **plotKwargs)
  
 class Scenario(RiskPlotr): #simple class for a scenario
     
