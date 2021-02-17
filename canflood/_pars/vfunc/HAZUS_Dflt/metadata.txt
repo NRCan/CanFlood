@@ -1,0 +1,11 @@
+[description]
+name = HAZUS_Dflt
+location = USA
+
+[variables]
+asset_types1 = utilities
+asset_types2 = plants and equipment
+native_platform = HAZUS
+classification_scheme = (FEMA 2012)
+impact_units = pct
+
