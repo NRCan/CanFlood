@@ -157,7 +157,7 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
         
         #build a df of what we want to display
         df = pd.DataFrame.from_dict({k: v['meta.d'] for k,v in vdata_d.items()}
-                                    ).T.reset_index(drop=True)
+                                    ).T.reset_index(drop=True).sort_values('name')
         
         #lModel = QStringListModel(list(vdata_d.keys()))
         self.dfModel = pandasModel(df)

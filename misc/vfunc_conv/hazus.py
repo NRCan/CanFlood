@@ -404,7 +404,7 @@ class HAZconv(VfConv):
         #=======================================================================
         crve_d.update({
             'desc':crve_d['desc'] + ' for buildings',
-            'scale_var':'building replacement cost',
+            'scale_var':'replacement cost',
             'scale_units':'monetary',
             'impact_units':'pct',
             'impact_var':'loss'})

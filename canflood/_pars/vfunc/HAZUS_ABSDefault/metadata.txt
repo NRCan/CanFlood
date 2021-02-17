@@ -3,8 +3,7 @@ name = HAZUS_ABSDefault
 location = USA
 
 [variables]
-asset_types1 = Vehicles
-asset_types2 = contents
+asset_types1 = vehicles
 native_platform = HAZUS
 classification_scheme = (FEMA 2012)
 impact_units = pct
