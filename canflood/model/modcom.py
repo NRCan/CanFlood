@@ -3866,12 +3866,19 @@ class DFunc(ComWrkr, #damage function or DFunc handler
                   
                   logger=None,
                   ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
         if logger is None: logger=self.logger
         log = logger.getChild('_get_smry')
         
         """
         clib_d.keys()
         """
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert isinstance(clib_d, dict)
         #=======================================================================
         # conversion
         #=======================================================================
@@ -3881,7 +3888,15 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         #=======================================================================
         # build data
         #=======================================================================
-        df_raw = pd.DataFrame(clib_d).T
+        try:
+            df_raw = pd.DataFrame(clib_d).T
+            
+            """
+            clib_d.keys()
+            
+            """
+        except Exception as e:
+            raise Error('faild to convert to frame w/ \n    %s'%e)
         
         cols = df_raw.columns
         assert 'exposure' in cols
@@ -3936,7 +3951,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         sdf[pgCn] = 'g1'
         sdf[pfCn] = True
         
-        log.info('finished w/ %s'%str(sdf.shape))
+        log.debug('finished w/ %s'%str(sdf.shape))
         
         """
         view(sdf)

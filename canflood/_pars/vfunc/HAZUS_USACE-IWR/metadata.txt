@@ -1,0 +1,11 @@
+[description]
+name = HAZUS_USACE-IWR
+location = USA
+
+[variables]
+asset_types1 = buildings
+asset_types2 = contents, structure
+native_platform = HAZUS
+classification_scheme = (FEMA 2012)
+impact_units = pct
+

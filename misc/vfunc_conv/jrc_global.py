@@ -165,28 +165,7 @@ class JRConv(VfConv):
         return self.res_d
  
 
-    def output(self,
-               d):
-        
-        ofn = '%s_%s.xls'%(self.libName, today_str)
-        ofp = os.path.join(out_dir, ofn)
-        assert len(d)>0
-        if os.path.exists(ofp): assert self.overwrite
-        
-        #write to multiple tabs
-        with pd.ExcelWriter(ofp, engine='xlsxwriter') as writer:
-            for tabnm, df in d.items():
-                if tabnm=='_smry':
-                    index, header = True, True
-                else:
-                    index, header = False, False
-                    
-                df.to_excel(writer, sheet_name=tabnm, index=index, header=header)
-            
-            
-        print('wrote %i sheets to %s'%(len(d), ofp))
-            
-        return ofp
+
                 
 
 

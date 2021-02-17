@@ -37,49 +37,53 @@ from hlpr.exceptions import QError as Error
 # setup matplotlib
 #===============================================================================
 
-import matplotlib
-matplotlib.use('Qt5Agg') #sets the backend (case sensitive)
-import matplotlib.pyplot as plt
-
-#set teh styles
-plt.style.use('default')
-
-#font
-matplotlib_font = {
-        'family' : 'serif',
-        'weight' : 'normal',
-        'size'   : 8}
-
-matplotlib.rc('font', **matplotlib_font)
-matplotlib.rcParams['axes.titlesize'] = 10 #set the figure title size
-
-#spacing parameters
-matplotlib.rcParams['figure.autolayout'] = False #use tight layout
+#===============================================================================
+# import matplotlib
+# matplotlib.use('Qt5Agg') #sets the backend (case sensitive)
+# import matplotlib.pyplot as plt
+# 
+# #set teh styles
+# plt.style.use('default')
+# 
+# #font
+# matplotlib_font = {
+#         'family' : 'serif',
+#         'weight' : 'normal',
+#         'size'   : 8}
+# 
+# matplotlib.rc('font', **matplotlib_font)
+# matplotlib.rcParams['axes.titlesize'] = 10 #set the figure title size
+# 
+# #spacing parameters
+# matplotlib.rcParams['figure.autolayout'] = False #use tight layout
+#===============================================================================
     
 
 #from hlpr.basic import ComWrkr
 #import hlpr.basic
 from model.modcom import DFunc
-
+from hlpr.plot import Plotr
 
 
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class CurvePlotr(DFunc):
-    
+class CurvePlotr(DFunc, Plotr):
+    subplot=111
     
     def __init__(self,
                  name='Results',
                  
-                 
-                figsize = (6,4), #6,4 seems good for documnets
-                subplot = 111,
-                
-                #writefig
-                fmt = 'svg' ,#format for figure saving
-                dpi = 300,
-                transparent = False,
+                #===============================================================
+                #  
+                # figsize = (6,4), #6,4 seems good for documnets
+                # subplot = 111,
+                # 
+                # #writefig
+                # fmt = 'svg' ,#format for figure saving
+                # dpi = 300,
+                # transparent = False,
+                #===============================================================
 
 
                  **kwargs
@@ -96,8 +100,8 @@ class CurvePlotr(DFunc):
         
         self.name = name
         
-        self.figsize, self.subplot, self.fmt, self.dpi, self.transparent = figsize, subplot, fmt, dpi, transparent
-        
+        #self.figsize, self.subplot, self.fmt, self.dpi, self.transparent = figsize, subplot, fmt, dpi, transparent
+        self._init_plt()
         self.logger.info('init finished')
         
     def load_data(self, fp):
@@ -115,19 +119,20 @@ class CurvePlotr(DFunc):
                 lib_as_df = True, #indicator for format of passed lib
                 title=None,
                 logger=None,
+
                 **lineKwargs
                 ):
         #=======================================================================
         # defaults
         #=======================================================================
         if logger is None: logger=self.logger
-        
+
         
         log = logger.getChild('plotAll')
         log.info('plotting w/ %i'%len(cLib_d))
         
         if title is None: title='%s vFunc plot of %i curves'%(self.tag, len(cLib_d))
-        
+        self.plt.close()
         #=======================================================================
         # convert clib
         #=======================================================================
@@ -369,7 +374,7 @@ class CurvePlotr(DFunc):
             if dd_f:
                 dd_d[k]=v
                 
-        log.info('collected %i dd vals: \n    %s'%(len(dd_d), dd_d))
+        log.debug('collected %i dd vals: \n    %s'%(len(dd_d), dd_d))
         dser = pd.Series(dd_d, name=crv_d['tag'])
         
         #=======================================================================
@@ -416,6 +421,7 @@ class CurvePlotr(DFunc):
                 ylab=None,
                 xlab=None,
                 
+                xlim=None,
 
                 **kwargs, #splill over kwargs
                 ):
@@ -423,10 +429,13 @@ class CurvePlotr(DFunc):
         #=======================================================================
         # defaults
         #=======================================================================
-        
+        plt= self.plt
         figsize=self.figsize
         subplot=self.subplot
         
+        """
+        plt.show()
+        """
         #=======================================================================
         # setup axis
         #=======================================================================
@@ -434,10 +443,13 @@ class CurvePlotr(DFunc):
 
             fig = plt.figure(figsize=figsize,
                      tight_layout=False,
-                     constrained_layout = True,
+                     constrained_layout = False,
                      )
 
             ax = fig.add_subplot(subplot)  
+            
+            if not xlim is None:
+                ax.set_xlim(xlim)
             
             #set the suptitle
             if isinstance(title, str):
@@ -446,6 +458,8 @@ class CurvePlotr(DFunc):
                 ftitle='figure'
                 
             fig.suptitle(ftitle)
+            
+            
             
         else:
             fig = plt.gcf()

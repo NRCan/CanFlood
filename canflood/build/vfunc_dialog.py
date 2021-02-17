@@ -157,7 +157,7 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
         
         #build a df of what we want to display
         df = pd.DataFrame.from_dict({k: v['meta.d'] for k,v in vdata_d.items()}
-                                    ).T.reset_index(drop=True)
+                                    ).T.reset_index(drop=True).sort_values('name')
         
         #lModel = QStringListModel(list(vdata_d.keys()))
         self.dfModel = pandasModel(df)
@@ -312,7 +312,7 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
 
         
         
-    def dislpayCsDetails(self): #display the selected curve set details
+    def dislpayCsDetails(self): #display the selected curve set (xls) details
         """called when a curve set is selected"""
 
         
@@ -324,10 +324,14 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
         #=======================================================================
         # build data for this
         #=======================================================================
-        assert self.libName in self.vdata_d, self.libName
-        assert fileName in self.vdata_d[self.libName]['curves_d'], 'requested filename not found: %s'%filePath
+        #=======================================================================
+        # assert self.libName in self.vdata_d, self.libName
+        # assert fileName in self.vdata_d[self.libName]['curves_d'], 'requested filename not found: %s'%filePath
+        # 
+        # data = self.vdata_d[self.libName]['curves_d'][fileName]
+        #=======================================================================
         
-        data = self.vdata_d[self.libName]['curves_d'][fileName]
+        data = self._load_cs(filePath)
         
         df = pd.Series(data, name='values'
                   ).to_frame().reset_index().rename(columns={'index':'var'})
@@ -401,8 +405,7 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
     def get_libData(self, #setup all the data for display
                     vfunc_dir=None,
                     
-                    #columns from curves to add in meta
-                    cs_colns = ['scale_var', 'exposure_var', 'impact_var'], 
+
                     ):
         
         #=======================================================================
@@ -471,51 +474,13 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
             data to display when .xls is selected in the bottom window
             curves_d is keyed by filename (filepath is bad for key lookup)
             """
-            curves_d = dict()
-            for fp in curve_fps:
-                assert os.path.exists(fp), fp
-                fn = os.path.basename(fp)
+            #===================================================================
+            # d['curves_d'] = dict()
+            # for fp in curve_fps:
+            #     d['curves_d'][os.path.basename(fp)] = self._load_cs(fp,log)
+            #===================================================================
                 
-                cs_d = dict()
-                
-                
-                clib_d_raw = pd.read_excel(fp, sheet_name=None, header=0, index_col=0)
-                
-                clib_d = {k:v for k,v in clib_d_raw.items() if not k.startswith('_')} #drop dummy tabs
-                
-                cs_d['cnt'] = len(clib_d)
-                cs_d['tags'] = list(clib_d.keys())
-                
-                
-                """
-                clib_d1['nrpUgPark']
-                view(clib_d['nrpUgPark'])
-                view(smry_df)
-                """
-                #get additional meta from curve data
-                smry_df = self._get_smry(clib_d, 
-                                         add_colns=cs_colns,
-                                         clib_fmt_df=True, logger=log)
-                
-                """just taking first... not checking if its actually unique"""
-                smry_d = smry_df.loc[:, smry_df.columns.isin(cs_colns)
-                            ].drop_duplicates().iloc[0].to_dict()
-                            
-                cs_d = {**cs_d, **smry_d}
-                
-                #update
-                curves_d[fn] = cs_d
-                
-            #summarize
-            d['curves_d'] = curves_d
 
-            
-            """no.. just give details on each .xls
-            d['curve_cnt'] = pd.DataFrame.from_dict(curves_d).T['cnt'].sum()
-            
-            l1 = [v['tags'] for v in curves_d.values()]
-            d['curve_tags'] = set([e for subl in l1 for e in subl])
-            d['curve_tags_cnt'] = len(d['curve_tags'])"""
             #===================================================================
             # wrap this library
             #===================================================================
@@ -546,6 +511,40 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
         log.info('finished collecting on %i librarires'%len(vdata_d))
         self.vdata_d = vdata_d.copy()
         return vdata_d
+    
+                    
+    def _load_cs(self, #load details from a curve set xls
+                 fp,
+                #columns from curves to add in meta
+                cs_colns = ['scale_var', 'exposure_var', 'impact_var'], 
+                 log=None,                
+                 ):
+        
+            assert os.path.exists(fp), fp
+            cs_d = dict()
+            
+            
+            clib_d_raw = pd.read_excel(fp, sheet_name=None, header=0, index_col=0)
+            
+            clib_d = {k:v for k,v in clib_d_raw.items() if not k.startswith('_')} #drop dummy tabs
+            
+            cs_d['cnt'] = len(clib_d)
+            cs_d['tags'] = list(clib_d.keys())
+            
+            #get additional meta from curve data
+            if not '_smry' in clib_d:
+                smry_df = self._get_smry(clib_d, 
+                                         add_colns=cs_colns,
+                                         clib_fmt_df=True, 
+                                         logger=log)
+            else:
+                smry_df = clib_d['_smry']
+            
+            """just taking first... not checking if its actually unique"""
+            smry_d = smry_df.loc[:, smry_df.columns.isin(cs_colns)
+                        ].drop_duplicates().iloc[0].to_dict()
+                        
+            return {**cs_d, **smry_d}
         
         
         
