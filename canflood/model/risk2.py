@@ -27,12 +27,12 @@ from hlpr.exceptions import QError as Error
 #from hlpr.Q import *
 from hlpr.basic import view
 #from model.modcom import Model
-from results.riskPlot import Plotr
-
+#from results.riskPlot import Plotr
+from model.modcom import RiskModel
 #==============================================================================
 # functions----------------------
 #==============================================================================
-class Risk2(Plotr, #This inherits 'Model'
+class Risk2(RiskModel, #This inherits 'Model'
              
             ):
     """Risk T2 tool for calculating expected value for a set of events from impact results
@@ -148,9 +148,9 @@ class Risk2(Plotr, #This inherits 'Model'
             self.load_attrimat(dxcol_lvls=2)
             self.promote_attrim()
         
-        """consider makeing riskPloter a child of modcom?"""    
+        #activate plot styles
         self.upd_impStyle() 
-        
+        self._init_fmtFunc()
         
         self.logger.debug('finished _setup() on Risk2')
         
@@ -233,7 +233,7 @@ class Risk2(Plotr, #This inherits 'Model'
         # get ead per asset-----
         #======================================================================
         if res_per_asset:
-            res_df = self.calc_ead(ddf1, drop_tails=self.drop_tails, logger=log)
+            res_df = self.calc_ead(ddf1)
                         
         else:
             res_df = None
@@ -245,7 +245,6 @@ class Risk2(Plotr, #This inherits 'Model'
         res_ttl = self.calc_ead(
             ddf1.sum(axis=0).to_frame().T, #rounding at end of calc_ead()
             drop_tails=False, #handle beslow 
-            logger=log,
             ).T #1 column df
             
         #self.res_ser = res_ttl.iloc[:, 0].copy() #set for risk_plot()
@@ -260,36 +259,12 @@ class Risk2(Plotr, #This inherits 'Model'
         #=======================================================================
         # #format total results for writing
         #=======================================================================
-        res_ttl.index.name = 'aep'
-        res_ttl.columns = [self.impact_units]
-        
-        #add labels
-        miss_l = set(self.extrap_vals_d.keys()).difference(res_ttl.index)
-        assert len(miss_l)==0
-
-
-        res_ttl = res_ttl.join(
-            pd.Series(np.full(len(self.extrap_vals_d), 'extrap'), 
-                  index=self.extrap_vals_d, name='note')
-            )
-        
-        res_ttl.loc['ead', 'note'] = 'integration'
-        res_ttl.loc[:, 'note'] = res_ttl.loc[:, 'note'].fillna('impact_sum')
-        
-        #plot lables
-        res_ttl['plot'] = True
-        res_ttl.loc['ead', 'plot'] = False
-        
-        res_ttl=res_ttl.reset_index(drop=False)
+        res_ttl = self._fmt_resTtl(res_ttl)
         
         #=======================================================================
         # wrap----
         #=======================================================================
-        #plotting string
-        self.val_str = 'annualized impacts = %s \nltail=\'%s\',  rtail=\'%s\''%(
-            self.impactFmtFunc(self.ead_tot), self.ltail, self.rtail) + \
-            '\nassets = %i, event_rels = \'%s\', prec = %i'%(
-                self.asset_cnt, self.event_rels, self.prec)
+        self._set_valstr()
             
         
         self.res_ttl=res_ttl #for convenioence outputters
@@ -298,50 +273,9 @@ class Risk2(Plotr, #This inherits 'Model'
 
 
         return res_ttl, res_df
+
     
-    def output_ttl(self,  #helper to o utput the total results file
-                    dtag='r2_ttl',
-                   ofn=None,
-                   upd_cf= True,
-                   logger=None,
-                   ):
- 
-        if ofn is None:
-            ofn = '%s_%s'%(self.resname, 'ttl') 
-            
-        out_fp = self.output_df(self.res_ttl, ofn, write_index=False, logger=logger)
-        
-        if upd_cf:
-            self.update_cf( {
-                    'results_fps':(
-                        {dtag:out_fp}, 
-                        '#\'%s\' file path set from output_ttl at %s'%(
-                            dtag, datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
-                        ), }, cf_fp = self.cf_fp )
-        
-        return out_fp
-    
-    def output_passet(self,  #helper to o utput the total results file
-                      dtag='r2_passet',
-                   ofn=None,
-                   upd_cf= True,
-                   logger=None,
-                   ):
-        """using these to help with control file writing"""
-        if ofn is None:
-            ofn = '%s_%s'%(self.resname, dtag)
-            
-        out_fp = self.output_df(self.res_df, ofn, logger=logger)
-        
-        if upd_cf:
-            self.update_cf( {
-                    'results_fps':(
-                        {dtag:out_fp}, 
-                        '#\'%s\' file path set from output_passet at %s'%(
-                            dtag, datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
-                        ), }, cf_fp = self.cf_fp )
-        
-        return out_fp
+
         
     
 

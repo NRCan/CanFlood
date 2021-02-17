@@ -194,9 +194,6 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         self.set_vdrivers()
         
         
-        
-        
-        
         if not self.proj_checks():
             raise Error('failed checks')
         
@@ -282,7 +279,9 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         return
         
     def set_crs(self, #load, build, and set the project crs
-                authid =  None):
+                authid =  None, #integer
+                crs = None, #QgsCoordinateReferenceSystem
+                ):
         
         #=======================================================================
         # setup and defaults
@@ -292,16 +291,22 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         if authid is None: 
             authid = self.crsid_default
         
-        if not isinstance(authid, int):
-            raise IOError('expected integer for crs')
+        #=======================================================================
+        # if not isinstance(authid, int):
+        #     raise IOError('expected integer for crs')
+        #=======================================================================
         
         #=======================================================================
         # build it
         #=======================================================================
-        self.crs = QgsCoordinateReferenceSystem(authid)
+        if crs is None:
+            crs = QgsCoordinateReferenceSystem(authid)
+
+        assert isinstance(crs, QgsCoordinateReferenceSystem)
+        self.crs=crs #overwrite
         
         if not self.crs.isValid():
-            raise IOError('CRS built from %i is invalid'%authid)
+            raise IOError('CRS built from %i is invalid'%self.crs.authid())
         
         #=======================================================================
         # attach to project
@@ -311,7 +316,9 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         if not self.qproj.crs().description() == self.crs.description():
             raise Error('qproj crs does not match sessions')
         
-        log.info('Session crs set to EPSG: %i, \'%s\''%(authid, self.crs.description()))
+        log.info('Session crs set to EPSG: %s, \'%s\''%(self.crs.authid(), self.crs.description()))
+        
+        return self.crs
            
     def proj_checks(self):
         log = self.logger.getChild('proj_checks')
@@ -376,6 +383,10 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         """only add intermediate layers to store
         self.mstore.addMapLayer(vlay_raw)"""
         
+        if not vlay_raw.crs()==self.qproj.crs():
+            log.warning('crs mismatch: \n    %s\n    %s'%(
+            vlay_raw.crs(), self.qproj.crs()))
+        
         #=======================================================================
         # aoi slice
         #=======================================================================
@@ -405,7 +416,9 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
 
         return vlay
     
-    def load_rlay(self, fp, logger=None):
+    def load_rlay(self, fp, 
+                  aoi_vlay = None,
+                  logger=None):
         if logger is None: logger = self.logger
         log = logger.getChild('load_rlay')
         
@@ -422,19 +435,31 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         
         #===========================================================================
-        # wrap
+        # check
         #===========================================================================
         assert rlayer.isValid(), "Layer failed to load!"
         assert isinstance(rlayer, QgsRasterLayer), 'failed to get a QgsRasterLayer'
         
         if not rlayer.crs() == self.qproj.crs():
             log.warning('loaded layer \'%s\' crs mismatch!'%rlayer.name())
-        #assert rlayer.crs() == self.crs, 'crs mismatch'
 
-        
         log.debug('loaded \'%s\' from \n    %s'%(rlayer.name(), fp))
         
-        return rlayer
+        #=======================================================================
+        # aoi
+        #=======================================================================
+        if not aoi_vlay is None:
+            assert isinstance(aoi_vlay, QgsVectorLayer)
+            rlay2 = self.cliprasterwithpolygon(rlayer,aoi_vlay, logger=log, layname=rlayer.name())
+            
+            #clean up
+            mstore = QgsMapLayerStore() #build a new store
+            mstore.addMapLayers([rlayer]) #add the layers to the store
+            mstore.removeAllMapLayers() #remove all the layers
+        else:
+            rlay2 = rlayer
+        
+        return rlay2
     
     
     def write_rlay(self, #make a local copy of the passed raster layer
@@ -1266,7 +1291,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
           
         return res_rlay
     
-    def cliprasterwithpolygon2(self,
+    def cliprasterwithpolygon2(self, #with saga
                               rlay_raw,
                               poly_vlay,
                               ofp = None,
@@ -2802,7 +2827,7 @@ def vlay_write( #write  a VectorLayer
       
     if error[0] == QgsVectorFileWriter.NoError:
         log.info('layer \' %s \' written to: \n     %s'%(vlay.name(),out_fp))
-        return 
+        return out_fp
      
     raise Error('FAILURE on writing layer \' %s \'  with code:\n    %s \n    %s'%(vlay.name(),error, out_fp))
     

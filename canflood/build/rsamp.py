@@ -33,13 +33,13 @@ from hlpr.exceptions import QError as Error
     
 
 
-from hlpr.Q import Qcoms,vlay_get_fdf, vlay_get_fdata
-
+from hlpr.Q import Qcoms,vlay_get_fdf, vlay_get_fdata, view
+from hlpr.plot import Plotr
 
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Rsamp(Qcoms):
+class Rsamp(Plotr, Qcoms):
     """ sampling hazard rasters from the inventory
     
     METHODS:
@@ -70,6 +70,9 @@ class Rsamp(Qcoms):
     
 
     
+    dep_rlay_d = dict() #container for depth rasters (for looped runs)
+    
+    impactfmt_str = '.2f' #formatting impact values on plots
     
     def __init__(self,
                  fname='expos', #prefix for file name
@@ -83,6 +86,9 @@ class Rsamp(Qcoms):
         self.fname=fname
         #flip the codes
         self.psmp_codes = dict(zip(self.psmp_codes.values(), self.psmp_codes.keys()))
+        
+        self._init_plt() #setup matplotlib
+        self._init_fmtFunc()
         
         self.logger.info('Rsamp.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
 
@@ -150,7 +156,9 @@ class Rsamp(Qcoms):
     def load_rlays(self, #shortcut for loading a set of rasters in a directory
                    
                    data_dir,
-                   rfn_l=None, 
+                   rfn_l=None,  #if None, loads all tifs in the directory
+                   
+                   aoi_vlay = None,
                    logger=None,
                    **kwargs
                    ):
@@ -185,7 +193,9 @@ class Rsamp(Qcoms):
         log.info('loading %i rlays'%len(rfp_d))
         rlay_d = dict()
         for fn, fp in rfp_d.items():
-            rlay_d[fn] = self.load_rlay(fp, logger=log, **kwargs)
+            rlay_d[fn] = self.load_rlay(fp, logger=log,aoi_vlay=aoi_vlay, **kwargs)
+            
+
             
             
         log.info('loaded %i'%len(rlay_d))
@@ -205,7 +215,7 @@ class Rsamp(Qcoms):
             
             #inundation sampling controls
             as_inun=False, #whether to sample for inundation (rather than wsl values)
-            dtm_rlay=None, #dtm raster
+            dtm_rlay=None, #dtm raster (for as_inun=True)
             dthresh = 0, #fordepth threshold
             clip_dtm=False,
             fname = None, #prefix for layer name
@@ -223,8 +233,7 @@ class Rsamp(Qcoms):
         if cid is None: cid = self.cid
         if fname is None: fname=self.fname
         self.as_inun = as_inun
-
-        
+        self.finv_name = finv_raw.name() #for plotters
         log.info('executing on %i rasters'%(len(rlayRaw_l)))
 
         #======================================================================
@@ -283,7 +292,7 @@ class Rsamp(Qcoms):
 
         self.feedback.setProgress(40)
         #=======================================================================
-        # #inundation runs--------
+        #inundation runs--------
         #=======================================================================
         if as_inun:
             #===================================================================
@@ -323,7 +332,7 @@ class Rsamp(Qcoms):
                 fname, self.tag, len(rlayRaw_l), res_vlay.dataProvider().featureCount(), dthresh)
         
         #=======================================================================
-        # #WSL value sampler------
+        #WSL value sampler------
         #=======================================================================
         else:
             res_vlay = self.samp_vals(finv,rlayRaw_l, psmp_stat)
@@ -333,6 +342,24 @@ class Rsamp(Qcoms):
         #=======================================================================
         # wrap
         #=======================================================================
+        """TODO: harmonize output types for build modules"""
+        #get dataframe like results
+        try:
+            df = vlay_get_fdf(res_vlay, logger=log).set_index(cid, drop=True
+                                          ).rename(columns=self.names_d)
+            """
+            view(df)
+            d.keys()
+            """
+            #get sorted index by values
+            sum_ser = pd.Series({k:cser.dropna().sum() for k, cser in df.items()}).sort_values()
+            
+            #set this new index
+            self.res_df = df.loc[:, sum_ser.index]
+        
+        except Exception as e:
+            log.warning('failed to convert vlay to dataframe w/ \n    %s'%e)
+        
         #max out the progress bar
         self.feedback.setProgress(90)
 
@@ -488,6 +515,7 @@ class Rsamp(Qcoms):
         #===================================================================
         # scale
         #===================================================================
+        
         if not float(scaleFactor) ==float(1.00):
             rlayScale = self.raster_mult(rlayTrim, scaleFactor, logger=log)
             
@@ -681,6 +709,7 @@ class Rsamp(Qcoms):
     def samp_inun(self, #inundation percent for polygons
                   finv, raster_l, dtm_rlay, dthresh,
                    ):
+
         #=======================================================================
         # defaults
         #=======================================================================
@@ -716,17 +745,19 @@ class Rsamp(Qcoms):
             #===================================================================
             # #get depth raster
             #===================================================================
-            log.info('calculating depth raster')
-
-            #using Qgis raster calculator constructor
-            dep_rlay = self.raster_subtract(rlay, dtm_rlay, logger=log,
-                                            out_dir = os.path.join(temp_dir, 'dep'))
+            dep_rlay = self._get_depr(dtm_rlay, log, temp_dir, rlay)
             
             #===================================================================
             # get threshold
             #===================================================================
             #reduce to all values above depththreshold
             log.info('calculating %.2f threshold raster'%dthresh) 
+            
+            """
+            TODO: speed this up somehow... super slow
+                native calculator?
+                
+            """
             
             thr_rlay = self.grastercalculator(
                                 'A*(A>%.2f)'%dthresh, #null if not above minval
@@ -846,7 +877,11 @@ class Rsamp(Qcoms):
         
         return res_vlay
 
-    def samp_inun_line(self, #inundation percent for lines
+
+
+
+    def samp_inun_line(self, #inundation percent for Line
+
                   finv, raster_l, dtm_rlay, dthresh,
                    ):
         
@@ -903,18 +938,14 @@ class Rsamp(Qcoms):
         names_d = dict()
 
         for indxr, rlay in enumerate(raster_l):
-            log = self.logger.getChild('samp_inun.%s'%rlay.name())
+            log = self.logger.getChild('samp_inunL.%s'%rlay.name())
             ofnl = [field.name() for field in finv.fields()]
 
 
             #===================================================================
             # #get depth raster
             #===================================================================
-            log.info('calculating depth raster')
-
-            #using Qgis raster calculator constructor
-            dep_rlay = self.raster_subtract(rlay, dtm_rlay, logger=log,
-                                            out_dir = os.path.join(temp_dir, 'dep'))
+            dep_rlay = self._get_depr(dtm_rlay, log, temp_dir, rlay)
             
             #===============================================================
             # #convert to points
@@ -1032,6 +1063,18 @@ class Rsamp(Qcoms):
         """
 
         return finv
+    
+    def _get_depr(self, dtm_rlay, log, temp_dir, rlay):
+        dep_rlay_nm = '%s_%s' % (dtm_rlay.name(), rlay.name())
+        log.info('calculating depth raster \'%s\''%dep_rlay_nm)
+        if dep_rlay_nm in self.dep_rlay_d:
+            dep_rlay = self.dep_rlay_d[dep_rlay_nm]
+        else:
+            dep_rlay = self.raster_subtract(rlay, dtm_rlay, logger=log, 
+                out_dir=os.path.join(temp_dir, 'dep'), 
+                layname=dep_rlay_nm)
+            self.dep_rlay_d[dep_rlay_nm] = dep_rlay #using Qgis raster calculator constructor
+        return dep_rlay
     
     def raster_subtract(self, #performs raster calculator rlayBig - rlaySmall
                         rlayBig, rlaySmall,
@@ -1218,26 +1261,6 @@ class Rsamp(Qcoms):
         
         
 
-    def dtm_check(self, vlay):
-        
-        log = self.logger.getChild('dtm_check')
-        
-        df = vlay_get_fdf(vlay)
-        
-        boolidx = df.isna()
-        if boolidx.any().any():
-            log.error('got some nulls')
-        
-        log.info('passed checks')
-        
-        #======================================================================
-        # #check results
-        #======================================================================
-        #check results cid column matches set in finv
-        
-        #make sure there are no negative values
-        
-        #report on number of nulls
         
     def line_sample_stats(self, #get raster stats using a line
                     line_vlay, #line vectorylayer with geometry to sample from
@@ -1334,9 +1357,27 @@ class Rsamp(Qcoms):
 
         return line_vlay
         
+    #===========================================================================
+    # CHECKS--------
+    #===========================================================================
     def check(self):
         pass
+    
+    def dtm_check(self, vlay):
         
+        log = self.logger.getChild('dtm_check')
+        
+        df = vlay_get_fdf(vlay)
+        
+        boolidx = df.isna()
+        if boolidx.any().any():
+            log.error('got some nulls')
+        
+        log.info('passed checks')
+        
+    #===========================================================================
+    # OUTPUTS--------
+    #===========================================================================
     def write_res(self, #save expos dataset to file
                   vlay,
               out_dir = None, #directory for puts
@@ -1384,9 +1425,9 @@ class Rsamp(Qcoms):
         return 
 
 
-    def upd_cf(self, cf_fp): #configured control file updater
+    def update_cf(self, cf_fp): #configured control file updater
         """make sure you write the file first"""
-        return self.update_cf(
+        return self.set_cf_pars(
             {
             'dmg_fps':(
                 {'expos':self.out_fp}, 
@@ -1401,7 +1442,7 @@ class Rsamp(Qcoms):
         
         
     def upd_cf_dtm(self, cf_fp=None):
-        return self.update_cf(
+        return self.set_cf_pars(
             {
             'dmg_fps':(
                 {'gels':self.out_fp},
@@ -1413,11 +1454,42 @@ class Rsamp(Qcoms):
              },
             cf_fp = cf_fp
             )
+        
+    #===========================================================================
+    # PLOTS-----
+    #===========================================================================
+    def plot_hist(self, #plot failure histogram of all layers
+                      df=None,**kwargs): 
 
-    def test(self):
-        print('Rsamp test')
-    
-    
+        if df is None: df=self.res_df
+        title = '%s Raster Sample Histogram on %i Events'%(self.tag, len(df.columns))
+        
+        self._set_valstr(df)
+        return self.plot_impact_hist(df,
+                     title=title, xlab = 'raster value',
+
+                     val_str=self.val_str, **kwargs)
+        
+
+    def plot_boxes(self, #plot boxplots of results
+                     df=None, 
+                      **kwargs): 
+
+        if df is None:df=self.res_df
+
+        title = '%s Raster Sample Boxplots on %i Events'%(self.tag, len(df.columns))
+
+        self._set_valstr(df)
+        
+        return self.plot_impact_boxes(df,
+                     title=title, xlab = 'hazard layer', ylab = 'raster value',
+                     smry_method='mean',
+                     val_str=self.val_str,   **kwargs)
+        
+    def _set_valstr(self, df):
+        self.val_str= 'finv_fcnt=%i \nfinv_name=\'%s\' \nas_inun=%s \ndate=%s'%(
+            len(df), self.finv_name, self.as_inun, self.today_str)
+        
     
 
     

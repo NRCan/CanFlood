@@ -29,15 +29,15 @@ idx = pd.IndexSlice
 from hlpr.exceptions import QError as Error
 
 #from hlpr.Q import *
-from hlpr.basic import ComWrkr, view
+from hlpr.basic import view
 #from model.modcom import Model
-from results.riskPlot import Plotr
-from model.modcom import DFunc
+from hlpr.plot import Plotr
+from model.modcom import DFunc, Model
 
 #==============================================================================
 # functions----------------------
 #==============================================================================
-class Dmg2(DFunc, Plotr):
+class Dmg2(Model, DFunc, Plotr):
     #==========================================================================
     # #program vars
     #==========================================================================
@@ -51,9 +51,9 @@ class Dmg2(DFunc, Plotr):
     
     #minimum inventory expectations
     finv_exp_d = {
-        'f0_tag':{'type':np.object},
-        'f0_scale':{'type':np.number},
-        'f0_elv':{'type':np.number},
+        'tag':{'type':np.object},
+        'scale':{'type':np.number},
+        'elv':{'type':np.number},
         }
     
     dfuncs_d = dict() #container for damage functions
@@ -137,6 +137,13 @@ class Dmg2(DFunc, Plotr):
         
         self.setup_dfuncs(self.data_d['curves'])
         
+        #=======================================================================
+        # plot setup
+        #=======================================================================
+  
+        self.upd_impStyle() 
+        self._init_fmtFunc()
+        
         #======================================================================
         # checks
         #======================================================================
@@ -165,8 +172,11 @@ class Dmg2(DFunc, Plotr):
         #=======================================================================
         assert self.bdf['ftag'].dtype.char == 'O'
         ftags_valid = self.bdf['ftag'].unique().tolist()
+        
+        if np.nan in ftags_valid:
+            raise Error('got some nulls')
 
-        log.info('loading for %i valid ftags in the finv'%len(ftags_valid))
+        log.debug('loading for %i valid ftags in the finv'%len(ftags_valid))
         #=======================================================================
         # #loop through each frame and build the func
         #=======================================================================
@@ -225,29 +235,10 @@ class Dmg2(DFunc, Plotr):
         return
         
         
-    def check_ftags(self): #check fx_tag values against loaded dfuncs
-        fdf = self.data_d['finv']
-        
-        #check all the tags are in the dfunc
-        
-        tag_boolcol = fdf.columns.str.contains('tag')
-        
-        f_ftags = pd.Series(pd.unique(fdf.loc[:, tag_boolcol].values.ravel())
-                            ).dropna().to_list()
 
-        c_ftags = list(self.dfuncs_d.keys())
-        
-        miss_l = set(f_ftags).difference(c_ftags)
-        
-        assert len(miss_l) == 0, '%i ftags in the finv not in the curves: \n    %s'%(
-            len(miss_l), miss_l)
-        
-        
-        #set this for later
-        self.f_ftags = f_ftags
 
     def run(self, #main runner fucntion
-
+            set_impactUnits=True, #set impact_units from the dfunc
             ):
         #======================================================================
         # defaults
@@ -292,8 +283,6 @@ class Dmg2(DFunc, Plotr):
                 self.feedback.upd_prog(5, method='portion')
 
 
-            
-        
         #=======================================================================
         # finalize damages
         #=======================================================================
@@ -306,14 +295,25 @@ class Dmg2(DFunc, Plotr):
         #=======================================================================
         # get labels
         #=======================================================================
-        try:
-            self.impact_units = self.get_DF_att(attn='impact_units')
-        except Exception as e:
-            log.warning('failed to set \'impact_units\' w/ %s'%e)
+        if set_impactUnits:
+            """
+            if user wants to use the value in the c ontrol file.. pass set_impactUnits=False
+            otherwise we attempt to read from control file
+            
+            both should default to the modcom.Model.impact_units=impacts
+            """
+            try:
+                dFunc_iu = self.get_DF_att(attn='impact_units')
+                if not dFunc_iu == '' or dFunc_iu is None:
+                    self.impact_units = dFunc_iu
+            except Exception as e:
+                log.warning('failed to set \'impact_units\' w/ %s'%e)
+                
+        #for plotting
         #=======================================================================
         # report
         #=======================================================================
-        log.info('maxes:\n%s'%(
+        log.debug('maxes:\n%s'%(
             cres_df.max()))
         
         log.info('finished w/ %s and TtlDmg = %.2f'%(
@@ -348,7 +348,7 @@ class Dmg2(DFunc, Plotr):
         #identifier for depth columns
         dboolcol = ~ddf.columns.isin([cid, bid])
         
-        log.info('running on %i assets and %i events'%(len(bdf), len(ddf.columns)-2))
+        log.debug('running on %i assets and %i events'%(len(bdf), len(ddf.columns)-2))
         
 
         #======================================================================
@@ -374,7 +374,7 @@ class Dmg2(DFunc, Plotr):
         
         #report those faling the check
         if not dep_booldf.all().all():
-            log.info('marked %i (of %i) entries w/ excluded depths (<= %.2f or NULL)'%(
+            log.debug('marked %i (of %i) entries w/ excluded depths (<= %.2f or NULL)'%(
                 np.invert(dep_booldf).sum().sum(), dep_booldf.size, mdval))
         
 
@@ -899,6 +899,11 @@ class Dmg2(DFunc, Plotr):
         assert len(miss_l) == 0, 'result inventory mismatch: \n    %s'%miss_l
         assert np.array_equal(fdf.index, cres_df.index), 'index mismatch'
         
+        #=======================================================================
+        # sort cres
+        #=======================================================================
+        
+        
 
         #=======================================================================
         # wrap
@@ -907,12 +912,12 @@ class Dmg2(DFunc, Plotr):
         #set these for use later
         self.res_df = res_df #needed for _rdf_smry
         self.bdmgC_df = resC_df
-        self.cres_df = cres_df.copy() #set for plotting
+        self.cres_df = cres_df.loc[:, cres_df.sum(axis=0).sort_values(ascending=True).index] #set for plotting
         
         
         log.info('got cleaned impacts: \n    %s'%(self._rdf_smry('_dmg')))
 
-        return self.bdmgC_df, cres_df
+        return self.bdmgC_df, self.cres_df
     
     
     def bdmg_smry(self, #generate summary of damages
@@ -1298,14 +1303,38 @@ class Dmg2(DFunc, Plotr):
             log.warning('got %i \'%s\' (from %i DFuncs), taking first: %s'%(
                 len(attv_s), attn, len(d), attv))
             
-        log.info('got \'%s\' = \'%s\''%(attn, attv))
+        log.debug('got \'%s\' = \'%s\''%(attn, attv))
         
         return attv
+    
+    #===========================================================================
+    # VALIDATORS----
+    #===========================================================================
+    def check_ftags(self): #check fx_tag values against loaded dfuncs
+        fdf = self.data_d['finv']
+        
+        #check all the tags are in the dfunc
+        
+        tag_boolcol = fdf.columns.str.contains('tag')
+        
+        f_ftags = pd.Series(pd.unique(fdf.loc[:, tag_boolcol].values.ravel())
+                            ).dropna().to_list()
+
+        c_ftags = list(self.dfuncs_d.keys())
+        
+        miss_l = set(f_ftags).difference(c_ftags)
+        
+        assert len(miss_l) == 0, '%i ftags in the finv not in the curves: \n    %s'%(
+            len(miss_l), miss_l)
+        
+        
+        #set this for later
+        self.f_ftags = f_ftags
 
     #===========================================================================
     # OUTPUTRS-------------
     #===========================================================================
-    def upd_cf(self, #update the control file 
+    def update_cf(self, #update the control file 
                out_fp = None,
                cf_fp = None,
                ):
@@ -1321,7 +1350,7 @@ class Dmg2(DFunc, Plotr):
         if not self.absolute_fp:
             out_fp = os.path.split(out_fp)[1]
         
-        return self.update_cf(
+        return self.set_cf_pars(
             {
             'parameters':(
                 {'impact_units':self.impact_units},
@@ -1384,104 +1413,55 @@ class Dmg2(DFunc, Plotr):
     #===========================================================================
     # PLOTRS------
     #===========================================================================
+    def _set_valstr(self, df):
+        self.val_str = 'asset count=%i \napply_miti=%s \nground_water=%s \nfelv=\'%s\' \ndate= %s'%(
+            len(df), self.apply_miti, self.ground_water, self.felv, self.today_str)
+        
     def plot_boxes(self, #box plots for each event 
                    df=None, 
                       
                     #labelling
                     impact_name = None, 
-                    impactFmtFunc=None, #tick label format function for impact values
+
                     #figure parametrs
-                    figsize=None, logger=None,  plotTag=None,        
+                     plotTag=None,        
                     
-                    pkwargs = {},
+                    **kwargs
                       ): 
-        
-        """
-        dont want to initiate matplotlib in the module...
-            just using a nasty single f unction
-        """
-        #======================================================================
-        # defaults
-        #======================================================================
-        if logger is None: logger=self.logger
-        log = logger.getChild('plot_boxes')
-        plt, matplotlib = self.plt, self.matplotlib
-        
-        if df is None: df = self.cres_df.copy()
-        if figsize is None: figsize    =    self.figsize
-        if plotTag is None: plotTag=self.tag
+
         if impact_name is None: impact_name=self.impact_units
-        if impactFmtFunc is None: impactFmtFunc=self.impactFmtFunc
-        
-        title = '%s %s Impact Boxplots on %i Events'%(plotTag, self.name, len(df.columns))
-        #=======================================================================
-        # manipulate data
-        #=======================================================================
-        #get a collectio nof arrays from a dataframe's columns
-        data = [ser.values for _, ser in df.items()]
+        if plotTag is None: plotTag=self.tag
+        if df is None: 
+            df = self.cres_df.replace({0.0:np.nan})
 
-        
-        
-        
-        #======================================================================
-        # figure setup
-        #======================================================================
-        plt.close()
-        fig = plt.figure(figsize=figsize, constrained_layout = True)
-        #axis setup
-        ax1 = fig.add_subplot(111)
-        
-        #aep units
-        #ax1.set_ylim(0, 1.0)
- 
-        
-        # axis label setup
-        fig.suptitle(title)
-        ax1.set_xlabel('hazard event raster')
-        ax1.set_ylabel(impact_name)
-        """
-        plt.show()
-        
-        pd.__version__
-        """
+        title = '%s %s dmg2.Impact Boxplots on %i Events'%(plotTag, self.name, len(df.columns))
+        self._set_valstr(df) 
 
-        
-        #=======================================================================
-        # plot thie histogram
-        #=======================================================================
-        boxRes_d = ax1.boxplot(data, whis=1.5, **pkwargs)
-        
-
-
-        #=======================================================================
-        # format axis labels
-        #======================================================= ================
-        #apply the new labels
-        xfmtFunc = lambda idx:'%s = %s'%(df.columns[idx-1], impactFmtFunc(df.iloc[:, idx-1].sum()))
-        l = [xfmtFunc(value) for value in ax1.get_xticks()]
-        ax1.set_xticklabels(l, rotation=90, va='center', y=.5, color='red')
-        
-        
-        self._tickSet(ax1, yfmtFunc=impactFmtFunc)
-        
-        
-        #=======================================================================
-        # Add text string 'annot' to lower left of plot
-        #=======================================================================
-        val_str = '%i assets \napply_miti=%s \nground_water=%s \nfelv=\'%s\''%(
-            len(df), self.apply_miti, self.ground_water, self.felv)
-        
-        xmin, xmax1 = ax1.get_xlim()
-        ymin, ymax1 = ax1.get_ylim()
-         
-        x_text = xmin + (xmax1 - xmin)*.5 # 1/10 to the right of the left ax1is
-        y_text = ymin + (ymax1 - ymin)*.8 #1/10 above the bottom ax1is
-        anno_obj = ax1.text(x_text, y_text, val_str)
-
-        
-        
-        return fig
+        return self.plot_impact_boxes(df,
+                      title=title, xlab = 'hazard event raster', ylab = impact_name,
+                       val_str=self.val_str, **kwargs)
             
+    def plot_hist(self, #box plots for each event 
+                   df=None, 
+                      
+                    #labelling
+                    impact_name = None, 
+
+                    #figure parametrs
+                     plotTag=None,        
+                    
+                    **kwargs
+                      ): 
+
+        if impact_name is None: impact_name=self.impact_units
+        if plotTag is None: plotTag=self.tag
+        if df is None: df = self.cres_df.replace({0.0:np.nan})
+
+        title = '%s %s dmg2.Impact Histograms on %i Events'%(plotTag, self.name, len(df.columns))
+        self._set_valstr(df) 
+        return self.plot_impact_hist(df,
+                      title=title, xlab = impact_name,
+                       val_str=self.val_str, **kwargs)
             
         
                    

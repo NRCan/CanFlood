@@ -7,9 +7,10 @@ Created on Feb. 9, 2021
 
 from io import BytesIO
 
-import requests, os, configparser
+import requests, os, configparser, sys, locale
 import pandas as pd
 from hlpr.basic import view, force_open_dir
+from hlpr.exceptions import Error
 
 """couldnt get this to work
 r = requests.get('https://docs.google.com/spreadsheets/d/1CwoGkVlY6YPF3zb67BlJTKjeNr09Mez0f6c7EjPOmNg/edit?usp=sharing')
@@ -29,7 +30,7 @@ colnh_d = {
     'description':[
         'creation_date', 'location','name'],
     'variables':[
-             'reference', 'asset_types1', 'asset_types2', 'reference_2', 'original_platform',
+             'reference', 'asset_types1', 'asset_types2', 'reference_2', 'native_platform',
                'classification_scheme', 'flood_type', 'impact_units', 'cost_base',
                'cost_year', 'empirical_synthetic'
                ]
@@ -71,11 +72,28 @@ if not os.path.exists(out_dir):os.makedirs(out_dir)
 # formatters
 #===============================================================================
 #df.loc[:,'creation_date'] =df['creation_date'].astype(int) 
+"""
+view(df)
+"""
 
+encoding = locale.getpreferredencoding()
+
+
+"""this makes the references ugly... but should stop the errors"""
+for coln in ['Source', 'reference']:
+    """
+    view(df[coln].str.encode('ascii'))
+    """
+    try:
+        df.loc[:, coln] = df[coln].str.encode('utf-8')
+    except Exception as e:
+        raise Error('\'%s\' has some bad character: \n    %s'%(coln, e))
+    #print(coln)
 
 #===============================================================================
 # loop and build
 #===============================================================================
+
 print('on %s'%str(df.shape))
 
 for name, r_raw in df.iterrows():

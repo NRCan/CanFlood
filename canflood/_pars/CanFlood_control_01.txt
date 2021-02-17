@@ -35,8 +35,8 @@ risk3 = False
 [results_fps]
 attrimat02 =            #lvl2 attribution matrix fp (post dmg model)
 attrimat03 =            #lvl3 attribution matrix fp (post risk model)
-r2_passet =             #per_asset results from the risk2 model
-r2_ttl =                #total results from risk2
+r_passet =             #per_asset results from the risk2 model
+r_ttl =                #total results from risk2
 eventypes =             #dataframe of aep, noFail, and rEventName
 
 [plotting]

@@ -4,13 +4,13 @@ creation_date = 2015
 location = Edmonton and Calgary, AB
 
 [variables]
-reference = IBI Group and Golder Associates. 2015. “Provincial Flood Damage Assessment Study.” Government of Alberta. https://open.alberta.ca/publications/7032365.
-	
+reference = b"IBI Group and Golder Associates. 2015. 'Provincial Flood Damage Assessment Study.\xe2\x80\x9d Government of Alberta. https://open.alberta.ca/publications/7032365.\n"
 asset_types1 = buildings
 asset_types2 = structure, contents
-original_platform = RFDA/PFDAT
+native_platform = RFDA/PFDAT
 classification_scheme = (IBI Group and Golder Associates 2015)
 impact_units = $CAD
+cost_base = replacement
 cost_year = 2014
 empirical_synthetic = synthetic
 

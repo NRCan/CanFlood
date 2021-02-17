@@ -545,7 +545,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # #copy the template
         #=======================================================================
-        cf_path = wrkr.copy_cf_template(wdir, logger=self.logger)
+        cf_path = wrkr.copy_cf_template()
         self.feedback.upd_prog(75)
         
         #=======================================================================
@@ -599,7 +599,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                         cf_fp=cf_fp, 
                         ) 
         self.feedback.upd_prog(50)
-        wrkr.update_cf(
+        wrkr.set_cf_pars(
             {
             'dmg_fps':(
                 {'curves':curves_fp}, 
@@ -671,7 +671,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # secondary flags
         #=======================================================================
         if self.checkBox_inv_apMiti.isChecked():
-            wrkr.update_cf(
+            wrkr.set_cf_pars(
                             {
                     'parameters':(
                         {'apply_miti':'True'},
@@ -969,7 +969,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         self.feedback.setProgress(10)
         #======================================================================
-        # execute
+        # execute----
         #======================================================================
         
         #build the sample
@@ -995,7 +995,18 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         wrkr.write_res(res_vlay, )
         
         #update ocntrol file
-        wrkr.upd_cf(cf_fp)
+        wrkr.update_cf(cf_fp)
+        
+        #=======================================================================
+        # plots
+        #=======================================================================
+        if self.checkBox_ras_pBox.isChecked():
+            fig = wrkr.plot_boxes()
+            wrkr.output_fig(fig)
+            
+        if self.checkBox_ras_pHist.isChecked():
+            fig = wrkr.plot_hist()
+            wrkr.output_fig(fig)
         
         #======================================================================
         # post---------
@@ -1143,9 +1154,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                           out_dir = out_dir, fname='gels', cf_fp=cf_fp
                           )
         
-        
-
-        
         res_vlay = wrkr.run([rlay], finv, psmp_stat=psmp_stat)
         
         #check it
@@ -1257,17 +1265,18 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         wrkr.write_res(res_df, out_dir = out_dir)
         
         #update ocntrol file
-        wrkr.upd_cf(cf_fp)
+        wrkr.update_cf(cf_fp)
         
         #=======================================================================
         # summary plots
         #=======================================================================
         if self.checkBox_LS_hist.isChecked():
-            fig = wrkr.plot_hist_all(res_df)
+            fig = wrkr.plot_hist()
             wrkr.output_fig(fig)
+
             
         if self.checkBox_LS_box.isChecked():
-            fig = wrkr.plot_box_all(res_df)
+            fig = wrkr.plot_boxes()
             wrkr.output_fig(fig)
         
         #======================================================================
@@ -1368,7 +1377,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
         # update the control file
         #======================================================================
-        wrkr.update_cf(
+        wrkr.set_cf_pars(
             {
                 'parameters':({
                     'event_probs':event_probs, 'event_rels':event_rels},),

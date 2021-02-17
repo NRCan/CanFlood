@@ -17,7 +17,7 @@ import os, logging
 import pandas as pd
 import numpy as np
 
-from scipy import interpolate, integrate
+#from scipy import interpolate, integrate
 
 #==============================================================================
 # custom imports
@@ -30,11 +30,12 @@ from hlpr.exceptions import QError as Error
 
 #from hlpr.Q import *
 #from hlpr.basic import *
-from results.riskPlot import Plotr
+#from results.riskPlot import Plotr
+from model.modcom import RiskModel
 
 
 
-class Risk1(Plotr):
+class Risk1(RiskModel):
     """
     model for summarizing inundation counts (positive depths)
     """
@@ -67,6 +68,9 @@ class Risk1(Plotr):
          }
     
     exp_pars_op = {#optional expectations
+       'parameters':{
+            'impact_units': {'type':str}
+            },
         'dmg_fps':{
             'gels':{'ext':('.csv',)},
                  },
@@ -81,8 +85,8 @@ class Risk1(Plotr):
     
     #minimum inventory expectations
     finv_exp_d = {
-        'f0_scale':{'type':np.number},
-        'f0_elv':{'type':np.number}
+        'scale':{'type':np.number},
+        'elv':{'type':np.number}
         }
     """
     NOTE: for as_inun=True, 
@@ -96,8 +100,10 @@ class Risk1(Plotr):
     #==========================================================================
     # plot controls
     #==========================================================================
-    plot_fmt = '{0:.0f}' #floats w/ 2 decimal
-    y1lab = 'impacts'
+    #===========================================================================
+    # plot_fmt = '{0:.0f}' #floats w/ 2 decimal
+    # y1lab = 'impacts'
+    #===========================================================================
     
     def __init__(self,
                  cf_fp='',
@@ -106,7 +112,7 @@ class Risk1(Plotr):
         
         #init the baseclass
         super().__init__(cf_fp=cf_fp, **kwargs) #initilzie Model
-        
+        self._init_plt() #setup matplotlib
         
         
         self.logger.debug('finished __init__ on Risk1')
@@ -136,6 +142,10 @@ class Risk1(Plotr):
 
         self.build_exp_finv() #build the expanded finv
         self.build_depths()
+        
+        #activate plot styles
+        self.upd_impStyle() 
+        self._init_fmtFunc()
         
         
         
@@ -255,46 +265,50 @@ class Risk1(Plotr):
         #check the columns
         assert np.array_equal(bres_df.columns.values, aep_ser.unique()), 'column name problem'
         _ = self.check_monot(bres_df)
+        self.feedback.setProgress(50)
         #======================================================================
         # get ead per asset------
         #======================================================================
         if res_per_asset:
-            self.feedback.setProgress(50)
-            res_df = self.calc_ead(bres_df, drop_tails=self.drop_tails, logger=log).round(self.prec)
+            
+            res_df = self.calc_ead(bres_df)
                         
         else:
             res_df = None
-        
+        self.res_df = res_df
         self.feedback.setProgress(90)
         #======================================================================
         # totals
         #======================================================================        
-        res_ser = self.calc_ead(bres_df.sum(axis=0).to_frame().T, logger=log).iloc[0]
+        res_ttl = self.calc_ead(bres_df.sum(axis=0).to_frame().T,
+                                drop_tails=False,
+                                ).T #1 column df
         
-        self.res_ser = res_ser.copy() #set for risk_plot()
-        self.feedback.setProgress(95)
+        self.ead_tot = res_ttl.iloc[:,0]['ead'] #set for plot_riskCurve()
+        
+        """old plotters
+        self.res_ser = res_ttl.copy() #set for risk_plot()
+        """
+        
+        log.info('finished on %i assets and %i damage cols'%(len(bres_df), len(res_ttl)))
+        #=======================================================================
+        # #format total results for writing
+        #=======================================================================
+        self.res_ttl = self._fmt_resTtl(res_ttl)
             
         
         #=======================================================================
         # wrap
         #=======================================================================
-        log.info('finished on %i assets and %i damage cols'%(len(bres_df), len(res_ser)))
-
-        #format resul series
-        res = res_ser.to_frame()
-        res.index.name = 'aep'
-        res.columns = ['impacts']
+        self._set_valstr()
         
-        #remove tails
-        if self.drop_tails:
-            res = res.iloc[1:-2,:] #slice of ends 
-            res.loc['ead'] = res_ser['ead'] #add ead back
-        
-         
+        self.feedback.setProgress(95)
         log.info('finished')
 
 
-        return res.round(self.prec), res_df
+        return self.res_ttl, self.res_df
+    
+
     
 
 if __name__ =="__main__": 

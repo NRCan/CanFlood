@@ -393,6 +393,8 @@ class pandasModel(QAbstractTableModel):
                 return None
         return None
     
+
+    
     
 #===============================================================================
 # class xxxDataFrameModel(QtCore.QAbstractTableModel):

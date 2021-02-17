@@ -44,6 +44,8 @@ class Vali(Qcoms):
     model validator worker
     
     kept separate from the model workers to keep init sequences clean
+    
+     TODO: add some more data checks?
 
     """
     valid_par = None #validation parmater for control file writing
@@ -128,7 +130,7 @@ class Vali(Qcoms):
         #=======================================================================
         # write result to control file
         #=======================================================================
-        self.update_cf(
+        self.set_cf_pars(
             {
                 'validation':({valid_par:str(self.valid)},
                 '# \'%s\' validated by validator.py at %s'%(
