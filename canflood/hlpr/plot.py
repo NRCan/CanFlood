@@ -139,7 +139,7 @@ class Plotr(ComWrkr):
 
     
     def _init_plt(self,  #initilize matplotlib
-                **kwargs
+                #**kwargs
                   ):
         """
         calling this here so we get clean parameters each time the class is instanced
@@ -546,13 +546,16 @@ class Plotr(ComWrkr):
     # OUTPUTTRS------
     #===========================================================================
     def output_fig(self, fig,
-                   out_dir = None, overwrite=None,
                    
-                   #figure file controls
+                   #file controls
+                   out_dir = None, overwrite=None,
+                   fname = None, #filename
+                   
+                   #figure write controls
                  fmt='svg', 
                   transparent=True, 
                   dpi = 150,
-                  fname = None, #filename
+                  
                   ):
         #======================================================================
         # defaults

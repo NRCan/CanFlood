@@ -12,7 +12,7 @@ import numpy as np
 
 from hlpr.logr import basic_logger
 mod_logger = basic_logger() 
-from hlpr.basic import force_open_dir, view
+from hlpr.basic import force_open_dir, view, get_valid_filename
 from hlpr.exceptions import Error
 
 from misc.curvePlot import CurvePlotr
@@ -50,3 +50,50 @@ class VfConv(CurvePlotr):
         
         super().__init__(**kwargs) #initilzie teh baseclass
         
+    def output(self,
+               d,
+               ofn = None,
+               out_dir = None,
+               ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if out_dir is None: out_dir=self.out_dir
+        if not os.path.exists(out_dir):os.makedirs(out_dir)
+        if ofn is None:
+            ofn = '%s_%s.xls'%(self.libName, today_str)
+        
+        ofn = get_valid_filename(ofn)
+        assert os.path.splitext(ofn)[1]=='.xls', ofn
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        for k, v in d.items():
+            assert isinstance(v, pd.DataFrame), 'bad type on %s: %s'%(k, type(v))
+        
+        #=======================================================================
+        # patsh
+        #=======================================================================
+        ofp = os.path.join(out_dir, ofn)
+        assert len(d)>0
+        if os.path.exists(ofp): assert self.overwrite
+        
+        #write to multiple tabs
+        with pd.ExcelWriter(ofp, engine='xlsxwriter') as writer:
+            for tabnm, df in d.items():
+                #write handles
+                if tabnm=='_smry':
+                    index, header = True, True
+                else:
+                    index, header = False, False
+                    
+                #tab check
+                if len(tabnm)>30:
+                    tabnm = tabnm.replace(' ','')
+                    
+                df.to_excel(writer, sheet_name=tabnm, index=index, header=header)
+            
+            
+        print('wrote %i sheets to %s'%(len(d), ofp))
+            
+        return ofp
