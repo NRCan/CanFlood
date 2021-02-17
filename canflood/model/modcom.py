@@ -3951,7 +3951,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         sdf[pgCn] = 'g1'
         sdf[pfCn] = True
         
-        log.info('finished w/ %s'%str(sdf.shape))
+        log.debug('finished w/ %s'%str(sdf.shape))
         
         """
         view(sdf)
