@@ -514,7 +514,7 @@ class HAZconv(VfConv):
         meta_d = dict()
         for srce_raw, l1_d in lib_d.copy().items():
             srce = srce_raw.replace('.', '').replace(' ','')
-            od1 = os.path.join(out_dir, srce)
+            od1 = os.path.join(out_dir, 'HAZUS_%s'%srce)
             if not os.path.exists(od1):os.makedirs(od1)
             meta_d[srce] = dict()
  
