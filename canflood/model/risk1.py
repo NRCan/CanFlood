@@ -159,6 +159,9 @@ class Risk1(RiskModel):
             ):
         """
         main caller for L1 risk model
+        
+        TODO: clean this up and divide into more functions
+            need to support impact only runs
         """
         #======================================================================
         # defaults
