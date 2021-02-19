@@ -326,7 +326,7 @@ class Rsamp(Plotr, Qcoms):
             elif 'Line' in self.gtype:
                 res_vlay = self.samp_inun_line(finv, rlayRaw_l, dtm_rlay1, dthresh)
             else:
-                raise Error('bad gtype')
+                raise Error('\'%s\' got unexpected gtype: %s'%(finv.name(), self.gtype))
             
             res_name = '%s_%s_%i_%i_d%.2f'%(
                 fname, self.tag, len(rlayRaw_l), res_vlay.dataProvider().featureCount(), dthresh)
@@ -1076,16 +1076,27 @@ class Rsamp(Plotr, Qcoms):
 
         return finv
     
-    def _get_depr(self, dtm_rlay, log, temp_dir, rlay):
+    def _get_depr(self, #get a depth raster, but first check if its already been made
+                  dtm_rlay, log, temp_dir, rlay):
+        
         dep_rlay_nm = '%s_%s' % (dtm_rlay.name(), rlay.name())
-        log.info('calculating depth raster \'%s\''%dep_rlay_nm)
+        
+        #pull previously created
         if dep_rlay_nm in self.dep_rlay_d:
             dep_rlay = self.dep_rlay_d[dep_rlay_nm]
+            
+        #build fresh
         else:
+            log.info('calculating depth raster \'%s\''%dep_rlay_nm)
+            
+            #using Qgis raster calculator constructor
             dep_rlay = self.raster_subtract(rlay, dtm_rlay, logger=log, 
                 out_dir=os.path.join(temp_dir, 'dep'), 
                 layname=dep_rlay_nm)
-            self.dep_rlay_d[dep_rlay_nm] = dep_rlay #using Qgis raster calculator constructor
+            
+            #store for next time
+            self.dep_rlay_d[dep_rlay_nm] = dep_rlay
+            
         return dep_rlay
     
     def raster_subtract(self, #performs raster calculator rlayBig - rlaySmall
@@ -1378,7 +1389,7 @@ class Rsamp(Plotr, Qcoms):
         
         boolidx = df.isna()
         if boolidx.any().any():
-            log.error('got some nulls')
+            log.error('got %i (of %i) nulls on dtm sampler'%(boolidx.sum().sum(), len(boolidx)))
         
         log.info('passed checks')
         
