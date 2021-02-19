@@ -39,7 +39,7 @@ from .dcoms import Dcoms
     
 #from hlpr.basic import get_valid_filename
 
-from results.riskPlot import Plotr
+from hlpr.plot import Plotr
 
 #==============================================================================
 # functions-------------------

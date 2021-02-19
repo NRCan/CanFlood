@@ -434,8 +434,6 @@ class Dexpo(Qcoms, DPlotr):
         #===================================================================
         """gets a point for the vertex at the START of the line.
         should work fine for right/left.. but not for 'BOTH'
-        
-        
         """
         """this is cleaner for handling transects on either side... 
         but can result in MULTIPLE intersects for some geometries
@@ -460,13 +458,7 @@ class Dexpo(Qcoms, DPlotr):
         #count check
         assert tr_vlay.dataProvider().featureCount()==cPts_vlay.dataProvider().featureCount()
         
-        #drop these new fields
-        #=======================================================================
-        # cPts_vlay = self.deletecolumn(cPts_vlay, 
-        #               ['vertex_pos','vertex_index','vertex_part','vertex_part_index', 'distance'], 
-        #                             logger=log, invert=False)
-        #     
-        #=======================================================================
+
         #===================================================================
         # crest sample
         #===================================================================
@@ -571,24 +563,14 @@ class Dexpo(Qcoms, DPlotr):
             #building from points (should be keyed by 'TR_ID')
             res_d[eTag] = self.vlay_new_df2(df, geo_d=geo_d, logger=log, gkey=tr_fid,
                                    layname='%s_%s_expo'%(dike_vlay.name(), eTag))
-            """
-            view(df)
-            view(df2)
-            """
-            
+
             mstore.removeAllMapLayers() #clear the store
             
             #===================================================================
             # add to master data
             #===================================================================
             dxi = pd.concat([df.loc[:,(self.fbn, self.wsln)].T], keys=[eTag], names=['eTag']).T
-            
-            """
-            df.dtypes
-            dxi.dtypes
-            dxi.columns
-            """
-            
+
             if dxcol is None:
                 #add a dummy level
                 dxcol = dxi
@@ -612,34 +594,23 @@ class Dexpo(Qcoms, DPlotr):
         for coln, dtype in df.dtypes.to_dict().items():
             dxcol.loc[:, idx[:, coln]] = dxcol.loc[:, idx[:, coln]].astype(dtype)
 
-        """
-        view(df)
-        view(dxcol)
-        """
-
-        
         #=======================================================================
         # wrap----
         #=======================================================================
         log.info('finished building exposure on %i events'%len(res_d))
         self.expo_vlay_d = res_d
         self.expo_dxcol = dxcol
-        """
-        view(dxcol)
-        """
-            
+
         return self.expo_dxcol, self.expo_vlay_d
     
     def get_fb_smry(self, #get a summary of the freeboard value for feeding to the curves 
                       dxcol = None,
-                      stat = 'min', 
+                      stat = 'min', #summary statistic to apply to the freeboard values (min=worst case)
                       logger=None,
 
                       **kwargs
                      ):
-        """
-        view(dxcol) 
-        """
+
         #=======================================================================
         # defaults
         #=======================================================================
@@ -664,7 +635,7 @@ class Dexpo(Qcoms, DPlotr):
         """needed by vuln module"""
         seg_df = seg_df.join(self.dike_df.loc[:, jcolns].set_index(self.sid))
         #=======================================================================
-        # loop and calc stat
+        # loop and calc stat---
         #=======================================================================
         res_df = None
         for eTag, edxcol in dxcol.drop('wsl', level=1, axis=1).groupby(level=0, axis=1):
@@ -672,6 +643,9 @@ class Dexpo(Qcoms, DPlotr):
             
             #get this frame (with the sid values attached)
             edf = edxcol.droplevel(level=0, axis=1).join(cdf[self.sid])
+            """
+            view(edxcol)
+            """
             
             
         
@@ -689,9 +663,6 @@ class Dexpo(Qcoms, DPlotr):
         #=======================================================================
         # crest summary
         #=======================================================================
-        """
-        view(res_df)
-        """
         for coln in [self.celn]:
             """dont rename anything here.. makes column detection difficult"""
             res_df = res_df.join(dxcol.loc[:, ('common', (self.sid, coln))].droplevel(level=0, axis=1
@@ -772,7 +743,7 @@ class Dexpo(Qcoms, DPlotr):
         # dxcol
         #=======================================================================
         ofp = os.path.join(self.out_dir, 
-                           '%s_expo_dxcol_%i.csv'%(self.tag, len(dxcol.columns.levels[0])))
+                           '%s_dExpo_dxcol_%i.csv'%(self.tag, len(dxcol.columns.levels[0])))
         if os.path.exists(ofp):
             assert overwrite
             
@@ -802,7 +773,7 @@ class Dexpo(Qcoms, DPlotr):
         #=======================================================================
         # tabular
         #=======================================================================
-        ofp = os.path.join(self.out_dir, '%s_expo_%i_%i.csv'%(
+        ofp = os.path.join(self.out_dir, '%s_dExpo_%i_%i.csv'%(
             self.tag, len(df.columns)-4,len(df) ))
         
         if os.path.exists(ofp):assert self.overwrite
