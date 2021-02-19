@@ -1007,6 +1007,7 @@ class Model(ComWrkr,
         else:
             miss_l = set(self.expcols).symmetric_difference(df.columns)
             
+        """todo: allow dmg only runs to pass w/o evals"""
         assert len(miss_l) == 0, '%i eventName mismatch on \'%s\' and \'evals\': \n    %s'%(
             len(miss_l), dtag, miss_l)
         
@@ -1318,7 +1319,8 @@ class Model(ComWrkr,
             
         boolidx = df.iloc[:,0].isna()
         if boolidx.any():
-            raise Error('got %i (of %i) null ground elevation values'%(boolidx.sum(), len(boolidx)))
+            log.debug(df.loc[boolidx, :])
+            raise Error('got %i (of %i) null ground elevation values... see logger'%(boolidx.sum(), len(boolidx)))
         
         boolidx = df.iloc[:,0] < 0
         if boolidx.any():
@@ -2378,7 +2380,8 @@ class Model(ComWrkr,
         #=======================================================================
         # check order
         #=======================================================================
-        assert np.all(np.diff(df.columns) <=0), 'passed headers are not descending'
+        if not np.all(np.diff(df.columns) <=0):
+            raise Error('passed headers are not descending')
         #=======================================================================
         # #check everything is positive
         #=======================================================================
@@ -3056,7 +3059,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         #======================================================================
         if drop_tails:
             #just add the results values onto the raw
-            res_df = df_raw.join(df['ead']).round(self.prec)
+            res_df = df_raw.sort_index(axis=1, ascending=False).join(df['ead']).round(self.prec)
         else:
             #take everything
             res_df = df.round(self.prec)

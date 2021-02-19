@@ -63,7 +63,8 @@ class Dmg2(Model, DFunc, Plotr):
     #===========================================================================
     exp_pars_md = {#mandataory: section: {variable: handles} 
         'parameters' :
-            {'name':{'type':str}, 'cid':{'type':str},
+            {'name':{'type':str}, 
+             'cid':{'type':str},
              'felv':{'values':('ground', 'datum')},
              'prec':{'type':int}, 
              'ground_water':{'type':bool},

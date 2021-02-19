@@ -260,7 +260,7 @@ class HAZconv(VfConv):
                 pass
                 
             else:
-                print(gname)
+                raise Error('unrecognized table: \'%s\''%gname)
                 
             if not d is None:
                 rLib_d[gname] = d

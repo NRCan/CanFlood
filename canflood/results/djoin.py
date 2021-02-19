@@ -215,8 +215,10 @@ class Djoiner(Qcoms, Model):
         assert res_df['fid'].is_unique
         res_df = res_df.set_index('fid', drop=True).sort_index(axis=0)
         
-
-        assert np.array_equal(res_df.index, df_raw.index)
+        
+        if not np.array_equal(res_df.index, df_raw.index):
+            """aoi slicing?"""
+            log.warning('index mismatch')
         
         log.info('merged %s w/ %s to get %s'%(
             str(df1.shape), str(lkp_df.shape), str(res_df.shape)))    

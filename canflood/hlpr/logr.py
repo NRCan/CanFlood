@@ -15,7 +15,9 @@ class Error(Exception):
 
         mod_logger.error(msg)
 
-def basic_logger(root_lvl = logging.DEBUG): #attaches to a log file in the users directory per the parameter file
+def basic_logger(root_lvl = logging.DEBUG,
+                 new_wdir = None,
+                 ): #attaches to a log file in the users directory per the parameter file
     """
     the control file generates a 'DEBUG' and a 'WARNING' filehandler
     """
