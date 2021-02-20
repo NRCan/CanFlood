@@ -110,9 +110,50 @@ def run_r1( #generic runner for the risk2 model
     return out_dir, res_d
 
     
+def run_r1_batch(
+        BatchWrkr = None,
+        out_dir = None,
+        **kwargs
+        ):
+    
+    #===========================================================================
+    # defaults
+    #===========================================================================
+    if BatchWrkr is  None:
+        from batchRuns.pComs import CFbatch as BatchWrkr
+        
+    if out_dir is None:
+        out_dir = BatchWrkr.out_dir
+    
+    assert os.path.exists(out_dir)
+    
+    
+    #===========================================================================
+    # get parameters
+    #===========================================================================
+    wrkr = BatchWrkr(out_dir=out_dir,  toolName='risk1', logger=mod_logger)
+
+    runPars_d = wrkr.get_pars()
+ 
+    #===========================================================================
+    # run
+    #===========================================================================
+    if len(runPars_d)==0:
+        print('risk1 got no pars.. skipping')
+        return None
     
 
-
+    out_dir, meta_d = run_r1(runPars_d,smry_d=wrkr.smry_d, **kwargs)
+    
+    #===========================================================================
+    # #write the metadata
+    #===========================================================================
+    wrkr.update_pars(pd.DataFrame.from_dict(meta_d).T, next_bcoln='results', clear_bcoln=False)
+    wrkr.write_pars()
+    
+    return out_dir
+    
+    
     
 if __name__ =="__main__": 
     print('???')

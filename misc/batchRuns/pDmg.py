@@ -115,7 +115,51 @@ def run_dmg(runPars_d,
     return out_dir, meta_d
     
 
+def run_dmg_batch(
+        scenarioTag = None,
+        BatchWrkr = None,
+        out_dir = None,
+        **kwargs
+        ):
+
+    #===========================================================================
+    # defaults
+    #===========================================================================
+    if BatchWrkr is  None:
+        from batchRuns.pComs import CFbatch as BatchWrkr
+        
+    if out_dir is None:
+        out_dir = BatchWrkr.out_dir
+        
+        if not scenarioTag is None:
+            out_dir = os.path.join(out_dir, scenarioTag)
     
+    assert os.path.exists(out_dir)
+    #===========================================================================
+    # get parameters
+    #===========================================================================
+    wrkr = BatchWrkr(out_dir=out_dir,  toolName='dmg', logger=mod_logger)
+
+    runPars_d = wrkr.get_pars()
+ 
+ 
+    #===========================================================================
+    # #run
+    #===========================================================================
+    if len(runPars_d)==0:
+        print('dmg got no pars.. skipping')
+        return None
+    
+    out_dir, meta_d = run_dmg(runPars_d, wrkr.logger, **kwargs)
+
+    #===========================================================================
+    # #write the metadata
+    #===========================================================================
+    wrkr.update_pars(pd.DataFrame.from_dict(meta_d, orient='index'), next_bcoln='risk2')
+    wrkr.write_pars()
+
+
+    return out_dir
     
 
     

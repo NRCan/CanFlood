@@ -62,6 +62,8 @@ class CFbatch(ComWrkr):
             }
         
         }
+    
+    smry_d = None #default risk model results summary parameters {coln: dataFrame method to summarize with}
             
     def __init__(self,
                  buildControl_fp = None,
@@ -70,6 +72,7 @@ class CFbatch(ComWrkr):
                  toolName='build', #tool name of this run
                  tag = 'r', #mostly for column suffixes and repeat run labelling
                  out_dir = None,
+                 crs_id='EPSG:4326',
                  #logger=None,
                  start_lib=False, #whether to start the csv data from the xlss
                  **kwargs
@@ -85,6 +88,7 @@ class CFbatch(ComWrkr):
         
         
         #attachments
+        self.crs_id=crs_id
         self.buildControl_fp=buildControl_fp
         self.control_fp=control_fp
         #self.out_dir=out_dir
@@ -100,14 +104,16 @@ class CFbatch(ComWrkr):
             assert isinstance(control_fp, str), 'for start_lib=False, need to specificy a control_fp'
  
             self.load_control()
+            
+        self.logger.info('CFbatch __init__ finished')
 
 
     
     def load_buildControl(self,
                      fp=None, #headers on row 2
                      sheet_name='finv',
-
-                     
+                     header=1, #default is to ignore the first line
+                        
                      ):
         #=======================================================================
         # defaults
@@ -119,13 +125,14 @@ class CFbatch(ComWrkr):
         #=======================================================================
         # load
         #=======================================================================
-        df_raw = pd.read_excel(fp, sheet_name=sheet_name, index_col=None, header=1)
+        df_raw = pd.read_excel(fp, sheet_name=sheet_name, index_col=None, header=header)
         
         #=======================================================================
         # precheck
         #=======================================================================
         miss_l = set(hcolns + ['tag']).difference(df_raw.columns)
-        assert len(miss_l)==0, miss_l
+        assert len(miss_l)==0, 'BuildControl \'%s\' file mising %i columns \n    %s \n check header row number?'%(
+            os.path.basename(fp), len(miss_l), miss_l)
         #=======================================================================
         # #clean---------
         #=======================================================================
