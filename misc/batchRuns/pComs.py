@@ -12,20 +12,17 @@ today_str = datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')
 from hlpr.basic import view, ComWrkr
 from hlpr.exceptions import Error
 
-class CFbatch(ComWrkr):
+class CFbatch(ComWrkr): #handerl of batch CanFlood runs (build, model, results)
+    
+    """
+    this facilitates linking together the following workflows via python scripts:
+        tools (build, model, cresults)
+        assetModels (e.g., residential, NRP, infrastrdutrue)
+        sceanrios (e.g., climate change, baseline)
+        
+    no GUI planned for this
+    """
 
-    
-    
-    #===========================================================================
-    # #column names with some handles
-    # hcolns = ['as_inun', 'dthresh', 'cid', 'impactfmt_str', 'impact_units', 
-    #               'Levent_rels', 'event_rels', 'rtail',
-    #               'finv_fn', 'curves_fn','felv',
-    #               ]
-    #         
-    # #coluns with run/noRun bools
-    # fcolns = ['include','build', 'dmg', 'risk2', 'risk1', 'results']
-    #===========================================================================
     
     #handles per tool
     """WARNING! these are handles for the batch HANDLES (not the data)"""
