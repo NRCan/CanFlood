@@ -100,6 +100,9 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
         'djoin':{
             'cf_fp':{'type':np.object},
             'finv_fp':{'type':np.object},
+            },
+        'compare':{
+            'cf_fp':{'type':np.object},
             }
         
         }
@@ -117,7 +120,8 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
     
     #column name to use for your flow control (default is to use your own toolname
     bcoln_d = {
-        'djoin':'results'
+        'djoin':'results',
+        'compare':'results',
         }
     
     smry_d = None #default risk model results summary parameters {coln: dataFrame method to summarize with}
@@ -779,10 +783,11 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
         if plot is None: plot=self.plot
         
         if out_dir is None:
+            out_dir = os.path.join(self.out_dir, 'assetModels')
             if self.runTag is None:
-                out_dir = self.out_dir
+                out_dir = out_dir
             else:
-                out_dir = os.path.join(self.out_dir, self.runTag)
+                out_dir = os.path.join(out_dir, self.runTag)
         
         log = logger.getChild('tBuild')
         
@@ -1354,7 +1359,52 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
     
         log.info('finished on %i'%len(runPars_d))
         return wrkr.out_dir, meta_d
-
+    
+    def tools_compare(self, #generic runner for the risk2 model
+                runpars_d,
+                logger=None,
+        ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('tCompare')
+        
+        
+        #=======================================================================
+        # setup the worker
+        #=======================================================================
+        from results.compare import Cmpr
+        fps_d = {k:d['cf_fp'] for k,d in runpars_d.items()}
+    
+        wrkr = Cmpr(fps_d = fps_d, logger=log,cf_fp = fps_d[list(fps_d)[0]],
+                    out_dir = os.path.join(self.out_dir, 'res_compare'))
+        
+        self._init_child_pars(wrkr) #pass standard attributies 
+        wrkr._setup()
+    
+            
+        #===========================================================================
+        # get data
+        #===========================================================================
+        cdxind = wrkr.collect_ttls()
+        
+        #===========================================================================
+        # plot
+        #===========================================================================
+        for y1lab in ['AEP', 'impacts']:
+            fig = wrkr.plot_rCurveStk_comb(y1lab=y1lab)
+            wrkr.output_fig(fig)
+    
+        log.info('finished on %i'%len(runpars_d))
+        
+        #=======================================================================
+        # get meta
+        #=======================================================================
+        meta_d = cdxind.droplevel(axis=0, level=['note', 'plot']
+                      ).sum().rename('impacts').to_frame().to_dict(orient='index')
+        
+        return wrkr.out_dir, meta_d
     #===========================================================================
     # SINGLE TOOL HANDLER-------
     #===========================================================================
@@ -1447,7 +1497,7 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
     #===========================================================================
 
     def run_all(self, #run all tool sets against all assetModels
-                  
+            toolNames = None, #sequence of toolNames to execute
 
             logger=None,
             **kwargs
@@ -1460,17 +1510,18 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
         if logger is None: logger=self.logger
         log = logger.getChild('all')
     
-    
+        if toolNames is None:
+            toolNames = self.hndl_lib.keys()
         #=======================================================================
         # loop and run each toolbox
         #=======================================================================
         log.info('running %i toolboxes'%len(self.hndl_lib))
         pars_df = None #ignored by build
-        for toolName in self.hndl_lib.keys():
+        for toolName in toolNames:
             try:
                 tool_od, pars_df = self.run_toolbox(toolName, 
-                                control_df=pars_df, writePars=False, logger = log, 
-                                **kwargs)
+                                            control_df=pars_df, writePars=False, logger = log, 
+                                            **kwargs)
             except Exception as e:
                 log.error('failed on \'%s\' w/ \n    %s'%(toolName, e))
 
