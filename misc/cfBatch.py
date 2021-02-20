@@ -2,6 +2,20 @@
 Created on Feb. 14, 2021
 
 @author: cefect
+
+CanFlood asset groups build, model, results batch runs.
+
+
+
+
+linking together the following workflows via python scripts:
+        tools (build, model, cresults)
+        assetModels (e.g., residential, NRP, infrastrdutrue)
+        sceanrios (e.g., climate change, baseline) 
+            NOTE: minimal support for scenarios... need to run each separately still
+                just providing logical naming and output handling
+        
+    no GUI planned for this
 '''
 #===============================================================================
 # imports-------------
@@ -73,13 +87,7 @@ class MasterBuilder(#combine all the build workers for a single run
 class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
     
     """
-    this facilitates linking together the following workflows via python scripts:
-        tools (build, model, cresults)
-        assetModels (e.g., residential, NRP, infrastrdutrue)
-        sceanrios (e.g., climate change, baseline) 
-            NOTE: minimal support for scenarios... need to run each separately still
-        
-    no GUI planned for this
+
     
 
     """
@@ -1336,7 +1344,7 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
         return wrkr.out_dir, meta_d
 
     #===========================================================================
-    # SINGLE TOOL HANDLERS-------
+    # SINGLE TOOL HANDLER-------
     #===========================================================================
     def run_toolbox(self,
                     toolName, #run a specific tool group (other than build)
