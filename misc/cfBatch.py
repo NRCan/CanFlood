@@ -16,6 +16,20 @@ linking together the following workflows via python scripts:
                 just providing logical naming and output handling
         
     no GUI planned for this
+    
+call the CFbatch object from your projects script, passing all the parameters and filepaths
+    to facilitate individual tool runs, and linked runs, batch runs are controlled w/ 2 files
+        
+        batch_control.csv: 
+            updated after each toolbox run. 
+            flags for which assetmodels should run under which toolbox
+            has some results summary, timestamps, and filepaths
+            iniitally created after the buildToolbox run when start_lib =True
+        
+        batch BUILD control.xls
+            created by user to control the build toolbox and parameters for each assetModel
+            on first run, 'start_lib' should be set to TRUE to set the batch_contro.csv
+        
 '''
 #===============================================================================
 # imports-------------
@@ -46,51 +60,11 @@ mod_logger = basic_logger()
 
 
 #===============================================================================
-# CanFlood tool imports
+# definitiions-------
 #===============================================================================
-from build.prepr import Preparor
-from build.rsamp import Rsamp
-from build.lisamp import LikeSampler
-from build.validator import Vali
-
-#===============================================================================
-# definitions----------
-#===============================================================================
-
-class MasterBuilder(#combine all the build workers for a single run
-        Preparor, Rsamp, LikeSampler, Vali):
-    """
-    needed to avoid reinitilziing qgis each time
-    """
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        
-        self.baseClassConv_d = self.get_baseClassConv_d()
-        
-    def get_baseClassConv_d(self):
-        
-        baseClassConv_d = dict()
-        first=True
-        last=None
-        for baseClass in self.__class__.__mro__:
-            bcName = baseClass.__name__
-            if first:
-                first=False
-            else:
-                baseClassConv_d[bcName]=last
-            
-            last = baseClass
-            
-        return baseClassConv_d
 
 class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
     
-    """
-
-    
-
-    """
 
     
     #run handles per tool
@@ -811,6 +785,44 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
                 out_dir = os.path.join(self.out_dir, self.runTag)
         
         log = logger.getChild('tBuild')
+        
+        #=======================================================================
+        # imports
+        #=======================================================================
+        # CanFlood tool imports
+        from build.prepr import Preparor
+        from build.rsamp import Rsamp
+        from build.lisamp import LikeSampler
+        from build.validator import Vali
+        
+
+        
+        class MasterBuilder(#combine all the build workers for a single run
+                Preparor, Rsamp, LikeSampler, Vali):
+            """
+            needed to avoid reinitilziing qgis each time
+            """
+            
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                
+                self.baseClassConv_d = self.get_baseClassConv_d()
+                
+            def get_baseClassConv_d(self):
+                
+                baseClassConv_d = dict()
+                first=True
+                last=None
+                for baseClass in self.__class__.__mro__:
+                    bcName = baseClass.__name__
+                    if first:
+                        first=False
+                    else:
+                        baseClassConv_d[bcName]=last
+                    
+                    last = baseClass
+                    
+                return baseClassConv_d
         
         #=======================================================================
         # tool setup
