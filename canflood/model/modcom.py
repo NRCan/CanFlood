@@ -2471,8 +2471,8 @@ class Model(ComWrkr,
                 for hndl, cval in hndl_d.items():
                     
                     if hndl=='type':
-                        assert np.issubdtype(ser.dtype, cval), '%s_%s bad type: %s'%(
-                            nestID, coln, ser.dtype)
+                        assert np.issubdtype(ser.dtype, cval), '%s got %s_%s bad type: %s'%(
+                            self.tag, nestID, coln, ser.dtype)
                         
                         """
                         throwing  FutureWarning: Conversion of the second argument of issubdtype
