@@ -66,8 +66,18 @@ mod_logger = basic_logger()
 class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
     
 
+    #===========================================================================
+    # program vars---------
+    #===========================================================================
     
-    #run handles per tool
+    smry_d = None #default risk model results summary parameters {coln: dataFrame method to summarize with}
+    
+    proj_dir = None #useful to add here for wrappers
+    
+    meta_d = dict() #summary counter for reporting
+    #===========================================================================
+    # #run handles per tool
+    #===========================================================================
     """WARNING! these are handles for the batch HANDLES (not the data)
     key order is important here for run_all()"""
     hndl_lib = {
@@ -124,10 +134,11 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
         'compare':'results',
         }
     
-    smry_d = None #default risk model results summary parameters {coln: dataFrame method to summarize with}
     
-    proj_dir = None #useful to add here for wrappers
-    #qgis attributes
+
+    #===========================================================================
+    # #qgis attributes
+    #===========================================================================
     """
     Qgis should only be init when necessary
         each tool handler should check to see if q has been initilized
@@ -137,7 +148,9 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
     qinit = False
     qhandl_d = {'qproj':None, 'crs':None, 'qap':None, 'algo_init':None, 'vlay_drivers':None}
 
-    #attribute names to pass onto tool workers    
+    #===========================================================================
+    # #CanFlood attributes   
+    #===========================================================================
     com_hndls = ('absolute_fp', 'figsize', 'overwrite', 'attriMode')
     absolute_fp = True
     figsize = (14,8)
@@ -639,8 +652,9 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
         #=======================================================================
         new_colns = set(new_df.columns).difference(df.columns)
         new_indx = set(new_df.index).difference(df.index)
+        
         if len(new_colns)>0 or len(new_indx)>0:
-            log.info('adding %i new colns: %s'%(len(new_colns), new_colns))
+            log.debug('adding %i new colns: %s'%(len(new_colns), new_colns))
             df = df.merge(
                 new_df.loc[new_indx, new_colns],
                 how='outer',
@@ -658,6 +672,7 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
         miss_l = set(new_df.index).difference(df.index)
         assert len(miss_l)==0, 'didnt add new rows'
         """
+        view(df)
         old_df = old_df.drop('cf_fp', axis=1)
         old_df = old_df.drop('bldg.sfd')
         df.columns
@@ -909,6 +924,15 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
             #load the finv
             finv_vlay = wrkrPR.load_vlay(am_d['finv_fp'], aoi_vlay=aoi_vlay)
             
+            #aoi slice check
+            if finv_vlay.dataProvider().featureCount()==0:
+                """
+                would be nice to write some meta on this... 
+                """
+                log.warning('%s got no features.. skipping'%tag)
+                continue
+                
+            
             #convert
             wrkrPR.finv_to_csv(finv_vlay, felv=am_d['felv'])
             del wrkrPR
@@ -1036,8 +1060,6 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
             cf_d[tag].update({
                 'cf_fp':cf_fp,
                 'finv_fp':am_d['finv_fp'],
-                
-                #'use':True,
                 })
     
             #=======================================================================
@@ -1106,19 +1128,19 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
             wrkr.cf_fp = cf_fp
             wrkr.out_dir = out_dir
             wrkr.logger = logger.getChild('tdmg.%s'%atag)
-            wrkr._setup()
+            wrkr.tag = atag
+            
+
+            
             #=======================================================================
             # run
             #=======================================================================
-    
-    
-            
+            #execute setup
+            wrkr._setup()
+
             res_df = wrkr.run(set_impactUnits=set_impactUnits)
             
-            """
-            getting some phantom crash here
-            """
-            
+
             if self.attriMode:
                 _ = wrkr.get_attribution(res_df)
             
@@ -1170,6 +1192,7 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
             logger=None,
 
         ):
+
         #=======================================================================
         # defaults
         #=======================================================================
@@ -1179,6 +1202,9 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
         
         log = logger.getChild(self.toolName)
         
+        #=======================================================================
+        # precheck
+        #=======================================================================
 
         #==========================================================================
         # build/execute
@@ -1462,29 +1488,35 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
             #load pars
             if control_df is None:
                 control_df = self.load_control()
+                
             runPars_d = self.get_pars(control_df=control_df)
         
+            #execute run
             if len(runPars_d)==0:
                 log.warning('%s got no pars.. skipping'%self.toolName)
-                return dict(), control_df
-            
-            #get the runner
-            f = getattr(self, fName)            
-            tool_od, meta_d = f(runPars_d, logger=log, **kwargs)
+                tool_od = self.out_dir
+                meta_d = dict()
+            else:
+                #get the runner
+                f = getattr(self, fName)            
+                tool_od, meta_d = f(runPars_d, logger=log, **kwargs)
     
         #===========================================================================
         # run sunnarty data --------
         #===========================================================================
-        
+        self.meta_d = meta_d #set this for run_all()'s reporting
         
         #intelligent updating, setting up next run, and outputting
-        #if toolName in self.nbcoln_d:
-        pars_df = pd.DataFrame.from_dict(meta_d, orient='index')
-        pars_df = self.update_pars(pars_df)
-        
-        if toolName == 'build':
-            pars_df = self.set_mixed_controls(tag_d, pars_df)
-        
+        if len(meta_d)>0:
+            #if toolName in self.nbcoln_d:
+            pars_df = pd.DataFrame.from_dict(meta_d, orient='index')
+            pars_df = self.update_pars(pars_df)
+            
+            if toolName == 'build':
+                pars_df = self.set_mixed_controls(tag_d, pars_df)
+        else:
+            pars_df = self.pars_df
+            
         if writePars:
             self.write_pars(df=pars_df)
     
@@ -1517,18 +1549,30 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
         #=======================================================================
         log.info('running %i toolboxes'%len(self.hndl_lib))
         pars_df = None #ignored by build
+        smry_d = dict()
         for toolName in toolNames:
             try:
                 tool_od, pars_df = self.run_toolbox(toolName, 
                                             control_df=pars_df, writePars=False, logger = log, 
                                             **kwargs)
+                
+                smry_d[toolName] = '    finished on %i w/ %s'%(len(self.meta_d), self.meta_d)
             except Exception as e:
-                log.error('failed on \'%s\' w/ \n    %s'%(toolName, e))
+                msg = 'failed on \'%s\' w/ \n    %s'%(toolName, e)
+                smry_d[toolName] = 'FAIL=%s'%e
+                log.error(msg)
 
         #=======================================================================
         # write the run summary
         #=======================================================================
-        self.write_pars(df=pars_df)
+        if not pars_df is None:
+            self.write_pars(df=pars_df)
+        
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        for toolName, msg in smry_d.items():
+            log.info('%s:    %s'%(toolName, msg))
         
         return self.out_dir, pars_df
             
