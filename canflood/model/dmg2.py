@@ -578,6 +578,9 @@ class Dmg2(Model, DFunc, Plotr):
         # wrap
         #=======================================================================
         """written by bdmg_smry"""
+        """
+        view(cmeta_df)
+        """
         self.cmeta_df = cmeta_df
         self.res_colg = 'capped' #needed by  mitigation funcs
         
@@ -956,14 +959,11 @@ class Dmg2(Model, DFunc, Plotr):
         if logger is None: logger=self.logger
         
         bdf = self.bdf
-        cid = self.cid
+        #cid = self.cid
         
         log=logger.getChild('bdmg_smry')
         
-        """
-        view(events_df)
-        view(res_df)
-        """
+
         #=======================================================================
         # precheck
         #=======================================================================
@@ -974,6 +974,7 @@ class Dmg2(Model, DFunc, Plotr):
         # add some common cols
         #=======================================================================
         res_df = res_df_raw.join(bdf.loc[:,[gCn]])
+        
         #=======================================================================
         # impact meta for each result type
         #=======================================================================
@@ -1010,14 +1011,20 @@ class Dmg2(Model, DFunc, Plotr):
         #=======================================================================
         # cap counts
         #=======================================================================
-        df = cmeta_df.drop(['fcap', 'fscale', self.cid, self.bid], axis=1).fillna(False)
-        cm_df1  = df.groupby(gCn).sum().astype(np.int)
+        df = cmeta_df.drop(['fcap', 'fscale', self.cid, self.bid], axis=1, errors='ignore').fillna(False)
+        cm_df1  = df.groupby(gCn).sum().astype(np.int) #count all the trues
         
-
+        #=======================================================================
+        # for k, sdf in df.groupby(gCn):
+        #     print(k)
+        #=======================================================================
         #=======================================================================
         # progression summary
         #=======================================================================
         """
+        view(cm_df1)
+        view(df.groupby(gCn).sum())
+        view(df)
         view(events_df)
         view(res_df)
         """

@@ -1129,9 +1129,7 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
             wrkr.out_dir = out_dir
             wrkr.logger = logger.getChild('tdmg.%s'%atag)
             wrkr.tag = atag
-            
 
-            
             #=======================================================================
             # run
             #=======================================================================

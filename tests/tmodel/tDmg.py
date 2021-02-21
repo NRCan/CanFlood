@@ -48,6 +48,8 @@ class tDmg(tModel): #worker for testing the damage model
         #=======================================================================
         res_df = self.Model.run()
         
+        """TODO: test teh outputs here"""
+        _ = self.Model.bdmg_smry()
         #=======================================================================
         # #do the checking        
         #=======================================================================
