@@ -524,21 +524,14 @@ class Dmg2(Model, DFunc, Plotr):
         if res_df is None: res_df = self.res_df
         events_df = self.events_df
         
-        bdf = self.bdf.copy()
+        bdf = self.bdf
         cid, bid = self.cid, self.bid
-        #=======================================================================
-        # precheck
-        #=======================================================================
-        #=======================================================================
-        # if not 'fcap' in bdf.columns:
-        #     bdf['fcap'] = res_df[e_ser['scaled']]
-        #=======================================================================
 
         #=======================================================================
         # start meta
         #=======================================================================
         meta_d = dict()
-        cmeta_df =bdf.loc[:,bdf.columns.isin([cid, bid, 'ftag', 'fcap', 'fscale', 'nestID'])]
+        cmeta_df =bdf.loc[:,[cid, bid, 'ftag', 'fcap', 'fscale', 'nestID']]
 
         #=======================================================================
         # #loop and add scaled damages
@@ -551,8 +544,6 @@ class Dmg2(Model, DFunc, Plotr):
             
             #identify nulls
             boolidx = res_df[e_ser['scaled']].notna()
-            
-            
             #calc and set the scalecd values
             res_df.loc[boolidx, e_ser['capped']] = sc_df[boolidx].min(axis=1)
             
