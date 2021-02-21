@@ -196,6 +196,8 @@ class Preparor(Model, Qcoms):
             df = df.loc[:, ~boolcol]
             log.warning('%s dropping %i (of %i) empty fields'%(self.tag, boolcol.sum(), len(boolcol)))
             
+        
+            
         #=======================================================================
         # post checks
         #=======================================================================

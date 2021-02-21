@@ -1582,7 +1582,8 @@ class Model(ComWrkr,
         if group_cnt == 2: #Risk1
             pass
         elif group_cnt == 4: #Dmg2 and Risk2
-            exp_fcolns = exp_fcolns + ['ftag', 'fcap']
+            """fcap is optional"""
+            exp_fcolns = exp_fcolns + ['ftag']
             
         else:
             raise Error('bad group_cnt %i'%group_cnt)
@@ -2432,9 +2433,14 @@ class Model(ComWrkr,
         #=======================================================================
         assert len(df)>0, self.tag
         
+        #=======================================================================
+        # null checks
+        #=======================================================================
         boolcol = df.isna().all(axis=0)
         assert not boolcol.any(), '%s got %i empty columns: \n    %s'%(
             self.tag, boolcol.sum(), df.columns[boolcol].tolist())
+        
+        assert not df.isna().all(axis=1).any()
         #=======================================================================
         # #cid checks
         #=======================================================================

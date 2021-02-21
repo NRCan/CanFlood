@@ -531,7 +531,7 @@ class Dmg2(Model, DFunc, Plotr):
         # start meta
         #=======================================================================
         meta_d = dict()
-        cmeta_df =bdf.loc[:,[cid, bid, 'ftag', 'fcap', 'fscale', 'nestID']]
+        cmeta_df =bdf.loc[:,bdf.columns.isin([cid, bid, 'ftag', 'fcap', 'fscale', 'nestID'])]
 
         #=======================================================================
         # #loop and add scaled damages
