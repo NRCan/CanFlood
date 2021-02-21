@@ -513,9 +513,14 @@ class Dmg2(Model, DFunc, Plotr):
         return res_df
         
         
-    def bdmg_capped(self,
+    def bdmg_capped(self, #apply the  optional 'fcap' values to the scaled damages
                     res_df = None,
                     ):
+        
+        """
+        bdf can ber passed w/o fcap
+            shouldn't be passed w/ all nulls... but this would still wortk I thihnk
+        """
         
         log = self.logger.getChild('bdmg_capped')
         #=======================================================================
@@ -538,22 +543,32 @@ class Dmg2(Model, DFunc, Plotr):
         #=======================================================================
 
         for event, e_ser in events_df.iterrows():
-
+            
             #join scaled values and cap values for easy comparison
-            sc_df = res_df[e_ser['scaled']].to_frame().join(bdf['fcap'])
+            if 'fcap' in bdf.columns:
+                sc_df = res_df[e_ser['scaled']].to_frame().join(bdf['fcap'])
+            else:
+                sc_df = res_df[e_ser['scaled']].to_frame()
             
             #identify nulls
             boolidx = res_df[e_ser['scaled']].notna()
+            
             #calc and set the scalecd values
-            res_df.loc[boolidx, e_ser['capped']] = sc_df[boolidx].min(axis=1)
+            """this will ignore any null fcap values when determining theminimum"""
+            res_df.loc[boolidx, e_ser['capped']] = sc_df[boolidx].min(axis=1, skipna=True)
             
-            
+ 
             #===================================================================
             # #meta
             #===================================================================
             
             #where the scaled values were capped
-            mser = res_df.loc[boolidx, e_ser['scaled']] >bdf.loc[boolidx, 'fcap'] 
+            if 'fcap' in bdf.columns:
+                mser = res_df.loc[boolidx, e_ser['scaled']] >bdf.loc[boolidx, 'fcap'] 
+            else:
+                #all FALSE
+                mser = pd.Series(index=cmeta_df.index, dtype=bool)
+                
             cmeta_df= cmeta_df.join(mser.rename(event), how='left')
             
             #totals
