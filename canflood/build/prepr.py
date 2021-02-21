@@ -193,7 +193,7 @@ class Preparor(Model, Qcoms):
         #drop empty columns
         boolcol = df.isna().all(axis=0)
         if boolcol.any():
-            df = df.loc[:, boolcol]
+            df = df.loc[:, ~boolcol]
             log.warning('%s dropping %i (of %i) empty fields'%(self.tag, boolcol.sum(), len(boolcol)))
             
         #=======================================================================
