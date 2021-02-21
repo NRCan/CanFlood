@@ -189,6 +189,12 @@ class Preparor(Model, Qcoms):
             df = df.drop(gindx, axis=1, errors='ignore')
             
         df = df.set_index(cid, drop=True)
+        
+        #drop empty columns
+        boolcol = df.isna().all(axis=1)
+        if boolcol.any():
+            df = df.loc[:, boolcol]
+            log.warning('%s dropping %i (of %i) empty fields'%(self.tag, boolcol.sum(), len(boolcol)))
             
         #=======================================================================
         # post checks
