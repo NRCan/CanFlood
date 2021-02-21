@@ -702,7 +702,7 @@ class Model(ComWrkr,
         #======================================================================
         assert cid in df_raw.columns, '%s missing index column \"%s\''%(dtag, cid)
         
-        
+        log.debug('loaded %s from %s'%(str(df_raw.shape), fp))
         #======================================================================
         # clean it
         #======================================================================
@@ -1616,9 +1616,12 @@ class Model(ComWrkr,
             else:
                 bdf = bdf.append(df, ignore_index=True, sort=False)
                         
-            log.info('for \"%s\' got %s'%(prefix, str(df.shape)))
+            log.debug('for \"%s\' got %s'%(prefix, str(df.shape)))
             
-            
+        #add optionals
+        """would probably be better if we could handle the bdf w/o this column"""
+        if 'fcap' in exp_fcolns:
+            bdf['fcap'] = np.nan
         #==================================================================
         # #add back in other needed columns
         #==================================================================
@@ -1639,11 +1642,13 @@ class Model(ComWrkr,
         bdf[bid] = bdf.index
         bdf.index.name=bid
         
+
+        
         #======================================================================
         # check
         #======================================================================
         miss_l = set(exp_fcolns).difference(bdf.columns)
-        assert len(miss_l) == 0, miss_l
+        assert len(miss_l) == 0, '%s missing some nest fields: %s'%(self.tag, miss_l)
         
         
         #======================================================================
@@ -2426,7 +2431,7 @@ class Model(ComWrkr,
         
         df = df_raw.copy()
         
-        
+        log.debug('on %s'%str(df_raw.shape))
         #=======================================================================
         # #cid checks
         #=======================================================================
@@ -2471,8 +2476,8 @@ class Model(ComWrkr,
                 for hndl, cval in hndl_d.items():
                     
                     if hndl=='type':
-                        assert np.issubdtype(ser.dtype, cval), '%s_%s bad type: %s'%(
-                            nestID, coln, ser.dtype)
+                        assert np.issubdtype(ser.dtype, cval), '%s %s_%s bad type: %s'%(
+                            self.tag, nestID, coln, ser.dtype)
                         
                         """
                         throwing  FutureWarning: Conversion of the second argument of issubdtype

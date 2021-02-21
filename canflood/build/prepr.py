@@ -189,6 +189,9 @@ class Preparor(Model, Qcoms):
             df = df.drop(gindx, axis=1, errors='ignore')
             
         df = df.set_index(cid, drop=True)
+        
+        #drop any all null fields
+        df = df.dropna(axis=1, how='all')
             
         #=======================================================================
         # post checks
