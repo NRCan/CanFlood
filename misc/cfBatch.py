@@ -375,7 +375,11 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
  
         
         df_raw = pd.read_csv(fp, index_col=0)
-        df = df_raw.copy()
+        assert len(df_raw)>0, 'loaded empty batch control file'
+        assert 'cf_fp' in df_raw.columns, 'missing cf_fp'
+        
+        """when the build routine slices out all features... no cf_fp will write"""
+        df = df_raw.dropna(subset=['cf_fp'], axis=0)
         
         #=======================================================================
         # for coln in self.fcolns:
@@ -426,14 +430,16 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
                 toolName, len(miss_l), miss_l))
         
         #=======================================================================
-        # clean 
-        #=======================================================================\
-        bx = control_df[bool_coln]
-        if not bx.any():
+        # clean the batch control file
+        #=======================================================================
+        if not toolName == 'build':
+            control_df=control_df.dropna(subset=['cf_fp'], axis=0)
+
+        df = control_df.loc[control_df[bool_coln], control_df.columns.isin(hndl_d.keys())]
+        
+        if not len(df)>0:
             log.warning('for \'%s\' got zero runs flagged... returning empty dict'%bool_coln)
             return dict()
-        
-        df = control_df.loc[bx, control_df.columns.isin(hndl_d.keys())]
         
         #=======================================================================
         # typeset
@@ -1106,7 +1112,7 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
         
         self._init_child_pars(wrkr) #pass standard attributies
                          
-        
+        for k,v in runPars_d.items():assert 'cf_fp' in v
         #=======================================================================
         # execute tool on each assetModel                         
         #=======================================================================
