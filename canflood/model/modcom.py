@@ -3517,6 +3517,9 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             then reverting"""
         df1 = tlRaw_df.copy()
         
+        """
+        TODO: harmonize this with 'impact_units' loaded from control file
+        """
         self.impact_name = list(df1.columns)[1] #get the label for the impacts
         
         newColNames = list(df1.columns)
@@ -3533,7 +3536,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         self.ead_tot = df1.loc[bx, 'impacts'].values[0]
         
         assert not pd.isna(self.ead_tot)
-        assert isinstance(self.ead_tot, float)
+        assert isinstance(self.ead_tot, float), '%s got bad type on ead_tot: %s'%(self.name, type(self.ead_tot))
         
         #=======================================================================
         # #get plot values

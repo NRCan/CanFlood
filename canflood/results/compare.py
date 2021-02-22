@@ -296,6 +296,15 @@ class Cmpr(RiskPlotr):
             cttl_df = dfi_raw.drop(['impacts', 'ari'], axis=1).copy()
             cttl_df[self.impact_name] = mdf.sum(axis=1)
             
+            #fix order
+            """
+            prep_ttl() is column location senstigvite
+            """
+            l = cttl_df.columns.to_list()
+            l.remove(self.impact_name)
+            l = [l[0], self.impact_name]+l[1:]
+            cttl_df = cttl_df.loc[:, l]
+            
             #add the ead row at the bottom
             cWrkr.data_d['ttl'] = cttl_df.append(pd.Series({
                 'aep':'ead', 'note':'integration', 'plot':False, self.impact_name:sum(ead_d.values())
