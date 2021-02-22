@@ -249,6 +249,7 @@ class Cmpr(RiskPlotr):
     #===========================================================================
     def build_composite(self, #merge data from a collection of asset models
                     sWrkr_d=None, #container of scenario works to plot curve comparison
+                    new_wrkr=True, #whether to build a new worker
                     ):
         
         log = self.logger.getChild('collect_ttls')
@@ -263,17 +264,19 @@ class Cmpr(RiskPlotr):
         mdf = None
         ead_d = dict()
         for childName, sWrkr in sWrkr_d.items():
-            dfi_raw = sWrkr.data_d['ttl'].copy()
+            dfi_raw = sWrkr.data_d['ttl'].copy()  #set by prep_ttl() 
             dfi = dfi_raw.loc[:, 'impacts'].rename(childName).astype(float).to_frame()
             
             ead_d[childName] = sWrkr.ead_tot
             
             if mdf is None:
+                #pull some from the first
                 self.impact_name = sWrkr.impact_name
+                self.rtail, self.ltail = sWrkr.rtail, sWrkr.ltail
+                
+                
                 mindex = pd.MultiIndex.from_frame(
                     dfi_raw.loc[:, ['aep', 'ari', 'note', 'plot']])
-                
-                #dxcol = pd.concat([dfi.T], keys=[childName], names=['childName']).T
                 mdf = dfi
                 
                 
@@ -284,13 +287,34 @@ class Cmpr(RiskPlotr):
         #=======================================================================
         # build new worker
         #=======================================================================
-        cWrkr = sWrkr.copy(name='%s_composite'%self.tag) #start with a copy
-        
-        cttl_df = dfi_raw.drop('impacts', axis=1).copy()
-        cttl_df['impacts'] = mdf.sum(axis=1)
-        
-        cWrkr.data_d['ttl'] = cttl_df
-        
+        if new_wrkr:
+            cWrkr = sWrkr.copy(name='%s_composite'%self.tag) #start with a copy
+            
+            #===================================================================
+            # convert the data to standard ttl format
+            #===================================================================
+            cttl_df = dfi_raw.drop(['impacts', 'ari'], axis=1).copy()
+            cttl_df[self.impact_name] = mdf.sum(axis=1)
+            
+            #add the ead row at the bottom
+            cWrkr.data_d['ttl'] = cttl_df.append(pd.Series({
+                'aep':'ead', 'note':'integration', 'plot':False, self.impact_name:sum(ead_d.values())
+                }), ignore_index=True)
+            
+            
+            
+            
+            """this function isnt set up very well.. easier to do it ourselves here
+            #get just the combined impacts (drop tails)
+            bx = dfi_raw['note']=='impact_sum'
+            cttl_df = dfi_raw.loc[bx, 'aep'].to_frame().join(pd.Series(mdf[bx].sum(axis=1), name='impacts'))
+            
+            cWrkr.data_d['ttl'] = dfi_raw #set this for pulling handles
+            cWrkr.data_d['ttl'], ead_tot = cWrkr.get_ttl(cttl_df, logger=log,
+                                                 cols_include=['note', 'plot'])"""
+            
+
+            
 
         #=======================================================================
         # wrap

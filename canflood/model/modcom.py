@@ -2045,7 +2045,7 @@ class Model(ComWrkr,
         
         return 
     
-    def _fmt_resTtl(self, 
+    def _fmt_resTtl(self,  #format res_ttl
                     df_raw):
         
         df = df_raw.copy()
@@ -3335,6 +3335,69 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
 
         return round(ead_tot, self.prec)
     
+    def get_ttl(self, #get a total impacts summary from an impacts dxcol 
+                df, # index: {aep, impacts}
+                logger=None,
+                cols_include = ['ari', 'plot']
+                ):
+        """
+        see also Plotr.prep_ttl()
+        """
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert isinstance(df, pd.DataFrame)
+        miss_l = set(['aep', 'impacts']).symmetric_difference(df.columns)
+        assert len(miss_l)==0, 'bad column labels: %s'%df.columns.tolist()
+        
+                     
+        
+        #=======================================================================
+        # get ead and tail values
+        #=======================================================================
+        """should apply the same ltail/rtail parameters from the cf"""
+        
+        if df['impacts'].sum()==0:
+            ead = 0.0
+            df1 = df.copy()
+            
+        elif df['impacts'].sum()>0:
+            dfc = df.loc[:, ('aep', 'impacts')].set_index('aep').T
+            ttl_ser = self.calc_ead(dfc,
+                drop_tails=False, logger=logger, )
+            
+            ead = ttl_ser['ead'][0] 
+            df1 = ttl_ser.drop('ead', axis=1).T.reset_index()
+            
+ 
+        else:
+            raise Error('negative impacts!')
+            
+        assert isinstance(ead, float)
+        assert df1['impacts'].min()>=0
+        #=======================================================================
+        # add ari 
+        #=======================================================================
+        if 'ari' in cols_include:
+            self._get_ttl_ari(df1) #add ari column
+            cols_include.remove('ari')
+        
+        #=======================================================================
+        # add plot columns from ttl
+        #=======================================================================
+        ttl_df=self.data_d['ttl'].copy()
+        df1 = df1.merge(ttl_df.loc[:, ['aep']+cols_include], on='aep', how='inner')
+        
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        
+        self.slice_ead = ead #set for plotter
+        
+        return df1, ead
+    
+    
     #===========================================================================
     # OUTPUTTERS------
     #===========================================================================
@@ -3434,6 +3497,8 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         here we clean it up and only take those for plotting
         
         see also Artr.get_ttl()
+            Model._fmt_resTtl()
+            riskPlot.load_ttl()
         """
         
         if tlRaw_df is None: tlRaw_df = self.tlRaw_df
