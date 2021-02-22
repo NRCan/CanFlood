@@ -9,7 +9,7 @@ Template for worker scripts
 #==========================================================================
 # logger setup-----------------------
 #==========================================================================
-import logging, configparser, datetime, copy
+import logging, configparser, datetime, copy, shutil
 
 from weakref import WeakValueDictionary as wdict
 
@@ -247,7 +247,7 @@ class Cmpr(RiskPlotr):
     #===========================================================================
     # aggregators
     #===========================================================================
-    def collect_ttls(self,
+    def build_composite(self, #merge data from a collection of asset models
                     sWrkr_d=None, #container of scenario works to plot curve comparison
                     ):
         
@@ -257,6 +257,9 @@ class Cmpr(RiskPlotr):
         #more logicla for single plots
         self.name=self.tag
         
+        #=======================================================================
+        # collect data
+        #=======================================================================
         mdf = None
         ead_d = dict()
         for childName, sWrkr in sWrkr_d.items():
@@ -276,15 +279,34 @@ class Cmpr(RiskPlotr):
                 
             else:
                 mdf = mdf.join(dfi)
-                
         
         
+        #=======================================================================
+        # build new worker
+        #=======================================================================
+        cWrkr = sWrkr.copy(name='%s_composite'%self.tag) #start with a copy
+        
+        cttl_df = dfi_raw.drop('impacts', axis=1).copy()
+        cttl_df['impacts'] = mdf.sum(axis=1)
+        
+        cWrkr.data_d['ttl'] = cttl_df
+        
+
+        #=======================================================================
+        # wrap
+        #=======================================================================
         mdf.index = mindex
+        """
+        view(mdf)
+        """
         log.info('collected %i'%len(mdf.columns))
         self.cdxind = mdf
         self.ead_d = ead_d
         self.ead_tot = sum(ead_d.values())
-        return self.cdxind
+        
+        return self.cdxind, cWrkr
+    
+
     
     def plot_rCurveStk_comb(self, #plot a risk curve comparing all the scenarios
                    dxind_raw=None, #container of scenario works to plot curve comparison
@@ -346,6 +368,10 @@ class Scenario(RiskPlotr): #simple class for a scenario
     plt.show()
     moved to Model
     """
+    
+    out_funcs_d = { #data tag:function that outputs it
+        'ttl':'output_ttl'
+        }
 
     
 
@@ -363,7 +389,7 @@ class Scenario(RiskPlotr): #simple class for a scenario
         """we'll set another name from the control file
         TODO: clean this up"""
         #self.nameRaw = nameRaw 
-        
+        self.parent=parent
         #=======================================================================
         # loaders
         #=======================================================================
@@ -384,6 +410,101 @@ class Scenario(RiskPlotr): #simple class for a scenario
         # wrap
         #=======================================================================
         log.info('finished _init_')
+        
+    def copy(self,
+             name = None,
+             clear_data = True,):
+        
+        cWrkr = copy.copy(self)
+        
+        #clear all the data
+        if clear_data:
+            cWrkr.data_d = dict()
+        #change the name
+        if not name is None:
+            cWrkr.name = name
+        else:
+            cWrkr.name = '%s_copy'%self.name
+        
+        return cWrkr
+        
+        
+    def write(self,#store this scenario to file
+              
+              #filepaths
+              out_dir = None,
+              logger=None,
+              
+              ): 
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('write')
+        if out_dir is None: 
+            out_dir = os.path.join(self.parent.out_dir, self.name)
+            
+        if not os.path.exists(out_dir):os.makedirs(out_dir)
+        
+        self.out_dir=out_dir #set this
+        self.resname = self.name #normally set by risk models
+        log.info('set out_dir to: %s'%out_dir)
+        
+        #=======================================================================
+        #set the new control file
+        #=======================================================================
+        #=======================================================================
+        # #duplicate
+        # cf_fp = os.path.join(out_dir, 'cf_controlFile_%s.txt'%self.name)
+        # shutil.copy2(self.cf_fp,cf_fp)
+        #=======================================================================
+        
+        #open the copy
+        cpars_raw = configparser.ConfigParser(inline_comment_prefixes='#')
+        log.info('reading parameters from \n     %s'%cpars_raw.read(self.cf_fp))
+        
+        #cleaqr filepath sections
+        for sectName in cpars_raw.sections():
+            
+            if sectName.endswith('_fps'):
+                log.info('clearing  section \"%s\''%sectName)
+                assert cpars_raw.remove_section(sectName) #remove it
+                cpars_raw.add_section(sectName) #add it back empty
+                
+        #write the config file 
+        cf_fp = os.path.join(out_dir, 'cf_controlFile_%s.txt'%self.name)
+        with open(cf_fp, 'w') as configfile:
+            cpars_raw.write(configfile)
+            
+        self.cf_fp = cf_fp
+        
+        #=======================================================================
+        # #add new data
+        #=======================================================================
+        """each of these makes a new call to set_cf_pars"""
+        self.set_cf_pars({
+            'parameters':({'name':self.name}, '#copy')
+            })
+        
+        #update 
+        """each of these should write using intelligent name/path/index and update the control file"""
+        meta_d = dict()
+        for dtag, data in self.data_d.items():
+            assert dtag in self.out_funcs_d, 'missing function key on %s'%dtag
+            
+            #retrieve the outputter function
+            assert hasattr(self, self.out_funcs_d[dtag]), self.out_funcs_d[dtag]
+            f = getattr(self, self.out_funcs_d[dtag]) 
+            
+            #output the data using the function
+            meta_d[dtag] = f(df=data, upd_cf=True, logger=log)
+            
+        log.info('finished on %i \n    %s'%(len(meta_d), meta_d))
+        
+        return meta_d
+            
+                
 
 
 

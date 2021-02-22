@@ -204,6 +204,9 @@ class ComWrkr(object): #common methods for all classes
                   new_pars_d, #new paraemeters 
                     # {section : ({valnm : value } OR string (for notes)})
                   cf_fp = None):
+        """
+        should this be on the MOdel only?
+        """
         
         log = self.logger.getChild('set_cf_pars')
         

@@ -1446,7 +1446,7 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
         self._init_child_pars(wrkr) #pass standard attributies
         
         #set some attributes used by the title block
-        wrkr.tag = self.projName
+        wrkr.tag = '%s_%s'%(self.projName, self.scenarioName)
  
         
         wrkr._setup()
@@ -1455,16 +1455,21 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
         #===========================================================================
         # get data
         #===========================================================================
-        cdxind = wrkr.collect_ttls()
+        cdxind, cWrkr = wrkr.build_composite()
         
         #===========================================================================
         # plot
         #===========================================================================
         for y1lab in ['AEP', 'impacts']:
-            fig = wrkr.plot_rCurveStk_comb(y1lab=y1lab, plotTag =  self.scenarioName)
+            fig = wrkr.plot_rCurveStk_comb(y1lab=y1lab)
             wrkr.output_fig(fig)
     
         log.info('finished on %i'%len(runpars_d))
+        
+        #=======================================================================
+        # store the composite worker
+        #=======================================================================
+        cWrkr.write(logger=log)
         
         #=======================================================================
         # get meta

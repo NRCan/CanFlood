@@ -3339,6 +3339,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
     # OUTPUTTERS------
     #===========================================================================
     def output_ttl(self,  #helper to o utput the total results file
+                   df= None,
                     dtag='r_ttl',
                    ofn=None,
                    upd_cf= None,
@@ -3350,8 +3351,9 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         #=======================================================================
         if upd_cf is None: upd_cf = self.upd_cf
         if ofn is None: ofn = '%s_%s'%(self.resname, 'ttl') 
+        if df is None: df = self.res_ttl
             
-        out_fp = self.output_df(self.res_ttl, ofn, write_index=False, logger=logger)
+        out_fp = self.output_df(df, ofn, write_index=False, logger=logger)
         
         if upd_cf:
             self.set_cf_pars( {
