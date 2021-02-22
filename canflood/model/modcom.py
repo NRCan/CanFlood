@@ -857,14 +857,16 @@ class Model(ComWrkr,
     def load_evals(self,#loading event probability data
                    fp = None,
                    dtag = 'evals',
+                   check=True, #whether to perform special model loading logic tests
+                   logger=None,
                    ):
-        
-        log = self.logger.getChild('load_evals')
+        if logger is None: logger=self.logger
+        log = logger.getChild('load_evals')
         if fp is None: fp = getattr(self, dtag)
 
         #check load sequence
         assert os.path.exists(fp), '%s got invalid filepath \n    %s'%(dtag, fp)
-        assert 'finv' in self.data_d, 'call load_finv first'
+        
         
         #======================================================================
         # load it
@@ -904,26 +906,10 @@ class Model(ComWrkr,
         aep_ser = aep_ser.sort_values(ascending=True)
         aep_ser.name='aep'  
  
-        #======================================================================
-        # check2
-        #======================================================================
-        #check all aeps are below 1
-        boolar = np.logical_and(
-            aep_ser < 1,
-            aep_ser > 0)
-        
-        assert np.all(boolar), 'passed aeps out of range'
-        
-        #check logic against whether this model considers failure
-        log.debug('\n%s'%aep_ser.to_frame().join(aep_ser.duplicated(keep=False).rename('dupes')))
-        if self.exlikes == '': #no failure
-            
-            assert len(aep_ser.unique())==len(aep_ser), \
-            'got duplicated \'evals\' but no \'exlikes\' data was provided.. see logger'
-        else:
-            assert len(aep_ser.unique())!=len(aep_ser), \
-            'got unique \'evals\' but \'exlikes\' data is provided... see logger'
-        
+        if check:
+            assert 'finv' in self.data_d, 'call load_finv first'
+            log.debug('\n%s'%aep_ser.to_frame().join(aep_ser.duplicated(keep=False).rename('dupes')))
+            self._check_evals(aep_ser)
         #=======================================================================
         # #assemble event type  frame
         #=======================================================================
@@ -943,6 +929,27 @@ class Model(ComWrkr,
         self.data_d[dtag] = aep_ser #setting for consistency. 
         
         self.expcols = aep_ser.index.copy() #set for later checks
+        
+        return aep_ser
+        
+    def _check_evals(self, aep_ser):
+
+        #check all aeps are below 1
+        boolar = np.logical_and(
+            aep_ser < 1,
+            aep_ser > 0)
+        
+        assert np.all(boolar), 'passed aeps out of range'
+        
+        #check logic against whether this model considers failure
+        
+        if self.exlikes == '': #no failure
+            
+            assert len(aep_ser.unique())==len(aep_ser), \
+            'got duplicated \'evals\' but no \'exlikes\' data was provided.. see logger'
+        else:
+            assert len(aep_ser.unique())!=len(aep_ser), \
+            'got unique \'evals\' but \'exlikes\' data is provided... see logger'
         
     def load_expos(self,#generic exposure loader
                    fp = None,
@@ -1110,14 +1117,11 @@ class Model(ComWrkr,
         # assemble complex aeps
         #=======================================================================
         #collect event names
-        cplx_evn_d = dict()
-        cnt=0
-        for aep in aep_ser.unique(): #those aeps w/ duplicates:
-            cplx_evn_d[aep] = aep_ser[aep_ser==aep].index.tolist()
-            cnt=max(cnt, len(cplx_evn_d[aep])) #get the size of the larget complex event
-        
+        cplx_evn_d, cnt = self._get_cplx_evn(aep_ser)
 
-        assert cnt > 1, 'passed \'exlikes\' but there are no complex events'
+        assert cnt>0, 'passed \'exlikes\' but there are no complex events'
+
+
         
 
         def get_cplx_df(df, aep=None, exp_l=None): #retrieve complex data helper
@@ -1150,7 +1154,8 @@ class Model(ComWrkr,
         for aep, exn_l in cplx_evn_d.items(): 
             
             miss_l = set(exn_l).difference(edf.columns)
-            assert len(miss_l)<2, 'can only fill one exposure column per complex event: %s'%miss_l
+            if not len(miss_l)<2:
+                raise Error('can only fill one exposure column per complex event: %s'%miss_l)
             
             if len(miss_l)==1:
                 fill_exn_d[aep] = list(miss_l)[0]
@@ -1261,6 +1266,16 @@ class Model(ComWrkr,
         self.cplx_evn_d = cplx_evn_d
         
         return
+    
+    def _get_cplx_evn(self, aep_ser): #get complex event sets from aep_ser
+        cplx_evn_d = dict()
+        cnt=0
+        for aep in aep_ser.unique(): #those aeps w/ duplicates:
+            cplx_evn_d[aep] = aep_ser[aep_ser==aep].index.tolist()
+            cnt=max(cnt, len(cplx_evn_d[aep])) #get the size of the larget complex event
+            
+        return cplx_evn_d, cnt
+            
         
     def load_gels(self,#loading expo data
                    fp = None,

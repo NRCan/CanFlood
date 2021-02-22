@@ -513,8 +513,36 @@ class LikeSampler(Plotr, Qcoms):
         
         return res_vlay
     
-    def check(self):
-        pass #placeholder
+    def check(self,
+              res_df, #data to check
+              aep_ser=None):
+        
+        #=======================================================================
+        # check evals
+        #=======================================================================
+        if not aep_ser is None:
+            
+            #make sure all our event names have some aep data
+            miss_l = set(res_df.columns).difference(aep_ser.index)
+            assert len(miss_l)==0, '%s missing some evals data: %s'%(self.tag, miss_l)
+            
+            
+            #make sure all the columns w/ duplicate aeps are in the results
+            cplx_evn_d, cnt = self._get_cplx_evn(aep_ser)
+            assert cnt>0, 'no complex events in aep_ser'
+            
+            for aep, exp_l in cplx_evn_d.items():
+                if len(exp_l)>1: #complex events
+                    l = set(exp_l).intersection(res_df.columns) #eventNames in both
+                    assert len(l)>=1, '%s passed in evals not found in exlikes'%aep
+                    
+                    
+            
+                    
+            
+            
+            
+
     
     def write_res(self, res_df,ofn=None, **kwargs):
         if ofn is None: ofn = 'exlikes_%s'%self.tag

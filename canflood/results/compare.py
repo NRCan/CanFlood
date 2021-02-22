@@ -289,7 +289,7 @@ class Cmpr(RiskPlotr):
     def plot_rCurveStk_comb(self, #plot a risk curve comparing all the scenarios
                    dxind_raw=None, #container of scenario works to plot curve comparison
                    logger=None,
-
+                   plotTag='',
                    
                    #plot formatters
                    val_str='*no',
@@ -311,7 +311,7 @@ class Cmpr(RiskPlotr):
                     
         return self.plot_stackdRCurves(dxind,
                                        pd.Series(self.ead_d),
-                                       val_str=val_str,plotTag='',
+                                       val_str=val_str,plotTag=plotTag,
                                        **plotKwargs,)
         
     def plot_rCurve_comb(self, #plot a risk curve comparing all the scenarios

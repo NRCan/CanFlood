@@ -241,7 +241,7 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
         # control file paths
         #=======================================================================
         if control_fp is None:
-            control_fp = os.path.join(out_dir, 'cf_batchControl_%s_%s.csv'%(projName, scenarioName))
+            control_fp = os.path.join(out_dir, 'cf_batchAssetControl_%s_%s.csv'%(projName, scenarioName))
             
         self.control_fp = control_fp
         
@@ -758,7 +758,9 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
         """
         
         return pars_df
-    
+    #===========================================================================
+    # OUTPUTS-------
+    #===========================================================================
     def write_pars(self, #write batch control file
                   df=None,
                   ofp = None,
@@ -773,9 +775,36 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
         # write it
         #=======================================================================
         try:
-            df.to_csv(self.control_fp, index=True)
+            df.sort_index(axis=0, ascending=True).to_csv(ofp, index=True)
+            print('wrote pars_df %s to file: %s'%(str(df.shape), ofp))
         except Exception as e:
             self.logger.error('failed to write meta.csv w/ \n    %s'%e)
+            
+        return ofp
+    
+    def write_parsd(self, #write the raw parameter dictionary
+                    d = None,
+                    ofp=None,
+                    ):
+        
+        if d is None: d = self.pars_d
+        #=======================================================================
+        # filepaths
+        #=======================================================================
+        ofn = 'cf_batchPars_%s_%s'%(self.projName, self.scenarioName)
+        if self.runTag is None:
+            ofn = ofn+'.csv'
+        else:
+            ofn = ofn+'%s.csv'%self.runTag
+            
+        if ofp is None: ofp = os.path.join(os.path.dirname(self.control_fp), ofn)
+                                           
+                                           
+        try:
+            pd.Series(d, name='pval').to_csv(ofp, index=True)
+            print('wrote pars_d %i to file: %s'%(len(d), ofp))
+        except Exception as e:
+            self.logger.error('failed to write %s  w/ \n    %s'%(ofn, e))
             
         return ofp
             
@@ -872,7 +901,7 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
         self._init_child_pars(wrkr) #pass standard attributies 
                                 
         #==========================================================================
-        # build/execute
+        # build/execute----------
         #==========================================================================
         #containers
         rlay_d, dtm_rlay, lpol_d = None, None, None
@@ -958,7 +987,8 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
             if 'dtm_fp' in pars_d:
                 if dtm_rlay is None:
                     dtm_rlay = wrkrHR.load_rlay(pars_d['dtm_fp'])
-                                
+                    
+            """TODO: add check against evals"""
             #=======================================================================
             # #run samples
             #=======================================================================
@@ -993,6 +1023,7 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
             #=======================================================================
             # event variables----
             #=======================================================================
+            aep_ser = None
             if 'evals_fn' in pars_d:
                 evals_fp = os.path.join(base_dir, pars_d['evals_fn'])
                 assert os.path.exists(evals_fp), evals_fp
@@ -1002,6 +1033,8 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
                         'risk_fps':({'evals':evals_fp},)                          
                      }
                     )
+                
+                aep_ser = wrkr.load_evals(fp = evals_fp, logger=log, check=False) #load for checks
             
             #=======================================================================
             # pFail----- 
@@ -1019,7 +1052,7 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
                                     lfield=pars_d['lfield'], 
                                     event_rels=am_d['Levent_rels'])          
                 #post
-                wrkrLS.check()
+                wrkrLS.check(res_df, aep_ser=aep_ser)
                 wrkrLS.write_res(res_df)
                 wrkrLS.update_cf(cf_fp)
                 
@@ -1410,7 +1443,12 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
         wrkr = Cmpr(fps_d = fps_d, logger=log,cf_fp = fps_d[list(fps_d)[0]],
                     out_dir = os.path.join(self.out_dir, 'res_compare'))
         
-        self._init_child_pars(wrkr) #pass standard attributies 
+        self._init_child_pars(wrkr) #pass standard attributies
+        
+        #set some attributes used by the title block
+        wrkr.tag = self.projName
+ 
+        
         wrkr._setup()
     
             
@@ -1423,7 +1461,7 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
         # plot
         #===========================================================================
         for y1lab in ['AEP', 'impacts']:
-            fig = wrkr.plot_rCurveStk_comb(y1lab=y1lab)
+            fig = wrkr.plot_rCurveStk_comb(y1lab=y1lab, plotTag =  self.scenarioName)
             wrkr.output_fig(fig)
     
         log.info('finished on %i'%len(runpars_d))
@@ -1571,6 +1609,7 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
         #=======================================================================
         if not pars_df is None:
             self.write_pars(df=pars_df)
+        self.write_parsd()
         
         #=======================================================================
         # wrap
