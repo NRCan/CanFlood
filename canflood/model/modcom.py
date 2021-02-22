@@ -2943,117 +2943,148 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         
 
         #=======================================================================
-        # get tail values-----
+        # data prep-----
         #=======================================================================
+        """
+        view(df_raw)
+        """
         df = df_raw.copy().sort_index(axis=1, ascending=False)
         
+        #=======================================================================
+        # no value----
+        #=======================================================================
+        """
+        this can happen for small inventories w/ no failure probs
+        """
         #identify columns to calc ead for
         bx = (df > 0).any(axis=1) #only want those with some real damages
         
-        assert bx.any(), 'no valid results on %s'%str(df.shape)
+        if not bx.any():
+            log.warning('%s got no positive damages %s'%(self.tag, str(df.shape)))
+            
+            #apply dummy tails as 'flat'
+            if not ltail is None:
+                df.loc[:,0] = df.iloc[:,0] 
+            if not rtail is None:
+                aep_val = max(df.columns.tolist())*(1+10**-(self.prec+2))
+                df[aep_val] = 0
+                
+            #re-arrange columns so x is ascending
+            df = df.sort_index(ascending=False, axis=1)
+            
+            #apply dummy ead
+            df['ead'] = 0
+            
         #=======================================================================
-        # precheck
+        # some values---------
         #=======================================================================
-        self.check_eDmg(df, dropna=True, logger=log)
-
-        #======================================================================
-        # left tail
-        #======================================================================
-        
-        #flat projection
-        if ltail == 'flat':
-            df.loc[:,0] = df.iloc[:,0] 
-            
-            if len(df)==1: 
-                self.extrap_vals_d[0] = df.loc[:,0].mean().round(self.prec) #store for later
-            
-        elif ltail == 'extrapolate': #DEFAULT
-            df.loc[bx,0] = df.loc[bx, :].apply(self._extrap_rCurve, axis=1, left=True)
-            
-            #extrap vqalue will be different for each entry
-            if len(df)==1: 
-                self.extrap_vals_d[0] = df.loc[:,0].mean().round(self.prec) #store for later
-
-        elif isinstance(ltail, float):
-            """this cant be a good idea...."""
-            df.loc[bx,0] = ltail
-            
-            self.extrap_vals_d[0] = ltail #store for later
-            
-        elif ltail == 'none':
-            pass
         else:
-            raise Error('unexected ltail key'%ltail)
-        
-        
-        #======================================================================
-        # right tail
-        #======================================================================
-        if rtail == 'extrapolate':
-            """just using the average for now...
-            could extraploate for each asset but need an alternate method"""
-            aep_ser = df.loc[bx, :].apply(
-                self._extrap_rCurve, axis=1, left=False)
+            #=======================================================================
+            # get tail values-----
+            #=======================================================================
+            #=======================================================================
+            # precheck
+            #=======================================================================
+            self.check_eDmg(df, dropna=True, logger=log)
+    
+            #======================================================================
+            # left tail
+            #======================================================================
             
-            aep_val = round(aep_ser.mean(), 5)
+            #flat projection
+            if ltail == 'flat':
+                df.loc[:,0] = df.iloc[:,0] 
+                
+                if len(df)==1: 
+                    self.extrap_vals_d[0] = df.loc[:,0].mean().round(self.prec) #store for later
+                
+            elif ltail == 'extrapolate': #DEFAULT
+                df.loc[bx,0] = df.loc[bx, :].apply(self._extrap_rCurve, axis=1, left=True)
+                
+                #extrap vqalue will be different for each entry
+                if len(df)==1: 
+                    self.extrap_vals_d[0] = df.loc[:,0].mean().round(self.prec) #store for later
+    
+            elif isinstance(ltail, float):
+                """this cant be a good idea...."""
+                df.loc[bx,0] = ltail
+                
+                self.extrap_vals_d[0] = ltail #store for later
+                
+            elif ltail == 'none':
+                pass
+            else:
+                raise Error('unexected ltail key'%ltail)
             
-            assert aep_val > df.columns.max()
             
-            df.loc[bx, aep_val] = 0
+            #======================================================================
+            # right tail
+            #======================================================================
+            if rtail == 'extrapolate':
+                """just using the average for now...
+                could extraploate for each asset but need an alternate method"""
+                aep_ser = df.loc[bx, :].apply(
+                    self._extrap_rCurve, axis=1, left=False)
+                
+                aep_val = round(aep_ser.mean(), 5)
+                
+                assert aep_val > df.columns.max()
+                
+                df.loc[bx, aep_val] = 0
+                
+                log.info('using right intersection of aep= %.2e from average extraploation'%(
+                    aep_val))
+                
+                
+                self.extrap_vals_d[aep_val] = 0 #store for later 
+                
             
-            log.info('using right intersection of aep= %.2e from average extraploation'%(
-                aep_val))
+            elif isinstance(rtail, float): #DEFAULT
+                aep_val = round(rtail, 5)
+                assert aep_val > df.columns.max(), 'passed rtail value (%.2f) not > max aep (%.2f)'%(
+                    aep_val, df.columns.max())
+                
+                df.loc[bx, aep_val] = 0
+                
+                log.debug('setting ZeroDamage event from user passed \'rtail\' aep=%.7f'%(
+                    aep_val))
+                
+                self.extrap_vals_d[aep_val] = 0 #store for later 
+    
+            elif rtail == 'flat':
+                #set the zero damage year as the lowest year in the model (with a small buffer) 
+                aep_val = max(df.columns.tolist())*(1+10**-(self.prec+2))
+                df.loc[bx, aep_val] = 0
+                
+                log.info('rtail=\'flat\' setting ZeroDamage event as aep=%.7f'%aep_val)
+                
+            elif rtail == 'none':
+                log.warning('no rtail extrapolation specified! leads to invalid integration bounds!')
             
+            else:
+                raise Error('unexpected rtail %s'%rtail)
+                
+            #re-arrange columns so x is ascending
+            df = df.sort_index(ascending=False, axis=1)
+            #======================================================================
+            # check  again
+            #======================================================================
+            self.check_eDmg(df, dropna=True, logger=log)
+    
+            #======================================================================
+            # calc EAD-----------
+            #======================================================================
+            #get reasonable dx (integration step along damage axis)
+            """todo: allow the user to set t his"""
+            if dx is None:
+                dx = df.max().max()/100
+            assert isinstance(dx, float)
             
-            self.extrap_vals_d[aep_val] = 0 #store for later 
+    
             
-        
-        elif isinstance(rtail, float): #DEFAULT
-            aep_val = round(rtail, 5)
-            assert aep_val > df.columns.max(), 'passed rtail value (%.2f) not > max aep (%.2f)'%(
-                aep_val, df.columns.max())
-            
-            df.loc[bx, aep_val] = 0
-            
-            log.debug('setting ZeroDamage event from user passed \'rtail\' aep=%.7f'%(
-                aep_val))
-            
-            self.extrap_vals_d[aep_val] = 0 #store for later 
-
-        elif rtail == 'flat':
-            #set the zero damage year as the lowest year in the model (with a small buffer) 
-            aep_val = max(df.columns.tolist())*(1+10**-(self.prec+2))
-            df.loc[bx, aep_val] = 0
-            
-            log.info('rtail=\'flat\' setting ZeroDamage event as aep=%.7f'%aep_val)
-            
-        elif rtail == 'none':
-            log.warning('no rtail extrapolation specified! leads to invalid integration bounds!')
-        
-        else:
-            raise Error('unexpected rtail %s'%rtail)
-            
-        #re-arrange columns so x is ascending
-        df = df.sort_index(ascending=False, axis=1)
-        #======================================================================
-        # check  again
-        #======================================================================
-        self.check_eDmg(df, dropna=True, logger=log)
-
-        #======================================================================
-        # calc EAD-----------
-        #======================================================================
-        #get reasonable dx (integration step along damage axis)
-        """todo: allow the user to set t his"""
-        if dx is None:
-            dx = df.max().max()/100
-        assert isinstance(dx, float)
-        
-
-        
-        #apply the ead func
-        df.loc[bx, 'ead'] = df.loc[bx, :].apply(
-            self._get_ev, axis=1, dx=dx)
+            #apply the ead func
+            df.loc[bx, 'ead'] = df.loc[bx, :].apply(
+                self._get_ev, axis=1, dx=dx)
         
         
         df.loc[:, 'ead'] = df['ead'].fillna(0) #fill remander w/ zeros

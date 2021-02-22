@@ -1224,14 +1224,14 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
             #=======================================================================
             basedir = os.path.split(cf_fp)[0]
             #tag  = os.path.basename(basedir)
-            tag=self.runTag
+            #tag=self.runTag
             out_dir = os.path.join(basedir, self.toolName)
             
             #=======================================================================
             # runit
             #=======================================================================
  
-            wrkr = RiskClass(cf_fp, out_dir=out_dir, logger=logger.getChild('rTool.%s'%atag), tag=tag,
+            wrkr = RiskClass(cf_fp, out_dir=out_dir, logger=logger.getChild('rTool.%s'%atag), tag=atag,
                          )
 
             self._init_child_pars(wrkr) #pass standard attributies
