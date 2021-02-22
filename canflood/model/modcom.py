@@ -2883,9 +2883,11 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         #======================================================================
         # wrap
         #======================================================================
+        #find those w/ zero fail
+        bx = res_df.max(axis=1)==0
 
-        
-        log.info('resolved to %i unique event damages'%len(res_df.columns))
+        log.info('resolved %i asset (%i w/ pfail=0) to %i unique event damages to \n    %s'%(
+            len(bx), bx.sum(), len(res_df.columns), res_df.mean(axis=0).to_dict()))
         
         return res_df.sort_index(axis=1)
     
@@ -2981,9 +2983,6 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         else:
             #=======================================================================
             # get tail values-----
-            #=======================================================================
-            #=======================================================================
-            # precheck
             #=======================================================================
             self.check_eDmg(df, dropna=True, logger=log)
     
