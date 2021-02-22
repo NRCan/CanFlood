@@ -3350,7 +3350,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         assert isinstance(df, pd.DataFrame)
         miss_l = set(['aep', 'impacts']).symmetric_difference(df.columns)
         assert len(miss_l)==0, 'bad column labels: %s'%df.columns.tolist()
-        
+        cols_include = cols_include.copy()
                      
         
         #=======================================================================

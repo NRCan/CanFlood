@@ -481,7 +481,7 @@ class Attr(RiskPlotr):
         for coln, cser in sdf.items():
             tdf, ead_d[coln] = self.get_ttl(cser.to_frame().reset_index().rename(columns={coln:'impacts'}))
             
-
+            assert 'ari' in tdf.columns, coln
             if sdf1 is None:
                 sdf1 = tdf.drop('impacts', axis=1)
 
