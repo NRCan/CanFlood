@@ -925,11 +925,12 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
             finv_vlay = wrkrPR.load_vlay(am_d['finv_fp'], aoi_vlay=aoi_vlay)
             
             #aoi slice check
-            if finv_vlay.dataProvider().featureCount()==0:
+            if finv_vlay is None:
                 """
                 would be nice to write some meta on this... 
                 """
                 log.warning('%s got no features.. skipping'%tag)
+                del wrkrPR
                 continue
                 
             
@@ -946,8 +947,7 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
             # #load rasters
             #=======================================================================
             if rlay_d is None:
-                rlay_d = wrkrHR.load_rlays(os.path.join(base_dir, pars_d['raster_dir']),
-                                           aoi_vlay=aoi_vlay)
+                rlay_d = wrkrHR.load_rlays(pars_d['raster_dir'],aoi_vlay=aoi_vlay)
                 
             if 'dtm_fp' in pars_d:
                 if dtm_rlay is None:

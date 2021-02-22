@@ -348,7 +348,9 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                   fp, 
                   logger=None, 
                   providerLib='ogr',
-                  aoi_vlay = None):
+                  aoi_vlay = None,
+                  allow_none=True, #control check in saveselectedfeastures
+                  ):
         
         assert os.path.exists(fp), 'requested file does not exist: %s'%fp
         
@@ -393,7 +395,12 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         if isinstance(aoi_vlay, QgsVectorLayer):
             log.info('slicing by aoi %s'%aoi_vlay.name())
             
-            vlay = self.selectbylocation(vlay_raw, aoi_vlay, logger=log, result_type='layer')
+            vlay = self.selectbylocation(vlay_raw, aoi_vlay, allow_none=allow_none,
+                                 logger=log, result_type='layer')
+            
+            #check for no selection
+            if vlay is None:
+                return None
             
             vlay.setName(vlay_raw.name()) #reset the name
             
