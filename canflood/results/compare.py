@@ -208,7 +208,7 @@ class Cmpr(RiskPlotr):
             #===================================================================
             firstC = True
             for sectName, svars_d in sWrkr.cfPars_d.items():
-                
+                if len(svars_d)==0: continue #skip blank sections
                 sdf = pd.DataFrame.from_dict(svars_d, orient='index')
                 sdf.columns = [childName]
                 
@@ -288,7 +288,7 @@ class Cmpr(RiskPlotr):
         # build new worker
         #=======================================================================
         if new_wrkr:
-            cWrkr = sWrkr.copy(name='%s_composite'%self.tag) #start with a copy
+            cWrkr = sWrkr.copy(name='%s_%i_composite'%(self.tag, len(sWrkr_d))) #start with a copy
             
             #===================================================================
             # convert the data to standard ttl format
