@@ -51,19 +51,19 @@ from qgis.core import QgsCoordinateReferenceSystem
 #===============================================================================
 # CanFlood generals
 #===============================================================================
-from hlpr.basic import view, ComWrkr
+from hlpr.basic import view
 from hlpr.exceptions import Error
 
 from hlpr.logr import basic_logger
 mod_logger = basic_logger() 
 
-
+from runComs import Runner
 
 #===============================================================================
 # definitiions-------
 #===============================================================================
 
-class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
+class CFbatch(Runner): #handerl of batch CanFlood runs (build, model, results)
     
 
     #===========================================================================
@@ -73,7 +73,7 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
     smry_d = None #default risk model results summary parameters 
         #{coln: dataFrame method to summarize with}
     
-    proj_dir = None #useful to add here for wrappers
+    
     
     meta_d = dict() #summary counter for reporting
     #===========================================================================
@@ -137,26 +137,7 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
     
     
 
-    #===========================================================================
-    # #qgis attributes
-    #===========================================================================
-    """
-    Qgis should only be init when necessary
-        each tool handler should check to see if q has been initilized
-        try and take init pars from the handler
-        otherwise, build and pass to the handler
-    """
-    qinit = False
-    qhandl_d = {'qproj':None, 'crs':None, 'qap':None, 'algo_init':None, 'vlay_drivers':None}
 
-    #===========================================================================
-    # #CanFlood attributes   
-    #===========================================================================
-    com_hndls = ('absolute_fp', 'figsize', 'overwrite', 'attriMode')
-    absolute_fp = True
-    figsize = (14,8)
-    overwrite=True
-    attriMode=False
             
     def __init__(self,
                  #project tool parameters
@@ -166,117 +147,32 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
                  
                  #run controls
                  start_lib=False, #whether to start the csv data from the xlss
-                 plot = True, #whether to execute plot tools
-                 write_vlay = True, #whether to write vlays to file
-                 
+
                  
                  #file pahts
                  control_fp = None, #optional path to batch control file
-                 proj_dir = None, #optional direcotry for saving results for this project
-                 out_dir = None, #optoinal output directory overwrite (default is to build from tags)
-                 
-                 #tags and names
-                 projName='project',
-                 scenarioName = 'baseline', #scenario run
-                 runTag = None, #optional secondary tag for batch runs (nice for testing/building models)
-                 #toolName=None, #OPTIONAL tool name for individual tool runs
-                 #tag = 'r', #mostly for column suffixes and repeat run labelling
-                 
-                 #project properties
-                 crs_id='EPSG:4326', #project coordinate system
-                 
-                 #program objects
-                 logger=mod_logger,
+
                  
                  **kwargs #for standard attributes
                  ):
-        
 
-        
-
-        assert isinstance(pars_d, dict)
+        super().__init__(pars_d,**kwargs)
         #=======================================================================
         # #attachments
         #=======================================================================
-        self.pars_d = pars_d
-        self.crs_id=crs_id
-        #=======================================================================
-        # self.buildControl_fp=buildControl_fp
-        # self.control_fp=control_fp
-        #=======================================================================
-        #self.out_dir=out_dir
-        self.projName=projName
-        #self.toolName = toolName
-        self.runTag=runTag
         self.start_lib=start_lib
-        self.logger=logger
-        self.plot=plot
-        self.today_str = datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')
-        self.write_vlay=write_vlay
-        self.scenarioName=scenarioName
-        
-        for k,v in kwargs.items():
-            setattr(self, k, v)
-        
-        #=======================================================================
-        # #output directory setupo
-        #=======================================================================
-        if out_dir is None: 
-            
-            if proj_dir is None: 
-                
-                proj_dir = os.getcwd()
-            
-            
-            out_dir = os.path.join(proj_dir, scenarioName)
-            
-            if not runTag is None:
-                out_dir = os.path.join(out_dir, runTag)
-            
-        if not os.path.exists(out_dir):os.makedirs(out_dir)
-        self.out_dir = out_dir
-        
-        self.logger.info('set output directory: %s'%out_dir)
-        
+
+       
         #=======================================================================
         # control file paths
         #=======================================================================
         if control_fp is None:
-            control_fp = os.path.join(out_dir, 'cf_batchAssetControl_%s_%s.csv'%(projName, scenarioName))
+            control_fp = os.path.join(self.out_dir, 
+                          'cf_batchAssetControl_%s_%s.csv'%(self.projName, self.scenarioName))
             
         self.control_fp = control_fp
         
-        #=======================================================================
-        # toolname logic check
-        #=======================================================================
-        """
-        tool execution and logic by tool handlers
-        """
-        #=======================================================================
-        # if not toolName is None:
-        #     assert toolName in self.hndl_lib
-        #     
-        #     if toolName =='build':
-        #         assert os.path.exists(buildControl_fp)
-        #     else:
-        #         assert os.path.exists(control_fp)
-        #=======================================================================
 
-    
-        
-        #=======================================================================
-        # setup functions
-        #=======================================================================
-        """
-        loading is done by tool handlers
-        """
-        #=======================================================================
-        # if start_lib:
-        #     self.load_buildControl(**loadKwargs)
-        #     
-        # else:
-        #     self.load_control(**loadKwargs)
-        #=======================================================================
             
         self.logger.info('CFbatch __init__ finished')
         
