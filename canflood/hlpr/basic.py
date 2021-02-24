@@ -229,7 +229,7 @@ class ComWrkr(object): #common methods for all classes
                 if isinstance(subval, dict):
                     for valnm, value in subval.items():
                         assert isinstance(value, str), \
-                        'got bad type on %s.%s: \'%s\''%(section, valnm, type(value))
+                            'failed to get a str on %s.%s: \'%s\''%(section, valnm, type(value))
                         
                         pars.set(section, valnm, value)
                         

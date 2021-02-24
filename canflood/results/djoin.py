@@ -93,7 +93,6 @@ class Djoiner(Qcoms, Model):
         todo: clean this up and switch over to joinattributestable algo
  
         """
-        
         #=======================================================================
         # defaults
         #=======================================================================
@@ -109,9 +108,9 @@ class Djoiner(Qcoms, Model):
             data_fp = getattr(self, fp_attn)
             log.debug('using \'%s\' for data_fp and got : %s'%(fp_attn, data_fp))
             
-            if layname is None:  layname='%s_%s_%s'%(fp_attn, self.name, tag)
+            if layname is None:  layname='%s_%s_%s'%(fp_attn, tag, self.name)
         else:
-            if layname is None:  layname='res_%s_%s'%(self.name, tag)
+            if layname is None:  layname='res_%s_%s'%(tag, self.name)
             
         assert os.path.exists(data_fp), '\'%s\' got bad data_fp: \'%s\''%(self.tag, data_fp)
         

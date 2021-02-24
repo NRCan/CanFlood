@@ -927,10 +927,13 @@ class Dmg2(Model, DFunc, Plotr):
         #=======================================================================
         # wrap
         #=======================================================================
+        """
+        view(resC_df.round(self.prec))
+        """
 
         #set these for use later
         self.res_df = res_df #needed for _rdf_smry
-        self.bdmgC_df = resC_df
+        self.bdmgC_df = resC_df.round(self.prec)
         self.cres_df = cres_df.loc[:, cres_df.sum(axis=0).sort_values(ascending=True).index] #set for plotting
         
         

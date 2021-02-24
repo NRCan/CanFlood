@@ -932,11 +932,11 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
             #set some basics
             new_pars_d =dict()
             for sect, keys in {
-                'parameters':['impact_units', 'rtail', 'event_rels', 'felv'],
+                'parameters':['impact_units', 'rtail', 'event_rels', 'felv', 'prec'],
                 'dmg_fps':['curves'],
                 'plotting':['impactfmt_str']
                 }.items():
-                d = {k:am_d[k] for k in keys if k in am_d} #get these keys where present
+                d = {k:str(am_d[k]) for k in keys if k in am_d} #get these keys where present
                 
                 if sect == 'parameters':
                     d['name']=tag
@@ -1535,7 +1535,9 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
             #load pars
             if control_df is None:
                 control_df = self.load_control()
-                
+            """
+            view(control_df)
+            """
             runPars_d = self.get_pars(control_df=control_df)
         
             #execute run
