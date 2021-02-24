@@ -39,7 +39,7 @@ class DikeRunner(Runner):
         # meta results filepaths
         #=======================================================================
         if meta_fp is None:
-            meta_fp = os.path.join(self.out_dir, 
+            self.meta_fp = os.path.join(self.out_dir, 
                           'cf_dikeRunner_%s_%s.xls'%(self.projName, self.scenarioName))
         
         
@@ -138,7 +138,7 @@ class DikeRunner(Runner):
         # meta
         #=======================================================================
         
-        meta_d = {**self._get_smry(expo_df)}
+        meta_d = {**{'crest_el_min':expo_df['crest_el'].min()},**self._get_smry(expo_df)}
                 
 
         return wrkr.out_dir, meta_d
@@ -299,23 +299,42 @@ class DikeRunner(Runner):
                   df=None, #dummy catch for run_all
                   meta_lib = None, #library fo data to write
                   meta_fp = None,
-                  
+                  logger=None,
                   ):
+        
         """
         updating a tab on a spreadsheet
         """
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log=logger.getChild('write_pars')
         if meta_lib is None: meta_lib = self.meta_lib
+        if meta_fp is None: meta_fp = self.meta_fp
         
+        if len(meta_lib)==0: 
+            log.warning('no meta_lib data! skipping')
+            return meta_fp
         #=======================================================================
         # load the old results
         #=======================================================================
-        if os.path.exists(meta_fp):
-            d = pd.read_excel(meta_fp, sheet_name=None)
+        d = dict()
+        if not meta_fp is None:
+            if os.path.exists(meta_fp):
+                d = pd.read_excel(meta_fp, sheet_name=None)
+                
+        if meta_fp is None:
+            meta_fp = os.path.join(self.out_dir, 'dikes_meta.xls')
+                
+        assert isinstance(meta_fp, str)
+        assert meta_fp.endswith('.xls')
             
         #=======================================================================
         # reconcile
         #=======================================================================
         d.update(meta_lib) #should overwrite and add any new
+        
         
         #=======================================================================
         # write ammended resulst
@@ -328,12 +347,12 @@ class DikeRunner(Runner):
                 if isinstance(data, pd.DataFrame):
                     df = data
                 else:
-                    df = pd.dataFrame.from_dict(data)
+                    df = pd.Series(data)
                 
                 
                 df.to_excel(writer, sheet_name=tabnm, index=True, header=True)
 
-            
+        log.info('wrote %i tabs to file: %s'%(len(d), meta_fp))
         return meta_fp
     
     

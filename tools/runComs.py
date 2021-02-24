@@ -18,7 +18,7 @@ mod_logger = basic_logger()
 
 class Runner(object): #base worker for runner scripts
     
-    proj_dir = None #useful to add here for wrappers
+    
     #===========================================================================
     # #qgis attributes
     #===========================================================================
@@ -43,7 +43,14 @@ class Runner(object): #base worker for runner scripts
     #===========================================================================
     # program vars
     #===========================================================================
+    
+    proj_dir = None #useful to add here for wrappers
+    
+    
     qinit = False #flag whether qgis has been initiated or not yet
+    
+    smry_d = None #default risk model results summary parameters 
+        #{coln: dataFrame method to summarize with}
 
     def __init__(self,
              #project tool parameters
@@ -100,11 +107,8 @@ class Runner(object): #base worker for runner scripts
         # #output directory setupo
         #=======================================================================
         if out_dir is None: 
-            
             if proj_dir is None: 
-                
                 proj_dir = os.getcwd()
-            
             
             out_dir = os.path.join(proj_dir, scenarioName)
             
@@ -145,6 +149,12 @@ class Runner(object): #base worker for runner scripts
             
             self.qinit=True
             
+        #=======================================================================
+        # check
+        #=======================================================================
+        assert child.crs.authid()==self.crs_id
+        assert child.qproj.crs().authid()==self.crs_id
+            
         return child
 
     def _init_child_pars(self, #pass attributes onto a child tool worker
@@ -156,7 +166,10 @@ class Runner(object): #base worker for runner scripts
             
         return child
 
-        
+    
+    #===========================================================================
+    # RUNNERS-------
+    #===========================================================================
     def run_all(self, #run all tool sets against all assetModels
             toolNames = None, #sequence of toolNames to execute
 
@@ -213,6 +226,30 @@ class Runner(object): #base worker for runner scripts
         
         return self.out_dir, pars_df
         
+    def _get_smry(self,  #retrieve some extra summary info from teh data
+                  df, smry_d=None,
+                  expect_all=False,#whether to expect all columns to hit
+                  ):
+        if smry_d is None: smry_d = self.smry_d
+        
+        if not smry_d is None:
+            """allowing request to pass for columns not there"""
+            
+            if expect_all:
+                #get summaries from handles
+                miss_l = set(smry_d.keys()).difference(df.columns)
+                assert len(miss_l)==0, 'missing summary columns on results:%s'%miss_l
+             
+            d = dict()
+            for coln, smry_str in smry_d.items():
+                if not coln in df.columns:
+                    continue
+                f = getattr(df[coln], smry_str) 
+                
+                d['%s_%s'%(coln, smry_str)] = f()
+            return d
+        else:
+            return dict()
     #===========================================================================
     # OUTPUTTERs----------
     #===========================================================================

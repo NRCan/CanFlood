@@ -70,8 +70,7 @@ class CFbatch(Runner): #handerl of batch CanFlood runs (build, model, results)
     # program vars---------
     #===========================================================================
     
-    smry_d = None #default risk model results summary parameters 
-        #{coln: dataFrame method to summarize with}
+
     
     
     
@@ -1309,30 +1308,7 @@ class CFbatch(Runner): #handerl of batch CanFlood runs (build, model, results)
         
         return wrkr.out_dir, meta_d
     
-    def _get_smry(self,  #retrieve some extra summary info from teh data
-                  df, smry_d=None,
-                  expect_all=False,#whether to expect all columns to hit
-                  ):
-        if smry_d is None: smry_d = self.smry_d
-        
-        if not smry_d is None:
-            """allowing request to pass for columns not there"""
-            
-            if expect_all:
-                #get summaries from handles
-                miss_l = set(smry_d.keys()).difference(df.columns)
-                assert len(miss_l)==0, 'missing summary columns on results:%s'%miss_l
-             
-            d = dict()
-            for coln, smry_str in smry_d.items():
-                if not coln in df.columns:
-                    continue
-                f = getattr(df[coln], smry_str) 
-                
-                d['%s_%s'%(coln, smry_str)] = f()
-            return d
-        else:
-            return dict()
+
     #===========================================================================
     # SINGLE TOOL HANDLER-------
     #===========================================================================

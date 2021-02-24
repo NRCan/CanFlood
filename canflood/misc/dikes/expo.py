@@ -229,17 +229,18 @@ class Dexpo(Qcoms, DPlotr):
         #=======================================================================
         assert sid in [f.name() for f in dike_vlay.fields()], 'failed to get sid on dikes'
         
+        #crs
+        for layer in [dike_vlay, dtm_rlay]:
+            assert layer.crs().authid() == self.qproj.crs().authid(), \
+                '\'%s\' crs (%s) does not match projects: %s'%(
+                    layer.name(), layer.crs().authid(), self.qproj.crs().authid())
         
         #tside
         tside_d = {'Left':0, 'Right':1, 'Both':2}
         assert tside in tside_d, 'bad tside: \'%s\''%tside
         assert not tside =='Both', 'Both not supported'
         
-        #wsl sampling
-        #=======================================================================
-        # assert wsl_stat in stat_pars_d, 'bad wsl_stat: %s'%wsl_stat
-        # assert wsl_stat == 'Max', 'wsl_stat has to be maximum'
-        #=======================================================================
+
         
         #=======================================================================
         # crossProfiles---
@@ -454,6 +455,7 @@ class Dexpo(Qcoms, DPlotr):
         #===================================================================
         # crest sample
         #===================================================================
+        assert cPts_vlay.crs().authid() == dtm_rlay.crs().authid(), 'CRS mismatch!'
         d = { 'COLUMN_PREFIX' : 'dtm', 'INPUT' : cPts_vlay, 'OUTPUT' : 'TEMPORARY_OUTPUT',
           'RASTERCOPY' : dtm_rlay }
         algo_nm = 'qgis:rastersampling'
