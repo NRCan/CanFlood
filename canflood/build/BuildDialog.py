@@ -1333,7 +1333,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         log = self.logger.getChild('set_event_vals')
         #log.info('user pushed \'pushButton_ELstore\'')
         
-
+        pcoln = 'Probability'
+        ecoln = 'EventName'
         #======================================================================
         # collect variables
         #======================================================================
@@ -1367,10 +1368,11 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.logger.info('extracted data w/ %s \n%s'%(str(df.shape), df))
         
         # check it
-        if df.iloc[:, 1].isna().any():
-            raise Error('got %i nulls in the likelihood column'%df.iloc[:,1].isna().sum())
+        if df[pcoln].isna().any():
+            raise Error('got %i nulls in the \'%s\' column'%(
+                df[pcoln].isna().sum(), pcoln))
         
-        miss_l = set(self.event_name_set).symmetric_difference(df.iloc[:,0].values)
+        miss_l = set(self.event_name_set).symmetric_difference(df[ecoln].values)
         if len(miss_l)>0:
             raise Error('event name mismatch')
         
@@ -1378,7 +1380,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
         # clean it
         #======================================================================
-        aep_df = df.set_index(df.columns[0]).iloc[:,0].to_frame().T
+        aep_df = df.set_index(ecoln, drop=True).T
         
 
         
@@ -1388,6 +1390,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         ofn = os.path.join(self.lineEdit_wd.text(), 'evals_%i_%s.csv'%(len(aep_df.columns), tag))
         
         from hlpr.Q import Qcoms
+        
         #build a shell worker for these taxks
         wrkr = Qcoms(logger=log, tag=tag, feedback=self.feedback, out_dir=out_dir)
         
