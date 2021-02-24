@@ -1488,7 +1488,7 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
             control_df = None,
             writePars = True, #whether to save the control parameters to file
             logger=None,
-            **kwargs
+            **kwargs, #passed to 'tools_xxx()' function
             ):
     
         #===========================================================================
@@ -1579,7 +1579,8 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
             toolNames = None, #sequence of toolNames to execute
 
             logger=None,
-            **kwargs
+            tool_kwargs = {}, #oprtional kwargs to pass onto each tool
+
                   ):
         
         #=======================================================================
@@ -1599,8 +1600,14 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
         smry_d = dict()
         for toolName in toolNames:
             try:
+                #get kwargs
+                if toolName in tool_kwargs:
+                    kwargs = tool_kwargs[toolName]
+                else:
+                    kwargs={}
+                
                 tool_od, pars_df = self.run_toolbox(toolName, 
-                                            control_df=pars_df, writePars=False, logger = log, 
+                                            control_df=pars_df, writePars=False, logger = log,
                                             **kwargs)
                 
                 smry_d[toolName] = '    finished on %i w/ %s'%(len(self.meta_d), self.meta_d)
