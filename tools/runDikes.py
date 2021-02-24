@@ -16,14 +16,14 @@ from hlpr.logr import basic_logger
 mod_logger = basic_logger() 
     
     
-from hlpr.Q import  vlay_write
+from hlpr.Q import view
 
 from runComs import Runner
 
 class DikeRunner(Runner):
     
     #dummy hanles for 'run_all' to get sequence from
-    hndl_lib = {'expo':{}, 'vuln':{}, 'results':{}}
+    hndl_lib = {'expo':{}, 'vuln':{}, 'rjoin':{}}
     
     meta_lib = dict()
 
@@ -40,7 +40,7 @@ class DikeRunner(Runner):
         #=======================================================================
         if meta_fp is None:
             self.meta_fp = os.path.join(self.out_dir, 
-                          'cf_dikeRunner_%s_%s.xls'%(self.projName, self.scenarioName))
+                          'cf_dikeSummary_%s_%s.xls'%(self.projName, self.scenarioName))
         
         
         
@@ -80,7 +80,7 @@ class DikeRunner(Runner):
         #=======================================================================
         from misc.dikes.expo import Dexpo
         
-        wrkr = Dexpo(logger=log,  out_dir=os.path.join(self.out_dir, self.toolName), #overwrite below   
+        wrkr = Dexpo(logger=log,  out_dir=os.path.join(self.out_dir, self.toolName),   
                           segID=pars_d['segID'], dikeID=pars_d['dikeID'],
                           **kwargs
                          )
@@ -137,109 +137,146 @@ class DikeRunner(Runner):
         #=======================================================================
         # meta
         #=======================================================================
+        self.meta_d = {'dexpo_fp': self.pars_d['dexpo_fp']} #run_all reporting
+        """
+        indexing by dike segment
+        """
+        expoV_df = expo_df.loc[:, wrkr._get_etags(expo_df)] #just the exposure values
+
+        meta_df = expo_df.join(expoV_df.max(axis=1).rename('max_expo'))
         
-        meta_d = {**{'crest_el_min':expo_df['crest_el'].min()},**self._get_smry(expo_df)}
                 
 
-        return wrkr.out_dir, meta_d
+        return wrkr.out_dir, meta_df
     
     
     def tools_vuln(self,
-            setPars_d,
-            tag='vuln',
-            link_res = False
+            pars_d,
+            
+            logger=None,
+            **kwargs
+
             ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        assert self.toolName=='vuln'
+        log = logger.getChild('vuln')
+        
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        assert 'dexpo_fp' in pars_d, 'vuln requires the dexpo_fp.. did you run expo yet?'
         
         from misc.dikes.vuln import Dvuln
-        
-        for tag, pars_d in setPars_d.copy().items():
-            log = mod_logger.getChild(tag)
-            #===========================================================================
-            # build directories
-            #===========================================================================
-            out_dir = os.path.join(pars_d['out_dir'], 'vuln')
-            if not os.path.exists(out_dir):
-                os.makedirs(out_dir)
-            #===========================================================================
-            #run--------
-            #===========================================================================
-            wrkr = Dvuln(logger=log, tag=tag, out_dir=out_dir,  LogLevel=20,
-                         segID=pars_d['segID'], dikeID=pars_d['dikeID'],
+ 
+        #===========================================================================
+        #run--------
+        #===========================================================================
+        wrkr = Dvuln(logger=log,  out_dir=os.path.join(self.out_dir, self.toolName),   
+                          segID=pars_d['segID'], dikeID=pars_d['dikeID'],
+                          **kwargs
                          )
-            
-            #==========================================================================
-            # load the data
-            #==========================================================================
-            #mandatory
-            wrkr._setup(dexpo_fp = pars_d['dexpo_fp'],
-                        dcurves_fp = pars_d['dcurves_fp'],
-                        )
-            
-            #==========================================================================
-            # execute
-            #==========================================================================
-            wrkr.get_failP()
-            
-            wrkr.set_lenfx() #apply length effects
-                        
-            #=======================================================================
-            # outputs
-            #=======================================================================
-            pars_d['pfail_fp'] = wrkr.output_vdfs()
-            
-            #=======================================================================
-            # update
-            #=======================================================================
-            setPars_d[tag] = pars_d
-            
-        if link_res:
-            run_res(setPars_d)
-            
-        return out_dir
+        
+        self._init_child_pars(wrkr) #pass standard attributies 
+        
+        #==========================================================================
+        # load the data
+        #==========================================================================
+        #mandatory
+        wrkr._setup(dexpo_fp = pars_d['dexpo_fp'],
+                    dcurves_fp = pars_d['dcurves_fp'],
+                    )
+        
+        #==========================================================================
+        # execute
+        #==========================================================================
+        pf_df = wrkr.get_failP()
+        """
+        view(pf_df)
+        """
+        
+        """consider making thise a separate tool?"""
+        wrkr.set_lenfx() #apply length effects
+                    
+        #=======================================================================
+        # outputs
+        #=======================================================================
+        self.pars_d['pfail_fp'] = wrkr.output_vdfs()
+        
+        #=======================================================================
+        # meta
+        #=======================================================================
+        pfails_df = pf_df.loc[:, pf_df.columns.isin(wrkr.etag_l)] #just the failure values
+        
+        meta_df = pf_df.join(pfails_df.max(axis=1).rename('pfail_max'))
+
+        self.meta_d = {'pfail_fp': self.pars_d['pfail_fp']} #run_all reporting
+                
+
+        return wrkr.out_dir, meta_df
     
-    def tools_results(self,
-            setPars_d,
-            write_vlays=True,
+    def tools_rjoin(self, #join vulnerability results onto dike exposure polygons
+            pars_d,
+            
+            write_vlay = None,
+            logger=None,
+            **kwargs
+
             ):
-        from misc.dikes.dRes import DRes
-        for tag, pars_d in setPars_d.items():
-            log = mod_logger.getChild(tag)
-            #===========================================================================
-            # build directories
-            #===========================================================================
-            out_dir = os.path.join(pars_d['out_dir'], 'vuln', 'res')
-            if not os.path.exists(out_dir):
-                os.makedirs(out_dir)
-            #===========================================================================
-            #run--------
-            #===========================================================================
-    
-            wrkr = DRes(logger=log, tag=tag, out_dir=out_dir,  LogLevel=20,
-                         segID=pars_d['segID'], dikeID=pars_d['dikeID'],
-                         ridN=pars_d['ridN'], ifidN=pars_d['ifidN'],
-                         ).ini_standalone(
-                             crs = QgsCoordinateReferenceSystem(pars_d['crs']))
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        assert self.toolName=='rjoin'
+        log = logger.getChild('rjoin')
+        if write_vlay is None: write_vlay=self.write_vlay
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        assert 'pfail_fp' in pars_d, '%s requires the pfail_fp.. did you run vuln yet?'%self.toolName
+        
+        from misc.dikes.rjoin import DikeJoiner
+ 
+        #===========================================================================
+        #setup the worker
+        #===========================================================================
+        wrkr = DikeJoiner(logger=log,  out_dir=os.path.join(self.out_dir, self.toolName),   
+                          segID=pars_d['segID'], dikeID=pars_d['dikeID'],
+                          **kwargs
+                         )
+        
+        self._init_child_pars(wrkr) #pass standard attributies 
+        self._init_child_q(wrkr) #setup Q
+
+        #==========================================================================
+        # load the data
+        #==========================================================================
+        #mandatory
+        wrkr.load_pfail_df(pars_d['pfail_fp'])
+        wrkr.load_ifz_fps(pars_d['eifz_lib'])
+        
+        #==========================================================================
+        # execute
+        #==========================================================================
+        vlay_d = wrkr.join_pfails()
+ 
+        #=======================================================================
+        # outputs
+        #=======================================================================
+        if write_vlay:
+            vlay_fp_d = wrkr.output_vlays()
+        else:
+            vlay_fp_d = dict()
             
-            #==========================================================================
-            # load the data
-            #==========================================================================
-            #mandatory
-            wrkr.load_pfail_df(pars_d['pfail_fp'])
-            wrkr.load_ifz_fps(pars_d['eifz_lib'])
-            
-            #==========================================================================
-            # execute
-            #==========================================================================
-            vlay_d = wrkr.join_pfails()
-     
-            #=======================================================================
-            # outputs
-            #=======================================================================
-            if write_vlays:
-                wrkr.output_vlays()
+        #=======================================================================
+        # meta
+        #=======================================================================
+        self.meta_d = vlay_fp_d #run_all reporting
             
            
-        return out_dir
+        return wrkr.out_dir, None
     
     #===========================================================================
     # SINGLE TOOL HANDLER-------

@@ -8,8 +8,8 @@ common methods for runner scripts
 
 
 import os, datetime
-from qgis.core import QgsCoordinateReferenceSystem, QgsRasterLayer
-
+from qgis.core import QgsCoordinateReferenceSystem
+import pandas as pd
 
 from hlpr.logr import basic_logger
 mod_logger = basic_logger() 
@@ -268,7 +268,8 @@ class Runner(object): #base worker for runner scripts
         else:
             ofn = ofn+'%s.csv'%self.runTag
             
-        if ofp is None: ofp = os.path.join(os.path.dirname(self.control_fp), ofn)
+        if ofp is None: 
+            ofp = os.path.join(self.out_dir, ofn)
                                            
                                            
         try:

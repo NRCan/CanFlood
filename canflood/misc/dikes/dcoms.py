@@ -76,6 +76,9 @@ class Dcoms(ComWrkr):
         self.logger.debug('Dcoms.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
         
         
+    
+        
+        
     def load_expo(self, #load the dike segment exposure data
                   fp,
                   prop_colns = None,
@@ -90,27 +93,16 @@ class Dcoms(ComWrkr):
         
         df = pd.read_csv(fp, header=0, index_col=0)
         
-        #=======================================================================
-        # precheck
-        #=======================================================================
-        if prop_colns is None:
-            prop_colns = [self.dikeID, self.segID, self.segln, self.cbfn, self.celn]
-        miss_l = set(prop_colns).difference(df.columns)
-        assert len(miss_l)==0, 'missing some expected colns: %s'%miss_l
+
         
         #=======================================================================
         # tags
         #=======================================================================
+        """duplicated in _get_etags()"""
         tag_l = [c for c in df.columns if c.endswith('_dtag')]
         assert len(tag_l)>0, 'failed to find any tag columns'
         
-        #=======================================================================
-        # events
-        #=======================================================================
-        l1 = set(prop_colns).union(tag_l) #those we dont want
-        etag_l = list(set(df.columns).difference(l1))
-        assert len(etag_l)>0, 'failed to get any eTags'
-        etag_l.sort()
+        etag_l = self._get_etags(df)
         
         #=======================================================================
         # wrap
@@ -126,6 +118,35 @@ class Dcoms(ComWrkr):
         
         return self.expo_df
         
+    def _get_etags(self,   #exposure column names
+                   df,
+                   prop_colns = None,
+                   ):
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        if prop_colns is None:
+            prop_colns = [self.dikeID, self.segID, self.segln, self.cbfn, self.celn]
+        miss_l = set(prop_colns).difference(df.columns)
+        assert len(miss_l)==0, 'missing some expected colns: %s'%miss_l
+        
+        
+        #=======================================================================
+        # tags
+        #=======================================================================
+        tag_l = [c for c in df.columns if c.endswith('_dtag')]
+        assert len(tag_l)>0, 'failed to find any tag columns'
+        
+        #=======================================================================
+        # events
+        #=======================================================================
+        l1 = set(prop_colns).union(tag_l) #those we dont want
+        etag_l = list(set(df.columns).difference(l1))
+        assert len(etag_l)>0, 'failed to get any eTags'
+        etag_l.sort()
+        
+        return etag_l
         
         
         
