@@ -3,7 +3,7 @@ Created on Feb. 9, 2020
 
 @author: cefect
 
-simple build routines
+generate dike exposure data
 '''
 
 #==========================================================================
@@ -44,15 +44,7 @@ from .dPlot import DPlotr
 # functions-------------------
 #==============================================================================
 class Dexpo(Qcoms, DPlotr):
-    """
-
-    
-    each time the user performs an action, 
-        a new instance of this should be spawned
-        this way all the user variables can be freshley pulled
-    """
-
-
+ 
     def __init__(self,
                  
                   *args,  **kwargs):
