@@ -183,7 +183,7 @@ class Dmg2(Model, DFunc, Plotr):
         #=======================================================================
         for tabn, df in df_d.items():
             if tabn.startswith('_'):
-                log.warning('skipping dummy tab \'%s\''%tabn)
+                log.debug('skipping dummy tab \'%s\''%tabn)
                 continue
             
             tabn = tabn.strip() #remove whitespace
@@ -342,6 +342,10 @@ class Dmg2(Model, DFunc, Plotr):
         """ddf is appending _1 to column names"""
         cid, bid = self.cid, self.bid
         
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        assert len(self.dfuncs_d)>0
         assert bid in ddf.columns
         assert ddf.index.name == bid
         assert np.array_equal(ddf.index.values, ddf[bid].values)
@@ -362,23 +366,6 @@ class Dmg2(Model, DFunc, Plotr):
         # setup-----
         #======================================================================
         edf = ddf.loc[:, dboolcol] #just the exposure values
-        #=======================================================================
-        # id valid bids
-        #=======================================================================
-        if self.ground_water:
-            mdval = min(self.df_minD_d.values())
-        else:
-            mdval = 0
-        
-        """this marks nulls as False"""
-        dep_booldf = edf >= mdval
-        
-        #report those faling the check
-        if not dep_booldf.all().all():
-            log.debug('marked %i (of %i) entries w/ excluded depths (<= %.2f or NULL)'%(
-                np.invert(dep_booldf).sum().sum(), dep_booldf.size, mdval))
-        
-
         
         #=======================================================================
         # build the events matrix
@@ -390,6 +377,35 @@ class Dmg2(Model, DFunc, Plotr):
         events_df = pd.DataFrame(index = ddf.columns[dboolcol])       
         for sufix in ['raw', 'scaled', 'capped', 'dmg']:
             events_df[sufix] = events_df.index + '_%s'%sufix
+        self.events_df = events_df #set for later
+        #=======================================================================
+        # id valid bids
+        #=======================================================================
+        if self.ground_water:
+            mdval = min(self.df_minD_d.values())
+        else:
+            mdval = 0
+        
+        """this marks nulls as False"""
+        dep_booldf = edf >= mdval #True= depth is valid
+        
+        #report those faling the check
+        if not dep_booldf.all().all():
+            log.debug('marked %i (of %i) entries w/ excluded depths (<= %.2f or NULL)'%(
+                np.invert(dep_booldf).sum().sum(), dep_booldf.size, mdval))
+        
+        #check if EVERYTHING failed
+        if not dep_booldf.any().any():
+            log.warning('ZERO (of %i) exposures exceed the minimum threshold (%.2f)! returning all zeros'%(
+                dep_booldf.size, mdval))
+            
+            self.res_df = pd.DataFrame(0, index=edf.index, columns= ['%s_raw'%e for e in edf.columns])
+            
+            return self.res_df
+            
+            
+        
+
         
         #======================================================================
         # RAW: loop and calc raw damage by ftag-------------
@@ -414,7 +430,7 @@ class Dmg2(Model, DFunc, Plotr):
                 booldf.any(axis=1).sum(), len(booldf)))
             
             if not booldf.any().any():
-                log.debug('no valid entries!')
+                log.debug('    no valid entries!')
                 continue
             #==================================================================
             # calc damage by tag.depth
@@ -456,12 +472,12 @@ class Dmg2(Model, DFunc, Plotr):
         # wrap-------
         #=======================================================================
         log = self.logger.getChild('bdmg')
-        
+        assert not res_df is None, 'failed to get any valid entries'
         res_df.columns = ['%s_raw'%e for e in res_df.columns] #add the suffix
         
         #attach
         self.res_df = res_df
-        self.events_df = events_df
+        
         
         
         log.info('got raw impacts for %i dfuncs and %i events: \n    %s'%(

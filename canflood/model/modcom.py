@@ -227,7 +227,7 @@ class Model(ComWrkr,
         #=======================================================================
         # precheck
         #=======================================================================
-        mod_logger.info('Model.__init__ start')
+        #mod_logger.debug('Model.__init__ start')
         """no.. letting dummy cf_fps get passed
         assert os.path.exists(cf_fp), 'bad control filepath: %s'%cf_fp"""
         
@@ -420,7 +420,7 @@ class Model(ComWrkr,
                     
             
             
-        log.info('finished checking %i sections w/ %i errors. optional=%s \n'%(len(cpars), len(errors), optional))
+        log.debug('finished checking %i sections w/ %i errors. optional=%s \n'%(len(cpars), len(errors), optional))
         
         return len(errors)==0, errors
         
@@ -1060,7 +1060,7 @@ class Model(ComWrkr,
         self.data_d[dtag] = df
         
         
-        log.info('finished loading %s as %s'%(dtag, str(df.shape)))
+        log.info('finished loading %s as w/ \n    %s'%(dtag, self._get_stats(df)))
         
         return
         
@@ -1347,8 +1347,7 @@ class Model(ComWrkr,
         #======================================================================
         self.data_d[dtag] = df
         
-        log.info('finished loading %s as %s w/ \n    min=%.2f, mean=%.2f, max=%.2f'%(
-            dtag, str(df.shape), df.min().min(), df.mean().mean(), df.max().max()))
+        log.info('finished loading \'%s\' w/ \n    %s'%(dtag, self._get_stats(df)))
         
         
     def load_dmgs(self,#loading any exposure type data (expos, or exlikes)
@@ -1527,7 +1526,10 @@ class Model(ComWrkr,
 
         log.info('finished loading %s as %s'%(dtag, str(dxcol.shape)))
   
+    def _get_stats(self, df): #log stats of a frame
         
+        return 'count = %i, nulls = %i, min = %.2f, mean = %.2f, max = %.2f'%(
+            df.size, df.isna().sum().sum(), df.min().min(), df.mean().mean(), df.max().max())
    
     def add_gels(self): #add gels to finv (that's heights)
         log = self.logger.getChild('add_gels')

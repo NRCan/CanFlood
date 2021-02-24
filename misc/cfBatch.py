@@ -1344,7 +1344,6 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
     
     def tools_djoin(self,
             runPars_d,
-
             write_vlay=None,
             logger=None,
             **kwargs):
@@ -1487,6 +1486,9 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
             pars_d=None, #common parameters for build toolbox
             control_df = None,
             writePars = True, #whether to save the control parameters to file
+            
+            bool_coln=None, #control column name for asset flow (see get_pars())
+            
             logger=None,
             **kwargs, #passed to 'tools_xxx()' function
             ):
@@ -1521,11 +1523,8 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
         
             #extract pars
             tag_d = self.get_pars_build(rel_d = pars_d.pop('rel_d'), logger=log)
-    
-            
-            #===========================================================================
+
             # construct models
-            #===========================================================================
             tool_od, meta_d = self.tools_build(tag_d, pars_d=pars_d, **kwargs)
             
         #=======================================================================
@@ -1535,10 +1534,8 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
             #load pars
             if control_df is None:
                 control_df = self.load_control()
-            """
-            view(control_df)
-            """
-            runPars_d = self.get_pars(control_df=control_df)
+
+            runPars_d = self.get_pars(control_df=control_df, bool_coln=bool_coln)
         
             #execute run
             if len(runPars_d)==0:
