@@ -504,7 +504,7 @@ class CFbatch(Runner): #handerl of batch CanFlood runs (build, model, results)
     # PARAMETER SETTING--------
     #===========================================================================
     def update_pars(self, #update the run control file
-                    new_df,
+                    new_df, #summary data from individual tool run
                     old_df = None,
                     toolName = None,
                     next_bcoln = None, #next column w/ control flag
@@ -679,31 +679,7 @@ class CFbatch(Runner): #handerl of batch CanFlood runs (build, model, results)
             
         return ofp
     
-    def write_parsd(self, #write the raw parameter dictionary
-                    d = None,
-                    ofp=None,
-                    ):
-        
-        if d is None: d = self.pars_d
-        #=======================================================================
-        # filepaths
-        #=======================================================================
-        ofn = 'cf_batchPars_%s_%s'%(self.projName, self.scenarioName)
-        if self.runTag is None:
-            ofn = ofn+'.csv'
-        else:
-            ofn = ofn+'%s.csv'%self.runTag
-            
-        if ofp is None: ofp = os.path.join(os.path.dirname(self.control_fp), ofn)
-                                           
-                                           
-        try:
-            pd.Series(d, name='pval').to_csv(ofp, index=True)
-            print('wrote pars_d %i to file: %s'%(len(d), ofp))
-        except Exception as e:
-            self.logger.error('failed to write %s  w/ \n    %s'%(ofn, e))
-            
-        return ofp
+
             
     #===========================================================================
     # TOOL RUNS-----------
@@ -1484,61 +1460,7 @@ class CFbatch(Runner): #handerl of batch CanFlood runs (build, model, results)
     # LINKED TOOL HANDLER-------
     #===========================================================================
 
-    def run_all(self, #run all tool sets against all assetModels
-            toolNames = None, #sequence of toolNames to execute
 
-            logger=None,
-            tool_kwargs = {}, #oprtional kwargs to pass onto each tool
-
-                  ):
-        
-        #=======================================================================
-        # defaults
-        #=======================================================================
-
-        if logger is None: logger=self.logger
-        log = logger.getChild('all')
-    
-        if toolNames is None:
-            toolNames = self.hndl_lib.keys()
-        #=======================================================================
-        # loop and run each toolbox
-        #=======================================================================
-        log.info('running %i toolboxes'%len(self.hndl_lib))
-        pars_df = None #ignored by build
-        meta_d = dict()
-        for toolName in toolNames:
-            try:
-                #get kwargs
-                if toolName in tool_kwargs:
-                    kwargs = tool_kwargs[toolName]
-                else:
-                    kwargs={}
-                
-                tool_od, pars_df = self.run_toolbox(toolName, 
-                                            control_df=pars_df, writePars=False, logger = log,
-                                            **kwargs)
-                
-                meta_d[toolName] = '    finished on %i w/ %s'%(len(self.meta_d), self.meta_d)
-            except Exception as e:
-                msg = 'failed on \'%s\' w/ \n    %s'%(toolName, e)
-                meta_d[toolName] = 'FAIL=%s'%e
-                log.error(msg)
-
-        #=======================================================================
-        # write the run summary
-        #=======================================================================
-        if not pars_df is None:
-            self.write_pars(df=pars_df)
-        self.write_parsd()
-        
-        #=======================================================================
-        # wrap
-        #=======================================================================
-        for toolName, msg in meta_d.items():
-            log.info('%s:    %s'%(toolName, msg))
-        
-        return self.out_dir, pars_df
             
             
             
