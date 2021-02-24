@@ -470,6 +470,11 @@ class pandasModel(QAbstractTableModel):
 def qtbl_get_df( #extract data to a frame from a qtable
         table, 
             ):
+    """
+    for indx in range(0, table.rowCount()+1):
+        print(indx)
+        print(table.horizontalHeaderItem(indx).text())
+    """
 
     #get lables    
     coln_l = qtlb_get_axis_l(table, axis=1)
@@ -488,21 +493,27 @@ def qtbl_get_df( #extract data to a frame from a qtable
             
             if not qval is None:
                 tmp_df.iloc[i, j] = qval.text()
+                
+    #assert len(tmp_df.columns)>1
 
     return tmp_df
 
 
 def qtlb_get_axis_l(table, axis=0): #get axis lables from a qtable
-    #row names
-    if axis == 1:
-        q_l  = [table.horizontalHeaderItem(cnt) for cnt in range(table.rowCount())]
-    elif axis == 0:
-        q_l  = [table.verticalHeaderItem(cnt) for cnt in range(table.rowCount())]
-        
     
-    #get data
+    if axis == 1: #column names
+        q_l  = [table.horizontalHeaderItem(cnt) for cnt in range(0, table.columnCount())]
+    elif axis == 0: #row names
+        q_l  = [table.verticalHeaderItem(cnt) for cnt in range(0, table.rowCount())]
+        
+    """
+    
+    """
     l = []
+    #get data
+
     for qval in q_l:
+
         if qval is None:
             l.append('UnNamed')
         else:
