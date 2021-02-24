@@ -112,8 +112,8 @@ class Djoiner(Qcoms, Model):
         else:
             if layname is None:  layname='res_%s_%s'%(tag, self.name)
             
-        assert os.path.exists(data_fp), '\'%s\' got bad data_fp (fp_attn:%s): \'%s\''%(
-                    self.tag, fp_attn, data_fp)
+        assert os.path.exists(data_fp), '\'%s.%s\' got bad data_fp (fp_attn:%s): \'%s\''%(
+                    self.tag, self.name, fp_attn, data_fp)
         
         #=======================================================================
         # precheck
