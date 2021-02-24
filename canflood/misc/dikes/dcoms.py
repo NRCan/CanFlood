@@ -102,8 +102,11 @@ class Dcoms(ComWrkr):
         tag_l = [c for c in df.columns if c.endswith('_dtag')]
         assert len(tag_l)>0, 'failed to find any tag columns'
         
-        etag_l = self._get_etags(df)
+        etag_l = self._get_etags(df, prop_colns=prop_colns)
         
+        """
+        view(df)
+        """
         #=======================================================================
         # wrap
         #=======================================================================

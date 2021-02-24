@@ -17,19 +17,24 @@ mod_logger = basic_logger()
     
     
 from hlpr.Q import view
+from hlpr.exceptions import Error
 
 from runComs import Runner
 
 class DikeRunner(Runner):
     
     #dummy hanles for 'run_all' to get sequence from
-    hndl_lib = {'expo':{}, 'vuln':{}, 'rjoin':{}}
+    hndl_lib = {'expo':{}, 
+                'vuln':{'dexpo_fp':{'filepath':True}},
+                'rjoin':{'pfail_fp':{'filepath':True}}
+                }
     
     meta_lib = dict()
 
     def __init__(self,
                  pars_d,
                  meta_fp = None,
+                 control_fp=None, #parameters for  individual tool runs
                  **kwargs):
         
         super().__init__(pars_d, **kwargs)
@@ -41,6 +46,17 @@ class DikeRunner(Runner):
         if meta_fp is None:
             self.meta_fp = os.path.join(self.out_dir, 
                           'cf_dikeSummary_%s_%s.xls'%(self.projName, self.scenarioName))
+            
+            
+        
+        #=======================================================================
+        # control file paths
+        #=======================================================================
+        if control_fp is None:
+            control_fp = os.path.join(self.out_dir, 
+                          'cf_batchPars_%s_%s.csv'%(self.projName, self.scenarioName))
+            
+        self.control_fp = control_fp
         
         
         
@@ -74,6 +90,10 @@ class DikeRunner(Runner):
         if write_vlay is None: write_vlay = self.write_vlay
         if plot is None: plot = self.plot
 
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        assert not 'dexpo_fp' in pars_d, 'output parameter already set!'
         assert self.toolName == 'expo'
         #=======================================================================
         # setup the tool
@@ -81,7 +101,7 @@ class DikeRunner(Runner):
         from misc.dikes.expo import Dexpo
         
         wrkr = Dexpo(logger=log,  out_dir=os.path.join(self.out_dir, self.toolName),   
-                          segID=pars_d['segID'], dikeID=pars_d['dikeID'],
+                          segID=pars_d['segID'], dikeID=pars_d['dikeID'],tag=self.runTag,
                           **kwargs
                          )
 
@@ -167,7 +187,8 @@ class DikeRunner(Runner):
         #=======================================================================
         # prechecks
         #=======================================================================
-        assert 'dexpo_fp' in pars_d, 'vuln requires the dexpo_fp.. did you run expo yet?'
+        #assert 'dexpo_fp' in pars_d, 'vuln requires the dexpo_fp.. did you run expo yet?'
+        #assert not 'pfail_fp' in pars_d, 'output parameter already set!'
         
         from misc.dikes.vuln import Dvuln
  
@@ -175,7 +196,7 @@ class DikeRunner(Runner):
         #run--------
         #===========================================================================
         wrkr = Dvuln(logger=log,  out_dir=os.path.join(self.out_dir, self.toolName),   
-                          segID=pars_d['segID'], dikeID=pars_d['dikeID'],
+                          segID=pars_d['segID'], dikeID=pars_d['dikeID'],tag=self.runTag,
                           **kwargs
                          )
         
@@ -220,7 +241,7 @@ class DikeRunner(Runner):
     def tools_rjoin(self, #join vulnerability results onto dike exposure polygons
             pars_d,
             
-            write_vlay = None,
+            write_vlay = True,
             logger=None,
             **kwargs
 
@@ -235,7 +256,7 @@ class DikeRunner(Runner):
         #=======================================================================
         # prechecks
         #=======================================================================
-        assert 'pfail_fp' in pars_d, '%s requires the pfail_fp.. did you run vuln yet?'%self.toolName
+        #assert 'pfail_fp' in pars_d, '%s requires the pfail_fp.. did you run vuln yet?'%self.toolName
         
         from misc.dikes.rjoin import DikeJoiner
  
@@ -243,7 +264,7 @@ class DikeRunner(Runner):
         #setup the worker
         #===========================================================================
         wrkr = DikeJoiner(logger=log,  out_dir=os.path.join(self.out_dir, self.toolName),   
-                          segID=pars_d['segID'], dikeID=pars_d['dikeID'],
+                          segID=pars_d['segID'], dikeID=pars_d['dikeID'], tag=self.runTag,
                           **kwargs
                          )
         
@@ -276,7 +297,7 @@ class DikeRunner(Runner):
         self.meta_d = vlay_fp_d #run_all reporting
             
            
-        return wrkr.out_dir, None
+        return wrkr.out_dir, pd.Series(vlay_fp_d).rename('ifz_fp')
     
     #===========================================================================
     # SINGLE TOOL HANDLER-------
@@ -287,8 +308,7 @@ class DikeRunner(Runner):
             pars_d=None, #common parameters for build toolbox
 
             writePars = True, #whether to save the control parameters to file
-            
-            
+
             control_df=None, #not using this here.. but passeed by run_all()
             logger=None,
             **kwargs, #passed to 'tools_xxx()' function
@@ -303,6 +323,9 @@ class DikeRunner(Runner):
         self.toolName=toolName
         if pars_d is None: pars_d =self.pars_d
         
+        assert toolName in self.hndl_lib
+        phndl_d = self.hndl_lib[toolName] #handles for this tool
+        
         #=======================================================================
         # precheck
         #=======================================================================
@@ -311,23 +334,57 @@ class DikeRunner(Runner):
         assert hasattr(self, fName)
         
         #=======================================================================
+        # augment parameters from csv
+        #=======================================================================
+        miss_l = set(phndl_d.keys()).difference(pars_d)
+        if len(miss_l)>0:
+            assert not toolName=='expo', 'missing parameters on expo run: %s'%miss_l
+            assert os.path.exists(self.control_fp), '%s is missing %i and no batchPars provided!\n    %s'%(
+                toolName, len(miss_l), miss_l)
+            bpars_d = pd.read_csv(self.control_fp, index_col=0, header=0).iloc[:, 0].to_dict()
+            
+            #get just the ones we're missing
+            bp_d = {k:v for k,v in bpars_d.items() if k in miss_l}
+            pars_d.update(bp_d) #update the parameters
+            
+            log.info('%s missing %i required pars... collected from batchPars.csv\n    %s'%(
+                toolName, len(miss_l), bp_d))
+        
+        #=======================================================================
+        # check parameters
+        #=======================================================================
+        for k, hndl_d in phndl_d.items():
+            assert k in pars_d, '%s missing %s'%(toolName, k)
+            
+            for hndl, v in hndl_d.items():
+                if hndl=='filepath':
+                    assert v, 'should be True...'
+                    assert os.path.exists(pars_d[k]), '%s got bad filepath: %s'%(k, pars_d[k])
+                    
+                else:
+                    raise Error('unrecognized handle: %s'%hndl)
+                    
+                
+        
+        
+        #=======================================================================
         # run the tools---------
         #=======================================================================
         #get the runner
         f = getattr(self, fName)            
-        tool_od, meta_d = f(pars_d, logger=log, **kwargs)
+        tool_od, meta_df = f(pars_d, logger=log, **kwargs)
     
         #===========================================================================
         # run summary data --------
         #===========================================================================
-        self.meta_lib[toolName] = meta_d
+        self.meta_lib[toolName] = meta_df
         
         if writePars: #for single runs, just write now... othwerwise, let run_all write
             self.write_pars()
 
     
         log.info('finished on %s'%toolName)
-        return tool_od, None
+        return tool_od, meta_df
     
     #===========================================================================
     # OUTPUTTERS----

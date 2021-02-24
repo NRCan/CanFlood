@@ -34,7 +34,7 @@ class Runner(object): #base worker for runner scripts
     #===========================================================================
     # #CanFlood attributes   
     #===========================================================================
-    com_hndls = ('absolute_fp', 'figsize', 'overwrite', 'attriMode')
+    com_hndls = ('absolute_fp', 'figsize', 'overwrite', 'attriMode', 'projName', 'scenarioName')
     absolute_fp = True
     figsize = (14,8)
     overwrite=True
@@ -216,6 +216,7 @@ class Runner(object): #base worker for runner scripts
         #=======================================================================
         if not pars_df is None:
             self.write_pars(df=pars_df)
+            
         self.write_parsd()
         
         #=======================================================================
