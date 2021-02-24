@@ -39,6 +39,11 @@ class Runner(object): #base worker for runner scripts
     figsize = (14,8)
     overwrite=True
     attriMode=False
+    
+    #===========================================================================
+    # program vars
+    #===========================================================================
+    qinit = False #flag whether qgis has been initiated or not yet
 
     def __init__(self,
              #project tool parameters
@@ -115,6 +120,42 @@ class Runner(object): #base worker for runner scripts
         # wrap
         #=======================================================================
         self.logger.debug('Runner __init__ finished')
+        
+    
+    #===========================================================================
+    # CHILD HANDLING--------
+    #===========================================================================
+    def _init_child_q(self,  #handle the q setup on a child
+                      child): 
+        
+        #pass onto child
+        if self.qinit:
+            assert not self.toolName=='Build', 'should never init_q for a build tool'
+            
+            for k,v in self.qhandl_d.items():
+                setattr(child, k, v)
+                
+        #build and get from child
+        else:
+            child.ini_standalone(crs = QgsCoordinateReferenceSystem(self.crs_id))
+            
+            #collect for the next child
+            for k in self.qhandl_d.keys():
+                self.qhandl_d[k] = getattr(child, k)
+            
+            self.qinit=True
+            
+        return child
+
+    def _init_child_pars(self, #pass attributes onto a child tool worker
+                         child):
+        
+        for attn in self.com_hndls:
+            assert hasattr(self, attn)
+            setattr(child, attn, getattr(self, attn))
+            
+        return child
+
         
     def run_all(self, #run all tool sets against all assetModels
             toolNames = None, #sequence of toolNames to execute

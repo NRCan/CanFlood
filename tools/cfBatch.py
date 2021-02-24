@@ -177,36 +177,6 @@ class CFbatch(Runner): #handerl of batch CanFlood runs (build, model, results)
         self.logger.info('CFbatch __init__ finished')
         
     
-    def _init_child_q(self,  #handle the q setup on a child
-                      child): 
-        
-        #pass onto child
-        if self.qinit:
-            assert not self.toolName=='Build'
-            
-            for k,v in self.qhandl_d.items():
-                setattr(child, k, v)
-                
-        #build and get from child
-        else:
-            child.ini_standalone(crs = QgsCoordinateReferenceSystem(self.crs_id))
-            
-            #collect for the next child
-            for k in self.qhandl_d.keys():
-                self.qhandl_d[k] = getattr(child, k)
-            
-            self.qinit=True
-            
-        return child
-
-    def _init_child_pars(self, #pass attributes onto a child tool worker
-                         child):
-        
-        for attn in self.com_hndls:
-            assert hasattr(self, attn)
-            setattr(child, attn, getattr(self, attn))
-            
-        return child
 
 
     #===========================================================================
@@ -1015,7 +985,7 @@ class CFbatch(Runner): #handerl of batch CanFlood runs (build, model, results)
         
         from model.dmg2 import Dmg2
         
-        wrkr = Dmg2(out_dir=os.getcwd(), #settint below
+        wrkr = Dmg2(out_dir=os.getcwd(), #overwriting below
                     logger=logger, tag='dmg2',**kwargs)
         
         self._init_child_pars(wrkr) #pass standard attributies

@@ -46,97 +46,102 @@ class DikeRunner(Runner):
         
         
     def tools_expo(self,
-        setPars_d,
+        pars_d,
         
         #exposure pars
         dist_dike = 40, #distance along dike to draw perpindicular profiles
         dist_trans = 200, #length (from dike cl) of transect 
         
         #output control
-        breach_pts = True,
+        breach_pts = False , #write the breach points
         write_tr = False, #write th etransecft template
-        write_vlays=True,
+        write_vlay = None,
+        plot = None,
 
-        #plotting
-        plots = True,
-        figsize     = (14, 4),
         
-        #flow control
-        link_vuln = False,
+        logger=None,
+        **kwargs
         ):
-    
+        """
+        no need to loop... not batching dike segements.. just one r un
+        """
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('expo')
+        
+        if write_vlay is None: write_vlay = self.write_vlay
+        if plot is None: plot = self.plot
+
+        assert self.toolName == 'expo'
+        #=======================================================================
+        # setup the tool
+        #=======================================================================
         from misc.dikes.expo import Dexpo
-        for tag, pars_d in setPars_d.copy().items():
-            log = mod_logger.getChild(tag)
-            #===========================================================================
-            # build directories
-            #===========================================================================
-            out_dir = pars_d['out_dir']
-            if not os.path.exists(out_dir):
-                os.makedirs(out_dir)
-            #===========================================================================
-            #expo--------
-            #===========================================================================
-    
-            wrkr = Dexpo(logger=log, tag=tag, out_dir=out_dir,  LogLevel=20,
+        
+        wrkr = Dexpo(logger=log,  out_dir=os.path.join(self.out_dir, self.toolName), #overwrite below   
                           segID=pars_d['segID'], dikeID=pars_d['dikeID'],
-                          figsize     = figsize,
-                         ).ini_standalone(
-                             crs = QgsCoordinateReferenceSystem(pars_d['crs']))
-            
-            #==========================================================================
-            # load the data
-            #==========================================================================
-            #mandatory
-            noFailr_d = wrkr.load_rlays(pars_d['noFailr_d'], basedir = pars_d['data_dir'])
-            
-            _ = wrkr.load_dike(pars_d['dikes'], basedir = pars_d['data_dir'])
-            _ = wrkr.load_dtm(pars_d['dtm'])
-    
-            
-            #==========================================================================
-            # execute
-            #==========================================================================
-    
-            dxcol, vlay_d = wrkr.get_dike_expo(noFailr_d, write_tr=write_tr,
-                                               dist_dike=dist_dike, dist_trans=dist_trans)
-            df = wrkr.get_fb_smry()
-            
-            #get just the breach points
+                          **kwargs
+                         )
+
+        self._init_child_q(wrkr) #setup Q
+        self._init_child_pars(wrkr) #pass standard attributies 
+                         
+
+        #==========================================================================
+        # load the data
+        #==========================================================================
+        #mandatory
+        noFailr_d = wrkr.load_rlays(pars_d['noFailr_d'], basedir = pars_d['data_dir'])
+        
+        _ = wrkr.load_dike(pars_d['dikes'], basedir = pars_d['data_dir'])
+        _ = wrkr.load_dtm(pars_d['dtm'])
+
+        
+        #==========================================================================
+        # execute
+        #==========================================================================
+
+        dxcol, vlay_d = wrkr.get_dike_expo(noFailr_d, write_tr=write_tr,
+                                           dist_dike=dist_dike, dist_trans=dist_trans)
+        expo_df = wrkr.get_fb_smry()
+        
+        #get just the breach points
+        if breach_pts:
+            breach_vlay_d = wrkr.get_breach_vlays()
+        
+        #=======================================================================
+        # plots
+        #=======================================================================
+        if plot:
+            """
+            should we take this over for our children also?
+            """
+            wrkr._init_plt()
+            for sidVal in wrkr.sid_vals:
+                fig = wrkr.plot_seg_prof(sidVal)
+                wrkr.output_fig(fig)
+        #=======================================================================
+        # outputs
+        #=======================================================================
+        
+        wrkr.output_expo_dxcol()
+        self.pars_d['dexpo_fp'] = wrkr.output_expo_df(as_vlay=write_vlay)
+        
+        if write_vlay: 
+            wrkr.output_vlays()
             if breach_pts:
-                breach_vlay_d = wrkr.get_breach_vlays()
-            
-            #=======================================================================
-            # plots
-            #=======================================================================
-            if plots:
-                wrkr._init_plt()
-                for sidVal in wrkr.sid_vals:
-                    fig = wrkr.plot_seg_prof(sidVal)
-                    wrkr.output_fig(fig)
-            #=======================================================================
-            # outputs
-            #=======================================================================
-            
-            wrkr.output_expo_dxcol()
-            pars_d['dexpo_fp'] = wrkr.output_expo_df(as_vlay=write_vlays)
-            if write_vlays: 
-                wrkr.output_vlays()
-                if breach_pts:
-                    wrkr.output_breaches()
-                    
-            #=======================================================================
-            # update for linked runs
-            #=======================================================================
-    
-            setPars_d[tag] = pars_d
+                wrkr.output_breaches()
+                
         #=======================================================================
-        # vulnerability
+        # meta
         #=======================================================================
-        if link_vuln:
-            run_vuln(setPars_d, tag=tag)
-           
-        return out_dir
+        
+        meta_d = {**self._get_smry(expo_df)}
+                
+
+        return wrkr.out_dir, meta_d
     
     
     def tools_vuln(self,
