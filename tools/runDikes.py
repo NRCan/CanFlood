@@ -8,7 +8,7 @@ scripted dike runs
 
 
 import os, datetime
-from qgis.core import QgsCoordinateReferenceSystem, QgsRasterLayer
+#from qgis.core import QgsCoordinateReferenceSystem, QgsRasterLayer
 import pandas as pd
 import numpy as np
 
