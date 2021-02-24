@@ -70,7 +70,8 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
     # program vars---------
     #===========================================================================
     
-    smry_d = None #default risk model results summary parameters {coln: dataFrame method to summarize with}
+    smry_d = None #default risk model results summary parameters 
+        #{coln: dataFrame method to summarize with}
     
     proj_dir = None #useful to add here for wrappers
     
@@ -1118,8 +1119,10 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
             output_bdmg=True,
 
             set_impactUnits = False,
+            
+             smry_d = None, #results summary parameters {coln: dataFrame method to summarize with}
 
-            #floc ontrols
+            #flow ontrols
             plot=None,
             upd_cf = True,
             
@@ -1211,9 +1214,8 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
             #=======================================================================
             # meta
             #=======================================================================
-            meta_d[atag] = {
-                'dmg_ttl':res_df.sum().sum()
-                }
+            
+            meta_d[atag] = {**{'dmg_ttl':res_df.sum().sum()}, **self._get_smry(res_df)}
     
             
         return out_dir, meta_d
@@ -1222,7 +1224,7 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
             runPars_d,
             RiskClass,
             
-            smry_d = None, #default risk model results summary parameters {coln: dataFrame method to summarize with}
+            #smry_d = None, #default risk model results summary parameters {coln: dataFrame method to summarize with}
             plot = None,
             res_per_asset = True,
 
@@ -1234,7 +1236,7 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
         # defaults
         #=======================================================================
         if plot is None: plot=self.plot
-        if smry_d is None: smry_d=self.smry_d
+        #if smry_d is None: smry_d=self.smry_d
         if logger is None: logger=self.logger
         
         log = logger.getChild(self.toolName)
@@ -1303,19 +1305,10 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
             #=======================================================================
             # meta
             #=======================================================================
-            res_d[atag] = {
-                'ead':wrkr.ead_tot
-                }
+            
+            res_d[atag] = {**{'ead':wrkr.ead_tot}, **self._get_smry(res_df)}
                     
-            if not smry_d is None:
-                #get summaries from handles
-                miss_l = set(smry_d.keys()).difference(res_df.columns)
-                assert len(miss_l)==0, 'missing summary columns on results:%s'%miss_l
-                
-                for coln, smry_str in smry_d.items():
-                    f = getattr(res_df[coln], smry_str) 
-                    
-                    res_d[atag]['%s_%s'%(coln, smry_str)] = f()
+
             
             #=======================================================================
             # wrap
@@ -1446,11 +1439,7 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
         
         #set some attributes used by the title block
         wrkr.tag = '%s_%s'%(self.projName, self.scenarioName)
- 
-        
         wrkr._setup()
-    
-            
         #===========================================================================
         # get data
         #===========================================================================
@@ -1477,6 +1466,27 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
                       ).sum().rename('impacts').to_frame().to_dict(orient='index')
         
         return wrkr.out_dir, meta_d
+    
+    def _get_smry(self, df, smry_d=None): #retrieve some extra summary info from teh data
+        if smry_d is None: smry_d = self.smry_d
+        
+        if not smry_d is None:
+            """allowing request to pass for columns not there"""
+            #get summaries from handles
+            #===================================================================
+            # miss_l = set(smry_d.keys()).difference(df.columns)
+            # assert len(miss_l)==0, 'missing summary columns on results:%s'%miss_l
+            # 
+            #===================================================================
+            d = dict()
+            for coln, smry_str in smry_d.items():
+                if not coln in df.columns:continue
+                f = getattr(df[coln], smry_str) 
+                
+                d['%s_%s'%(coln, smry_str)] = f()
+            return d
+        else:
+            return dict()
     #===========================================================================
     # SINGLE TOOL HANDLER-------
     #===========================================================================
@@ -1596,7 +1606,7 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
         #=======================================================================
         log.info('running %i toolboxes'%len(self.hndl_lib))
         pars_df = None #ignored by build
-        smry_d = dict()
+        meta_d = dict()
         for toolName in toolNames:
             try:
                 #get kwargs
@@ -1609,10 +1619,10 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
                                             control_df=pars_df, writePars=False, logger = log,
                                             **kwargs)
                 
-                smry_d[toolName] = '    finished on %i w/ %s'%(len(self.meta_d), self.meta_d)
+                meta_d[toolName] = '    finished on %i w/ %s'%(len(self.meta_d), self.meta_d)
             except Exception as e:
                 msg = 'failed on \'%s\' w/ \n    %s'%(toolName, e)
-                smry_d[toolName] = 'FAIL=%s'%e
+                meta_d[toolName] = 'FAIL=%s'%e
                 log.error(msg)
 
         #=======================================================================
@@ -1625,7 +1635,7 @@ class CFbatch(object): #handerl of batch CanFlood runs (build, model, results)
         #=======================================================================
         # wrap
         #=======================================================================
-        for toolName, msg in smry_d.items():
+        for toolName, msg in meta_d.items():
             log.info('%s:    %s'%(toolName, msg))
         
         return self.out_dir, pars_df
