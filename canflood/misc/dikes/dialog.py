@@ -16,7 +16,7 @@ import numpy as np #assuming if pandas is fine, numpy will be fine
 
 #PyQt
 from PyQt5 import uic, QtWidgets
-from PyQt5.QtWidgets import QFileSystemModel, QListView, QHeaderView
+from PyQt5.QtWidgets import QFileSystemModel, QListView, QHeaderView, QComboBox, QGroupBox
 from PyQt5.QtCore import QStringListModel, QAbstractTableModel
 from PyQt5 import QtGui
 
@@ -32,9 +32,10 @@ from qgis.core import QgsMapLayer, QgsMapLayerProxyModel, QgsProject
 
 from hlpr.basic import get_valid_filename, view
 from hlpr.exceptions import QError as Error
-import hlpr.plug
+#import hlpr.plug
 from hlpr.plug import MyFeedBackQ, QprojPlug, pandasModel, bind_layersListWidget, bind_MapLayerComboBox
-
+from hlpr.plug import bind_link_boxes
+import hlpr.logr
 
 #===============================================================================
 # workers
@@ -62,61 +63,58 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
 
     def __init__(self, 
                  iface, 
-                 parent=None,
-                 plogger=None):
-        """these will only ini tthe first baseclass (QtWidgets.QDialog)
+                 parent=None):
         
+        """these will only ini tthe first baseclass (QtWidgets.QDialog)
         required"""
         super(DikesDialog, self).__init__(parent) #only calls QtWidgets.QDialog
         
-
         #=======================================================================
         # attachments
         #=======================================================================
         self.iface = iface
-        
         #=======================================================================
         # setup funcs
         #=======================================================================
-
         self.setupUi(self)
 
-        #=======================================================================
-        # qproj_setup 
-        #=======================================================================
 
-        self.qproj_setup() #basic dialog worker setup
-        
- 
-        
-
-        #=======================================================================
-        # connect the slots
-        #=======================================================================        
-        #self.connect_slots()
-        
-        
-        
-        self.logger.info('rDialog initilized')
-        
 
         
-    def _setup(self, **kwargs):
+    def _setup(self,
+               logger=None,
+                **kwargs): #standlone runs
+        
+        #=======================================================================
+        # logger
+        #=======================================================================
+        if logger is None:
+            logger = hlpr.logr.basic_logger()
+        self.logger=logger
+        
+        #=======================================================================
+        # setup plugin and qgis
+        #=======================================================================
+        #from hlpr.Q import Qcoms
+        super(QprojPlug, self).__init__() #call Qcoms init
+        self.ini_standalone()
+        self.qproj_setup(plogger=logger)
+        
 
         self.connect_slots(**kwargs)
         return self
     
-    def launch(self): #connect + show
+    def launch(self): #launch the gui from a plugin (and do some setup)
         """called by CanFlood.py menu click
         should improve load time by moving the connections to after the menu click"""
         
  
-        
+        self.qproj_setup() #basic dialog worker setup
         self.connect_slots()
         self.show()
 
     def connect_slots(self,
-                      rlays=None, #set of rasters to populate list w/ 
+                      rlays=None, #set of rasters to populate list w/ (for standalone)
                       ):
         log = self.logger.getChild('connect_slots')
 
@@ -207,6 +205,19 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         self.pushButton_vuln_run.clicked.connect(self.run_vuln)
         
+        #=======================================================================
+        # Join Areas------------
+        #=======================================================================
+        #setup the layer linker
+        bind_link_boxes(self.scrollAreaWidgetContents_ja, 
+                 {'event':QgsMapLayerProxyModel.RasterLayer, 'lpol':QgsMapLayerProxyModel.PolygonLayer},
+                 iface=self.iface)
+
+        self.pushButton_ja_clearAll.clicked.connect(self.scrollAreaWidgetContents_ja.clear_all)
+        self.pushButton_ja_fill.clicked.connect(lambda x: self.scrollAreaWidgetContents_ja.fill_down('lpol'))
+        
+        #runner
+        self.pushButton_ja_run.clicked.connect(self.run_rjoin)
         #=======================================================================
         # wrap-------
         #=======================================================================
@@ -413,6 +424,9 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         # load the data
         #==========================================================================
         wrkr.load_pfail_df(self.lineEdit_v_ifz_pfail_fp.text())
+        
+        grPoly_d = self.scrollAreaWidgetContents_ja.get_linked_layers() #{groupName:{namePart:layer}}
+        
         self.feedback.setProgress(40)
         #==========================================================================
         # execute

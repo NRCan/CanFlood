@@ -20,9 +20,9 @@ import pandas as pd
 from qgis.core import QgsVectorLayer, Qgis, QgsProject, QgsLogger, QgsMessageLog, QgsMapLayer
 
 #pyQt
-from PyQt5.QtWidgets import QApplication, QWidget, QInputDialog, QLineEdit, QFileDialog, QPushButton
+from PyQt5.QtWidgets import QApplication, QWidget, QInputDialog, QLineEdit, QFileDialog, QGroupBox, QComboBox
 #from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import Qt, QAbstractTableModel
+from PyQt5.QtCore import Qt, QAbstractTableModel, QObject
 from PyQt5 import QtCore
 
 #==============================================================================
@@ -594,6 +594,79 @@ def bind_MapLayerComboBox(widget, #add some bindings to layer combo boxes
     #===========================================================================
     for fName in ['attempt_selection']:
         setattr(widget, fName, types.MethodType(eval(fName), widget)) 
+        
+def bind_link_boxes(widget, #wrapper for widget containing comboboxes linking layers (1:1)
+                         types_d, #column type parameterse {comboBox.name string: comboBox layer type}
+                         childWidgetType=QComboBox, #lowest container with layer selection
+                         iface=None):
+    
+    
+    #===========================================================================
+    # #collect all the widgets and set the filters
+    #===========================================================================
+    d = dict()
+    for gBox in widget.findChildren(QGroupBox):
+        d[gBox.objectName()] = dict() #start page
+        allChildren = gBox.findChildren(childWidgetType)
+        
+        #get all those matching the the name strings
+        for name_str, layType in types_d.items():
+            
+            #find children matching the name
+            childMatch = [c for c in allChildren if name_str in c.objectName()]
+            
+            assert len(childMatch)==1, '%s.%s got multiple children matching %s'%(
+                widget.objectName(), gBox.objectName(), name_str)
+            
+            #collect
+            d[gBox.objectName()][name_str] = childMatch[0]
+            
+            #apply the filter
+            childMatch[0].setFilters(layType)
+            childMatch[0].setAllowEmptyLayer(True)
+            childMatch[0].setCurrentIndex(-1)
+        #wrap gBox
+    #wrap widget
+    widget.children_links_d = d #{groupBoxName: {name:ComboBox}}
+    #set all the filters
+    
+    def get_linked_layers(self): #get all the layers selected in the combo boxes
+        
+        rLib = dict()
+        for gName, gd in self.children_links_d.items():
+            #get from each widget
+            rLib[gName] = {nstr:w.currentLayer() for nstr,w in gd.items() if not w.currentLayer() is None}
+            
+
+        return {k:v for k,v in rLib.items() if len(v)>0}
+    
+    def clear_all(self): #clear all the combo boxes
+        for child in widget.findChildren(childWidgetType):
+            child.setCurrentIndex(-1)
+            
+    def fill_down(self,  #take the first entry in the combo box column matching the name, and propagate
+                  name_str):
+        
+        first = True
+        for gName, gd in self.children_links_d.items():
+            assert name_str in gd
+            
+            #get the selection to propagate
+            if first:
+                layer1 = gd[name_str].currentLayer()
+                first = False
+            else:
+                gd[name_str].setLayer(layer1)
+            
+        
+            
+
+    #===========================================================================
+    # bind functions
+    #===========================================================================
+    for fName in ['get_linked_layers', 'clear_all', 'fill_down']:
+        setattr(widget, fName, types.MethodType(eval(fName), widget)) 
+ 
 #==============================================================================
 # functions-----------
 #==============================================================================
@@ -651,45 +724,11 @@ def qtlb_get_axis_l(table, axis=0): #get axis lables from a qtable
             l.append(qval.text())
         
     return l
-            
+
 
 if __name__ =="__main__": 
-    
-    class Example(QWidget):
-    
-        def __init__(self):
-            super().__init__()
-            
-            self.initUI()
-            
-            
-        def initUI(self):      
-    
-            self.btn = QPushButton('Dialog', self)
-            self.btn.move(20, 20)
-            self.btn.clicked.connect(self.showDialog)
-            
-            self.le = QLineEdit(self)
-            self.le.move(130, 22)
-            
-            self.setGeometry(300, 300, 290, 150)
-            self.setWindowTitle('Input dialog')
-            self.show()
-            
-            
-        def showDialog(self):
-            
-            text, ok = QInputDialog.getText(self, 'Input Dialog', 
-                'Enter your name:')
-            
-            if ok:
-                self.le.setText(str(text))
-            
-    app = QApplication(sys.argv)
-    ex = Example()
-    sys.exit(app.exec_())
             
             
     
-    print('finisshed')
+    print('?"??')
         
