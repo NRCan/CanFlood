@@ -22,7 +22,7 @@ from PyQt5 import QtGui
 
 #qgis
 
-from qgis.core import QgsMapLayer
+from qgis.core import QgsMapLayer, QgsMapLayerProxyModel
 
 
 #==============================================================================
@@ -136,7 +136,13 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.logger.statusQlab=self.progressText #connect to the progress text
         
         #=======================================================================
-        # Exposurte--------
+        # setup--------
+        #=======================================================================
+        self._connect_wdir(self.pushButton_wd_brwse, self.pushButton_wd_open, self.lineEdit_wdir,
+                           default_wdir = os.path.join(os.path.expanduser('~'), 'CanFlood', 'dikes'))
+
+        #=======================================================================
+        # Exposure--------
         #=======================================================================
         #=======================================================================
         # wsl raster layers
@@ -154,6 +160,26 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.pushButton_expo_refr.clicked.connect(self.listWidget_expo_rlays.populate_layers)
        
         self.listWidget_expo_rlays._set_selection_byName([r.name() for r in rlays])
+        
+        #=======================================================================
+        # dtm
+        #=======================================================================
+        self.mMapLayerComboBox_dtm.setFilters(QgsMapLayerProxyModel.RasterLayer)
+        self.mMapLayerComboBox_dtm.setAllowEmptyLayer(True)
+        self.mMapLayerComboBox_dtm.setCurrentIndex(-1) #set selection to none
+        
+        #=======================================================================
+        # run
+        #=======================================================================
+        self.pushButton_expo_run.clicked.connect(self.run_expo)
+        
+        
+    def _get_pars(self): #get common pars from Setup tab
+        self.scenarioName = self.linEdit_ScenTag.text()
+        
+        
+    def run_expo(self): #execute dike exposure routeines
+        print('run_expo')
             
         
 if __name__=='__main__':

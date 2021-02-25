@@ -31,7 +31,7 @@ from PyQt5 import QtCore
 
 from hlpr.exceptions import QError as Error
 from hlpr.Q import MyFeedBackQ, Qcoms
-
+from hlpr.basic import force_open_dir
 
 #==============================================================================
 # classes-----------
@@ -245,7 +245,32 @@ class QprojPlug(Qcoms): #baseclass for plugins
         index = comboBox.findText(default, Qt.MatchFixedString)
         if index >= 0:
             comboBox.setCurrentIndex(index)
+            
+    def _connect_wdir(self, #connect the workint direcotry buttons
+                      browseButton, openButton, lineEdit,
+                      default_wdir = None
+                      ):
+        #=======================================================================
+        # connect buttons
+        #=======================================================================
+        #Working Directory browse            
+        browseButton.clicked.connect(
+                lambda: self.browse_button(lineEdit, 
+                                           prompt='Select Working Directory',
+                                      qfd = QFileDialog.getExistingDirectory)
+                )
+
+        #WD Open
+        openButton.clicked.connect(
+                lambda: force_open_dir(lineEdit.text()))
         
+        #=======================================================================
+        # set default
+        #=======================================================================
+        if not default_wdir is None:
+            lineEdit.setText(default_wdir)
+            
+            if not os.path.exists(default_wdir): os.makedirs(default_wdir)
         
 
 class logger(object): #workaround for qgis logging pythonic
