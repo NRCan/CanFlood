@@ -149,7 +149,7 @@ class DikeRunner(Runner):
         #=======================================================================
         
         wrkr.output_expo_dxcol()
-        self.pars_d['dexpo_fp'] = wrkr.output_expo_df(as_vlay=write_vlay)
+        self.pars_d['dexpo_fp'] = wrkr.output_expo_df()
         
         if write_vlay: 
             wrkr.output_vlays()
@@ -207,7 +207,7 @@ class DikeRunner(Runner):
         #==========================================================================
         # load the data
         #==========================================================================
-        #mandatory
+        """bundles the two loader functions"""
         wrkr._setup(dexpo_fp = pars_d['dexpo_fp'],
                     dcurves_fp = pars_d['dcurves_fp'],
                     )

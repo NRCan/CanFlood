@@ -40,6 +40,7 @@ from hlpr.plug import MyFeedBackQ, QprojPlug, pandasModel, bind_layersListWidget
 # workers
 #===============================================================================
 from misc.dikes.expo import Dexpo
+from misc.dikes.vuln import Dvuln
 
 
 #===============================================================================
@@ -201,9 +202,13 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         self.pushButton_expo_run.clicked.connect(self.run_expo)
         
+        #=======================================================================
+        # vuln-------
+        #=======================================================================
+        self.pushButton_vuln_run.clicked.connect(self.run_vuln)
         
         #=======================================================================
-        # wrap
+        # wrap-------
         #=======================================================================
         log.info("finished")
         
@@ -235,13 +240,10 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         log.debug('start')
         self._set_setup() #attach all the commons
         self.feedback.setProgress(5)
-        
-        
+
         #=======================================================================
         # collect inputs
         #=======================================================================
-        
-        
         rlays_d = self.listWidget_expo_rlays.get_selected_layers()
         
         #tside
@@ -331,7 +333,63 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         log.info('finished Dike Expo w/ %s'%str(expo_df.shape))
         self.feedback.upd_prog(None)
+        
+    def run_vuln(self):
+        log = self.logger.getChild('run_vuln')
+        log.debug('start')
+        self._set_setup() #attach all the commons
+        self.feedback.setProgress(5)
             
+        #=======================================================================
+        # collect inputs
+        #=======================================================================
+        
+        #=======================================================================
+        # init
+        #=======================================================================
+        kwargs = {attn:getattr(self, attn) for attn in ['logger', 'out_dir', 'segID', 'dikeID', 'tag', 'cbfn']}
+        wrkr = Dexpo(**kwargs)
+        self.feedback.setProgress(10)
+        
+        #=======================================================================
+        # load
+        #=======================================================================
+        wrkr._setup(
+            dexpo_fp=self.lineEdit_v_dexpo_fp.text(),
+             dcurves_fp = self.lineEdit_v_dcurves_fp.text())
+        
+        #==========================================================================
+        # execute
+        #==========================================================================
+        pf_df = wrkr.get_failP()
+        
+        #=======================================================================
+        # length effect
+        #=======================================================================
+        #collect method from user
+        if self.radioButton_v_lfx_none.isChecked():
+            method = None
+        elif self.radioButton_v_lfx_urs.isChecked():
+            method='URS2007'
+        else:
+            raise Error('unrecognized lfx method')
+
+        if not method is None:
+            wrkr.set_lenfx(method=method) #apply length effects
+            
+        #=======================================================================
+        # outputs
+        #=======================================================================
+        pfail_fp = wrkr.output_vdfs()
+        
+        #=======================================================================
+        # update gui
+        #=======================================================================
+        self.lineEdit_v_ifz_pfail_fp.setText(pfail_fp)
+        
+        log.info('finished Dike Vuln w/ %s'%str(pf_df.shape))
+        self.feedback.upd_prog(None)
+        
         
 if __name__=='__main__':
     print('???')
