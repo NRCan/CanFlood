@@ -22,7 +22,7 @@ from PyQt5 import QtGui
 
 #qgis
 
-from qgis.core import QgsMapLayer, QgsMapLayerProxyModel
+from qgis.core import QgsMapLayer, QgsMapLayerProxyModel, QgsProject
 
 
 #==============================================================================
@@ -115,6 +115,10 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
     def launch(self): #connect + show
         """called by CanFlood.py menu click
         should improve load time by moving the connections to after the menu click"""
+        
+        self.qproj = QgsProject.instance()
+        self.crs = self.qproj.crs()
+        
         self.connect_slots()
         self.show()
 
@@ -218,6 +222,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.tag = self.linEdit_ScenTag.text()
         self.out_dir = self.lineEdit_wdir.text()
         assert os.path.exists(self.out_dir), 'working directory does not exist!'
+        self.loadRes = self.checkBox_loadres.isChecked()
         
         #project aoi
         self.aoi_vlay = self.comboBox_aoi.currentLayer()
@@ -288,24 +293,29 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         """dont write any layers.. just load them and let the user write"""
         wrkr.output_expo_dxcol()
-        dexpo_fp = wrkr.output_expo_df(as_vlay=self.checkBox_expo_write_vlay.isChecked())
+        dexpo_fp = wrkr.output_expo_df()
+        
+        #=======================================================================
+        # dike layer
+        #=======================================================================
+        if self.checkBox_expo_wDikes.isChecked():
+            dike_vlay = wrkr.get_dikes_vlay() #get the dikes layer for writintg (fixed index)
+            self.qproj.addMapLayer(dike_vlay)
+            log.info('added \'%s\' to canvas'%(dike_vlay.name()))
         
         #=======================================================================
         # breach points
         #=======================================================================
         if self.checkBox_expo_breach_pts.isChecked():
-            assert self.checkBox_loadres.isChecked(), 'to get ouput layers, check \'Load session results...\''
             breach_vlay_d = wrkr.get_breach_vlays()
+            self._load_toCanvas(breach_vlay_d, log.getChild('breachPts'))
             
-            for k, layer in breach_vlay_d.items():
-                self.qproj.addMapLayer(layer)
-            log.info('loaded %i breach point layers'%len(breach_vlay_d))
+
             
         #=======================================================================
         # transects
         #=======================================================================
         if self.checkBox_expo_write_tr.isChecked():
-            assert self.checkBox_loadres.isChecked(), 'to get ouput layers, check \'Load session results...\''
             self.qproj.addMapLayer(wrkr.tr_vlay)
             log.info('loaded transect layer \'%s\' to canvas'%wrkr.tr_vlay.name())
             
@@ -313,21 +323,8 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         # exposure crest points
         #=======================================================================
         if self.checkBox_expo_crestPts.isChecked():
-            assert self.checkBox_loadres.isChecked(), 'to get ouput layers, check \'Load session results...\''
-            
-            for k, layer in wrkr.expo_vlay_d.items():
-                self.qproj.addMapLayer(layer)
-            log.info('loaded %i expo_crest_pts layers'%len(wrkr.expo_vlay_d))
-            
-        #=======================================================================
-        # dike layer
-        #=======================================================================
-        if self.checkBox_expo_wDikes.isChecked():
-            assert self.checkBox_loadres.isChecked(), 'to get ouput layers, check \'Load session results...\''
-            self.qproj.addMapLayer(dike_vlay)
-            log.info('added \'%s\' to canvas'%(dike_vlay.name()))
-            
-            
+            self._load_toCanvas(wrkr.expo_vlay_d, log.getChild('expo_crestPts'))
+
         #=======================================================================
         # plots
         #=======================================================================
@@ -344,6 +341,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.lineEdit_v_dexpo_fp.setText(dexpo_fp)
         
         log.info('finished w/ %s'%str(expo_df.shape))
+        self.feedback.upd_prog(None)
             
         
 if __name__=='__main__':

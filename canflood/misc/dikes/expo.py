@@ -657,6 +657,8 @@ class Dexpo(Qcoms, DPlotr):
             """dont rename anything here.. makes column detection difficult"""
             res_df = res_df.join(dxcol.loc[:, ('common', (self.sid, coln))].droplevel(level=0, axis=1
                              ).groupby(self.sid).min())
+            
+
                 
         #=======================================================================
         # wrap
@@ -666,6 +668,35 @@ class Dexpo(Qcoms, DPlotr):
         
         self.expo_df = res_df
         return self.expo_df
+    
+    def get_dikes_vlay(self, #promote the index on the dikes_vlay
+                     df = None,
+                     vlay = None, #geometry to use for writing
+                    logger=None,
+                       ):
+        
+        #=======================================================================
+        # defautls
+        #=======================================================================
+ 
+        if logger is None: logger=self.logger
+        log=logger.getChild('get_dikes_vlay')
+        
+        if df is None: df = self.expo_df.copy()
+        if vlay is None: vlay = self.dike_vlay
+        
+        #=======================================================================
+        # update the dikes layer
+        #=======================================================================
+        geo_d = vlay_get_fdata(vlay, geo_obj=True, logger=log, rekey=self.sid)
+        
+        #add the index as a column so it gets into the layer
+        df.index.name=None
+        df[self.sid] = df.index
+        
+        return self.vlay_new_df2(df, geo_d=geo_d, logger=log,
+                           layname=vlay.name())
+        
     
 
     def get_breach_vlays(self, #get vlays of breach points
@@ -745,11 +776,14 @@ class Dexpo(Qcoms, DPlotr):
     
     def output_expo_df(self, #output the dike data (for the vuln calc
                   df = None,
-                     vlay = None, #geometry to use for writing
+ 
                      logger=None,
                      overwrite=None,
-                     as_vlay = False, #option to vectorize the reuslts
+ 
                      ): 
+        """
+        see also get_dikes_vlay()
+        """
         #=======================================================================
         # defaults
         #=======================================================================
@@ -758,7 +792,7 @@ class Dexpo(Qcoms, DPlotr):
         log=logger.getChild('output_dikes_csv')
         
         if df is None: df = self.expo_df.copy()
-        if vlay is None: vlay = self.dike_vlay
+ 
         
         #=======================================================================
         # tabular
@@ -772,28 +806,7 @@ class Dexpo(Qcoms, DPlotr):
         
         log.info('wrote %s to file \n    %s'%(str(df.shape), ofp))
         
-        #=======================================================================
-        # vectorized
-        #=======================================================================
-        if as_vlay:
-            """unatural flow here... need to output the tabular data for scripting"""
-            
-            
-            geo_d = vlay_get_fdata(vlay, geo_obj=True, logger=log, rekey=self.sid)
-            
-            #add the index as a column so it gets into the layer
-            df.index.name=None
-            df[self.sid] = df.index
-            
-            res_vlay = self.vlay_new_df2(df, geo_d=geo_d, logger=log,
-                               layname=vlay.name())
-            
-            
-            _ = self.vlay_write(res_vlay, logger=log)
-
-            
-
-        
+ 
         return ofp
         
         

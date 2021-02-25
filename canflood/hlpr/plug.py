@@ -271,6 +271,17 @@ class QprojPlug(Qcoms): #baseclass for plugins
             lineEdit.setText(default_wdir)
             
             if not os.path.exists(default_wdir): os.makedirs(default_wdir)
+            
+    def _load_toCanvas(self,  #helper to load a container of layers to canvas w/ some reporting
+                       d, log):
+        
+        #load
+        for k, layer in d.items():
+            self.qproj.addMapLayer(layer)
+            
+        #report
+        layNames = [lay.name() for lay in d.values()]
+        log.info('loaded %i layers: %s'%(len(layNames), layNames))
         
 
 class logger(object): #workaround for qgis logging pythonic
