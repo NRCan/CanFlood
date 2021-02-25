@@ -88,7 +88,7 @@ class Dexpo(Qcoms, DPlotr):
                 vlay_raw,
                   dikeID = None, #dike identifier field
                   segID = None, #segment identifier field
-                  cbfn = None, #crest buffer
+                  cbfn = None, #crest buffer fieldname
                   
  
                    logger=None):
@@ -488,6 +488,7 @@ class Dexpo(Qcoms, DPlotr):
         tr_vlay.setName('%s_%s_transects'%(self.tag, dike_vlay.name()))
         if write_tr:
             self.vlay_write(tr_vlay, logger=log)
+        self.tr_vlay=tr_vlay #set for loading by the dialog
         mstore.removeAllMapLayers() #clear the store
         
         log.info('joined crest elevations')
