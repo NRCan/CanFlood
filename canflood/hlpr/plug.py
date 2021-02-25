@@ -430,10 +430,8 @@ def bind_layersListWidget(widget, #instanced widget
         
     
     #===========================================================================
-    # define functions
+    # populating and setting selection
     #===========================================================================
-        
-        
     def populate_layers(self, layers=None):
         if layers is None:
             #get all from the project
@@ -471,6 +469,33 @@ def bind_layersListWidget(widget, #instanced widget
             else:
                 self.item(indx).setSelected(False)
             
+    #===========================================================================
+    # retriving selection
+    #===========================================================================
+    def get_selected_layers(self):
+        qproj = QgsProject.instance()
+        #collected selected text
+        nms_l = [e.text() for e in self.selectedItems()]
+        
+        assert len(nms_l)>0, 'no selection!'
+        #retrieve layers from canvas
+        lays_d = {nm:qproj.mapLayersByName(nm) for nm in nms_l}
+        
+        #check we only got one hit
+        d = dict()
+        for k,hits in lays_d.items(): 
+            assert len(hits)==1, 'failed to match \'%s\''%k
+            
+            lay = hits[0]
+            assert isinstance(lay, QgsMapLayer), 'bad type on %s: %s'%(k, type(lay))
+            
+            d[k] = lay
+        
+        #drop to singular elements
+        
+        return d
+        
+        
     #===========================================================================
     # bind them
     #===========================================================================

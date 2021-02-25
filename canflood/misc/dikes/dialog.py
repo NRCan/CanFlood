@@ -36,8 +36,9 @@ from hlpr.plug import MyFeedBackQ, QprojPlug, pandasModel, bind_layersListWidget
 
 
 #===============================================================================
-# logger
+# workers
 #===============================================================================
+from misc.dikes.expo import Dexpo
 
 
 #===============================================================================
@@ -77,13 +78,6 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
 
         self.setupUi(self)
-        
-        # Set up the user interface from Designer through FORM_CLASS.
-        # After self.setupUi() you can access any designer object by doing
-        # self.<objectname>, and you can use autoconnect slots - see
-        # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
-        # #widgets-and-dialogs-with-auto-connect
-
 
         #=======================================================================
         # qproj_setup 
@@ -176,7 +170,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.pushButton_expo_sVis.clicked.connect(self.listWidget_expo_rlays.select_visible)
         self.pushButton_expo_refr.clicked.connect(self.listWidget_expo_rlays.populate_layers)
        
-        self.listWidget_expo_rlays._set_selection_byName([r.name() for r in rlays])
+        
         
         #=======================================================================
         # dtm
@@ -194,7 +188,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
     def _set_setup(self): #attach parameters from setup tab
         
         #secssion controls
-        self.scenarioName = self.linEdit_ScenTag.text()
+        self.tag = self.linEdit_ScenTag.text()
         self.out_dir = self.lineEdit_wdir.text()
         assert os.path.exists(self.out_dir), 'working directory does not exist!'
         
@@ -207,12 +201,80 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.absolute_fp = self.radioButton_SS_fpAbs.isChecked()
         
         #dikes layer
-        self.dikes_vlay = self.comboBox_dikesVlay.currentLayer()
+        self.dike_vlay = self.comboBox_dikesVlay.currentLayer()
         self.dikeID = self.mFieldComboBox_dikeID.currentField()
         self.segID = self.mFieldComboBox_segID.currentField()
         
     def run_expo(self): #execute dike exposure routeines
-        print('run_expo')
+        log = self.logger.getChild('run_expo')
+        self.feedback.setProgress(1)
+        log.debug('start')
+        
+        #=======================================================================
+        # collect inputs
+        #=======================================================================
+        kwargs = {attn:getattr(self, attn) for attn in ['logger', 'out_dir', 'segID', 'dikeID', 'tag']}
+        
+        rlays_d = self.listWidget_expo_rlays.get_selected_layers()
+        
+        #tside
+        if self.radioButton_v_tside_left.isChecked():
+            tside = 'Left'
+        else:
+            tside = 'Right'
+
+        #=======================================================================
+        # init
+        #=======================================================================
+        
+        wrkr = Dexpo(**kwargs)
+        self.feedback.setProgress(10)
+        
+        #=======================================================================
+        # execute
+        #=======================================================================
+        
+        kwargs = {attn:getattr(self, attn) for attn in ['dike_vlay']} 
+        
+        dxcol, vlay_d = wrkr.get_dike_expo(rlays_d, 
+                           dtm_rlay = self.mMapLayerComboBox_dtm.currentLayer(),
+                           
+                           #transect pars
+                           tside=tside,
+                           
+                           write_tr=self.checkBox_expo_write_tr.isChecked(),
+                           dist_dike=float(self.doubleSpinBox_dist_dike.value()), 
+                           dist_trans=float(self.doubleSpinBox_dist_trans.value()),
+                           **kwargs)
+        
+        self.feedback.setProgress(60)
+        
+        
+        expo_df = wrkr.get_fb_smry()
+        self.feedback.setProgress(80)
+        #=======================================================================
+        # write
+        #=======================================================================
+        wrkr.output_expo_dxcol()
+        dexpo_fp = wrkr.output_expo_df(as_vlay=self.checkBox_expo_write_vlay.isChecked())
+        
+        if self.checkBox_expo_breach_pts.isChecked():
+            breach_vlay_d = wrkr.get_breach_vlays()
+            wrkr.output_breaches()
+            
+        if self.checkBox_expo_plot.isChecked():
+            wrkr._init_plt()
+            for sidVal in wrkr.sid_vals:
+                fig = wrkr.plot_seg_prof(sidVal)
+                wrkr.output_fig(fig)
+                
+        self.feedback.setProgress(95)
+        #=======================================================================
+        # update gui
+        #=======================================================================
+        self.lineEdit_v_dexpo_fp.setText(dexpo_fp)
+        
+        log.info('finished w/ %s'%str(expo_df.shape))
             
         
 if __name__=='__main__':
