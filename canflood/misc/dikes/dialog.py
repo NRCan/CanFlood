@@ -348,7 +348,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         # init
         #=======================================================================
         kwargs = {attn:getattr(self, attn) for attn in ['logger', 'out_dir', 'segID', 'dikeID', 'tag', 'cbfn']}
-        wrkr = Dexpo(**kwargs)
+        wrkr = Dvuln(**kwargs)
         self.feedback.setProgress(10)
         
         #=======================================================================

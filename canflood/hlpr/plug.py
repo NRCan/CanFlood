@@ -305,10 +305,13 @@ class QprojPlug(Qcoms): #baseclass for plugins
             group = None
             
         def add_layer(lay):
+            
             if not group is None:
                 group.addLayer(lay)
+                self.qproj.addMapLayer(lay, False) #add tot he project, but hide
             else:
-                self.qproj.addMapLayer(lay)
+                self.qproj.addMapLayer(lay, True) #just add to teh selected group
+                
         
         #=======================================================================
         # #load
@@ -400,17 +403,18 @@ class logger(object): #workaround for qgis logging pythonic
     def warning(self, msg):
         self._loghlp(msg, Qgis.Warning, push=False)
 
-        
     def push(self, msg):
         self._loghlp(msg, Qgis.Info, push=True)
 
     def error(self, msg):
+        """similar behavior to raising a QError.. but without throwing the execption"""
         self._loghlp(msg, Qgis.Critical, push=True)
         
     def _loghlp(self, #helper function for generalized logging
                 msg_raw, qlevel, 
-                push=False,
-                status=False):
+                push=False, #treat as a push message on Qgis' bar
+                status=False, #whether to send to the status widget
+                ):
         """
         QgsMessageLog writes to the message panel
             optionally, users can enable file logging
@@ -429,8 +433,6 @@ class logger(object): #workaround for qgis logging pythonic
             msg = '%s:   %s'%(self.log_nm, msg_raw)
             QgsMessageLog.logMessage(msg, self.log_tabnm, level=qlevel)
             QgsLogger.debug('%i_%s'%(qlevel, msgDebug)) #also send to file
-        
-        
         
         #Qgis bar
         if push:
