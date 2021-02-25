@@ -910,6 +910,7 @@ class Model(ComWrkr,
             assert 'finv' in self.data_d, 'call load_finv first'
             log.debug('\n%s'%aep_ser.to_frame().join(aep_ser.duplicated(keep=False).rename('dupes')))
             self._check_evals(aep_ser)
+            
         #=======================================================================
         # #assemble event type  frame
         #=======================================================================
@@ -932,7 +933,9 @@ class Model(ComWrkr,
         
         return aep_ser
         
-    def _check_evals(self, aep_ser):
+    def _check_evals(self, aep_ser, logger=None):
+        if logger is None: logger=self.logger
+        log=logger.getChild('check_evals')
 
         #check all aeps are below 1
         boolar = np.logical_and(
@@ -942,7 +945,6 @@ class Model(ComWrkr,
         assert np.all(boolar), 'passed aeps out of range'
         
         #check logic against whether this model considers failure
-        
         if self.exlikes == '': #no failure
             
             assert len(aep_ser.unique())==len(aep_ser), \
@@ -950,6 +952,12 @@ class Model(ComWrkr,
         else:
             assert len(aep_ser.unique())!=len(aep_ser), \
             'got unique \'evals\' but \'exlikes\' data is provided... see logger'
+            
+        #check minimum events for risk calculation
+        if not len(aep_ser.unique())>2:
+            log.warning("received %i unique events. this small number could cause unexpected behavior of the EAD algorhihtim"%(
+                len(aep_ser.unique())))
+        
         
     def load_expos(self,#generic exposure loader
                    fp = None,
@@ -2385,7 +2393,8 @@ class Model(ComWrkr,
         #=======================================================================
         if not 'float' in df_raw.columns.dtype.name:
             raise Error('expected aep values in columns')
-        assert len(df_raw.columns)>2
+        
+        #assert len(df_raw.columns)>2
         
         #=======================================================================
         # prep
