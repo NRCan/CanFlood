@@ -13,11 +13,11 @@ helper functions for use in plugins
 # imports------------
 #==============================================================================
 #python
-import logging, configparser, datetime, sys, os
+import logging, configparser, datetime, sys, os, types
 import pandas as pd
 
 #Qgis imports
-from qgis.core import QgsVectorLayer, Qgis, QgsProject, QgsLogger, QgsMessageLog
+from qgis.core import QgsVectorLayer, Qgis, QgsProject, QgsLogger, QgsMessageLog, QgsMapLayer
 
 #pyQt
 from PyQt5.QtWidgets import QApplication, QWidget, QInputDialog, QLineEdit, QFileDialog, QPushButton
@@ -394,75 +394,64 @@ class pandasModel(QAbstractTableModel):
         return None
     
 
+def bind_layersListWidget(widget, #instanced widget
+                          layerType=None, #optional layertype to enforce
+                          iface=None
+                         ):
+    """
+    because Qgis passes instanced widgets, need to bind any new methods programatically
+    """
+
+        
     
-    
-#===============================================================================
-# class xxxDataFrameModel(QtCore.QAbstractTableModel):
-#     """
-#     taken from here:
-#     https://stackoverflow.com/questions/44603119/how-to-display-a-pandas-data-frame-with-pyqt5-pyside2
-#     """
-#     DtypeRole = QtCore.Qt.UserRole + 1000
-#     ValueRole = QtCore.Qt.UserRole + 1001
-# 
-#     def __init__(self, df=pd.DataFrame(), parent=None):
-#         super(DataFrameModel, self).__init__(parent)
-#         self._dataframe = df
-# 
-#     def setDataFrame(self, dataframe):
-#         self.beginResetModel()
-#         self._dataframe = dataframe.copy()
-#         self.endResetModel()
-# 
-#     def dataFrame(self):
-#         return self._dataframe
-# 
-#     dataFrame = QtCore.pyqtProperty(pd.DataFrame, fget=dataFrame, fset=setDataFrame)
-# 
-#     @QtCore.pyqtSlot(int, QtCore.Qt.Orientation, result=str)
-#     def headerData(self, section: int, orientation: QtCore.Qt.Orientation, role: int = QtCore.Qt.DisplayRole):
-#         if role == QtCore.Qt.DisplayRole:
-#             if orientation == QtCore.Qt.Horizontal:
-#                 return self._dataframe.columns[section]
-#             else:
-#                 return str(self._dataframe.index[section])
-#         return QtCore.QVariant()
-# 
-#     def rowCount(self, parent=QtCore.QModelIndex()):
-#         if parent.isValid():
-#             return 0
-#         return len(self._dataframe.index)
-# 
-#     def columnCount(self, parent=QtCore.QModelIndex()):
-#         if parent.isValid():
-#             return 0
-#         return self._dataframe.columns.size
-# 
-#     def data(self, index, role=QtCore.Qt.DisplayRole):
-#         if not index.isValid() or not (0 <= index.row() < self.rowCount() \
-#             and 0 <= index.column() < self.columnCount()):
-#             return QtCore.QVariant()
-#         row = self._dataframe.index[index.row()]
-#         col = self._dataframe.columns[index.column()]
-#         dt = self._dataframe[col].dtype
-# 
-#         val = self._dataframe.iloc[row][col]
-#         if role == QtCore.Qt.DisplayRole:
-#             return str(val)
-#         elif role == DataFrameModel.ValueRole:
-#             return val
-#         if role == DataFrameModel.DtypeRole:
-#             return dt
-#         return QtCore.QVariant()
-# 
-#     def roleNames(self):
-#         roles = {
-#             QtCore.Qt.DisplayRole: b'display',
-#             DataFrameModel.DtypeRole: b'dtype',
-#             DataFrameModel.ValueRole: b'value'
-#         }
-#         return roles
-#===============================================================================
+    #===========================================================================
+    # define functions
+    #===========================================================================
+        
+        
+    def populate_layers(self, layers=None):
+        if layers is None:
+            #get all from the project
+            layers = [layer for layer in QgsProject.instance().mapLayers().values()]
+            
+            #apply filters
+            if not layerType is None:
+                layers = self._apply_filter(layers)
+                
+        
+        self.clear()
+        #add all these
+        for layer in layers:
+            e = layer.name()
+            self.addItem(e)
+            #print('adding \'%s\''%e):
+            
+    def _apply_filter(self, layers):
+        return [rl for rl in layers if rl.type()==layerType]
+            
+    def select_visible(self):
+        print('selecint only visible layers')
+        lays_l = iface.mapCanvas().layers()
+        self._set_selection_byName([l.name() for l in lays_l])
+        
+    def select_canvas(self):
+        print('set the selection the same as the canvas')
+        lays_l = iface.layerTreeView().selectedLayers()
+        self._set_selection_byName([l.name() for l in lays_l])
+        
+    def _set_selection_byName(self, names_l):
+        for indx in range(0, self.count()):
+            if self.item(indx).text() in names_l:
+                self.item(indx).setSelected(True)
+            else:
+                self.item(indx).setSelected(False)
+            
+    #===========================================================================
+    # bind them
+    #===========================================================================
+    for fName in ['populate_layers', '_apply_filter', 'select_visible', 'select_canvas', '_set_selection_byName']:
+        setattr(widget, fName, types.MethodType(eval(fName), widget)) 
+
 #==============================================================================
 # functions-----------
 #==============================================================================

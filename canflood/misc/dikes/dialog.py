@@ -22,7 +22,7 @@ from PyQt5 import QtGui
 
 #qgis
 
-#from qgis.core import *
+from qgis.core import QgsMapLayer
 
 
 #==============================================================================
@@ -32,7 +32,7 @@ from PyQt5 import QtGui
 import hlpr.plug
 from hlpr.basic import get_valid_filename, view
 from hlpr.exceptions import QError as Error
-from hlpr.plug import MyFeedBackQ, QprojPlug, pandasModel
+from hlpr.plug import MyFeedBackQ, QprojPlug, pandasModel, bind_layersListWidget
 
 
 #===============================================================================
@@ -141,18 +141,19 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # wsl raster layers
         #=======================================================================
-
-        if rlays is None:
-            """todo: get all the raster layers in the project"""
-            rlays = list()
+        #list widget
+        bind_layersListWidget(self.listWidget_expo_rlays, iface=self.iface, 
+                              layerType=QgsMapLayer.RasterLayer) #add custom bindigns
         
-        for layer in rlays:
-            e = layer.name()
-            self.listWidget_expo_rlays.addItem(e)
-            print('adding \'%s\''%e)
+        self.listWidget_expo_rlays.populate_layers(layers=rlays) #populate
         
+        #connect buttons
+        self.pushButton_expo_sAll.clicked.connect(self.listWidget_expo_rlays.selectAll)
+        self.pushButton_expo_clear.clicked.connect(self.listWidget_expo_rlays.clearSelection)
+        self.pushButton_expo_sVis.clicked.connect(self.listWidget_expo_rlays.select_visible)
+        self.pushButton_expo_refr.clicked.connect(self.listWidget_expo_rlays.populate_layers)
        
-                
+        self.listWidget_expo_rlays._set_selection_byName([r.name() for r in rlays])
             
         
 if __name__=='__main__':
