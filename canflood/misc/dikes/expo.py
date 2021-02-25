@@ -699,15 +699,21 @@ class Dexpo(Qcoms, DPlotr):
         
     
 
-    def get_breach_vlays(self, #get vlays of breach points
+    def get_breach_vlays(self, #get exposure points with negative freeboard
                          vlay_d = None,
                          logger=None,
                          ):
         
+        #=======================================================================
+        # defaults
+        #=======================================================================
         if logger is None: logger=self.logger
         log=logger.getChild('get_breach_vlays')
         if vlay_d is None: vlay_d = self.expo_vlay_d
         
+        #=======================================================================
+        # loop and calc for each
+        #=======================================================================
         log.info('on %i vlays'%len(vlay_d))
         res_d = dict()
         for eTag, vlay_raw in vlay_d.items():
@@ -721,9 +727,10 @@ class Dexpo(Qcoms, DPlotr):
             
             fcnt = vlay.dataProvider().featureCount()
             if fcnt ==0:
-                log.warning('%s got no breach points'%eTag)
+                log.debug('%s got no breach points'%eTag)
             else:
-                log.info('%s got %i breach pionts'%(eTag, fcnt))
+                log.debug('%s got %i breach poitns'%(eTag, fcnt))
+                vlay.setName('%s_breach_%i_pts'%(eTag, fcnt))
                 res_d[eTag] = vlay
             
         #=======================================================================

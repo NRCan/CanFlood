@@ -38,11 +38,15 @@ from hlpr.basic import force_open_dir
 #==============================================================================
 class QprojPlug(Qcoms): #baseclass for plugins
     
+    groupName = 'CanFlood' #default group for loading layers to canvas
+    
     tag='scenario1'
     overwrite=True
     wd = ''
     progress = 0
     
+    
+    loadRes = False #whether to load layers to canvas
     
     
     """not a great way to init this one
@@ -67,6 +71,8 @@ class QprojPlug(Qcoms): #baseclass for plugins
             
         self.setup_feedback(progressBar = self.progressBar,
                             feedback = MyFeedBackQ())
+        
+        self.layerTree = QgsProject.instance().layerTreeRoot() #for groups
         
         #=======================================================================
         # default directories
@@ -272,16 +278,57 @@ class QprojPlug(Qcoms): #baseclass for plugins
             
             if not os.path.exists(default_wdir): os.makedirs(default_wdir)
             
-    def _load_toCanvas(self,  #helper to load a container of layers to canvas w/ some reporting
-                       d, log):
+    def _load_toCanvas(self,  #helper to load a layers to canvas w/ some reporting
+                       layers, log, 
+                       groupName=None, #optional group name to load to
+                       ):
         
-        #load
-        for k, layer in d.items():
-            self.qproj.addMapLayer(layer)
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        """forcing layers into a group"""
+        if groupName is None: groupName = self.groupName
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        if not self.loadRes: log.warning('load results to canvas control mismatch!')
+        
+        #=======================================================================
+        # groups
+        #=======================================================================
+        if not groupName is None:
+            group = self.layerTree.findGroup(groupName) #search
+            if group is None: #nothign found.. add the group
+                group = self.layerTree.addGroup(groupName)
+                log.debug('group not found.. added \'%s\''%groupName)
+        else:
+            group = None
             
-        #report
-        layNames = [lay.name() for lay in d.values()]
-        log.info('loaded %i layers: %s'%(len(layNames), layNames))
+        def add_layer(lay):
+            if not group is None:
+                group.addLayer(lay)
+            else:
+                self.qproj.addMapLayer(lay)
+        
+        #=======================================================================
+        # #load
+        #=======================================================================
+        if isinstance(layers, list):
+            for layer in layers:
+                add_layer(layer)
+
+            #report
+            layNames = [lay.name() for lay in layers]
+            log.info('loaded %i layers: %s'%(len(layNames), layNames))
+            
+        elif isinstance(layers, QgsMapLayer):
+            add_layer(layers)
+            log.info('laoded \'%s\' to project'%layers.name())
+            
+        else:
+            raise Error('unrecognized layer container type: %s'%type(layers))
+            
+        return
         
 
 class logger(object): #workaround for qgis logging pythonic

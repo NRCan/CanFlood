@@ -582,12 +582,8 @@ class Plotr(ComWrkr):
             
         out_fp = os.path.join(out_dir, '%s.%s'%(fname, fmt))
             
-        if os.path.exists(out_fp):
-            msg = 'passed output file path already esists :\n    %s'%out_fp
-            if overwrite: 
-                log.warning(msg)
-            else: 
-                raise Error(msg)
+        if os.path.exists(out_fp): assert overwrite
+
             
         #write the file
         try: 
