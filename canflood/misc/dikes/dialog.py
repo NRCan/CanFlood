@@ -39,8 +39,8 @@ from hlpr.plug import MyFeedBackQ, QprojPlug, pandasModel, bind_layersListWidget
 #===============================================================================
 # workers
 #===============================================================================
-from misc.dikes.expo import Dexpo
-from misc.dikes.vuln import Dvuln
+
+
 
 
 #===============================================================================
@@ -240,7 +240,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         log.debug('start')
         self._set_setup() #attach all the commons
         self.feedback.setProgress(5)
-
+        from misc.dikes.expo import Dexpo
         #=======================================================================
         # collect inputs
         #=======================================================================
@@ -339,7 +339,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         log.debug('start')
         self._set_setup() #attach all the commons
         self.feedback.setProgress(5)
-            
+        from misc.dikes.vuln import Dvuln
         #=======================================================================
         # collect inputs
         #=======================================================================
@@ -357,12 +357,12 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         wrkr._setup(
             dexpo_fp=self.lineEdit_v_dexpo_fp.text(),
              dcurves_fp = self.lineEdit_v_dcurves_fp.text())
-        
+        self.feedback.setProgress(20)
         #==========================================================================
         # execute
         #==========================================================================
         pf_df = wrkr.get_failP()
-        
+        self.feedback.setProgress(60)
         #=======================================================================
         # length effect
         #=======================================================================
@@ -376,12 +376,12 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
 
         if not method is None:
             wrkr.set_lenfx(method=method) #apply length effects
-            
+        self.feedback.setProgress(80)
         #=======================================================================
         # outputs
         #=======================================================================
         pfail_fp = wrkr.output_vdfs()
-        
+        self.feedback.setProgress(95)
         #=======================================================================
         # update gui
         #=======================================================================
@@ -390,6 +390,45 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         log.info('finished Dike Vuln w/ %s'%str(pf_df.shape))
         self.feedback.upd_prog(None)
         
+    def run_rjoin(self): #join failure probabilities onto influence polygons
+        #=======================================================================
+        # setup
+        #=======================================================================
+        log = self.logger.getChild('run_rjoin')
+        log.debug('start')
+        self._set_setup() #attach all the commons
+        self.feedback.setProgress(5)
+        from misc.dikes.rjoin import DikeJoiner
+        
+        """no reason to build the layers if they won't be loaded"""
+        assert self.loadRes, 'ensure \'Load Results to Canvas..\' is selected'
+        #=======================================================================
+        # init
+        #=======================================================================
+        kwargs = {attn:getattr(self, attn) for attn in ['logger', 'out_dir', 'segID', 'dikeID', 'tag', 'cbfn']}
+        wrkr = DikeJoiner(**kwargs)
+        self.feedback.setProgress(10)
+        
+        #==========================================================================
+        # load the data
+        #==========================================================================
+        wrkr.load_pfail_df(self.lineEdit_v_ifz_pfail_fp.text())
+        self.feedback.setProgress(40)
+        #==========================================================================
+        # execute
+        #==========================================================================
+        vlay_d = wrkr.join_pfails()
+        self.feedback.setProgress(80)
+        #=======================================================================
+        # outputs
+        #=======================================================================
+        self._load_toCanvas(list(vlay_d.values()), log)
+        self.feedback.setProgress(95)
+        #=======================================================================
+        # wrapo
+        #=======================================================================
+        log.info('finisehd Join Areas w/ %i'%len(vlay_d))
+        self.feedback.upd_prog(None)
         
 if __name__=='__main__':
     print('???')
