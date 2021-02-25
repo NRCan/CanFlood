@@ -138,9 +138,26 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # setup--------
         #=======================================================================
+        #working directory
         self._connect_wdir(self.pushButton_wd_brwse, self.pushButton_wd_open, self.lineEdit_wdir,
                            default_wdir = os.path.join(os.path.expanduser('~'), 'CanFlood', 'dikes'))
+        
+        #aoi
+        self.comboBox_aoi.setFilters(QgsMapLayerProxyModel.PolygonLayer) #SS. Project AOI
+        self.comboBox_aoi.setCurrentIndex(-1) #by default, lets have this be blan
 
+        #=======================================================================
+        # #dikes
+        #=======================================================================
+        self.comboBox_dikesVlay.setFilters(QgsMapLayerProxyModel.LineLayer)
+        
+        #connect field boxes
+        self.comboBox_dikesVlay.layerChanged.connect(
+            lambda : self.mfcb_connect(self.mFieldComboBox_dikeID, 
+                           self.comboBox_ivlay.currentLayer(), fn_str='id'))
+
+        
+ 
         #=======================================================================
         # Exposure--------
         #=======================================================================
@@ -174,9 +191,25 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.pushButton_expo_run.clicked.connect(self.run_expo)
         
         
-    def _get_pars(self): #get common pars from Setup tab
-        self.scenarioName = self.linEdit_ScenTag.text()
+    def _set_setup(self): #attach parameters from setup tab
         
+        #secssion controls
+        self.scenarioName = self.linEdit_ScenTag.text()
+        self.out_dir = self.lineEdit_wdir.text()
+        assert os.path.exists(self.out_dir), 'working directory does not exist!'
+        
+        #project aoi
+        self.aoi_vlay = self.comboBox_aoi.currentLayer()
+        
+        #file behavior
+        self.loadRes = self.checkBox_loadres.isChecked()
+        self.overwrite=self.checkBox_SSoverwrite.isChecked()
+        self.absolute_fp = self.radioButton_SS_fpAbs.isChecked()
+        
+        #dikes layer
+        self.dikes_vlay = self.comboBox_dikesVlay.currentLayer()
+        self.dikeID = self.mFieldComboBox_dikeID.currentField()
+        self.segID = self.mFieldComboBox_segID.currentField()
         
     def run_expo(self): #execute dike exposure routeines
         print('run_expo')

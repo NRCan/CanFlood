@@ -34,7 +34,7 @@ from .model.ModelDialog import Modelling_Dialog
 from .results.ResultsDialog import Results_Dialog
 from .misc.wc import WebConnect
 from .misc.rfda import rfda_dialog
-
+from .misc.dikes.dialog import DikesDialog
 
 
 
@@ -67,7 +67,7 @@ class CanFlood:
         self.dlg3 = Results_Dialog(self.iface)
         
         self.dlg_rfda = rfda_dialog.rDialog(self.iface)
-        
+        self.dlg_dikes = DikesDialog(self.iface)
 
         
 
@@ -176,20 +176,17 @@ class CanFlood:
         #add to the menu
         self.iface.addPluginToMenu(self.menu_name, self.action_rfda)
         
+        #=======================================================================
+        # dikes
+        #=======================================================================
+        icon = QIcon(os.path.dirname(__file__) + "/icons/dike.png")
+        self.action_dikes = QAction(QIcon(icon), 'Dike Fragility Mapper', self.iface.mainWindow())
+        self.action_dikes.triggered.connect(self.dlg_dikes.show)
+        self.act_menu_l.append(self.action_dikes) #add for cleanup
+        
+        #add to the menu
+        self.iface.addPluginToMenu(self.menu_name, self.action_dikes)
 
-    #===========================================================================
-    # def showToolbarDataPrep(self):
-    #     
-    #     # Using exec_() creating a blocking dialog, show creates a non-blocking dialog
-    #     #self.dlg1.exec_()
-    #     self.dlg1.show()
-    # 
-    # def showToolbarProjectModelling(self):
-    #     self.dlg2.show()
-    # 
-    # def showToolbarProjectResults(self):
-    #     self.dlg3.show()
-    #===========================================================================
 
         
         
@@ -242,7 +239,7 @@ class CanFlood:
         
 
     def run(self):
-        """Run method that performs all the real work"""
+
         # show the dialog
         self.dlg.show()
         # Run the dialog event loop

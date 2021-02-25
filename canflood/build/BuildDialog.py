@@ -147,23 +147,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self._connect_wdir(self.pushButton_wd, self.pushButton_wd_open, self.lineEdit_wd,
                            default_wdir = os.path.join(os.path.expanduser('~'), 'CanFlood', 'build'))
                 
-        #=======================================================================
-        # """default is set below.
-        # doesn't seem to open the displayed directory on first click"""
-        # def browse_wd():
-        #     return self.browse_button(self.lineEdit_wd, prompt='Select Working Directory',
-        #                               qfd = QFileDialog.getExistingDirectory)
-        #     
-        # self.pushButton_wd.clicked.connect(browse_wd) # SS. Working Dir. Browse
-        #=======================================================================
-        
-        #=======================================================================
-        # #WD force open
-        # def open_wd():
-        #     force_open_dir(self.lineEdit_wd.text())
-        #=======================================================================
-        
-        #self.pushButton_wd_open.clicked.connect(open_wd)
+
         
         #AOI
         self.comboBox_aoi.setFilters(QgsMapLayerProxyModel.PolygonLayer) #SS. Project AOI
