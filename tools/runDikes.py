@@ -115,7 +115,9 @@ class DikeRunner(Runner):
         #mandatory
         noFailr_d = wrkr.load_rlays(pars_d['noFailr_d'], basedir = pars_d['data_dir'])
         
-        _ = wrkr.load_dike(pars_d['dikes'], basedir = pars_d['data_dir'])
+        dike_vlay = wrkr.load_vlay(os.path.join(pars_d['data_dir'], pars_d['dikes']))
+        
+        _ = wrkr.prep_dike(dike_vlay)
         _ = wrkr.load_dtm(pars_d['dtm'])
 
         

@@ -181,7 +181,7 @@ class CanFlood:
         #=======================================================================
         icon = QIcon(os.path.dirname(__file__) + "/icons/dike.png")
         self.action_dikes = QAction(QIcon(icon), 'Dike Fragility Mapper', self.iface.mainWindow())
-        self.action_dikes.triggered.connect(self.dlg_dikes.show)
+        self.action_dikes.triggered.connect(self.dlg_dikes.launch)
         self.act_menu_l.append(self.action_dikes) #add for cleanup
         
         #add to the menu

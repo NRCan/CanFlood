@@ -29,10 +29,11 @@ from qgis.core import QgsMapLayer, QgsMapLayerProxyModel
 # custom imports
 #==============================================================================
 
-import hlpr.plug
+
 from hlpr.basic import get_valid_filename, view
 from hlpr.exceptions import QError as Error
-from hlpr.plug import MyFeedBackQ, QprojPlug, pandasModel, bind_layersListWidget
+import hlpr.plug
+from hlpr.plug import MyFeedBackQ, QprojPlug, pandasModel, bind_layersListWidget, bind_MapLayerComboBox
 
 
 #===============================================================================
@@ -102,12 +103,20 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         
         
-        self.logger.debug('rDialog initilized')
+        self.logger.info('rDialog initilized')
+        
+
         
     def _setup(self, **kwargs):
 
         self.connect_slots(**kwargs)
         return self
+    
+    def launch(self): #connect + show
+        """called by CanFlood.py menu click
+        should improve load time by moving the connections to after the menu click"""
+        self.connect_slots()
+        self.show()
 
     def connect_slots(self,
                       rlays=None, #set of rasters to populate list w/ 
@@ -143,15 +152,24 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # #dikes
         #=======================================================================
-        self.comboBox_dikesVlay.setFilters(QgsMapLayerProxyModel.LineLayer)
+        bind_MapLayerComboBox(self.comboBox_dikesVlay, 
+                      layerType=QgsMapLayerProxyModel.LineLayer, iface=self.iface)
+        self.comboBox_dikesVlay.attempt_selection('dikes')
         
         #connect field boxes
         self.comboBox_dikesVlay.layerChanged.connect(
             lambda : self.mfcb_connect(self.mFieldComboBox_dikeID, 
-                           self.comboBox_ivlay.currentLayer(), fn_str='id'))
+                           self.comboBox_dikesVlay.currentLayer(), fn_str='id'))
 
+        self.comboBox_dikesVlay.layerChanged.connect(
+            lambda : self.mfcb_connect(self.mFieldComboBox_segID, 
+                           self.comboBox_dikesVlay.currentLayer(), fn_str='seg'))
         
- 
+        self.comboBox_dikesVlay.layerChanged.connect(
+            lambda : self.mfcb_connect(self.mFieldComboBox_cbfn, 
+                           self.comboBox_dikesVlay.currentLayer(), fn_str='crest'))
+                
+
         #=======================================================================
         # Exposure--------
         #=======================================================================
@@ -159,7 +177,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         # wsl raster layers
         #=======================================================================
         #list widget
-        bind_layersListWidget(self.listWidget_expo_rlays, iface=self.iface, 
+        bind_layersListWidget(self.listWidget_expo_rlays, log, iface=self.iface, 
                               layerType=QgsMapLayer.RasterLayer) #add custom bindigns
         
         self.listWidget_expo_rlays.populate_layers(layers=rlays) #populate
@@ -168,21 +186,30 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.pushButton_expo_sAll.clicked.connect(self.listWidget_expo_rlays.selectAll)
         self.pushButton_expo_clear.clicked.connect(self.listWidget_expo_rlays.clearSelection)
         self.pushButton_expo_sVis.clicked.connect(self.listWidget_expo_rlays.select_visible)
-        self.pushButton_expo_refr.clicked.connect(self.listWidget_expo_rlays.populate_layers)
+        self.pushButton_expo_canvas.clicked.connect(self.listWidget_expo_rlays.select_canvas)
+        
+        """not sure if this fix is needed... but possibleissue with kwarg passing"""
+        self.pushButton_expo_refr.clicked.connect(lambda x: self.listWidget_expo_rlays.populate_layers())
        
         
         
         #=======================================================================
         # dtm
         #=======================================================================
-        self.mMapLayerComboBox_dtm.setFilters(QgsMapLayerProxyModel.RasterLayer)
-        self.mMapLayerComboBox_dtm.setAllowEmptyLayer(True)
-        self.mMapLayerComboBox_dtm.setCurrentIndex(-1) #set selection to none
-        
+        bind_MapLayerComboBox(self.mMapLayerComboBox_dtm, 
+                              layerType=QgsMapLayerProxyModel.RasterLayer, iface=self.iface)
+
+        self.mMapLayerComboBox_dtm.attempt_selection('dtm')
         #=======================================================================
         # run
         #=======================================================================
         self.pushButton_expo_run.clicked.connect(self.run_expo)
+        
+        
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        log.info("finished")
         
         
     def _set_setup(self): #attach parameters from setup tab
@@ -204,16 +231,19 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.dike_vlay = self.comboBox_dikesVlay.currentLayer()
         self.dikeID = self.mFieldComboBox_dikeID.currentField()
         self.segID = self.mFieldComboBox_segID.currentField()
+        self.cbfn = self.mFieldComboBox_cbfn.currentField()
         
     def run_expo(self): #execute dike exposure routeines
         log = self.logger.getChild('run_expo')
-        self.feedback.setProgress(1)
         log.debug('start')
+        self._set_setup() #attach all the commons
+        self.feedback.setProgress(5)
+        
         
         #=======================================================================
         # collect inputs
         #=======================================================================
-        kwargs = {attn:getattr(self, attn) for attn in ['logger', 'out_dir', 'segID', 'dikeID', 'tag']}
+        
         
         rlays_d = self.listWidget_expo_rlays.get_selected_layers()
         
@@ -226,23 +256,24 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # init
         #=======================================================================
-        
+        kwargs = {attn:getattr(self, attn) for attn in ['logger', 'out_dir', 'segID', 'dikeID', 'tag', 'cbfn']}
         wrkr = Dexpo(**kwargs)
         self.feedback.setProgress(10)
         
         #=======================================================================
         # execute
         #=======================================================================
+        dike_vlay = wrkr.prep_dike(self.dike_vlay)
         
-        kwargs = {attn:getattr(self, attn) for attn in ['dike_vlay']} 
+        kwargs = {attn:getattr(self, attn) for attn in []} 
         
         dxcol, vlay_d = wrkr.get_dike_expo(rlays_d, 
                            dtm_rlay = self.mMapLayerComboBox_dtm.currentLayer(),
-                           
+                           dike_vlay = dike_vlay,
                            #transect pars
                            tside=tside,
                            
-                           write_tr=self.checkBox_expo_write_tr.isChecked(),
+                           write_tr=False, #loaded below
                            dist_dike=float(self.doubleSpinBox_dist_dike.value()), 
                            dist_trans=float(self.doubleSpinBox_dist_trans.value()),
                            **kwargs)
@@ -253,15 +284,53 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         expo_df = wrkr.get_fb_smry()
         self.feedback.setProgress(80)
         #=======================================================================
-        # write
+        # write/load to cannvas----------
         #=======================================================================
+        """dont write any layers.. just load them and let the user write"""
         wrkr.output_expo_dxcol()
         dexpo_fp = wrkr.output_expo_df(as_vlay=self.checkBox_expo_write_vlay.isChecked())
         
+        #=======================================================================
+        # breach points
+        #=======================================================================
         if self.checkBox_expo_breach_pts.isChecked():
+            assert self.checkBox_loadres.isChecked(), 'to get ouput layers, check \'Load session results...\''
             breach_vlay_d = wrkr.get_breach_vlays()
-            wrkr.output_breaches()
             
+            for k, layer in breach_vlay_d.items():
+                self.qproj.addMapLayer(layer)
+            log.info('loaded %i breach point layers'%len(breach_vlay_d))
+            
+        #=======================================================================
+        # transects
+        #=======================================================================
+        if self.checkBox_expo_write_tr.isChecked():
+            assert self.checkBox_loadres.isChecked(), 'to get ouput layers, check \'Load session results...\''
+            self.qproj.addMapLayer(wrkr.tr_vlay)
+            log.info('loaded transect layer \'%s\' to canvas'%wrkr.tr_vlay.name())
+            
+        #=======================================================================
+        # exposure crest points
+        #=======================================================================
+        if self.checkBox_expo_crestPts.isChecked():
+            assert self.checkBox_loadres.isChecked(), 'to get ouput layers, check \'Load session results...\''
+            
+            for k, layer in wrkr.expo_vlay_d.items():
+                self.qproj.addMapLayer(layer)
+            log.info('loaded %i expo_crest_pts layers'%len(wrkr.expo_vlay_d))
+            
+        #=======================================================================
+        # dike layer
+        #=======================================================================
+        if self.checkBox_expo_wDikes.isChecked():
+            assert self.checkBox_loadres.isChecked(), 'to get ouput layers, check \'Load session results...\''
+            self.qproj.addMapLayer(dike_vlay)
+            log.info('added \'%s\' to canvas'%(dike_vlay.name()))
+            
+            
+        #=======================================================================
+        # plots
+        #=======================================================================
         if self.checkBox_expo_plot.isChecked():
             wrkr._init_plt()
             for sidVal in wrkr.sid_vals:

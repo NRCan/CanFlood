@@ -216,6 +216,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
 
         #find a good layer
+        """TODO: 
+        migrate to bind_MapLayerComboBox()
+        """
         if len(vlays_d)>0:
             try:
                 for layname, vlay in vlays_d.items():

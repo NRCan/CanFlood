@@ -101,7 +101,7 @@
           </size>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>3</number>
          </property>
          <property name="movable">
           <bool>false</bool>
@@ -3612,7 +3612,7 @@ p, li { white-space: pre-wrap; }
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
+                   <width>599</width>
                    <height>500</height>
                   </rect>
                  </property>

@@ -51,7 +51,7 @@ class Dcoms(ComWrkr):
     segln = 'sid_len'
     fbn = 'freeboard'
     sid = 'sid' #global segment identifier
-    cbfn = 'crest_buff' #crest buffer field name
+    
     nullSamp = -999 #value for bad samples
     
     lfxn = 'lenfx_SF'
@@ -64,6 +64,7 @@ class Dcoms(ComWrkr):
     def __init__(self,                  
              dikeID = 'dikeID', #dike identifier field
              segID = 'segID', #segment identifier field
+             cbfn = 'crest_buff', #crest buffer field name
                   *args,  **kwargs):
         
         super().__init__(*args,**kwargs)
@@ -72,6 +73,7 @@ class Dcoms(ComWrkr):
         # attach
         #=======================================================================
         self.dikeID, self.segID = dikeID, segID #done during init
+        self.cbfn = cbfn
         
         self.logger.debug('Dcoms.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
         

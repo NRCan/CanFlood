@@ -444,6 +444,58 @@
                 </item>
                </layout>
               </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_8">
+                <item>
+                 <widget class="QLabel" name="label_11">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>Crest Buffer Field (cbfn):</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QgsFieldComboBox" name="mFieldComboBox">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>100</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>200</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_3">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </item>
              </layout>
             </widget>
            </item>
@@ -686,14 +738,7 @@
               <string>Output Control</string>
              </property>
              <layout class="QGridLayout" name="gridLayout_2">
-              <item row="6" column="0">
-               <widget class="QCheckBox" name="checkBox_expo_write_vlay">
-                <property name="text">
-                 <string>Write Results VectorLayer</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="1">
+              <item row="1" column="2">
                <widget class="QCheckBox" name="checkBox_expo_plot">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -709,6 +754,13 @@
                 </property>
                </widget>
               </item>
+              <item row="6" column="0">
+               <widget class="QCheckBox" name="checkBox_expo_crestPts">
+                <property name="text">
+                 <string>Generate All Exposure Layers</string>
+                </property>
+               </widget>
+              </item>
               <item row="1" column="0">
                <widget class="QCheckBox" name="checkBox_expo_breach_pts">
                 <property name="sizePolicy">
@@ -718,14 +770,27 @@
                  </sizepolicy>
                 </property>
                 <property name="text">
-                 <string>Write Breach Points (breach_pts)</string>
+                 <string>Generate Breach Points (breach_pts)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QCheckBox" name="checkBox_expo_write_tr">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Generate Transects Layer</string>
                 </property>
                </widget>
               </item>
               <item row="6" column="1">
-               <widget class="QCheckBox" name="checkBox_expo_write_tr">
+               <widget class="QCheckBox" name="checkBox_expo_wDikes">
                 <property name="text">
-                 <string>Write Transects Layer (write_tr)</string>
+                 <string>Generate Proccessed Dikes Layer</string>
                 </property>
                </widget>
               </item>

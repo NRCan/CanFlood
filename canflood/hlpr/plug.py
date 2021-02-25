@@ -420,15 +420,17 @@ class pandasModel(QAbstractTableModel):
     
 
 def bind_layersListWidget(widget, #instanced widget
+                          log,
                           layerType=None, #optional layertype to enforce
-                          iface=None
+                          iface=None,
+                          
                          ):
     """
     because Qgis passes instanced widgets, need to bind any new methods programatically
     """
 
         
-    
+    widget.iface = iface
     #===========================================================================
     # populating and setting selection
     #===========================================================================
@@ -441,25 +443,28 @@ def bind_layersListWidget(widget, #instanced widget
             if not layerType is None:
                 layers = self._apply_filter(layers)
                 
-        
         self.clear()
+        assert isinstance(layers, list), 'bad type on layeres: %s'%type(layers)
+        
         #add all these
         for layer in layers:
             e = layer.name()
             self.addItem(e)
             #print('adding \'%s\''%e):
+        del layers
             
     def _apply_filter(self, layers):
         return [rl for rl in layers if rl.type()==layerType]
             
     def select_visible(self):
-        print('selecint only visible layers')
-        lays_l = iface.mapCanvas().layers()
+        #print('selecint only visible layers')
+        lays_l = self.iface.mapCanvas().layers()
         self._set_selection_byName([l.name() for l in lays_l])
         
     def select_canvas(self):
-        print('set the selection the same as the canvas')
-        lays_l = iface.layerTreeView().selectedLayers()
+ 
+        lays_l = self.iface.layerTreeView().selectedLayers()
+        #log.info('setting selection to %i layers from layerTreeView'%len(lays_l))
         self._set_selection_byName([l.name() for l in lays_l])
         
     def _set_selection_byName(self, names_l):
@@ -499,9 +504,36 @@ def bind_layersListWidget(widget, #instanced widget
     #===========================================================================
     # bind them
     #===========================================================================
-    for fName in ['populate_layers', '_apply_filter', 'select_visible', 'select_canvas', '_set_selection_byName']:
+    for fName in ['populate_layers', '_apply_filter', 'select_visible', 'select_canvas', 
+                  '_set_selection_byName', 'get_selected_layers']:
         setattr(widget, fName, types.MethodType(eval(fName), widget)) 
-
+        
+def bind_MapLayerComboBox(widget, #add some bindings to layer combo boxes
+                          iface=None, layerType=None): 
+    
+    
+    #default selection
+    if not layerType is None:
+        widget.setFilters(layerType)
+    widget.setAllowEmptyLayer(True)
+    widget.setCurrentIndex(-1) #set selection to none
+    
+    #===========================================================================
+    # define new methods
+    #===========================================================================
+    def attempt_selection(self, layName):
+        
+        qproj = QgsProject.instance()
+        layers = qproj.mapLayersByName(layName)
+        
+        if len(layers)>0:
+            self.setLayer(layers[0])
+            
+    #===========================================================================
+    # bind functions
+    #===========================================================================
+    for fName in ['attempt_selection']:
+        setattr(widget, fName, types.MethodType(eval(fName), widget)) 
 #==============================================================================
 # functions-----------
 #==============================================================================

@@ -84,13 +84,18 @@ class Dexpo(Qcoms, DPlotr):
         
         return d
     
-    def load_dike(self, fp,
+    def prep_dike(self, #do some pre-calcs on teh dike layer
+                vlay_raw,
                   dikeID = None, #dike identifier field
                   segID = None, #segment identifier field
                   cbfn = None, #crest buffer
                   
-                  basedir=None,
-                   logger=None, **kwargs):
+ 
+                   logger=None):
+        
+        """
+        not sure it makes sense to have this separate from get_dike_expo anymroe
+        """
         
         #=======================================================================
         # defaults
@@ -105,14 +110,7 @@ class Dexpo(Qcoms, DPlotr):
         
         mstore = QgsMapLayerStore() #build a new map store
         
-        if not basedir is None: 
-            assert os.path.exists(basedir)
-            fp = os.path.join(basedir, fp)
-        #=======================================================================
-        # load it
-        #=======================================================================
-        vlay_raw = self.load_vlay(fp, **kwargs)
-        mstore.addMapLayer(vlay_raw)
+ 
         
         #=======================================================================
         # precheck
@@ -181,11 +179,7 @@ class Dexpo(Qcoms, DPlotr):
         self.sid_vals = df[self.sid].unique().tolist()
         mstore.removeAllMapLayers()
         
-        """
-        view(res_vlay)
-        
-        """
-        
+         
         return self.dike_vlay
     
 
@@ -227,7 +221,8 @@ class Dexpo(Qcoms, DPlotr):
         #=======================================================================
         # prechecks
         #=======================================================================
-        assert sid in [f.name() for f in dike_vlay.fields()], 'failed to get sid on dikes'
+        assert sid in [f.name() for f in dike_vlay.fields()], \
+            'failed to get sid \'%s\'on dikes vlay fields'%(sid)
         
         #crs
         for layer in [dike_vlay, dtm_rlay]:
