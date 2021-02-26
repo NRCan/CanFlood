@@ -693,7 +693,7 @@ def bind_link_boxes(widget, #wrapper for widget containing comboboxes linking la
         for indx, (gName, gd) in enumerate(self.children_links_d.items()):
             assert name_str in gd
             if len(layers)<indx+1: break #stop here
-            layer =  #get the layer
+ 
             
             gd[name_str].setLayer(layers[indx])
 
@@ -702,7 +702,7 @@ def bind_link_boxes(widget, #wrapper for widget containing comboboxes linking la
     #===========================================================================
     # bind functions
     #===========================================================================
-    for fName in ['get_linked_layers', 'clear_all', 'fill_down']:
+    for fName in ['get_linked_layers', 'clear_all', 'fill_down', 'set_selections']:
         setattr(widget, fName, types.MethodType(eval(fName), widget)) 
  
 #==============================================================================
