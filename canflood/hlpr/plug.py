@@ -571,7 +571,7 @@ def bind_layersListWidget(widget, #instanced widget
 def bind_MapLayerComboBox(widget, #add some bindings to layer combo boxes
                           iface=None, layerType=None): 
     
-    
+    widget.iface=iface
     #default selection
     if not layerType is None:
         widget.setFilters(layerType)
@@ -582,7 +582,6 @@ def bind_MapLayerComboBox(widget, #add some bindings to layer combo boxes
     # define new methods
     #===========================================================================
     def attempt_selection(self, layName):
-        
         qproj = QgsProject.instance()
         layers = qproj.mapLayersByName(layName)
         
@@ -595,12 +594,13 @@ def bind_MapLayerComboBox(widget, #add some bindings to layer combo boxes
     for fName in ['attempt_selection']:
         setattr(widget, fName, types.MethodType(eval(fName), widget)) 
         
+        
 def bind_link_boxes(widget, #wrapper for widget containing comboboxes linking layers (1:1)
                          types_d, #column type parameterse {comboBox.name string: comboBox layer type}
                          childWidgetType=QComboBox, #lowest container with layer selection
                          iface=None):
     
-    
+    widget.iface=iface
     #===========================================================================
     # #collect all the widgets and set the filters
     #===========================================================================
@@ -660,10 +660,6 @@ def bind_link_boxes(widget, #wrapper for widget containing comboboxes linking la
                         break #just taking the first
             rLib = d #reset the result
                     
-                
-            
-        
-        
         return rLib 
     
     def clear_all(self): #clear all the combo boxes
@@ -671,7 +667,9 @@ def bind_link_boxes(widget, #wrapper for widget containing comboboxes linking la
             child.setCurrentIndex(-1)
             
     def fill_down(self,  #take the first entry in the combo box column matching the name, and propagate
-                  name_str):
+                  name_str,
+                  name_str2= None, #optional paired name_str to stop filling when blank
+                  ):
         
         first = True
         for gName, gd in self.children_links_d.items():
@@ -682,10 +680,24 @@ def bind_link_boxes(widget, #wrapper for widget containing comboboxes linking la
                 layer1 = gd[name_str].currentLayer()
                 first = False
             else:
+                if not name_str2 is None:
+                    if gd[name_str2].currentLayer() is None:
+                        break #stop the filling here
                 gd[name_str].setLayer(layer1)
-            
+                
+    def set_selections(self, #populate a column with layers
+                       name_str,
+                       layers, #list of layers to populate combo boxes with
+                       ):
         
+        for indx, (gName, gd) in enumerate(self.children_links_d.items()):
+            assert name_str in gd
+            if len(layers)<indx+1: break #stop here
+            layer =  #get the layer
             
+            gd[name_str].setLayer(layers[indx])
+
+                
 
     #===========================================================================
     # bind functions

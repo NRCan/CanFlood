@@ -53,7 +53,7 @@
        <item>
         <widget class="QTabWidget" name="tabWidget">
          <property name="currentIndex">
-          <number>3</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="tab_setup">
           <attribute name="title">
@@ -1884,6 +1884,37 @@
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_10">
               <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_18">
+                <item>
+                 <widget class="QPushButton" name="pushButton_ja_clearAll">
+                  <property name="text">
+                   <string>Clear All</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_5">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="pushButton_ja_fill">
+                  <property name="text">
+                   <string>Fill Down</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
                <widget class="QScrollArea" name="scrollArea_2">
                 <property name="widgetResizable">
                  <bool>true</bool>
@@ -2178,7 +2209,7 @@
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_24">
               <item alignment="Qt::AlignHCenter">
-               <widget class="QPushButton" name="pushButton_vuln_run_2">
+               <widget class="QPushButton" name="pushButton_ja_run">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                   <horstretch>0</horstretch>

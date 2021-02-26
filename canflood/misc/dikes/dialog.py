@@ -149,6 +149,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         bind_MapLayerComboBox(self.comboBox_dikesVlay, 
                       layerType=QgsMapLayerProxyModel.LineLayer, iface=self.iface)
+         
         self.comboBox_dikesVlay.attempt_selection('dikes')
         
         #connect field boxes
@@ -193,7 +194,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         bind_MapLayerComboBox(self.mMapLayerComboBox_dtm, 
                               layerType=QgsMapLayerProxyModel.RasterLayer, iface=self.iface)
-
+ 
         self.mMapLayerComboBox_dtm.attempt_selection('dtm')
         #=======================================================================
         # run
@@ -214,7 +215,8 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                  iface=self.iface)
 
         self.pushButton_ja_clearAll.clicked.connect(self.scrollAreaWidgetContents_ja.clear_all)
-        self.pushButton_ja_fill.clicked.connect(lambda x: self.scrollAreaWidgetContents_ja.fill_down('lpol'))
+        self.pushButton_ja_fill.clicked.connect(
+            lambda x: self.scrollAreaWidgetContents_ja.fill_down('lpol', name_str2='event'))
         
         #runner
         self.pushButton_ja_run.clicked.connect(self.run_rjoin)
@@ -340,7 +342,10 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # update gui
         #=======================================================================
-        self.lineEdit_v_dexpo_fp.setText(dexpo_fp)
+        self.lineEdit_v_dexpo_fp.setText(dexpo_fp) #fill joinareaas filepath
+        
+        #populate the Join Areas widget
+        self.scrollAreaWidgetContents_ja.set_selections('event', list(rlays_d.values()))
         
         log.info('finished Dike Expo w/ %s'%str(expo_df.shape))
         self.feedback.upd_prog(None)
@@ -425,16 +430,14 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #==========================================================================
         wrkr.load_pfail_df(self.lineEdit_v_ifz_pfail_fp.text())
         
-        #get influence polygons
-        grPoly_d = self.scrollAreaWidgetContents_ja.get_linked_layers(keyByFirst=True) #{groupName:{namePart:layer}}
-        #re-key by raster names
-        
+        #get influence polygons {rasterLayerName:polygonLayer}   
+        eifz_d = self.scrollAreaWidgetContents_ja.get_linked_layers(keyByFirst=True) 
         
         self.feedback.setProgress(40)
         #==========================================================================
         # execute
         #==========================================================================
-        vlay_d = wrkr.join_pfails()
+        vlay_d = wrkr.join_pfails(eifz_d=eifz_d)
         self.feedback.setProgress(80)
         #=======================================================================
         # outputs
