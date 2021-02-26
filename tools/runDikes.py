@@ -101,7 +101,7 @@ class DikeRunner(Runner):
         from misc.dikes.expo import Dexpo
         
         wrkr = Dexpo(logger=log,  out_dir=os.path.join(self.out_dir, self.toolName),   
-                          segID=pars_d['segID'], dikeID=pars_d['dikeID'],tag=self.runTag,
+                          segID=pars_d['segID'], dikeID=pars_d['dikeID'],tag=self.scenarioName,
                           **kwargs
                          )
 
@@ -198,7 +198,7 @@ class DikeRunner(Runner):
         #run--------
         #===========================================================================
         wrkr = Dvuln(logger=log,  out_dir=os.path.join(self.out_dir, self.toolName),   
-                          segID=pars_d['segID'], dikeID=pars_d['dikeID'],tag=self.runTag,
+                          segID=pars_d['segID'], dikeID=pars_d['dikeID'],tag=self.scenarioName,
                           **kwargs
                          )
         
@@ -221,7 +221,7 @@ class DikeRunner(Runner):
         """
         
         """consider making thise a separate tool?"""
-        wrkr.set_lenfx() #apply length effects
+        #wrkr.set_lenfx() #apply length effects
                     
         #=======================================================================
         # outputs
@@ -266,7 +266,7 @@ class DikeRunner(Runner):
         #setup the worker
         #===========================================================================
         wrkr = DikeJoiner(logger=log,  out_dir=os.path.join(self.out_dir, self.toolName),   
-                          segID=pars_d['segID'], dikeID=pars_d['dikeID'], tag=self.runTag,
+                          segID=pars_d['segID'], dikeID=pars_d['dikeID'], tag=self.scenarioName,
                           **kwargs
                          )
         
@@ -383,6 +383,7 @@ class DikeRunner(Runner):
         
         if writePars: #for single runs, just write now... othwerwise, let run_all write
             self.write_pars()
+            self.write_parsd()
 
     
         log.info('finished on %s'%toolName)

@@ -65,6 +65,7 @@ class Dcoms(ComWrkr):
              dikeID = 'dikeID', #dike identifier field
              segID = 'segID', #segment identifier field
              cbfn = 'crest_buff', #crest buffer field name
+             ifidN = 'ifzID', #influence polygon id field name
                   *args,  **kwargs):
         
         super().__init__(*args,**kwargs)
@@ -74,13 +75,11 @@ class Dcoms(ComWrkr):
         #=======================================================================
         self.dikeID, self.segID = dikeID, segID #done during init
         self.cbfn = cbfn
+        self.ifidN = ifidN
         
         self.logger.debug('Dcoms.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
         
-        
-    
-        
-        
+
     def load_expo(self, #load the dike segment exposure data
                   fp,
                   prop_colns = None,
@@ -108,7 +107,9 @@ class Dcoms(ComWrkr):
         
         """
         view(df)
+        view(self.expo_df)
         """
+        df.loc[:, etag_l] = df.loc[:, etag_l].round(self.prec)
         #=======================================================================
         # wrap
         #=======================================================================
@@ -119,7 +120,7 @@ class Dcoms(ComWrkr):
         self.dtag_l = set([item for sublist in l1 for item in sublist])
         
         self.etag_l = etag_l
-        self.expo_df = df.round(self.prec)
+        self.expo_df = df
         
         return self.expo_df
         
@@ -132,7 +133,7 @@ class Dcoms(ComWrkr):
         # precheck
         #=======================================================================
         if prop_colns is None:
-            prop_colns = [self.dikeID, self.segID, self.segln, self.cbfn, self.celn]
+            prop_colns = [self.dikeID, self.segID, self.segln, self.cbfn, self.celn, self.ifidN]
         miss_l = set(prop_colns).difference(df.columns)
         assert len(miss_l)==0, 'missing some expected colns: %s'%miss_l
         

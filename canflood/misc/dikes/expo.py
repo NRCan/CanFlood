@@ -117,7 +117,7 @@ class Dexpo(Qcoms, DPlotr):
         #=======================================================================
         fnl = [f.name() for f in vlay_raw.fields()]
         #jcolns = [self.sid, 'f0_dtag', self.cbfn, self.segln]
-        miss_l =  set([dikeID, segID, 'f0_dtag', cbfn]).difference(fnl)
+        miss_l =  set([dikeID, segID, 'f0_dtag', cbfn, self.ifidN]).difference(fnl)
         assert len(miss_l)==0, 'missing expected columns on dike layer: %s'%miss_l
         
         """try forcing
@@ -621,7 +621,7 @@ class Dexpo(Qcoms, DPlotr):
         seg_df = cdf.groupby(self.sid).first()
         
         #join tags
-        jcolns = [self.sid, 'f0_dtag', self.cbfn, self.segln]
+        jcolns = [self.sid, 'f0_dtag', self.cbfn, self.segln, self.ifidN]
         """needed by vuln module"""
         seg_df = seg_df.join(self.dike_df.loc[:, jcolns].set_index(self.sid))
         #=======================================================================

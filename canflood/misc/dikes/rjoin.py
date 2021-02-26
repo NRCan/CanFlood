@@ -50,41 +50,57 @@ class DikeJoiner(Qcoms, DPlotr):
     """
     
     ridN = 'ringID' #just for info
-    ifidN = 'ifzID'
+    #ifidN = 'ifzID'
 
 
     def __init__(self,
                   *args,
                   
                   ridN = 'ringID',
-                  ifidN = 'ifzID', 
+                   
 
                     **kwargs):
         
         super().__init__(*args,**kwargs)
         
         self.ridN = ridN
-        self.ifidN = ifidN
+        
 
         
         self.logger.debug('Diker.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
         
     def load_pfail_df(self,
                       fp):
+        
         log = self.logger.getChild('load_pfail_df')
         
-        df = self.load_expo(fp, 
-            prop_colns = [self.dikeID, self.segID, self.segln, self.lfxn, self.celn, self.cbfn],
-                            logger=log)
-        del self.expo_df #clear out this ref
+        #=======================================================================
+        # df = self.load_expo(fp, 
+        #     prop_colns = [self.dikeID, self.segID, self.segln, self.lfxn, self.celn, self.cbfn, self.ifidN],
+        #                     logger=log)
+        # del self.expo_df #clear out this ref
+        #=======================================================================
+        
+        df = pd.read_csv(fp, header=0, index_col=0)
+        
+        #=======================================================================
+        # identify columns
+        #=======================================================================
+        
+        prop_colns = [self.dikeID, self.segID, self.segln, self.lfxn, self.celn, self.cbfn, self.ifidN]
+        self.etag_l = self._get_etags(df, prop_colns=prop_colns)
         #=======================================================================
         # checks
         #=======================================================================
         assert (df.loc[:, self.etag_l] <=1.0).all().all()
         assert (df.loc[:, self.etag_l] >=0.0).all().all()
+        assert self.ifidN in df.columns
         
         self.pfail_df = df
         self.sid_l = df.index.values.tolist()
+        """
+        view(df)
+        """
         return self.pfail_df
         
         
@@ -124,15 +140,17 @@ class DikeJoiner(Qcoms, DPlotr):
         # loop and load
         #=======================================================================
         log.info('loading on %i events'%len(eifz_lib))
-        for eTag, e_d in eifz_lib.copy().items():
-            #keys check
-            miss_l = set(['difz_fp', 'sid_ifz_d']).difference(e_d.keys())
-            assert len(miss_l)==0, '\'%s\' got bad keys: %s'%(eTag, miss_l)
-            
+        for eTag, fp in eifz_lib.copy().items():
+            #===================================================================
+            # #keys check
+            # miss_l = set(['difz_fp', 'sid_ifz_d']).difference(e_d.keys())
+            # assert len(miss_l)==0, '\'%s\' got bad keys: %s'%(eTag, miss_l)
+            # 
+            #===================================================================
             #===================================================================
             # get the layer
             #===================================================================
-            fp = e_d['difz_fp']
+            #fp = e_d['difz_fp']
             #check if its already loaded
             if fp in fp_vlay_d:
                 vlay = self.fixgeometries(fp_vlay_d[fp], logger=log, layname=fp_vlay_d[fp].name())
@@ -156,15 +174,17 @@ class DikeJoiner(Qcoms, DPlotr):
                 because some pfails may get filtered out... 
                     we may not want to throw this error
             """
-            miss_l = set(self.sid_l).difference(e_d['sid_ifz_d'])
-            assert len(miss_l)==0, '%s sid_ifz_d missing some %s keys: %s'%(eTag, self.sid, miss_l)
+            #===================================================================
+            # miss_l = set(self.sid_l).difference(e_d['sid_ifz_d'])
+            # assert len(miss_l)==0, '%s sid_ifz_d missing some %s keys: %s'%(eTag, self.sid, miss_l)
+            #===================================================================
 
             #===================================================================
             # update the container
             #===================================================================
             dp = vlay.dataProvider()
             log.info('%s got vlay \'%s\' w/ %i features'%(eTag, vlay.name(), dp.featureCount()))
-            eifz_lib[eTag]['ifz_vlay'] = vlay
+            eifz_lib[eTag] = vlay
             
         #=======================================================================
         # wrap
@@ -190,9 +210,11 @@ class DikeJoiner(Qcoms, DPlotr):
         return True
         
     def join_pfails(self, #join the pfail data onto the ifz polys
-                    eifz_lib=None, #container with join and layer info, 'etag': {
+                    eifz_lib=None, #container with join and layer info, 
+                    #'etag': {
                         #sid_ifz_d: {sid:ifid}
-                        #difz_vlay: ifz vectorLayer w/ ifid fields
+                        #ifz_vlay: ifz vectorLayer w/ ifid fields
+                        #ifz_vlay: difz_fp. NOT USED. filepath of ifz_vlay. see load_ifz_fps()
                         
                     pf_df = None, 
                     
@@ -218,23 +240,28 @@ class DikeJoiner(Qcoms, DPlotr):
         miss_l = set(self.etag_l).difference(eifz_lib)
         assert len(miss_l)==0, 'event mismatch: %s'%miss_l
         
-        for eTag, ed in eifz_lib.items():
-            miss_l = set(['sid_ifz_d', 'ifz_vlay']).difference(ed.keys())
-            assert len(miss_l)==0, '%s keys mismatch: %s'%(eTag, miss_l)
+        #=======================================================================
+        # for eTag, ed in eifz_lib.items():
+        #     miss_l = set(['ifz_vlay']).difference(ed.keys())
+        #     assert len(miss_l)==0, '%s keys mismatch: %s'%(eTag, miss_l)
+        #=======================================================================
             
         #=======================================================================
         # loop on events----
         #=======================================================================
         res_d = dict()
-        for eTag, ed in eifz_lib.items():
+        for eTag, vlay_raw in eifz_lib.items():
             log = self.logger.getChild('jp.%s'%eTag)
             #===================================================================
             # pull the data----
             #===================================================================
+            """
+            ed.keys()
+            """
             #===================================================================
             # #vlay
             #===================================================================
-            vlay_raw = ed['ifz_vlay']
+            #vlay_raw = ed['ifz_vlay']
             self._check_ifz(vlay_raw)
             vdf = vlay_get_fdf(vlay_raw, logger=log)
             geoR_d = vlay_get_fdata(vlay_raw, geo_obj=True, logger=log, rekey=self.ifidN)
@@ -243,7 +270,9 @@ class DikeJoiner(Qcoms, DPlotr):
             #===================================================================
             # #keys
             #===================================================================
-            sid_ifz_d = ed['sid_ifz_d']
+            """get from dike sinstead
+            sid_ifz_d = ed['sid_ifz_d']"""
+            sid_ifz_d = pf_df[self.ifidN].to_dict()
 
             #check keysr
             miss_l = set(sid_ifz_d.values()).symmetric_difference(vdf[self.ifidN])
@@ -255,7 +284,12 @@ class DikeJoiner(Qcoms, DPlotr):
             #clean to just our event
             l = set(self.etag_l).difference([eTag]) #other event data
             idf = pf_df.drop(l, axis=1).rename(columns={eTag:self.pfn}) 
-            idf = idf.join(pd.Series(sid_ifz_d, name=self.ifidN))
+            
+            idf.loc[:, self.pfn] = idf[self.pfn].round(self.prec) #force rouind (again)
+            """
+            view(idf)
+            """
+            #idf = idf.join(pd.Series(sid_ifz_d, name=self.ifidN))
             idf['eTag'] = eTag #nice to have this on there
             
             #apply threshold
@@ -273,9 +307,7 @@ class DikeJoiner(Qcoms, DPlotr):
             miss_l = set(idf.index.values).difference(sid_ifz_d.keys())
             assert len(miss_l)==0, 'missing keys in sid_ifz_d: %s'%miss_l
             
-            #clean out keys
-            
-            
+            #clean out keys            
             sid_ifz_d2 = {k:v for k,v in sid_ifz_d.items() if k in idf.index.values}
             assert len(sid_ifz_d2)==len(idf), 'failed to get the expected matches'
             #===================================================================
