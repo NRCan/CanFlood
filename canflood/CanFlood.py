@@ -218,19 +218,27 @@ class CanFlood:
         
     def load_style_xml(self): #load the xml style file
         #=======================================================================
-        # defaults
+        #setup the logger
         #=======================================================================
         from hlpr.plug import logger
+        log = logger(self)
+        
+        #=======================================================================
+        # filepath
+        #=======================================================================
         
         fp = os.path.join(self.pars_dir, 'CanFlood.xml')
         assert os.path.exists(fp), 'requested xml filepath does not exist: %s'%fp
         
+        #=======================================================================
+        # add the sylte
+        #=======================================================================
         style = QgsStyle.defaultStyle() #get the users style database
 
         if style.importXml(fp):
-            logger.info('imported styles from %s'%fp)
+            log.info('imported styles from %s'%fp)
         else:
-            logger.error('failed to import styles')
+            log.error('failed to import styles')
         
     
     def unload(self):
