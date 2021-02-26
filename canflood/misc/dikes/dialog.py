@@ -425,7 +425,10 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #==========================================================================
         wrkr.load_pfail_df(self.lineEdit_v_ifz_pfail_fp.text())
         
-        grPoly_d = self.scrollAreaWidgetContents_ja.get_linked_layers() #{groupName:{namePart:layer}}
+        #get influence polygons
+        grPoly_d = self.scrollAreaWidgetContents_ja.get_linked_layers(keyByFirst=True) #{groupName:{namePart:layer}}
+        #re-key by raster names
+        
         
         self.feedback.setProgress(40)
         #==========================================================================

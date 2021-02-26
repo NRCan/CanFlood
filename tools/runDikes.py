@@ -278,7 +278,7 @@ class DikeRunner(Runner):
         #==========================================================================
         #mandatory
         wrkr.load_pfail_df(pars_d['pfail_fp'])
-        wrkr.load_ifz_fps(pars_d['eifz_lib'])
+        wrkr.load_ifz_fps(pars_d['eifz_d'])
         
         #==========================================================================
         # execute

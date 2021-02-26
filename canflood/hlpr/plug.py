@@ -630,15 +630,41 @@ def bind_link_boxes(widget, #wrapper for widget containing comboboxes linking la
     widget.children_links_d = d #{groupBoxName: {name:ComboBox}}
     #set all the filters
     
-    def get_linked_layers(self): #get all the layers selected in the combo boxes
+    def get_linked_layers(self,  #get all the layers selected in the combo boxes
+                          keyByFirst=False, #whether to re-key the results by the first layer's name
+                          ):
         
         rLib = dict()
         for gName, gd in self.children_links_d.items():
             #get from each widget
             rLib[gName] = {nstr:w.currentLayer() for nstr,w in gd.items() if not w.currentLayer() is None}
             
+        #clear empties
+        rLib = {k:v for k,v in rLib.items() if len(v)>0}
+        
+        #=======================================================================
+        # fancy re-key by the first layers name (then drop that layer)
+        #=======================================================================
+        if keyByFirst:
+            d = dict()
 
-        return {k:v for k,v in rLib.items() if len(v)>0}
+            for k, sub_d in rLib.items():
+                
+                first = True
+                for nstr, layer in sub_d.items():
+                    if first:
+                        newKey =layer.name()
+                        first =False
+                    else:
+                        d[newKey] = layer
+                        break #just taking the first
+            rLib = d #reset the result
+                    
+                
+            
+        
+        
+        return rLib 
     
     def clear_all(self): #clear all the combo boxes
         for child in widget.findChildren(childWidgetType):

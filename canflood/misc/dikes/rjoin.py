@@ -105,12 +105,12 @@ class DikeJoiner(Qcoms, DPlotr):
         
         
     def load_ifz_fps(self, #load filepaths in an ifz map and replace with layer referneces
-                 eifz_lib, #ifz map w/ filepaths
+                 eifz_d, #ifz map w/ filepaths
                  aoi_vlay=None,
                  ):
         """
         plugin runs dont need this.
-            just pass eifz_lib with vlays (no fps)
+            just pass eifz_d with vlays (no fps)
             what about copies??
             
         #=======================================================================
@@ -131,16 +131,16 @@ class DikeJoiner(Qcoms, DPlotr):
         #=======================================================================
         # prechecks
         #=======================================================================
-        miss_l = set(eifz_lib.keys()).difference(self.etag_l)
-        assert len(miss_l)==0, 'eTag mismatch on eifz_lib and pfail_df: %s'%miss_l
+        miss_l = set(eifz_d.keys()).difference(self.etag_l)
+        assert len(miss_l)==0, 'eTag mismatch on eifz_d and pfail_df: %s'%miss_l
         
         
         fp_vlay_d = dict() #container for repeat layers
         #=======================================================================
         # loop and load
         #=======================================================================
-        log.info('loading on %i events'%len(eifz_lib))
-        for eTag, fp in eifz_lib.copy().items():
+        log.info('loading on %i events'%len(eifz_d))
+        for eTag, fp in eifz_d.copy().items():
             #===================================================================
             # #keys check
             # miss_l = set(['difz_fp', 'sid_ifz_d']).difference(e_d.keys())
@@ -184,16 +184,16 @@ class DikeJoiner(Qcoms, DPlotr):
             #===================================================================
             dp = vlay.dataProvider()
             log.info('%s got vlay \'%s\' w/ %i features'%(eTag, vlay.name(), dp.featureCount()))
-            eifz_lib[eTag] = vlay
+            eifz_d[eTag] = vlay
             
         #=======================================================================
         # wrap
         #=======================================================================
-        log.info('finished loading %i layers for %i events'%(len(fp_vlay_d), len(eifz_lib)))
+        log.info('finished loading %i layers for %i events'%(len(fp_vlay_d), len(eifz_d)))
         
-        self.eifz_lib = eifz_lib
+        self.eifz_d = eifz_d
         
-        return self.eifz_lib
+        return self.eifz_d
             
     def _check_ifz(self, #typical checks for an ifz poly layer
                    vlay):
@@ -210,11 +210,7 @@ class DikeJoiner(Qcoms, DPlotr):
         return True
         
     def join_pfails(self, #join the pfail data onto the ifz polys
-                    eifz_lib=None, #container with join and layer info, 
-                    #'etag': {
-                        #sid_ifz_d: {sid:ifid}
-                        #ifz_vlay: ifz vectorLayer w/ ifid fields
-                        #ifz_vlay: difz_fp. NOT USED. filepath of ifz_vlay. see load_ifz_fps()
+                    eifz_d=None, #influence poilygions {eTag: poly Vlay}
                         
                     pf_df = None, 
                     
@@ -225,10 +221,10 @@ class DikeJoiner(Qcoms, DPlotr):
         # defaults
         #=======================================================================
         log = self.logger.getChild('jp')
-        if eifz_lib is None: eifz_lib=self.eifz_lib
+        if eifz_d is None: eifz_d=self.eifz_d
         if pf_df is None: pf_df = self.pfail_df
         
-        log.info('on %i events w/ pfail %s'%(len(eifz_lib), str(pf_df.shape)))
+        log.info('on %i events w/ pfail %s'%(len(eifz_d), str(pf_df.shape)))
         #=======================================================================
         # precheck
         #=======================================================================
@@ -237,11 +233,11 @@ class DikeJoiner(Qcoms, DPlotr):
         
         
         #check library keys
-        miss_l = set(self.etag_l).difference(eifz_lib)
+        miss_l = set(self.etag_l).difference(eifz_d)
         assert len(miss_l)==0, 'event mismatch: %s'%miss_l
         
         #=======================================================================
-        # for eTag, ed in eifz_lib.items():
+        # for eTag, ed in eifz_d.items():
         #     miss_l = set(['ifz_vlay']).difference(ed.keys())
         #     assert len(miss_l)==0, '%s keys mismatch: %s'%(eTag, miss_l)
         #=======================================================================
@@ -250,7 +246,7 @@ class DikeJoiner(Qcoms, DPlotr):
         # loop on events----
         #=======================================================================
         res_d = dict()
-        for eTag, vlay_raw in eifz_lib.items():
+        for eTag, vlay_raw in eifz_d.items():
             log = self.logger.getChild('jp.%s'%eTag)
             #===================================================================
             # pull the data----
