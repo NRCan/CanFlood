@@ -15,7 +15,7 @@ from .resources import *
 
 
 import os.path
-from qgis.core import Qgis, QgsMessageLog
+from qgis.core import Qgis, QgsMessageLog, QgsStyle
 
 
 
@@ -81,6 +81,7 @@ class CanFlood:
         # Must be set in initGui() to survive plugin reloads
         self.first_start = None
         
+        self.pars_dir = os.path.join(os.path.dirname(__file__), '_pars')
         
         #start with an empty ref
         #self.canflood_menu = None
@@ -186,6 +187,17 @@ class CanFlood:
         
         #add to the menu
         self.iface.addPluginToMenu(self.menu_name, self.action_dikes)
+        
+        #=======================================================================
+        # styles
+        #=======================================================================
+        icon = QIcon(os.path.dirname(__file__) + "/icons/paint-palette.png")
+        self.action_styles = QAction(QIcon(icon), 'Add Styles', self.iface.mainWindow())
+        self.action_styles.triggered.connect(self.load_style_xml)
+        self.act_menu_l.append(self.action_styles) #add for cleanup
+        
+        #add to the menu
+        self.iface.addPluginToMenu(self.menu_name, self.action_styles)
 
 
         
@@ -203,6 +215,22 @@ class CanFlood:
         self.iface.reloadConnections()
         
         wc1.logger.push('added %i connections'%(len(newCons_d)))
+        
+    def load_style_xml(self): #load the xml style file
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        from hlpr.plug import logger
+        
+        fp = os.path.join(self.pars_dir, 'CanFlood.xml')
+        assert os.path.exists(fp), 'requested xml filepath does not exist: %s'%fp
+        
+        style = QgsStyle.defaultStyle() #get the users style database
+
+        if style.importXml(fp):
+            logger.info('imported styles from %s'%fp)
+        else:
+            logger.error('failed to import styles')
         
     
     def unload(self):
