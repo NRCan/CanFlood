@@ -187,6 +187,9 @@ class QprojPlug(Qcoms): #baseclass for plugins
                            fn_str = None, #optional field name for auto setting
                            fn_no_str = None, #optional field name to EXCVLUDE from auto setting
                            ):
+        """
+        TODO: migrate to bind function
+        """
         
         mfcb.clear()
         if isinstance(layer, QgsVectorLayer):
@@ -219,47 +222,31 @@ class QprojPlug(Qcoms): #baseclass for plugins
             
         self.logger.push('overwrite set to %s'%self.overwrite)
         
-    def field_selectM(self, #select mutliple fields
-                      vlay):
-        """
-        TODO: mimc the Qgis Algo multiple feature selection dialog
-        """
-        
-        class NewDialog(QWidget):
-            def __init__(self):
-                super().__init__()
-                
-                self.initUI()
-                
-            def initUI(self):      
-    
-                
-                self.le = QLineEdit(self)
-                self.le.move(130, 22)
-                
-                self.setGeometry(300, 300, 290, 150)
-                self.setWindowTitle('Multiple Selection')
-                self.show()
+
                 
     def setup_comboBox(self, #helper for setting up a combo box with a default selection
                        comboBox,
                        selection_l, #list of values to set as selectable options
-                       default = 'none', #default selection string ot set
+                       default = None, #default selection string ot set
                        
                        ):
+        """
+        TODO: change this to bind to the combo box
+        """
         
         assert isinstance(selection_l, list)
         
-        assert default in selection_l
+
         
         comboBox.clear()
         #set the selection
         comboBox.addItems(selection_l)
         
         #set the default
-        index = comboBox.findText(default, Qt.MatchFixedString)
-        if index >= 0:
-            comboBox.setCurrentIndex(index)
+        if not default is None:
+            index = comboBox.findText(default, Qt.MatchFixedString)
+            if index >= 0:
+                comboBox.setCurrentIndex(index)
             
     def _connect_wdir(self, #connect the workint direcotry buttons
                       browseButton, openButton, lineEdit,
@@ -298,6 +285,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
         #=======================================================================
         """forcing layers into a group"""
         if groupName is None: groupName = self.groupName
+        if style_fn == '': style_fn=None
         #=======================================================================
         # precheck
         #=======================================================================
@@ -354,6 +342,44 @@ class QprojPlug(Qcoms): #baseclass for plugins
                 layer.triggerRepaint()
             
         return
+    
+    def get_cf_par(self, #load a parameter value from a controlFile path
+                      cf_fp, #control file path
+                      sectName='results_fps',
+                      varName = 'r_ttl',
+                      varType = str,
+                      logger=None,
+                      ):
+        """
+        wrapper for  _get_from_cpar()
+            but loads the control file each time and 
+        """
+        #handle the default empty selection
+        if varName=='':return 'no selection'
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log=logger.getChild('get_cf_par')
+        
+        #=======================================================================
+        # load the control file
+        #=======================================================================
+        if cf_fp == '':
+            raise Error('passed an empty cf_fp!')
+        assert os.path.exists(cf_fp), 'provided parameter file path does not exist \n    %s'%cf_fp
+
+        pars = configparser.ConfigParser(inline_comment_prefixes='#')
+        log.debug('reading parameters from \n     %s'%pars.read(cf_fp))
+        
+        #=======================================================================
+        # get the value
+        #=======================================================================
+        """
+        see _get_from_cpar()  for fancy typesetting
+            seems like we should only be pulling strings here...
+        """
+        return varType(pars[sectName][varName])
         
 
 class logger(object): #workaround for qgis logging pythonic
@@ -729,6 +755,51 @@ def bind_link_boxes(widget, #wrapper for widget containing comboboxes linking la
     #===========================================================================
     for fName in ['get_linked_layers', 'clear_all', 'fill_down', 'set_selections']:
         setattr(widget, fName, types.MethodType(eval(fName), widget)) 
+        
+def bind_fieldSelector( #setup a groupbox collection for field selection
+                        groupBox, # groupbox containing the collection
+                       layerWidget, #widget w/ layer
+                       logger,
+                       default_selection = ['xid'], #default field to select
+                       ):
+    
+    groupBox.logger=logger
+    
+    #collect children widgets
+    
+    
+    
+    
+    
+    #define funcs
+    def launch_selector(self):
+        pass
+    
+    def set_selection(self, select_fields):
+        pass
+    
+    def get_selection(self):
+        pass
+    
+    def clear(self):
+        pass
+    
+
+    
+    
+    #===========================================================================
+    # bind functions
+    #===========================================================================
+    for fName in ['launch_selector', 'get_selection', 'clear']:
+        setattr(groupBox, fName, types.MethodType(eval(fName), groupBox)) 
+        
+        
+    #connect to layer
+    layerWidget.layerChanged.connect(groupBox.clear())
+    
+    #set the default
+    groupBox.set_selection(default_selection)
+    
  
 #==============================================================================
 # functions-----------

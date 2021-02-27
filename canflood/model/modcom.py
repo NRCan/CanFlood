@@ -496,59 +496,7 @@ class Model(ComWrkr,
         
         return cpars_d
     
-    def _get_from_cpar(self, #special parameter extraction recognizing object's t ype
-                      cpars,
-                      sectName,
-                      varName,
-                      logger = None):
-        
-        """each parameter should exist on teh class instance.
-                we use this to set the type"""
-        
-        if logger is None: logger=self.logger
-        log = logger.getChild('_get_from_cpar')
-        #=======================================================================
-        # get native type on class
-        #=======================================================================
-        assert hasattr(self, varName), '\'%s\' does not exist on %s'%(varName, self)
-        
-        
-        #get class instance's native type
-        ntype = type(getattr(self, varName))
-        
-        #==============================================================
-        # retrive and typeset  (using native t ype)            
-        #==============================================================
-        assert isinstance(cpars, configparser.ConfigParser)
-        
-        csect = cpars[sectName]
-        pval_raw = csect[varName] #raw value (always a string)
-        
-        #boolean
-        if ntype == bool:
-            pval = csect.getboolean(varName)
-        
-        #no check or type conversion
-        elif getattr(self, varName) is None:
-            pval = pval_raw 
 
-        #other types
-        else:
-            try:
-                pval = ntype(pval_raw)
-            except Exception as e:
-                raise Error('failed to set %s.%s  with input \'%s\' (%s) to %s \n %s'%(
-                    sectName, varName, pval_raw, type(pval_raw), ntype, e))
-        
-        #=======================================================================
-        # blank set
-        #=======================================================================
-        """seems like we're setup for ''.... not sure the value in switching everything over
-        if pval == '':
-            pval = np.nan"""
-        
-        log.debug('retrieved \'%s.%s\'=\'%s\' w/ type: \'%s\''%(sectName, varName, pval, type(pval)))
-        return pval
 
     def _par_hndl_chk(self, #check a parameter aginast provided handles
                      sect, varnm, pval, achk_d,
@@ -2018,9 +1966,7 @@ class Model(ComWrkr,
         miss_l = set(df.columns).difference(aep_ser.index)
         assert len(miss_l) == 0, 'some event columns in the ddf not in the aep'
         
-        #slice down aep_ser
-        aep_ser = aep_ser
-        
+        #slice down aep_ser       
         aep_ser = aep_ser[aep_ser.index.isin(df.columns)]
         
         

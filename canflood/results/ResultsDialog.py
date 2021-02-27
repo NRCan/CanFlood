@@ -37,6 +37,11 @@ FORM_CLASS, _ = uic.loadUiType(ui_fp)
 
 
 class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
+    
+    groupName = 'CanFlood.results'
+    
+    r_passet = '' #needed for typesetting from parameter file
+    
     def __init__(self, iface, parent=None):
 
         super(Results_Dialog, self).__init__(parent)
@@ -73,32 +78,26 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # setup------------
         #=======================================================================
-        #Working Directory browse            
-        self.pushButton_wd.clicked.connect(
-                lambda: self.browse_button(self.lineEdit_wd, 
-                                           prompt='Select Working Directory',
-                                      qfd = QFileDialog.getExistingDirectory)
-                )
-
-        #WD Open
-        self.pushButton_wd_open.clicked.connect(
-                lambda: force_open_dir(self.lineEdit_wd.text()))
+        #working directory
+        self._connect_wdir(self.pushButton_wd_brwse, self.pushButton_wd_open, self.lineEdit_wdir,
+                           default_wdir = os.path.join(os.path.expanduser('~'), 'CanFlood', 'results'))
                 
         #Control File browse
         self.pushButton_SS_cf_browse.clicked.connect(
                 lambda: self.fileSelect_button(self.lineEdit_SS_cf, 
                                           caption='Select Control File',
-                                          path = self.lineEdit_wd.text(),
+                                          path = self.lineEdit_wdir.text(),
                                           filters="Text Files (*.txt)")
                 )
         
-        #CF update RP label
+        #update control file display labels
         self.lineEdit_SS_cf.textChanged.connect(
             lambda:self.label_RP_cfPath.setText(self.lineEdit_SS_cf.text()))
         
-        """
-        TODO: open the cf and display the plot styles
-        """
+        self.lineEdit_SS_cf.textChanged.connect(
+            lambda:self.label_jg_cfPath.setText(self.lineEdit_SS_cf.text()))
+        
+
         #=======================================================================
         # Risk PLot-------------
         #=======================================================================
@@ -110,24 +109,49 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
 
         #vector geometry layer
-        self.comboBox_JGfinv.setFilters(QgsMapLayerProxyModel.VectorLayer) 
+        hlpr.plug.bind_MapLayerComboBox(self.comboBox_JGfinv, 
+                      layerType=QgsMapLayerProxyModel.VectorLayer, iface=self.iface)
+                
+        self.comboBox_JGfinv.attempt_selection('finv')
         
-        def upd_cid(): #change the 'cid' display when the finv selection changes
-            return self.mfcb_connect(
-                self.mFieldComboBox_JGfinv, self.comboBox_JGfinv.currentLayer(),
-                fn_str = 'xid' )
+        #hlpr.plug.bind_fieldSelector(self.groupBox_jg_field2copy, self.comboBox_JGfinv, self.logger)
         
-        self.comboBox_JGfinv.layerChanged.connect(upd_cid)
-        
+        #=======================================================================
+        # results data
+        #=======================================================================
         
         #data file browse
-        def browse_jg():
-            return self.fileSelect_button(self.lineEdit_JG_resfp, 
+        self.pushButton_JG_resfp_br.clicked.connect(
+                lambda: self.fileSelect_button(self.lineEdit_JG_resfp, 
                                           caption='Select Asset Results Data File',
-                                          path = self.lineEdit_wd.text(),
+                                          path = self.lineEdit_wdir.text(),
                                           filters="Data Files (*.csv)")
-            
-        self.pushButton_JG_resfp_br.clicked.connect(browse_jg) 
+                )
+
+        #populate the combobox
+        self.comboBox_jg_par.addItems(['r_passet', ''])
+        
+        #set the tabular data file path based on the dropdown
+        self.comboBox_jg_par.currentTextChanged.connect(
+            lambda x: self.lineEdit_JG_resfp.setText(
+                self.get_cf_par(self.lineEdit_SS_cf.text(), varName=x)
+                                                    ))
+        
+        #also connect teh layer
+        self.comboBox_JGfinv.layerChanged.connect(            
+            lambda x: self.lineEdit_JG_resfp.setText(
+                self.get_cf_par(self.lineEdit_SS_cf.text(), 
+                                varName=self.comboBox_jg_par.currentText())
+                                                    ))
+        
+        self.comboBox_jg_par.setCurrentIndex(0)
+        
+        
+        #=======================================================================
+        # results layer style
+        #=======================================================================
+        #relabel
+        self.setup_comboBox(self.comboBox_jg_relabel,['', 'ari', 'aep'], default='ari')
         
         #styles
         def set_style(): #set the style options based on the selecte dlayer
@@ -140,7 +164,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             
             #get the directory for thsi type of style
             subdir = None
-            for foldernm in ['Point']:
+            for foldernm in ['Point', 'Polygon']:
                 if foldernm in gtype:
                     subdir = foldernm
                     break
@@ -148,14 +172,14 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             #set the options
             if isinstance(subdir, str):
                 srch_dir = os.path.join(self.pars_dir, 'qmls', subdir)
-                assert os.path.exists(srch_dir)
+                assert os.path.exists(srch_dir), 'requested qml search dir doesnt exist: %s'%srch_dir
                 
                 #keeping the subdir for easy loading
                 l = [os.path.join(subdir, fn) for fn in os.listdir(srch_dir)]
             else:
                 l=[]
         
-            l.append('none')
+            l.append('') #add teh empty selection
             self.setup_comboBox(self.comboBox_JG_style,l)
             
         self.comboBox_JGfinv.layerChanged.connect(set_style)
@@ -229,7 +253,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             fil1="Control Files (*.txt)"
             d['cf'].clicked.connect(
                 lambda a, x=d.pop('cf_line'), c=cap1, f=fil1: \
-                self.fileSelect_button(x, caption=c, filters=f, path=self.lineEdit_wd.text()))
+                self.fileSelect_button(x, caption=c, filters=f, path=self.lineEdit_wdir.text()))
             
             #total results
             #===================================================================
@@ -237,7 +261,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             # fil1="Data Files (*.csv)"
             # d['ttl'].clicked.connect(
             #     lambda a, x=d.pop('ttl_line'), c=cap1, f=fil1: \
-            #     self.fileSelect_button(x, caption=c, filters=f, path=self.lineEdit_wd.text()))
+            #     self.fileSelect_button(x, caption=c, filters=f, path=self.lineEdit_wdir.text()))
             #===================================================================
 
 
@@ -254,7 +278,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         """
 
         debug_dir =os.path.join(os.path.expanduser('~'), 'CanFlood', 'results')
-        self.lineEdit_wd.setText(debug_dir)
+        self.lineEdit_wdir.setText(debug_dir)
         
         if not os.path.exists(debug_dir):
             log.info('builg directory: %s'%debug_dir)
@@ -265,6 +289,87 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         log.debug('connect_slots finished')
         
+    def _set_setup(self): #attach parameters from setup tab
+        
+        #secssion controls
+        self.tag = self.linEdit_ScenTag.text()
+        self.out_dir = self.lineEdit_wdir.text()
+        
+        assert not self.out_dir == ''
+        
+        if not os.path.exists(self.out_dir): os.makedirs(self.out_dir)
+ 
+        #filepaths
+        self.cf_fp = self.lineEdit_SS_cf.text()
+        assert os.path.exists(self.cf_fp), 'passed invalid control file: %s'%self.cf_fp
+ 
+        
+        #file behavior
+        self.overwrite=self.checkBox_SSoverwrite.isChecked()
+        self.absolute_fp = self.radioButton_SS_fpAbs.isChecked()
+        
+    def run_joinGeo(self):
+        log = self.logger.getChild('run_joinGeo')
+        log.info('user pushed \'run_joinGeo\'')
+        
+        #=======================================================================
+        # collect inputs
+        #=======================================================================
+        self._set_setup()
+        
+        #local
+        """pulling from cf_fp now
+        cid = self.mFieldComboBox_JGfinv.currentField() #user selected field"""
+        
+        """using controlFile parameter to populate the data_fp in the gui
+            then pulling the data_fp from the gui"""
+        data_fp = self.lineEdit_JG_resfp.text()
+        assert os.path.exists(data_fp), 'passed invalid data_fp: %s'%data_fp
+        
+        geo_vlay = self.comboBox_JGfinv.currentLayer()
+        
+        #relabel kwarg
+        relabel = self.comboBox_jg_relabel.currentText()
+        if relabel == '':relabel = None
+        
+        self.feedback.setProgress(5)
+        #=======================================================================
+        # check inputs
+        #=======================================================================        
+        assert isinstance(geo_vlay, QgsVectorLayer)
+        
+
+        #=======================================================================
+        # #setup
+        #=======================================================================
+        kwargs = {attn:getattr(self, attn) for attn in ['logger', 'tag', 'cf_fp', 'out_dir', 'feedback']}
+        wrkr = results.djoin.Djoiner(**kwargs)
+        
+        wrkr.init_model() #load teh control file
+        
+        #=======================================================================
+        # execute
+        #=======================================================================
+        res_vlay = wrkr.run(geo_vlay, 
+                data_fp = data_fp,  relabel=relabel,
+                 keep_fnl='all', #todo: setup a dialog to allow user to select any of the fields
+                 )
+        
+        self.feedback.setProgress(75)
+        #=======================================================================
+        # load and styleize
+        #=======================================================================
+        self._load_toCanvas(res_vlay, log, style_fn = self.comboBox_JG_style.currentText())
+        
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        self.feedback.setProgress(95)
+        
+        
+        log.push('run_joinGeo finished')
+        self.feedback.upd_prog(None)
+    
     def run_plotRisk(self): #single risk plot of total results
         log = self.logger.getChild('run_plotRisk')
         log.info('user pushed \'plotRisk\'')
@@ -274,8 +379,8 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
 
         #general
-        out_dir = self.lineEdit_wd.text()
-        tag = self.linEdit_Stag.text() #set the secnario tag from user provided name
+        out_dir = self.lineEdit_wdir.text()
+        tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
         cf_fp = self.lineEdit_SS_cf.text()
         
         
@@ -291,7 +396,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         self.feedback.setProgress(5)
         #setup
-        wrkr = results.riskPlot.Plotr(cf_fp=cf_fp, 
+        wrkr = results.riskPlot.RiskPlotr(cf_fp=cf_fp, 
                                       logger=self.logger, 
                                      tag = tag,
                                      feedback=self.feedback,
@@ -330,8 +435,8 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # collect inputs
         #=======================================================================
         #general
-        out_dir = self.lineEdit_wd.text()
-        tag = self.linEdit_Stag.text() #set the secnario tag from user provided name
+        out_dir = self.lineEdit_wdir.text()
+        tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
         cf_fp = self.lineEdit_SS_cf.text()
         
         
@@ -390,8 +495,8 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # collect inputs
         #=======================================================================
         #general
-        out_dir = self.lineEdit_wd.text()
-        tag = self.linEdit_Stag.text() #set the secnario tag from user provided name
+        out_dir = self.lineEdit_wdir.text()
+        tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
         cf_fp = self.lineEdit_SS_cf.text()
         
         
@@ -439,86 +544,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.feedback.upd_prog(None) #set the progress bar back down to zero
         log.push('pNoFail finished')
         
-    def run_joinGeo(self):
-        log = self.logger.getChild('run_joinGeo')
-        log.info('user pushed \'run_joinGeo\'')
-        
-        #=======================================================================
-        # collect inputs
-        #=======================================================================
-        #general
-        wd = self.lineEdit_wd.text()
-        
-        tag = self.linEdit_Stag.text() #set the secnario tag from user provided name
-        
-        cf_fp = self.lineEdit_SS_cf.text()
-        
-        #local
-        """pulling from cf_fp now
-        cid = self.mFieldComboBox_JGfinv.currentField() #user selected field
-        data_fp = self.lineEdit_JG_resfp.text()"""
-        
-        geo_vlay = self.comboBox_JGfinv.currentLayer()
-        res_style_fp = self.comboBox_JG_style.currentText()
-        
-        #=======================================================================
-        # check inputs
-        #=======================================================================
-        assert isinstance(wd, str)
 
-        assert isinstance(tag, str)
-        
-        assert isinstance(geo_vlay, QgsVectorLayer)
-        
-        #check cid
-        #=======================================================================
-        # assert isinstance(cid, str), 'bad index FieldName passed'
-        # if cid == '' or cid in self.invalid_cids:
-        #     raise Error('user selected index FieldName \'%s\''%cid)
-        # 
-        # assert cid in [field.name() for field in geo_vlay.fields()] 
-        #=======================================================================
-        
-        #assert os.path.exists(data_fp), 'invalid data_fp'
-        
-        assert isinstance(res_style_fp, str), 'bad style var'
-         
-
-        #=======================================================================
-        # execute
-        #=======================================================================
-        #setup
-        wrkr = results.djoin.Djoiner(logger=self.logger, 
-                                     tag = tag, cf_fp=cf_fp,
-                                     feedback=self.feedback,
-                                     #cid=cid, 
-                                     out_dir=wd)
-        #execute
-        res_vlay = wrkr.run(geo_vlay, 
-                            #data_fp, 
-                 keep_fnl='all', #todo: setup a dialog to allow user to select any of the fields
-                 )
-        
-        #=======================================================================
-        # styleize
-        #=======================================================================
-        #load the layer into the project
-        self.qproj.addMapLayer(res_vlay)
-        
-        if not res_style_fp == 'none':
-            """res_style_fp should contain the subdirectory (e.g. Points/style)"""
-            style_fp = os.path.join(self.pars_dir, 'qmls', res_style_fp)
-            assert os.path.exists(style_fp)
-            res_vlay.loadNamedStyle(style_fp)
-            res_vlay.triggerRepaint()
-        #=======================================================================
-        # wrap
-        #=======================================================================
-
-        
-        self.feedback.upd_prog(None)
-        log.push('run_joinGeo finished')
-    
     def run_compare(self):
         log = self.logger.getChild('run_compare')
         log.info('user pushed \'run_compare\'')
@@ -527,10 +553,10 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # collect inputs
         #=======================================================================
         #general
-        out_dir = self.lineEdit_wd.text()
+        out_dir = self.lineEdit_wdir.text()
         if not os.path.exists(out_dir): os.makedirs(out_dir)
         
-        tag = self.linEdit_Stag.text() #set the secnario tag from user provided name
+        tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
         main_cf_fp = self.lineEdit_SS_cf.text() #for general plot styles
         
         #scenario filepaths

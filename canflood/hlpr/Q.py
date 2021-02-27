@@ -1217,6 +1217,215 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         return res_vlay, new_fn_l, join_cnt
     
     
+    def joinbylocationsummary(self,
+                                vlay, #polygon layer to sample from
+                                 join_vlay, #layer from which to extract attribue values onto th ebottom vlay
+                                 jlay_fieldn_l, #list of field names to extract from the join_vlay
+                                 jvlay_selected_only = False, #only consider selected features on the join layer
+
+                                 predicate_l = ['intersects'],#list of geometric serach predicates
+                                 smry_l = ['sum'], #data summaries to apply
+                                 discard_nomatch = False, #Discard records which could not be joined
+                                 
+                                 use_raw_fn=False, #whether to convert names back to the originals
+                                 layname=None,
+                                 
+                     ):
+        """
+        WARNING: This ressets the fids
+        
+        discard_nomatch: 
+            TRUE: two resulting layers have no features in common
+            FALSE: in layer retains all non matchers, out layer only has the non-matchers?
+        
+        """
+        
+        """
+        view(join_vlay)
+        """
+        #=======================================================================
+        # presets
+        #=======================================================================
+        algo_nm = 'qgis:joinbylocationsummary'
+        
+        predicate_d = {'intersects':0,'contains':1,'equals':2,'touches':3,'overlaps':4,'within':5, 'crosses':6}
+        summaries_d = {'count':0, 'unique':1, 'min':2, 'max':3, 'range':4, 'sum':5, 'mean':6}
+
+        log = self.logger.getChild('joinbylocationsummary')
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if isinstance(jlay_fieldn_l, set):
+            jlay_fieldn_l = list(jlay_fieldn_l)
+            
+            
+        #convert predicate to code
+        pred_code_l = [predicate_d[pred_name] for pred_name in predicate_l]
+            
+        #convert summaries to code
+        sum_code_l = [summaries_d[smry_str] for smry_str in smry_l]
+        
+        
+        if layname is None:  layname = '%s_jsmry'%vlay.name()
+            
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        if not isinstance(jlay_fieldn_l, list):
+            raise Error('expected a list')
+        
+        #check requested join fields
+        fn_l = [f.name() for f in join_vlay.fields()]
+        s = set(jlay_fieldn_l).difference(fn_l)
+        assert len(s)==0, 'requested join fields not on layer: %s'%s
+        
+        #check crs
+        assert join_vlay.crs().authid() == vlay.crs().authid()
+                
+        #=======================================================================
+        # assemble pars
+        #=======================================================================
+        main_input=vlay
+
+        if jvlay_selected_only:
+            join_input = self._get_sel_obj(join_vlay)
+        else:
+            join_input = join_vlay
+
+        #assemble pars
+        ins_d = { 'DISCARD_NONMATCHING' : discard_nomatch,
+                  'INPUT' : main_input,
+                   'JOIN' : join_input,
+                   'JOIN_FIELDS' : jlay_fieldn_l,
+                  'OUTPUT' : 'TEMPORARY_OUTPUT', 
+                  'PREDICATE' : pred_code_l, 
+                  'SUMMARIES' : sum_code_l,
+                   }
+        
+        log.debug('executing \'%s\' with ins_d: \n    %s'%(algo_nm, ins_d))
+ 
+        res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
+ 
+        res_vlay = res_d['OUTPUT']
+ 
+        #===========================================================================
+        # post formatting
+        #===========================================================================
+        res_vlay.setName(layname) #reset the name
+        
+        #get new field names
+        nfn_l = set([f.name() for f in res_vlay.fields()]).difference([f.name() for f in vlay.fields()])
+        
+        """
+        view(res_vlay)
+        """
+        #=======================================================================
+        # post check
+        #=======================================================================
+        for fn in nfn_l:
+            rser = vlay_get_fdata(res_vlay, fieldn=fn, logger=log, fmt='ser')
+            if rser.isna().all().all():
+                log.warning('%s \'%s\' got all nulls'%(vlay.name(), fn))
+
+        
+        #=======================================================================
+        # rename fields
+        #=======================================================================
+        if use_raw_fn:
+            assert len(smry_l)==1, 'rename only allowed for single sample stat'
+            rnm_d = {s:s.replace('_%s'%smry_l[0],'') for s in nfn_l}
+            
+            s = set(rnm_d.values()).symmetric_difference(jlay_fieldn_l)
+            assert len(s)==0, 'failed to convert field names'
+            
+            res_vlay = vlay_rename_fields(res_vlay, rnm_d, logger=log)
+            
+            nfn_l = jlay_fieldn_l
+        
+        
+        
+        log.info('sampled \'%s\' w/ \'%s\' (%i hits) and \'%s\'to get %i new fields \n    %s'%(
+            join_vlay.name(), vlay.name(), res_vlay.dataProvider().featureCount(), 
+            smry_l, len(nfn_l), nfn_l))
+        
+        return res_vlay, nfn_l
+
+    def joinattributestable(self, #join csv edata to a vector layer
+                            vlay, table_fp, fieldNm, 
+                            
+                      method = 1,  #join type
+                              #- 0: Create separate feature for each matching feature (one-to-many)
+                              #- 1: Take attributes of the first matching feature only (one-to-one)
+
+                      csv_params = {'encoding':'System',
+                                    'type':'csv',
+                                    'maxFields':'10000',
+                                    'detectTypes':'yes',
+                                    'geomType':'none',
+                                    'subsetIndex':'no',
+                                    'watchFile':'no'},
+                      
+                     logger=None, 
+                      layname=None,
+                      ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger = self.logger
+        
+        if layname is None: 
+            layname = '%s_j'%vlay.name()
+        
+        algo_nm = 'native:joinattributestable'
+        log = self.logger.getChild('joinattributestable')
+
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        assert isinstance(vlay, QgsVectorLayer)
+        assert os.path.exists(table_fp)
+        assert fieldNm in [f.name() for f in vlay.fields()], 'vlay missing link field %s'%fieldNm
+        
+        #=======================================================================
+        # setup table layer
+        #=======================================================================
+        uriW = QgsDataSourceUri()
+        for pName, pValue in csv_params.items():
+            uriW.setParam(pName, pValue)
+        
+        table_uri = r'file:///' + table_fp.replace('\\','/') +'?'+ str(uriW.encodedUri(), 'utf-8')
+       
+        table_vlay = QgsVectorLayer(table_uri,'table',"delimitedtext")
+        
+        assert fieldNm in [f.name() for f in table_vlay.fields()], 'table missing link field %s'%fieldNm
+        #=======================================================================
+        # assemble p ars
+        #=======================================================================
+        
+        ins_d = { 'DISCARD_NONMATCHING' : True, 
+                 'FIELD' : 'xid', 'FIELDS_TO_COPY' : [],
+                  'FIELD_2' : 'xid', 
+                  'INPUT' : vlay, 
+                  'INPUT_2' : table_vlay,
+                  'METHOD' : method, 
+                  'OUTPUT' : 'TEMPORARY_OUTPUT', 'PREFIX' : '' }
+        
+        #=======================================================================
+        # execute
+        #=======================================================================
+        log.debug('executing \'native:buffer\' with ins_d: \n    %s'%ins_d)
+        
+        res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
+        
+        res_vlay = res_d['OUTPUT']
+
+        res_vlay.setName(layname) #reset the name
+        
+        log.debug('finished w/ %i feats'%res_vlay.dataProvider().featureCount())
+
+        return res_vlay
+
     def cliprasterwithpolygon(self,
                               rlay_raw,
                               poly_vlay,
@@ -1994,140 +2203,6 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
 
         
         return 
-
-    def joinbylocationsummary(self,
-                                vlay, #polygon layer to sample from
-                                 join_vlay, #layer from which to extract attribue values onto th ebottom vlay
-                                 jlay_fieldn_l, #list of field names to extract from the join_vlay
-                                 jvlay_selected_only = False, #only consider selected features on the join layer
-
-                                 predicate_l = ['intersects'],#list of geometric serach predicates
-                                 smry_l = ['sum'], #data summaries to apply
-                                 discard_nomatch = False, #Discard records which could not be joined
-                                 
-                                 use_raw_fn=False, #whether to convert names back to the originals
-                                 layname=None,
-                                 
-                     ):
-        """
-        WARNING: This ressets the fids
-        
-        discard_nomatch: 
-            TRUE: two resulting layers have no features in common
-            FALSE: in layer retains all non matchers, out layer only has the non-matchers?
-        
-        """
-        
-        """
-        view(join_vlay)
-        """
-        #=======================================================================
-        # presets
-        #=======================================================================
-        algo_nm = 'qgis:joinbylocationsummary'
-        
-        predicate_d = {'intersects':0,'contains':1,'equals':2,'touches':3,'overlaps':4,'within':5, 'crosses':6}
-        summaries_d = {'count':0, 'unique':1, 'min':2, 'max':3, 'range':4, 'sum':5, 'mean':6}
-
-        log = self.logger.getChild('joinbylocationsummary')
-        
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        if isinstance(jlay_fieldn_l, set):
-            jlay_fieldn_l = list(jlay_fieldn_l)
-            
-            
-        #convert predicate to code
-        pred_code_l = [predicate_d[pred_name] for pred_name in predicate_l]
-            
-        #convert summaries to code
-        sum_code_l = [summaries_d[smry_str] for smry_str in smry_l]
-        
-        
-        if layname is None:  layname = '%s_jsmry'%vlay.name()
-            
-        #=======================================================================
-        # prechecks
-        #=======================================================================
-        if not isinstance(jlay_fieldn_l, list):
-            raise Error('expected a list')
-        
-        #check requested join fields
-        fn_l = [f.name() for f in join_vlay.fields()]
-        s = set(jlay_fieldn_l).difference(fn_l)
-        assert len(s)==0, 'requested join fields not on layer: %s'%s
-        
-        #check crs
-        assert join_vlay.crs().authid() == vlay.crs().authid()
-                
-        #=======================================================================
-        # assemble pars
-        #=======================================================================
-        main_input=vlay
-
-        if jvlay_selected_only:
-            join_input = self._get_sel_obj(join_vlay)
-        else:
-            join_input = join_vlay
-
-        #assemble pars
-        ins_d = { 'DISCARD_NONMATCHING' : discard_nomatch,
-                  'INPUT' : main_input,
-                   'JOIN' : join_input,
-                   'JOIN_FIELDS' : jlay_fieldn_l,
-                  'OUTPUT' : 'TEMPORARY_OUTPUT', 
-                  'PREDICATE' : pred_code_l, 
-                  'SUMMARIES' : sum_code_l,
-                   }
-        
-        log.debug('executing \'%s\' with ins_d: \n    %s'%(algo_nm, ins_d))
- 
-        res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
- 
-        res_vlay = res_d['OUTPUT']
- 
-        #===========================================================================
-        # post formatting
-        #===========================================================================
-        res_vlay.setName(layname) #reset the name
-        
-        #get new field names
-        nfn_l = set([f.name() for f in res_vlay.fields()]).difference([f.name() for f in vlay.fields()])
-        
-        """
-        view(res_vlay)
-        """
-        #=======================================================================
-        # post check
-        #=======================================================================
-        for fn in nfn_l:
-            rser = vlay_get_fdata(res_vlay, fieldn=fn, logger=log, fmt='ser')
-            if rser.isna().all().all():
-                log.warning('%s \'%s\' got all nulls'%(vlay.name(), fn))
-
-        
-        #=======================================================================
-        # rename fields
-        #=======================================================================
-        if use_raw_fn:
-            assert len(smry_l)==1, 'rename only allowed for single sample stat'
-            rnm_d = {s:s.replace('_%s'%smry_l[0],'') for s in nfn_l}
-            
-            s = set(rnm_d.values()).symmetric_difference(jlay_fieldn_l)
-            assert len(s)==0, 'failed to convert field names'
-            
-            res_vlay = vlay_rename_fields(res_vlay, rnm_d, logger=log)
-            
-            nfn_l = jlay_fieldn_l
-        
-        
-        
-        log.info('sampled \'%s\' w/ \'%s\' (%i hits) and \'%s\'to get %i new fields \n    %s'%(
-            join_vlay.name(), vlay.name(), res_vlay.dataProvider().featureCount(), 
-            smry_l, len(nfn_l), nfn_l))
-        
-        return res_vlay, nfn_l
 
 
     def warpreproject(self, #repojrect a raster
