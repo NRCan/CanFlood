@@ -1,0 +1,256 @@
+<!DOCTYPE qgis-layer-definition>
+<qlr>
+  <layer-tree-group expanded="1" name="" checked="Qt::Checked">
+    <customproperties/>
+    <layer-tree-layer legend_exp="" id="dtm_97b56589_0d60_4152_aa4e_eb0726c9e818" source="./dtm.tif" expanded="0" name="dtm" providerKey="gdal" checked="Qt::Checked">
+      <customproperties/>
+    </layer-tree-layer>
+  </layer-tree-group>
+  <maplayers>
+    <maplayer refreshOnNotifyMessage="" type="raster" minScale="1e+08" hasScaleBasedVisibilityFlag="0" refreshOnNotifyEnabled="0" autoRefreshTime="0" autoRefreshEnabled="0" styleCategories="AllStyleCategories" maxScale="0">
+      <extent>
+        <xmin>1267807.52659999998286366</xmin>
+        <ymin>462913.94829999998910353</ymin>
+        <xmax>1271257.73750000004656613</xmax>
+        <ymax>464993.38209999998798594</ymax>
+      </extent>
+      <id>dtm_97b56589_0d60_4152_aa4e_eb0726c9e818</id>
+      <datasource>./dtm.tif</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>dtm</layername>
+      <srs>
+        <spatialrefsys>
+          <wkt>PROJCRS["NAD83 / BC Albers",BASEGEOGCRS["NAD83",DATUM["North American Datum 1983",ELLIPSOID["GRS 1980",6378137,298.257222101,LENGTHUNIT["metre",1]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433]],ID["EPSG",4269]],CONVERSION["British Columbia Albers",METHOD["Albers Equal Area",ID["EPSG",9822]],PARAMETER["Latitude of false origin",45,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8821]],PARAMETER["Longitude of false origin",-126,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8822]],PARAMETER["Latitude of 1st standard parallel",50,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8823]],PARAMETER["Latitude of 2nd standard parallel",58.5,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8824]],PARAMETER["Easting at false origin",1000000,LENGTHUNIT["metre",1],ID["EPSG",8826]],PARAMETER["Northing at false origin",0,LENGTHUNIT["metre",1],ID["EPSG",8827]]],CS[Cartesian,2],AXIS["(E)",east,ORDER[1],LENGTHUNIT["metre",1]],AXIS["(N)",north,ORDER[2],LENGTHUNIT["metre",1]],USAGE[SCOPE["unknown"],AREA["Canada - British Columbia"],BBOX[48.25,-139.04,60.01,-114.08]],ID["EPSG",3005]]</wkt>
+          <proj4>+proj=aea +lat_0=45 +lon_0=-126 +lat_1=50 +lat_2=58.5 +x_0=1000000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs</proj4>
+          <srsid>970</srsid>
+          <srid>3005</srid>
+          <authid>EPSG:3005</authid>
+          <description>NAD83 / BC Albers</description>
+          <projectionacronym>aea</projectionacronym>
+          <ellipsoidacronym>EPSG:7019</ellipsoidacronym>
+          <geographicflag>false</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <links/>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <wkt></wkt>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>false</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent/>
+      </resourceMetadata>
+      <provider>gdal</provider>
+      <noData>
+        <noDataList useSrcNoData="1" bandNo="1"/>
+      </noData>
+      <map-layer-style-manager current="default">
+        <map-layer-style name="default"/>
+      </map-layer-style-manager>
+      <flags>
+        <Identifiable>1</Identifiable>
+        <Removable>1</Removable>
+        <Searchable>1</Searchable>
+      </flags>
+      <customproperties>
+        <property key="identify/format" value="Value"/>
+      </customproperties>
+      <pipe>
+        <rasterrenderer opacity="1" alphaBand="-1" band="1" type="singlebandpseudocolor" classificationMin="-5" classificationMax="50">
+          <rasterTransparency/>
+          <minMaxOrigin>
+            <limits>None</limits>
+            <extent>WholeRaster</extent>
+            <statAccuracy>Estimated</statAccuracy>
+            <cumulativeCutLower>0.02</cumulativeCutLower>
+            <cumulativeCutUpper>0.98</cumulativeCutUpper>
+            <stdDevFactor>2</stdDevFactor>
+          </minMaxOrigin>
+          <rastershader>
+            <colorrampshader colorRampType="INTERPOLATED" classificationMode="1" clip="0">
+              <colorramp type="cpt-city" name="[source]">
+                <prop k="inverted" v="0"/>
+                <prop k="rampType" v="cpt-city"/>
+                <prop k="schemeName" v="wkp/schwarzwald/wiki-schwarzwald-cont"/>
+                <prop k="variantName" v=""/>
+              </colorramp>
+              <item label="-5" alpha="255" color="#aeefd5" value="-5"/>
+              <item label="-4.6315" alpha="255" color="#aff0d3" value="-4.6315"/>
+              <item label="-4.2685" alpha="255" color="#b0f2d0" value="-4.2685"/>
+              <item label="-3.9" alpha="255" color="#b0f2ca" value="-3.9"/>
+              <item label="-3.5315" alpha="255" color="#b1f2c4" value="-3.5315"/>
+              <item label="-3.1685" alpha="255" color="#b0f3be" value="-3.1685"/>
+              <item label="-2.8" alpha="255" color="#b0f4ba" value="-2.8"/>
+              <item label="-2.4315" alpha="255" color="#b2f6b5" value="-2.4315"/>
+              <item label="-2.0685" alpha="255" color="#b5f6b2" value="-2.0685"/>
+              <item label="-1.7" alpha="255" color="#baf7b2" value="-1.7"/>
+              <item label="-1.3315" alpha="255" color="#c0f7b2" value="-1.3315"/>
+              <item label="-0.9685" alpha="255" color="#c6f8b2" value="-0.9685"/>
+              <item label="-0.6" alpha="255" color="#ccf9b2" value="-0.6"/>
+              <item label="-0.2315" alpha="255" color="#d2fab1" value="-0.2315"/>
+              <item label="0.1315" alpha="255" color="#d9fab2" value="0.1315"/>
+              <item label="0.5" alpha="255" color="#e0fbb2" value="0.5"/>
+              <item label="0.8685" alpha="255" color="#e7fcb2" value="0.8685"/>
+              <item label="1.2315" alpha="255" color="#eefcb3" value="1.2315"/>
+              <item label="1.6" alpha="255" color="#f5fcb3" value="1.6"/>
+              <item label="1.9685" alpha="255" color="#fafcb2" value="1.9685"/>
+              <item label="2.3315" alpha="255" color="#f8f9ac" value="2.3315"/>
+              <item label="2.7" alpha="255" color="#eef4a2" value="2.7"/>
+              <item label="3.0685" alpha="255" color="#e2f097" value="3.0685"/>
+              <item label="3.4315" alpha="255" color="#d5eb8c" value="3.4315"/>
+              <item label="3.8" alpha="255" color="#c6e480" value="3.8"/>
+              <item label="4.1685" alpha="255" color="#b8de76" value="4.1685"/>
+              <item label="4.5315" alpha="255" color="#aad86c" value="4.5315"/>
+              <item label="4.9" alpha="255" color="#9ad362" value="4.9"/>
+              <item label="5.2685" alpha="255" color="#8ccd59" value="5.2685"/>
+              <item label="5.6315" alpha="255" color="#7dc752" value="5.6315"/>
+              <item label="6" alpha="255" color="#6ec24a" value="6"/>
+              <item label="6.3685" alpha="255" color="#5ebc42" value="6.3685"/>
+              <item label="6.7315" alpha="255" color="#4db639" value="6.7315"/>
+              <item label="7.1" alpha="255" color="#3eb032" value="7.1"/>
+              <item label="7.4685" alpha="255" color="#31ab2c" value="7.4685"/>
+              <item label="7.8315" alpha="255" color="#27a52a" value="7.8315"/>
+              <item label="8.2" alpha="255" color="#1ea02b" value="8.2"/>
+              <item label="8.5685" alpha="255" color="#189a2e" value="8.5685"/>
+              <item label="8.9315" alpha="255" color="#129431" value="8.9315"/>
+              <item label="9.3" alpha="255" color="#0e8e34" value="9.3"/>
+              <item label="9.6685" alpha="255" color="#098938" value="9.6685"/>
+              <item label="10.0315" alpha="255" color="#07843c" value="10.0315"/>
+              <item label="10.4" alpha="255" color="#0c823f" value="10.4"/>
+              <item label="10.7685" alpha="255" color="#18823f" value="10.7685"/>
+              <item label="11.1315" alpha="255" color="#28843d" value="11.1315"/>
+              <item label="11.5" alpha="255" color="#34883c" value="11.5"/>
+              <item label="11.8685" alpha="255" color="#408c3b" value="11.8685"/>
+              <item label="12.2315" alpha="255" color="#4c8e3b" value="12.2315"/>
+              <item label="12.6" alpha="255" color="#579238" value="12.6"/>
+              <item label="12.9685" alpha="255" color="#639436" value="12.9685"/>
+              <item label="13.3315" alpha="255" color="#6e9634" value="13.3315"/>
+              <item label="13.7" alpha="255" color="#789a32" value="13.7"/>
+              <item label="14.0685" alpha="255" color="#809c30" value="14.0685"/>
+              <item label="14.4315" alpha="255" color="#89a02e" value="14.4315"/>
+              <item label="14.8" alpha="255" color="#93a22b" value="14.8"/>
+              <item label="15.1685" alpha="255" color="#9ca429" value="15.1685"/>
+              <item label="15.5315" alpha="255" color="#a6a627" value="15.5315"/>
+              <item label="15.9" alpha="255" color="#b0aa24" value="15.9"/>
+              <item label="16.2685" alpha="255" color="#bbad22" value="16.2685"/>
+              <item label="16.6315" alpha="255" color="#c5b01e" value="16.6315"/>
+              <item label="17" alpha="255" color="#cfb11c" value="17"/>
+              <item label="17.3685" alpha="255" color="#dab318" value="17.3685"/>
+              <item label="17.7315" alpha="255" color="#e4b414" value="17.7315"/>
+              <item label="18.1" alpha="255" color="#eeb60e" value="18.1"/>
+              <item label="18.4685" alpha="255" color="#f6b608" value="18.4685"/>
+              <item label="18.8315" alpha="255" color="#f8b004" value="18.8315"/>
+              <item label="19.2" alpha="255" color="#f4a602" value="19.2"/>
+              <item label="19.5685" alpha="255" color="#ee9b02" value="19.5685"/>
+              <item label="19.9315" alpha="255" color="#e89002" value="19.9315"/>
+              <item label="20.3" alpha="255" color="#e28402" value="20.3"/>
+              <item label="20.6685" alpha="255" color="#dc7a02" value="20.6685"/>
+              <item label="21.0315" alpha="255" color="#d86f02" value="21.0315"/>
+              <item label="21.4" alpha="255" color="#d36602" value="21.4"/>
+              <item label="21.7685" alpha="255" color="#ce5c02" value="21.7685"/>
+              <item label="22.1315" alpha="255" color="#c85402" value="22.1315"/>
+              <item label="22.5" alpha="255" color="#c04a02" value="22.5"/>
+              <item label="22.8685" alpha="255" color="#ba4202" value="22.8685"/>
+              <item label="23.2315" alpha="255" color="#b43a02" value="23.2315"/>
+              <item label="23.6" alpha="255" color="#ae3102" value="23.6"/>
+              <item label="23.9685" alpha="255" color="#a92a02" value="23.9685"/>
+              <item label="24.3315" alpha="255" color="#a32402" value="24.3315"/>
+              <item label="24.7" alpha="255" color="#9d1e02" value="24.7"/>
+              <item label="25.0685" alpha="255" color="#971702" value="25.0685"/>
+              <item label="25.4315" alpha="255" color="#921201" value="25.4315"/>
+              <item label="25.8" alpha="255" color="#8d0e01" value="25.8"/>
+              <item label="26.1685" alpha="255" color="#870800" value="26.1685"/>
+              <item label="26.5315" alpha="255" color="#820500" value="26.5315"/>
+              <item label="26.9" alpha="255" color="#7d0400" value="26.9"/>
+              <item label="27.2685" alpha="255" color="#7a0802" value="27.2685"/>
+              <item label="27.6315" alpha="255" color="#770d02" value="27.6315"/>
+              <item label="28" alpha="255" color="#761002" value="28"/>
+              <item label="28.3685" alpha="255" color="#751204" value="28.3685"/>
+              <item label="28.7315" alpha="255" color="#751404" value="28.7315"/>
+              <item label="29.1" alpha="255" color="#751504" value="29.1"/>
+              <item label="29.4685" alpha="255" color="#741604" value="29.4685"/>
+              <item label="29.8315" alpha="255" color="#741805" value="29.8315"/>
+              <item label="30.2" alpha="255" color="#721a06" value="30.2"/>
+              <item label="30.5685" alpha="255" color="#721d06" value="30.5685"/>
+              <item label="30.9315" alpha="255" color="#701f07" value="30.9315"/>
+              <item label="31.3" alpha="255" color="#6f2108" value="31.3"/>
+              <item label="31.6685" alpha="255" color="#6e2308" value="31.6685"/>
+              <item label="32.0315" alpha="255" color="#6e2408" value="32.0315"/>
+              <item label="32.4" alpha="255" color="#6d2609" value="32.4"/>
+              <item label="32.7685" alpha="255" color="#6c280a" value="32.7685"/>
+              <item label="33.1315" alpha="255" color="#6c280a" value="33.1315"/>
+              <item label="33.5" alpha="255" color="#6c2a0a" value="33.5"/>
+              <item label="33.8685" alpha="255" color="#6b2c0b" value="33.8685"/>
+              <item label="34.2315" alpha="255" color="#6a2c0c" value="34.2315"/>
+              <item label="34.6" alpha="255" color="#6a2e0c" value="34.6"/>
+              <item label="34.9685" alpha="255" color="#6b300e" value="34.9685"/>
+              <item label="35.3315" alpha="255" color="#6e3412" value="35.3315"/>
+              <item label="35.7" alpha="255" color="#713917" value="35.7"/>
+              <item label="36.0685" alpha="255" color="#743e1c" value="36.0685"/>
+              <item label="36.4315" alpha="255" color="#764220" value="36.4315"/>
+              <item label="36.8" alpha="255" color="#794625" value="36.8"/>
+              <item label="37.1685" alpha="255" color="#7d4a2b" value="37.1685"/>
+              <item label="37.5315" alpha="255" color="#804f32" value="37.5315"/>
+              <item label="37.9" alpha="255" color="#835538" value="37.9"/>
+              <item label="38.2685" alpha="255" color="#875a3f" value="38.2685"/>
+              <item label="38.6315" alpha="255" color="#8a6045" value="38.6315"/>
+              <item label="39" alpha="255" color="#8c654c" value="39"/>
+              <item label="39.3685" alpha="255" color="#906a54" value="39.3685"/>
+              <item label="39.7315" alpha="255" color="#936f5a" value="39.7315"/>
+              <item label="40.1" alpha="255" color="#967460" value="40.1"/>
+              <item label="40.4685" alpha="255" color="#987a68" value="40.4685"/>
+              <item label="40.8315" alpha="255" color="#9c8170" value="40.8315"/>
+              <item label="41.2" alpha="255" color="#9e8778" value="41.2"/>
+              <item label="41.5685" alpha="255" color="#a08d82" value="41.5685"/>
+              <item label="41.9315" alpha="255" color="#a3938b" value="41.9315"/>
+              <item label="42.3" alpha="255" color="#a69a93" value="42.3"/>
+              <item label="42.6685" alpha="255" color="#a7a09c" value="42.6685"/>
+              <item label="43.0315" alpha="255" color="#aaa7a4" value="43.0315"/>
+              <item label="43.4" alpha="255" color="#acacab" value="43.4"/>
+              <item label="43.7685" alpha="255" color="#aeaeae" value="43.7685"/>
+              <item label="44.1315" alpha="255" color="#b2b2b2" value="44.1315"/>
+              <item label="44.5" alpha="255" color="#b5b5b5" value="44.5"/>
+              <item label="44.8685" alpha="255" color="#b8b8b8" value="44.8685"/>
+              <item label="45.2315" alpha="255" color="#bcbcbc" value="45.2315"/>
+              <item label="45.6" alpha="255" color="#c0c0c0" value="45.6"/>
+              <item label="45.9685" alpha="255" color="#c4c4c4" value="45.9685"/>
+              <item label="46.3315" alpha="255" color="#c8c8c8" value="46.3315"/>
+              <item label="46.7" alpha="255" color="#cccccc" value="46.7"/>
+              <item label="47.0685" alpha="255" color="#d0ced0" value="47.0685"/>
+              <item label="47.4315" alpha="255" color="#d4d2d4" value="47.4315"/>
+              <item label="47.8" alpha="255" color="#d8d6d8" value="47.8"/>
+              <item label="48.1685" alpha="255" color="#dad8da" value="48.1685"/>
+              <item label="48.5315" alpha="255" color="#dddbdd" value="48.5315"/>
+              <item label="48.9" alpha="255" color="#e1dfe1" value="48.9"/>
+              <item label="49.2685" alpha="255" color="#e5e3e5" value="49.2685"/>
+              <item label="49.6315" alpha="255" color="#e9e7e9" value="49.6315"/>
+              <item label="50" alpha="255" color="#ebe9eb" value="50"/>
+            </colorrampshader>
+          </rastershader>
+        </rasterrenderer>
+        <brightnesscontrast brightness="0" contrast="0"/>
+        <huesaturation colorizeRed="255" colorizeGreen="128" colorizeBlue="128" saturation="0" colorizeOn="0" colorizeStrength="100" grayscaleMode="0"/>
+        <rasterresampler maxOversampling="2"/>
+      </pipe>
+      <blendMode>0</blendMode>
+    </maplayer>
+  </maplayers>
+</qlr>

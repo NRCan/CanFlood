@@ -438,65 +438,7 @@ class Attr(RiskPlotr):
         
         return mdxcol
     
-    def get_ttl(self, #get a total impacts summary from an impacts dxcol 
-                df, # index: {aep, impacts}
-                logger=None,
-                ):
-        """
-        see also Plotr.prep_ttl()
-        """
-        
-        #=======================================================================
-        # precheck
-        #=======================================================================
-        assert isinstance(df, pd.DataFrame)
-        miss_l = set(['aep', 'impacts']).symmetric_difference(df.columns)
-        assert len(miss_l)==0, 'bad column labels: %s'%df.columns.tolist()
-        
-                     
-        
-        #=======================================================================
-        # get ead and tail values
-        #=======================================================================
-        """should apply the same ltail/rtail parameters from the cf"""
-        
-        if df['impacts'].sum()==0:
-            ead = 0.0
-            df1 = df.copy()
-            
-        elif df['impacts'].sum()>0:
-            dfc = df.loc[:, ('aep', 'impacts')].set_index('aep').T
-            ttl_ser = self.calc_ead(dfc,
-                drop_tails=False, logger=logger, )
-            
-            ead = ttl_ser['ead'][0] 
-            df1 = ttl_ser.drop('ead', axis=1).T.reset_index()
-            
- 
-        else:
-            raise Error('negative impacts!')
-            
-        assert isinstance(ead, float)
-        assert df1['impacts'].min()>=0
-        #=======================================================================
-        # add ari 
-        #=======================================================================
-        self._get_ttl_ari(df1) #add ari column
-        
-        #=======================================================================
-        # add plot columns from ttl
-        #=======================================================================
-        ttl_df=self.data_d['ttl'].copy()
-        df1 = df1.merge(ttl_df.loc[:, ('aep', 'plot')], on='aep', how='inner')
-        
-        #=======================================================================
-        # wrap
-        #=======================================================================
-        
-        self.slice_ead = ead #set for plotter
-        
-        return df1, ead
-    
+
     def get_stack(self, #get a set of stacked data for a stack plot
                   lvlName='nestID', #level from which to build stacked data from
                     #eventually we could support different unstacking dimensions.. but nestID is the only obviuos one now
@@ -539,7 +481,7 @@ class Attr(RiskPlotr):
         for coln, cser in sdf.items():
             tdf, ead_d[coln] = self.get_ttl(cser.to_frame().reset_index().rename(columns={coln:'impacts'}))
             
-
+            assert 'ari' in tdf.columns, coln
             if sdf1 is None:
                 sdf1 = tdf.drop('impacts', axis=1)
 

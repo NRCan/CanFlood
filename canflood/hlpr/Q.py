@@ -67,6 +67,11 @@ npc_pytype_d = {'?':bool,
 
 type_qvar_py_d = {10:str, 2:int, 135:float, 6:float, 4:int, 1:bool, 16:datetime.datetime, 12:str} #QVariant.types to pythonic types
 
+#parameters for lots of statistic algos
+stat_pars_d = {'First': 0, 'Last': 1, 'Count': 2, 'Sum': 3, 'Mean': 4, 'Median': 5,
+                'St dev (pop)': 6, 'Minimum': 7, 'Maximum': 8, 'Range': 9, 'Minority': 10,
+                 'Majority': 11, 'Variety': 12, 'Q1': 13, 'Q3': 14, 'IQR': 15}
+
 #==============================================================================
 # classes -------------
 #==============================================================================
@@ -343,7 +348,9 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                   fp, 
                   logger=None, 
                   providerLib='ogr',
-                  aoi_vlay = None):
+                  aoi_vlay = None,
+                  allow_none=True, #control check in saveselectedfeastures
+                  ):
         
         assert os.path.exists(fp), 'requested file does not exist: %s'%fp
         
@@ -388,7 +395,12 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         if isinstance(aoi_vlay, QgsVectorLayer):
             log.info('slicing by aoi %s'%aoi_vlay.name())
             
-            vlay = self.selectbylocation(vlay_raw, aoi_vlay, logger=log, result_type='layer')
+            vlay = self.selectbylocation(vlay_raw, aoi_vlay, allow_none=allow_none,
+                                 logger=log, result_type='layer')
+            
+            #check for no selection
+            if vlay is None:
+                return None
             
             vlay.setName(vlay_raw.name()) #reset the name
             
@@ -617,12 +629,102 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         
         return out_fp
+    
+    def vlay_write(self, #write  a VectorLayer
+        vlay,
+        out_fp=None, 
+
+        driverName='GPKG',
+        fileEncoding = "CP1250", 
+        opts = QgsVectorFileWriter.SaveVectorOptions(), #empty options object
+        overwrite=None,
+        logger=None):
+        """
+        help(QgsVectorFileWriter.SaveVectorOptions)
+        QgsVectorFileWriter.SaveVectorOptions.driverName='GPKG'
+        opt2 = QgsVectorFileWriter.BoolOption(QgsVectorFileWriter.CreateOrOverwriteFile)
+        help(QgsVectorFileWriter)
 
         
+        """
+        
+        #==========================================================================
+        # defaults
+        #==========================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('vlay_write')
+        if overwrite is None: overwrite=self.overwrite
+        
+        if out_fp is None: out_fp = os.path.join(self.out_dir, '%s.gpkg'%vlay.name())
+        
+        #===========================================================================
+        # assemble options
+        #===========================================================================
+        opts.driverName = driverName
+        opts.fileEncoding = fileEncoding
         
         
+        #===========================================================================
+        # checks
+        #===========================================================================
+        #file extension
+        fhead, ext = os.path.splitext(out_fp)
+        
+        if not 'gpkg' in ext:
+            raise Error('unexpected extension: %s'%ext)
+        
+        if os.path.exists(out_fp):
+            msg = 'requested file path already exists!. overwrite=%s \n    %s'%(
+                overwrite, out_fp)
+            if overwrite:
+                log.warning(msg)
+                os.remove(out_fp) #workaround... should be away to overwrite with the QgsVectorFileWriter
+            else:
+                raise Error(msg)
+            
+        
+        if vlay.dataProvider().featureCount() == 0:
+            raise Error('\'%s\' has no features!'%(
+                vlay.name()))
+            
+        if not vlay.isValid():
+            Error('passed invalid layer')
+            
+        #=======================================================================
+        # write
+        #=======================================================================
+        
+        error = QgsVectorFileWriter.writeAsVectorFormatV2(
+                vlay, out_fp, 
+                QgsCoordinateTransformContext(),
+                opts,
+                )
+        
+        
+        #=======================================================================
+        # wrap and check
+        #=======================================================================
+          
+        if error[0] == QgsVectorFileWriter.NoError:
+            log.info('layer \' %s \' written to: \n     %s'%(vlay.name(),out_fp))
+            return out_fp
+         
+        raise Error('FAILURE on writing layer \' %s \'  with code:\n    %s \n    %s'%(vlay.name(),error, out_fp))
+        
+
     
-    
+    def load_dtm(self, #convienece loader for assining the correct attribute 
+                 fp, 
+                 logger=None,
+                 **kwargs):
+        if logger is None: logger=self.logger
+        log=logger.getChild('load_dtm')
+        
+        self.dtm_rlay = self.load_rlay(fp, logger=log, **kwargs)
+        
+        return self.dtm_rlay
+        
+
     #==========================================================================
     # GENERIC METHODS-----------------
     #==========================================================================
@@ -637,6 +739,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             
             layname='df',
             
+            index = False, #whether to include the index as a field
             logger=None, 
 
             ):
@@ -648,17 +751,30 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #=======================================================================
         # setup
         #=======================================================================
-        if crs is None: crs = self.crs
+        if crs is None: crs = self.qproj.crs()
         if logger is None: logger = self.logger
             
         log = logger.getChild('vlay_new_df')
         
-
+        
+        #=======================================================================
+        # index fix
+        #=======================================================================
+        df = df_raw.copy()
+        
+        if index:
+            if not df.index.name is None:
+                coln = df.index.name
+                df.index.name = None
+            else:
+                coln = 'index'
+                
+            df[coln] = df.index
             
         #=======================================================================
         # precheck
         #=======================================================================
-        df = df_raw.copy()
+        
         
         #make sure none of hte field names execeed the driver limitations
         max_len = self.fieldn_max_d[self.driverName]
@@ -772,7 +888,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                              list(feats_d.values()),
                              logger=log,
                              )
-        
+        self.createspatialindex(vlay, logger=log)
         #=======================================================================
         # post check
         #=======================================================================
@@ -814,13 +930,13 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #=======================================================================
         algo_nm = 'qgis:deletecolumn'
         if logger is None: logger=self.logger
-        log = self.logger.getChild('deletecolumn')
+        log = logger.getChild('deletecolumn')
         self.vlay = in_vlay
 
         #=======================================================================
         # field manipulations
         #=======================================================================
-        fieldn_l = self._field_handlr(in_vlay, fieldn_l,  invert=invert)
+        fieldn_l = self._field_handlr(in_vlay, fieldn_l,  invert=invert, logger=log)
         
             
 
@@ -911,8 +1027,10 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                                            jlay_fieldn_l, 
                                            invert=False)
         
-        jgeot = vlay_get_bgeo_type(join_vlay)
-        mgeot = vlay_get_bgeo_type(self.vlay)
+        #=======================================================================
+        # jgeot = vlay_get_bgeo_type(join_vlay)
+        # mgeot = vlay_get_bgeo_type(self.vlay)
+        #=======================================================================
         
         mfcnt = self.vlay.dataProvider().featureCount()
         #jfcnt = join_vlay.dataProvider().featureCount()
@@ -923,6 +1041,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #=======================================================================
         # geometry expectation prechecks
         #=======================================================================
+        """should take any geo
         if not (jgeot == 'polygon' or mgeot == 'polygon'):
             raise Error('one of the layres has to be a polygon')
         
@@ -950,6 +1069,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         if not expect_j_overlap:
             if not method==0:
                 raise Error('for expect_j_overlap=False, method must = 0 (1:m) for validation')
+                """
 
                
         #=======================================================================
@@ -2090,6 +2210,76 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
           
         return res_rlay
     
+    #===========================================================================
+    # ALGOS - CUSTOM--------
+    #===========================================================================
+    def vlay_pts_dist(self, #get the distance between points in a given order
+        vlay_raw, 
+        ifn = 'fid', #fieldName to index by
+        request = None,
+        
+        result = 'vlay_append', #result type
+        logger=None):
+        #===========================================================================
+        # defaults
+        #===========================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('vlay_pts_dist')
+        
+        
+        if request is None: 
+            request =  QgsFeatureRequest(
+                ).addOrderBy(ifn, ascending=True
+                             ).setSubsetOfAttributes([ifn], vlay_raw.fields())
+                             
+        #===========================================================================
+        # precheck
+        #===========================================================================
+        assert 'Point' in QgsWkbTypes().displayString(vlay_raw.wkbType()), 'passed bad geo type'
+        
+        #see if indexer is unique
+        ifn_d = vlay_get_fdata(vlay_raw, fieldn=ifn, logger=log)
+        assert len(set(ifn_d.values()))==len(ifn_d)
+        #===========================================================================
+        # loop and calc
+        #===========================================================================
+        
+        d = dict()
+        first, geo_prev = True, None 
+        for i, feat in enumerate(vlay_raw.getFeatures(request)):
+            assert not feat.attribute(ifn) in d, 'indexer is not unique!'
+            geo = feat.geometry()
+            if first:
+                first=False
+            else:
+                d[feat.attribute(ifn)] = geo.distance(geo_prev)
+                
+            geo_prev = geo
+    
+        log.info('got %i distances using \"%s\''%(len(d), ifn))
+        #===========================================================================
+        # check
+        #===========================================================================
+        assert len(d) == (vlay_raw.dataProvider().featureCount() -1)
+        
+        
+        #===========================================================================
+        # results typing 
+        #===========================================================================
+        if result == 'dict': return d
+        elif result == 'vlay_append':
+            #data manip
+            ncoln = '%s_dist'%ifn
+            df_raw = vlay_get_fdf(vlay_raw, logger=log)
+            df = df_raw.join(pd.Series(d, name=ncoln), on=ifn)
+            
+            assert df[ncoln].isna().sum()==1, 'expected 1 null'
+            
+            #reassemble
+            geo_d = vlay_get_fdata(vlay_raw, geo_obj=True, logger=log)
+            return self.vlay_new_df2(df, geo_d=geo_d, logger=log,
+                                   layname='%s_%s'%(vlay_raw.name(), ncoln))
+    
     
     
     #==========================================================================
@@ -2099,9 +2289,10 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                       vlay, #layer to check for field presence
                       fieldn_l, #list of fields to handle
                       invert = False,
+                      logger=None,
                       ):
-        
-        log = self.logger.getChild('_field_handlr')
+        if logger is None: logger=self.logger
+        log = logger.getChild('_field_handlr')
 
         #=======================================================================
         # all flag
@@ -2132,7 +2323,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
     
     
-        vlay_check(vlay, exp_fieldns=fieldn_l)
+        #vlay_check(vlay, exp_fieldns=fieldn_l)
         
         
         #=======================================================================
@@ -2144,7 +2335,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             #get the difference
             fieldn_l = list(big_fn_s.difference(set(fieldn_l)))
             
-            self.logger.debug('inverted selection from %i to %i fields'%
+            log.debug('inverted selection from %i to %i fields'%
                       (len(big_fn_s),  len(fieldn_l)))
             
             
@@ -3768,6 +3959,7 @@ def vlay_key_convert(#convert a list of ids in one form to another
             
   
 
+        
 
 #==============================================================================
 # type checks-----------------

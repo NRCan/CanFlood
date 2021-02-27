@@ -144,19 +144,10 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # session controls
         #=======================================================================
         #Working Directory 
-        """default is set below.
-        doesn't seem to open the displayed directory on first click"""
-        def browse_wd():
-            return self.browse_button(self.lineEdit_wd, prompt='Select Working Directory',
-                                      qfd = QFileDialog.getExistingDirectory)
-            
-        self.pushButton_wd.clicked.connect(browse_wd) # SS. Working Dir. Browse
-        
-        #WD force open
-        def open_wd():
-            force_open_dir(self.lineEdit_wd.text())
-        
-        self.pushButton_wd_open.clicked.connect(open_wd)
+        self._connect_wdir(self.pushButton_wd, self.pushButton_wd_open, self.lineEdit_wd,
+                           default_wdir = os.path.join(os.path.expanduser('~'), 'CanFlood', 'build'))
+                
+
         
         #AOI
         self.comboBox_aoi.setFilters(QgsMapLayerProxyModel.PolygonLayer) #SS. Project AOI
@@ -225,6 +216,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
 
         #find a good layer
+        """TODO: 
+        migrate to bind_MapLayerComboBox()
+        """
         if len(vlays_d)>0:
             try:
                 for layname, vlay in vlays_d.items():
@@ -414,21 +408,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # validator-----------
         #======================================================================
         self.pushButton_Validate.clicked.connect(self.run_validate)
-        
-        #======================================================================
-        # project defaults-----------
-        #======================================================================
-        """"
-        to speed up testing.. manually configure the project
-        """
 
-        debug_dir =os.path.join(os.path.expanduser('~'), 'CanFlood', 'build')
-        #self.lineEdit_cf_fp.setText(os.path.join(debug_dir, 'CanFlood_scenario1.txt'))
-        self.lineEdit_wd.setText(debug_dir)
-        
-        if not os.path.exists(debug_dir):
-            log.info('building directory: %s'%debug_dir)
-            os.makedirs(debug_dir)
             
         #=======================================================================
         # wrap
@@ -1311,7 +1291,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         log = self.logger.getChild('set_event_vals')
         #log.info('user pushed \'pushButton_ELstore\'')
         
-
+        pcoln = 'Probability'
+        ecoln = 'EventName'
         #======================================================================
         # collect variables
         #======================================================================
@@ -1345,10 +1326,11 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.logger.info('extracted data w/ %s \n%s'%(str(df.shape), df))
         
         # check it
-        if df.iloc[:, 1].isna().any():
-            raise Error('got %i nulls in the likelihood column'%df.iloc[:,1].isna().sum())
+        if df[pcoln].isna().any():
+            raise Error('got %i nulls in the \'%s\' column'%(
+                df[pcoln].isna().sum(), pcoln))
         
-        miss_l = set(self.event_name_set).symmetric_difference(df.iloc[:,0].values)
+        miss_l = set(self.event_name_set).symmetric_difference(df[ecoln].values)
         if len(miss_l)>0:
             raise Error('event name mismatch')
         
@@ -1356,7 +1338,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
         # clean it
         #======================================================================
-        aep_df = df.set_index(df.columns[0]).iloc[:,0].to_frame().T
+        aep_df = df.set_index(ecoln, drop=True).T
         
 
         
@@ -1366,6 +1348,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         ofn = os.path.join(self.lineEdit_wd.text(), 'evals_%i_%s.csv'%(len(aep_df.columns), tag))
         
         from hlpr.Q import Qcoms
+        
         #build a shell worker for these taxks
         wrkr = Qcoms(logger=log, tag=tag, feedback=self.feedback, out_dir=out_dir)
         

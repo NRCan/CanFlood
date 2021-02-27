@@ -101,7 +101,7 @@
           </size>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>3</number>
          </property>
          <property name="movable">
           <bool>false</bool>
@@ -3049,7 +3049,7 @@ p, li { white-space: pre-wrap; }
                </property>
                <column>
                 <property name="text">
-                 <string>Event Name</string>
+                 <string>EventName</string>
                 </property>
                </column>
                <column>
@@ -5669,9 +5669,9 @@ p, li { white-space: pre-wrap; }
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="buttonGroup_LS_rels"/>
   <buttongroup name="buttonGroup_S_filepaths"/>
-  <buttongroup name="buttonGroup_EV_eventRels"/>
   <buttongroup name="buttonGroup_ELfmt"/>
+  <buttongroup name="buttonGroup_EV_eventRels"/>
+  <buttongroup name="buttonGroup_LS_rels"/>
  </buttongroups>
 </ui>

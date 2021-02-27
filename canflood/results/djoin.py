@@ -50,21 +50,31 @@ class Djoiner(Qcoms, Model):
         'parameters':{
             'cid':{'type':str}
             },
+
+        }
+    
+    exp_pars_op={
+
+        'risk_fps':{
+             'dmgs':{'ext':('.csv',)},
+             },
         'results_fps':{
              'r_passet':{'ext':('.csv',)},
              }
         }
     
-    exp_pars_op=dict() #none for now
-    
 
     
     
     def __init__(self,
+                 fp_attn = 'r_passet', #default attribute name to pull tabulat data from
                  **kwargs
                  ):
 
         super().__init__(**kwargs) #initilzie teh baseclass
+        
+        assert hasattr(self, fp_attn), 'bad dfp_attn: %s'%fp_attn
+        self.fp_attn=fp_attn
         
         self.logger.debug('init finished')
         
@@ -72,6 +82,7 @@ class Djoiner(Qcoms, Model):
     def run(self,#join tabular results back to the finv
               vlay_raw, #finv vlay (to join results to)
               data_fp=None, #filepath to res_per asset tabular results data
+              fp_attn = None, #if no data_fp is provided, attribute name to use
               cid=None, #linking column/field name
               keep_fnl = 'all', #list of field names to keep from the vlay (or 'all' to keep all)
               layname = None,
@@ -82,7 +93,6 @@ class Djoiner(Qcoms, Model):
         todo: clean this up and switch over to joinattributestable algo
  
         """
-        
         #=======================================================================
         # defaults
         #=======================================================================
@@ -90,15 +100,28 @@ class Djoiner(Qcoms, Model):
         log = self.logger.getChild('djoin')
         tag = self.tag
         if cid is None: cid = self.cid
-        if data_fp is None: data_fp = self.r_passet
-        if layname is None:  layname='res_%s_%s'%(self.name, tag)
+        
+        
+        
+        if data_fp is None:
+            if fp_attn is None: fp_attn=self.fp_attn 
+            data_fp = getattr(self, fp_attn)
+            log.debug('using \'%s\' for data_fp and got : %s'%(fp_attn, data_fp))
+            
+            if layname is None:  layname='%s_%s_%s'%(fp_attn, tag, self.name)
+        else:
+            if layname is None:  layname='res_%s_%s'%(tag, self.name)
+            
+        assert os.path.exists(data_fp), '\'%s.%s\' got bad data_fp (fp_attn:%s): \'%s\''%(
+                    self.tag, self.name, fp_attn, data_fp)
         
         #=======================================================================
         # precheck
         #=======================================================================
         assert vlay_raw.crs()==self.qproj.crs(), 'crs mismatch: \n    %s\n    %s'%(
             vlay_raw.crs(), self.qproj.crs())
-        assert os.path.exists(data_fp)
+        
+        
         
         #=======================================================================
         # get the left data from the vlay geomtry

@@ -227,7 +227,7 @@ class Model(ComWrkr,
         #=======================================================================
         # precheck
         #=======================================================================
-        mod_logger.info('Model.__init__ start')
+        #mod_logger.debug('Model.__init__ start')
         """no.. letting dummy cf_fps get passed
         assert os.path.exists(cf_fp), 'bad control filepath: %s'%cf_fp"""
         
@@ -420,7 +420,7 @@ class Model(ComWrkr,
                     
             
             
-        log.info('finished checking %i sections w/ %i errors. optional=%s \n'%(len(cpars), len(errors), optional))
+        log.debug('finished checking %i sections w/ %i errors. optional=%s \n'%(len(cpars), len(errors), optional))
         
         return len(errors)==0, errors
         
@@ -697,6 +697,7 @@ class Model(ComWrkr,
         #======================================================================
         df_raw = pd.read_csv(fp, index_col=None)
         
+        log.debug('got %s from %s'%(df_raw.shape, fp))
         #======================================================================
         # check it
         #======================================================================
@@ -856,14 +857,16 @@ class Model(ComWrkr,
     def load_evals(self,#loading event probability data
                    fp = None,
                    dtag = 'evals',
+                   check=True, #whether to perform special model loading logic tests
+                   logger=None,
                    ):
-        
-        log = self.logger.getChild('load_evals')
+        if logger is None: logger=self.logger
+        log = logger.getChild('load_evals')
         if fp is None: fp = getattr(self, dtag)
 
         #check load sequence
         assert os.path.exists(fp), '%s got invalid filepath \n    %s'%(dtag, fp)
-        assert 'finv' in self.data_d, 'call load_finv first'
+        
         
         #======================================================================
         # load it
@@ -903,26 +906,11 @@ class Model(ComWrkr,
         aep_ser = aep_ser.sort_values(ascending=True)
         aep_ser.name='aep'  
  
-        #======================================================================
-        # check2
-        #======================================================================
-        #check all aeps are below 1
-        boolar = np.logical_and(
-            aep_ser < 1,
-            aep_ser > 0)
-        
-        assert np.all(boolar), 'passed aeps out of range'
-        
-        #check logic against whether this model considers failure
-        log.debug('\n%s'%aep_ser.to_frame().join(aep_ser.duplicated(keep=False).rename('dupes')))
-        if self.exlikes == '': #no failure
+        if check:
+            assert 'finv' in self.data_d, 'call load_finv first'
+            log.debug('\n%s'%aep_ser.to_frame().join(aep_ser.duplicated(keep=False).rename('dupes')))
+            self._check_evals(aep_ser)
             
-            assert len(aep_ser.unique())==len(aep_ser), \
-            'got duplicated \'evals\' but no \'exlikes\' data was provided.. see logger'
-        else:
-            assert len(aep_ser.unique())!=len(aep_ser), \
-            'got unique \'evals\' but \'exlikes\' data is provided... see logger'
-        
         #=======================================================================
         # #assemble event type  frame
         #=======================================================================
@@ -942,6 +930,34 @@ class Model(ComWrkr,
         self.data_d[dtag] = aep_ser #setting for consistency. 
         
         self.expcols = aep_ser.index.copy() #set for later checks
+        
+        return aep_ser
+        
+    def _check_evals(self, aep_ser, logger=None):
+        if logger is None: logger=self.logger
+        log=logger.getChild('check_evals')
+
+        #check all aeps are below 1
+        boolar = np.logical_and(
+            aep_ser < 1,
+            aep_ser > 0)
+        
+        assert np.all(boolar), 'passed aeps out of range'
+        
+        #check logic against whether this model considers failure
+        if self.exlikes == '': #no failure
+            
+            assert len(aep_ser.unique())==len(aep_ser), \
+            'got duplicated \'evals\' but no \'exlikes\' data was provided.. see logger'
+        else:
+            assert len(aep_ser.unique())!=len(aep_ser), \
+            'got unique \'evals\' but \'exlikes\' data is provided... see logger'
+            
+        #check minimum events for risk calculation
+        if not len(aep_ser.unique())>2:
+            log.warning("received %i unique events. this small number could cause unexpected behavior of the EAD algorhihtim"%(
+                len(aep_ser.unique())))
+        
         
     def load_expos(self,#generic exposure loader
                    fp = None,
@@ -1052,7 +1068,7 @@ class Model(ComWrkr,
         self.data_d[dtag] = df
         
         
-        log.info('finished loading %s as %s'%(dtag, str(df.shape)))
+        log.info('finished loading %s as w/ \n    %s'%(dtag, self._get_stats(df)))
         
         return
         
@@ -1109,14 +1125,11 @@ class Model(ComWrkr,
         # assemble complex aeps
         #=======================================================================
         #collect event names
-        cplx_evn_d = dict()
-        cnt=0
-        for aep in aep_ser.unique(): #those aeps w/ duplicates:
-            cplx_evn_d[aep] = aep_ser[aep_ser==aep].index.tolist()
-            cnt=max(cnt, len(cplx_evn_d[aep])) #get the size of the larget complex event
-        
+        cplx_evn_d, cnt = self._get_cplx_evn(aep_ser)
 
-        assert cnt > 1, 'passed \'exlikes\' but there are no complex events'
+        assert cnt>0, 'passed \'exlikes\' but there are no complex events'
+
+
         
 
         def get_cplx_df(df, aep=None, exp_l=None): #retrieve complex data helper
@@ -1149,7 +1162,8 @@ class Model(ComWrkr,
         for aep, exn_l in cplx_evn_d.items(): 
             
             miss_l = set(exn_l).difference(edf.columns)
-            assert len(miss_l)<2, 'can only fill one exposure column per complex event: %s'%miss_l
+            if not len(miss_l)<2:
+                raise Error('can only fill one exposure column per complex event: %s'%miss_l)
             
             if len(miss_l)==1:
                 fill_exn_d[aep] = list(miss_l)[0]
@@ -1260,6 +1274,16 @@ class Model(ComWrkr,
         self.cplx_evn_d = cplx_evn_d
         
         return
+    
+    def _get_cplx_evn(self, aep_ser): #get complex event sets from aep_ser
+        cplx_evn_d = dict()
+        cnt=0
+        for aep in aep_ser.unique(): #those aeps w/ duplicates:
+            cplx_evn_d[aep] = aep_ser[aep_ser==aep].index.tolist()
+            cnt=max(cnt, len(cplx_evn_d[aep])) #get the size of the larget complex event
+            
+        return cplx_evn_d, cnt
+            
         
     def load_gels(self,#loading expo data
                    fp = None,
@@ -1331,8 +1355,7 @@ class Model(ComWrkr,
         #======================================================================
         self.data_d[dtag] = df
         
-        log.info('finished loading %s as %s w/ \n    min=%.2f, mean=%.2f, max=%.2f'%(
-            dtag, str(df.shape), df.min().min(), df.mean().mean(), df.max().max()))
+        log.info('finished loading \'%s\' w/ \n    %s'%(dtag, self._get_stats(df)))
         
         
     def load_dmgs(self,#loading any exposure type data (expos, or exlikes)
@@ -1511,7 +1534,10 @@ class Model(ComWrkr,
 
         log.info('finished loading %s as %s'%(dtag, str(dxcol.shape)))
   
+    def _get_stats(self, df): #log stats of a frame
         
+        return 'count = %i, nulls = %i, min = %.2f, mean = %.2f, max = %.2f'%(
+            df.size, df.isna().sum().sum(), df.min().min(), df.mean().mean(), df.max().max())
    
     def add_gels(self): #add gels to finv (that's heights)
         log = self.logger.getChild('add_gels')
@@ -1581,7 +1607,8 @@ class Model(ComWrkr,
         if group_cnt == 2: #Risk1
             pass
         elif group_cnt == 4: #Dmg2 and Risk2
-            exp_fcolns = exp_fcolns + ['ftag', 'fcap']
+            """fcap is optional"""
+            exp_fcolns = exp_fcolns + ['ftag']
             
         else:
             raise Error('bad group_cnt %i'%group_cnt)
@@ -2028,7 +2055,7 @@ class Model(ComWrkr,
         
         return 
     
-    def _fmt_resTtl(self, 
+    def _fmt_resTtl(self,  #format res_ttl
                     df_raw):
         
         df = df_raw.copy()
@@ -2366,7 +2393,8 @@ class Model(ComWrkr,
         #=======================================================================
         if not 'float' in df_raw.columns.dtype.name:
             raise Error('expected aep values in columns')
-        assert len(df_raw.columns)>2
+        
+        #assert len(df_raw.columns)>2
         
         #=======================================================================
         # prep
@@ -2426,7 +2454,19 @@ class Model(ComWrkr,
         
         df = df_raw.copy()
         
+        #=======================================================================
+        # dimensional checks
+        #=======================================================================
+        assert len(df)>0, self.tag
         
+        #=======================================================================
+        # null checks
+        #=======================================================================
+        boolcol = df.isna().all(axis=0)
+        assert not boolcol.any(), '%s got %i empty columns: \n    %s'%(
+            self.tag, boolcol.sum(), df.columns[boolcol].tolist())
+        
+        assert not df.isna().all(axis=1).any()
         #=======================================================================
         # #cid checks
         #=======================================================================
@@ -2471,8 +2511,8 @@ class Model(ComWrkr,
                 for hndl, cval in hndl_d.items():
                     
                     if hndl=='type':
-                        assert np.issubdtype(ser.dtype, cval), '%s_%s bad type: %s'%(
-                            nestID, coln, ser.dtype)
+                        assert np.issubdtype(ser.dtype, cval), '%s  %s_%s expected %s got: %s'%(
+                            self.tag, nestID, coln, cval, ser.dtype)
                         
                         """
                         throwing  FutureWarning: Conversion of the second argument of issubdtype
@@ -2869,9 +2909,11 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         #======================================================================
         # wrap
         #======================================================================
+        #find those w/ zero fail
+        bx = res_df.max(axis=1)==0
 
-        
-        log.info('resolved to %i unique event damages'%len(res_df.columns))
+        log.info('resolved %i asset (%i w/ pfail=0) to %i unique event damages to \n    %s'%(
+            len(bx), bx.sum(), len(res_df.columns), res_df.mean(axis=0).to_dict()))
         
         return res_df.sort_index(axis=1)
     
@@ -2929,117 +2971,145 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         
 
         #=======================================================================
-        # get tail values-----
+        # data prep-----
         #=======================================================================
+        """
+        view(df_raw)
+        """
         df = df_raw.copy().sort_index(axis=1, ascending=False)
         
+        #=======================================================================
+        # no value----
+        #=======================================================================
+        """
+        this can happen for small inventories w/ no failure probs
+        """
         #identify columns to calc ead for
         bx = (df > 0).any(axis=1) #only want those with some real damages
         
-        assert bx.any(), 'no valid results on %s'%str(df.shape)
+        if not bx.any():
+            log.warning('%s got no positive damages %s'%(self.tag, str(df.shape)))
+            
+            #apply dummy tails as 'flat'
+            if not ltail is None:
+                df.loc[:,0] = df.iloc[:,0] 
+            if not rtail is None:
+                aep_val = max(df.columns.tolist())*(1+10**-(self.prec+2))
+                df[aep_val] = 0
+                
+            #re-arrange columns so x is ascending
+            df = df.sort_index(ascending=False, axis=1)
+            
+            #apply dummy ead
+            df['ead'] = 0
+            
         #=======================================================================
-        # precheck
+        # some values---------
         #=======================================================================
-        self.check_eDmg(df, dropna=True, logger=log)
-
-        #======================================================================
-        # left tail
-        #======================================================================
-        
-        #flat projection
-        if ltail == 'flat':
-            df.loc[:,0] = df.iloc[:,0] 
-            
-            if len(df)==1: 
-                self.extrap_vals_d[0] = df.loc[:,0].mean().round(self.prec) #store for later
-            
-        elif ltail == 'extrapolate': #DEFAULT
-            df.loc[bx,0] = df.loc[bx, :].apply(self._extrap_rCurve, axis=1, left=True)
-            
-            #extrap vqalue will be different for each entry
-            if len(df)==1: 
-                self.extrap_vals_d[0] = df.loc[:,0].mean().round(self.prec) #store for later
-
-        elif isinstance(ltail, float):
-            """this cant be a good idea...."""
-            df.loc[bx,0] = ltail
-            
-            self.extrap_vals_d[0] = ltail #store for later
-            
-        elif ltail == 'none':
-            pass
         else:
-            raise Error('unexected ltail key'%ltail)
-        
-        
-        #======================================================================
-        # right tail
-        #======================================================================
-        if rtail == 'extrapolate':
-            """just using the average for now...
-            could extraploate for each asset but need an alternate method"""
-            aep_ser = df.loc[bx, :].apply(
-                self._extrap_rCurve, axis=1, left=False)
+            #=======================================================================
+            # get tail values-----
+            #=======================================================================
+            self.check_eDmg(df, dropna=True, logger=log)
+    
+            #======================================================================
+            # left tail
+            #======================================================================
             
-            aep_val = round(aep_ser.mean(), 5)
+            #flat projection
+            if ltail == 'flat':
+                df.loc[:,0] = df.iloc[:,0] 
+                
+                if len(df)==1: 
+                    self.extrap_vals_d[0] = df.loc[:,0].mean().round(self.prec) #store for later
+                
+            elif ltail == 'extrapolate': #DEFAULT
+                df.loc[bx,0] = df.loc[bx, :].apply(self._extrap_rCurve, axis=1, left=True)
+                
+                #extrap vqalue will be different for each entry
+                if len(df)==1: 
+                    self.extrap_vals_d[0] = df.loc[:,0].mean().round(self.prec) #store for later
+    
+            elif isinstance(ltail, float):
+                """this cant be a good idea...."""
+                df.loc[bx,0] = ltail
+                
+                self.extrap_vals_d[0] = ltail #store for later
+                
+            elif ltail == 'none':
+                pass
+            else:
+                raise Error('unexected ltail key'%ltail)
             
-            assert aep_val > df.columns.max()
             
-            df.loc[bx, aep_val] = 0
+            #======================================================================
+            # right tail
+            #======================================================================
+            if rtail == 'extrapolate':
+                """just using the average for now...
+                could extraploate for each asset but need an alternate method"""
+                aep_ser = df.loc[bx, :].apply(
+                    self._extrap_rCurve, axis=1, left=False)
+                
+                aep_val = round(aep_ser.mean(), 5)
+                
+                assert aep_val > df.columns.max()
+                
+                df.loc[bx, aep_val] = 0
+                
+                log.info('using right intersection of aep= %.2e from average extraploation'%(
+                    aep_val))
+                
+                
+                self.extrap_vals_d[aep_val] = 0 #store for later 
+                
             
-            log.info('using right intersection of aep= %.2e from average extraploation'%(
-                aep_val))
+            elif isinstance(rtail, float): #DEFAULT
+                aep_val = round(rtail, 5)
+                assert aep_val > df.columns.max(), 'passed rtail value (%.2f) not > max aep (%.2f)'%(
+                    aep_val, df.columns.max())
+                
+                df.loc[bx, aep_val] = 0
+                
+                log.debug('setting ZeroDamage event from user passed \'rtail\' aep=%.7f'%(
+                    aep_val))
+                
+                self.extrap_vals_d[aep_val] = 0 #store for later 
+    
+            elif rtail == 'flat':
+                #set the zero damage year as the lowest year in the model (with a small buffer) 
+                aep_val = max(df.columns.tolist())*(1+10**-(self.prec+2))
+                df.loc[bx, aep_val] = 0
+                
+                log.info('rtail=\'flat\' setting ZeroDamage event as aep=%.7f'%aep_val)
+                
+            elif rtail == 'none':
+                log.warning('no rtail extrapolation specified! leads to invalid integration bounds!')
             
+            else:
+                raise Error('unexpected rtail %s'%rtail)
+                
+            #re-arrange columns so x is ascending
+            df = df.sort_index(ascending=False, axis=1)
+            #======================================================================
+            # check  again
+            #======================================================================
+            self.check_eDmg(df, dropna=True, logger=log)
+    
+            #======================================================================
+            # calc EAD-----------
+            #======================================================================
+            #get reasonable dx (integration step along damage axis)
+            """todo: allow the user to set t his"""
+            if dx is None:
+                dx = df.max().max()/100
+            assert isinstance(dx, float)
             
-            self.extrap_vals_d[aep_val] = 0 #store for later 
+    
             
-        
-        elif isinstance(rtail, float): #DEFAULT
-            aep_val = round(rtail, 5)
-            assert aep_val > df.columns.max(), 'passed rtail value (%.2f) not > max aep (%.2f)'%(
-                aep_val, df.columns.max())
-            
-            df.loc[bx, aep_val] = 0
-            
-            log.debug('setting ZeroDamage event from user passed \'rtail\' aep=%.7f'%(
-                aep_val))
-            
-            self.extrap_vals_d[aep_val] = 0 #store for later 
-
-        elif rtail == 'flat':
-            #set the zero damage year as the lowest year in the model (with a small buffer) 
-            aep_val = max(df.columns.tolist())*(1+10**-(self.prec+2))
-            df.loc[bx, aep_val] = 0
-            
-            log.info('rtail=\'flat\' setting ZeroDamage event as aep=%.7f'%aep_val)
-            
-        elif rtail == 'none':
-            log.warning('no rtail extrapolation specified! leads to invalid integration bounds!')
-        
-        else:
-            raise Error('unexpected rtail %s'%rtail)
-            
-        #re-arrange columns so x is ascending
-        df = df.sort_index(ascending=False, axis=1)
-        #======================================================================
-        # check  again
-        #======================================================================
-        self.check_eDmg(df, dropna=True, logger=log)
-
-        #======================================================================
-        # calc EAD-----------
-        #======================================================================
-        #get reasonable dx (integration step along damage axis)
-        """todo: allow the user to set t his"""
-        if dx is None:
-            dx = df.max().max()/100
-        assert isinstance(dx, float)
-        
-
-        
-        #apply the ead func
-        df.loc[bx, 'ead'] = df.loc[bx, :].apply(
-            self._get_ev, axis=1, dx=dx)
+            #apply the ead func
+            df.loc[bx, 'ead'] = df.loc[bx, :].apply(
+                self._get_ev, axis=1, dx=dx)
         
         
         df.loc[:, 'ead'] = df['ead'].fillna(0) #fill remander w/ zeros
@@ -3276,10 +3346,74 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
 
         return round(ead_tot, self.prec)
     
+    def get_ttl(self, #get a total impacts summary from an impacts dxcol 
+                df, # index: {aep, impacts}
+                logger=None,
+                cols_include = ['ari', 'plot']
+                ):
+        """
+        see also Plotr.prep_ttl()
+        """
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert isinstance(df, pd.DataFrame)
+        miss_l = set(['aep', 'impacts']).symmetric_difference(df.columns)
+        assert len(miss_l)==0, 'bad column labels: %s'%df.columns.tolist()
+        cols_include = cols_include.copy()
+                     
+        
+        #=======================================================================
+        # get ead and tail values
+        #=======================================================================
+        """should apply the same ltail/rtail parameters from the cf"""
+        
+        if df['impacts'].sum()==0:
+            ead = 0.0
+            df1 = df.copy()
+            
+        elif df['impacts'].sum()>0:
+            dfc = df.loc[:, ('aep', 'impacts')].set_index('aep').T
+            ttl_ser = self.calc_ead(dfc,
+                drop_tails=False, logger=logger, )
+            
+            ead = ttl_ser['ead'][0] 
+            df1 = ttl_ser.drop('ead', axis=1).T.reset_index()
+            
+ 
+        else:
+            raise Error('negative impacts!')
+            
+        assert isinstance(ead, float)
+        assert df1['impacts'].min()>=0
+        #=======================================================================
+        # add ari 
+        #=======================================================================
+        if 'ari' in cols_include:
+            self._get_ttl_ari(df1) #add ari column
+            cols_include.remove('ari')
+        
+        #=======================================================================
+        # add plot columns from ttl
+        #=======================================================================
+        ttl_df=self.data_d['ttl'].copy()
+        df1 = df1.merge(ttl_df.loc[:, ['aep']+cols_include], on='aep', how='inner')
+        
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        
+        self.slice_ead = ead #set for plotter
+        
+        return df1, ead
+    
+    
     #===========================================================================
     # OUTPUTTERS------
     #===========================================================================
     def output_ttl(self,  #helper to o utput the total results file
+                   df= None,
                     dtag='r_ttl',
                    ofn=None,
                    upd_cf= None,
@@ -3291,8 +3425,9 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         #=======================================================================
         if upd_cf is None: upd_cf = self.upd_cf
         if ofn is None: ofn = '%s_%s'%(self.resname, 'ttl') 
+        if df is None: df = self.res_ttl
             
-        out_fp = self.output_df(self.res_ttl, ofn, write_index=False, logger=logger)
+        out_fp = self.output_df(df, ofn, write_index=False, logger=logger)
         
         if upd_cf:
             self.set_cf_pars( {
@@ -3373,6 +3508,8 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         here we clean it up and only take those for plotting
         
         see also Artr.get_ttl()
+            Model._fmt_resTtl()
+            riskPlot.load_ttl()
         """
         
         if tlRaw_df is None: tlRaw_df = self.tlRaw_df
@@ -3391,6 +3528,9 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             then reverting"""
         df1 = tlRaw_df.copy()
         
+        """
+        TODO: harmonize this with 'impact_units' loaded from control file
+        """
         self.impact_name = list(df1.columns)[1] #get the label for the impacts
         
         newColNames = list(df1.columns)
@@ -3407,7 +3547,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         self.ead_tot = df1.loc[bx, 'impacts'].values[0]
         
         assert not pd.isna(self.ead_tot)
-        assert isinstance(self.ead_tot, float)
+        assert isinstance(self.ead_tot, float), '%s got bad type on ead_tot: %s'%(self.name, type(self.ead_tot))
         
         #=======================================================================
         # #get plot values
@@ -3484,6 +3624,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         assert len(miss_l)==0, miss_l
         
 
+
         #======================================================================
         # labels
         #======================================================================
@@ -3517,6 +3658,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         # axis label setup
         fig.suptitle(title)
         ax1.set_ylabel(y1lab)
+
 
         ax1.set_xlabel(xlab)
         

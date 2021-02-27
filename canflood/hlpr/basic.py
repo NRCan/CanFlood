@@ -204,6 +204,9 @@ class ComWrkr(object): #common methods for all classes
                   new_pars_d, #new paraemeters 
                     # {section : ({valnm : value } OR string (for notes)})
                   cf_fp = None):
+        """
+        should this be on the MOdel only?
+        """
         
         log = self.logger.getChild('set_cf_pars')
         
@@ -226,7 +229,7 @@ class ComWrkr(object): #common methods for all classes
                 if isinstance(subval, dict):
                     for valnm, value in subval.items():
                         assert isinstance(value, str), \
-                        'got bad type on %s.%s: \'%s\''%(section, valnm, type(value))
+                            'failed to get a str on %s.%s: \'%s\''%(section, valnm, type(value))
                         
                         pars.set(section, valnm, value)
                         
@@ -302,6 +305,7 @@ class ComWrkr(object): #common methods for all classes
     
 
     
+
 
     
 class MyFeedBack(object): #simple custom feedback object

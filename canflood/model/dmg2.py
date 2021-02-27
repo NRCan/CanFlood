@@ -24,7 +24,7 @@ idx = pd.IndexSlice
 # custom imports
 #==============================================================================
 
-mod_logger = logging.getLogger('dmg2') #get the root logger
+#mod_logger = logging.getLogger('dmg2') #get the root logger
 
 from hlpr.exceptions import QError as Error
 
@@ -158,12 +158,10 @@ class Dmg2(Model, DFunc, Plotr):
         
         return self
          
-    def setup_dfuncs(self, # build curve workers
+    def setup_dfuncs(self, # build curve workers from loaded xlsx data
                  df_d, #{tab name: raw curve data
                  ):
-        """
-        consider only building curves found in the inventory
-        """
+ 
         #=======================================================================
         # defaults
         #=======================================================================
@@ -185,7 +183,7 @@ class Dmg2(Model, DFunc, Plotr):
         #=======================================================================
         for tabn, df in df_d.items():
             if tabn.startswith('_'):
-                log.warning('skipping dummy tab \'%s\''%tabn)
+                log.debug('skipping dummy tab \'%s\''%tabn)
                 continue
             
             tabn = tabn.strip() #remove whitespace
@@ -344,6 +342,10 @@ class Dmg2(Model, DFunc, Plotr):
         """ddf is appending _1 to column names"""
         cid, bid = self.cid, self.bid
         
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        assert len(self.dfuncs_d)>0
         assert bid in ddf.columns
         assert ddf.index.name == bid
         assert np.array_equal(ddf.index.values, ddf[bid].values)
@@ -364,23 +366,6 @@ class Dmg2(Model, DFunc, Plotr):
         # setup-----
         #======================================================================
         edf = ddf.loc[:, dboolcol] #just the exposure values
-        #=======================================================================
-        # id valid bids
-        #=======================================================================
-        if self.ground_water:
-            mdval = min(self.df_minD_d.values())
-        else:
-            mdval = 0
-        
-        """this marks nulls as False"""
-        dep_booldf = edf >= mdval
-        
-        #report those faling the check
-        if not dep_booldf.all().all():
-            log.debug('marked %i (of %i) entries w/ excluded depths (<= %.2f or NULL)'%(
-                np.invert(dep_booldf).sum().sum(), dep_booldf.size, mdval))
-        
-
         
         #=======================================================================
         # build the events matrix
@@ -392,6 +377,35 @@ class Dmg2(Model, DFunc, Plotr):
         events_df = pd.DataFrame(index = ddf.columns[dboolcol])       
         for sufix in ['raw', 'scaled', 'capped', 'dmg']:
             events_df[sufix] = events_df.index + '_%s'%sufix
+        self.events_df = events_df #set for later
+        #=======================================================================
+        # id valid bids
+        #=======================================================================
+        if self.ground_water:
+            mdval = min(self.df_minD_d.values())
+        else:
+            mdval = 0
+        
+        """this marks nulls as False"""
+        dep_booldf = edf >= mdval #True= depth is valid
+        
+        #report those faling the check
+        if not dep_booldf.all().all():
+            log.debug('marked %i (of %i) entries w/ excluded depths (<= %.2f or NULL)'%(
+                np.invert(dep_booldf).sum().sum(), dep_booldf.size, mdval))
+        
+        #check if EVERYTHING failed
+        if not dep_booldf.any().any():
+            log.warning('ZERO (of %i) exposures exceed the minimum threshold (%.2f)! returning all zeros'%(
+                dep_booldf.size, mdval))
+            
+            self.res_df = pd.DataFrame(0, index=edf.index, columns= ['%s_raw'%e for e in edf.columns])
+            
+            return self.res_df
+            
+            
+        
+
         
         #======================================================================
         # RAW: loop and calc raw damage by ftag-------------
@@ -416,7 +430,7 @@ class Dmg2(Model, DFunc, Plotr):
                 booldf.any(axis=1).sum(), len(booldf)))
             
             if not booldf.any().any():
-                log.debug('no valid entries!')
+                log.debug('    no valid entries!')
                 continue
             #==================================================================
             # calc damage by tag.depth
@@ -458,12 +472,12 @@ class Dmg2(Model, DFunc, Plotr):
         # wrap-------
         #=======================================================================
         log = self.logger.getChild('bdmg')
-        
+        assert not res_df is None, 'failed to get any valid entries'
         res_df.columns = ['%s_raw'%e for e in res_df.columns] #add the suffix
         
         #attach
         self.res_df = res_df
-        self.events_df = events_df
+        
         
         
         log.info('got raw impacts for %i dfuncs and %i events: \n    %s'%(
@@ -515,9 +529,14 @@ class Dmg2(Model, DFunc, Plotr):
         return res_df
         
         
-    def bdmg_capped(self,
+    def bdmg_capped(self, #apply the  optional 'fcap' values to the scaled damages
                     res_df = None,
                     ):
+        
+        """
+        bdf can ber passed w/o fcap
+            shouldn't be passed w/ all nulls... but this would still wortk I thihnk
+        """
         
         log = self.logger.getChild('bdmg_capped')
         #=======================================================================
@@ -533,29 +552,39 @@ class Dmg2(Model, DFunc, Plotr):
         # start meta
         #=======================================================================
         meta_d = dict()
-        cmeta_df =bdf.loc[:,[cid, bid, 'ftag', 'fcap', 'fscale', 'nestID']]
+        cmeta_df =bdf.loc[:,bdf.columns.isin([cid, bid, 'ftag', 'fcap', 'fscale', 'nestID'])]
 
         #=======================================================================
         # #loop and add scaled damages
         #=======================================================================
 
         for event, e_ser in events_df.iterrows():
-
+            
             #join scaled values and cap values for easy comparison
-            sc_df = res_df[e_ser['scaled']].to_frame().join(bdf['fcap'])
+            if 'fcap' in bdf.columns:
+                sc_df = res_df[e_ser['scaled']].to_frame().join(bdf['fcap'])
+            else:
+                sc_df = res_df[e_ser['scaled']].to_frame()
             
             #identify nulls
             boolidx = res_df[e_ser['scaled']].notna()
+            
             #calc and set the scalecd values
-            res_df.loc[boolidx, e_ser['capped']] = sc_df[boolidx].min(axis=1)
+            """this will ignore any null fcap values when determining theminimum"""
+            res_df.loc[boolidx, e_ser['capped']] = sc_df[boolidx].min(axis=1, skipna=True)
             
-            
+ 
             #===================================================================
             # #meta
             #===================================================================
             
             #where the scaled values were capped
-            mser = res_df.loc[boolidx, e_ser['scaled']] >bdf.loc[boolidx, 'fcap'] 
+            if 'fcap' in bdf.columns:
+                mser = res_df.loc[boolidx, e_ser['scaled']] >bdf.loc[boolidx, 'fcap'] 
+            else:
+                #all FALSE
+                mser = pd.Series(index=cmeta_df.index, dtype=bool)
+                
             cmeta_df= cmeta_df.join(mser.rename(event), how='left')
             
             #totals
@@ -565,6 +594,9 @@ class Dmg2(Model, DFunc, Plotr):
         # wrap
         #=======================================================================
         """written by bdmg_smry"""
+        """
+        view(cmeta_df)
+        """
         self.cmeta_df = cmeta_df
         self.res_colg = 'capped' #needed by  mitigation funcs
         
@@ -911,10 +943,13 @@ class Dmg2(Model, DFunc, Plotr):
         #=======================================================================
         # wrap
         #=======================================================================
+        """
+        view(resC_df.round(self.prec))
+        """
 
         #set these for use later
         self.res_df = res_df #needed for _rdf_smry
-        self.bdmgC_df = resC_df
+        self.bdmgC_df = resC_df.round(self.prec)
         self.cres_df = cres_df.loc[:, cres_df.sum(axis=0).sort_values(ascending=True).index] #set for plotting
         
         
@@ -943,14 +978,11 @@ class Dmg2(Model, DFunc, Plotr):
         if logger is None: logger=self.logger
         
         bdf = self.bdf
-        cid = self.cid
+        #cid = self.cid
         
         log=logger.getChild('bdmg_smry')
         
-        """
-        view(events_df)
-        view(res_df)
-        """
+
         #=======================================================================
         # precheck
         #=======================================================================
@@ -961,6 +993,7 @@ class Dmg2(Model, DFunc, Plotr):
         # add some common cols
         #=======================================================================
         res_df = res_df_raw.join(bdf.loc[:,[gCn]])
+        
         #=======================================================================
         # impact meta for each result type
         #=======================================================================
@@ -997,14 +1030,20 @@ class Dmg2(Model, DFunc, Plotr):
         #=======================================================================
         # cap counts
         #=======================================================================
-        df = cmeta_df.drop(['fcap', 'fscale', self.cid, self.bid], axis=1).fillna(False)
-        cm_df1  = df.groupby(gCn).sum().astype(np.int)
+        df = cmeta_df.drop(['fcap', 'fscale', self.cid, self.bid], axis=1, errors='ignore').fillna(False)
+        cm_df1  = df.groupby(gCn).sum().astype(np.int) #count all the trues
         
-
+        #=======================================================================
+        # for k, sdf in df.groupby(gCn):
+        #     print(k)
+        #=======================================================================
         #=======================================================================
         # progression summary
         #=======================================================================
         """
+        view(cm_df1)
+        view(df.groupby(gCn).sum())
+        view(df)
         view(events_df)
         view(res_df)
         """
@@ -1469,6 +1508,6 @@ class Dmg2(Model, DFunc, Plotr):
         
                    
 
-    
+
     
     

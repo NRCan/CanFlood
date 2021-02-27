@@ -9,7 +9,7 @@ Template for worker scripts
 #==========================================================================
 # logger setup-----------------------
 #==========================================================================
-import logging, configparser, datetime, copy
+import logging, configparser, datetime, copy, shutil
 
 from weakref import WeakValueDictionary as wdict
 
@@ -208,7 +208,7 @@ class Cmpr(RiskPlotr):
             #===================================================================
             firstC = True
             for sectName, svars_d in sWrkr.cfPars_d.items():
-                
+                if len(svars_d)==0: continue #skip blank sections
                 sdf = pd.DataFrame.from_dict(svars_d, orient='index')
                 sdf.columns = [childName]
                 
@@ -247,8 +247,9 @@ class Cmpr(RiskPlotr):
     #===========================================================================
     # aggregators
     #===========================================================================
-    def collect_ttls(self,
+    def build_composite(self, #merge data from a collection of asset models
                     sWrkr_d=None, #container of scenario works to plot curve comparison
+                    new_wrkr=True, #whether to build a new worker
                     ):
         
         log = self.logger.getChild('collect_ttls')
@@ -257,39 +258,93 @@ class Cmpr(RiskPlotr):
         #more logicla for single plots
         self.name=self.tag
         
+        #=======================================================================
+        # collect data
+        #=======================================================================
         mdf = None
         ead_d = dict()
         for childName, sWrkr in sWrkr_d.items():
-            dfi_raw = sWrkr.data_d['ttl'].copy()
+            dfi_raw = sWrkr.data_d['ttl'].copy()  #set by prep_ttl() 
             dfi = dfi_raw.loc[:, 'impacts'].rename(childName).astype(float).to_frame()
             
             ead_d[childName] = sWrkr.ead_tot
             
             if mdf is None:
+                #pull some from the first
                 self.impact_name = sWrkr.impact_name
+                self.rtail, self.ltail = sWrkr.rtail, sWrkr.ltail
+                
+                
                 mindex = pd.MultiIndex.from_frame(
                     dfi_raw.loc[:, ['aep', 'ari', 'note', 'plot']])
-                
-                #dxcol = pd.concat([dfi.T], keys=[childName], names=['childName']).T
                 mdf = dfi
                 
                 
             else:
                 mdf = mdf.join(dfi)
-                
         
         
+        #=======================================================================
+        # build new worker
+        #=======================================================================
+        if new_wrkr:
+            cWrkr = sWrkr.copy(name='%s_%i_composite'%(self.tag, len(sWrkr_d))) #start with a copy
+            
+            #===================================================================
+            # convert the data to standard ttl format
+            #===================================================================
+            cttl_df = dfi_raw.drop(['impacts', 'ari'], axis=1).copy()
+            cttl_df[self.impact_name] = mdf.sum(axis=1)
+            
+            #fix order
+            """
+            prep_ttl() is column location senstigvite
+            """
+            l = cttl_df.columns.to_list()
+            l.remove(self.impact_name)
+            l = [l[0], self.impact_name]+l[1:]
+            cttl_df = cttl_df.loc[:, l]
+            
+            #add the ead row at the bottom
+            cWrkr.data_d['ttl'] = cttl_df.append(pd.Series({
+                'aep':'ead', 'note':'integration', 'plot':False, self.impact_name:sum(ead_d.values())
+                }), ignore_index=True)
+            
+            
+            
+            
+            """this function isnt set up very well.. easier to do it ourselves here
+            #get just the combined impacts (drop tails)
+            bx = dfi_raw['note']=='impact_sum'
+            cttl_df = dfi_raw.loc[bx, 'aep'].to_frame().join(pd.Series(mdf[bx].sum(axis=1), name='impacts'))
+            
+            cWrkr.data_d['ttl'] = dfi_raw #set this for pulling handles
+            cWrkr.data_d['ttl'], ead_tot = cWrkr.get_ttl(cttl_df, logger=log,
+                                                 cols_include=['note', 'plot'])"""
+            
+
+            
+
+        #=======================================================================
+        # wrap
+        #=======================================================================
         mdf.index = mindex
+        """
+        view(mdf)
+        """
         log.info('collected %i'%len(mdf.columns))
         self.cdxind = mdf
         self.ead_d = ead_d
         self.ead_tot = sum(ead_d.values())
-        return self.cdxind
+        
+        return self.cdxind, cWrkr
+    
+
     
     def plot_rCurveStk_comb(self, #plot a risk curve comparing all the scenarios
                    dxind_raw=None, #container of scenario works to plot curve comparison
                    logger=None,
-
+                   plotTag='',
                    
                    #plot formatters
                    val_str='*no',
@@ -311,7 +366,7 @@ class Cmpr(RiskPlotr):
                     
         return self.plot_stackdRCurves(dxind,
                                        pd.Series(self.ead_d),
-                                       val_str=val_str,plotTag='',
+                                       val_str=val_str,plotTag=plotTag,
                                        **plotKwargs,)
         
     def plot_rCurve_comb(self, #plot a risk curve comparing all the scenarios
@@ -346,6 +401,10 @@ class Scenario(RiskPlotr): #simple class for a scenario
     plt.show()
     moved to Model
     """
+    
+    out_funcs_d = { #data tag:function that outputs it
+        'ttl':'output_ttl'
+        }
 
     
 
@@ -363,7 +422,7 @@ class Scenario(RiskPlotr): #simple class for a scenario
         """we'll set another name from the control file
         TODO: clean this up"""
         #self.nameRaw = nameRaw 
-        
+        self.parent=parent
         #=======================================================================
         # loaders
         #=======================================================================
@@ -384,6 +443,101 @@ class Scenario(RiskPlotr): #simple class for a scenario
         # wrap
         #=======================================================================
         log.info('finished _init_')
+        
+    def copy(self,
+             name = None,
+             clear_data = True,):
+        
+        cWrkr = copy.copy(self)
+        
+        #clear all the data
+        if clear_data:
+            cWrkr.data_d = dict()
+        #change the name
+        if not name is None:
+            cWrkr.name = name
+        else:
+            cWrkr.name = '%s_copy'%self.name
+        
+        return cWrkr
+        
+        
+    def write(self,#store this scenario to file
+              
+              #filepaths
+              out_dir = None,
+              logger=None,
+              
+              ): 
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('write')
+        if out_dir is None: 
+            out_dir = os.path.join(self.parent.out_dir, self.name)
+            
+        if not os.path.exists(out_dir):os.makedirs(out_dir)
+        
+        self.out_dir=out_dir #set this
+        self.resname = self.name #normally set by risk models
+        log.info('set out_dir to: %s'%out_dir)
+        
+        #=======================================================================
+        #set the new control file
+        #=======================================================================
+        #=======================================================================
+        # #duplicate
+        # cf_fp = os.path.join(out_dir, 'cf_controlFile_%s.txt'%self.name)
+        # shutil.copy2(self.cf_fp,cf_fp)
+        #=======================================================================
+        
+        #open the copy
+        cpars_raw = configparser.ConfigParser(inline_comment_prefixes='#')
+        log.info('reading parameters from \n     %s'%cpars_raw.read(self.cf_fp))
+        
+        #cleaqr filepath sections
+        for sectName in cpars_raw.sections():
+            
+            if sectName.endswith('_fps'):
+                log.info('clearing  section \"%s\''%sectName)
+                assert cpars_raw.remove_section(sectName) #remove it
+                cpars_raw.add_section(sectName) #add it back empty
+                
+        #write the config file 
+        cf_fp = os.path.join(out_dir, 'cf_controlFile_%s.txt'%self.name)
+        with open(cf_fp, 'w') as configfile:
+            cpars_raw.write(configfile)
+            
+        self.cf_fp = cf_fp
+        
+        #=======================================================================
+        # #add new data
+        #=======================================================================
+        """each of these makes a new call to set_cf_pars"""
+        self.set_cf_pars({
+            'parameters':({'name':self.name}, '#copy')
+            })
+        
+        #update 
+        """each of these should write using intelligent name/path/index and update the control file"""
+        meta_d = dict()
+        for dtag, data in self.data_d.items():
+            assert dtag in self.out_funcs_d, 'missing function key on %s'%dtag
+            
+            #retrieve the outputter function
+            assert hasattr(self, self.out_funcs_d[dtag]), self.out_funcs_d[dtag]
+            f = getattr(self, self.out_funcs_d[dtag]) 
+            
+            #output the data using the function
+            meta_d[dtag] = f(df=data, upd_cf=True, logger=log)
+            
+        log.info('finished on %i \n    %s'%(len(meta_d), meta_d))
+        
+        return meta_d
+            
+                
 
 
 

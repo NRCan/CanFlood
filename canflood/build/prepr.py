@@ -174,6 +174,9 @@ class Preparor(Model, Qcoms):
         
         
         assert cid in [field.name() for field in vlay.fields()], '%s missing cid %s'%(vlay.name(), cid)
+        
+        #label checks
+        assert isinstance(tag, str)
 
         #=======================================================================
         # #extract data
@@ -189,6 +192,14 @@ class Preparor(Model, Qcoms):
             df = df.drop(gindx, axis=1, errors='ignore')
             
         df = df.set_index(cid, drop=True)
+        
+        #drop empty columns
+        boolcol = df.isna().all(axis=0)
+        if boolcol.any():
+            df = df.loc[:, ~boolcol]
+            log.warning('%s dropping %i (of %i) empty fields'%(tag, boolcol.sum(), len(boolcol)))
+            
+        
             
         #=======================================================================
         # post checks
@@ -199,7 +210,8 @@ class Preparor(Model, Qcoms):
         #=======================================================================
         # #write to file
         #=======================================================================
-        out_fp = os.path.join(self.out_dir, get_valid_filename('finv_%s_%s.csv'%(self.tag, vlay.name())))
+        out_fp = os.path.join(self.out_dir, 
+                              get_valid_filename('finv_%s_%i_%s.csv'%(tag, len(df), vlay.name().replace('finv_', ''))))
         
         #see if this exists
         if os.path.exists(out_fp):
