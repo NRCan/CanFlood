@@ -236,7 +236,7 @@ class CanFlood:
         style = QgsStyle.defaultStyle() #get the users style database
 
         if style.importXml(fp):
-            log.info('imported styles from %s'%fp)
+            log.push('imported styles from %s'%fp)
         else:
             log.error('failed to import styles')
         

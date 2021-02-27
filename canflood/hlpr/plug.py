@@ -108,11 +108,16 @@ class QprojPlug(Qcoms): #baseclass for plugins
         
         return wd
     
-    def browse_button(self, 
+    def browse_button(self, #browse to a directory
                       lineEdit, #text bar where selected directory should be displayed
                       prompt = 'Select Directory', #title of box
                       qfd = QFileDialog.getExistingDirectory, #dialog to launch
                       ):
+        """
+        TODO: migrate to standalone function?
+        see fileSelect_button() for borwsing to a file
+        """
+        
         
         #get the currently displayed filepath
         fp_old = lineEdit.text()
@@ -130,13 +135,13 @@ class QprojPlug(Qcoms): #baseclass for plugins
         
         #see if they picked something
         if fp == '':
-            self.logger.error('user failed to make a selection. skipping')
+            self.logger.debug('user failed to make a selection. skipping')
             return 
         
         #update the bar
         lineEdit.setText(fp)
         
-        self.logger.info('user selected: %s'%fp)
+        self.logger.debug('user selected: %s'%fp)
         
     def fileSelect_button(self, #
                       lineEdit, #text bar where selected directory should be displayed
@@ -478,7 +483,9 @@ class pandasModel(QAbstractTableModel):
                 return None
         return None
     
-
+#===============================================================================
+# widget binds-------------
+#===============================================================================
 def bind_layersListWidget(widget, #instanced widget
                           log,
                           layerType=None, #optional layertype to enforce
@@ -708,6 +715,8 @@ def bind_link_boxes(widget, #wrapper for widget containing comboboxes linking la
 #==============================================================================
 # functions-----------
 #==============================================================================
+
+        
          
 def qtbl_get_df( #extract data to a frame from a qtable
         table, 

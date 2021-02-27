@@ -202,8 +202,23 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.pushButton_expo_run.clicked.connect(self.run_expo)
         
         #=======================================================================
-        # vuln-------
+        # Vuln-------
         #=======================================================================
+        #filepath browse buttons
+        self.pushButton_v_dexpo_brwse.clicked.connect(
+            lambda: self.fileSelect_button(self.lineEdit_v_dexpo_fp, 
+                                       caption='Select Exposure Results',
+                                       filters="Data Files (*.csv)",
+                                       path=self.lineEdit_wdir.text())
+                                       )
+        
+        self.pushButton_v_dcurves_brwse.clicked.connect(
+            lambda: self.fileSelect_button(self.lineEdit_v_dcurves_fp, 
+                                       caption='Select Fragility Curves',
+                                       filters="Spreadsheets (*.xls)",
+                                       path=self.lineEdit_wdir.text())
+                                       )
+        
         self.pushButton_vuln_run.clicked.connect(self.run_vuln)
         
         #=======================================================================
@@ -231,7 +246,8 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #secssion controls
         self.tag = self.linEdit_ScenTag.text()
         self.out_dir = self.lineEdit_wdir.text()
-        assert os.path.exists(self.out_dir), 'working directory does not exist!'
+        
+        if not os.path.exists(self.out_dir): os.makedirs(self.out_dir)
         self.loadRes = self.checkBox_loadres.isChecked()
         
         #project aoi
@@ -273,7 +289,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.feedback.setProgress(10)
         
         #=======================================================================
-        # execute
+        # execute------
         #=======================================================================
         dike_vlay = wrkr.prep_dike(self.dike_vlay)
         
@@ -299,7 +315,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         # write/load to cannvas----------
         #=======================================================================
         """dont write any layers.. just load them and let the user write"""
-        wrkr.output_expo_dxcol()
+        #wrkr.output_expo_dxcol()
         dexpo_fp = wrkr.output_expo_df()
         
         #=======================================================================
