@@ -185,6 +185,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
                            mfcb, #mFieldComboBox
                            layer, #layer to set in the combo box
                            fn_str = None, #optional field name for auto setting
+                           fn_no_str = None, #optional field name to EXCVLUDE from auto setting
                            ):
         
         mfcb.clear()
@@ -194,6 +195,9 @@ class QprojPlug(Qcoms): #baseclass for plugins
                 
                 #try and match
                 for field in layer.fields():
+                    if not fn_no_str is None:
+                        if field.Name()==fn_no_str: continue #keep looking
+                        
                     if fn_str in field.name():
                         break
                     
@@ -286,6 +290,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
     def _load_toCanvas(self,  #helper to load a layers to canvas w/ some reporting
                        layers, log, 
                        groupName=None, #optional group name to load to
+                       style_fn = None, #optional qml styule file name to apply
                        ):
         
         #=======================================================================
@@ -332,9 +337,21 @@ class QprojPlug(Qcoms): #baseclass for plugins
         elif isinstance(layers, QgsMapLayer):
             add_layer(layers)
             log.info('laoded \'%s\' to project'%layers.name())
+            layers = [layers] #throw it into a list for below
             
         else:
             raise Error('unrecognized layer container type: %s'%type(layers))
+            
+        #=======================================================================
+        # stylieze
+        #=======================================================================
+        if not style_fn is None:
+
+            style_fp = os.path.join(self.pars_dir, 'qmls', style_fn)
+            assert os.path.exists(style_fp)
+            for layer in layers:
+                layer.loadNamedStyle(style_fp)
+                layer.triggerRepaint()
             
         return
         
@@ -498,6 +515,7 @@ def bind_layersListWidget(widget, #instanced widget
 
         
     widget.iface = iface
+    widget.layerType = layerType
     #===========================================================================
     # populating and setting selection
     #===========================================================================
@@ -507,7 +525,7 @@ def bind_layersListWidget(widget, #instanced widget
             layers = [layer for layer in QgsProject.instance().mapLayers().values()]
             
             #apply filters
-            if not layerType is None:
+            if not self.layerType is None:
                 layers = self._apply_filter(layers)
                 
         self.clear()
@@ -521,7 +539,7 @@ def bind_layersListWidget(widget, #instanced widget
         del layers
             
     def _apply_filter(self, layers):
-        return [rl for rl in layers if rl.type()==layerType]
+        return [rl for rl in layers if rl.type()==self.layerType]
             
     def select_visible(self):
         #print('selecint only visible layers')

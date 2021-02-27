@@ -46,7 +46,7 @@
         <x>0</x>
         <y>0</y>
         <width>680</width>
-        <height>611</height>
+        <height>594</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
@@ -363,7 +363,7 @@
                   </property>
                   <property name="minimumSize">
                    <size>
-                    <width>0</width>
+                    <width>140</width>
                     <height>0</height>
                    </size>
                   </property>
@@ -374,7 +374,7 @@
                    </size>
                   </property>
                   <property name="text">
-                   <string>Dike Identifier Field (dikeID):</string>
+                   <string>Dike ID Field (dikeID):</string>
                   </property>
                  </widget>
                 </item>
@@ -422,7 +422,7 @@
                    </size>
                   </property>
                   <property name="text">
-                   <string>Segment Identifier Field (segID):</string>
+                   <string>Segment ID Field (segID):</string>
                   </property>
                  </widget>
                 </item>
@@ -453,6 +453,12 @@
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>140</width>
+                    <height>0</height>
+                   </size>
                   </property>
                   <property name="text">
                    <string>Crest Buffer Field (cbfn):</string>
@@ -494,6 +500,23 @@
                   </property>
                  </spacer>
                 </item>
+                <item>
+                 <widget class="QLabel" name="label_12">
+                  <property name="text">
+                   <string>Influence Area ID Field (ifidN)</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QgsFieldComboBox" name="mFieldComboBox_ifidN">
+                  <property name="minimumSize">
+                   <size>
+                    <width>100</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                 </widget>
+                </item>
                </layout>
               </item>
              </layout>
@@ -519,13 +542,6 @@
            <string>Dike Exposure</string>
           </attribute>
           <layout class="QVBoxLayout" name="verticalLayout_5">
-           <item>
-            <widget class="QLabel" name="label_12">
-             <property name="text">
-              <string>Calculate  freeboard (i.e., exposure)</string>
-             </property>
-            </widget>
-           </item>
            <item>
             <widget class="QGroupBox" name="groupBox_3">
              <property name="title">
@@ -832,7 +848,7 @@
               </size>
              </property>
              <property name="title">
-              <string>Calculate dike exposure data:</string>
+              <string>Calculate dike exposure (i.e. freeboard) data:</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_22">
               <item alignment="Qt::AlignHCenter">
@@ -1285,13 +1301,6 @@
            <string>Dike Vulnerability</string>
           </attribute>
           <layout class="QVBoxLayout" name="verticalLayout_8">
-           <item>
-            <widget class="QLabel" name="label_13">
-             <property name="text">
-              <string>Calculate failure probability using exposure and fragility curves</string>
-             </property>
-            </widget>
-           </item>
            <item>
             <widget class="QGroupBox" name="groupBox_7">
              <property name="sizePolicy">
@@ -1865,16 +1874,23 @@
              <property name="title">
               <string>Data Filepaths:</string>
              </property>
-             <layout class="QFormLayout" name="formLayout_3">
-              <item row="1" column="0">
+             <layout class="QHBoxLayout" name="horizontalLayout_19">
+              <item>
                <widget class="QLabel" name="label_14">
                 <property name="text">
                  <string>Failure P Results (pfail_fp):</string>
                 </property>
                </widget>
               </item>
-              <item row="1" column="1">
-               <widget class="QLineEdit" name="lineEdit_v_ifz_pfail_fp"/>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_ja_pfail_fp"/>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_ja_brwse">
+                <property name="text">
+                 <string>Browse</string>
+                </property>
+               </widget>
               </item>
              </layout>
             </widget>
@@ -2221,8 +2237,8 @@
              <property name="title">
               <string>Map failure probabilities onto influence polygons</string>
              </property>
-             <layout class="QVBoxLayout" name="verticalLayout_24">
-              <item alignment="Qt::AlignHCenter">
+             <layout class="QHBoxLayout" name="horizontalLayout_21">
+              <item>
                <widget class="QPushButton" name="pushButton_ja_run">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -2695,14 +2711,29 @@
        <layout class="QVBoxLayout" name="verticalLayout_20">
         <item>
          <widget class="QLabel" name="progressText">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>30</height>
+           </size>
+          </property>
           <property name="maximumSize">
            <size>
             <width>16777215</width>
-            <height>15</height>
+            <height>30</height>
            </size>
           </property>
           <property name="text">
            <string>Waiting on User...</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
           </property>
          </widget>
         </item>

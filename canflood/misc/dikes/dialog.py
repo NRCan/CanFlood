@@ -77,6 +77,9 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         # setup funcs
         #=======================================================================
         self.setupUi(self)
+        
+        self.qproj_setup() #basic dialog worker setup
+        self.connect_slots()
 
 
 
@@ -109,8 +112,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         should improve load time by moving the connections to after the menu click"""
         
  
-        self.qproj_setup() #basic dialog worker setup
-        self.connect_slots()
+
         self.show()
 
     def connect_slots(self,
@@ -155,7 +157,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #connect field boxes
         self.comboBox_dikesVlay.layerChanged.connect(
             lambda : self.mfcb_connect(self.mFieldComboBox_dikeID, 
-                           self.comboBox_dikesVlay.currentLayer(), fn_str='id'))
+                           self.comboBox_dikesVlay.currentLayer(), fn_str='id', fn_no_str='fid'))
 
         self.comboBox_dikesVlay.layerChanged.connect(
             lambda : self.mfcb_connect(self.mFieldComboBox_segID, 
@@ -164,6 +166,12 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.comboBox_dikesVlay.layerChanged.connect(
             lambda : self.mfcb_connect(self.mFieldComboBox_cbfn, 
                            self.comboBox_dikesVlay.currentLayer(), fn_str='crest'))
+        
+        self.comboBox_dikesVlay.layerChanged.connect(
+            lambda : self.mfcb_connect(self.mFieldComboBox_ifidN, 
+                           self.comboBox_dikesVlay.currentLayer(), fn_str='ifz'))
+                
+                
                 
 
         #=======================================================================
@@ -224,6 +232,13 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # Join Areas------------
         #=======================================================================
+        #datafilepaths
+        self.pushButton_ja_brwse.clicked.connect(
+            lambda: self.fileSelect_button(self.lineEdit_ja_pfail_fp, 
+                                       caption='Select Failure P Results',
+                                       filters="Data Files (*.csv)",
+                                       path=self.lineEdit_wdir.text())
+                                       )
         #setup the layer linker
         bind_link_boxes(self.scrollAreaWidgetContents_ja, 
                  {'event':QgsMapLayerProxyModel.RasterLayer, 'lpol':QgsMapLayerProxyModel.PolygonLayer},
@@ -232,6 +247,8 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.pushButton_ja_clearAll.clicked.connect(self.scrollAreaWidgetContents_ja.clear_all)
         self.pushButton_ja_fill.clicked.connect(
             lambda x: self.scrollAreaWidgetContents_ja.fill_down('lpol', name_str2='event'))
+        
+        
         
         #runner
         self.pushButton_ja_run.clicked.connect(self.run_rjoin)
@@ -260,9 +277,23 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         #dikes layer
         self.dike_vlay = self.comboBox_dikesVlay.currentLayer()
+        
+        #dikes layer fields
         self.dikeID = self.mFieldComboBox_dikeID.currentField()
         self.segID = self.mFieldComboBox_segID.currentField()
         self.cbfn = self.mFieldComboBox_cbfn.currentField()
+        self.ifidN = self.mFieldComboBox_ifidN.currentField()
+        
+        """just put this here for easy upedating"""
+        self.inherit_fieldNames = ['logger', 'out_dir', 'segID', 'dikeID', 'tag', 'cbfn', 'ifidN']
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        for attn in ['dikeID', 'segID', 'cbfn', 'ifidN']:
+            assert hasattr(self, attn)
+            attv = getattr(self, attn)
+            assert isinstance(attv, str)
+            assert not attv == '', 'got empty string for \"%s\'. did you select a field?'%attn
         
     def run_expo(self): #execute dike exposure routeines
         log = self.logger.getChild('run_expo')
@@ -284,7 +315,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # init
         #=======================================================================
-        kwargs = {attn:getattr(self, attn) for attn in ['logger', 'out_dir', 'segID', 'dikeID', 'tag', 'cbfn']}
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
         wrkr = Dexpo(**kwargs)
         self.feedback.setProgress(10)
         
@@ -361,6 +392,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.lineEdit_v_dexpo_fp.setText(dexpo_fp) #fill joinareaas filepath
         
         #populate the Join Areas widget
+        self.scrollAreaWidgetContents_ja.clear_all() #clear for repeat runs
         self.scrollAreaWidgetContents_ja.set_selections('event', list(rlays_d.values()))
         
         log.info('finished Dike Expo w/ %s'%str(expo_df.shape))
@@ -379,7 +411,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # init
         #=======================================================================
-        kwargs = {attn:getattr(self, attn) for attn in ['logger', 'out_dir', 'segID', 'dikeID', 'tag', 'cbfn']}
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
         wrkr = Dvuln(**kwargs)
         self.feedback.setProgress(10)
         
@@ -417,7 +449,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # update gui
         #=======================================================================
-        self.lineEdit_v_ifz_pfail_fp.setText(pfail_fp)
+        self.lineEdit_ja_pfail_fp.setText(pfail_fp)
         
         log.info('finished Dike Vuln w/ %s'%str(pf_df.shape))
         self.feedback.upd_prog(None)
@@ -437,14 +469,14 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # init
         #=======================================================================
-        kwargs = {attn:getattr(self, attn) for attn in ['logger', 'out_dir', 'segID', 'dikeID', 'tag', 'cbfn']}
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
         wrkr = DikeJoiner(**kwargs)
         self.feedback.setProgress(10)
         
         #==========================================================================
         # load the data
         #==========================================================================
-        wrkr.load_pfail_df(self.lineEdit_v_ifz_pfail_fp.text())
+        wrkr.load_pfail_df(self.lineEdit_ja_pfail_fp.text())
         
         #get influence polygons {rasterLayerName:polygonLayer}   
         eifz_d = self.scrollAreaWidgetContents_ja.get_linked_layers(keyByFirst=True) 
@@ -458,7 +490,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # outputs
         #=======================================================================
-        self._load_toCanvas(list(vlay_d.values()), log)
+        self._load_toCanvas(list(vlay_d.values()), log, style_fn = 'failPoly_graduated_reds.qml')
         self.feedback.setProgress(95)
         #=======================================================================
         # wrapo

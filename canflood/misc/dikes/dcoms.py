@@ -77,6 +77,13 @@ class Dcoms(ComWrkr):
         self.cbfn = cbfn
         self.ifidN = ifidN
         
+        #=======================================================================
+        # checks
+        #=======================================================================
+        for coln in [self.dikeID, self.segID, self.segln, self.cbfn, self.celn, self.ifidN]:
+            assert isinstance(coln, str), 'bad type on %s: %s'%(coln, type(coln))
+            assert not coln =='', 'got empty string for \'%s\''%coln
+            
         self.logger.debug('Dcoms.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
         
 
@@ -135,7 +142,8 @@ class Dcoms(ComWrkr):
         if prop_colns is None:
             prop_colns = [self.dikeID, self.segID, self.segln, self.cbfn, self.celn, self.ifidN]
         miss_l = set(prop_colns).difference(df.columns)
-        assert len(miss_l)==0, 'missing some expected colns: %s'%miss_l
+        assert len(miss_l)==0, 'passed data is missing %i required columns. are the dike fields correct? \n    %s'%(
+            len(miss_l), miss_l)
         
         
         #=======================================================================

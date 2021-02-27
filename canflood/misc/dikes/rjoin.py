@@ -48,31 +48,23 @@ class DikeJoiner(Qcoms, DPlotr):
     """
 
     """
-    
-    ridN = 'ringID' #just for info
+ 
     #ifidN = 'ifzID'
 
 
     def __init__(self,
                   *args,
-                  
-                  ridN = 'ringID',
-                   
-
+ 
                     **kwargs):
         
         super().__init__(*args,**kwargs)
-        
-        self.ridN = ridN
-        
-
-        
+ 
         self.logger.debug('Diker.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
         
     def load_pfail_df(self,
                       fp):
         
-        log = self.logger.getChild('load_pfail_df')
+        #log = self.logger.getChild('load_pfail_df')
         
         #=======================================================================
         # df = self.load_expo(fp, 
@@ -204,7 +196,7 @@ class DikeJoiner(Qcoms, DPlotr):
         
         assert dp.featureCount()>0
         
-        miss_l = set([self.ridN, self.ifidN]).difference([f.name() for f in vlay.fields()])
+        miss_l = set([self.ifidN]).difference([f.name() for f in vlay.fields()])
         assert len(miss_l)==0, 'missing some fields: %s'%miss_l
         
         return True
