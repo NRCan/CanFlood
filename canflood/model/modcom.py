@@ -217,7 +217,7 @@ class Model(ComWrkr,
                     #now that this is a parent... wish this was a kwarg
                  
                  split_key=None,#for checking monotonicy on exposure sets with duplicate events
-                 absolute_fp=True, #whether filepaths in control file are absolute (False=Relative). 
+                 
                  base_dir =None, #for absolute_fp=False, base directory to use (defaults 
                  attriMode = False, #flow control for some attribution matrix functions
                  upd_cf = True, #control ssome updating of control file writes
@@ -246,8 +246,8 @@ class Model(ComWrkr,
         self.cf_fp = cf_fp"""
         self.split_key= split_key 
         
-        """TODO: Consider moving this to ComWrkr so Build dialogs can access"""
-        self.absolute_fp=absolute_fp
+ 
+
         
         if base_dir is None:
             base_dir = os.path.split(cf_fp)[0]

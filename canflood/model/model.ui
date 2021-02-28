@@ -145,7 +145,14 @@ p, li { white-space: pre-wrap; }
               <item>
                <layout class="QHBoxLayout" name="_6">
                 <item>
-                 <widget class="QLineEdit" name="lineEdit_wd"/>
+                 <widget class="QLineEdit" name="lineEdit_wdir">
+                  <property name="text">
+                   <string/>
+                  </property>
+                  <property name="placeholderText">
+                   <string>Select working directory for this session</string>
+                  </property>
+                 </widget>
                 </item>
                 <item>
                  <widget class="QPushButton" name="pushButton_wd">
@@ -181,7 +188,11 @@ p, li { white-space: pre-wrap; }
               <item>
                <layout class="QHBoxLayout" name="_16">
                 <item>
-                 <widget class="QLineEdit" name="lineEdit_cf_fp"/>
+                 <widget class="QLineEdit" name="lineEdit_cf_fp">
+                  <property name="placeholderText">
+                   <string>Specify CanFlood control file path</string>
+                  </property>
+                 </widget>
                 </item>
                 <item>
                  <widget class="QToolButton" name="pushButton_cf">
@@ -220,7 +231,7 @@ p, li { white-space: pre-wrap; }
                  </widget>
                 </item>
                 <item>
-                 <widget class="QRadioButton" name="radioButton_S_fpAbs">
+                 <widget class="QRadioButton" name="radioButton_SS_fpAbs">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                     <horstretch>0</horstretch>
@@ -281,19 +292,6 @@ p, li { white-space: pre-wrap; }
               <item>
                <layout class="QHBoxLayout" name="horizontalLayout_4">
                 <item>
-                 <widget class="QLabel" name="label_8">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="text">
-                   <string>Layer:</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
                  <widget class="QgsMapLayerComboBox" name="comboBox_JGfinv">
                   <property name="allowEmptyLayer">
                    <bool>true</bool>
@@ -302,67 +300,6 @@ p, li { white-space: pre-wrap; }
                    <bool>true</bool>
                   </property>
                  </widget>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_5">
-                <item>
-                 <widget class="QLabel" name="label_9">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="maximumSize">
-                   <size>
-                    <width>100</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>Index FieldName:</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QgsFieldComboBox" name="mFieldComboBox_JGfinv">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="minimumSize">
-                   <size>
-                    <width>200</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="maximumSize">
-                   <size>
-                    <width>200</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
-                  <property name="allowEmptyFieldName">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <spacer name="horizontalSpacer">
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>40</width>
-                    <height>20</height>
-                   </size>
-                  </property>
-                 </spacer>
                 </item>
                </layout>
               </item>
@@ -441,11 +378,30 @@ p, li { white-space: pre-wrap; }
                  </widget>
                 </item>
                 <item>
-                 <widget class="QLineEdit" name="linEdit_Stag">
+                 <widget class="QLineEdit" name="linEdit_ScenTag">
+                  <property name="maximumSize">
+                   <size>
+                    <width>150</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
                   <property name="text">
                    <string>run1</string>
                   </property>
                  </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
                 </item>
                </layout>
               </item>
@@ -486,7 +442,7 @@ p, li { white-space: pre-wrap; }
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_5">
               <item>
-               <widget class="QCheckBox" name="checkBox_r2rpa_2">
+               <widget class="QCheckBox" name="checkBox_r1_rpa">
                 <property name="text">
                  <string>Calculate Annualized Impacts per asset (slow) (res_per_asset)</string>
                 </property>
@@ -501,19 +457,6 @@ p, li { white-space: pre-wrap; }
               <string>Results Analysis</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_9">
-              <item>
-               <widget class="QCheckBox" name="checkBox_r2ires_2">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="text">
-                 <string>Run 'Results - Join Geo' upon completion (set Vector Geometry on the 'Setup' tab)</string>
-                </property>
-                <property name="checkable">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
               <item>
                <widget class="QGroupBox" name="groupBox_10">
                 <property name="title">
@@ -1594,16 +1537,6 @@ p, li { white-space: pre-wrap; }
               <string>Results Analysis</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_4">
-              <item>
-               <widget class="QCheckBox" name="checkBox_r2ires">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="text">
-                 <string>Run 'Results - Join Geo' upon completion (set Vector Geometry on the 'Setup' tab)</string>
-                </property>
-               </widget>
-              </item>
               <item>
                <widget class="QGroupBox" name="groupBox_11">
                 <property name="title">
@@ -2698,11 +2631,6 @@ p, li { white-space: pre-wrap; }
   </layout>
  </widget>
  <customwidgets>
-  <customwidget>
-   <class>QgsFieldComboBox</class>
-   <extends>QComboBox</extends>
-   <header>qgsfieldcombobox.h</header>
-  </customwidget>
   <customwidget>
    <class>QgsMapLayerComboBox</class>
    <extends>QComboBox</extends>

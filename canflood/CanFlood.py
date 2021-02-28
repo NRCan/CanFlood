@@ -46,6 +46,8 @@ class CanFlood:
     menu_name = "&CanFlood"
     act_menu_l = []
     act_toolbar_l = []
+    
+    cf_fp = '' #control file pathf or passing between dialogs
 
     def __init__(self, iface):
         """Constructor.
@@ -62,9 +64,9 @@ class CanFlood:
 
 
         # Create the dialog (after translation) and keep reference
-        self.dlg1 = DataPrep_Dialog(self.iface)
-        self.dlg2 = Modelling_Dialog(self.iface)
-        self.dlg3 = Results_Dialog(self.iface)
+        self.dlg1 = DataPrep_Dialog(self.iface, session=self)
+        self.dlg2 = Modelling_Dialog(self.iface, session=self)
+        self.dlg3 = Results_Dialog(self.iface, session=self)
         
         self.dlg_rfda = rfda_dialog.rDialog(self.iface)
         self.dlg_dikes = DikesDialog(self.iface)
@@ -113,7 +115,7 @@ class CanFlood:
          
         self.button_build.setObjectName('Build')
         self.button_build.setCheckable(False)
-        self.button_build.triggered.connect(self.dlg1.show)
+        self.button_build.triggered.connect(self.dlg1.launch)
         
         #add button to th etoolbar
         self.toolbar.addAction(self.button_build)
@@ -128,7 +130,7 @@ class CanFlood:
         
         self.button_model.setObjectName('Model')
         self.button_model.setCheckable(False)
-        self.button_model.triggered.connect(self.dlg2.show)
+        self.button_model.triggered.connect(self.dlg2.launch)
         
         #add it
         self.toolbar.addAction(self.button_model)
@@ -143,7 +145,7 @@ class CanFlood:
         
         self.button_results.setObjectName('button_results')
         self.button_results.setCheckable(False)
-        self.button_results.triggered.connect(self.dlg3.show)
+        self.button_results.triggered.connect(self.dlg3.launch)
         
         #add
         self.toolbar.addAction(self.button_results)

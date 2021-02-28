@@ -265,7 +265,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.out_dir = self.lineEdit_wdir.text()
         
         if not os.path.exists(self.out_dir): os.makedirs(self.out_dir)
-        self.loadRes = self.checkBox_loadres.isChecked()
+
         
         #project aoi
         self.aoi_vlay = self.comboBox_aoi.currentLayer()
@@ -285,7 +285,8 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.ifidN = self.mFieldComboBox_ifidN.currentField()
         
         """just put this here for easy upedating"""
-        self.inherit_fieldNames = ['logger', 'out_dir', 'segID', 'dikeID', 'tag', 'cbfn', 'ifidN']
+        self.inherit_fieldNames = ['logger', 'out_dir', 'segID', 'dikeID', 'tag',
+                                    'cbfn', 'ifidN', 'overwrite', 'absolute_fp']
         #=======================================================================
         # prechecks
         #=======================================================================
@@ -354,27 +355,27 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         if self.checkBox_expo_wDikes.isChecked():
             dike_vlay = wrkr.get_dikes_vlay() #get the dikes layer for writintg (fixed index)
-            self._load_toCanvas(dike_vlay, log.getChild('dike_vlay'))
+            self._load_toCanvas(dike_vlay, logger=log.getChild('dike_vlay'))
 
         #=======================================================================
         # breach points
         #=======================================================================
         if self.checkBox_expo_breach_pts.isChecked():
             breach_vlay_d = wrkr.get_breach_vlays()
-            self._load_toCanvas(list(breach_vlay_d.values()), log.getChild('breachPts'))
+            self._load_toCanvas(list(breach_vlay_d.values()), logger=log.getChild('breachPts'))
             
         #=======================================================================
         # transects
         #=======================================================================
         if self.checkBox_expo_write_tr.isChecked():
-            self._load_toCanvas(wrkr.tr_vlay, log.getChild('tr_vlay'))
+            self._load_toCanvas(wrkr.tr_vlay, logger=log.getChild('tr_vlay'))
             log.info('loaded transect layer \'%s\' to canvas'%wrkr.tr_vlay.name())
             
         #=======================================================================
         # exposure crest points
         #=======================================================================
         if self.checkBox_expo_crestPts.isChecked():
-            self._load_toCanvas(list(wrkr.expo_vlay_d.values()), log.getChild('expo_crestPts'))
+            self._load_toCanvas(list(wrkr.expo_vlay_d.values()), logger=log.getChild('expo_crestPts'))
 
         #=======================================================================
         # plots
@@ -490,7 +491,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # outputs
         #=======================================================================
-        self._load_toCanvas(list(vlay_d.values()), log, style_fn = 'failPoly_graduated_reds.qml')
+        self._load_toCanvas(list(vlay_d.values()), logger=log, style_fn = 'failPoly_graduated_reds.qml')
         self.feedback.setProgress(95)
         #=======================================================================
         # wrapo

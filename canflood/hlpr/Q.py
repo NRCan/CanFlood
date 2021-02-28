@@ -3176,7 +3176,7 @@ def vlay_get_fdata( #get data for a single field from all the features
     #===========================================================================
     # loop through and collect hte data
     #===========================================================================
-    if db_f: req_log(request, logger=log)
+    #if db_f: req_log(request, logger=log)
     d = dict() #empty container for results
     for feat in vlay.getFeatures(request):
         
@@ -3961,12 +3961,15 @@ def vlay_key_convert(#convert a list of ids in one form to another
             
         #by field values
         elif id1_type == 'field': #limit by field value
+            raise Error(' not implemented')
             #build an expression so we only query features with values matching the id1_l
-            qexp = exp_vals_in_field(id1_l, id_fieldn, qfields = vlay.fields(),  logger=log)
-            request =  QgsFeatureRequest(qexp)
-            
-            log.debug('pulling \'fid_fval_d\' from %i \'%s\' fvals'%(
-                len(id1_l), id_fieldn))
+            #===================================================================
+            # qexp = exp_vals_in_field(id1_l, id_fieldn, qfields = vlay.fields(),  logger=log)
+            # request =  QgsFeatureRequest(qexp)
+            # 
+            # log.debug('pulling \'fid_fval_d\' from %i \'%s\' fvals'%(
+            #     len(id1_l), id_fieldn))
+            #===================================================================
         else:
             raise Error('unrecognized id1_type')
             

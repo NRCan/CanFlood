@@ -42,19 +42,15 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     
     r_passet = '' #needed for typesetting from parameter file
     
-    def __init__(self, iface, parent=None):
+    def __init__(self, iface, parent=None, **kwargs):
 
         super(Results_Dialog, self).__init__(parent)
-        # Set up the user interface from Designer through FORM_CLASS.
-        # After self.setupUi() you can access any designer object by doing
-        # self.<objectname>, and you can use autoconnect slots - see
-        # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
-        # #widgets-and-dialogs-with-auto-connect
+
         self.setupUi(self)
         
         #custom setup
-        self.iface = iface
-        self.qproj_setup()
+
+        self.qproj_setup(iface=iface, **kwargs)
         self.connect_slots()
         
         self.logger.debug('Results_Dialog init')
@@ -84,18 +80,18 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                 
         #Control File browse
         self.pushButton_SS_cf_browse.clicked.connect(
-                lambda: self.fileSelect_button(self.lineEdit_SS_cf, 
+                lambda: self.fileSelect_button(self.lineEdit_cf_fp, 
                                           caption='Select Control File',
                                           path = self.lineEdit_wdir.text(),
                                           filters="Text Files (*.txt)")
                 )
         
         #update control file display labels
-        self.lineEdit_SS_cf.textChanged.connect(
-            lambda:self.label_RP_cfPath.setText(self.lineEdit_SS_cf.text()))
+        self.lineEdit_cf_fp.textChanged.connect(
+            lambda:self.label_RP_cfPath.setText(self.lineEdit_cf_fp.text()))
         
-        self.lineEdit_SS_cf.textChanged.connect(
-            lambda:self.label_jg_cfPath.setText(self.lineEdit_SS_cf.text()))
+        self.lineEdit_cf_fp.textChanged.connect(
+            lambda:self.label_jg_cfPath.setText(self.lineEdit_cf_fp.text()))
         
 
         #=======================================================================
@@ -134,13 +130,13 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #set the tabular data file path based on the dropdown
         self.comboBox_jg_par.currentTextChanged.connect(
             lambda x: self.lineEdit_JG_resfp.setText(
-                self.get_cf_par(self.lineEdit_SS_cf.text(), varName=x)
+                self.get_cf_par(self.lineEdit_cf_fp.text(), varName=x)
                                                     ))
         
         #also connect teh layer
         self.comboBox_JGfinv.layerChanged.connect(            
             lambda x: self.lineEdit_JG_resfp.setText(
-                self.get_cf_par(self.lineEdit_SS_cf.text(), 
+                self.get_cf_par(self.lineEdit_cf_fp.text(), 
                                 varName=self.comboBox_jg_par.currentText())
                                                     ))
         
@@ -270,23 +266,11 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         
         self.pushButton_C_compare.clicked.connect(self.run_compare)
-        #======================================================================
-        # defaults-----------
-        #======================================================================
-        """"
-        to speed up testing.. manually configure the project
-        """
+        
+        #=======================================================================
+        # wrap--------
+        #=======================================================================
 
-        debug_dir =os.path.join(os.path.expanduser('~'), 'CanFlood', 'results')
-        self.lineEdit_wdir.setText(debug_dir)
-        
-        if not os.path.exists(debug_dir):
-            log.info('builg directory: %s'%debug_dir)
-            os.makedirs(debug_dir)
-        
-        
-        
-        
         log.debug('connect_slots finished')
         
     def _set_setup(self): #attach parameters from setup tab
@@ -300,7 +284,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         if not os.path.exists(self.out_dir): os.makedirs(self.out_dir)
  
         #filepaths
-        self.cf_fp = self.lineEdit_SS_cf.text()
+        self.cf_fp = self.lineEdit_cf_fp.text()
         assert os.path.exists(self.cf_fp), 'passed invalid control file: %s'%self.cf_fp
  
         
@@ -359,7 +343,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # load and styleize
         #=======================================================================
-        self._load_toCanvas(res_vlay, log, style_fn = self.comboBox_JG_style.currentText())
+        self._load_toCanvas(res_vlay, logger=log, style_fn = self.comboBox_JG_style.currentText())
         
         #=======================================================================
         # wrap
@@ -381,7 +365,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #general
         out_dir = self.lineEdit_wdir.text()
         tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
-        cf_fp = self.lineEdit_SS_cf.text()
+        cf_fp = self.lineEdit_cf_fp.text()
         
         
         #=======================================================================
@@ -437,7 +421,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #general
         out_dir = self.lineEdit_wdir.text()
         tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
-        cf_fp = self.lineEdit_SS_cf.text()
+        cf_fp = self.lineEdit_cf_fp.text()
         
         
         #=======================================================================
@@ -497,7 +481,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #general
         out_dir = self.lineEdit_wdir.text()
         tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
-        cf_fp = self.lineEdit_SS_cf.text()
+        cf_fp = self.lineEdit_cf_fp.text()
         
         
         #=======================================================================
@@ -557,7 +541,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         if not os.path.exists(out_dir): os.makedirs(out_dir)
         
         tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
-        main_cf_fp = self.lineEdit_SS_cf.text() #for general plot styles
+        main_cf_fp = self.lineEdit_cf_fp.text() #for general plot styles
         
         #scenario filepaths
         raw_d = {

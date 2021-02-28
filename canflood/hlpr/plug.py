@@ -55,15 +55,28 @@ class QprojPlug(Qcoms): #baseclass for plugins
         self.logger = logger()"""
     
     def qproj_setup(self,
+                    iface = None,
                     plogger=None,
+                    session=None, #main CanFlood.CanFlood session worker 
                     ): #project inits for Dialog Classes
 
+        #=======================================================================
+        # attacyhments
+        #=======================================================================
+        self.session=session #used for passing between windows
+        self.iface = iface
         if plogger is None: plogger = logger(self) 
         
         self.logger = plogger
+        
+        #=======================================================================
+        # Qsetupts
+        #=======================================================================
         self.qproj = QgsProject.instance()
         
         self.crs = self.qproj.crs()
+        
+        self.layerTree = QgsProject.instance().layerTreeRoot() #for groups
         
         """connect to UI's progress bar
             expects 'progressBar' as the widget name
@@ -72,8 +85,10 @@ class QprojPlug(Qcoms): #baseclass for plugins
         self.setup_feedback(progressBar = self.progressBar,
                             feedback = MyFeedBackQ())
         
-        self.layerTree = QgsProject.instance().layerTreeRoot() #for groups
         
+        
+        
+
         #=======================================================================
         # default directories
         #=======================================================================
@@ -81,6 +96,27 @@ class QprojPlug(Qcoms): #baseclass for plugins
         self.pars_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), '_pars')
         assert os.path.exists(self.pars_dir)
 
+    def launch(self): #placeholder for launching the dialog
+        """allows children to customize what happens when called"""
+        
+        #try and set the control file path from the session if there
+
+        if os.path.exists(self.session.cf_fp):
+            #set the control file path
+            self.lineEdit_cf_fp.setText(self.session.cf_fp)
+            
+            #set the working directory
+            newdir = os.path.join(os.path.dirname(self.session.cf_fp))
+            assert os.path.exists(newdir), 'this should  exist...%s'%newdir
+            self.lineEdit_wdir.setText(newdir)
+            
+        #default catch for working directory
+        if self.lineEdit_wdir.text() == '':
+            newdir = os.path.join(os.getcwd(), 'CanFlood')
+            if not os.path.exists(newdir): os.makedirs(newdir)
+            self.lineEdit_wdir.setText(newdir)
+        
+        self.show()
         
 
     def get_cf_fp(self):
@@ -96,17 +132,19 @@ class QprojPlug(Qcoms): #baseclass for plugins
         
         return cf_fp
     
-    def get_wd(self):
-        wd = self.lineEdit_wd.text()
-        
-        if wd is None or wd == '':
-            raise Error('need to specficy a Working Directory')
-        if not os.path.exists(wd):
-            os.makedirs(wd)
-            self.logger.info('built new working directory at:\n    %s'%wd)
-        
-        
-        return wd
+    #===========================================================================
+    # def get_wd(self):
+    #     wd = self.lineEdit_wd.text()
+    #     
+    #     if wd is None or wd == '':
+    #         raise Error('need to specficy a Working Directory')
+    #     if not os.path.exists(wd):
+    #         os.makedirs(wd)
+    #         self.logger.info('built new working directory at:\n    %s'%wd)
+    #     
+    #     
+    #     return wd
+    #===========================================================================
     
     def browse_button(self, #browse to a directory
                       lineEdit, #text bar where selected directory should be displayed
@@ -275,15 +313,19 @@ class QprojPlug(Qcoms): #baseclass for plugins
             if not os.path.exists(default_wdir): os.makedirs(default_wdir)
             
     def _load_toCanvas(self,  #helper to load a layers to canvas w/ some reporting
-                       layers, log, 
+                       layers, 
+                       
                        groupName=None, #optional group name to load to
                        style_fn = None, #optional qml styule file name to apply
+                       logger=None, 
                        ):
         
         #=======================================================================
         # defaults
         #=======================================================================
         """forcing layers into a group"""
+        if logger is None: logger=self.logger
+        log=logger.getChild('load_toCanvas')
         if groupName is None: groupName = self.groupName
         if style_fn == '': style_fn=None
         #=======================================================================
@@ -356,6 +398,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
         """
         #handle the default empty selection
         if varName=='':return 'no selection'
+        if cf_fp == '':return 'no selection'
         #=======================================================================
         # defaults
         #=======================================================================
@@ -365,8 +408,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
         #=======================================================================
         # load the control file
         #=======================================================================
-        if cf_fp == '':
-            raise Error('passed an empty cf_fp!')
+
         assert os.path.exists(cf_fp), 'provided parameter file path does not exist \n    %s'%cf_fp
 
         pars = configparser.ConfigParser(inline_comment_prefixes='#')
@@ -380,6 +422,37 @@ class QprojPlug(Qcoms): #baseclass for plugins
             seems like we should only be pulling strings here...
         """
         return varType(pars[sectName][varName])
+    
+    def _set_setup(self, set_cf_fp=True,): #attach parameters from setup tab
+        
+        inherit_fieldNames = ['logger', 'out_dir','tag', 'overwrite', 'absolute_fp', 'feedback']
+        
+        #secssion controls
+        self.tag = self.linEdit_ScenTag.text()
+        self.out_dir = self.lineEdit_wdir.text()
+        
+        
+        if not os.path.exists(self.out_dir): os.makedirs(self.out_dir)
+        
+        if set_cf_fp:
+
+                    
+            #pull from the line
+            self.cf_fp = self.lineEdit_cf_fp.text()
+            assert os.path.exists(self.cf_fp), 'got invalid controlFile path: %s'%self.cf_fp
+            
+            inherit_fieldNames.append('cf_fp')
+
+        
+        #file behavior
+
+        self.overwrite=self.checkBox_SSoverwrite.isChecked()
+        self.absolute_fp = self.radioButton_SS_fpAbs.isChecked()
+        
+        #layer loading
+        self.groupName = 'CanFlood.%s'%self.tag
+        
+        self.inherit_fieldNames = inherit_fieldNames
         
 
 class logger(object): #workaround for qgis logging pythonic

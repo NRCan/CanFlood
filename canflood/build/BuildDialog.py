@@ -57,7 +57,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     event_name_set = [] #event names
     
 
-    def __init__(self, iface, parent=None):
+    def __init__(self, iface, parent=None, **kwargs):
         #=======================================================================
         # #init baseclass
         #=======================================================================
@@ -75,9 +75,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.ras_dict = {}
         self.vec = None
 
-        self.iface = iface
         
-        self.vDialog = vDialog(self.iface) #init and attach (connected below)
+        
+        
         
         #=======================================================================
         # setup funcs
@@ -85,16 +85,13 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         self.setupUi(self)
         
-        # Set up the user interface from Designer through FORM_CLASS.
-        # After self.setupUi() you can access any designer object by doing
-        # self.<objectname>, and you can use autoconnect slots - see
-        # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
-        # #widgets-and-dialogs-with-auto-connect
+        self.qproj_setup(iface=iface, **kwargs)
         
-        
-        self.qproj_setup() #basic dialog worker setup
+        self.vDialog = vDialog(iface) #init and attach vfunc library dialog(connected below)
         
         self.connect_slots()
+        
+        
         
         
         self.logger.debug('DataPrep_Dialog initilized')
@@ -144,7 +141,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # session controls
         #=======================================================================
         #Working Directory 
-        self._connect_wdir(self.pushButton_wd, self.pushButton_wd_open, self.lineEdit_wd,
+        self._connect_wdir(self.pushButton_wd, self.pushButton_wd_open, self.lineEdit_wdir,
                            default_wdir = os.path.join(os.path.expanduser('~'), 'CanFlood', 'build'))
                 
 
@@ -157,13 +154,15 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.checkBox_SSoverwrite.stateChanged.connect(self.set_overwrite) #SS overwrite data files
 
         
-        #CanFlood Control File
-        def browse_cf():
-            return self.browse_button(self.lineEdit_cf_fp, prompt='Select CanFlood control file',
-                           qfd=QFileDialog.getOpenFileName)
-            
-        self.pushButton_cf.clicked.connect(browse_cf)# SS. Model Control File. Browse
+        #CanFlood Control 
+        self.pushButton_cf.clicked.connect(
+                lambda: self.fileSelect_button(self.lineEdit_cf_fp, 
+                                          caption='Select Control File',
+                                          path = self.lineEdit_wdir.text(),
+                                          filters="Text Files (*.txt)")
+                )
         
+        self.pushButton_s_cfOpen.clicked.connect(lambda: os.startfile(self.lineEdit_cf_fp.text()))
 
         
         
@@ -194,7 +193,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # vfunc
         #=======================================================================
         #give commmon widgets
-        self.vDialog.lineEdit_wd = self.lineEdit_wd #share the reference
+        self.vDialog.lineEdit_wdir = self.lineEdit_wdir #share the reference
         self.vDialog.lineEdit_curve = self.lineEdit_curve
         self.vDialog.linEdit_ScenTag = self.linEdit_ScenTag
         
@@ -420,6 +419,25 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     #===========================================================================
     # common methods----------
     #===========================================================================
+    def set_setup(self, set_cf_fp=True,): #attach parameters from setup tab
+        
+
+        #=======================================================================
+        # #call the common
+        #=======================================================================
+        self._set_setu(set_cf_fp=set_cf_fp)
+        
+        #=======================================================================
+        # custom setups
+        #=======================================================================
+        #project aoi
+        self.aoi_vlay = self.comboBox_aoi.currentLayer()
+        
+        #file behavior
+        self.loadRes = self.checkBox_loadres.isChecked()
+
+
+        
     def slice_aoi(self, vlay):
         
         aoi_vlay = self.comboBox_aoi.currentLayer()
@@ -494,32 +512,30 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         """
         log = self.logger.getChild('build_scenario')
         log.info('build_scenario started')
-        tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
-        wdir =  self.lineEdit_wd.text() #pull the wd filepath from the user provided in 'Browse'
+        #tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
+        #wdir =  self.lineEdit_wdir.text() #pull the wd filepath from the user provided in 'Browse'
         
+        #=======================================================================
+        # collect inputs
+        #=======================================================================
 
+        self._set_setup(set_cf_fp=False)
+        prec = str(int(self.spinBox_s_prec.value())) #need a string for setting
+        
         #=======================================================================
         # prechecks
-        #=======================================================================
-        assert isinstance(wdir, str)
-        assert isinstance(tag, str)
- 
+        #======================================================================= 
         if self.radioButton_SS_fpRel.isChecked():
             raise Error('Relative filepaths not implemented')
-             
-        #======================================================================
-        # setup working directory
-        #======================================================================
-        if not os.path.exists(wdir):
-            os.makedirs(wdir)
-            log.info('built working directory: %s'%wdir)
+
         self.feedback.upd_prog(10)
             
         #=======================================================================
         # run the control file builder----
         #=======================================================================
         #initilize
-        wrkr = Preparor(logger=self.logger,  out_dir=wdir, tag=tag, feedback=self.feedback)
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        wrkr = Preparor(**kwargs)
         self.feedback.upd_prog(20)
         
         #=======================================================================
@@ -531,14 +547,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # #set some basics
         #=======================================================================
-        #=======================================================================
-        # if not self.lineEdit_curve.text()=='':
-        #     curves_fp=self.lineEdit_curve.text()
-        # else:
-        #     curves_fp = None
-        #=======================================================================
             
-        wrkr.upd_cf_first(scenarioName=self.linEdit_ScenTag.text())
+        wrkr.upd_cf_first(scenarioName=self.linEdit_ScenTag.text(), **{'prec':prec})
  
         log.info("default CanFlood model config file created :\n    %s"%cf_path)
         
@@ -549,14 +559,19 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         write aoi filepath to scratch file
         """
         self.feedback.upd_prog(95)
+        
+        #=======================================================================
+        # ui updates
+        #=======================================================================
+        self.session.cf_fp = cf_path #set for other dialogs
+        #display the control file in the dialog
+        self.lineEdit_cf_fp.setText(cf_path)
+        
         #======================================================================
         # wrap
         #======================================================================
-        
-        #display the control file in the dialog
-        self.lineEdit_cf_fp.setText(cf_path)
 
-        log.push('control file created for "\'%s\''%tag)
+        log.push('control file created for "\'%s\''%self.tag)
         self.feedback.upd_prog(None) #set the progress bar back down to zero
 
     def store_curves(self): #write the curves_fp to the control file
@@ -604,7 +619,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         vlay_raw = self.comboBox_ivlay.currentLayer()
         cf_fp = self.get_cf_fp()
         tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
-        wdir =  self.lineEdit_wd.text() #pull the wd filepath from the user provided in 'Browse'
+        wdir =  self.lineEdit_wdir.text() #pull the wd filepath from the user provided in 'Browse'
         
         #======================================================================
         # prechecks
@@ -678,7 +693,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # collect from UI----
         #=======================================================================
         in_vlay = self.mMapLayerComboBox_inv_finv.currentLayer()
-        out_dir = self.lineEdit_wd.text()
+        out_dir = self.lineEdit_wdir.text()
         nestID = int(self.spinBox_inv.value())
         
         def get_data(d): #helper to pull data off widgets
@@ -765,7 +780,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # assemble/prepare inputs
         #=======================================================================
         rlayRaw_l = list(self.ras_dict.values())
-        out_dir = self.lineEdit_wd.text()
+        out_dir = self.lineEdit_wdir.text()
         
         
         #raster prep parameters
@@ -872,7 +887,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         log = self.logger.getChild('run_rsamp')
         start = datetime.datetime.now()
         log.info('start \'run_rsamp\' at %s'%start)
-        
+        self._set_setup()
         #=======================================================================
         # assemble/prepare inputs
         #=======================================================================
@@ -880,9 +895,9 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         rlay_l = list(self.ras_dict.values())
         
 
-        cf_fp = self.get_cf_fp()
-        out_dir = self.lineEdit_wd.text()
-        tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
+        #cf_fp = self.get_cf_fp()
+        #out_dir = self.lineEdit_wdir.text()
+        #tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
 
         cid = self.mFieldComboBox_cid.currentField() #user selected field
         psmp_stat = self.comboBox_HS_stat.currentText()
@@ -922,8 +937,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                 raise Error('unexpected type on raster layer')
             assert rlay.crs()==self.qproj.crs(), 'layer CRS does not match project'
             
-        if not os.path.exists(out_dir):
-            raise Error('working directory does not exist:  %s'%out_dir)
         
         if cid is None or cid=='':
             raise Error('need to select a cid')
@@ -932,7 +945,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             raise Error('requested cid field \'%s\' not found on the finv_raw'%cid)
         
 
-        assert os.path.exists(cf_fp), 'bad control file specified'
+        
         
         #geometry specific input checks
         if 'Polygon' in gtype or 'Line' in gtype:
@@ -953,12 +966,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
         
         #build the sample
-        wrkr = Rsamp(logger=self.logger, 
-                          tag = tag, #set by build_scenario() 
-                          feedback = self.feedback, #let the instance build its own feedback worker
-                          cid=cid,
-                          out_dir = out_dir
-                          )
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        wrkr = Rsamp(cid=cid, **kwargs)
         
 
         #execute the tool
@@ -975,7 +984,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         wrkr.write_res(res_vlay, )
         
         #update ocntrol file
-        wrkr.update_cf(cf_fp)
+        wrkr.update_cf(self.cf_fp)
         
         #=======================================================================
         # plots
@@ -998,8 +1007,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # add to map
         #======================================================================
         if self.checkBox_loadres.isChecked():
-            self.qproj.addMapLayer(res_vlay)
-            self.logger.info('added \'%s\' to canvas'%res_vlay.name())
+            self._load_toCanvas(res_vlay, logger=log)
+
             
         #======================================================================
         # update event names
@@ -1080,7 +1089,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
 
         cf_fp = self.get_cf_fp()
-        out_dir = self.lineEdit_wd.text()
+        out_dir = self.lineEdit_wdir.text()
         
 
         #update some parameters
@@ -1167,7 +1176,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         finv_raw = self.comboBox_ivlay.currentLayer()
 
         cf_fp = self.get_cf_fp()
-        out_dir = self.lineEdit_wd.text()
+        out_dir = self.lineEdit_wdir.text()
         cid = self.mFieldComboBox_cid.currentField() #user selected field
         
         lfield = self.mFieldComboBox_LSfn.currentField()
@@ -1299,7 +1308,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
         #get displayed control file path
         cf_fp = self.get_cf_fp()
-        out_dir = self.lineEdit_wd.text()
+        out_dir = self.lineEdit_wdir.text()
         
         #likelihood paramter
         if self.radioButton_ELari.isChecked():
@@ -1345,7 +1354,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
         # #write to file
         #======================================================================
-        ofn = os.path.join(self.lineEdit_wd.text(), 'evals_%i_%s.csv'%(len(aep_df.columns), tag))
+        ofn = os.path.join(self.lineEdit_wdir.text(), 'evals_%i_%s.csv'%(len(aep_df.columns), tag))
         
         from hlpr.Q import Qcoms
         
@@ -1395,7 +1404,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #===================================================================
         # setup validation worker
         #===================================================================
-        wrkr = Vali(cf_fp=cf_fp, logger=self.logger, out_dir=self.lineEdit_wd.text(), tag=tag)
+        wrkr = Vali(cf_fp=cf_fp, logger=self.logger, out_dir=self.lineEdit_wdir.text(), tag=tag)
         
 
         #======================================================================

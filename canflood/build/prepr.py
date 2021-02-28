@@ -118,6 +118,7 @@ class Preparor(Model, Qcoms):
     def upd_cf_first(self, #seting initial values to the control file
                      scenarioName=None,
                      curves_fp=None,
+                     **kwargs
                      ):
         """
         todo: change this to accept kwargs
@@ -132,11 +133,15 @@ class Preparor(Model, Qcoms):
             datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S'))
         
         
-        new_pars_d = {'parameters':({'name':scenarioName},note_str)}
+        new_pars_d = {'parameters':(
+            dict(**{'name':scenarioName}, **kwargs),note_str)}
         
         #add curves
         if isinstance(curves_fp, str):
             new_pars_d['dmg_fps'] = ({'curves':curves_fp},)
+            
+
+            
         
         
         return self.set_cf_pars(new_pars_d)

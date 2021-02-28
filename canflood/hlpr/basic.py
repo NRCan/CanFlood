@@ -39,6 +39,7 @@ class ComWrkr(object): #common methods for all classes
     progressBar = None
     feedback = None
     
+    absolute_fp=True
     #mandatory keys for curves
     
     invalid_cids = ['fid', 'ogc_fid']
@@ -47,7 +48,9 @@ class ComWrkr(object): #common methods for all classes
     def __init__(self, 
                  tag='session', 
                  cid='xid', #default used by inventory constructors
+                 
                  cf_fp='',
+                 absolute_fp=True, #whether filepaths in control file are absolute (False=Relative). 
 
                  overwrite=True, 
                  out_dir=None, 
@@ -93,6 +96,7 @@ class ComWrkr(object): #common methods for all classes
         self.cf_fp = cf_fp
         self.prec = prec
         self.today_str = datetime.datetime.now().strftime('%Y-%m-%d %H:%M') #nice for labelling plots
+        self.absolute_fp=absolute_fp
         
         #=======================================================================
         # feedback
