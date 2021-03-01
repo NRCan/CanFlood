@@ -18,6 +18,7 @@ import pandas as pd
 
 #Qgis imports
 from qgis.core import QgsVectorLayer, Qgis, QgsProject, QgsLogger, QgsMessageLog, QgsMapLayer
+from qgis.gui import QgisInterface
 
 #pyQt
 from PyQt5.QtWidgets import QApplication, QWidget, QInputDialog, QLineEdit, QFileDialog, QGroupBox, QComboBox
@@ -64,10 +65,27 @@ class QprojPlug(Qcoms): #baseclass for plugins
         # attacyhments
         #=======================================================================
         self.session=session #used for passing between windows
-        self.iface = iface
-        if plogger is None: plogger = logger(self) 
+        
+
+
+        
+        #=======================================================================
+        # interface
+        #=======================================================================
+        if not iface is None:
+            """only checking real iface for compatabilitgy"""
+            assert isinstance(iface, QgisInterface), 'got bad iface type: %s'%type(iface)
+            self.iface = iface
+            
+        #=======================================================================
+        # logger
+        #=======================================================================
+        if plogger is None: 
+            """this needs iface to be set"""
+            plogger = logger(self) 
         
         self.logger = plogger
+            
         
         #=======================================================================
         # Qsetupts
