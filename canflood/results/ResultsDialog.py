@@ -569,14 +569,14 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # #plot curves
         #=======================================================================
-        if self.checkBox_C_rplot.isChecked():
+ 
             
-            if self.checkBox_C_ari.isChecked():
-                fig = wrkr.riskCurves(y1lab='impacts')
-                wrkr.output_fig(fig)
-            if self.checkBox_C_aep.isChecked():
-                fig = wrkr.riskCurves(y1lab='AEP')
-                wrkr.output_fig(fig)
+        if self.checkBox_C_ari.isChecked():
+            fig = wrkr.riskCurves(y1lab='impacts')
+            wrkr.output_fig(fig)
+        if self.checkBox_C_aep.isChecked():
+            fig = wrkr.riskCurves(y1lab='AEP')
+            wrkr.output_fig(fig)
                 
             
         
@@ -619,21 +619,21 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # #plot curves
         #=======================================================================
-        if self.checkBox_C_rplot.isChecked():
+ 
             
-            if self.checkBox_C_ari.isChecked():
-                fig = wrkr.plot_rCurveStk_comb(y1lab='impacts')
-                wrkr.output_fig(fig)
-            if self.checkBox_C_aep.isChecked():
-                fig = wrkr.plot_rCurveStk_comb(y1lab='AEP')
-                wrkr.output_fig(fig)
+        if self.checkBox_C_ari.isChecked():
+            fig = wrkr.plot_rCurveStk_comb(y1lab='impacts')
+            wrkr.output_fig(fig)
+        if self.checkBox_C_aep.isChecked():
+            fig = wrkr.plot_rCurveStk_comb(y1lab='AEP')
+            wrkr.output_fig(fig)
                 
         self.feedback.setProgress(80)
         #=======================================================================
         # write
         #=======================================================================
         if self.checkBox_C_composite.isChecked():
-            cWrkr.write(logger=log)
+            cWrkr.write(logger=log, out_dir=self.out_dir)
             
         self.feedback.setProgress(95)
         log.push('run_combine finished')

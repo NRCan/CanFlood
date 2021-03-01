@@ -68,15 +68,12 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
     #===========================================================================
 
     def __init__(self,*args, **kwargs):
-        
-        """inherited by the dialog.
-        init is not called during the plugin"""
-
-        
-
-        
+ 
+ 
         super().__init__(*args, **kwargs) #initilzie teh baseclass
-
+        
+        self.logger.debug('%s.__init__ w/ feedback \'%s\''%(
+            self.__class__.__name__, type(self.feedback).__name__))
 
         
     def _setup(self):
@@ -99,15 +96,8 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
         
         #set default plot text
         self._set_valstr()
-        #=======================================================================
-        # try:
-        #     self.val_str =  'annualized impacts = %s \nltail=\'%s\',  rtail=\'%s\''%(
-        #         self.impactFmtFunc(self.ead_tot), self.ltail, self.rtail) + \
-        #         '\naevent_rels = \'%s\', prec = %i'%(self.event_rels, self.prec)
-        # except Exception as e:
-        #     log.warning('failed to set default plot string w/ \n    %s'%e)
-        #=======================================================================
-            
+ 
+
    
         
         return self
