@@ -40,13 +40,28 @@ from results.riskPlot import RiskPlotr
 class CbaWrkr(RiskPlotr):
  
     
- 
-
+    cba_xls =None
+    
+    #===========================================================================
+    # expectations from parameter file
+    #===========================================================================
+    exp_pars_md = {
+        'results_fps':{
+             'r_ttl':{'ext':('.csv',)},
+             }
+        }
+    
+    exp_pars_op={
+        'results_fps':{
+             'cba_xls':{'ext':('.xlsx',)},
+             }
+        }
+    
     def __init__(self,
- 
-                  *args, **kwargs):
+                figsize=(10,6),
+                 **kwargs):
         
-        super().__init__(*args, **kwargs)
+        super().__init__(figsize=figsize, **kwargs)
         
         #=======================================================================
         # paramters directory
@@ -90,6 +105,7 @@ class CbaWrkr(RiskPlotr):
         #=======================================================================
         # add data----
         #=======================================================================
+        
         #=======================================================================
         # scenario description
         #=======================================================================
@@ -98,8 +114,9 @@ class CbaWrkr(RiskPlotr):
         for evalA, nvalB in {
             'name':self.name,
             'control_filename':os.path.basename(self.cf_fp),
-            'ead_total':'?',
-            'timestamp':self.today_str
+            'ead_total':self.ead_tot,
+            'timestamp':self.today_str,
+            'base_year':int(datetime.datetime.now().strftime('%Y')),
             }.items():
             
             #===================================================================
@@ -144,14 +161,17 @@ class CbaWrkr(RiskPlotr):
     def write_wbook(self, #helper to write the openpyxl workbo0ok to file
                        wbook=None,
                        ofp=None,
-                       logger=None):
+                       logger=None,
+                       upd_cf=None,
+                       ):
         
         #=======================================================================
         # defaults
         #=======================================================================
         if wbook is None: wbook=self.wbook
-        if ofp is None: ofp = os.path.join(self.out_dir, '%s_%s_cba.xlsx'%(self.name, self.tag))
+        if ofp is None: ofp = os.path.join(self.out_dir, 'cba_%s_%s.xlsx'%(self.name, self.tag))
         if logger is None: logger=self.logger
+        if upd_cf is  None: upd_cf=self.upd_cf
         log=logger.getChild('write_wbook')
         
         #=======================================================================
@@ -160,8 +180,167 @@ class CbaWrkr(RiskPlotr):
         wbook.save(ofp)
         log.info('wrote workbook to file \n    %s'%(ofp))
         
-        return ofp
+        #=======================================================================
+        # update control file
+        #=======================================================================
+        if upd_cf:
+            self.set_cf_pars(
+                {'results_fps': ({'cba_xls':ofp}, '#%s set cba_xls on %s'%(
+                    self.__class__.__name__, self.today_str))}
+                )
+
         
+        return ofp
+    
+    def plot_cba(self, #generate a plot of costs and benefits
+                 data_fp=None,
+                 logger=None,
+                 title=None,
+                 
+                 #plot styles
+                 impactFmtFunc = None, #formattting the y axis
+                 style_lib = { #styles to apply to each line
+                     'Grand Total Costs':
+                            {
+                            'color':'red'
+                                },
+                    'Grand Total Benefits':{
+                            'color':'green'
+                                }
+                     }
+                 ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if data_fp is None: data_fp = self.cba_xls
+        assert os.path.exists(data_fp), 'passed bad filepath for cba_xls: %s'%data_fp
+        
+        if logger is None: logger=self.logger
+        log=logger.getChild('plot_cba')
+        
+        if title is None: title = '%s Cost-Benefit Curves for %s'%(self.tag, self.name)
+        if impactFmtFunc is None: impactFmtFunc=self.impactFmtFunc
+        
+        plt, matplotlib = self.plt, self.matplotlib
+        #=======================================================================
+        # get data------
+        #=======================================================================
+        #=======================================================================
+        # load  
+        #=======================================================================
+        df_raw = pd.read_excel(data_fp, sheet_name='data' ,engine='openpyxl')
+        
+        log.info('loaded %s from %s'%(str(df_raw.shape), data_fp))
+        
+        #=======================================================================
+        # check
+        #=======================================================================
+        assert 'plot' in df_raw.columns
+        
+        #=======================================================================
+        # clean DATA
+        #=======================================================================
+        df = df_raw.dropna(axis=0, how='all').copy() #drop empty rows
+        
+        #fix plot bool
+        df.loc[:, 'plot'] = df['plot'].fillna(0).astype(bool)
+        
+        #get just rows w/ plot=Truee
+        df = df.loc[df['plot'], :].drop('plot',axis=1)
+        
+        #fix index
+        df = df.set_index(df.columns[0], drop=True)
+        df.index.name = None
+        
+        #drop any remaining unamed columns
+        boolcol = df.columns.str.contains('Unnamed:').fillna(False).values.astype(bool)
+        
+        df = df.loc[:, np.invert(boolcol)]
+        
+        log.debug('cleaned cba data to %s'%(str(df.shape)))
+        
+        #minmum length checks
+        assert len(df.index)>=2
+        assert len(df.columns)>=2
+        assert df.notna().all().all(), 'got some nulls... make sure all the data is complete'
+        #=======================================================================
+        # get cumulatives
+        #=======================================================================
+        dfc = df.cumsum(axis=1) #convert to cumulatives
+        
+        #=======================================================================
+        # plot----
+        #=======================================================================
+        #======================================================================
+        # figure setup
+        #======================================================================
+        """
+        plt.show()
+        """
+        plt.close()
+        fig = plt.figure(figsize=self.figsize, constrained_layout = True)
+        
+        #axis setup
+        ax = fig.add_subplot(111)
+
+        # axis label setup
+        fig.suptitle(title)
+        ax.set_ylabel(self.impact_units)
+        ax.set_xlabel('years')
+        
+        #=======================================================================
+        # add lines
+        #=======================================================================
+        fill_d = dict()
+        for serName, row in dfc.iterrows():
+            #get style
+            if serName in style_lib:
+                styles = style_lib[serName]
+            else:
+                styles = dict()
+            
+            xar,  yar = row.index.values, row.values
+            pline1 = ax.plot(xar,yar,
+                            label       = serName,
+                            **styles
+                            )
+            
+            #collect for filling
+            for k in ['benefit', 'cost']:
+                if k in serName.lower():
+                    fill_d[k] = yar
+                    break
+
+            
+        #=======================================================================
+        # fill between the lines
+        #=======================================================================
+        if len(fill_d)==2:
+            polys = ax.fill_between(fill_d['cost'], fill_d['benefit'], y2=0, 
+                                            color       = 'green', 
+                                            alpha       = 0.5,
+                                            hatch       = hatch)
+            
+        #=======================================================================
+        # post format
+        #=======================================================================
+        self._postFmt(ax)
+        
+        #assign tick formatter functions
+
+            
+        self._tickSet(ax, yfmtFunc=impactFmtFunc)
+        
+        log.info('finished')
+        
+        return fig
+    
+        """
+        plt.show()
+        view(df)
+        view(df_raw)
+        """
         
         
         

@@ -248,6 +248,12 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.pushButton_C_combine.clicked.connect(self.run_combine)
         
         #=======================================================================
+        # CBA-----------
+        #=======================================================================
+        
+        self.pushButton_cba_copy.clicked.connect(self.run_cba_copy)
+        
+        #=======================================================================
         # wrap--------
         #=======================================================================
 
@@ -638,6 +644,47 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.feedback.setProgress(95)
         log.push('run_combine finished')
         self.feedback.upd_prog(None)
+        
+    def run_cba_copy(self):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        log = self.logger.getChild('run_combine')
+        log.info('user pushed \'run_combine\'')
+        
+        """put this here to avoid the global openpyxl dependency"""
+        from results.cba import CbaWrkr 
+        
+        #=======================================================================
+        # collect inputs
+        #=======================================================================
+
+        self._set_setup(set_cf_fp=True)
+        
+        #=======================================================================
+        # init
+        #=======================================================================
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        wrkr = results.cba.CbaWrkr(**kwargs)._setup()
+        
+        self.feedback.setProgress(50)
+        
+        #=======================================================================
+        # copy and write
+        #=======================================================================
+        
+        wrkr.copy_template()
+        self.feedback.setProgress(70)
+        wrkr.write_wbook()
+        self.feedback.setProgress(90)
+        
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        log.push('run_cba_copy finished')
+        self.feedback.upd_prog(None)
+        
+        
         
         
         
