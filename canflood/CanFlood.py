@@ -61,6 +61,7 @@ class CanFlood:
         
         self.iface = iface
         
+        
 
 
         # Create the dialog (after translation) and keep reference

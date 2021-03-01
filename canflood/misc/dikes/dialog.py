@@ -64,6 +64,9 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
     def __init__(self, 
                  iface, 
                  parent=None):
+        """
+        called during startup by CanFlood.__init__
+        """
         
         """these will only ini tthe first baseclass (QtWidgets.QDialog)
         required"""
@@ -72,29 +75,29 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # attachments
         #=======================================================================
-        self.iface = iface
+
         #=======================================================================
         # setup funcs
         #=======================================================================
         self.setupUi(self)
         
-        self.qproj_setup() #basic dialog worker setup
+        self.qproj_setup(iface=iface) #basic dialog worker setup
         self.connect_slots()
 
 
 
         
-    def _setup(self,
+    def _setup(self, #for standalone runs
                logger=None,
-                **kwargs): #standlone runs
-        
+                **kwargs): 
+        raise Error('fix me')
         #=======================================================================
         # logger
         #=======================================================================
         if logger is None:
             logger = hlpr.logr.basic_logger()
         self.logger=logger
-        
+         
         #=======================================================================
         # setup plugin and qgis
         #=======================================================================
@@ -102,8 +105,8 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         super(QprojPlug, self).__init__() #call Qcoms init
         self.ini_standalone()
         self.qproj_setup(plogger=logger)
-        
-
+         
+ 
         self.connect_slots(**kwargs)
         return self
     
@@ -119,6 +122,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                       rlays=None, #set of rasters to populate list w/ (for standalone)
                       ):
         log = self.logger.getChild('connect_slots')
+        assert not self.iface is None
 
         #======================================================================
         # pull project data
