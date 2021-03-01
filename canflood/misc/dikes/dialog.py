@@ -73,6 +73,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         # attachments
         #=======================================================================
         self.iface = iface
+        assert not iface is None
         #=======================================================================
         # setup funcs
         #=======================================================================
@@ -119,7 +120,8 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                       rlays=None, #set of rasters to populate list w/ (for standalone)
                       ):
         log = self.logger.getChild('connect_slots')
-
+        #assert not self.iface is None
+        """where is this being caolled now?"""
         #======================================================================
         # pull project data
         #======================================================================

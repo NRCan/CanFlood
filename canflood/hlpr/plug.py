@@ -611,7 +611,7 @@ def bind_layersListWidget(widget, #instanced widget
     """
     because Qgis passes instanced widgets, need to bind any new methods programatically
     """
-
+    #assert not iface is None
         
     widget.iface = iface
     widget.layerType = layerType
