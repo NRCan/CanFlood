@@ -2430,7 +2430,7 @@ p, li { white-space: pre-wrap; }
          </widget>
          <widget class="QWidget" name="tab_Compare">
           <attribute name="title">
-           <string>Compare</string>
+           <string>Compare/Combine</string>
           </attribute>
           <layout class="QVBoxLayout" name="verticalLayout_12">
            <item>
@@ -2451,7 +2451,7 @@ p, li { white-space: pre-wrap; }
                 <x>0</x>
                 <y>0</y>
                 <width>636</width>
-                <height>393</height>
+                <height>337</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -2628,51 +2628,67 @@ p, li { white-space: pre-wrap; }
                 </item>
                </layout>
               </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_10">
+             <property name="title">
+              <string>Combine Controls:</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_18">
               <item>
-               <widget class="QGroupBox" name="groupBox_9">
-                <property name="title">
-                 <string>Plot Controls</string>
+               <widget class="QCheckBox" name="checkBox_C_composite">
+                <property name="text">
+                 <string>Generate composite control file</string>
                 </property>
-                <layout class="QVBoxLayout" name="verticalLayout_16">
-                 <item>
-                  <layout class="QHBoxLayout" name="horizontalLayout_11">
-                   <item>
-                    <widget class="QCheckBox" name="checkBox_C_ari">
-                     <property name="text">
-                      <string>ARI vs. Impacts</string>
-                     </property>
-                     <property name="checked">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QCheckBox" name="checkBox_C_aep">
-                     <property name="text">
-                      <string>Impacts vs. AEP</string>
-                     </property>
-                     <property name="checked">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <spacer name="horizontalSpacer_5">
-                     <property name="orientation">
-                      <enum>Qt::Horizontal</enum>
-                     </property>
-                     <property name="sizeHint" stdset="0">
-                      <size>
-                       <width>40</width>
-                       <height>20</height>
-                      </size>
-                     </property>
-                    </spacer>
-                   </item>
-                  </layout>
-                 </item>
-                </layout>
                </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_9">
+             <property name="title">
+              <string>Plot Controls:</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_16">
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_11">
+                <item>
+                 <widget class="QCheckBox" name="checkBox_C_ari">
+                  <property name="text">
+                   <string>ARI vs. Impacts</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QCheckBox" name="checkBox_C_aep">
+                  <property name="text">
+                   <string>Impacts vs. AEP</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_5">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
               </item>
              </layout>
             </widget>

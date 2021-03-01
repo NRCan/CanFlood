@@ -185,7 +185,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.pushButton_JG_join.clicked.connect(self.run_joinGeo)
         
         #=======================================================================
-        # COMPARE--------
+        # COMPARE + COMBINE--------
         #=======================================================================
         #=======================================================================
         # browse/open buttons
@@ -231,19 +231,6 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             }.items():
             
 
-                
-            #Results Directory
-            #===================================================================
-            # cap1='Select Results Directory for Scenario %s'%scName
-            # d['rd_browse'].clicked.connect(
-            #     lambda a, x=d['rd_line'], c=cap1: \
-            #     self.browse_button(x, prompt=c))
-            # 
-            # d['rd_open'].clicked.connect(
-            #     lambda a, x=d['rd_line']: force_open_dir(x.text()))
-            #===================================================================
-
-            
             #Control File
             cap1='Select Control File for Scenario %s'%scName
             fil1="Control Files (*.txt)"
@@ -251,14 +238,6 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                 lambda a, x=d.pop('cf_line'), c=cap1, f=fil1: \
                 self.fileSelect_button(x, caption=c, filters=f, path=self.lineEdit_wdir.text()))
             
-            #total results
-            #===================================================================
-            # cap1='Select Total Results for Scenario %s'%scName
-            # fil1="Data Files (*.csv)"
-            # d['ttl'].clicked.connect(
-            #     lambda a, x=d.pop('ttl_line'), c=cap1, f=fil1: \
-            #     self.fileSelect_button(x, caption=c, filters=f, path=self.lineEdit_wdir.text()))
-            #===================================================================
 
 
         #=======================================================================
@@ -266,6 +245,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         
         self.pushButton_C_compare.clicked.connect(self.run_compare)
+        self.pushButton_C_combine.clicked.connect(self.run_combine)
         
         #=======================================================================
         # wrap--------
@@ -585,7 +565,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             mdf = wrkr.cf_compare()
             mdf.to_csv(os.path.join(wrkr.out_dir, 'CFcompare_%s_%i.csv'%(wrkr.tag, len(mdf.columns))))
         
-        self.feedback.setProgress(60)
+        self.feedback.setProgress(70)
         #=======================================================================
         # #plot curves
         #=======================================================================
@@ -599,16 +579,82 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                 wrkr.output_fig(fig)
                 
             
-        self.feedback.setProgress(90)
+        
         
         #=======================================================================
         # wrap
         #=======================================================================
-        self.feedback.upd_prog(None)
+        self.feedback.setProgress(95)
         log.push('run_compare finished')
+        self.feedback.upd_prog(None)
+        
     
+    def run_combine(self):
+        log = self.logger.getChild('run_combine')
+        log.info('user pushed \'run_combine\'')
+        
+        #=======================================================================
+        # collect inputs
+        #=======================================================================
+
+        self._set_setup(set_cf_fp=True)
+        fps_d = self._set_fps()
+        
+        self.feedback.setProgress(10)
     
-    
-    
+        #=======================================================================
+        # init
+        #=======================================================================
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        wrkr = results.compare.Cmpr(fps_d = fps_d,**kwargs)._setup()
+        
+        self.feedback.setProgress(50)
+        #===========================================================================
+        # get data
+        #===========================================================================
+        cdxind, cWrkr = wrkr.build_composite()
+        
+        
+        self.feedback.setProgress(70)
+        #=======================================================================
+        # #plot curves
+        #=======================================================================
+        if self.checkBox_C_rplot.isChecked():
+            
+            if self.checkBox_C_ari.isChecked():
+                fig = wrkr.plot_rCurveStk_comb(y1lab='impacts')
+                wrkr.output_fig(fig)
+            if self.checkBox_C_aep.isChecked():
+                fig = wrkr.plot_rCurveStk_comb(y1lab='AEP')
+                wrkr.output_fig(fig)
+                
+        self.feedback.setProgress(80)
+        #=======================================================================
+        # write
+        #=======================================================================
+        if self.checkBox_C_composite.isChecked():
+            cWrkr.write(logger=log)
+            
+        self.feedback.setProgress(95)
+        log.push('run_combine finished')
+        self.feedback.upd_prog(None)
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
     
     
