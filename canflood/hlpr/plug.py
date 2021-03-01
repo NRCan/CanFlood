@@ -431,7 +431,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
         self.tag = self.linEdit_ScenTag.text()
         self.out_dir = self.lineEdit_wdir.text()
         
-        
+        assert not self.out_dir == '', 'must specify a working directory!'
         if not os.path.exists(self.out_dir): os.makedirs(self.out_dir)
         
         if set_cf_fp:

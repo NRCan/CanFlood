@@ -119,10 +119,12 @@ class Cmpr(RiskPlotr):
         """needs to be a strong reference or the workers die!"""
         d = dict() #start a weak reference container
         
-        for i, fp in enumerate(fps_d.values()):
+        for i,(tag, fp) in enumerate(fps_d.items()):
             log.debug('loading %i/%i'%(i+1, len(fps_d)))
+
             # build/load the children
-            sWrkr = Scenario(self, cf_fp=fp, absolute_fp=self.absolute_fp, base_dir=base_dir)
+            sWrkr = Scenario(self, cf_fp=fp, absolute_fp=self.absolute_fp, 
+                             base_dir=os.path.dirname(fp), tag=tag)
 
 
             # add to family

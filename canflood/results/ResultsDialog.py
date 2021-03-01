@@ -273,24 +273,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
         log.debug('connect_slots finished')
         
-    def _set_setup(self): #attach parameters from setup tab
-        
-        #secssion controls
-        self.tag = self.linEdit_ScenTag.text()
-        self.out_dir = self.lineEdit_wdir.text()
-        
-        assert not self.out_dir == ''
-        
-        if not os.path.exists(self.out_dir): os.makedirs(self.out_dir)
- 
-        #filepaths
-        self.cf_fp = self.lineEdit_cf_fp.text()
-        assert os.path.exists(self.cf_fp), 'passed invalid control file: %s'%self.cf_fp
- 
-        
-        #file behavior
-        self.overwrite=self.checkBox_SSoverwrite.isChecked()
-        self.absolute_fp = self.radioButton_SS_fpAbs.isChecked()
+
         
     def run_joinGeo(self):
         log = self.logger.getChild('run_joinGeo')
@@ -528,20 +511,10 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.feedback.upd_prog(None) #set the progress bar back down to zero
         log.push('pNoFail finished')
         
-
-    def run_compare(self):
-        log = self.logger.getChild('run_compare')
-        log.info('user pushed \'run_compare\'')
         
-        #=======================================================================
-        # collect inputs
-        #=======================================================================
-        #general
-        out_dir = self.lineEdit_wdir.text()
-        if not os.path.exists(out_dir): os.makedirs(out_dir)
-        
-        tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
-        main_cf_fp = self.lineEdit_cf_fp.text() #for general plot styles
+    def _set_fps(self, logger=None):
+        if logger is None: logger=self.logger
+        log=logger.getChild('_set_fps')
         
         #scenario filepaths
         raw_d = {
@@ -570,29 +543,37 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             if not rd['cf_fp']=='':
                 fps_d[k1] = rd['cf_fp']
             
-    
+        #=======================================================================
+        # check
+        #=======================================================================
+        
+        #=======================================================================
+        # wrap
+        #=======================================================================
         log.debug('pars w/ %i keys'%(len(fps_d)))
         
-        #=======================================================================
-        # precheck
-        #=======================================================================
-        assert os.path.exists(main_cf_fp), 'bad filepath for main control file'
-        for k, v in fps_d.items(): assert os.path.exists(v), 'bad fp on %s'%k
+        return fps_d
         
-        self.feedback.setProgress(10)
-        
-        #=======================================================================
-        # working dir
-        #=======================================================================
         
 
+    def run_compare(self):
+        log = self.logger.getChild('run_compare')
+        log.info('user pushed \'run_compare\'')
+        
+        #=======================================================================
+        # collect inputs
+        #=======================================================================
+
+        self._set_setup(set_cf_fp=True)
+        fps_d = self._set_fps()
+        
+        self.feedback.setProgress(10)
     
         #=======================================================================
         # init
         #=======================================================================
-        wrkr = results.compare.Cmpr(fps_d = fps_d,
-                    out_dir=out_dir, tag=tag, logger=self.logger,
-                    cf_fp = main_cf_fp)._setup()
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        wrkr = results.compare.Cmpr(fps_d = fps_d,**kwargs)._setup()
     
         #load
         #sWrkr_d = wrkr.load_scenarios(list(fp_d.values()))
@@ -602,7 +583,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         if self.checkBox_C_cf.isChecked():
             mdf = wrkr.cf_compare()
-            mdf.to_csv(os.path.join(out_dir, 'CFcompare_%s_%i.csv'%(tag, len(mdf.columns))))
+            mdf.to_csv(os.path.join(wrkr.out_dir, 'CFcompare_%s_%i.csv'%(wrkr.tag, len(mdf.columns))))
         
         self.feedback.setProgress(60)
         #=======================================================================

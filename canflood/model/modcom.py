@@ -578,9 +578,10 @@ class Model(ComWrkr,
                 if valRaw == '': continue #skip blanks
                 
                 if os.path.exists(valRaw):
-                    
-                    raise Error('%s.%s passed aboslute_fp=False but fp exists \n    %s'%(
-                        sectName, varName, valRaw))
+                    """switchged to warning... some tools may not use this fp"""
+                    log.warning(('%s.%s passed aboslute_fp=False but fp exists \n    %s'%(
+                        sectName, varName, valRaw)))
+                    continue
                 else:
                 
                     #get the absolute filepath
