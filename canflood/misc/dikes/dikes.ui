@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>710</width>
-    <height>699</height>
+    <width>700</width>
+    <height>700</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -45,17 +45,35 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>690</width>
-        <height>591</height>
+        <width>680</width>
+        <height>592</height>
        </rect>
+      </property>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
         <widget class="QTabWidget" name="tabWidget">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="currentIndex">
           <number>0</number>
          </property>
          <widget class="QWidget" name="tab_setup">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <attribute name="title">
            <string>Setup</string>
           </attribute>
@@ -237,6 +255,12 @@
                    </item>
                    <item>
                     <widget class="QCheckBox" name="checkBox_SSoverwrite">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
                      <property name="text">
                       <string>Overwrite files</string>
                      </property>
@@ -244,6 +268,19 @@
                       <bool>true</bool>
                      </property>
                     </widget>
+                   </item>
+                   <item>
+                    <spacer name="horizontalSpacer_6">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>40</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
                    </item>
                   </layout>
                  </item>
@@ -538,6 +575,12 @@
           </layout>
          </widget>
          <widget class="QWidget" name="tab_expo">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <attribute name="title">
            <string>Dike Exposure</string>
           </attribute>
@@ -770,7 +813,7 @@
                  </sizepolicy>
                 </property>
                 <property name="text">
-                 <string>Write Dike Profile Plots</string>
+                 <string>Profile Plots</string>
                 </property>
                 <property name="checked">
                  <bool>true</bool>
@@ -1297,6 +1340,12 @@
           </layout>
          </widget>
          <widget class="QWidget" name="tab">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <attribute name="title">
            <string>Dike Vulnerability</string>
           </attribute>
@@ -1859,6 +1908,12 @@
           </layout>
          </widget>
          <widget class="QWidget" name="tab_2">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <attribute name="title">
            <string>Join Areas</string>
           </attribute>
@@ -1954,7 +2009,7 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>609</width>
+                   <width>599</width>
                    <height>524</height>
                   </rect>
                  </property>
