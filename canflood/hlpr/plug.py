@@ -32,6 +32,7 @@ from PyQt5 import QtCore
 
 from hlpr.exceptions import QError as Error
 from hlpr.Q import MyFeedBackQ, Qcoms
+import hlpr.Q
 from hlpr.basic import force_open_dir
 from hlpr.plt_qt import PltWindow
 
@@ -53,6 +54,8 @@ class QprojPlug(Qcoms): #baseclass for plugins
     plt_window = False #control whether to launch the plot window
     
     
+    
+    
     """not a great way to init this one
     Plugin classes are only initilaizing the first baseclass
     def __init__(self):
@@ -69,7 +72,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
         #=======================================================================
         self.session=session #used for passing between windows
         
-
+        self.launch_actions = dict() #container of actions to execute when 'launch' is pressed
 
         
         #=======================================================================
@@ -117,7 +120,6 @@ class QprojPlug(Qcoms): #baseclass for plugins
         """allows children to customize what happens when called"""
         
         #try and set the control file path from the session if there
-
         if os.path.exists(self.session.cf_fp):
             #set the control file path
             self.lineEdit_cf_fp.setText(self.session.cf_fp)
@@ -132,35 +134,109 @@ class QprojPlug(Qcoms): #baseclass for plugins
             newdir = os.path.join(os.getcwd(), 'CanFlood')
             if not os.path.exists(newdir): os.makedirs(newdir)
             self.lineEdit_wdir.setText(newdir)
+            
+            
+        #inventory vector layer
+        if isinstance(self.session.finv_vlay, QgsVectorLayer):
+            if hasattr(self, 'comboBox_JGfinv'): #should just skip the Build
+                self.comboBox_JGfinv.setLayer(self.session.finv_vlay)
+                
+                
+        #customs
+        """
+        lets each dialog attach custom functions when they are launched
+            useful for automatically setting some dialog boxes
+            
+        could consider adding all of the above to this....
+        """
+        for fName, f in self.launch_actions.items():
+            self.logger.info('atempting %s'%fName)
+            try:
+                f()
+            except Exception as e:
+                self.logger.warning('failed to execute \'%s\' w/ \n    %s'%(fName, e))
         
         self.show()
         
 
-    def get_cf_fp(self):
-        cf_fp = self.lineEdit_cf_fp.text()
+
+    
+    def _load_toCanvas(self,  #helper to load a layers to canvas w/ some reporting
+                       layers, 
+                       
+                       groupName=None, #optional group name to load to
+                       style_fn = None, #optional qml styule file name to apply
+                       logger=None, 
+                       ):
         
-        if cf_fp is None or cf_fp == '':
-            raise Error('need to specficy a control file path')
-        if not os.path.exists(cf_fp):
-            raise Error('need to specficy a valid control file path')
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        """forcing layers into a group"""
+        if logger is None: logger=self.logger
+        log=logger.getChild('load_toCanvas')
+        if groupName is None: groupName = self.groupName
+        if style_fn == '': style_fn=None
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        if not self.loadRes: log.warning('load results to canvas control mismatch!')
         
-        if not os.path.splitext(cf_fp)[1] == '.txt':
-            raise Error('unexpected extension on Control File')
+        #=======================================================================
+        # groups
+        #=======================================================================
+        if not groupName is None:
+            group = self.layerTree.findGroup(groupName) #search
+            if group is None: #nothign found.. add the group
+                group = self.layerTree.addGroup(groupName)
+                log.debug('group not found.. added \'%s\''%groupName)
+        else:
+            group = None
+            
+        def add_layer(lay):
+            
+            if not group is None:
+                group.addLayer(lay)
+                self.qproj.addMapLayer(lay, False) #add tot he project, but hide
+            else:
+                self.qproj.addMapLayer(lay, True) #just add to teh selected group
+                
         
-        return cf_fp
+        #=======================================================================
+        # #load
+        #=======================================================================
+        if isinstance(layers, list):
+            for layer in layers:
+                add_layer(layer)
+
+            #report
+            layNames = [lay.name() for lay in layers]
+            log.info('loaded %i layers: %s'%(len(layNames), layNames))
+            
+        elif isinstance(layers, QgsMapLayer):
+            add_layer(layers)
+            log.info('laoded \'%s\' to project'%layers.name())
+            layers = [layers] #throw it into a list for below
+            
+        else:
+            raise Error('unrecognized layer container type: %s'%type(layers))
+            
+        #=======================================================================
+        # stylieze
+        #=======================================================================
+        if not style_fn is None:
+
+            style_fp = os.path.join(self.pars_dir, 'qmls', style_fn)
+            assert os.path.exists(style_fp)
+            for layer in layers:
+                layer.loadNamedStyle(style_fp)
+                layer.triggerRepaint()
+            
+        return
+    
     
     #===========================================================================
-    # def get_wd(self):
-    #     wd = self.lineEdit_wd.text()
-    #     
-    #     if wd is None or wd == '':
-    #         raise Error('need to specficy a Working Directory')
-    #     if not os.path.exists(wd):
-    #         os.makedirs(wd)
-    #         self.logger.info('built new working directory at:\n    %s'%wd)
-    #     
-    #     
-    #     return wd
+    # widget setup----------
     #===========================================================================
     
     def browse_button(self, #browse to a directory
@@ -269,13 +345,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
         return 
     
 
-    def set_overwrite(self): #action for checkBox_SSoverwrite state change
-        if self.checkBox_SSoverwrite.isChecked():
-            self.overwrite= True
-        else:
-            self.overwrite= False
-            
-        self.logger.push('overwrite set to %s'%self.overwrite)
+
         
 
                 
@@ -329,79 +399,25 @@ class QprojPlug(Qcoms): #baseclass for plugins
             
             if not os.path.exists(default_wdir): os.makedirs(default_wdir)
             
-    def _load_toCanvas(self,  #helper to load a layers to canvas w/ some reporting
-                       layers, 
-                       
-                       groupName=None, #optional group name to load to
-                       style_fn = None, #optional qml styule file name to apply
-                       logger=None, 
-                       ):
+    #===========================================================================
+    # run function helpers------
+    #===========================================================================
+    def get_cf_fp(self):
+        """"
+        TODO: migrate all of these to _set_setup
+        """
+        cf_fp = self.lineEdit_cf_fp.text()
         
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        """forcing layers into a group"""
-        if logger is None: logger=self.logger
-        log=logger.getChild('load_toCanvas')
-        if groupName is None: groupName = self.groupName
-        if style_fn == '': style_fn=None
-        #=======================================================================
-        # precheck
-        #=======================================================================
-        if not self.loadRes: log.warning('load results to canvas control mismatch!')
+        if cf_fp is None or cf_fp == '':
+            raise Error('need to specficy a control file path')
+        if not os.path.exists(cf_fp):
+            raise Error('need to specficy a valid control file path')
         
-        #=======================================================================
-        # groups
-        #=======================================================================
-        if not groupName is None:
-            group = self.layerTree.findGroup(groupName) #search
-            if group is None: #nothign found.. add the group
-                group = self.layerTree.addGroup(groupName)
-                log.debug('group not found.. added \'%s\''%groupName)
-        else:
-            group = None
-            
-        def add_layer(lay):
-            
-            if not group is None:
-                group.addLayer(lay)
-                self.qproj.addMapLayer(lay, False) #add tot he project, but hide
-            else:
-                self.qproj.addMapLayer(lay, True) #just add to teh selected group
-                
+        if not os.path.splitext(cf_fp)[1] == '.txt':
+            raise Error('unexpected extension on Control File')
         
-        #=======================================================================
-        # #load
-        #=======================================================================
-        if isinstance(layers, list):
-            for layer in layers:
-                add_layer(layer)
+        return cf_fp
 
-            #report
-            layNames = [lay.name() for lay in layers]
-            log.info('loaded %i layers: %s'%(len(layNames), layNames))
-            
-        elif isinstance(layers, QgsMapLayer):
-            add_layer(layers)
-            log.info('laoded \'%s\' to project'%layers.name())
-            layers = [layers] #throw it into a list for below
-            
-        else:
-            raise Error('unrecognized layer container type: %s'%type(layers))
-            
-        #=======================================================================
-        # stylieze
-        #=======================================================================
-        if not style_fn is None:
-
-            style_fp = os.path.join(self.pars_dir, 'qmls', style_fn)
-            assert os.path.exists(style_fp)
-            for layer in layers:
-                layer.loadNamedStyle(style_fp)
-                layer.triggerRepaint()
-            
-        return
-    
     def get_cf_par(self, #load a parameter value from a controlFile path
                       cf_fp, #control file path
                       sectName='results_fps',
@@ -453,7 +469,6 @@ class QprojPlug(Qcoms): #baseclass for plugins
         
         if set_cf_fp:
 
-                    
             #pull from the line
             self.cf_fp = self.lineEdit_cf_fp.text()
             assert os.path.exists(self.cf_fp), 'got invalid controlFile path: %s'%self.cf_fp
@@ -462,15 +477,66 @@ class QprojPlug(Qcoms): #baseclass for plugins
 
         
         #file behavior
-
         self.overwrite=self.checkBox_SSoverwrite.isChecked()
         self.absolute_fp = self.radioButton_SS_fpAbs.isChecked()
         
         #layer loading
         self.groupName = 'CanFlood.%s'%self.tag
-        
         self.inherit_fieldNames = inherit_fieldNames
         
+        #plot window
+        if hasattr(self, 'radioButton_s_pltW'):
+            self.plt_window = self.radioButton_s_pltW.isChecked()
+            
+    def _check_finv(self, logger=None): #check the finv and some paramter logic
+        """
+        see also Model.check_finv() for data level checks
+        """
+        if logger is None: logger=self.logger
+        log=logger.getChild('_check_finv')
+        #=======================================================================
+        # selection checks
+        #=======================================================================
+        assert not self.cid is None, 'must specify a valid cid'
+        assert isinstance(self.finv_vlay, QgsVectorLayer), 'must select a VectorLayer for the finv'
+        
+        
+        #=======================================================================
+        # data checks
+        #=======================================================================
+        #CRS
+        assert self.finv_vlay.crs()==self.qproj.crs(), 'finv CRS (%s) does not match projects (%s)'%(
+            self.finv_vlay.crs(), self.qproj.crs())
+                
+        
+                
+        #cid in the fields
+        fields_d = {f.name():f for f in self.finv_vlay.fields()}
+        assert self.cid in fields_d, 'specified cid not found on finv'
+        
+        #field type
+        assert 'int' in fields_d[self.cid].typeName().lower(), \
+        'cid field \'%s\' must be integer type not \'%s\''%(
+            self.cid, fields_d[self.cid].typeName())
+                
+        #unique values
+        cid_ser = hlpr.Q.vlay_get_fdata(self.finv_vlay, fieldn=self.cid, fmt='df', logger=log)
+        boolidx = cid_ser.duplicated(keep=False)
+        if boolidx.any():
+            log.debug('duplicated values \n%s'%cid_ser[boolidx])
+            
+            raise Error('passed finv cid=\'%s\' values contain %i duplicates... see logger'%(
+                self.cid, boolidx.sum()))
+        
+
+
+            
+        
+            
+        
+    #===========================================================================
+    # OUTPUTS------------
+    #===========================================================================
     def output_fig(self, fig,
                    
                    plt_window=None, #whether to launch the matplotlib  window
@@ -530,8 +596,6 @@ class QprojPlug(Qcoms): #baseclass for plugins
         # launch window
         #=======================================================================
         else:
-
-            
             
             app = PltWindow(fig, out_dir=out_dir)
             app.show()
@@ -794,11 +858,10 @@ def bind_MapLayerComboBox(widget, #add some bindings to layer combo boxes
     # define new methods
     #===========================================================================
     def attempt_selection(self, layName):
-        qproj = QgsProject.instance()
-        layers = qproj.mapLayersByName(layName)
+        layer = get_layerbyName(layName)
         
-        if len(layers)>0:
-            self.setLayer(layers[0])
+        if not layer is None:
+            self.setLayer(layer)
             
     #===========================================================================
     # bind functions
@@ -965,7 +1028,31 @@ def bind_fieldSelector( #setup a groupbox collection for field selection
 #==============================================================================
 # functions-----------
 #==============================================================================
-
+def get_layerbyName(layName, #flexible search for layers by name
+                    qproj = None,
+                    ):
+    """
+    couldnt find native support for partial name matching
+    """
+    if qproj is None: qproj = QgsProject.instance()
+    
+    names = [layer.name() for layer in qproj.mapLayers().values()]
+    
+    #find the matching name
+    match = None
+    for name in names:
+        if layName.lower() in name.lower().strip():
+            match = name
+            break
+        
+    #get this layer
+    if not match is None:
+        layer = qproj.mapLayersByName(match)[0]
+        
+    else:
+        layer=None
+        
+    return layer
         
          
 def qtbl_get_df( #extract data to a frame from a qtable

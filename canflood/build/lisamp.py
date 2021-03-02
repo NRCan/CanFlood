@@ -514,8 +514,10 @@ class LikeSampler(Plotr, Qcoms):
         return res_vlay
     
     def check(self,
-              res_df, #data to check
+              res_df=None, #data to check
               aep_ser=None):
+        
+        if res_df is None: res_df = self.res_df.copy()
         
         #=======================================================================
         # check evals

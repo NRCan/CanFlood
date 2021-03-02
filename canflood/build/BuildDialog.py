@@ -147,11 +147,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
         
         #AOI
-        self.comboBox_aoi.setFilters(QgsMapLayerProxyModel.PolygonLayer) #SS. Project AOI
-        self.comboBox_aoi.setCurrentIndex(-1) #by default, lets have this be blank
-        
-        #Controls
-        self.checkBox_SSoverwrite.stateChanged.connect(self.set_overwrite) #SS overwrite data files
+        hlpr.plug.bind_MapLayerComboBox(self.comboBox_aoi, 
+                                        iface=self.iface, layerType=QgsMapLayerProxyModel.PolygonLayer)
 
         
         #CanFlood Control 
@@ -210,37 +207,26 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # Store IVlayer
         #=======================================================================
         #inventory vector layer box
-        self.comboBox_ivlay.setFilters(QgsMapLayerProxyModel.VectorLayer) #SS. Inventory Layer: Drop down
+        hlpr.plug.bind_MapLayerComboBox(self.comboBox_ivlay, 
+                      layerType=QgsMapLayerProxyModel.VectorLayer, iface=self.iface)
         
-
-
-        #find a good layer
-        """TODO: 
-        migrate to bind_MapLayerComboBox()
-        """
-        if len(vlays_d)>0:
-            try:
-                for layname, vlay in vlays_d.items():
-                    if layname.startswith('finv'):
-                        break
-                
-                self.logger.debug('setting comboBox_vec = %s'%vlay.name())
-                self.comboBox_ivlay.setLayer(vlay)
-            except Exception as e:
-                self.logger.debug('failed to set inventory layer w: \n    %s'%e)
-            
+        #attempt to select the layer during launch
+        self.launch_actions['attempt finv'] = lambda: self.comboBox_ivlay.attempt_selection('finv')
+        
+        #set it on the session for the other dialogs
+        self.comboBox_ivlay.layerChanged.connect( 
+            lambda: setattr(self.session, 'finv_vlay', self.comboBox_ivlay.currentLayer()))
+        
 
         #index field name
-        #change the 'cid' display when the finv selection changes
-        def upd_cid():
-            return self.mfcb_connect(
-                self.mFieldComboBox_cid, self.comboBox_ivlay.currentLayer(),
-                fn_str = 'xid' )
+        self.comboBox_ivlay.layerChanged.connect(
+            lambda : self.mfcb_connect(self.mFieldComboBox_cid, 
+                           self.comboBox_ivlay.currentLayer(), fn_str='xid'))
                 
-        self.comboBox_ivlay.layerChanged.connect(upd_cid) #SS inventory vector layer
+
         
         #connect button
-        self.pushButton_Inv_store.clicked.connect(self.convert_finv)
+        self.pushButton_Inv_store.clicked.connect(self.store_finv)
         
         
         #=======================================================================
@@ -265,7 +251,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # raster layer selection box
         #=======================================================================
         # Set GUI elements
-        self.comboBox_ras.setFilters(QgsMapLayerProxyModel.RasterLayer)
+        #self.comboBox_ras.setFilters(QgsMapLayerProxyModel.RasterLayer)
         """
         todo: swap this out with better selection widget
         """
@@ -274,14 +260,18 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.pushButton_HS_clear.clicked.connect(self._HS_clearBox)
         self.pushButton_add_all.clicked.connect(self._HS_addAll)
         
-        self.comboBox_ras.currentTextChanged.connect(self._HS_comboAdd)
+        #self.comboBox_ras.currentTextChanged.connect(self._HS_comboAdd)
         
         #=======================================================================
         # inundation
         #=======================================================================
-        self.comboBox_HS_DTM.setFilters(QgsMapLayerProxyModel.RasterLayer)
-        self.comboBox_HS_DTM.setAllowEmptyLayer(True)
-        self.comboBox_HS_DTM.setCurrentIndex(-1) #set selection to none
+        
+        hlpr.plug.bind_MapLayerComboBox(self.comboBox_HS_DTM, 
+                      layerType=QgsMapLayerProxyModel.RasterLayer, iface=self.iface)
+        
+        #attempt to select the layer during launch
+        self.launch_actions['attempt dtm2'] = lambda: self.comboBox_HS_DTM.attempt_selection('dtm')
+        
         #=======================================================================
         # #complex
         #=======================================================================
@@ -399,8 +389,14 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.pushButton_CP_clear.clicked.connect(self._CP_clear)
         #======================================================================
         # DTM sampler---------
-        #======================================================================
-        self.comboBox_dtm.setFilters(QgsMapLayerProxyModel.RasterLayer)
+        #======================================================================       
+        hlpr.plug.bind_MapLayerComboBox(self.comboBox_dtm, 
+                      layerType=QgsMapLayerProxyModel.RasterLayer, iface=self.iface)
+        
+        #attempt to select the layer during launch
+        self.launch_actions['attempt dtm'] = lambda: self.comboBox_dtm.attempt_selection('dtm')
+        
+        
         self.pushButton_DTMsamp.clicked.connect(self.run_dsamp)
         
         #======================================================================
@@ -419,13 +415,15 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     #===========================================================================
     # common methods----------
     #===========================================================================
-    def set_setup(self, set_cf_fp=True,): #attach parameters from setup tab
-        
-
+    def set_setup(self, #attach parameters from setup tab
+                  set_cf_fp=True, set_finv=True,
+                  logger=None,): 
+        if logger is None: logger=self.logger
+        log = logger.getChild('set_setup')
         #=======================================================================
         # #call the common
         #=======================================================================
-        self._set_setu(set_cf_fp=set_cf_fp)
+        self._set_setup(set_cf_fp=set_cf_fp)
         
         #=======================================================================
         # custom setups
@@ -435,11 +433,82 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         #file behavior
         self.loadRes = self.checkBox_loadres.isChecked()
+        
+        #=======================================================================
+        # #inventory vector layer---------
+        #=======================================================================
+        if set_finv:
+            
+            #===================================================================
+            # get using sleection logic
+            #===================================================================
+            vlay_raw = self.comboBox_ivlay.currentLayer()
+            assert not vlay_raw is None, 'must select a finv vlay'
+            
+            aoi_vlay = self.comboBox_aoi.currentLayer()
+            
 
+            #selected finv features
+            if self.checkBox_sels.isChecked():
+                assert aoi_vlay is None, 'specify \'Selected features only\' or an AOI layer'
+                vlay = self.saveselectedfeatures(vlay_raw, logger=log)
+                vlay.setName('%s_sels'%vlay_raw.name())
+                self._set_finv(vlay)  
+
+            #aoi slice
+            elif not aoi_vlay is  None:
+                self.check_aoi(aoi_vlay)
+            
+                vlay =  self.selectbylocation(vlay_raw, aoi_vlay, 
+                                        result_type='layer', logger=log)
+                
+                vlay.setName('%s_aoi'%vlay_raw.name())
+                self._set_finv(vlay)  
+                
+                
+            #use the raw
+            else:
+                self.finv_vlay = vlay_raw
+            
+            vlay_raw.removeSelection()
+            self.session.finv_vlay = self.finv_vlay #set for the next dialog
+            #===================================================================
+            # cid
+            #===================================================================
+            self.cid = self.mFieldComboBox_cid.currentField() #user selected fied
+            
+            #===================================================================
+            # checks
+            #===================================================================
+            self._check_finv()
+            
+    def _set_finv(self, vlay): #helper for finv slicing
+        
+        #cleaqr selection handles
+        self.comboBox_aoi.setCurrentIndex(-1)
+        self.checkBox_sels.setChecked(False) #uncheck
+        
+        
+        #name check
+        if len(vlay.name()) > 50:
+            vlay.setName(vlay.name()[0:50])
+            
+        #load it
+        self._load_toCanvas(vlay)
+            
+        #set as teh new layer
+        self.comboBox_ivlay.setLayer(vlay)
+        self.finv_vlay = vlay
+        
 
         
-    def slice_aoi(self, vlay):
         
+
+        
+    def slice_aoi(self, vlay): #apply the aoi slice
+        """
+        todo: migrate off this
+        """
         aoi_vlay = self.comboBox_aoi.currentLayer()
         log = self.logger.getChild('slice_aoi')
         
@@ -498,7 +567,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     #===========================================================================
     # Run Actions------
     #===========================================================================
-
 
     def build_scenario(self): #'Generate' on the setup tab
         """
@@ -606,54 +674,22 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.feedback.upd_prog(95)
         self.feedback.upd_prog(None)
         
-    def convert_finv(self): #aoi slice and convert the finv vector to csv file
-        
-        log = self.logger.getChild('convert_finv')
-        self.feedback.upd_prog(5)
-        
-        
+    def store_finv(self): #aoi slice and convert the finv vector to csv file
+        log = self.logger.getChild('store_finv')
+
         #=======================================================================
         # retrieve data
         #=======================================================================
-        cid = self.mFieldComboBox_cid.currentField() #user selected field
-        vlay_raw = self.comboBox_ivlay.currentLayer()
-        cf_fp = self.get_cf_fp()
-        tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
-        wdir =  self.lineEdit_wdir.text() #pull the wd filepath from the user provided in 'Browse'
-        
-        #======================================================================
-        # prechecks
-        #======================================================================
-        assert isinstance(vlay_raw, QgsVectorLayer), 'must select a VectorLayer'
-        
-        assert vlay_raw.crs()==self.qproj.crs(), 'finv CRS (%s) does not match projects (%s)'%(vlay_raw.crs(), self.qproj.crs())
-        
- 
-        
-        #=======================================================================
-        # aoi slice
-        #=======================================================================
-        vlay = self.slice_aoi(vlay_raw)
-        
-        #name check
-        if len(vlay.name()) > 50:
-            vlay.setName(vlay.name()[0:50])
-        
-        
-        if self.checkBox_loadres.isChecked():
-            self.qproj.addMapLayer(vlay)
-            self.logger.info('added \'%s\' to canvas'%vlay.name())
-            self.comboBox_ivlay.setLayer(vlay) #set this as the new finv
-        
-        self.feedback.upd_prog(30)
+        self.set_setup()
+        self.feedback.upd_prog(10)
         
         #=======================================================================
         # extract, download, and update cf
         #=======================================================================
-        wrkr = Preparor(logger=self.logger,  out_dir=wdir, tag=tag, feedback=self.feedback,
-                        cid=cid, cf_fp=cf_fp, overwrite=self.overwrite) 
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        wrkr = Preparor(**kwargs) 
         
-        out_fp = wrkr.finv_to_csv( vlay, felv=self.comboBox_SSelv.currentText(),
+        out_fp = wrkr.finv_to_csv(self.finv_vlay, felv=self.comboBox_SSelv.currentText(),
                                    logger=self.logger)
 
         #try the curves
@@ -676,14 +712,11 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # wrap
         #=======================================================================
-        log.push('inventory vector layer stored "\'%s\''%vlay.name())
+        log.push('inventory vector layer stored "\'%s\''%self.finv_vlay.name())
         self.feedback.upd_prog(None) #set the progress bar back down to zero
         
         return 
     
-    
-   
-
     def construct_finv(self): #add some fields to a finv like vectoralyer
 
         log = self.logger.getChild('construct_finv')
@@ -991,11 +1024,11 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         if self.checkBox_ras_pBox.isChecked():
             fig = wrkr.plot_boxes()
-            wrkr.output_fig(fig)
+            self.output_fig(fig)
             
         if self.checkBox_ras_pHist.isChecked():
             fig = wrkr.plot_hist()
-            wrkr.output_fig(fig)
+            self.output_fig(fig)
         
         #======================================================================
         # post---------
@@ -1166,18 +1199,21 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
     def run_lisamp(self): #sample dtm raster
         
-        self.logger.info('user pressed \'pushButton_DTMsamp\'')
+        self.logger.info('user pressed \'run_lisamp\'')
         
         
         #=======================================================================
         # assemble/prepare inputs
         #=======================================================================
-        tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
+        self._set_setup()
+        #tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
         finv_raw = self.comboBox_ivlay.currentLayer()
 
-        cf_fp = self.get_cf_fp()
-        out_dir = self.lineEdit_wdir.text()
-        cid = self.mFieldComboBox_cid.currentField() #user selected field
+        #=======================================================================
+        # cf_fp = self.get_cf_fp()
+        # out_dir = self.lineEdit_wdir.text()
+        # cid = self.mFieldComboBox_cid.currentField() #user selected field
+        #=======================================================================
         
         lfield = self.mFieldComboBox_LSfn.currentField()
         
@@ -1219,11 +1255,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         if not isinstance(finv, QgsVectorLayer):
             raise Error('did not get a vector layer for finv')
                     
-        if not os.path.exists(out_dir):
-            raise Error('working directory does not exist:  %s'%out_dir)
-        
-        if cid is None or cid=='':
-            raise Error('need to select a cid')
+ 
         
         if lfield is None or lfield=='':
             raise Error('must select a valid lfield')
@@ -1326,6 +1358,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             event_rels='indep'
         else:
             raise Error('event_rels radio logic fail')
+        
+        self.feedback.upd_prog(10)
         #======================================================================
         # collcet table data
         #======================================================================
@@ -1343,13 +1377,13 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         if len(miss_l)>0:
             raise Error('event name mismatch')
         
-        
+        self.feedback.upd_prog(50)
         #======================================================================
         # clean it
         #======================================================================
         aep_df = df.set_index(ecoln, drop=True).T
         
-
+        self.feedback.upd_prog(70)
         
         #======================================================================
         # #write to file
@@ -1365,7 +1399,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                                   overwrite=self.overwrite, write_index=False)
         
         
-        
+        self.feedback.upd_prog(90)
         #======================================================================
         # update the control file
         #======================================================================
@@ -1384,6 +1418,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
             
         self.logger.push('generated \'aeps\' and set \'event_probs\' to control file')
+        self.feedback.upd_prog(None)
         
     def run_validate(self):
         """only validating the text in the control file for now (not the data objects)
@@ -1475,13 +1510,15 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     #==========================================================================
     # HazardSampler Raster Box---------------
     #==========================================================================
-    def _HS_comboAdd(self):
-        x = [str(self.listWidget_ras.item(i).text()) for i in range(self.listWidget_ras.count())]
-        self.ras_dict.update({ (self.comboBox_ras.currentText()) : (self.comboBox_ras.currentLayer()) })
-        if (self.comboBox_ras.currentText()) not in x:
-            self.listWidget_ras.addItem(self.comboBox_ras.currentText())
-            self.ras_dict.update({ (self.comboBox_ras.currentText()) : (self.comboBox_ras.currentLayer()) })
-        
+    #===========================================================================
+    # def _HS_comboAdd(self):
+    #     x = [str(self.listWidget_ras.item(i).text()) for i in range(self.listWidget_ras.count())]
+    #     self.ras_dict.update({ (self.comboBox_ras.currentText()) : (self.comboBox_ras.currentLayer()) })
+    #     if (self.comboBox_ras.currentText()) not in x:
+    #         self.listWidget_ras.addItem(self.comboBox_ras.currentText())
+    #         self.ras_dict.update({ (self.comboBox_ras.currentText()) : (self.comboBox_ras.currentLayer()) })
+    #     
+    #===========================================================================
     def _HS_clearBox(self):
         if len(self.ras_dict) > 0:
             self.listWidget_ras.clear()

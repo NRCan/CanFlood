@@ -33,7 +33,7 @@ class PltWindow(QtWidgets.QMainWindow):
         matplotlib.rcParams['savefig.directory'] = out_dir
         
         #styleize window
-        self.setWindowTitle('CanFlood %s'%(figure._suptitle.get_text()[:10]))
+        self.setWindowTitle('CanFlood %s'%(figure._suptitle.get_text()[:15]))
         
         #=======================================================================
         # setup window

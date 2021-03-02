@@ -118,6 +118,7 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
         # #precheck
         #=======================================================================
         assert isinstance(fp, str)
+        assert not fp=='', 'no \'r_ttl\' path provided'
         assert os.path.exists(fp), 'bad \'r_ttl\' fp: %s'%fp
         
         #=======================================================================

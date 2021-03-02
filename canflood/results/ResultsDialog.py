@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-
-
+results toolbox dialog
 """
 
 import os, copy
@@ -111,10 +110,6 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         hlpr.plug.bind_MapLayerComboBox(self.comboBox_JGfinv, 
                       layerType=QgsMapLayerProxyModel.VectorLayer, iface=self.iface)
                 
-        self.comboBox_JGfinv.attempt_selection('finv')
-        
-        #hlpr.plug.bind_fieldSelector(self.groupBox_jg_field2copy, self.comboBox_JGfinv, self.logger)
-        
         #=======================================================================
         # results data
         #=======================================================================
@@ -364,12 +359,12 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         if self.checkBox_RP_aep.isChecked():
             fig = wrkr.plot_riskCurve(y1lab='AEP')
-            self.output_fig(fig, plt_window=True)
+            self.output_fig(fig)
             self.feedback.upd_prog(30, method='append')
             
         if self.checkBox_RP_ari.isChecked():
             fig = wrkr.plot_riskCurve(y1lab='impacts')
-            self.output_fig(fig, plt_window=True)
+            self.output_fig(fig)
             self.feedback.upd_prog(30, method='append')
         
         #=======================================================================
@@ -389,29 +384,14 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # collect inputs
         #=======================================================================
-        #general
-        out_dir = self.lineEdit_wdir.text()
-        tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
-        cf_fp = self.lineEdit_cf_fp.text()
+        self._set_setup(set_cf_fp=True)
+        self.feedback.setProgress(5)
         
-        
-        #=======================================================================
-        # checks
-        #=======================================================================
-        assert isinstance(tag, str)
-        assert os.path.exists(cf_fp), 'invalid cf_fp: %s'%cf_fp
-        assert os.path.exists(out_dir), 'working directory does not exist'
-            
         #=======================================================================
         # setup and load
         #=======================================================================
-        self.feedback.setProgress(5)
-        #setup
-        wrkr = results.attribution.Attr(cf_fp=cf_fp, 
-                                      logger=self.logger, 
-                                     tag = tag,
-                                     feedback=self.feedback,
-                                     out_dir=out_dir)._setup()
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        wrkr = results.attribution.Attr(**kwargs)._setup()
         
         
         
@@ -425,12 +405,12 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         if self.checkBox_RP_aep.isChecked():
             fig = wrkr.plot_stackdRCurves(stack_dxind, sEAD_ser, y1lab='AEP')
-            wrkr.output_fig(fig)
+            self.output_fig(fig)
             self.feedback.upd_prog(30, method='append')
             
         if self.checkBox_RP_ari.isChecked():
             fig = wrkr.plot_stackdRCurves(stack_dxind, sEAD_ser, y1lab='impacts')
-            wrkr.output_fig(fig)
+            self.output_fig(fig)
             self.feedback.upd_prog(30, method='append')
         
         #=======================================================================
@@ -449,48 +429,29 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # collect inputs
         #=======================================================================
-        #general
-        out_dir = self.lineEdit_wdir.text()
-        tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
-        cf_fp = self.lineEdit_cf_fp.text()
+        self._set_setup(set_cf_fp=True)
+        self.feedback.setProgress(5)
         
-        
-        #=======================================================================
-        # checks
-        #=======================================================================
-        assert isinstance(tag, str)
-        assert os.path.exists(cf_fp), 'invalid cf_fp: %s'%cf_fp
-        assert os.path.exists(out_dir), 'working directory does not exist'
-            
         #=======================================================================
         # setup and load
         #=======================================================================
-        self.feedback.setProgress(5)
-        #setup
-        wrkr = results.attribution.Attr(cf_fp=cf_fp, 
-                                      logger=self.logger, 
-                                     tag = tag,
-                                     feedback=self.feedback,
-                                     out_dir=out_dir)._setup()
-        
-        
-        
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        wrkr = results.attribution.Attr(**kwargs)._setup()
         self.feedback.setProgress(10)
         
         si_ttl = wrkr.get_slice_noFail()
-        
         self.feedback.setProgress(20)
         #=======================================================================
         # #execute
         #=======================================================================
         if self.checkBox_RP_aep.isChecked():
             fig = wrkr.plot_slice(si_ttl, y1lab='AEP')
-            wrkr.output_fig(fig)
+            self.output_fig(fig)
             self.feedback.upd_prog(30, method='append')
             
         if self.checkBox_RP_ari.isChecked():
             fig = wrkr.plot_slice(si_ttl, y1lab='impacts')
-            wrkr.output_fig(fig)
+            self.output_fig(fig)
             self.feedback.upd_prog(30, method='append')
         
         #=======================================================================
@@ -581,10 +542,10 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             
         if self.checkBox_C_ari.isChecked():
             fig = wrkr.riskCurves(y1lab='impacts')
-            wrkr.output_fig(fig)
+            self.output_fig(fig)
         if self.checkBox_C_aep.isChecked():
             fig = wrkr.riskCurves(y1lab='AEP')
-            wrkr.output_fig(fig)
+            self.output_fig(fig)
                 
             
         
@@ -631,10 +592,10 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             
         if self.checkBox_C_ari.isChecked():
             fig = wrkr.plot_rCurveStk_comb(y1lab='impacts')
-            wrkr.output_fig(fig)
+            self.output_fig(fig)
         if self.checkBox_C_aep.isChecked():
             fig = wrkr.plot_rCurveStk_comb(y1lab='AEP')
-            wrkr.output_fig(fig)
+            self.output_fig(fig)
                 
         self.feedback.setProgress(80)
         #=======================================================================
@@ -722,11 +683,9 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         fig = wrkr.plot_cba()
         self.feedback.setProgress(80)
-        wrkr.output_fig(fig)
+        self.output_fig(fig)
         self.feedback.setProgress(95)
         
-
- 
         #=======================================================================
         # wrap
         #=======================================================================

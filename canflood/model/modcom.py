@@ -2390,7 +2390,10 @@ class Model(ComWrkr,
                    cid=None,
                    logger=None,
                    ):
+        """
+        see also QProjPlug._check_finv() for dialog level checks
         
+        """
         #=======================================================================
         # defaults
         #=======================================================================

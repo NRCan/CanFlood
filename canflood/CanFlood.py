@@ -48,6 +48,7 @@ class CanFlood:
     act_toolbar_l = []
     
     cf_fp = '' #control file pathf or passing between dialogs
+    finv_vlay = None #finv layer for passing
 
     def __init__(self, iface):
         """Constructor.

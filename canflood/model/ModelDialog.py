@@ -158,18 +158,12 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         """
         risk T1 runner
         """
-        self._set_setup()
+        
         #=======================================================================
         # variables
         #=======================================================================
         log = self.logger.getChild('run_risk1')
-        #=======================================================================
-        # cf_fp = self.get_cf_fp()
-        # out_dir = self.get_wd()
-        # tag = self.linEdit_Stag.text()
-        #=======================================================================
-
-        #absolute_fp = self._get_absolute_fp()
+        self._set_setup()
 
         #=======================================================================
         # setup/execute
@@ -358,7 +352,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
             
             #plot it
             fig = model.plot_riskCurve(ttl_df, y1lab=y1lab)
-            _ = model.output_fig(fig)
+            self.output_fig(fig)
 
     def run_risk3(self):
         
