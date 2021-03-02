@@ -93,6 +93,9 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.lineEdit_cf_fp.textChanged.connect(
             lambda:self.label_jg_cfPath.setText(self.lineEdit_cf_fp.text()))
         
+        self.lineEdit_cf_fp.textChanged.connect(
+            lambda:self.label_cba_cfPath.setText(self.lineEdit_cf_fp.text()))
+        
 
         #=======================================================================
         # Risk PLot-------------
@@ -250,8 +253,21 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # CBA-----------
         #=======================================================================
-        
+        #template copy
         self.pushButton_cba_copy.clicked.connect(self.run_cba_copy)
+        
+        #data file browse
+        self.pushButton_cba_browse.clicked.connect(
+                lambda: self.fileSelect_button(self.lineEdit_cba_cf, 
+                                          caption='Select CBA Calculation Spreadsheet',
+                                          path = self.lineEdit_cba_cf.text(),
+                                          filters="Excel Workbook (*.xlsx)")
+                )
+        
+        #data file open
+        self.pushButton_cba_open.clicked.connect(lambda: os.startfile(self.lineEdit_cba_cf.text()))
+        
+        self.pushButton_cba_plot.clicked.connect(self.run_cba_plot)
         
         #=======================================================================
         # wrap--------
@@ -330,30 +346,16 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # collect inputs
         #=======================================================================
+        self._set_setup(set_cf_fp=True)
 
-        #general
-        out_dir = self.lineEdit_wdir.text()
-        tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
-        cf_fp = self.lineEdit_cf_fp.text()
-        
-        
-        #=======================================================================
-        # checks
-        #=======================================================================
-        assert isinstance(tag, str)
-        assert os.path.exists(cf_fp), 'invalid cf_fp: %s'%cf_fp
-        assert os.path.exists(out_dir), 'working directory does not exist'
             
         #=======================================================================
         # setup and load
         #=======================================================================
         self.feedback.setProgress(5)
         #setup
-        wrkr = results.riskPlot.RiskPlotr(cf_fp=cf_fp, 
-                                      logger=self.logger, 
-                                     tag = tag,
-                                     feedback=self.feedback,
-                                     out_dir=out_dir)._setup()
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        wrkr = results.riskPlot.RiskPlotr(**kwargs)._setup()
         
         self.feedback.setProgress(10)
 
@@ -362,12 +364,12 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         if self.checkBox_RP_aep.isChecked():
             fig = wrkr.plot_riskCurve(y1lab='AEP')
-            wrkr.output_fig(fig)
+            self.output_fig(fig, plt_window=True)
             self.feedback.upd_prog(30, method='append')
             
         if self.checkBox_RP_ari.isChecked():
             fig = wrkr.plot_riskCurve(y1lab='impacts')
-            wrkr.output_fig(fig)
+            self.output_fig(fig, plt_window=True)
             self.feedback.upd_prog(30, method='append')
         
         #=======================================================================
@@ -649,18 +651,18 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # defaults
         #=======================================================================
-        log = self.logger.getChild('run_combine')
-        log.info('user pushed \'run_combine\'')
+        log = self.logger.getChild('run_cba_copy')
+        log.info('user pushed \'run_cba_copy\'')
         
         """put this here to avoid the global openpyxl dependency"""
         from results.cba import CbaWrkr 
-        
+        self.feedback.setProgress(10)
         #=======================================================================
         # collect inputs
         #=======================================================================
 
         self._set_setup(set_cf_fp=True)
-        
+        self.feedback.setProgress(20)
         #=======================================================================
         # init
         #=======================================================================
@@ -675,8 +677,14 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         wrkr.copy_template()
         self.feedback.setProgress(70)
-        wrkr.write_wbook()
+        ofp = wrkr.write_wbook()
         self.feedback.setProgress(90)
+        
+        #=======================================================================
+        # update gui
+        #=======================================================================
+        """populate for conveience of the cba_plot tool"""
+        self.lineEdit_cba_cf.setText(ofp)
         
         #=======================================================================
         # wrap
@@ -685,13 +693,45 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.feedback.upd_prog(None)
         
         
+    def run_cba_plot(self):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        log = self.logger.getChild('run_cba_plot')
+        log.info('user pushed \'run_cba_copy\'')
         
+        """put this here to avoid the global openpyxl dependency"""
+        from results.cba import CbaWrkr 
+        self.feedback.setProgress(10)
+        #=======================================================================
+        # collect inputs
+        #=======================================================================
+
+        self._set_setup(set_cf_fp=True)
+        self.feedback.setProgress(20)
+        #=======================================================================
+        # init
+        #=======================================================================
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        wrkr = results.cba.CbaWrkr(**kwargs)._setup()
         
+        self.feedback.setProgress(50)
         
+        #=======================================================================
+        # execute
+        #=======================================================================
+        fig = wrkr.plot_cba()
+        self.feedback.setProgress(80)
+        wrkr.output_fig(fig)
+        self.feedback.setProgress(95)
         
-        
-        
-        
+
+ 
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        log.push('run_cba_copy finished')
+        self.feedback.upd_prog(None)
         
         
         

@@ -555,14 +555,15 @@ class Plotr(ComWrkr):
                  fmt='svg', 
                   transparent=True, 
                   dpi = 150,
-                  
+                  logger=None,
                   ):
         #======================================================================
         # defaults
         #======================================================================
         if out_dir is None: out_dir = self.out_dir
         if overwrite is None: overwrite = self.overwrite
-        log = self.logger.getChild('output_fig')
+        if logger is None: logger=self.logger
+        log = logger.getChild('output_fig')
         
         #=======================================================================
         # precheck

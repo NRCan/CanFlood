@@ -60,9 +60,6 @@ class CanFlood:
 
         
         self.iface = iface
-        
-        
-
 
         # Create the dialog (after translation) and keep reference
         self.dlg1 = DataPrep_Dialog(self.iface, session=self)
@@ -72,13 +69,6 @@ class CanFlood:
         self.dlg_rfda = rfda_dialog.rDialog(self.iface)
         self.dlg_dikes = DikesDialog(self.iface)
 
-        
-
-        # Declare instance attributes
-        """not sure how this gets populated
-        used by 'unload' to unload everything
-        self.actions = []"""
-
 
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
@@ -86,9 +76,6 @@ class CanFlood:
         
         self.pars_dir = os.path.join(os.path.dirname(__file__), '_pars')
         
-        #start with an empty ref
-        #self.canflood_menu = None
-
 
 
     def initGui(self): #add UI elements to Qgis
@@ -96,8 +83,6 @@ class CanFlood:
         called on Qgis Load?
         
         """
-        
-
         #=======================================================================
         # toolbar--------
         #=======================================================================

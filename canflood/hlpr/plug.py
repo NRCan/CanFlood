@@ -33,6 +33,7 @@ from PyQt5 import QtCore
 from hlpr.exceptions import QError as Error
 from hlpr.Q import MyFeedBackQ, Qcoms
 from hlpr.basic import force_open_dir
+from hlpr.plt_qt import PltWindow
 
 #==============================================================================
 # classes-----------
@@ -48,6 +49,8 @@ class QprojPlug(Qcoms): #baseclass for plugins
     
     
     loadRes = False #whether to load layers to canvas
+    
+    plt_window = False #control whether to launch the plot window
     
     
     """not a great way to init this one
@@ -102,10 +105,6 @@ class QprojPlug(Qcoms): #baseclass for plugins
             
         self.setup_feedback(progressBar = self.progressBar,
                             feedback = MyFeedBackQ())
-        
-        
-        
-        
 
         #=======================================================================
         # default directories
@@ -471,6 +470,77 @@ class QprojPlug(Qcoms): #baseclass for plugins
         self.groupName = 'CanFlood.%s'%self.tag
         
         self.inherit_fieldNames = inherit_fieldNames
+        
+    def output_fig(self, fig,
+                   
+                   plt_window=None, #whether to launch the matplotlib  window
+                   
+                   #file controls
+                   out_dir = None, 
+                   overwrite=None,
+                   fname = None, #filename
+                   
+                   #figure write controls
+                 fmt='svg', 
+                  transparent=True, 
+                  dpi = 150,
+                  logger=None,
+                  ):
+        #======================================================================
+        # defaults
+        #======================================================================
+        if out_dir is None: out_dir = self.out_dir
+        if overwrite is None: overwrite = self.overwrite
+        if plt_window is None: plt_window=self.plt_window
+        if logger is None: logger=self.logger
+        log = logger.getChild('output_fig')
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        """avoiding importing matplotlib here"""
+        #assert isinstance(fig, self.matplotlib.figure.Figure)
+        log.debug('on %s'%fig)
+        #======================================================================
+        # save file
+        #======================================================================
+        if not plt_window:
+            #file setup
+            if fname is None:
+                try:
+                    fname = fig._suptitle.get_text()
+                except:
+                    fname = self.name
+                
+            out_fp = os.path.join(out_dir, '%s.%s'%(fname, fmt))
+                
+            if os.path.exists(out_fp): assert overwrite
+    
+                
+            #write the file
+            try: 
+                fig.savefig(out_fp, dpi = dpi, format = fmt, transparent=transparent)
+                log.info('saved figure to file:   %s'%out_fp)
+            except Exception as e:
+                raise Error('failed to write figure to file w/ \n    %s'%e)
+            
+            return out_fp
+            
+        #=======================================================================
+        # launch window
+        #=======================================================================
+        else:
+
+            
+            
+            app = PltWindow(fig, out_dir=out_dir)
+            app.show()
+            log.info('launched matplotlib window on %s'%fig._suptitle.get_text())
+            app.activateWindow()
+            app.raise_()
+            
+        
+        
         
 
 class logger(object): #workaround for qgis logging pythonic
