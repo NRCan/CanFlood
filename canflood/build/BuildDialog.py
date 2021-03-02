@@ -190,9 +190,11 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # vfunc
         #=======================================================================
         #give commmon widgets
-        self.vDialog.lineEdit_wdir = self.lineEdit_wdir #share the reference
-        self.vDialog.lineEdit_curve = self.lineEdit_curve
-        self.vDialog.linEdit_ScenTag = self.linEdit_ScenTag
+        for wName in self.vDialog.inherit_atts:
+            assert hasattr(self, wName), wName
+            setattr(self.vDialog, wName, getattr(self, wName))
+
+        
         
         #connect launcher button
         def vDia(): #helper to connect slots and 
@@ -415,8 +417,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     #===========================================================================
     # common methods----------
     #===========================================================================
-    def set_setup(self, #attach parameters from setup tab
-                  set_cf_fp=True, set_finv=True,
+    def set_setup(self, set_cf_fp=True, set_finv=True, #attach parameters from setup tab
                   logger=None,): 
         if logger is None: logger=self.logger
         log = logger.getChild('set_setup')
@@ -499,12 +500,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #set as teh new layer
         self.comboBox_ivlay.setLayer(vlay)
         self.finv_vlay = vlay
-        
-
-        
-        
-
-        
+                
     def slice_aoi(self, vlay): #apply the aoi slice
         """
         todo: migrate off this
@@ -587,7 +583,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # collect inputs
         #=======================================================================
 
-        self._set_setup(set_cf_fp=False)
+        self.set_setup(set_cf_fp=False, set_finv=False)
         prec = str(int(self.spinBox_s_prec.value())) #need a string for setting
         
         #=======================================================================
@@ -631,7 +627,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # ui updates
         #=======================================================================
-        self.session.cf_fp = cf_path #set for other dialogs
+        
         #display the control file in the dialog
         self.lineEdit_cf_fp.setText(cf_path)
         
@@ -644,8 +640,13 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
     def store_curves(self): #write the curves_fp to the control file
         
+        
+        #=======================================================================
+        # get values
+        #=======================================================================
+        self._set_setup()
         curves_fp=self.lineEdit_curve.text()
-        cf_fp = self.get_cf_fp()
+ 
         self.feedback.upd_prog(10)
         #=======================================================================
         # precheck
@@ -657,10 +658,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # execute
         #=======================================================================
         #get a simple worker to handle the control file
-        wrkr = Preparor(logger=self.logger,  feedback=self.feedback,
-                       # out_dir=None, tag=tag, cid=cid, overwrite=self.overwrite
-                        cf_fp=cf_fp, 
-                        ) 
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        wrkr = Preparor(**kwargs) 
         self.feedback.upd_prog(50)
         wrkr.set_cf_pars(
             {
@@ -720,13 +719,15 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     def construct_finv(self): #add some fields to a finv like vectoralyer
 
         log = self.logger.getChild('construct_finv')
-        tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
+        #tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
         
         #=======================================================================
         # collect from UI----
         #=======================================================================
+        """not applying aoi slices"""
         in_vlay = self.mMapLayerComboBox_inv_finv.currentLayer()
-        out_dir = self.lineEdit_wdir.text()
+        #out_dir = self.lineEdit_wdir.text()
+        self.set_setup(set_finv=False, set_cf_fp=False)
         nestID = int(self.spinBox_inv.value())
         
         def get_data(d): #helper to pull data off widgets
@@ -767,36 +768,26 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # input checks
         #=======================================================================
         assert isinstance(in_vlay, QgsVectorLayer), 'no VectorLayer selected!'
-        assert os.path.exists(out_dir)
+
         
         #=======================================================================
         # init
         #=======================================================================
-        wrkr = Preparor(logger=self.logger,  out_dir=out_dir, tag=tag)
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        wrkr = Preparor(**kwargs)
         
-        
-        #=======================================================================
-        # aoi slice
-        #=======================================================================
-        in_vlay_aoi = self.slice_aoi(in_vlay)
-        
-                
+
         #=======================================================================
         # run converter
         #=======================================================================
         nest_data2 = wrkr.build_nest_data(nestID=nestID, d_raw = nest_data)
-        finv_vlay = wrkr.to_finv(in_vlay_aoi, newLayname = 'finv_%s'%in_vlay.name(),
+        finv_vlay = wrkr.to_finv(in_vlay, newLayname = 'finv_%s'%in_vlay.name(),
                                 new_data={**nest_data2, **miti_data})
         
         #=======================================================================
         # wrap
         #=======================================================================
-        if self.checkBox_loadres.isChecked():
-            self.qproj.addMapLayer(finv_vlay)
-            self.comboBox_ivlay.setLayer(finv_vlay) #set this to the inventory selection
-            log.info('added \'%s\' to canvas'%finv_vlay.name())
-        else:
-            raise Error('ensure load results is checked!')
+        self._set_finv(finv_vlay)
         
         log.push('finished building finv from %s'%in_vlay.name())
         self.feedback.upd_prog(None) #set the progress bar back down to zero
@@ -1207,7 +1198,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         self._set_setup()
         #tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
-        finv_raw = self.comboBox_ivlay.currentLayer()
+        #finv_raw = self.comboBox_ivlay.currentLayer()
 
         #=======================================================================
         # cf_fp = self.get_cf_fp()
@@ -1240,73 +1231,60 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         else:
             raise Error('button logic fail')
             
-        #======================================================================
-        # aoi slice
-        #======================================================================
-        finv = self.slice_aoi(finv_raw)
+ 
         
 
         #======================================================================
         # precheck
         #======================================================================
-                
-        if finv is None:
-            raise Error('got nothing for finv')
-        if not isinstance(finv, QgsVectorLayer):
-            raise Error('did not get a vector layer for finv')
+ 
                     
  
         
         if lfield is None or lfield=='':
             raise Error('must select a valid lfield')
-        
-        if not cid in [field.name() for field in finv.fields()]:
-            raise Error('requested cid field \'%s\' not found on the finv_raw'%cid)
+ 
  
         #======================================================================
         # execute
         #======================================================================
 
         #build the sample
-        wrkr = LikeSampler(logger=self.logger, 
-                          tag=tag, #set by build_scenario() 
-                          feedback = self.feedback, #needs to be connected to progress bar
-                          cid=cid, out_dir=out_dir
-                          )
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        wrkr = LikeSampler(**kwargs)
         
         #connect the status bar
         #wrkr.feedback.progressChanged.connect(self.upd_prog)
         
-        res_df = wrkr.run(finv, lpol_d,lfield=lfield, event_rels=event_rels)
+        res_df = wrkr.run(self.finv_vlay, lpol_d,lfield=lfield, event_rels=event_rels)
         
         #check it
         wrkr.check()
         
         #save csv results to file
-        wrkr.write_res(res_df, out_dir = out_dir)
+        wrkr.write_res(res_df)
         
         #update ocntrol file
-        wrkr.update_cf(cf_fp)
+        wrkr.update_cf()
         
         #=======================================================================
         # summary plots
         #=======================================================================
         if self.checkBox_LS_hist.isChecked():
             fig = wrkr.plot_hist()
-            wrkr.output_fig(fig)
+            self.output_fig(fig)
 
             
         if self.checkBox_LS_box.isChecked():
             fig = wrkr.plot_boxes()
-            wrkr.output_fig(fig)
+            self.output_fig(fig)
         
         #======================================================================
         # add to map
         #======================================================================
-        if self.checkBox_loadres.isChecked():
+        if self.loadRes:
             res_vlay = wrkr.vectorize(res_df)
-            self.qproj.addMapLayer(res_vlay)
-            self.logger.info('added \'%s\' to canvas'%finv.name())
+            self._load_toCanvas(res_vlay)
             
         self.feedback.upd_prog(None) #set the progress bar back down to zero
         self.logger.push('lisamp finished')    

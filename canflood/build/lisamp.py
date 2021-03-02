@@ -550,7 +550,8 @@ class LikeSampler(Plotr, Qcoms):
         if ofn is None: ofn = 'exlikes_%s'%self.tag
         return self.output_df(res_df, ofn,write_index=True, **kwargs)
     
-    def update_cf(self, cf_fp): #configured control file updater
+    def update_cf(self, cf_fp=None): #configured control file updater
+        if cf_fp is None: cf_fp=self.cf_fp
         return self.set_cf_pars(
             {'risk_fps':(
                 {'exlikes':self.out_fp}, 

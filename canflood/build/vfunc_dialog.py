@@ -65,14 +65,15 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
     
     linEdit_ScenTag = 'scenario'
     lineEdit_wd = None
+    
+    inherit_atts = ['radioButton_s_pltW', 'lineEdit_wdir', 'lineEdit_curve', 'linEdit_ScenTag',
+                    'checkBox_SSoverwrite', 'radioButton_SS_fpAbs']
 
     def __init__(self, 
                  iface, 
                  parent=None,
                  plogger=None):
-        """these will only ini tthe first baseclass (QtWidgets.QDialog)
-        
-        required"""
+        """called on stawrtup"""
         super(vDialog, self).__init__(parent) #only calls QtWidgets.QDialog
         
 
@@ -87,11 +88,7 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
 
         self.setupUi(self)
         
-        # Set up the user interface from Designer through FORM_CLASS.
-        # After self.setupUi() you can access any designer object by doing
-        # self.<objectname>, and you can use autoconnect slots - see
-        # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
-        # #widgets-and-dialogs-with-auto-connect
+ 
 
 
         #=======================================================================
@@ -123,11 +120,25 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
         self.logger.debug('rDialog initilized')
         
     def _setup(self):
+        """
+        called on launch
+        """
         _ = self.get_libData()
         self.connect_slots()
+        
+        #simple setups
+        self.tag = self.linEdit_ScenTag.text()
+        self.out_dir = self.lineEdit_wdir.text()
+        self.overwrite=self.checkBox_SSoverwrite.isChecked()
+        self.absolute_fp = self.radioButton_SS_fpAbs.isChecked()
+        self.plt_window = self.radioButton_s_pltW.isChecked()
+        
         return self
 
     def connect_slots(self):
+        """
+        called on launch
+        """
         log = self.logger.getChild('connect_slots')
 
         #======================================================================
@@ -190,8 +201,6 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
         # wrap
         #=======================================================================
         
-
-    
     def displayDetails(self): #display details on the selected library
         #log = self.logger.getChild('displayDetails')
         
@@ -309,9 +318,7 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
         
 
         return fn, fp 
-
-        
-        
+ 
     def dislpayCsDetails(self): #display the selected curve set (xls) details
         """called when a curve set is selected"""
 
@@ -358,9 +365,15 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
         # disconntected sessions
         #=======================================================================
         if isinstance(self.linEdit_ScenTag, str):
-            return self.linEdit_ScenTag, os.getcwd()
+            tag, out_dir = self.linEdit_ScenTag, os.getcwd()
         else:
-            return self.linEdit_ScenTag.text(), self.lineEdit_wd.text()
+            tag, out_dir = self.linEdit_ScenTag.text(), self.lineEdit_wdir.text()
+            
+        assert isinstance(tag, str)
+        assert isinstance(out_dir, str), 'must specify a working directory'
+        assert not out_dir=='', 'must specify a working directory'
+        
+        return tag, out_dir
 
         
     def plot_set(self):
@@ -390,7 +403,7 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
         fig = wrkr.plotAll(cLib_d)
         
         #output
-        ofp = wrkr.output_fig(fig)
+        ofp = self.output_fig(fig)
         
         #=======================================================================
         # try:
@@ -562,7 +575,7 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
         fileName, filePath = self._get_cset_selection()
         log.debug('user selected %s'%filePath)
         
-        
+        assert isinstance(fileName, str), 'must select an xls library!'
         #=======================================================================
         # copy it over
         #=======================================================================

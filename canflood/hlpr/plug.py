@@ -474,6 +474,8 @@ class QprojPlug(Qcoms): #baseclass for plugins
             assert os.path.exists(self.cf_fp), 'got invalid controlFile path: %s'%self.cf_fp
             
             inherit_fieldNames.append('cf_fp')
+            
+            self.session.cf_fp = self.cf_fp #set for other dialogs
 
         
         #file behavior
