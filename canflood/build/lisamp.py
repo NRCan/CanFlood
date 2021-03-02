@@ -62,6 +62,7 @@ class LikeSampler(Plotr, Qcoms):
         
         #self.resname = 'exlikes_%s'%self.tag
         self._init_plt() #setup matplotlib
+        self._init_fmtFunc()
         
     def load_layers(self, #load data to project (for standalone runs)
                     lpol_fp_d, #{event name:polygon filepath}

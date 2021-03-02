@@ -1196,7 +1196,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # assemble/prepare inputs
         #=======================================================================
-        self._set_setup()
+        self.set_setup()
         #tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
         #finv_raw = self.comboBox_ivlay.currentLayer()
 
