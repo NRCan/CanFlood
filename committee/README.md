@@ -7,7 +7,7 @@ Thank you everyone for your participation!
 
 Here is a [link to the recording](https://drive.google.com/file/d/1TK2bvfw-cVxONJwQ6JyyjxFBtWfogkbU/view?usp=sharing)
 
-Here is a link to the presentation
+Here is a [link to the presentation](https://github.com/IBIGroupCanWest/CanFlood/blob/master/committee/tasks/CanFlood%20-%20committee%20meet%203%20-%20presentation.pdf)
 
 
 ### Thank You!
