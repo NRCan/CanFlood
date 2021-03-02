@@ -200,13 +200,18 @@ class CbaWrkr(RiskPlotr):
                  #plot styles
                  impactFmtFunc = None, #formattting the y axis
                  style_lib = { #styles to apply to each line
-                     'Grand Total Costs':
-                            {
-                            'color':'red'
+                     'Grand Total Costs':{
+                            'color':'red', 
+                            'marker':'x', 'markersize':3,
                                 },
                     'Grand Total Benefits':{
-                            'color':'green'
-                                }
+                            'color':'green',
+                            'marker':'x', 'markersize':3,
+                                },
+                    'hatch':{
+                            'alpha':0.5,
+                            'hatch':None,
+                            }
                      }
                  ):
         
@@ -253,8 +258,15 @@ class CbaWrkr(RiskPlotr):
         df = df.set_index(df.columns[0], drop=True)
         df.index.name = None
         
+        #check data
+        assert not df.isna().any().any(), 'got some nulls... make sure all the data is complete and the spreadsheet saved'
+        
         #drop any remaining unamed columns
         boolcol = df.columns.str.contains('Unnamed:').fillna(False).values.astype(bool)
+        
+        """
+        view(df)
+        """
         
         df = df.loc[:, np.invert(boolcol)]
         
@@ -268,6 +280,15 @@ class CbaWrkr(RiskPlotr):
         # get cumulatives
         #=======================================================================
         dfc = df.cumsum(axis=1) #convert to cumulatives
+        
+        #=======================================================================
+        # get label data
+        #=======================================================================
+        try:
+            calc_d = self._get_cba_calcs(data_fp=data_fp, impactFmtFunc=impactFmtFunc, logger=log)
+        except Exception as e:
+            log.warning('failed to retrieve calculation results from xls w/ \n    %s'%e)
+            calc_d = None
         
         #=======================================================================
         # plot----
@@ -287,7 +308,7 @@ class CbaWrkr(RiskPlotr):
         # axis label setup
         fig.suptitle(title)
         ax.set_ylabel(self.impact_units)
-        ax.set_xlabel('years')
+        ax.set_xlabel('year')
         
         #=======================================================================
         # add lines
@@ -302,7 +323,7 @@ class CbaWrkr(RiskPlotr):
             
             xar,  yar = row.index.values, row.values
             pline1 = ax.plot(xar,yar,
-                            label       = serName,
+                            label       = serName.replace('Grand', '').strip(),
                             **styles
                             )
             
@@ -317,15 +338,38 @@ class CbaWrkr(RiskPlotr):
         # fill between the lines
         #=======================================================================
         if len(fill_d)==2:
-            polys = ax.fill_between(fill_d['cost'], fill_d['benefit'], y2=0, 
-                                            color       = 'green', 
-                                            alpha       = 0.5,
-                                            hatch       = hatch)
+            if 'hatch' in style_lib:
+                styles = style_lib['hatch']
+            else:
+                styles = dict()
+                
+            for regionName, (pwhere, color) in {
+                'Positive Investment':(fill_d['benefit']>fill_d['cost'], 'green'),
+                'Negative Investment':(fill_d['benefit']<fill_d['cost'], 'red'),
+                    }.items():
+ 
+                if not np.any(pwhere): continue  #nothing here.. skip
+                
+                polys = ax.fill_between(xar.astype(np.float), fill_d['benefit'], 
+                                        y2=fill_d['cost'],
+                                        where=pwhere, color=color, label=regionName,
+                                         **styles)
+            
+
+ 
             
         #=======================================================================
-        # post format
+        # post format------
         #=======================================================================
-        self._postFmt(ax)
+        #=======================================================================
+        # text box
+        #=======================================================================
+        val_str = ''
+        if not calc_d is None:
+            for k,v in calc_d.items():
+                val_str = val_str + '\n%s=%s'%(k,v)
+        
+        self._postFmt(ax, val_str=val_str, xLocScale=0.8)
         
         #assign tick formatter functions
 
@@ -341,11 +385,49 @@ class CbaWrkr(RiskPlotr):
         view(df)
         view(df_raw)
         """
+    
+    def _get_cba_calcs(self, #helper to get teh calculation results from teh spreadsheet
+                       data_fp=None,
+                       logger=None,
+                       section_nm = 'Cost-Benefit Calculations',
+                       impactFmtFunc=None,
+                       ):
+        if logger is None: logger=self.logger
+        log=logger.getChild('cba_calcs')
         
+        if data_fp is None: data_fp = self.cba_xls
+        assert os.path.exists(data_fp), 'passed bad filepath for cba_xls: %s'%data_fp
         
+        df_raw = pd.read_excel(data_fp, sheet_name='smry' ,engine='openpyxl',
+                               index_col=0)
         
+        df = df_raw.loc[df_raw.index.notna(), :]
+        df.index.name=None
+        #=======================================================================
+        # #get everything beneath Cost-Benefit Calculations
+        #=======================================================================
+        assert section_nm in df.index, 'unable to locate section: \'%s\''%section_nm
+
+        d = df.iloc[df.index.get_loc(section_nm)+1:,0].to_dict()
         
+        #=======================================================================
+        # apply formatters
+        #=======================================================================
         
+        for k,v in d.copy().items():
+
+            if k.endswith('$'):
+                if not impactFmtFunc is None:
+                    d[k] = impactFmtFunc(v)
+                
+            
+            elif k.endswith('ratio'):
+                d[k] = '%.4f'%v
+                    
+                
+                    
+                
+        return d
         
         
         
