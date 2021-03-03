@@ -114,7 +114,7 @@ class CbaWrkr(RiskPlotr):
         for evalA, nvalB in {
             'name':self.name,
             'control_filename':os.path.basename(self.cf_fp),
-            'ead_total':self.ead_tot,
+            'ead_option':self.ead_tot,
             'timestamp':self.today_str,
             'base_year':int(datetime.datetime.now().strftime('%Y')),
             }.items():

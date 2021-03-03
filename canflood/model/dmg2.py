@@ -283,10 +283,19 @@ class Dmg2(Model, DFunc, Plotr):
                 bres_df, res_colg = self.bdmg_mitiV(res_df = bres_df, res_colg=res_colg)
                 self.feedback.upd_prog(5, method='portion')
 
-
+            #force positives
+            """ mitigation vaslue shifts bdmg_mitiS() especially can lead to negative values"""
+            booldf = bres_df <0 #find negatives
+            if booldf.any():
+                log.warning('mitigation handles got %i (of %i) negative values... replacing with zeros'%(
+                    booldf.sum().sum(), booldf.size))
+                
+                bres_df = bres_df.where(~booldf,
+                        pd.DataFrame(0, index=bres_df.index, columns=bres_df.columns))
         #=======================================================================
         # finalize damages
         #=======================================================================
+        """attaches cres_df to self"""
         bres_df, cres_df = self.bdmg_cleaned(res_df=bres_df, res_colg=res_colg)
         self.feedback.upd_prog(5, method='portion')
         
@@ -608,14 +617,14 @@ class Dmg2(Model, DFunc, Plotr):
         return res_df
     
 
-    def bdmg_mitiT(self, #adjust the depths using mitigation handles
+    def bdmg_mitiT(self, #apply mitigation thresholds
                    res_df = None,
 
                   res_colg = None, #predecessor results column group to work off
 
                   ):
         """
-        consider moving to common for Risk1
+        TODO: consider moving to common for Risk1
         """
         #=======================================================================
         # defaults
@@ -675,7 +684,7 @@ class Dmg2(Model, DFunc, Plotr):
 
                   ):
         """
-        consider moving to common for Risk1
+        TODO: consider moving to common for Risk1
         """
         #=======================================================================
         # defaults
@@ -884,6 +893,9 @@ class Dmg2(Model, DFunc, Plotr):
         bdf = self.bdf
         cid, bid = self.cid, self.bid
         fdf = self.data_d['finv']
+        
+
+        
         
         #=======================================================================
         # duplicate onto cleaned columns and fill nulls
@@ -1372,6 +1384,36 @@ class Dmg2(Model, DFunc, Plotr):
         
         #set this for later
         self.f_ftags = f_ftags
+        
+    def check(self,
+              df=None,
+              logger=None,
+              ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if df is None: df = self.cres_df.copy()
+        if logger is None: logger=self.logger
+        log = logger.getChild('check')
+        
+        #=======================================================================
+        # check xis:exposure results dataset
+        #=======================================================================
+        """
+        similar to check_eDmg() but without the aep logic
+        
+        """
+        
+        #=======================================================================
+        # #check everything is positive
+        #=======================================================================
+        booldf = df>=0
+        if not booldf.all().all():
+            log.debug(df[booldf])
+            raise Error('got %i (of %i) negative values... see logger'%(
+                np.invert(booldf).sum().sum(), booldf.size))
+        
+        
 
     #===========================================================================
     # OUTPUTRS-------------

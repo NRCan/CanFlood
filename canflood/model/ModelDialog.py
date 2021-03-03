@@ -106,12 +106,8 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         hlpr.plug.bind_MapLayerComboBox(self.comboBox_JGfinv, 
                       layerType=QgsMapLayerProxyModel.VectorLayer, iface=self.iface)
                 
-        self.comboBox_JGfinv.attempt_selection('finv')
-        
-        
-
-        
-        
+        self.launch_actions['attempt finv'] = lambda: self.comboBox_JGfinv.attempt_selection('finv')
+ 
         
         #======================================================================
         # risk level 1----------
@@ -206,11 +202,12 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         
     def run_impact2(self):
         log = self.logger.getChild('run_impact2')
+        start = time.time()
         #=======================================================================
         # retrive variable values
         #=======================================================================
 
-        
+        self._set_setup()
         #======================================================================
         # #build worker
         #======================================================================
@@ -262,15 +259,20 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         if self.checkBox_i2_pbox.isChecked():
             fig = model.plot_boxes()
-            _ = model.output_fig(fig)
+            self.output_fig(fig)
             
         if self.checkBox_i2_phist.isChecked():
             fig = model.plot_hist()
-            _ = model.output_fig(fig)
+            self.output_fig(fig)
             
         self.feedback.setProgress(99)
-
-        self.logger.push('Impacts2 complete')
+        
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        tdelta = (time.time()-start)/60.0
+        self.logger.push('Impacts2 complete in %.4f mins'%tdelta)
+ 
         self.feedback.upd_prog(None) #set the progress bar back down to zero
         
         #======================================================================
@@ -287,7 +289,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #======================================================================
         log = self.logger.getChild('run_risk2')
         start = time.time()
- 
+        self._set_setup()
 
         #======================================================================
         # run the model
@@ -317,14 +319,10 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         if not res_df is None:
             out_fp2= model.output_passet()
             
-
-            
         #attribution
         if self.checkBox_SS_attr.isChecked():
             model.output_attr()
-        
-        
-        
+ 
         #=======================================================================
         # wrap
         #=======================================================================
@@ -412,6 +410,8 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         
     def results_joinGeo(self,
                         fp_attn = 'r_passet',
+                        
+                        style_fn =None, #for loading specific styles
                         ):
 
         log = self.logger.getChild('results_joinGeo')
@@ -449,7 +449,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         # load
         #=======================================================================
-        self._load_toCanvas(res_vlay, logger=log)
+        self._load_toCanvas(res_vlay, logger=log, style_fn=style_fn)
         self.feedback.setProgress(99)
         
         #=======================================================================

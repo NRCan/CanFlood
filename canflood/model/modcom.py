@@ -2333,7 +2333,7 @@ class Model(ComWrkr,
         #=======================================================================
         # defaults
         #=======================================================================
-
+        log = logger.getChild('chk_eDmg')
         
         #=======================================================================
         # #check expectations
@@ -2362,8 +2362,10 @@ class Model(ComWrkr,
         #=======================================================================
         booldf = df>=0
         if not booldf.all().all():
-            raise Error('got %i (of %i) negative values'%(
+            log.debug(df[booldf])
+            log.warning('got %i (of %i) negative values... see logger'%(
                 np.invert(booldf).sum().sum(), booldf.size))
+            return False
         
         #=======================================================================
         # #check for damage monoticyt
@@ -2376,7 +2378,7 @@ class Model(ComWrkr,
         cboolidx = np.invert(df.apply(lambda x: x.is_monotonic_increasing, axis=1))
         if cboolidx.any():
             if logger is None: logger = self.logger
-            log = logger.getChild('chk_eDmg')
+            
             log.debug('%s/n'%df.loc[cboolidx, :])
             log.warning(' %i (of %i)  assets have non-monotonic-increasing damages. see logger'%(
                 cboolidx.sum(), len(cboolidx)))

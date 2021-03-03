@@ -109,6 +109,8 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #vector geometry layer
         hlpr.plug.bind_MapLayerComboBox(self.comboBox_JGfinv, 
                       layerType=QgsMapLayerProxyModel.VectorLayer, iface=self.iface)
+        
+        self.launch_actions['attempt finv'] = lambda: self.comboBox_JGfinv.attempt_selection('finv')
                 
         #=======================================================================
         # results data
@@ -603,6 +605,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         if self.checkBox_C_composite.isChecked():
             cWrkr.write(logger=log, out_dir=self.out_dir)
+            self.lineEdit_cf_fp.setText(cWrkr.cf_fp) #change the dialog's selection
             
         self.feedback.setProgress(95)
         log.push('run_combine finished')

@@ -471,6 +471,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
 
             #pull from the line
             self.cf_fp = self.lineEdit_cf_fp.text()
+            assert not self.cf_fp=='', 'must specify a control file!'
             assert os.path.exists(self.cf_fp), 'got invalid controlFile path: %s'%self.cf_fp
             
             inherit_fieldNames.append('cf_fp')

@@ -99,7 +99,7 @@ class Cmpr(RiskPlotr):
         #=======================================================================
         assert len(fps_d)>=2
         assert isinstance(fps_d, dict)
-        assert len(fps_d.values())==len(set(fps_d.values())), 'non unique fps!'
+        assert len(fps_d.values())==len(set(fps_d.values())), 'must specify unique Control filepaths'
         
         #=======================================================================
         # relatives

@@ -1058,7 +1058,7 @@ p, li { white-space: pre-wrap; }
                  <string>Run Risk (L2) upon completion (see 'Risk (L2)' tab for configuration)</string>
                 </property>
                 <property name="checked">
-                 <bool>true</bool>
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>
@@ -1082,12 +1082,18 @@ p, li { white-space: pre-wrap; }
                 <property name="text">
                  <string>Histograms</string>
                 </property>
+                <property name="checked">
+                 <bool>false</bool>
+                </property>
                </widget>
               </item>
               <item>
                <widget class="QCheckBox" name="checkBox_i2_pbox">
                 <property name="text">
                  <string>Box Plots</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -1595,7 +1601,7 @@ p, li { white-space: pre-wrap; }
                  <item>
                   <layout class="QHBoxLayout" name="horizontalLayout_12">
                    <item>
-                    <widget class="QCheckBox" name="checkBox_r2_ar">
+                    <widget class="QCheckBox" name="checkBox_r2_ari">
                      <property name="text">
                       <string>ARI vs. Impacts</string>
                      </property>

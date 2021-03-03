@@ -71,7 +71,7 @@
           </size>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>4</number>
          </property>
          <widget class="QWidget" name="tab_welcome">
           <attribute name="title">
@@ -2487,131 +2487,98 @@ p, li { white-space: pre-wrap; }
             </widget>
            </item>
            <item>
-            <widget class="QScrollArea" name="scrollArea_2">
-             <property name="widgetResizable">
-              <bool>true</bool>
+            <widget class="QGroupBox" name="groupBox_14">
+             <property name="title">
+              <string>Specify Scenarios:</string>
              </property>
-             <widget class="QWidget" name="scrollAreaWidgetContents_2">
-              <property name="geometry">
-               <rect>
-                <x>0</x>
-                <y>0</y>
-                <width>636</width>
-                <height>315</height>
-               </rect>
-              </property>
-              <layout class="QVBoxLayout" name="verticalLayout_14">
-               <item>
-                <widget class="QGroupBox" name="groupBox_C_s1">
-                 <property name="title">
-                  <string>Scenario 1</string>
-                 </property>
-                 <layout class="QVBoxLayout" name="verticalLayout_6">
-                  <item>
-                   <layout class="QHBoxLayout" name="_16">
-                    <item>
-                     <widget class="QLineEdit" name="lineEdit_C_cf_1">
-                      <property name="placeholderText">
-                       <string>Control File path</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QPushButton" name="pushButton_C_cf_browse_1">
-                      <property name="text">
-                       <string>Browse</string>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </item>
-                 </layout>
-                </widget>
-               </item>
-               <item>
-                <widget class="QGroupBox" name="groupBox_C_s2">
-                 <property name="title">
-                  <string>Scenario 2</string>
-                 </property>
-                 <layout class="QVBoxLayout" name="verticalLayout_7">
-                  <item>
-                   <layout class="QHBoxLayout" name="_20">
-                    <item>
-                     <widget class="QLineEdit" name="lineEdit_C_cf_2">
-                      <property name="placeholderText">
-                       <string>Control File path</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QPushButton" name="pushButton_C_cf_browse_2">
-                      <property name="text">
-                       <string>Browse</string>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </item>
-                 </layout>
-                </widget>
-               </item>
-               <item>
-                <widget class="QGroupBox" name="groupBox_C_s3">
-                 <property name="title">
-                  <string>Scenario 3</string>
-                 </property>
-                 <layout class="QVBoxLayout" name="verticalLayout_8">
-                  <item>
-                   <layout class="QHBoxLayout" name="_24">
-                    <item>
-                     <widget class="QLineEdit" name="lineEdit_C_cf_3">
-                      <property name="placeholderText">
-                       <string>Control File path</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QPushButton" name="pushButton_C_cf_browse_3">
-                      <property name="text">
-                       <string>Browse</string>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </item>
-                 </layout>
-                </widget>
-               </item>
-               <item>
-                <widget class="QGroupBox" name="groupBox_C_s4">
-                 <property name="title">
-                  <string>Scenario 4</string>
-                 </property>
-                 <layout class="QVBoxLayout" name="verticalLayout_9">
-                  <item>
-                   <layout class="QHBoxLayout" name="_28">
-                    <item>
-                     <widget class="QLineEdit" name="lineEdit_C_cf_4">
-                      <property name="placeholderText">
-                       <string>Control File path</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QPushButton" name="pushButton_C_cf_browse_4">
-                      <property name="text">
-                       <string>Browse</string>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </item>
-                 </layout>
-                </widget>
-               </item>
-              </layout>
-             </widget>
+             <layout class="QVBoxLayout" name="verticalLayout_6">
+              <item>
+               <layout class="QHBoxLayout" name="_16">
+                <item>
+                 <widget class="QLineEdit" name="lineEdit_C_cf_1">
+                  <property name="placeholderText">
+                   <string>Control File path</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="pushButton_C_cf_browse_1">
+                  <property name="text">
+                   <string>Browse</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="_20">
+                <item>
+                 <widget class="QLineEdit" name="lineEdit_C_cf_2">
+                  <property name="placeholderText">
+                   <string>Control File path</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="pushButton_C_cf_browse_2">
+                  <property name="text">
+                   <string>Browse</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="_24">
+                <item>
+                 <widget class="QLineEdit" name="lineEdit_C_cf_3">
+                  <property name="placeholderText">
+                   <string>Control File path</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="pushButton_C_cf_browse_3">
+                  <property name="text">
+                   <string>Browse</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="_28">
+                <item>
+                 <widget class="QLineEdit" name="lineEdit_C_cf_4">
+                  <property name="placeholderText">
+                   <string>Control File path</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="pushButton_C_cf_browse_4">
+                  <property name="text">
+                   <string>Browse</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
             </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_5">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
            </item>
            <item>
             <widget class="QGroupBox" name="groupBox_8">
@@ -2672,8 +2639,11 @@ p, li { white-space: pre-wrap; }
              <layout class="QVBoxLayout" name="verticalLayout_18">
               <item>
                <widget class="QCheckBox" name="checkBox_C_composite">
+                <property name="toolTip">
+                 <string>Select this option when running the 'Combine' tool to generate a new composite control file and 'r_ttl' results file for further analysis</string>
+                </property>
                 <property name="text">
-                 <string>Generate composite control file</string>
+                 <string>Generate composite scenario</string>
                 </property>
                </widget>
               </item>
@@ -2704,7 +2674,7 @@ p, li { white-space: pre-wrap; }
                    <string>Impacts vs. AEP</string>
                   </property>
                   <property name="checked">
-                   <bool>true</bool>
+                   <bool>false</bool>
                   </property>
                  </widget>
                 </item>
@@ -3607,7 +3577,7 @@ p, li { white-space: pre-wrap; }
          </widget>
          <widget class="QWidget" name="tab_cba">
           <attribute name="title">
-           <string>CBA</string>
+           <string>BCA</string>
           </attribute>
           <layout class="QVBoxLayout" name="verticalLayout_22">
            <item>
@@ -4089,7 +4059,7 @@ p, li { white-space: pre-wrap; }
                  <string>Generate a copy of CanFlood's CBA Calculation Template and populate with information from the selected control file</string>
                 </property>
                 <property name="text">
-                 <string>Copy CBA Template</string>
+                 <string>Copy BCA Template</string>
                 </property>
                </widget>
               </item>
@@ -4107,10 +4077,10 @@ p, li { white-space: pre-wrap; }
                 <item>
                  <widget class="QLineEdit" name="lineEdit_cba_cf">
                   <property name="toolTip">
-                   <string>Once your CBA spreadsheet is complete, load it here to generate the financials plot</string>
+                   <string>Once your BCA spreadsheet is complete, load it here to generate the financials plot</string>
                   </property>
                   <property name="placeholderText">
-                   <string>Filepath to CBA calculations spreadsheet</string>
+                   <string>Filepath to BCA calculations spreadsheet</string>
                   </property>
                  </widget>
                 </item>
