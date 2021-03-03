@@ -1,0 +1,49 @@
+[parameters]
+name = tut2b
+cid = xid
+prec = 6                #float precision for calculations
+ground_water = True     #whether to allow wsl < gel
+felv = ground
+event_probs = ari
+ltail = extrapolate     #EAD extrapolation: left tail treatment code (low prob high damage)
+rtail = 0.5             #EAD extrapolation: right trail treatment (high prob low damage)
+drop_tails = False      #EAD extrapolation: whether to remove the extrapolated values before writing the per-asset results
+integrate = trapz       #integration method to apply: trapz, simps
+as_inun = False
+event_rels = mutEx		#assumption for calculated expected value on complex events
+
+[dmg_fps]
+curves = CanFlood_curves_rfda_20200218.xls
+finv = finv_tut2b_finv_cT2.csv
+expos = expos_tut2b_6_32.csv
+gels = gels_tut2b_1_32.csv
+
+[risk_fps]
+dmgs = dmg2\dmgs_tut2b_Tut2b.csv
+exlikes = exlikes_tut2b.csv
+evals = evals_4_tut2b.csv
+
+[validation]
+risk1 = False
+dmg2 = True
+risk2 = True
+risk3 = False
+
+[results_fps]
+attrimat02 = dmg2\attr02_tut2b_Tut2b.csv
+attrimat03 = r2\attr03_tut2b_Tut2b.csv
+r_passet = r2\risk2_tut2b_Tut2b_r2_passet.csv
+r_ttl = r2\risk2_tut2b_Tut2b_ttl.csv
+eventypes = r2\eventypes_Tut2b_tut2b.csv
+#'attrimat03' file path set from output_attr at 2021-01-23 17.20.39
+
+[plotting]
+color = black           #line color
+linestyle = dashdot
+linewidth = 2
+alpha = 0.75            #0=transparent 1=opaque
+marker = o
+markersize = 4
+fillstyle = none        #marker fill style
+impactfmt_str = .2e     #python formatter to use for formatting the impact results values
+
