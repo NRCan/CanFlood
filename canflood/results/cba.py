@@ -194,6 +194,9 @@ class CbaWrkr(RiskPlotr):
     
     def plot_cba(self, #generate a plot of costs and benefits
                  data_fp=None,
+                 
+                 presentVal=True, #whether to adjust values to present
+                 
                  logger=None,
                  title=None,
                  
@@ -268,6 +271,7 @@ class CbaWrkr(RiskPlotr):
         view(df)
         """
         
+        
         df = df.loc[:, np.invert(boolcol)]
         
         log.debug('cleaned cba data to %s'%(str(df.shape)))
@@ -289,6 +293,34 @@ class CbaWrkr(RiskPlotr):
         except Exception as e:
             log.warning('failed to retrieve calculation results from xls w/ \n    %s'%e)
             calc_d = None
+            
+        #=======================================================================
+        # get discounted values
+        #=======================================================================
+        ylab = self.impact_units
+        legendTitle = 'Future Values'
+        if presentVal:
+            """should have worked w/ transposed...."""
+            dfp = dfc.append(pd.Series(range(len(df.columns)), index=df.columns, name='period'))
+            
+            dfp = dfp.append(pd.Series(calc_d['discount_rate']+1, index=df.columns, name='rate'
+                                       ).pow(dfp.loc['period', :]).rename('scale'))
+            
+            
+            #get scaled values
+            cols_d = dict()
+            for indxr in df.index:
+                cols_d[indxr] = '%s (PV)'%indxr
+                dfp.loc[cols_d[indxr]] = dfp.loc[indxr, :].divide(dfp.loc['scale', :])
+                
+            #set new plot frame
+            """better to keep the names the same here for plot styling"""
+            dfc = dfp.loc[cols_d.values(), :].rename(index={v:k for k,v in cols_d.items()})
+            
+            #update lables
+            ylab = ylab + ' (PV)'
+            title = title + ' (PV)'
+            legendTitle = 'Present Values'
         
         #=======================================================================
         # plot----
@@ -307,7 +339,7 @@ class CbaWrkr(RiskPlotr):
 
         # axis label setup
         fig.suptitle(title)
-        ax.set_ylabel(self.impact_units)
+        ax.set_ylabel(ylab)
         ax.set_xlabel('year')
         
         #=======================================================================
@@ -355,9 +387,6 @@ class CbaWrkr(RiskPlotr):
                                         where=pwhere, color=color, label=regionName,
                                          **styles)
             
-
- 
-            
         #=======================================================================
         # post format------
         #=======================================================================
@@ -369,7 +398,7 @@ class CbaWrkr(RiskPlotr):
             for k,v in calc_d.items():
                 val_str = val_str + '\n%s=%s'%(k,v)
         
-        self._postFmt(ax, val_str=val_str, xLocScale=0.8)
+        self._postFmt(ax, val_str=val_str, xLocScale=0.8, legendTitle=legendTitle)
         
         #assign tick formatter functions
 

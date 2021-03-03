@@ -684,7 +684,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # execute
         #=======================================================================
-        fig = wrkr.plot_cba()
+        fig = wrkr.plot_cba(presentVal = self.radioButton_cba_pv.isChecked())
         self.feedback.setProgress(80)
         self.output_fig(fig)
         self.feedback.setProgress(95)

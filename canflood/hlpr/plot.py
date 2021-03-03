@@ -168,6 +168,9 @@ class Plotr(ComWrkr):
         #spacing parameters
         matplotlib.rcParams['figure.autolayout'] = False #use tight layout
         
+        #legends
+        matplotlib.rcParams['legend.title_fontsize'] = 'large'
+        
         self.plt, self.matplotlib = plt, matplotlib
         
 
