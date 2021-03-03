@@ -119,6 +119,27 @@ class QprojPlug(Qcoms): #baseclass for plugins
     def launch(self): #placeholder for launching the dialog
         """allows children to customize what happens when called"""
         
+        #=======================================================================
+        # #customs
+        #=======================================================================
+        """
+        lets each dialog attach custom functions when they are launched
+            useful for automatically setting some dialog boxes
+            
+        could consider adding all of the above to this....
+        
+        prioritizinmg inheritanve over customs
+        """
+        for fName, f in self.launch_actions.items():
+            self.logger.info('atempting %s'%fName)
+            try:
+                f()
+            except Exception as e:
+                self.logger.warning('failed to execute \'%s\' w/ \n    %s'%(fName, e))
+        
+        #=======================================================================
+        # inherit from other tools
+        #=======================================================================
         #try and set the control file path from the session if there
         if os.path.exists(self.session.cf_fp):
             #set the control file path
@@ -142,19 +163,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
                 self.comboBox_JGfinv.setLayer(self.session.finv_vlay)
                 
                 
-        #customs
-        """
-        lets each dialog attach custom functions when they are launched
-            useful for automatically setting some dialog boxes
-            
-        could consider adding all of the above to this....
-        """
-        for fName, f in self.launch_actions.items():
-            self.logger.info('atempting %s'%fName)
-            try:
-                f()
-            except Exception as e:
-                self.logger.warning('failed to execute \'%s\' w/ \n    %s'%(fName, e))
+
         
         self.show()
         

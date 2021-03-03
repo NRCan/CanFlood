@@ -590,7 +590,7 @@ class Model(ComWrkr,
                     better to let the check with handles catch things
                     assert os.path.exists(fp), '%s.%s not found'%(sectName, varName)"""
                     if not os.path.exists(fp):
-                        log.debug('%s.%s got bad fp: %s'%(sectName, varName, fp))
+                        log.warning('%s.%s got bad fp: %s'%(sectName, varName, fp))
                 
                 #set it
                 res_d[sectName][varName]=fp

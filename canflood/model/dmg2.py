@@ -286,7 +286,7 @@ class Dmg2(Model, DFunc, Plotr):
             #force positives
             """ mitigation vaslue shifts bdmg_mitiS() especially can lead to negative values"""
             booldf = bres_df <0 #find negatives
-            if booldf.any():
+            if booldf.any().any():
                 log.warning('mitigation handles got %i (of %i) negative values... replacing with zeros'%(
                     booldf.sum().sum(), booldf.size))
                 
