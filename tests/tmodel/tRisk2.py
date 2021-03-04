@@ -96,8 +96,6 @@ class tRisk(tModel): #worker for testing the damage model
                 chk_df.sum().round(self.prec).values),  
                          msg='%s.%s failed to sum'%(dtag, self.name))
         
-        
-        
     def test_attrim(self,
                     dtag = 'attr03'):
         print('test_attrim on \'%s\''%self.name)
@@ -131,10 +129,6 @@ class tRisk(tModel): #worker for testing the damage model
                          msg='%s.%s failed to sum'%(self.name, dtag)
             )
         
-        
-
-        
-
 
 def gen_suite(    runpars_d={
 

@@ -107,14 +107,13 @@ def load_test_data(
     return d
 
 def get_suite(
-            suitePars_d, #build the tDmg testing suite from a set of paramters
+            suitePars_d, #build the tDmg testing suite from a set of paramters, {testName:model kwargs}
                 #any remaining pars will get passed to the model's init 
               testClassObj,
               dataLoad_pars={},
               absolute_fp=False,
               tdata_dir = None, #base directory for relative filepaths
-              **kwargsModel
-                ):
+              **kwargsModel):
 
 
     #===========================================================================
@@ -150,6 +149,7 @@ def get_suite(
         #=======================================================================
         # #setup the model to test
         #=======================================================================
+        """set up the model once for all tests"""
         Model = testClassObj.modelClassObj(cf_fp=cf_fp, 
                     out_dir=tempfile.mkdtemp(), #get a dummy temp directory
                     logger=mod_logger.getChild(testName), 
@@ -162,7 +162,9 @@ def get_suite(
         tdata_d = load_test_data(res_dir,dataLoad_pars=dataLoad_pars)
         
         #build a test for each mathing method in the class
+        
         for tMethodName in TestLoader().getTestCaseNames(testClassObj):
+            """inits the testClassObj each time"""
             suite.addTest(testClassObj(tMethodName, Model=Model, tdata_d=tdata_d))
 
     print('built suites')
