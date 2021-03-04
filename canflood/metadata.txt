@@ -5,12 +5,12 @@
 [general]
 name=CanFlood
 qgisMinimumVersion=3.10
-description=CanFlood is a flood risk modelling toolbox for Canada
-version=0.4
+description=Flood risk modelling toolbox
+version=1.0
 author=Seth Bryant
 email=david.sol@ibigroup.com
 
-about=This plugin contains 3 toolsets for modelling object-based flood risk in Canada: 1) 'Build' for preparing data; 2) 'Model' with 3 tiers of analyiss; and 3) 'Results' for viewing and anyalizing results.
+about=Provides a suite of tools for building, running, and analyzing simple flood risk models from typical asset and exposure data. Includes a tool for performing fragility calculations on dikes, downloading common flood vulnerability function libraries for buildings, and connecting to useful Canadian web-data. While the focus of the plugin is using depth-damage curves to estimate annualized flood risk from tangible building damages, the flexibility of the framework facilitates calculation of a wide-range of vulnerabilities from user-provided functions.
 
 tracker=https://github.com/IBIGroupCanWest/CanFlood/issues
 repository=https://github.com/IBIGroupCanWest/CanFlood
@@ -19,11 +19,11 @@ repository=https://github.com/IBIGroupCanWest/CanFlood
 # Recommended items:
 
 hasProcessingProvider=no
-# Uncomment the following line and add your changelog:
-# changelog=
+
+changelog=  v1.0 [2021-03] initial public release!
 
 # Tags are comma separated with spaces allowed
-tags=python, flood risk, risk
+tags=flood risk, dikes, levees, annualized loss, flood, model
 
 homepage=https://github.com/IBIGroupCanWest/CanFlood
 category=Plugins
@@ -39,8 +39,6 @@ deprecated=False
 # Check the documentation for more information.
 # plugin_dependencies=
 
-Category of the plugin: Raster, Vector, Database or Web
-# category=
 
 # If the plugin can run on QGIS Server.
 server=False
