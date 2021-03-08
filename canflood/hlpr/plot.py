@@ -131,7 +131,7 @@ class Plotr(ComWrkr):
 
         self.impactFmtFunc=impactFmtFunc
         
-        self.logger.info('init finished')
+        self.logger.debug('init finished')
         
         """call explicitly... sometimes we want lots of children who shouldnt call this
         self._init_plt()"""

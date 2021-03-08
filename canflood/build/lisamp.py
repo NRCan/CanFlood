@@ -130,6 +130,49 @@ class LikeSampler(Plotr, Qcoms):
             
         log.debug('finished w/ %i'%len(lpol_d))
         return lpol_d
+    
+    def load_lpols2(self, #loading fail polys where the names match
+                   lpol_dir,
+                   ext = '.gpkg', #files to include with matching extension
+                    providerLib='ogr',
+                    logger=None,
+                    **kwargs
+                   ):
+        """
+        mostly for testing... loads and links based on file name
+            (very picky input)
+        see load_lpols() for more flexible input
+        """
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log=logger.getChild('load_lpols')
+
+        assert os.path.exists(lpol_dir)
+        
+        #=======================================================================
+        # collect matching files
+        #=======================================================================
+        fps = [os.path.join(lpol_dir, e) for e in os.listdir(lpol_dir) if e.endswith(ext)]
+        
+        
+        log.info('on %i layers\n    %s'%(len(fps), fps))
+        
+        #=======================================================================
+        # loop and load
+        #=======================================================================
+        lpol_d = dict()
+        for fp in fps:
+            log.debug("on %s"%fp)
+            
+            ename=os.path.basename(fp).replace(ext, '')
+            #load it
+            lpol_d[ename] = self.load_vlay(fp, logger=log, providerLib=providerLib,
+                                           **kwargs)
+            
+        log.debug('finished w/ %i'%len(lpol_d))
+        return lpol_d
             
     def run(self, #sample conditional probability polygon 'lfield' values with finv geometry
             finv, #inventory layer
@@ -549,7 +592,8 @@ class LikeSampler(Plotr, Qcoms):
     
     def write_res(self, res_df,ofn=None, **kwargs):
         if ofn is None: ofn = 'exlikes_%s'%self.tag
-        return self.output_df(res_df, ofn,write_index=True, **kwargs)
+        self.out_fp= self.output_df(res_df, ofn,write_index=True, **kwargs)
+        return self.out_fp
     
     def update_cf(self, cf_fp=None): #configured control file updater
         if cf_fp is None: cf_fp=self.cf_fp

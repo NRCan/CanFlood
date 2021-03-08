@@ -271,6 +271,7 @@ class Model(ComWrkr,
         
         
     def init_model(self, #common inits for all model classes
+                   check_pars=True,
                    ):
         """
         should be called by the model's own 'setup()' func
@@ -301,21 +302,22 @@ class Model(ComWrkr,
         #=======================================================================
         # check against expectations
         #=======================================================================
-        errors = []
-        for chk_d, opt_f in ((self.exp_pars_md,False), (self.exp_pars_op,True)):
-            _, l = self.cf_chk_pars(self.pars, copy.copy(chk_d), optional=opt_f)
-            errors = errors + l
-            
-        #report on all the errors
-        for indxr, msg in enumerate(errors):
-            log.error('error %i: \n%s'%(indxr+1, msg))
-                    
+        if check_pars:
+            errors = []
+            for chk_d, opt_f in ((self.exp_pars_md,False), (self.exp_pars_op,True)):
+                _, l = self.cf_chk_pars(self.pars, copy.copy(chk_d), optional=opt_f)
+                errors = errors + l
                 
-        #final trip
-        """lets us loop through all the checks before failing"""
-        if not len(errors)==0:        
-            raise Error('failed to validate ControlFile w/ %i error(s)... see log'%len(errors))
-            
+            #report on all the errors
+            for indxr, msg in enumerate(errors):
+                log.error('error %i: \n%s'%(indxr+1, msg))
+                        
+                    
+            #final trip
+            """lets us loop through all the checks before failing"""
+            if not len(errors)==0:        
+                raise Error('failed to validate ControlFile w/ %i error(s)... see log'%len(errors))
+                
         #=======================================================================
         # attach control file parameter values
         #=======================================================================
@@ -326,10 +328,11 @@ class Model(ComWrkr,
         #=======================================================================
         # #check our validity tag
         #=======================================================================
-        if not self.valid_par is None:
-            if not getattr(self, self.valid_par):
-                raise Error('control file not validated for \'%s\'. please run InputValidator'%self.valid_par)
-            
+        if check_pars:
+            if not self.valid_par is None:
+                if not getattr(self, self.valid_par):
+                    raise Error('control file not validated for \'%s\'. please run InputValidator'%self.valid_par)
+                
         #wrap
         self.logger.debug('finished init_modelon Model')
         
@@ -623,6 +626,7 @@ class Model(ComWrkr,
     #===========================================================================
     def load_finv(self,#load asset inventory
                    fp = None,
+                   df_raw=None,
                    dtag = 'finv',
                    #finv_exp_d = None, #finv expeectations
                    ):
@@ -638,27 +642,37 @@ class Model(ComWrkr,
         cid = self.cid
         
         #======================================================================
-        # precehcsk
-        #======================================================================
-        assert os.path.exists(fp), '%s got invalid filepath \n    %s'%(dtag, fp)
-        #======================================================================
         # load it
         #======================================================================
-        df_raw = pd.read_csv(fp, index_col=None)
+        if df_raw is None:
+            assert os.path.exists(fp), '%s got invalid filepath \n    \'%s\''%(dtag, fp)
+
+            df_raw = pd.read_csv(fp, index_col=None)
+            
+            log.debug('got %s from %s'%(df_raw.shape, fp))
+            
+
+            assert cid in df_raw.columns, '%s missing index column \"%s\''%(dtag, cid)
+            
+
+            df_raw = df_raw.set_index(cid, drop=True)
+            
+        df = df_raw.sort_index(axis=0)
         
-        log.debug('got %s from %s'%(df_raw.shape, fp))
-        #======================================================================
-        # check it
-        #======================================================================
-        assert cid in df_raw.columns, '%s missing index column \"%s\''%(dtag, cid)
+        #=======================================================================
+        # set it 
+        #=======================================================================
+        self.set_finv(df)
+        self.data_d[dtag] = df
         
+        log.info('finished loading %s as %s'%(dtag, str(df.shape)))
         
-        #======================================================================
-        # clean it
-        #======================================================================
-        #df = df_raw
-        df = df_raw.set_index(cid, drop=True).sort_index(axis=0)
+        return 
         
+    def set_finv(self, df, #set some special values from the finv
+                 logger=None):
+        if logger is None: logger=self.logger
+        log=logger.getChild('set_finv')
         #======================================================================
         # post check
         #======================================================================
@@ -750,9 +764,7 @@ class Model(ComWrkr,
         self.asset_cnt = len(df) #used by risk plotters
         self.cindex = df.index.copy() #set this for checks later
         self.finv_cdf = cdf
-        self.data_d[dtag] = df
-        
-        log.info('finished loading %s as %s'%(dtag, str(df.shape)))
+
         """
         view(df)
         """
@@ -895,7 +907,6 @@ class Model(ComWrkr,
         
         #check logic against whether this model considers failure
         if self.exlikes == '': #no failure
-            
             assert len(aep_ser.unique())==len(aep_ser), \
             'got duplicated \'evals\' but no \'exlikes\' data was provided.. see logger'
         else:
@@ -910,6 +921,7 @@ class Model(ComWrkr,
         
     def load_expos(self,#generic exposure loader
                    fp = None,
+                   df_raw = None, #optional data 
                    dtag = 'expos',
                    check_monot=False, #whether to check monotonciy
                    logger=None,
@@ -936,23 +948,26 @@ class Model(ComWrkr,
         #=======================================================================
         assert 'finv' in self.data_d, 'call load_finv first'
         assert isinstance(self.cindex, pd.Index), 'bad cindex'
-        assert os.path.exists(fp), '%s got invalid filepath \n    %s'%(dtag, fp)
+        
         #======================================================================
         # load it
         #======================================================================
-        df_raw = pd.read_csv(fp, index_col=None)
+        if df_raw is None:
+            assert os.path.exists(fp), '%s got invalid filepath \n    %s'%(dtag, fp)
+            df_raw = pd.read_csv(fp, index_col=None)
+            
+            #======================================================================
+            # check raw data
+            #======================================================================
+            assert cid in df_raw.columns, '%s missing index column \"%s\''%(dtag, cid)
+            assert df_raw.columns.dtype.char == 'O','bad event names on %s'%dtag
         
-        #======================================================================
-        # check raw data
-        #======================================================================
-        assert cid in df_raw.columns, '%s missing index column \"%s\''%(dtag, cid)
-        assert df_raw.columns.dtype.char == 'O','bad event names on %s'%dtag
-        
-        #======================================================================
-        # clean it
-        #======================================================================
-        df = df_raw.set_index(cid, drop=True).sort_index(axis=1).sort_index(axis=0)
-        
+            #======================================================================
+            # clean it
+            #======================================================================
+            df_raw = df_raw.set_index(cid, drop=True)
+            
+        df = df_raw.sort_index(axis=1).sort_index(axis=0)
         #======================================================================
         # postcheck
         #======================================================================
@@ -963,7 +978,8 @@ class Model(ComWrkr,
         """
         #check cids
         miss_l = set(self.cindex).difference(df.index)
-        assert len(miss_l) == 0, 'some assets on %s not found in finv'%dtag
+        assert len(miss_l) == 0, '%i assets on %s not found in finv \n    %s'%(
+            len(miss_l), dtag, miss_l)
         
         #check events
 
@@ -1236,6 +1252,7 @@ class Model(ComWrkr,
         
     def load_gels(self,#loading expo data
                    fp = None,
+                   df_raw=None, #optional data
                    dtag = 'gels'):
         
         log = self.logger.getChild('load_gels')
@@ -1247,24 +1264,29 @@ class Model(ComWrkr,
         #======================================================================
         assert 'finv' in self.data_d, 'call load_finv first'
         assert isinstance(self.cindex, pd.Index), 'bad cindex'
-        assert os.path.exists(fp), '%s got invalid filepath \n    %s'%(dtag, fp)
+        
         assert not self.as_inun, 'loading ground els for as_inun =True is invalid'
+        
         #======================================================================
         # load it
         #======================================================================
-        df_raw = pd.read_csv(fp, index_col=None)
+        if df_raw is None:
+            assert os.path.exists(fp), '%s got invalid filepath \n    %s'%(dtag, fp)
+            df_raw = pd.read_csv(fp, index_col=None)
+            
+            #======================================================================
+            # check it
+            #======================================================================
+            assert cid in df_raw.columns, '%s missing index column \"%s\''%(dtag, cid)
+            assert len(df_raw.columns)==2, 'expected 1 column on gels, got %i'%len(df_raw.columns)
         
-        #======================================================================
-        # check it
-        #======================================================================
-        assert cid in df_raw.columns, '%s missing index column \"%s\''%(dtag, cid)
-        assert len(df_raw.columns)==2, 'expected 1 column on gels, got %i'%len(df_raw.columns)
-        
-        #======================================================================
-        # clean it
-        #======================================================================
-        #df = df_raw
-        df = df_raw.set_index(cid, drop=True).sort_index(axis=0)
+            #======================================================================
+            # clean it
+            #======================================================================
+            #df = df_raw
+            df_raw = df_raw.set_index(cid, drop=True)
+            
+        df = df_raw.sort_index(axis=0)
         
         df = df.rename(columns={df.columns[0]:'gels'}).round(self.prec)
         
@@ -3517,7 +3539,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         #=======================================================================
         # re-order
         #=======================================================================
-        log.info('finished w/ %s'%str(df2.shape))
+        log.debug('finished w/ %s'%str(df2.shape))
         
         ttl_df = df2.loc[:, sorted(df2.columns)].sort_values('ari', ascending=True)
         self.data_d['ttl'] = ttl_df.copy()

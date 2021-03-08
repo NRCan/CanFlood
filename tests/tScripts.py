@@ -113,7 +113,7 @@ def get_suite(
               dataLoad_pars={},
               absolute_fp=False,
               tdata_dir = None, #base directory for relative filepaths
-              **kwargsModel):
+              **kwargsModel): #common kwargs to send to model init
 
 
     #===========================================================================

@@ -90,7 +90,7 @@ class Rsamp(Plotr, Qcoms):
         self._init_plt() #setup matplotlib
         self._init_fmtFunc()
         
-        self.logger.info('Rsamp.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
+        self.logger.debug('Rsamp.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
 
                 
     def load_layers(self, #load data to project (for console runs)
@@ -1395,6 +1395,7 @@ class Rsamp(Plotr, Qcoms):
               names_d = None, #names conversion
               rname_l = None,
               res_name = None, #prefix for output name
+              write=True,
               ):
         
         log = self.logger.getChild('write_res')
@@ -1411,7 +1412,7 @@ class Rsamp(Plotr, Qcoms):
         #======================================================================
         assert os.path.exists(out_dir), 'bad out_dir'
         #======================================================================
-        # write data
+        # get
         #======================================================================
         #extract data
         df = vlay_get_fdf(vlay)
@@ -1429,6 +1430,11 @@ class Rsamp(Plotr, Qcoms):
             log.warning('failed to map %i raster layer names onto results: \n    %s'%(len(miss_l), miss_l))
         
         
+        #=======================================================================
+        # write
+        #=======================================================================
+        if not write: 
+            return df.set_index(self.cid, drop=True)
         out_fp = self.output_df(df, '%s.csv'%res_name, out_dir = out_dir, write_index=False)
         
         self.out_fp = out_fp

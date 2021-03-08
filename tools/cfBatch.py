@@ -767,6 +767,7 @@ class CFbatch(Runner): #handerl of batch CanFlood runs (build, model, results)
             # prepare----
             #=======================================================================
             wrkrPR = super(wrkr.baseClassConv_d['Preparor'], wrkr) #get a special worker
+            
             #copy the template
             cf_fp = wrkrPR.copy_cf_template(cf_src=os.path.join(base_dir, pars_d['cf_tmpl_fn']))
             
@@ -789,6 +790,7 @@ class CFbatch(Runner): #handerl of batch CanFlood runs (build, model, results)
             wrkrPR.set_cf_pars(new_pars_d)
     
             log.info('control file created: %s'%cf_fp)
+            
             #=======================================================================
             # convert_finv
             #=======================================================================

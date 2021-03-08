@@ -118,25 +118,41 @@ class Risk1(RiskModel):
         self.logger.debug('finished __init__ on Risk1')
         
         
-    def _setup(self): 
+    def _setup(self, 
+               data_d = dict(), #optional container with preloaded data
+               ): 
         """
         called by Dialog and standalones
         """
-        self.init_model()
+        #load the control file
+        if len(data_d)>0: 
+            check_pars=False
+        else:
+            check_pars=True
+        self.init_model(check_pars=check_pars)
+        
+        
         self.resname = 'risk1_%s_%s'%(self.tag, self.name)
-        #self.load_data()
+
         #======================================================================
         # load data files
         #======================================================================
-        self.load_finv()
-        self.load_evals()
-        self.load_expos(dtag='expos')
+        def get_data(k):
+            if k in data_d:
+                return {'df_raw':data_d[k]}
+            else:
+                return {}
+            
+            
+        self.load_finv(**get_data('finv'))
+        self.load_evals() #never pre-loaded
+        self.load_expos(dtag='expos', **get_data('expos'))
         
         if not self.exlikes == '':
-            self.load_exlikes()
+            self.load_exlikes( **get_data('exlikes'))
         
         if self.felv == 'ground':
-            self.load_gels()
+            self.load_gels( **get_data('gels'))
             self.add_gels()
         
 

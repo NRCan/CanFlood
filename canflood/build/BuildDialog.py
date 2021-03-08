@@ -688,7 +688,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
         wrkr = Preparor(**kwargs) 
         
-        out_fp = wrkr.finv_to_csv(self.finv_vlay, felv=self.comboBox_SSelv.currentText(),
+        _ = wrkr.finv_to_csv(self.finv_vlay, felv=self.comboBox_SSelv.currentText(),
                                    logger=self.logger)
 
         #try the curves
@@ -1197,14 +1197,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # assemble/prepare inputs
         #=======================================================================
         self.set_setup()
-        #tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
-        #finv_raw = self.comboBox_ivlay.currentLayer()
-
-        #=======================================================================
-        # cf_fp = self.get_cf_fp()
-        # out_dir = self.lineEdit_wdir.text()
-        # cid = self.mFieldComboBox_cid.currentField() #user selected field
-        #=======================================================================
+ 
         
         lfield = self.mFieldComboBox_LSfn.currentField()
         
@@ -1230,25 +1223,17 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             event_rels='indep'
         else:
             raise Error('button logic fail')
-            
  
-        
-
         #======================================================================
         # precheck
         #======================================================================
  
-                    
- 
-        
         if lfield is None or lfield=='':
             raise Error('must select a valid lfield')
- 
  
         #======================================================================
         # execute
         #======================================================================
-
         #build the sample
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
         wrkr = LikeSampler(**kwargs)

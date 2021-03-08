@@ -135,6 +135,7 @@ def gen_suite(
         #=======================================================================
         }
     ):
+    """testAll executes this function to collect the suites from this module"""
     
     return get_suite(runpars_d,
                       tDmg,

@@ -150,7 +150,7 @@ class Preparor(Model, Qcoms):
                     vlay,
                     felv='datum', #should probabl just leave this if none
                     cid=None, tag=None,
-                    logger=None,
+                    logger=None, write=True,
                     ):
         
         #=======================================================================
@@ -161,11 +161,11 @@ class Preparor(Model, Qcoms):
         
         if cid is None: cid=self.cid
         if tag is None: tag=self.tag
-        
+        self.felv = felv
         #=======================================================================
         # prechecks
         #=======================================================================
-        assert os.path.exists(self.cf_fp), 'bad cf_fp: %s'%self.cf_fp
+        
         assert vlay.crs()==self.qproj.crs(), 'finv CRS (%s) does not match projects (%s)'%(
             vlay.crs(), self.qproj.crs())
         
@@ -212,6 +212,11 @@ class Preparor(Model, Qcoms):
         self.check_finv(df, cid=cid, logger=log)
         self.feedback.upd_prog(50)
         
+        if not write: 
+            """mostly a skip for testing"""
+
+            return df
+        
         #=======================================================================
         # #write to file
         #=======================================================================
@@ -231,40 +236,46 @@ class Preparor(Model, Qcoms):
         df.to_csv(out_fp, index=True)  
         
         log.info("inventory csv written to file:\n    %s"%out_fp)
-        
+        assert os.path.exists(out_fp)
         self.feedback.upd_prog(80)
         #=======================================================================
         # write to control file
         #=======================================================================
-        assert os.path.exists(out_fp)
-        """
-        writing the filepath to the vector layer wont work...
-            often we're working with memory layers
-            the transition from spatial to non-spatial and back to spatial losses these connections
-        """
+        self.upd_cf_finv(out_fp)
         
+        self.feedback.upd_prog(99)
+        
+        
+        return out_fp
+    
+    def upd_cf_finv(self, out_fp):
+        
+        assert os.path.exists(self.cf_fp), 'bad cf_fp: %s'%self.cf_fp
+        
+        #=======================================================================
+        # """
+        # writing the filepath to the vector layer wont work...
+        #     often we're working with memory layers
+        #     the transition from spatial to non-spatial and back to spatial losses these connections
+        # """
+        # 
+        #=======================================================================
         self.set_cf_pars(
             {
             'dmg_fps':(
                 {'finv':out_fp}, 
-                '#\'finv\' file path set from BuildDialog.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                '#\'finv\' file path set from prepr.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
                 ),
             'parameters':(
-                {'cid':str(cid),
-                 'felv':felv},
+                {'cid':self.cid,
+                 'felv':self.felv},
                 ),
-            #===================================================================
-            # 'results_fps':(
-            #     {'finv_vlay_fp':0}
-            #     )
-            #===================================================================
+
              },
 
             )
-        
-        self.feedback.upd_prog(99)
-        
-        return out_fp
+    
+ 
             
     
     def to_finv(self, #clean a raw vlay an add some finv colums
