@@ -302,7 +302,7 @@ class WorkFlow_t(WorkFlow): #wrapper for test workflows
         log=logger.getChild('write_pick')
         
         if data is None: 
-            data={k:v for k,v in self.res_d.items() if k in self.tdata_keys}
+            data={k:self.res_d[k] for k in self.tdata_keys} #just get those required by the keys
         if ofp is None:
             ofp = os.path.join(self.session.pickel_dir, '%s.pickle'%self.name)
         
@@ -312,6 +312,9 @@ class WorkFlow_t(WorkFlow): #wrapper for test workflows
         #check data
         for k,v in data.items():
             assert not hasattr(v, 'crs'), k
+        
+
+            
         """
         data.keys()
         """
@@ -355,7 +358,7 @@ class WorkFlow_t(WorkFlow): #wrapper for test workflows
 class Tut1a_t(WorkFlow_t, Tut1a): #tutorial 1a
     
     #keys to include in test pickels
-    tdata_keys = ['finv', 'expos', 'evals', 'exlikes', 'r_ttl', 'eventypes', 'r_passet']
+    tdata_keys = ['finv', 'expos', 'evals', 'r_ttl', 'eventypes', 'r_passet']
 
         
 
@@ -373,13 +376,15 @@ if __name__ == '__main__':
     #===========================================================================
     # build test pickesl
     #===========================================================================
-    #ofp = wrkr.build_pickels(wFlow_l)
+    ofp = wrkr.build_pickels(wFlow_l)
     
     #===========================================================================
     # run tests
     #===========================================================================
-    suite = wrkr.get_tests(wFlow_l)
-    unittest.TextTestRunner(verbosity=3).run(suite)
+    #===========================================================================
+    # suite = wrkr.get_tests(wFlow_l)
+    # unittest.TextTestRunner(verbosity=3).run(suite)
+    #===========================================================================
     
     
      

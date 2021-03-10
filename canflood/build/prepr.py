@@ -46,6 +46,7 @@ class Preparor(Model, Qcoms):
 
     def __init__(self,**kwargs):
         
+        
         super().__init__(**kwargs)
 
         self.logger.debug('Preparor.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)

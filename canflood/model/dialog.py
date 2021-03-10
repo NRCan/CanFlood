@@ -52,12 +52,12 @@ assert os.path.exists(ui_fp)
 FORM_CLASS, _ = uic.loadUiType(ui_fp)
 
 
-class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,  
+class ModelDialog(QtWidgets.QDialog, FORM_CLASS,  
                        hlpr.plug.QprojPlug):
     
     def __init__(self, iface, parent=None, **kwargs):
         """Constructor."""
-        super(Modelling_Dialog, self).__init__(parent)
+        super(ModelDialog, self).__init__(parent)
 
         self.setupUi(self)
         

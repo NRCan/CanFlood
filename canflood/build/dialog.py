@@ -53,7 +53,7 @@ FORM_CLASS, _ = uic.loadUiType(ui_fp)
 # class objects-------
 #===============================================================================
 
-class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
+class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     
     event_name_set = [] #event names
     
@@ -66,7 +66,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         required"""
         
-        super(DataPrep_Dialog, self).__init__(parent) #only calls QtWidgets.QDialog
+        super(BuildDialog, self).__init__(parent) #only calls QtWidgets.QDialog
 
         #=======================================================================
         # attachments
@@ -91,7 +91,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         
         
-        self.logger.debug('DataPrep_Dialog initilized')
+        self.logger.debug('BuildDialog initilized')
         
 
     def connect_slots(self):
@@ -642,7 +642,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # get values
         #=======================================================================
-        self._set_setup()
+        self.set_setup(set_finv=False)
         curves_fp=self.lineEdit_curve.text()
  
         self.feedback.upd_prog(10)
@@ -668,7 +668,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
              },
             )
         
-        self.feedback.upd_prog(95)
+        #self.feedback.upd_prog(95)
         self.feedback.upd_prog(None)
         
     def store_finv(self): #aoi slice and convert the finv vector to csv file
@@ -909,7 +909,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         log = self.logger.getChild('run_rsamp')
         start = datetime.datetime.now()
         log.info('start \'run_rsamp\' at %s'%start)
-        self._set_setup()
+        self.set_setup()
         #=======================================================================
         # assemble/prepare inputs
         #=======================================================================
@@ -1105,7 +1105,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # assemble/prepare inputs
         #=======================================================================
-        self._set_setup()
+        self.set_setup()
  
         finv_raw = self.comboBox_ivlay.currentLayer()
         rlay = self.comboBox_dtm.currentLayer()
@@ -1171,7 +1171,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # add to map
         #======================================================================
         if self.checkBox_loadres.isChecked():
-            self._load_toCanvas(res_vlay, logger=log)
+            self._load_toCanvas(res_vlay)
             
         self.feedback.upd_prog(None) #set the progress bar back down to zero
         self.logger.push('dsamp finished')    

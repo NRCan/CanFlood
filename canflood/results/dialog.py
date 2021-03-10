@@ -35,7 +35,7 @@ assert os.path.exists(ui_fp)
 FORM_CLASS, _ = uic.loadUiType(ui_fp)
 
 
-class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
+class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     
     groupName = 'CanFlood.results'
     
@@ -43,7 +43,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     
     def __init__(self, iface, parent=None, **kwargs):
 
-        super(Results_Dialog, self).__init__(parent)
+        super(ResultsDialog, self).__init__(parent)
 
         self.setupUi(self)
         
@@ -52,7 +52,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.qproj_setup(iface=iface, **kwargs)
         self.connect_slots()
         
-        self.logger.debug('Results_Dialog init')
+        self.logger.debug('ResultsDialog init')
         
         
     def connect_slots(self): #connect your slots

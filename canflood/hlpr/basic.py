@@ -250,7 +250,7 @@ class ComWrkr(object): #common methods for all classes
         with open(cf_fp, 'w') as configfile:
             pars.write(configfile)
             
-        log.info('updated contyrol file w/ %i pars at :\n    %s'%(
+        log.info('updated control file w/ %i pars at :\n    %s'%(
             len(new_pars_d), cf_fp))
         
         return

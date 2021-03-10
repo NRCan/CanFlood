@@ -29,9 +29,9 @@ relative references seem to work in Qgis.. but IDE doesnt recognize
 from .hlpr.exceptions import QError as Error
 
 
-from .build.BuildDialog import DataPrep_Dialog
-from .model.ModelDialog import Modelling_Dialog
-from .results.ResultsDialog import Results_Dialog
+from build.dialog import BuildDialog
+from model.dialog import ModelDialog
+from results.dialog import ResultsDialog
 from .misc.wc import WebConnect
 from .misc.rfda import rfda_dialog
 from .misc.dikes.dialog import DikesDialog
@@ -63,9 +63,9 @@ class CanFlood:
         self.iface = iface
 
         # Create the dialog (after translation) and keep reference
-        self.dlg1 = DataPrep_Dialog(self.iface, session=self)
-        self.dlg2 = Modelling_Dialog(self.iface, session=self)
-        self.dlg3 = Results_Dialog(self.iface, session=self)
+        self.dlg1 = BuildDialog(self.iface, session=self)
+        self.dlg2 = ModelDialog(self.iface, session=self)
+        self.dlg3 = ResultsDialog(self.iface, session=self)
         
         self.dlg_rfda = rfda_dialog.rDialog(self.iface)
         self.dlg_dikes = DikesDialog(self.iface)
