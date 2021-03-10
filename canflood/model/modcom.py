@@ -565,59 +565,7 @@ class Model(ComWrkr,
     
 
 
-    def _par_hndl_chk(self, #check a parameter aginast provided handles
-                     sect, varnm, pval, achk_d,
-                     logger=None
-                     ):
-        
-        if logger is None: logger=self.logger
-        log = logger.getChild('par_hndl_chk')
-        
-        #=======================================================================
-        # precheck
-        #=======================================================================
-        assert not pval is None or pval == '', '%s.%s got none'%(sect, varnm)
-        
-        if achk_d is None:
-            log.warning('no checks provided for \'%s.%s\'... skipping'%(sect, varnm))
-            return
-        #==============================================================
-        # #check each handle
-        #==============================================================
-        for chk_hndl, hvals in achk_d.items():
-            
-            if chk_hndl is None:
-                pass
-            elif chk_hndl == 'type':
-                assert inspect.isclass(hvals)
-                assert isinstance(pval,hvals), '%s.%s expected %s got type: %s'%(sect, varnm, hvals, type(pval))
-                
-            elif chk_hndl == 'values':
-                assert isinstance(hvals, tuple), '%s.%s got bad type on hvals: %s'%(sect, varnm, type(hvals))
-                assert pval in hvals, '%s.%s unexpected value: \'%s\''%(sect, varnm, pval)
-            
-            elif chk_hndl == 'ext':
-                assert isinstance(pval, str), '%s.%s expected a filepath '%(sect, varnm)
-                if pval == '':
-                    raise Error('must provided a valid \'%s.%s\' filepath'%(sect, varnm))
-                assert os.path.exists(pval), '%s.%s passed invalid filepath: \'%s\''%(sect, varnm, pval)
-                
-                ext = os.path.splitext(os.path.split(pval)[1])[1]
 
-                
-                if isinstance(hvals, tuple):
-                    assert ext in hvals, '%s.%s  unrecognized extension: %s'%( sect, varnm, ext)
-                elif isinstance(hvals, str):
-                    assert ext == hvals, '%s.%s  unrecognized extension: %s'%( sect, varnm, ext)
-                else:
-                    raise Error('%s.%s bad hvals'%sect, varnm)
-                    
-            
-            else:
-                raise Error('unrecognized check handle: %s'%chk_hndl)
-            
-        log.debug('    \'%s.%s\' passed %i checks'%(sect, varnm, len(achk_d)))
-        return True
     
     def  _cf_relative(self, #convert filepaths from relative to absolute
                       cpars, #config parser
@@ -1935,6 +1883,59 @@ class Model(ComWrkr,
     #==========================================================================
     # VALIDATORS-----------
     #==========================================================================+
+    def _par_hndl_chk(self, #check a parameter aginast provided handles
+                     sect, varnm, pval, achk_d,
+                     logger=None
+                     ):
+        
+        if logger is None: logger=self.logger
+        log = logger.getChild('par_hndl_chk')
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert not pval is None or pval == '', '%s.%s got none'%(sect, varnm)
+        
+        if achk_d is None:
+            log.debug('no checks provided for \'%s.%s\'... skipping'%(sect, varnm))
+            return
+        #==============================================================
+        # #check each handle
+        #==============================================================
+        for chk_hndl, hvals in achk_d.items():
+            
+            if chk_hndl is None:
+                pass
+            elif chk_hndl == 'type':
+                assert inspect.isclass(hvals)
+                assert isinstance(pval,hvals), '%s.%s expected %s got type: %s'%(sect, varnm, hvals, type(pval))
+                
+            elif chk_hndl == 'values':
+                assert isinstance(hvals, tuple), '%s.%s got bad type on hvals: %s'%(sect, varnm, type(hvals))
+                assert pval in hvals, '%s.%s unexpected value: \'%s\''%(sect, varnm, pval)
+            
+            elif chk_hndl == 'ext':
+                assert isinstance(pval, str), '%s.%s expected a filepath '%(sect, varnm)
+                if pval == '':
+                    raise Error('must provided a valid \'%s.%s\' filepath'%(sect, varnm))
+                assert os.path.exists(pval), '%s.%s passed invalid filepath: \'%s\''%(sect, varnm, pval)
+                
+                ext = os.path.splitext(os.path.split(pval)[1])[1]
+
+                
+                if isinstance(hvals, tuple):
+                    assert ext in hvals, '%s.%s  unrecognized extension: %s'%( sect, varnm, ext)
+                elif isinstance(hvals, str):
+                    assert ext == hvals, '%s.%s  unrecognized extension: %s'%( sect, varnm, ext)
+                else:
+                    raise Error('%s.%s bad hvals'%sect, varnm)
+                    
+            
+            else:
+                raise Error('unrecognized check handle: %s'%chk_hndl)
+            
+        log.debug('    \'%s.%s\' passed %i checks'%(sect, varnm, len(achk_d)))
+        return True
     
     def _get_cf_miss(self, #collect mismatch between expectations and control file parameter presenece
                       cpars):

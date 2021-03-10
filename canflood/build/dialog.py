@@ -1409,7 +1409,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
             # #report on all the errors
             for indxr, msg in enumerate(errors):
-                log.error('%s error %i: \n%s'%(vtag, indxr+1, msg))
+                log.warning('%s error %i: \n%s'%(vtag, indxr+1, msg))
                 
             #===================================================================
             # update control file
