@@ -271,7 +271,7 @@ class Session_t(Session): #handle one test session
                 only 1 test method per TeestU for now"""
                 suite.addTest(runr.Test(tMethodName, runr=runr))
             
-            
+            runr.mstore.removeAllMapLayers()
         
         return suite
     
@@ -292,6 +292,8 @@ class Session_t(Session): #handle one test session
             runr = self._run_wflow(fWrkr, **kwargs)
             
             d[fWrkr.name] = runr.write_pick()
+            
+            runr.__exit__()
 
         log.info('finished on %i \n    %s'%(len(d), list(d.keys())))
         return d
@@ -400,6 +402,24 @@ wFlow_l = [Tut2a_t, Tut1a_t]
     
 
 if __name__ == '__main__':
+    
+    """
+    #===========================================================================
+    # INSTRUCTIONS: BUILDING TESTS
+    #===========================================================================
+    build a WorkFlow subclass of the workflow you want to test
+    
+    wrap it with a WorkFlow_t to add teh test methods
+    
+    run the session to build_pickels()
+    
+    #===========================================================================
+    # INSTRUCTIONS: RUNNING TESTS
+    #===========================================================================
+    
+    run the session to get_tests()
+    execute the test suite using TextTestRunner
+    """
     
     wrkr = Session_t()
     #===========================================================================
