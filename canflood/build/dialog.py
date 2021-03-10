@@ -668,7 +668,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
              },
             )
         
-        #self.feedback.upd_prog(95)
+        self.feedback.upd_prog(95)
         self.feedback.upd_prog(None)
         
     def store_finv(self): #aoi slice and convert the finv vector to csv file
@@ -794,24 +794,23 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         log = self.logger.getChild('run_rPrep')
         start = datetime.datetime.now()
         log.info('start \'run_rPrep\' at %s'%start)
-        tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
+ 
         
         
         
         #=======================================================================
         # assemble/prepare inputs
         #=======================================================================
+        self.set_setup(set_finv=False)
         rlayRaw_l = list(self.ras_dict.values())
-        out_dir = self.lineEdit_wdir.text()
-        
-        
+        aoi_vlay = self.aoi_vlay
+
         #raster prep parameters
-        aoi_vlay = self.comboBox_aoi.currentLayer()
         clip_rlays = self.checkBox_HS_clip.isChecked()
         allow_download = self.checkBox_HS_dpConv.isChecked()
         allow_rproj = self.checkBox_HS_rproj.isChecked()
         scaleFactor = self.doubleSpinBox_HS_sf.value()
-        
+
         
         #=======================================================================
         # precheck
@@ -822,9 +821,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             if not isinstance(rlay, QgsRasterLayer):
                 raise Error('unexpected type on raster layer')
             
-        
-        if not os.path.exists(out_dir):
-            raise Error('working directory does not exist:  %s'%out_dir)
+
         
         
         #raster prep checks
@@ -840,11 +837,8 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # execute
         #=======================================================================
-        wrkr = Rsamp(logger=self.logger, 
-                          tag = tag, #set by build_scenario() 
-                          feedback = self.feedback, #let the instance build its own feedback worker
-                          out_dir = out_dir
-                          )
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        wrkr = Rsamp(**kwargs)
         
 
         #execute the tool
@@ -865,29 +859,17 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         assert len(self.ras_dict)==0
             
             
-        #=======================================================================
-        # """adding the list of rasters to the canvas is crashing Qgis
-        # spent an hour and couldnt resolve
-        #=======================================================================
-
         if self.checkBox_loadres.isChecked():
-            log.debug('loading %i prepped raster results'%len(rlay_l))
 
-             
-
-            self.qproj.addMapLayers(rlay_l)
             for rlay in rlay_l:
                 assert isinstance(rlay, QgsRasterLayer)
-                #self.qproj.addMapLayer(rlay)
-                log.info('added \'%s\' to canvas'%rlay.name())
-                 
+                self._load_toCanvas(rlay, logger=log)
+
 
                 #update th erasterBox
                 self.ras_dict.update( { rlay.name() : rlay} )
                 self.listWidget_ras.addItem(str(rlay.name()))
 
-
-                 
         else:
             log.warning('prepped rasters not loaded to canvas!')
              
@@ -1383,14 +1365,14 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
         # collect form ui
         #======================================================================
-        tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
-        cf_fp = self.get_cf_fp() #get the control file path
+        self._set_setup()
         
         
         #===================================================================
         # setup validation worker
         #===================================================================
-        wrkr = Vali(cf_fp=cf_fp, logger=self.logger, out_dir=self.lineEdit_wdir.text(), tag=tag)
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        wrkr = Vali(**kwargs)
         
 
         #======================================================================
@@ -1431,7 +1413,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
             # #report on all the errors
             for indxr, msg in enumerate(errors):
-                log.error('%s error %i: \n%s'%(vtag, indxr+1, msg))
+                log.info('%s error %i: \n%s'%(vtag, indxr+1, msg))
                 
             #===================================================================
             # update control file
@@ -1461,15 +1443,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     #==========================================================================
     # HazardSampler Raster Box---------------
     #==========================================================================
-    #===========================================================================
-    # def _HS_comboAdd(self):
-    #     x = [str(self.listWidget_ras.item(i).text()) for i in range(self.listWidget_ras.count())]
-    #     self.ras_dict.update({ (self.comboBox_ras.currentText()) : (self.comboBox_ras.currentLayer()) })
-    #     if (self.comboBox_ras.currentText()) not in x:
-    #         self.listWidget_ras.addItem(self.comboBox_ras.currentText())
-    #         self.ras_dict.update({ (self.comboBox_ras.currentText()) : (self.comboBox_ras.currentLayer()) })
-    #     
-    #===========================================================================
+
     def _HS_clearBox(self):
         if len(self.ras_dict) > 0:
             self.listWidget_ras.clear()

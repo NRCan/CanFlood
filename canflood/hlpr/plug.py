@@ -508,7 +508,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
         self.crs = self.qproj.crs()
         self.crsid = self.crs.authid()
         
-        self.init_q_d =  {k:getattr(self, k) for k in self.q_hndls}
+        self._upd_qd() #update the q handles
         
             
     def _check_finv(self, logger=None): #check the finv and some paramter logic

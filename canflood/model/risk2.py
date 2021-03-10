@@ -108,8 +108,7 @@ class Risk2(RiskModel, #This inherits 'Model'
     def __init__(self,**kwargs):
         super().__init__(**kwargs) #initilzie Model
  
-        
-        self.resname = 'risk2_%s_%s'%(self.name, self.tag)
+
         
         self.dtag_d={**self.dtag_d,**{
             'dmgs':{'index_col':0},

@@ -398,7 +398,11 @@ class Model(ComWrkr,
         if hasattr(self, 'upd_impStyle'):
             self.upd_impStyle()
             self._init_fmtFunc()
-        #wrap
+            
+        self.resname = '%s_%s_%s'%(self.valid_par, self.name, self.tag)
+        #=======================================================================
+        # #wrap
+        #=======================================================================
         self.logger.debug('finished init_modelon Model')
         
         

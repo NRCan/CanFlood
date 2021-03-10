@@ -81,7 +81,7 @@ class Djoiner(Qcoms, Model):
         self.dtag_d={fp_attn:{'index_col':0},
                      'r_ttl':{'index_col':None}}
         
-        self.resname='%s_%s_%s'%(fp_attn, self.tag, self.name)
+        
         
         self.logger.debug('init finished')
         
@@ -90,6 +90,7 @@ class Djoiner(Qcoms, Model):
     def prep_model(self):
         #copy the raw over to the cleaned
         self.data_d[self.fp_attn] = self.raw_d[self.fp_attn]
+        self.resname='%s_%s_%s'%(self.fp_attn, self.tag, self.name)
         
 
 

@@ -105,7 +105,7 @@ class Dmg2(Model, DFunc, Plotr):
             'expos':{'index_col':0}
             }}
         
-        self.resname = 'dmgs_%s_%s'%(self.name, self.tag)
+        
         
         self.logger.debug('finished __init__ on Dmg2')
         

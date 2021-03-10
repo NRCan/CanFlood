@@ -97,7 +97,7 @@ class Vali(Qcoms):
         
       
         cpars = self.cpars
-        wrkr = modObj(self.cf_fp) #initilize it
+        wrkr = modObj(cf_fp = self.cf_fp) #initilize it
         #=======================================================================
         # check against expectations
         #=======================================================================

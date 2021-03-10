@@ -103,7 +103,7 @@ class Risk1(RiskModel):
             'expos':{'index_col':0}
             }}
         
-        self.resname = 'risk1_%s_%s'%(self.tag, self.name)
+
         
         self.logger.debug('finished __init__ on Risk1')
         
