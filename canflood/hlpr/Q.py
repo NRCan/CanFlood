@@ -2571,16 +2571,15 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
     
     def _in_out_checking(self,res_vlay,
                          ):
-        
         """placeholder"""
-        #===========================================================================
-        # setups and defaults
-        #===========================================================================
-        log = self.logger.getChild('_in_out_checking')
+        
+    def __exit__(self, #destructor
+                 *args,**kwargs):
+        
+        self.mstore.removeAllMapLayers()
+        
+        super().__exit__(*args,**kwargs) #initilzie teh baseclass
 
-
-            
-        return
     
 
 class MyFeedBackQ(QgsProcessingFeedback):

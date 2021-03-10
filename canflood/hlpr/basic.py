@@ -363,6 +363,10 @@ class ComWrkr(object): #common methods for all classes
         
         return out_fp
     
+    def __exit__(self, #destructor
+                 *args,**kwargs):
+        pass
+    
 
     
 

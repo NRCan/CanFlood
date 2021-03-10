@@ -288,6 +288,7 @@ class Model(ComWrkr,
     def setup_fromData(self, #setup the model from loaded data 
                       data,
                       logger=None,
+                      prep_kwargs={},
                       ):
         """typically for linked sessions"""
         
@@ -300,8 +301,20 @@ class Model(ComWrkr,
         #=======================================================================
         # #collect data
         #=======================================================================
-        self.raw_d = {k:v.copy() for k,v in data.items() if isinstance(v, pd.DataFrame) or isinstance(v, pd.Series)}
+        #everything but the layers
+        self.raw_d = {k:v.copy() for k,v in data.items() if not hasattr(v, 'crs')}
         
+        """
+        
+        self.raw_d.keys()
+        v = data['curves']
+        len(data['finv_vlay'])
+        data['finv_vlay'].crs()
+        
+        for k,v in data.items():
+            
+            print(k,hasattr(v, '__len__'),  type(v))
+        """
         #=======================================================================
         # #check requirements
         #=======================================================================
@@ -323,7 +336,7 @@ class Model(ComWrkr,
         
         log.info('loading w/ %i: %s'%(len(self.raw_d), self.raw_d.keys()))
         
-        self.prep_model()
+        self.prep_model(**prep_kwargs)
         return self
         
     #===========================================================================
@@ -666,9 +679,20 @@ class Model(ComWrkr,
             
             #check it
             assert os.path.exists(fp), '%s got pad filepath: \n    %s'%(dtag, fp)
-            df = pd.read_csv(fp, **d)
-            self.raw_d[dtag] = df
-            log.info('loaded \'%s\' w/ %s'%(dtag, str(df.shape)))
+            
+            #load by type
+            ext = os.path.splitext(fp)[1]
+            if ext == '.csv':
+                data = pd.read_csv(fp, **d)
+                log.info('loaded \'%s\' w/ %s'%(dtag, str(data.shape)))
+            elif ext == '.xls':
+                data = pd.read_excel(fp, **d)
+                log.info('loaded %s w/ %i sheets'%(dtag, len(data)))
+            else:
+                raise Error('unrecognized filetype: %s'%ext)
+                
+            self.raw_d[dtag] = data
+            
             
         #=======================================================================
         # wrap
@@ -962,6 +986,7 @@ class Model(ComWrkr,
 
     def _get_expos(self,#generic exposure-type data handling
                    dtag, log,
+                   event_slice=False, #allow the expolike data to pass MORE events than required 
                    check_monot=False, #whether to check monotonciy
                    ):
         
@@ -1003,28 +1028,45 @@ class Model(ComWrkr,
             len(miss_l), dtag, miss_l)
         
         #check events
+        
         if dtag == 'exlikes':
             miss_l = set(df.columns).difference(self.expcols)
         else:
             miss_l = set(self.expcols).symmetric_difference(df.columns)
             
-        """todo: allow dmg only runs to pass w/o evals"""
-        assert len(miss_l) == 0, '%i eventName mismatch on \'%s\' and \'evals\': \n    %s'%(
-            len(miss_l), dtag, miss_l)
+        if event_slice:
+            boolcol = df.columns.isin(self.expcols)
+            
+            assert boolcol.any(), 'no columns match'
+            if not boolcol.all():
+                log.warning('%s jonly passed %i (of %i) matching columns'%(
+                    dtag, boolcol.sum(), len(boolcol)))
+        else:
+            """todo: allow dmg only runs to pass w/o evals"""
+            assert len(miss_l) == 0, '%i eventName mismatch on \'%s\' and \'evals\': \n    %s'%(
+                len(miss_l), dtag, miss_l)
+            
+            boolcol = ~pd.Series(index=df.columns, dtype=bool) #all trues
         
+        
+
+            
+        #======================================================================
+        # slice
+        #======================================================================
+        df = df.loc[self.cindex,boolcol]
+        
+        
+        
+        #======================================================================
+        # postcheck2
+        #======================================================================
         
         #check dtype of columns
         for ename, chk_dtype in df.dtypes.items():
             assert np.issubdtype(chk_dtype, np.number), 'bad dtype %s.%s'%(dtag, ename)
             
-        #======================================================================
-        # slice
-        #======================================================================
-        df = df.loc[self.cindex,:]
-        
-        #======================================================================
-        # postcheck2
-        #======================================================================
+            
         booldf = df.isna()
         if booldf.any().any():
             """wsl nulls are left as such by build_depths()"""
@@ -1138,7 +1180,7 @@ class Model(ComWrkr,
         # defaults
         #=======================================================================
         if logger is None: logger=self.logger
-        log = logger.getChild('load_attrimat')
+        log = logger.getChild('set_attrimat')
         if dtag is None: dtag = self.attrdtag_in
  
         cid = self.cid
@@ -1192,9 +1234,12 @@ class Model(ComWrkr,
         #=======================================================================
         # set
         #=======================================================================
+        """Risk2 will remove this with promote_attrim()"""
+        assert not dtag in self.data_d
         self.data_d[dtag] = dxcol
 
-        log.info('finished loading %s as %s'%(dtag, str(dxcol.shape)))
+        log.info('finished setting %s as %s'%(dtag, str(dxcol.shape)))
+        return
   
     def _get_stats(self, df): #log stats of a frame
         

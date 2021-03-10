@@ -119,7 +119,9 @@ class Risk2(RiskModel, #This inherits 'Model'
         self.logger.debug('finished __init__ on Risk2')
         
         
-    def prep_model(self):
+    def prep_model(self,
+                   event_slice=False,
+                   ):
 
         if self.as_inun:
             raise Error('risk2 inundation percentage not implemented')
@@ -130,7 +132,7 @@ class Risk2(RiskModel, #This inherits 'Model'
         self.set_dmgs()
         
         if not self.exlikes == '':
-            self.set_exlikes()
+            self.set_exlikes(event_slice=event_slice)
 
             
         if self.attriMode:
@@ -143,7 +145,7 @@ class Risk2(RiskModel, #This inherits 'Model'
         
         self.logger.debug('finished  on Risk2')
         
-        return self
+        return
 
     def set_dmgs(self,#loading any exposure type data (expos, or exlikes)
 
@@ -238,7 +240,7 @@ class Risk2(RiskModel, #This inherits 'Model'
         
         self.data_d[dtag] = df
         
-        log.info('finished loading %s as %s'%(dtag, str(df.shape)))
+        log.info('finished building %s as %s'%(dtag, str(df.shape)))
 
 
     def promote_attrim(self, dtag=None): #add new index level

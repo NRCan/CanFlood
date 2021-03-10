@@ -60,9 +60,7 @@ class LikeSampler(Plotr, Qcoms):
                         
                          **kwargs)
         
-        #self.resname = 'exlikes_%s'%self.tag
-        self._init_plt() #setup matplotlib
-        self._init_fmtFunc()
+
         
     def load_layers(self, #load data to project (for standalone runs)
                     lpol_fp_d, #{event name:polygon filepath}
@@ -181,6 +179,7 @@ class LikeSampler(Plotr, Qcoms):
             lfield = 'p_fail', #field with likelihhood value
             
            event_rels=None, #ev calculation method
+                #WARNING: not necessaarily the same as the parameter used by RiskModel
                 #mutEx: assume each event is mutually exclusive (only one can happen)
                     #lower bound
                 #indep: assume each event is independent (failure of one does not influence the other)

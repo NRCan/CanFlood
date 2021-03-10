@@ -41,7 +41,7 @@ from hlpr.exceptions import Error
 # CF workers
 #===============================================================================
 from wFlow.scripts import Session, WorkFlow
-from wFlow.tutorials import Tut1a
+
 from model.riskcom import RiskModel
 
 
@@ -53,6 +53,9 @@ class RMwrkr(RiskModel):
 riskmodel = RiskModel()
 
 
+#===============================================================================
+# UNIT TESTS--------
+#===============================================================================
 class TestParent(unittest.TestCase): #unit test (one per test call)
     prec=4 #precision for some rounding tests
     
@@ -92,24 +95,25 @@ class TestParent(unittest.TestCase): #unit test (one per test call)
         #print('tearing down %s (%s) %s \n'%(self.__class__.__name__, self.Model.tag, self._testMethodName))
         pass
     
-    #===========================================================================
-    # tests-----
-    #===========================================================================
 
-class Test_wf(TestParent):
+
+class Test_wf_basic(TestParent):
     prec=4
     
     def _get_data(self, keys):
-        
+        """
+        keys passed NOT found in teh CALC set will be ignored
+        """
         #=======================================================================
         # get the data
         #=======================================================================
-        calc_d = {k:v for k,v in self.runr.res_d.items() if k in keys} #just calculated
+        calc_d = {k:v for k,v in self.runr.res_d.items() if k in keys} #requested keys from calc set
         test_d = self.runr.pick_d #test library 
         
         #=======================================================================
         # key check
         #=======================================================================
+        #check we have everything found in teh calc set in the test set
         miss_l = set(calc_d.keys()).difference(test_d.keys())
         assert len(miss_l)==0, 'missing keys: %s'%miss_l
         
@@ -183,7 +187,7 @@ class Test_wf(TestParent):
     def test_expos(self):
         self.logger.info('test_expos on %s'%self.name)
         #get the zipped checking data
-        chk_d = self._get_data(['expos', 'exlikes', 'r_passet'])
+        chk_d = self._get_data(['expos', 'exlikes', 'r_passet', 'gels'])
 
         #loop and compare each
         for k, (valC, valT) in chk_d.items():
@@ -191,7 +195,22 @@ class Test_wf(TestParent):
             assert len(valC.dtypes.unique())==1, 'got multiple dtypes'
             self._df_chks(valC, valT, nm)
 
-            
+class Test_wf_L2(Test_wf_basic): #tests for level 2 models
+    
+    def test_dmgs(self):
+        self.logger.info('test_dmgs on %s'%self.name)
+        #get the zipped checking data
+        chk_d = self._get_data(['dmgs'])
+
+        #loop and compare each
+        for k, (valC, valT) in chk_d.items():
+            nm = '%s.%s'%(self.name, k)
+            assert len(valC.dtypes.unique())==1, 'got multiple dtypes'
+            self._df_chks(valC, valT, nm)
+    
+#===============================================================================
+# TEST HANLDER--------
+#===============================================================================
 class Session_t(Session): #handle one test session 
     
     #===========================================================================
@@ -277,10 +296,13 @@ class Session_t(Session): #handle one test session
         log.info('finished on %i \n    %s'%(len(d), list(d.keys())))
         return d
     
+#===============================================================================
+# TEST WORKFLOWS----------
+#===============================================================================
 class WorkFlow_t(WorkFlow): #wrapper for test workflows
     
-    Test = Test_wf #unit test worker for this flow
-    prec = 4
+    Test = Test_wf_basic #unit test worker for this flow
+    
 
     def __init__(self,
 
@@ -355,18 +377,25 @@ class WorkFlow_t(WorkFlow): #wrapper for test workflows
         
         self.pick_d = data
             
+#===============================================================================
+# SPECIFIC TEST WORKFLOWS
+#===============================================================================
+from wFlow.tutorials import Tut1a, Tut2a
+
 class Tut1a_t(WorkFlow_t, Tut1a): #tutorial 1a
     
     #keys to include in test pickels
     tdata_keys = ['finv', 'expos', 'evals', 'r_ttl', 'eventypes', 'r_passet']
 
         
+class Tut2a_t(WorkFlow_t, Tut2a): #tutorial 1a
+    Test = Test_wf_L2
+    #keys to include in test pickels
+    tdata_keys = ['finv', 'expos', 'evals', 'r_ttl', 'eventypes', 'r_passet', 'gels', 'dmgs']
+        
 
         
-        
-
-        
-wFlow_l = [Tut1a_t]
+wFlow_l = [Tut2a_t, Tut1a_t]
     
     
 
@@ -376,15 +405,13 @@ if __name__ == '__main__':
     #===========================================================================
     # build test pickesl
     #===========================================================================
-    ofp = wrkr.build_pickels(wFlow_l)
+    #ofp = wrkr.build_pickels(wFlow_l)
     
     #===========================================================================
     # run tests
     #===========================================================================
-    #===========================================================================
-    # suite = wrkr.get_tests(wFlow_l)
-    # unittest.TextTestRunner(verbosity=3).run(suite)
-    #===========================================================================
+    suite = wrkr.get_tests(wFlow_l)
+    unittest.TextTestRunner(verbosity=3).run(suite)
     
     
      

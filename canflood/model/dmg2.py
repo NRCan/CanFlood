@@ -102,7 +102,8 @@ class Dmg2(Model, DFunc, Plotr):
         super().__init__(**kwargs) #initilzie Model
         
         self.dtag_d={**self.dtag_d,**{
-            'expos':{'index_col':0}
+            'expos':{'index_col':0},
+            'curves':{'sheet_name':None, 'header':None, 'index_col':None}
             }}
         
         
@@ -117,13 +118,13 @@ class Dmg2(Model, DFunc, Plotr):
         
         """evals are optional"""
         if not self.evals == '':
-            self.set_evals() #never pre-loaded
+            self.set_evals(check=False) #never pre-loaded
         else:
             self.expcols = pd.Series(dtype=np.object).index
             
         self.set_expos()
     
-        self.data_d['curves'] = pd.read_excel(self.curves, sheet_name=None, header=None, index_col=None)
+        #self.data_d['curves'] = pd.read_excel(self.curves, sheet_name=None, header=None, index_col=None)
         
         if self.felv == 'ground':
             self.set_gels()
@@ -134,7 +135,7 @@ class Dmg2(Model, DFunc, Plotr):
         self.build_exp_finv() #build the expanded finv
         self.build_depths()
         
-        self.setup_dfuncs(self.data_d['curves'])
+        self.setup_dfuncs(self.raw_d['curves'])
         
 
         #======================================================================
@@ -886,8 +887,6 @@ class Dmg2(Model, DFunc, Plotr):
         cid, bid = self.cid, self.bid
         fdf = self.data_d['finv']
         
-
-        
         
         #=======================================================================
         # duplicate onto cleaned columns and fill nulls
@@ -951,9 +950,17 @@ class Dmg2(Model, DFunc, Plotr):
         view(resC_df.round(self.prec))
         """
 
-        #set these for use later
-        self.res_df = res_df #needed for _rdf_smry
-        self.bdmgC_df = resC_df.round(self.prec)
+        #raw damages by bid
+        """output by output_bdmg()"""
+        self.res_df = res_df 
+        
+        #total damages by bid
+        """doesnt look like this isoutput anywhere"""
+        self.bdmgC_df = resC_df.round(self.prec) 
+        
+        #total damages by cid
+        """written by output_cdmg()
+        sent to control file as 'dmgs' in update_cf()"""
         self.cres_df = cres_df.loc[:, cres_df.sum(axis=0).sort_values(ascending=True).index] #set for plotting
         
         
@@ -1037,20 +1044,11 @@ class Dmg2(Model, DFunc, Plotr):
         df = cmeta_df.drop(['fcap', 'fscale', self.cid, self.bid], axis=1, errors='ignore').fillna(False)
         cm_df1  = df.groupby(gCn).sum().astype(np.int) #count all the trues
         
-        #=======================================================================
-        # for k, sdf in df.groupby(gCn):
-        #     print(k)
-        #=======================================================================
+
         #=======================================================================
         # progression summary
         #=======================================================================
-        """
-        view(cm_df1)
-        view(df.groupby(gCn).sum())
-        view(df)
-        view(events_df)
-        view(res_df)
-        """
+
         p_df = None
         for coln, cser in events_df.items():
             rser = res_df.loc[:, cser.values].sum(axis=0)
@@ -1060,10 +1058,7 @@ class Dmg2(Model, DFunc, Plotr):
                 p_df = rdf1
             else:
                 p_df = p_df.append(rdf1)
-            
 
-        
-        
         #=======================================================================
         # write results
         #=======================================================================

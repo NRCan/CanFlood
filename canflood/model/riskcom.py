@@ -337,6 +337,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             
            aep_ser,
            event_rels=None, #ev calculation method
+            #WARNING: not necessarily the same as the parameter used by LikeSampler
                 #max:  maximum expected value of impacts per asset from the duplicated events
                     #resolved damage = max(damage w/o fail, damage w/ fail * fail prob)
                     #default til 2020-12-30
