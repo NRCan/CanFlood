@@ -1355,18 +1355,14 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
     def run_validate(self):
         """only validating the text in the control file for now (not the data objects)
-        
-        
         """
-
-        log = self.logger.getChild('validator')
+        log = self.logger.getChild('run_validate')
         log.info('user pressed \'pushButton_Validate\'')
         
         #======================================================================
         # collect form ui
         #======================================================================
         self._set_setup()
-        
         
         #===================================================================
         # setup validation worker
@@ -1413,7 +1409,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
             # #report on all the errors
             for indxr, msg in enumerate(errors):
-                log.info('%s error %i: \n%s'%(vtag, indxr+1, msg))
+                log.error('%s error %i: \n%s'%(vtag, indxr+1, msg))
                 
             #===================================================================
             # update control file
@@ -1433,7 +1429,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         self.feedback.upd_prog(100)
         
-        log.push('passed %i (of %i) validations. see log'%(
+        log.push('passed %i (of %i) validations. see log for errors'%(
              np.array(list(res_d.values())).sum(), len(vpars_d)
              ))
         

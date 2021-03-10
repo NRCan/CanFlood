@@ -122,7 +122,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
 
     def launch(self): #placeholder for launching the dialog
         """allows children to customize what happens when called"""
-        
+        log = self.logger.getChild('launch')
         #=======================================================================
         # #customs
         #=======================================================================
@@ -135,11 +135,11 @@ class QprojPlug(Qcoms): #baseclass for plugins
         prioritizinmg inheritanve over customs
         """
         for fName, f in self.launch_actions.items():
-            self.logger.info('atempting %s'%fName)
+            log.debug('%s: %s'%(fName, f))
             try:
                 f()
             except Exception as e:
-                self.logger.warning('failed to execute \'%s\' w/ \n    %s'%(fName, e))
+                log.warning('failed to execute \'%s\' w/ \n    %s'%(fName, e))
         
         #=======================================================================
         # inherit from other tools

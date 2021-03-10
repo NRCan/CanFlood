@@ -51,10 +51,9 @@ class Vali(ComWrkr):
     valid_par = None #validation parmater for control file writing
     valid = False
 
-    def __init__(self,
-                  *args, **kwargs):
+    def __init__(self, **kwargs):
         
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
         
         #initlize the config parser
         if os.path.exists(self.cf_fp):
@@ -95,16 +94,12 @@ class Vali(ComWrkr):
                  modObj #model object to run check against
                  ):
         
-      
-        cpars = self.cpars
-        wrkr = modObj(cf_fp = self.cf_fp) #initilize it
+
+        wrkr = modObj(cf_fp = self.cf_fp, logger=self.logger) #initilize it
         #=======================================================================
         # check against expectations
         #=======================================================================
-        errors = []
-        for chk_d, opt_f in ((modObj.exp_pars_md,False), (modObj.exp_pars_op,True)):
-            _, l = wrkr.cf_chk_pars(cpars, copy.copy(chk_d), optional=opt_f)
-            errors = errors + l
+        errors = wrkr.validate(self.cpars)
             
         #record which validation prameter this referes to (for control file updating)
         self.valid_par = modObj.valid_par

@@ -362,10 +362,7 @@ class Model(ComWrkr,
         # check against expectations
         #=======================================================================
         if check_pars:
-            errors = []
-            for chk_d, opt_f in ((self.exp_pars_md,False), (self.exp_pars_op,True)):
-                _, l = self.cf_chk_pars(self.pars, copy.copy(chk_d), optional=opt_f)
-                errors = errors + l
+            errors = self._get_cf_miss(self.pars)
                 
             #report on all the errors
             for indxr, msg in enumerate(errors):
@@ -1937,7 +1934,37 @@ class Model(ComWrkr,
 
     #==========================================================================
     # VALIDATORS-----------
-    #==========================================================================
+    #==========================================================================+
+    
+    def _get_cf_miss(self, #collect mismatch between expectations and control file parameter presenece
+                      cpars):
+        
+        assert isinstance(cpars, configparser.ConfigParser)
+        errors = []
+
+        for chk_d, opt_f in ((self.exp_pars_md,False), (self.exp_pars_op,True)):
+            _, l = self.cf_chk_pars(cpars, copy.copy(chk_d), optional=opt_f)
+            errors = errors + l
+            
+        return errors
+                
+    def validate(self, #validate this model object
+                 cpars, #initilzied config parser
+                    #so a session can pass a control file... rather than usin gthe workers init
+                 logger=None,
+                 ):
+        if logger is None: logger=self.logger
+        
+        """only 1 check for now"""
+        #=======================================================================
+        # check the control file expectations
+        #=======================================================================
+        errors = self._get_cf_miss(cpars)
+        
+        
+        
+        return errors
+        
     def check_attrimat(self, #check the logic of the attrimat
                        atr_dxcol=None,
                        logger=None,

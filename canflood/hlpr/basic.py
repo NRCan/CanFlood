@@ -36,7 +36,7 @@ from hlpr.exceptions import QError as Error
 #==============================================================================
 class ComWrkr(object): #common methods for all classes
     
-    
+    name = None
     progressBar = None
     feedback = None
     
