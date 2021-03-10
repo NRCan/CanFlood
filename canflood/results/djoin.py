@@ -78,7 +78,8 @@ class Djoiner(Qcoms, Model):
         assert hasattr(self, fp_attn), 'bad dfp_attn: %s'%fp_attn
         self.fp_attn=fp_attn
         
-        self.dtag_d={fp_attn:{'index_col':0}}
+        self.dtag_d={fp_attn:{'index_col':0},
+                     'r_ttl':{'index_col':None}}
         
         self.resname='%s_%s_%s'%(fp_attn, self.tag, self.name)
         
@@ -206,13 +207,16 @@ class Djoiner(Qcoms, Model):
         # convert event probs
         #=======================================================================
         if not relabel is None: #aep to ari
-            attn = 'r_ttl'
-            #load the events data
-            assert hasattr(self, attn)
-            attv = getattr(self, attn)
-            assert not attv=='', 'passed empty %s filepath!'%attn
-            assert os.path.exists(attv), 'bad %s filepath: \'%s\''%(attn, attv)
-            rttl_df_raw = pd.read_csv(attv)
+            #===================================================================
+            # attn = 'r_ttl'
+            # #load the events data
+            # assert hasattr(self, attn)
+            # attv = getattr(self, attn)
+            # assert not attv=='', 'passed empty %s filepath!'%attn
+            # assert os.path.exists(attv), 'bad %s filepath: \'%s\''%(attn, attv)
+            # rttl_df_raw = pd.read_csv(attv)
+            #===================================================================
+            rttl_df_raw = self.raw_d['r_ttl']
             
             #drop the aep row
             rttl_df = rttl_df_raw.loc[np.invert(rttl_df_raw['note']=='integration'), :]

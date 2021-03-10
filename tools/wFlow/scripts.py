@@ -85,7 +85,7 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr): #handle one test session
         #=======================================================================
         # defaults
         #=======================================================================
-        if out_dir is None: out_dir = os.path.join(os.getcwd(), 'CanFlood', projName)
+        if out_dir is None: out_dir = os.path.join(os.path.expanduser('~'), 'CanFlood', projName)
         if logger is None: logger = basic_logger()
         
         #init the cascade 
@@ -128,7 +128,7 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr): #handle one test session
         
         #collect pars
         """similar to _get_wrkr().. but less flexible"""
-        for k in list(self.com_hndls) + ['init_plt_d', 'init_q_d']:
+        for k in list(self.com_hndls) + ['init_plt_d', 'init_q_d', 'write', 'base_dir', 'plot']:
             kwargs[k] = getattr(self, k)
 
         runr = WorkFlow(logger=log, session=self,**kwargs)

@@ -201,8 +201,7 @@ class Session_t(Session): #handle one test session
     # program vars
     #===========================================================================
     pickel_dir = r'tests\_data\all2\pickles' #folder with the pickes in it
-
-
+    
     def __init__(self,
                  **kwargs):
         
@@ -221,12 +220,7 @@ class Session_t(Session): #handle one test session
         self.pickel_dir = os.path.join(self.base_dir, self.pickel_dir)
         assert os.path.exists(self.pickel_dir), self.pickel_dir
 
-    #===========================================================================
-    # CHILD HANDLING--------
-    #===========================================================================
 
-
-     
     #==========================================================================
     # RUNNERS----------
     #==========================================================================
@@ -310,10 +304,17 @@ class WorkFlow_t(WorkFlow): #wrapper for test workflows
         if logger is None: logger=self.logger
         log=logger.getChild('write_pick')
         
-        if data is None: data=self.res_d
-        if ofp is None:ofp = os.path.join(self.session.pickel_dir, '%s.pickle'%self.name)
+        if data is None: 
+            data={k:v for k,v in self.res_d.items() if k in self.tdata_keys}
+        if ofp is None:
+            ofp = os.path.join(self.session.pickel_dir, '%s.pickle'%self.name)
         
         log.info('on %s'%type(data))
+        
+        
+        #check data
+        for k,v in data.items():
+            assert not hasattr(v, 'crs'), k
         """
         data.keys()
         """
@@ -345,7 +346,10 @@ class WorkFlow_t(WorkFlow): #wrapper for test workflows
         self.pick_d = data
             
 class Tut1a_t(WorkFlow_t, Tut1a): #tutorial 1a
-    pass
+    
+    #keys to include in test pickels
+    tdata_keys = ['finv', 'expos', 'evals', 'exlikes', 'r_ttl', 'eventypes', 'r_passet']
+
         
 
         
@@ -362,13 +366,15 @@ if __name__ == '__main__':
     #===========================================================================
     # build test pickesl
     #===========================================================================
-    #ofp = wrkr.build_pickels(wFlow_l)
+    ofp = wrkr.build_pickels(wFlow_l)
     
     #===========================================================================
     # run tests
     #===========================================================================
-    suite = wrkr.get_tests(wFlow_l)
-    unittest.TextTestRunner(verbosity=3).run(suite)
+    #===========================================================================
+    # suite = wrkr.get_tests(wFlow_l)
+    # unittest.TextTestRunner(verbosity=3).run(suite)
+    #===========================================================================
     
     
      
