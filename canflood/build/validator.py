@@ -31,14 +31,14 @@ import pandas as pd
 from hlpr.exceptions import QError as Error
     
 
-from hlpr.Q import Qcoms
+from hlpr.basic import ComWrkr
 """do we need the pyqgis handles?"""
 #from hlpr.basic import *
 
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Vali(Qcoms):
+class Vali(ComWrkr):
     """
     
     model validator worker
