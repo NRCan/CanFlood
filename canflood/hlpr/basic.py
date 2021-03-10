@@ -36,17 +36,18 @@ from hlpr.exceptions import QError as Error
 #==============================================================================
 class ComWrkr(object): #common methods for all classes
     
+    
     progressBar = None
     feedback = None
     
     absolute_fp=True
-    #mandatory keys for curves
+
     
     invalid_cids = ['fid', 'ogc_fid']
     
 
     def __init__(self, 
-                 tag='session', 
+                 tag='session', name='',
                  cid='xid', #default used by inventory constructors
                  
                  cf_fp='',
@@ -88,7 +89,7 @@ class ComWrkr(object): #common methods for all classes
         #======================================================================
         # attach
         #======================================================================
-        
+        self.name=name
         self.tag = tag
         self.cid = cid
         self.overwrite=overwrite

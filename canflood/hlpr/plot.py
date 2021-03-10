@@ -122,10 +122,12 @@ class Plotr(ComWrkr):
         
         #init matplotlib
         if len(init_plt_d)==0:
-            self._init_plt() #setup matplotlib
+            self.init_plt_d = self._init_plt() #setup matplotlib
         else:
             for k,v in init_plt_d.items():
                 setattr(self, k, v)
+                
+            self.init_plt_d = init_plt_d
         
         #impact formatting
 

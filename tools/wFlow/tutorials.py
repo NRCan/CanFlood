@@ -8,7 +8,7 @@ from wFlow.scripts import WorkFlow, Session
         
 class Tut1a(WorkFlow): #tutorial 1a
     name='tut1a'
-    crsid_default ='EPSG:3005'
+    crsid ='EPSG:3005'
     pars_d = {
             
             #data files

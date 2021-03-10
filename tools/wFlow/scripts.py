@@ -60,7 +60,7 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr): #handle one test session
     #===========================================================================
     # #CanFlood attributes   
     #===========================================================================
-    com_hndls = ('absolute_fp', 'overwrite', 'base_dir')
+    com_hndls = ('absolute_fp', 'overwrite')
     absolute_fp = True
 
     overwrite=True
@@ -79,11 +79,18 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr): #handle one test session
                  out_dir = None,
                  write=True, #whether to write results to file
                  plot=False, #whether to write plots to file
+                 logger=None,
                  **kwargs):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if out_dir is None: out_dir = os.path.join(os.getcwd(), 'CanFlood', projName)
+        if logger is None: logger = basic_logger()
         
         #init the cascade 
         """will need to pass some of these to children"""
-        super().__init__(logger = basic_logger(),
+        super().__init__(logger = logger,out_dir=out_dir,
                          **kwargs) #Qcoms -> ComWrkr
         
         #=======================================================================
@@ -98,91 +105,34 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr): #handle one test session
             base_dir = self.cf_dir
         self.base_dir=base_dir
 
-        
-        if out_dir is None: out_dir = os.path.join(os.getcwd(), 'CanFlood', self.projName)
-        self.out_dir = out_dir
-        #=======================================================================
-        # setup Qgis with some defaults
-        #=======================================================================
-        """CFWorkFlow calls will need their own CRS"""
-        self.ini_standalone()
-        
-        #=======================================================================
-        # setup matplotlib
-        #=======================================================================
-        self.init_plt_d = self._init_plt()
-        
 
     #===========================================================================
     # CHILD HANDLING--------
     #===========================================================================
-    def _init_child_q(self,  #handle the q setup on a child
-                      child,
-                      crs=None): 
-        
-        for k in self.qhandl_d:
-            setattr(child, k, getattr(self, k))
-        
-        child.set_crs(crs=crs) #load crs from crsid_default (should be passed by gen_suite)
-        
-        """
-        child.crs
-        """
-        assert child.qproj.crs().authid()==child.crsid_default
-            
-        return child
-    
-
-
-    def _init_child_pars(self, #pass attributes onto a child tool worker
-                         child,
-                         attn_l = None,
-                         ):
-        
-        if attn_l is None: attn_l = self.com_hndls
-        
-        for attn in attn_l:
-            assert hasattr(self, attn), attn
-            setattr(child, attn, getattr(self, attn))
-            
-        return child
-    
-    def _save_pick(self, data, ofn='.pickle',
-                   logger=None):
-        if logger is None: logger=self.logger
-        log=logger.getChild('_save_pick')
-        log.info('on %s'%type(data))
-        
-        ofp = os.path.join(self.pickel_dir, ofn)
-        
-        
-        """
-        data = data['finv_vlay']
-        out = self.createspatialindex(data, logger=log)
-        data= self.fixgeometries(data, logger=log)
-        
-        """
-        
-        with open(ofp, 'wb') as f:
-            # Pickle the 'data' dictionary using the highest protocol available.
-            pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
-            
-        log.info('wrote to %s'%ofp)
 
     def _run_wflow(self, #execute a single workflow 
                    WorkFlow, #workflow object to run
                    **kwargs):
         
         log = self.logger.getChild('r.%s'%WorkFlow.name)
+        
+        #=======================================================================
+        # update crs
+        #=======================================================================
+        if not WorkFlow.crsid == self.crsid:
+            self.set_crs(WorkFlow.crsid)
 
         #===================================================================
         # # init the flow 
         #===================================================================
+        
+        #collect pars
+        """similar to _get_wrkr().. but less flexible"""
+        for k in list(self.com_hndls) + ['init_plt_d', 'init_q_d']:
+            kwargs[k] = getattr(self, k)
 
         runr = WorkFlow(logger=log, session=self,**kwargs)
-        
-        self._init_child_pars(runr)
-        self._init_child_q(runr)
+
         #===================================================================
         # execute the flow
         #===================================================================
@@ -238,45 +188,49 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
     
     
     def __init__(self,
-
                  session=None,
-                 logger=None,
-
-         **kwargs):
+                 #init_q_d = {},
+                 **kwargs):
         
-        """
-        WARNING: all 'com_hndls' attributes will be overwritten by the tSession's caller
-        """
         #=======================================================================
-        # checks
+        # precheck
+        #=======================================================================
+        assert isinstance(self.name, str), 'must overwrite the \'name\' attribute with a subclass'
+        
+        #=======================================================================
+        # update q handles
         #=======================================================================
 
         
+        #=======================================================================
+        # init cascade
+        #=======================================================================
+
+        
+        super().__init__(out_dir=os.path.join(session.out_dir, self.name),
+                         tag = '%s'%datetime.datetime.now().strftime('%Y%m%d'),
+                         crsid=self.crsid, #overrwrite the default with your default
+                         
+                         **kwargs) #Session -> Qcoms -> ComWrkr
+                
+                
         #=======================================================================
         # attachments
         #=======================================================================
-
         self.session = session
-        self.logger=logger
-        self.write=session.write
-        self.plot = session.plot
         
         self.cf_tmpl_fp = os.path.join(self.session.base_dir, r'canflood\_pars\CanFlood_control_01.txt')
         assert os.path.exists(self.cf_tmpl_fp), self.cf_tmpl_fp
         
-        #setup the output directory
-        self.out_dir = os.path.join(self.session.out_dir, self.name)
-        if not os.path.exists(self.out_dir):os.makedirs(self.out_dir)
-        
-        self.tag = '%s'%datetime.datetime.now().strftime('%Y%m%d')
         
         self.com_hndls = list(session.com_hndls) +[
-            'crsid_default', 'out_dir', 'name', 'tag']
+            'out_dir', 'name', 'tag']
         
         self.data_d = dict() #empty container for data
         
-        self.mstore = QgsMapLayerStore() #build a new map store
         self.wrkr_d = dict() #container for loaded workers
+        
+
         
         #=======================================================================
         # checks
@@ -288,7 +242,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
     #===========================================================================
     def _get_wrkr(self, Worker,#check if the worker is loaded and return a setup worker
                   logger=None,
-                  initQ = True,
+
                   **kwargs
                   ): 
         if logger is None: logger=self.logger
@@ -305,13 +259,25 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         # start your own
         #=======================================================================
         else:
-            log.debug('building new worker')
-            if hasattr(Worker, '_init_plt'):
-                kwargs['init_plt_d'] = self.session.init_plt_d
-            wrkr = Worker(logger=logger, **kwargs)
-            self._init_child_pars(wrkr)
             
-            if hasattr(wrkr, 'set_crs'): self._init_child_q(wrkr)
+            
+            #collect common pars
+            for k in self.com_hndls:
+                kwargs[k] = getattr(self, k)
+            
+            #colect init pars
+            if hasattr(Worker, '_init_plt'): #plotters
+                kwargs['init_plt_d'] = self.init_plt_d
+            
+            if hasattr(Worker, '_init_standalone'): #Qgis
+                kwargs['init_q_d'] = self.init_q_d 
+                
+            if hasattr(Worker, 'init_model'): #models
+                kwargs['base_dir'] = self.base_dir
+                
+            log.debug('building %s w/ %s'%(Worker.__class__.__name__, kwargs))
+            wrkr = Worker(logger=logger, **kwargs)
+
 
         
         return wrkr
@@ -622,12 +588,13 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         # setup
         #=======================================================================
-        wrkr = self._get_wrkr(Risk1, initQ=False)
+        wrkr = self._get_wrkr(Risk1)
         
         #get control keys for this tool
         if rkwargs is None: rkwargs = self._get_kwargs(wrkr.__class__.__name__)
         
-        wrkr._setup(data_d=self.data_d) #setup w/ the pre-loaded data
+
+        wrkr.setup_fromData(self.data_d) #setup w/ the pre-loaded data
         
         #=======================================================================
         # execute
@@ -687,7 +654,8 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         wrkr = self._get_wrkr(Djoiner, fp_attn=dkey_tab)
         
-        wrkr.init_model()
+        """should load r_passet from the CF if not found"""
+        wrkr.setup_fromData(self.data_d) #setup w/ the pre-loaded data
         #=======================================================================
         # load the data
         #=======================================================================
@@ -697,20 +665,12 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
                                    )
         
         
-        df_raw = self._retrieve(dkey_tab,
-               f = lambda logger=None: wrkr.load_tab(fp_attn=dkey_tab, logger=logger)
-               )
-        """
-        self.data_d.keys()
-        """
-        #manipulate the raw data to be more like the loaded data
-        df = df_raw.reset_index(drop=False)
-        #df.columns = df.columns.astype(str)
+
         #=======================================================================
         # execute
         #=======================================================================
 
-        jvlay = wrkr.run(finv_vlay, df_raw=df, keep_fnl='all')
+        jvlay = wrkr.run(finv_vlay, keep_fnl='all')
         
         #=======================================================================
         # write result
@@ -759,7 +719,11 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         # event variables
         #=======================================================================
-        """passinng thse in prep_cf"""
+        """passing to control file in prep_cf()
+        loading here for linked runs"""
+        
+        res_d['evals'] = pd.read_csv(pars_d['evals'], **Preparor.dtag_d['evals'])
+        
         #=======================================================================
         # pfail
         #=======================================================================

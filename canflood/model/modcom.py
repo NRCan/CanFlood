@@ -132,7 +132,7 @@ class Model(ComWrkr,
     # parameters from control file
     #==========================================================================
     #[parameters]
-    name = ''
+    #name = '' #moved to COmWrkr
     cid = ''
     prec = 2
     ground_water = False
@@ -252,9 +252,6 @@ class Model(ComWrkr,
         self.cf_fp = cf_fp"""
         self.split_key= split_key 
         
- 
-
-        
         if base_dir is None:
             base_dir = os.path.split(cf_fp)[0]
         self.base_dir = base_dir
@@ -286,6 +283,47 @@ class Model(ComWrkr,
         
         self.prep_model() 
         
+        return self
+    
+    def setup_fromData(self, #setup the model from loaded data 
+                      data,
+                      logger=None,
+                      ):
+        """typically for linked sessions"""
+        
+        if logger is None: logger=self.logger
+        log = logger.getChild('setup')
+        
+        
+        self.init_model(check_pars=False)
+        
+        #=======================================================================
+        # #collect data
+        #=======================================================================
+        self.raw_d = {k:v.copy() for k,v in data.items() if isinstance(v, pd.DataFrame) or isinstance(v, pd.Series)}
+        
+        #=======================================================================
+        # #check requirements
+        #=======================================================================
+        """similar to the checks in init_model... but on the keys"""
+        #assemble requirements
+        req_dtags = list()
+        for k, d in self.exp_pars_md.items():
+            if k.endswith('_fps'):
+                req_dtags = req_dtags + list(d.keys())
+                
+        miss_l = set(req_dtags).difference(self.raw_d.keys())
+        if not len(miss_l)==0:
+            log.warning('missing %i: %s... loading from cf'%(len(miss_l), miss_l))
+            
+            self.load_df_ctrl({k:v for k,v in self.dtag_d.items() if k in miss_l})
+            
+            
+        """todo: load missing"""
+        
+        log.info('loading w/ %i: %s'%(len(self.raw_d), self.raw_d.keys()))
+        
+        self.prep_model()
         return self
         
     #===========================================================================
@@ -650,24 +688,26 @@ class Model(ComWrkr,
     # LOADERS------
     #===========================================================================
     def load_df_ctrl(self,#load raw data from control file
+                     dtag_d=None,
                       logger=None,
                       ): 
         #=======================================================================
         # default
         #=======================================================================
-        
+        if dtag_d is None: dtag_d=self.dtag_d
         if logger is None: logger=self.logger
         log=logger.getChild('load_df_cntrl')
         
         #=======================================================================
         # prechecks
         #=======================================================================
+        assert len(dtag_d)>0
         assert isinstance(self.pars, configparser.ConfigParser), 'did you init_model?'
         
         #=======================================================================
         # loop and load
         #=======================================================================
-        for dtag, d in self.dtag_d.items():
+        for dtag, d in dtag_d.items():
             #get from control file
             assert hasattr(self, dtag)
             fp = getattr(self, dtag)

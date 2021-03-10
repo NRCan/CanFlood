@@ -42,7 +42,7 @@ from hlpr.exceptions import Error
 #===============================================================================
 from wFlow.scripts import Session, WorkFlow
 from wFlow.tutorials import Tut1a
-from model.modcom import RiskModel
+from model.riskcom import RiskModel
 
 
 #===============================================================================

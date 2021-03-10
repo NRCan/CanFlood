@@ -102,7 +102,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                   #init controls
                  init_q_d = {}, #container of initilzied objects
                  
-                 crsid = 'EPSG:4326', #default crsID
+                 crsid = 'EPSG:4326', #default crsID if no init_q_d is passed
                  
                  **kwargs
                  ):
@@ -114,12 +114,21 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         QprojPlugs don't execute super cascade
         
         #=======================================================================
-        # standAlone use
+        # Qgis inheritance
         #=======================================================================
-        from hlpr.logr import basic_logger
-        mod_logger = basic_logger() 
+        for single standalone runs
+            all the handles will be generated and Qgis instanced
+            
+        for console runs
+            handles should be passed to avoid re-instancing Qgis
+            
+        for session standalone runs
+            handles passed
+            
+            for swapping crs
+                run set_crs() on the session prior to spawning the child
+            
 
-        wrkr = Qcoms(logger=mod_logger, tag=tag, out_dir=out_dir)
         
         
         """
@@ -141,6 +150,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             feedback = feedback, 
             **kwargs) #initilzie teh baseclass
         
+        log = self.logger
         #=======================================================================
         # attachments
         #=======================================================================
@@ -168,11 +178,13 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             #check everything is there
             miss_l = set(self.q_hndls).difference(init_q_d.keys())
             assert len(miss_l)==0, 'init_q_d missing handles: %s'%miss_l
-            
+                            
+            #set the handles
             for k,v in init_q_d.items():
                 setattr(self, k, v)
+
                 
-                
+        self._upd_qd()
         self.proj_checks()
         #=======================================================================
         # attach inputs
@@ -217,13 +229,16 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #=======================================================================
         # wrap
         #=======================================================================
-        self.init_q_d = {k:getattr(self, k) for k in self.q_hndls}
+        self._upd_qd()
         
 
         log.debug('Qproj._init_standalone finished')
         
         
         return
+    
+    def _upd_qd(self): #set a fresh parameter set
+        self.init_q_d = {k:getattr(self, k) for k in self.q_hndls}
     
     def init_qgis(self, #instantiate qgis
                   gui = False): 
@@ -302,7 +317,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         return
         
     def set_crs(self, #load, build, and set the project crs
-                authid =  None, #integer
+                crsid =  None, #integer
                 crs = None, #QgsCoordinateReferenceSystem
                 ):
         
@@ -311,11 +326,11 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #=======================================================================
         log = self.logger.getChild('set_crs')
         
-        if authid is None: 
-            authid = self.crsid
+        if crsid is None: 
+            crsid = self.crsid
         
         #=======================================================================
-        # if not isinstance(authid, int):
+        # if not isinstance(crsid, int):
         #     raise IOError('expected integer for crs')
         #=======================================================================
         
@@ -323,7 +338,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         # build it
         #=======================================================================
         if crs is None:
-            crs = QgsCoordinateReferenceSystem(authid)
+            crs = QgsCoordinateReferenceSystem(crsid)
 
         assert isinstance(crs, QgsCoordinateReferenceSystem)
         self.crs=crs #overwrite
@@ -335,11 +350,14 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         # attach to project
         #=======================================================================
         self.qproj.setCrs(self.crs)
+        self.crsid = self.crs.authid()
         
         if not self.qproj.crs().description() == self.crs.description():
             raise Error('qproj crs does not match sessions')
         
-        log.info('Session crs set to EPSG: %s, \'%s\''%(self.crs.authid(), self.crs.description()))
+        log.info('crs set to EPSG: %s, \'%s\''%(self.crs.authid(), self.crs.description()))
+        self._upd_qd()
+        self.proj_checks()
         
         return self.crs
            
@@ -369,6 +387,16 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         assert self.crs.authid() == self.crsid, 'crs mismatch'
         
         assert not self.crs.authid()=='', 'got empty CRS!'
+        
+        #=======================================================================
+        # handle checks
+        #=======================================================================
+        assert isinstance(self.init_q_d, dict)
+        miss_l = set(self.q_hndls).difference(self.init_q_d.keys())
+        assert len(miss_l)==0, 'init_q_d missing handles: %s'%miss_l
+        
+        for k,v in self.init_q_d.items():
+            assert getattr(self, k) == v, k
         
         log.info('project passed all checks')
         
