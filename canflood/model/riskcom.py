@@ -235,6 +235,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         return cplx_evn_d, cnt
 
     def set_ttl(self, # prep the raw results for plotting
+                tlRaw_df = None,
                  dtag='r_ttl',
                  logger=None,
                  ):
@@ -251,11 +252,11 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
  
         if logger is None: logger=self.logger
         log = logger.getChild('prep_ttl')
-        
+        if tlRaw_df is None: tlRaw_df = self.raw_d[dtag]
         #=======================================================================
         # precheck
         #=======================================================================
-        tlRaw_df = self.raw_d[dtag]
+        
         assert isinstance(tlRaw_df, pd.DataFrame)
  
         
@@ -321,7 +322,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         self.aep_df = df1.drop('note', axis=1)  #for checking
         self.data_d[dtag] = ttl_df.copy()
         
-        return 
+        return ttl_df
     
 
 

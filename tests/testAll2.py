@@ -80,6 +80,7 @@ class TestParent(unittest.TestCase): #unit test (one per test call)
 
         super().__init__(*args, **kwargs) #initilzie the baseclass cascade
         
+        self.logger = runr.logger.getChild('utest')
     #===========================================================================
     # expected handler methods---------
     #===========================================================================
@@ -139,7 +140,7 @@ class Test_wf(TestParent):
             
     
     def test_finv(self):
-        print('test_finv on %s'%self.name)
+        self.logger.info('test_finv on %s'%self.name)
         keys = ['finv']
         
         chk_d = self._get_data(keys) #get the zipped checking data
@@ -158,14 +159,12 @@ class Test_wf(TestParent):
         for k, (valC, valT) in chk_d.items():
             nm = '%s.%s'%(self.name, k)
             #clean these up
-            valC = riskmodel.prep_ttl(tlRaw_df=valC)
+            valC = riskmodel.set_ttl(tlRaw_df=valC)
             eadC = riskmodel.ead_tot
-            valT = riskmodel.prep_ttl(tlRaw_df=valT)
+            valT = riskmodel.set_ttl(tlRaw_df=valT)
             eadT = riskmodel.ead_tot
             
             self.assertEqual(eadC, eadT, msg= nm + 'ead mismatch')
-
-            
             self._df_chks(valC, valT, nm)
             
     def test_etypes(self):
@@ -182,7 +181,7 @@ class Test_wf(TestParent):
 
             
     def test_expos(self):
-        print('test_outs on %s'%self.name)
+        self.logger.info('test_expos on %s'%self.name)
         #get the zipped checking data
         chk_d = self._get_data(['expos', 'exlikes', 'r_passet'])
 
@@ -194,8 +193,6 @@ class Test_wf(TestParent):
 
             
 class Session_t(Session): #handle one test session 
-    
-
     
     #===========================================================================
     # program vars
@@ -338,9 +335,19 @@ class WorkFlow_t(WorkFlow): #wrapper for test workflows
             fp = os.path.join(self.session.pickel_dir, '%s.pickle'%self.name)
         
         assert os.path.exists(fp), 'got a bad pickel fp: %s'%fp
+        
+        #=======================================================================
+        # load
+        #=======================================================================
         with open(fp, 'rb') as f:
             data = pickle.load(f)
             
+        #=======================================================================
+        # check
+        #=======================================================================
+        assert isinstance(data, dict)
+        miss_l = set(self.tdata_keys).difference(data.keys())
+        assert len(miss_l)==0, 'pickle missing some required keys; %s'%miss_l
         log.info('got %i: %s'%(len(data), list(data.keys())))
         
         self.pick_d = data
@@ -366,15 +373,13 @@ if __name__ == '__main__':
     #===========================================================================
     # build test pickesl
     #===========================================================================
-    ofp = wrkr.build_pickels(wFlow_l)
+    #ofp = wrkr.build_pickels(wFlow_l)
     
     #===========================================================================
     # run tests
     #===========================================================================
-    #===========================================================================
-    # suite = wrkr.get_tests(wFlow_l)
-    # unittest.TextTestRunner(verbosity=3).run(suite)
-    #===========================================================================
+    suite = wrkr.get_tests(wFlow_l)
+    unittest.TextTestRunner(verbosity=3).run(suite)
     
     
      
