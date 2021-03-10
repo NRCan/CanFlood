@@ -108,7 +108,11 @@ class QprojPlug(Qcoms): #baseclass for plugins
             
         self.setup_feedback(progressBar = self.progressBar,
                             feedback = MyFeedBackQ())
+        
 
+        #set some dummies for children
+        self.qap = None #I dont think this ever gets referenced
+        self.algo_init=True
         #=======================================================================
         # default directories
         #=======================================================================
@@ -166,7 +170,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
 
         
         self.show()
-        
+
 
 
     
@@ -499,6 +503,13 @@ class QprojPlug(Qcoms): #baseclass for plugins
         #plot window
         if hasattr(self, 'radioButton_s_pltW'):
             self.plt_window = self.radioButton_s_pltW.isChecked()
+            
+        #qgis handles
+        self.crs = self.qproj.crs()
+        self.crsid = self.crs.authid()
+        
+        self.init_q_d =  {k:getattr(self, k) for k in self.q_hndls}
+        
             
     def _check_finv(self, logger=None): #check the finv and some paramter logic
         """

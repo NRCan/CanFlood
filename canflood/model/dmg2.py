@@ -94,41 +94,39 @@ class Dmg2(Model, DFunc, Plotr):
                     }
 
     
-    def __init__(self,
-                 cf_fp='',
-
-                 **kwargs
-                 ):
+    def __init__(self, **kwargs):
         
 
         
         #init the baseclass
-        super().__init__(cf_fp=cf_fp, **kwargs) #initilzie Model
-        self._init_plt() #setup matplotlib
+        super().__init__(**kwargs) #initilzie Model
+        
+        self.dtag_d={**self.dtag_d,**{
+            'expos':{'index_col':0}
+            }}
+        
+        self.resname = 'dmgs_%s_%s'%(self.name, self.tag)
         
         self.logger.debug('finished __init__ on Dmg2')
         
-    def _setup(self):
+    def prep_model(self):
         #======================================================================
         # setup funcs
         #======================================================================
-        self.init_model()
-        self.resname = 'dmgs_%s_%s'%(self.name, self.tag)
-        
-        self.load_finv()
+        self.set_finv()
         
         """evals are optional"""
         if not self.evals == '':
-            self.load_evals()
+            self.set_evals() #never pre-loaded
         else:
             self.expcols = pd.Series(dtype=np.object).index
             
-        self.load_expos()
+        self.set_expos()
     
         self.data_d['curves'] = pd.read_excel(self.curves, sheet_name=None, header=None, index_col=None)
         
         if self.felv == 'ground':
-            self.load_gels()
+            self.set_gels()
             self.add_gels()
         
 
@@ -138,13 +136,7 @@ class Dmg2(Model, DFunc, Plotr):
         
         self.setup_dfuncs(self.data_d['curves'])
         
-        #=======================================================================
-        # plot setup
-        #=======================================================================
-  
-        self.upd_impStyle() 
-        self._init_fmtFunc()
-        
+
         #======================================================================
         # checks
         #======================================================================
@@ -156,7 +148,7 @@ class Dmg2(Model, DFunc, Plotr):
         
         self.logger.debug('finished setup() on Dmg2')
         
-        return self
+        return 
          
     def setup_dfuncs(self, # build curve workers from loaded xlsx data
                  df_d, #{tab name: raw curve data

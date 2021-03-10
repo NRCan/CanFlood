@@ -72,28 +72,25 @@ class Attr(RiskPlotr):
         
         self.attriMode=True #always for this worker
         
+        self.dtag_d={'r_ttl':{'index_col':None},
+                     'r_passet':{'index_col':0},
+                     'eventypes':{'index_col':None},
+                     self.attrdtag_in:{'index_col':0, 'header':list(range(0,3))}}
+        
         self.logger.debug('%s.__init__ w/ feedback \'%s\''%(
             self.__class__.__name__, type(self.feedback).__name__))
         
-    def _setup(self):
-        log = self.logger.getChild('setup')
+    def prep_model(self):
+        log = self.logger.getChild('prep_model')
         
-        #load the control file
-        self.init_model()
-        self._init_plt()
+
         
-        #upldate your group plot style container
-        self.upd_impStyle()
-        self._init_fmtFunc()
+        self.set_ttl() #load and prep the total results
         
-        #load and prep the total results
-        _ = self.load_ttl(logger=log)
-        _ = self.prep_ttl(logger=log)
+        self.set_passet()
+        self.set_etypes()
         
-        self.load_passet()
-        self.load_etypes()
-        
-        self.load_attrimat(dxcol_lvls=3)
+        self.set_attrimat()
         
         #=======================================================================
         # attrim----
@@ -144,11 +141,9 @@ class Attr(RiskPlotr):
         log.debug('finished')
  
         
-        return self
-        
+        return 
 
-        
-    def load_passet(self, #load the per-asset results
+    def set_passet(self, #load the per-asset results
                    fp = None,
                    dtag = 'r_passet',
 
@@ -164,17 +159,16 @@ class Attr(RiskPlotr):
         if logger is None: logger=self.logger
         
         log = logger.getChild('load_passet')
-        if fp is None: fp = getattr(self, dtag)
-        cid = self.cid
+ 
         
         #=======================================================================
         # precheck
         #=======================================================================
-        assert os.path.exists(fp), 'bad filepath for per_asset results: %s'%fp
+
         #======================================================================
         # load it
         #======================================================================
-        df_raw = pd.read_csv(fp, index_col=0)
+        df_raw = self.raw_d[dtag]
         """
         df_raw.columns
         df.columns
@@ -215,7 +209,7 @@ class Attr(RiskPlotr):
         self.cindex = df.index.copy() #set this for checks later
         self.data_d[dtag] = df
         
-    def load_etypes(self,
+    def set_etypes(self,
                    fp = None,
                    dtag = 'eventypes',
 
@@ -230,15 +224,12 @@ class Attr(RiskPlotr):
         #=======================================================================
         if logger is None: logger=self.logger
         
-        log = logger.getChild('eventypes')
-        if fp is None: fp = getattr(self, dtag)
-        
-        assert os.path.exists(fp), 'bad filepath for eventypes: %s'%fp
-        
+        log = logger.getChild('set_etypes')
+
         #=======================================================================
         # load
         #=======================================================================
-        df_raw = pd.read_csv(fp, index_col=None)
+        df_raw = self.raw_d[dtag]
         
         #=======================================================================
         # check
@@ -259,13 +250,7 @@ class Attr(RiskPlotr):
         
         
         self.data_d[dtag] = df
-        
 
-        """
-        df_raw.columns
-        df.columns
-        """
-        
         
     def get_slice_noFail(self, #slice of noFail and fail
                          
@@ -301,7 +286,7 @@ class Attr(RiskPlotr):
         view(atr_dxcol)
         view(s1_dxcol)
         view(s1i_ttl)
-        self.data_d['ttl']
+
         view(self.data_d['r_passet'])
         """
         #multiply by impacts
@@ -527,7 +512,7 @@ class Attr(RiskPlotr):
         
         if plotTag is None: plotTag='%s byFail'%self.tag
         
-        if ttl_df is None: ttl_df=self.data_d['ttl'].copy()
+        if ttl_df is None: ttl_df=self.data_d['r_ttl'].copy()
         
         #slice default attributes
         if slice_impStyle_d is None: slice_impStyle_d=self.slice_impStyle_d

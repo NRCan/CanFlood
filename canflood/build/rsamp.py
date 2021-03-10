@@ -87,8 +87,7 @@ class Rsamp(Plotr, Qcoms):
         #flip the codes
         self.psmp_codes = dict(zip(self.psmp_codes.values(), self.psmp_codes.keys()))
         
-        self._init_plt() #setup matplotlib
-        self._init_fmtFunc()
+
         
         self.logger.debug('Rsamp.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
 
@@ -1429,17 +1428,17 @@ class Rsamp(Plotr, Qcoms):
         if len(miss_l)>0:
             log.warning('failed to map %i raster layer names onto results: \n    %s'%(len(miss_l), miss_l))
         
-        
+        df =  df.set_index(self.cid, drop=True)
         #=======================================================================
         # write
         #=======================================================================
         if not write: 
-            return df.set_index(self.cid, drop=True)
-        out_fp = self.output_df(df, '%s.csv'%res_name, out_dir = out_dir, write_index=False)
+            return df
+        out_fp = self.output_df(df, '%s.csv'%res_name, out_dir = out_dir, write_index=True)
         
         self.out_fp = out_fp
         
-        return 
+        return df
 
 
     def update_cf(self, cf_fp): #configured control file updater

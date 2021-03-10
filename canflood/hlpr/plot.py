@@ -45,7 +45,8 @@ class Plotr(ComWrkr):
     fillstyle = 'none'    #marker fill style
     impactfmt_str = '.2e'
         #',.0f' #Thousands separator
-
+        
+    impactFmtFunc = None
     
     #===========================================================================
     # controls
@@ -56,9 +57,7 @@ class Plotr(ComWrkr):
     # defaults
     #===========================================================================
     val_str='*default'
-    
-
-    
+        
     """values are dummies.. upd_impStyle will reset form attributes"""
     impStyle_d = {
             'color': 'black',
@@ -69,15 +68,15 @@ class Plotr(ComWrkr):
             'markersize':  4.0,
             'fillstyle': 'none' #marker fill style
                             }
-    
 
-    
     
     def __init__(self,
 
-                 name='Results',
+
                  impStyle_d=None,
-                   #labels
+                 
+                 #init controls
+                 init_plt_d = {}, #container of initilzied objects
  
                   #format controls
                   grid = True, logx = False, 
@@ -92,12 +91,12 @@ class Plotr(ComWrkr):
                     h_alpha = 0.1,
                     
                     impactFmtFunc=None, #function for formatting the impact results
-                        #TODO: clean up options for building this
+                        
                         #Option1: pass a raw function here
                         #Option2: pass function to init_fmtFunc
                         #Option3: use 'impactfmt_str' kwarg to have init_fmtFunc build
-                        #set by '_init_fmtFunc'
-                        #lambda x:'{:,.0f}'.format(x)   #(thousands separator)
+                            #default for 'Model' classes (see init_model)
+
 
                  **kwargs
                  ):
@@ -110,7 +109,7 @@ class Plotr(ComWrkr):
         #=======================================================================
         # attached passed        
         #=======================================================================
-        self.name = name #where are we using this?
+
         self.plotTag = self.tag #easier to store in methods this way
  
         self.grid    =grid
@@ -121,6 +120,18 @@ class Plotr(ComWrkr):
         self.h_color    =h_color
         self.h_alpha    =h_alpha
         
+        #init matplotlib
+        if len(init_plt_d)==0:
+            self._init_plt() #setup matplotlib
+        else:
+            for k,v in init_plt_d.items():
+                setattr(self, k, v)
+        
+        #impact formatting
+
+        self._init_fmtFunc(impactFmtFunc=impactFmtFunc)
+
+        
         """get the style handles
             setup to load from control file or passed explicitly"""
         if impStyle_d is None:
@@ -129,7 +140,7 @@ class Plotr(ComWrkr):
             self.impStyle_d=impStyle_d
             
 
-        self.impactFmtFunc=impactFmtFunc
+        
         
         self.logger.debug('init finished')
         
@@ -143,6 +154,8 @@ class Plotr(ComWrkr):
                   ):
         """
         calling this here so we get clean parameters each time the class is instanced
+        
+        
         """
 
         
@@ -174,29 +187,38 @@ class Plotr(ComWrkr):
         self.plt, self.matplotlib = plt, matplotlib
         
 
-        return self
+        return {'plt':plt, 'matplotlib':matplotlib}
     
     def _init_fmtFunc(self, #setup impact formatting from two options
                     impactFmtFunc=None, #raw function
                   impactfmt_str=None, #ALTERNATIVE: python formatting string for building function
                   ):
+        """
+        called during init with a callable
+        generally overwritten by init_model() (with impactfmt_str)
+        """
         
         #=======================================================================
         # defaults
         #=======================================================================
         """whatever was passed during construction.. usually None"""
-        if impactFmtFunc is None: impactFmtFunc=self.impactFmtFunc
-        if impactfmt_str is  None: impactfmt_str=self.impactfmt_str
+
         
-        assert isinstance(impactfmt_str, str)
         
-        if not callable(impactFmtFunc):
+        
+        
+        #get from string
+        if impactFmtFunc is None: 
+            if impactfmt_str is  None: impactfmt_str=self.impactfmt_str
+            assert isinstance(impactfmt_str, str)
             
             impactFmtFunc = lambda x, fmt=impactfmt_str:'{:>{fmt}}'.format(x, fmt=fmt)
             
+        
         self.impactFmtFunc=impactFmtFunc
         
         #check it
+        assert callable(self.impactFmtFunc)
         try:
             impactFmtFunc(1.2)
         except Exception as e:

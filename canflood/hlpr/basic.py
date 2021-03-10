@@ -97,7 +97,7 @@ class ComWrkr(object): #common methods for all classes
         self.prec = prec
         self.today_str = datetime.datetime.now().strftime('%Y-%m-%d %H:%M') #nice for labelling plots
         self.absolute_fp=absolute_fp
-        
+        self.cf_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__))) #'C:\\LS\\03_TOOLS\\CanFlood\\_git'
         #=======================================================================
         # feedback
         #=======================================================================

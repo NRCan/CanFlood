@@ -12,7 +12,7 @@ import os, copy
 from PyQt5 import uic, QtWidgets
 from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
 from qgis.core import QgsMapLayerProxyModel, QgsVectorLayer, QgsWkbTypes
-
+import pandas as pd
 #==============================================================================
 # custom imports
 #==============================================================================
@@ -291,6 +291,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             then pulling the data_fp from the gui"""
         data_fp = self.lineEdit_JG_resfp.text()
         assert os.path.exists(data_fp), 'passed invalid data_fp: %s'%data_fp
+        df_raw = pd.read_csv(data_fp, index_col=0)
         
         geo_vlay = self.comboBox_JGfinv.currentLayer()
         
@@ -308,17 +309,22 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # #setup
         #=======================================================================
-        kwargs = {attn:getattr(self, attn) for attn in ['logger', 'tag', 'cf_fp', 'out_dir', 'feedback']}
+        kwargs = {attn:getattr(self, attn) for attn in ['logger', 'tag', 'cf_fp', 
+                                            'out_dir', 'feedback', 'init_q_d']}
+        
         wrkr = results.djoin.Djoiner(**kwargs)
         
+        """shortened setup... loading the data here"""
         wrkr.init_model() #load teh control file
+        
         
         #=======================================================================
         # execute
         #=======================================================================
-        res_vlay = wrkr.run(geo_vlay, 
-                data_fp = data_fp,  relabel=relabel,
-                 keep_fnl='all', #todo: setup a dialog to allow user to select any of the fields
+
+        
+        res_vlay = wrkr.run(geo_vlay, relabel=relabel, df_raw=df_raw,
+                            keep_fnl='all', #todo: setup a dialog to allow user to select any of the fields
                  )
         
         self.feedback.setProgress(75)
@@ -352,7 +358,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.feedback.setProgress(5)
         #setup
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
-        wrkr = results.riskPlot.RiskPlotr(**kwargs)._setup()
+        wrkr = results.riskPlot.RiskPlotr(**kwargs).setup()
         
         self.feedback.setProgress(10)
 
@@ -393,7 +399,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # setup and load
         #=======================================================================
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
-        wrkr = results.attribution.Attr(**kwargs)._setup()
+        wrkr = results.attribution.Attr(**kwargs).setup()
         
         
         
@@ -438,7 +444,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # setup and load
         #=======================================================================
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
-        wrkr = results.attribution.Attr(**kwargs)._setup()
+        wrkr = results.attribution.Attr(**kwargs).setup()
         self.feedback.setProgress(10)
         
         si_ttl = wrkr.get_slice_noFail()
@@ -524,7 +530,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # init
         #=======================================================================
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
-        wrkr = results.compare.Cmpr(fps_d = fps_d,**kwargs)._setup()
+        wrkr = results.compare.Cmpr(fps_d = fps_d,**kwargs).setup()
     
         #load
         #sWrkr_d = wrkr.load_scenarios(list(fp_d.values()))
@@ -577,7 +583,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # init
         #=======================================================================
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
-        wrkr = results.compare.Cmpr(fps_d = fps_d,**kwargs)._setup()
+        wrkr = results.compare.Cmpr(fps_d = fps_d,**kwargs).setup()
         
         self.feedback.setProgress(50)
         #===========================================================================
@@ -631,7 +637,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # init
         #=======================================================================
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
-        wrkr = results.cba.CbaWrkr(**kwargs)._setup()
+        wrkr = results.cba.CbaWrkr(**kwargs).setup()
         
         self.feedback.setProgress(50)
         
@@ -677,7 +683,7 @@ class Results_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # init
         #=======================================================================
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
-        wrkr = results.cba.CbaWrkr(**kwargs)._setup()
+        wrkr = results.cba.CbaWrkr(**kwargs).setup()
         
         self.feedback.setProgress(50)
         

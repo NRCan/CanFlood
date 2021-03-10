@@ -30,7 +30,7 @@ import pandas as pd
 from hlpr.exceptions import QError as Error
 
 from hlpr.basic import view
-from model.modcom import RiskModel
+from model.riskcom import RiskModel
 #from hlpr.plot import Plotr
 
 #==============================================================================
@@ -67,86 +67,30 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
     # defaults
     #===========================================================================
 
-    def __init__(self,*args, **kwargs):
+    def __init__(self,**kwargs):
  
  
-        super().__init__(*args, **kwargs) #initilzie teh baseclass
+        super().__init__(**kwargs) #initilzie teh baseclass
+        
+        self.dtag_d={**self.dtag_d,**{
+            'r_ttl':{'index_col':None}}}
         
         self.logger.debug('%s.__init__ w/ feedback \'%s\''%(
             self.__class__.__name__, type(self.feedback).__name__))
 
         
-    def _setup(self):
+    def prep_model(self):
         """
         only calling for direct risk plotting calls
         parent classes should overwrite this"""
-        log = self.logger.getChild('setup')
+
         
-        
-        self.init_model() #load the control file
-        self._init_plt()
-        
-        #upldate your group plot style container
-        self.upd_impStyle()
-        self._init_fmtFunc()
-        
-        #load and prep the total results
-        _ = self.load_ttl(logger=log)
-        _ = self.prep_ttl(logger=log)
+        self.set_ttl() #load and prep the total results
         
         #set default plot text
         self._set_valstr()
- 
-
-   
         
-        return self
-    
-
-    def load_ttl(self,  #load a single raw ttl dataset
-                 fp=None, 
-                 logger=None): 
-        
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        if logger is None: logger=self.logger
-        log = logger.getChild('load_data')
-        if fp is None: fp=self.r_ttl
-        
-        #=======================================================================
-        # #precheck
-        #=======================================================================
-        assert isinstance(fp, str)
-        assert not fp=='', 'no \'r_ttl\' path provided'
-        assert os.path.exists(fp), 'bad \'r_ttl\' fp: %s'%fp
-        
-        #=======================================================================
-        # load
-        #=======================================================================
-        tlRaw_df = pd.read_csv(fp, index_col=None)
-        
-        #=======================================================================
-        # check
-        #=======================================================================
-        assert isinstance(tlRaw_df, pd.DataFrame)
-        
-        #check the column expectations
-        miss_l = set(self.exp_ttl_colns).difference(tlRaw_df.columns)
-        assert len(miss_l)==0
-
-        assert 'ead' in tlRaw_df.iloc[:,0].values, 'dmg_ser missing ead entry'
-        
-        #=======================================================================
-        # wrap
-        #=======================================================================
-        log.info('loaded %s from %s'%(str(tlRaw_df.shape), fp))
-        
-        self.tlRaw_df=tlRaw_df
-        
-        return tlRaw_df
-    
-
+        return 
 
     def plot_mRiskCurves(self, #single plot w/ risk curves from multiple scenarios
        

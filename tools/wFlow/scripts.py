@@ -24,6 +24,7 @@ from hlpr.logr import basic_logger
  
 from hlpr.exceptions import Error
 import hlpr.Q
+import hlpr.plot
 
 #===============================================================================
 # CF workers
@@ -42,7 +43,7 @@ from results.djoin import Djoiner
 # methods---------
 #===============================================================================
 
-class Session(hlpr.Q.Qcoms): #handle one test session 
+class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr): #handle one test session 
     
     #===========================================================================
     # #qgis attributes
@@ -94,7 +95,7 @@ class Session(hlpr.Q.Qcoms): #handle one test session
         
         if base_dir is None:
             """C:\\LS\\03_TOOLS\\CanFlood\\_git"""
-            base_dir = os.path.dirname(os.path.dirname(__file__))
+            base_dir = self.cf_dir
         self.base_dir=base_dir
 
         
@@ -105,6 +106,11 @@ class Session(hlpr.Q.Qcoms): #handle one test session
         #=======================================================================
         """CFWorkFlow calls will need their own CRS"""
         self.ini_standalone()
+        
+        #=======================================================================
+        # setup matplotlib
+        #=======================================================================
+        self.init_plt_d = self._init_plt()
         
 
     #===========================================================================
@@ -117,7 +123,6 @@ class Session(hlpr.Q.Qcoms): #handle one test session
         for k in self.qhandl_d:
             setattr(child, k, getattr(self, k))
         
-        
         child.set_crs(crs=crs) #load crs from crsid_default (should be passed by gen_suite)
         
         """
@@ -126,6 +131,8 @@ class Session(hlpr.Q.Qcoms): #handle one test session
         assert child.qproj.crs().authid()==child.crsid_default
             
         return child
+    
+
 
     def _init_child_pars(self, #pass attributes onto a child tool worker
                          child,
@@ -196,12 +203,14 @@ class Session(hlpr.Q.Qcoms): #handle one test session
         lets the user define their own methods for batching together workflows
         
         """
+        log=self.logger.getChild('r')
  
  
         rlib = dict()
         for fWrkr in wFLow_l:
             rlib[fWrkr.name] = self._run_wflow(fWrkr, **kwargs)
             
+        log.info('finished on %i: \n    %s'%(len(rlib), list(rlib.keys())))
         return rlib
             
 
@@ -280,6 +289,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
     def _get_wrkr(self, Worker,#check if the worker is loaded and return a setup worker
                   logger=None,
                   initQ = True,
+                  **kwargs
                   ): 
         if logger is None: logger=self.logger
         log = logger.getChild('get_wrkr')
@@ -296,9 +306,12 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         else:
             log.debug('building new worker')
-            wrkr = Worker(logger=logger)
+            if hasattr(Worker, '_init_plt'):
+                kwargs['init_plt_d'] = self.session.init_plt_d
+            wrkr = Worker(logger=logger, **kwargs)
             self._init_child_pars(wrkr)
-            if initQ: self._init_child_q(wrkr)
+            
+            if hasattr(wrkr, 'set_crs'): self._init_child_q(wrkr)
 
         
         return wrkr
@@ -316,6 +329,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         
         if dtag in self.data_d:
             data = self.data_d[dtag]
+            log.info('pulled \'%s\'=%s from data_d'%(dtag, type(data)))
         else:
             data = f(logger=log) #execute the method
             self.data_d[dtag] = data
@@ -640,10 +654,11 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         # wrap
         #=======================================================================
-        self.res_d['r_ttl'] = res_ttl
-        self.res_d['eventypes'] = wrkr.eventType_df
+        res_d = dict()
+        res_d['r_ttl'] = res_ttl
+        res_d['eventypes'] = wrkr.eventType_df
         if not res_df is None:
-            self.res_d['r_passet'] = res_df
+            res_d['r_passet'] = res_df
         
         """"
         wrkr.exlikes
@@ -653,15 +668,24 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         self.res_d.keys()
         self.com_hndls
         """
+        self.data_d = {**self.data_d, **res_d}
+        return res_d
 
-    def djoin(self, pars_d,
+    def djoin(self, pars_d=None,
                     logger=None,
-                    dkey='finv_vlay'):
-        
+                    dkey='finv_vlay',
+                    dkey_tab='r_passet'):
+        #=======================================================================
+        # defaults
+        #=======================================================================
         if logger is None: logger=self.logger
         log = logger.getChild('djoin')
+        if pars_d is None: pars_d = self.pars_d
         
-        wrkr = self._get_wrkr(Djoiner)
+        #=======================================================================
+        # setup
+        #=======================================================================
+        wrkr = self._get_wrkr(Djoiner, fp_attn=dkey_tab)
         
         wrkr.init_model()
         #=======================================================================
@@ -671,12 +695,22 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
                f = lambda logger=None: wrkr.load_vlay(
                    os.path.join(self.base_dir, pars_d['finv_fp']), logger=logger)
                                    )
-
+        
+        
+        df_raw = self._retrieve(dkey_tab,
+               f = lambda logger=None: wrkr.load_tab(fp_attn=dkey_tab, logger=logger)
+               )
+        """
+        self.data_d.keys()
+        """
+        #manipulate the raw data to be more like the loaded data
+        df = df_raw.reset_index(drop=False)
+        #df.columns = df.columns.astype(str)
         #=======================================================================
         # execute
         #=======================================================================
-        raise Error('need to separate out loaders')
-        jvlay = wrkr.run(finv_vlay, keep_fnl='all')
+
+        jvlay = wrkr.run(finv_vlay, df_raw=df, keep_fnl='all')
         
         #=======================================================================
         # write result
@@ -684,12 +718,9 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         if self.write:
             out_fp = wrkr.vlay_write(jvlay, logger=log)
             
-        else:
-            out_fp=''
-            
-        self.res_d['jvlay']
+
         
-        return
+        return {'jvlay':jvlay}
     #===========================================================================
     # TOOL BOXES-------
     #===========================================================================
@@ -740,12 +771,18 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         """no! were not using the controlf iles
         self.validate(pars_d, logger=log)"""
-        
+        """
+        self.data_d.keys()
+        res_d.keys()
+        res_d.values()
+        """
 
         #=======================================================================
         # #setup model runs
         #=======================================================================
-        self.data_d = res_d.copy()
+        for k,v in res_d.items():
+            assert isinstance(v, pd.DataFrame), 'bad type on \'%s\': %s'%(k, type(v))
+        self.data_d = {**res_d.copy(), **{'finv_vlay':self.data_d['finv_vlay']}}
         #self.mstore.removeAllMapLayers() 
         
         #add some dummies to the control file

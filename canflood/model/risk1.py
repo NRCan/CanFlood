@@ -27,11 +27,8 @@ import numpy as np
 mod_logger = logging.getLogger('risk1') #get the root logger
 
 from hlpr.exceptions import QError as Error
-
-#from hlpr.Q import *
-#from hlpr.basic import *
-#from results.riskPlot import Plotr
-from model.modcom import RiskModel
+ 
+from model.riskcom import RiskModel
 
 
 
@@ -80,6 +77,8 @@ class Risk1(RiskModel):
         
         }
     
+
+    
     #number of groups to epxect per prefix
     group_cnt = 2
     
@@ -97,77 +96,48 @@ class Risk1(RiskModel):
     
 
     
-    #==========================================================================
-    # plot controls
-    #==========================================================================
-    #===========================================================================
-    # plot_fmt = '{0:.0f}' #floats w/ 2 decimal
-    # y1lab = 'impacts'
-    #===========================================================================
-    
-    def __init__(self,
-                 cf_fp='',
-                 **kwargs
-                 ):
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs) #initilzie Model
         
-        #init the baseclass
-        super().__init__(cf_fp=cf_fp, **kwargs) #initilzie Model
-        self._init_plt() #setup matplotlib
+        self.dtag_d={**self.dtag_d,**{
+            'expos':{'index_col':0}
+            }}
         
+        self.resname = 'risk1_%s_%s'%(self.tag, self.name)
         
         self.logger.debug('finished __init__ on Risk1')
         
+
         
-    def _setup(self, 
-               data_d = dict(), #optional container with preloaded data
+        
+    def prep_model(self, #attach and prepare data for  model run
+
                ): 
         """
         called by Dialog and standalones
         """
-        #load the control file
-        if len(data_d)>0: 
-            check_pars=False
-        else:
-            check_pars=True
-        self.init_model(check_pars=check_pars)
-        
-        
-        self.resname = 'risk1_%s_%s'%(self.tag, self.name)
 
-        #======================================================================
-        # load data files
-        #======================================================================
-        def get_data(k):
-            if k in data_d:
-                return {'df_raw':data_d[k]}
-            else:
-                return {}
             
             
-        self.load_finv(**get_data('finv'))
-        self.load_evals() #never pre-loaded
-        self.load_expos(dtag='expos', **get_data('expos'))
+        self.set_finv()
+        self.set_evals() 
+        self.set_expos()
         
         if not self.exlikes == '':
-            self.load_exlikes( **get_data('exlikes'))
+            self.set_exlikes()
         
         if self.felv == 'ground':
-            self.load_gels( **get_data('gels'))
+            self.set_gels()
             self.add_gels()
         
 
         self.build_exp_finv() #build the expanded finv
         self.build_depths()
         
-        #activate plot styles
-        self.upd_impStyle() 
-        self._init_fmtFunc()
-        
-        
         
         self.logger.debug('finished setup_data on Risk1')
         
-        return self
+        return 
 
     def run(self,
             res_per_asset=False, #whether to generate results per asset

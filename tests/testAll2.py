@@ -40,8 +40,11 @@ from hlpr.exceptions import Error
 #===============================================================================
 # CF workers
 #===============================================================================
-from wFlow import Session, WorkFlow
+from wFlow.scripts import Session, WorkFlow
+from wFlow.tutorials import Tut1a
 from model.modcom import RiskModel
+
+
 #===============================================================================
 # methods---------
 #===============================================================================
@@ -289,7 +292,7 @@ class WorkFlow_t(WorkFlow): #wrapper for test workflows
     prec = 4
 
     def __init__(self,
-                 pdata_fp=None, #pickel data filepath
+
                  **kwargs):
 
         super().__init__( **kwargs) #initilzie the baseclass cascade
@@ -341,60 +344,15 @@ class WorkFlow_t(WorkFlow): #wrapper for test workflows
         
         self.pick_d = data
             
-        
+class Tut1a_t(WorkFlow_t, Tut1a): #tutorial 1a
+    pass
         
 
         
         
-        
-class WF_tut1a(WorkFlow_t): #tutorial 1a
-    name='tut1a'
-    crsid_default ='EPSG:3005'
-    pars_d = {
-            
-            #data files
-            'finv_fp':r'tutorials\1\finv_cT2b.gpkg',
-            'raster_dir':r'tutorials\1\haz_rast',
-            'evals_fp':r'tests\_data\all2\evals_4_tut1a.csv',
-            'lpol_dir':r'tutorials\1\haz_fpoly',
-            
-            #run controls
-            'felv':'datum', 'validate':'risk1'
-                    }
-    
-    tpars_d = {
-        'Risk1':{
-            'res_per_asset':True,
-            }
-        }
-    
-    
-    
-    def run(self,  #workflow for tutorial 1a
-
-              ):
-        log = self.logger.getChild('r')
-        
-        #build
-        self.res_d = self.tb_build(logger=log, fpoly=True)
-        
-        #model.risk1
-        self.risk1(logger=log)
-        
-        #results.djoin
-        
-        
-        
-        log.info('finished w/ %i'%len(self.res_d))
-        
-        """
-        self.res_d.keys()
-        self.data_d.keys()
-        """
-
 
         
-wFlow_l = [WF_tut1a]
+wFlow_l = [Tut1a_t]
     
     
 

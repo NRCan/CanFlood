@@ -42,24 +42,12 @@ from model.modcom import Model #for data checks
 # functions-------------------
 #==============================================================================
 class Preparor(Model, Qcoms):
-    """
 
-    
-    each time the user performs an action, 
-        a new instance of this should be spawned
-        this way all the user variables can be freshley pulled
-    """
-    
-    
 
-    def __init__(self,
-
-                  *args, **kwargs):
+    def __init__(self,**kwargs):
         
-        super().__init__(*args, **kwargs)
-        
+        super().__init__(**kwargs)
 
-        
         self.logger.debug('Preparor.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
         
         
@@ -246,7 +234,7 @@ class Preparor(Model, Qcoms):
         self.feedback.upd_prog(99)
         
         
-        return out_fp
+        return df
     
     def upd_cf_finv(self, out_fp):
         

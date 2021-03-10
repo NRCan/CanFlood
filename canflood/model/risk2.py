@@ -28,7 +28,7 @@ from hlpr.exceptions import QError as Error
 from hlpr.basic import view
 #from model.modcom import Model
 #from results.riskPlot import Plotr
-from model.modcom import RiskModel
+from model.riskcom import RiskModel
 #==============================================================================
 # functions----------------------
 #==============================================================================
@@ -102,60 +102,144 @@ class Risk2(RiskModel, #This inherits 'Model'
                     }
                 }
     
-    #==========================================================================
-    # plot controls----
-    #==========================================================================
-    plot_fmt = '{:,.0f}'
-    y1lab = 'impacts'
-    
-
-    
-    
-    def __init__(self,
-                 cf_fp='',
-                 **kwargs
-                 ):
-        
-        #init the baseclass
-        super().__init__(cf_fp=cf_fp, **kwargs) #initilzie Model
-        self._init_plt() #setup matplotlib
-        
-        self.logger.debug('finished __init__ on Risk')
-        
-        
-    def _setup(self):
-        #======================================================================
-        # setup funcs
-        #======================================================================
-        self.init_model() #mostly just attaching and checking parameters from file
+    #===========================================================================
+    # METHODS-------------
+    #===========================================================================
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs) #initilzie Model
+ 
         
         self.resname = 'risk2_%s_%s'%(self.name, self.tag)
         
+        self.dtag_d={**self.dtag_d,**{
+            'dmgs':{'index_col':0},
+            self.attrdtag_in:{'index_col':0, 'header':list(range(0,2))}
+            }}
+                
+                
+        self.logger.debug('finished __init__ on Risk2')
+        
+        
+    def prep_model(self):
+
         if self.as_inun:
             raise Error('risk2 inundation percentage not implemented')
         
         #data loaders
-        self.load_finv()
-        self.load_evals()
-        self.load_dmgs()
+        self.set_finv()
+        self.set_evals() 
+        self.set_dmgs()
         
         if not self.exlikes == '':
-            self.load_exlikes()
+            self.set_exlikes()
 
             
         if self.attriMode:
             """the control file parameter name changes depending on the model"""
-            self.load_attrimat(dxcol_lvls=2)
+            self.set_attrimat()
             self.promote_attrim()
         
         #activate plot styles
-        self.upd_impStyle() 
-        self._init_fmtFunc()
+
         
-        self.logger.debug('finished _setup() on Risk2')
+        self.logger.debug('finished  on Risk2')
         
         return self
+
+    def set_dmgs(self,#loading any exposure type data (expos, or exlikes)
+
+                   dtag = 'dmgs',
+                   check_monot=False, #whether to check monotonciy
+                   logger=None,
+                   ):
+        #======================================================================
+        # defaults
+        #======================================================================
+        if logger is None: logger=self.logger
         
+        log = logger.getChild('set_dmgs')
+ 
+        cid = self.cid
+        
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        
+        assert 'finv' in self.data_d, 'call load_finv first'
+        assert 'evals' in self.data_d, 'call load_evals first'
+        assert isinstance(self.expcols, pd.Index), 'bad expcols'
+        assert isinstance(self.cindex, pd.Index), 'bad cindex'
+ 
+        #======================================================================
+        # load it
+        #======================================================================
+        df_raw = self.raw_d[dtag]
+        
+        #======================================================================
+        # precheck
+        #======================================================================
+        assert df_raw.index.name == cid, 'expected \'%s\' index on %s'%(self.cid, dtag)
+ 
+        assert df_raw.columns.dtype.char == 'O','bad event names on %s'%dtag
+        
+
+        
+        #======================================================================
+        # clean it
+        #======================================================================
+        df = df_raw.copy()
+        
+        #drop dmg suffix
+        """2021-01-13: dropped the _dmg suffix during dmg2.run()
+        left this cleaning for backwards compatailibity"""
+        boolcol = df.columns.str.endswith('_dmg')
+        enm_l = df.columns[boolcol].str.replace('_dmg', '').tolist()
+        
+        ren_d = dict(zip(df.columns[boolcol].values, enm_l))
+        df = df.rename(columns=ren_d)
+        
+        #set new index
+ 
+        
+        #apply rounding
+        df = df.round(self.prec)
+        
+        #======================================================================
+        # postcheck
+        #======================================================================
+        #assert len(enm_l) > 1, 'failed to identify sufficient damage columns'
+        
+
+        #check cid index match
+        assert np.array_equal(self.cindex, df.index), \
+            'provided \'%s\' index (%i) does not match finv index (%i)'%(dtag, len(df), len(self.cindex))
+        
+        #check rEvents
+        miss_l = set(self.expcols).difference(df.columns)
+            
+        assert len(miss_l) == 0, '%i events on \'%s\' not found in aep_ser: \n    %s'%(
+            len(miss_l), dtag, miss_l)
+        
+        
+        #check dtype of columns
+        for ename, chk_dtype in df.dtypes.items():
+            assert np.issubdtype(chk_dtype, np.number), 'bad dtype %s.%s'%(dtag, ename)
+            
+        
+        #======================================================================
+        # postcheck2
+        #======================================================================
+        if check_monot:
+            self.check_monot(df, aep_ser = self.data_d['evals'])
+
+
+        #======================================================================
+        # set it
+        #======================================================================
+        
+        self.data_d[dtag] = df
+        
+        log.info('finished loading %s as %s'%(dtag, str(df.shape)))
 
 
     def promote_attrim(self, dtag=None): #add new index level

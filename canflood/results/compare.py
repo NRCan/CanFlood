@@ -60,15 +60,7 @@ class Cmpr(RiskPlotr):
         #=======================================================================
         self.fps_d = fps_d
         assert len(fps_d)>1, 'passed too few scnearios: %i'%len(fps_d)
-        #=======================================================================
-        # setup
-        #=======================================================================
-        self.init_model() #load the control file (style defaults)
-        self._init_plt()
-        
-        
-        self.upd_impStyle() #upldate your group plot style container
-        self._init_fmtFunc()
+
         #=======================================================================
         # wrap
         #=======================================================================
@@ -76,8 +68,9 @@ class Cmpr(RiskPlotr):
         self.logger.debug('%s.__init__ w/ feedback \'%s\''%(
             self.__class__.__name__, type(self.feedback).__name__))
     
-    def _setup(self):
+    def setup(self):
         """even though we only have one setup function... keeping this hear to match other workers"""
+        self.init_model() #attach control file
         _ = self.load_scenarios()
         return self
         
@@ -124,7 +117,7 @@ class Cmpr(RiskPlotr):
 
             # build/load the children
             sWrkr = Scenario(self, cf_fp=fp, absolute_fp=self.absolute_fp, 
-                             base_dir=os.path.dirname(fp), tag=tag)
+                             base_dir=os.path.dirname(fp), tag=tag).setup()
 
 
             # add to family
@@ -173,7 +166,7 @@ class Cmpr(RiskPlotr):
         for childName, sWrkr in sWrkr_d.items():
             log.debug('preping %s'%childName)
             plotPars_d[childName] = {
-                                    'ttl_df':sWrkr.data_d['ttl'],
+                                    'ttl_df':sWrkr.data_d['r_ttl'],
                                     'ead_tot':sWrkr.ead_tot,
                                     'impStyle_d':sWrkr.impStyle_d.copy(),
                                     }
@@ -266,7 +259,7 @@ class Cmpr(RiskPlotr):
         mdf = None
         ead_d = dict()
         for childName, sWrkr in sWrkr_d.items():
-            dfi_raw = sWrkr.data_d['ttl'].copy()  #set by prep_ttl() 
+            dfi_raw = sWrkr.data_d['r_ttl'].copy()  #set by prep_ttl() 
             dfi = dfi_raw.loc[:, 'impacts'].rename(childName).astype(float).to_frame()
             
             ead_d[childName] = sWrkr.ead_tot
@@ -308,7 +301,7 @@ class Cmpr(RiskPlotr):
             cttl_df = cttl_df.loc[:, l]
             
             #add the ead row at the bottom
-            cWrkr.data_d['ttl'] = cttl_df.append(pd.Series({
+            cWrkr.data_d['r_ttl'] = cttl_df.append(pd.Series({
                 'aep':'ead', 'note':'integration', 'plot':False, self.impact_name:sum(ead_d.values())
                 }), ignore_index=True)
             
@@ -320,8 +313,8 @@ class Cmpr(RiskPlotr):
             bx = dfi_raw['note']=='impact_sum'
             cttl_df = dfi_raw.loc[bx, 'aep'].to_frame().join(pd.Series(mdf[bx].sum(axis=1), name='impacts'))
             
-            cWrkr.data_d['ttl'] = dfi_raw #set this for pulling handles
-            cWrkr.data_d['ttl'], ead_tot = cWrkr.get_ttl(cttl_df, logger=log,
+            cWrkr.data_d['r_ttl'] = dfi_raw #set this for pulling handles
+            cWrkr.data_d['r_ttl'], ead_tot = cWrkr.get_ttl(cttl_df, logger=log,
                                                  cols_include=['note', 'plot'])"""
             
 
@@ -405,7 +398,7 @@ class Scenario(RiskPlotr): #simple class for a scenario
     """
     
     out_funcs_d = { #data tag:function that outputs it
-        'ttl':'output_ttl'
+        'r_ttl':'output_ttl'
         }
 
     
@@ -425,26 +418,22 @@ class Scenario(RiskPlotr): #simple class for a scenario
         TODO: clean this up"""
         #self.nameRaw = nameRaw 
         self.parent=parent
-        #=======================================================================
-        # loaders
-        #=======================================================================
-        self.init_model()
-        self.upd_impStyle() #update plot style dict w/ parameters from control file
-        
-        """note these also store on the instance"""
-        assert os.path.exists(self.r_ttl), '%s got bad \'r_ttl\': %s'%(self.name, self.r_ttl)
-        tlRaw_df = self.load_ttl()
-        ttl_df = self.prep_ttl(tlRaw_df)
-        
-        """
-        view(self.data_d['ttl'])
-        self.
-        """
-        
-        #=======================================================================
-        # wrap
-        #=======================================================================
         log.info('finished _init_')
+        
+#===============================================================================
+#     def prep_model(self):
+# 
+#         
+#         """note these also store on the instance"""
+#         assert os.path.exists(self.r_ttl), '%s got bad \'r_ttl\': %s'%(self.name, self.r_ttl)
+#         tlRaw_df = self.load_ttl()
+#         ttl_df = self.prep_ttl(tlRaw_df)
+#  
+#         #=======================================================================
+#         # wrap
+#         #=======================================================================
+#===============================================================================
+        
         
     def copy(self,
              name = None,

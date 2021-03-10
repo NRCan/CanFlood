@@ -24,13 +24,10 @@ from qgis.core import QgsMapLayerProxyModel, QgsVectorLayer
 #from qgis.analysis import *
 import qgis.utils
 import processing
-from processing.core.Processing import Processing
-
 
 
 import numpy as np
 import pandas as pd
-
 
 
 #==============================================================================
@@ -165,7 +162,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         # setup/execute
         #=======================================================================
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
-        model = Risk1(upd_cf = self.checkBox_SS_updCf.isChecked(), **kwargs)._setup()
+        model = Risk1(upd_cf = self.checkBox_SS_updCf.isChecked(), **kwargs).setup()
         
         res_ttl, res_df = model.run(res_per_asset=self.checkBox_r1_rpa.isChecked())
         
@@ -214,7 +211,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
         model = Dmg2(attriMode=self.checkBox_SS_attr.isChecked(),
                      upd_cf = self.checkBox_SS_updCf.isChecked(),**kwargs
-                     )._setup()
+                     ).setup()
                      
         self.feedback.setProgress(5)
         
@@ -297,7 +294,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
         model = Risk2(attriMode=self.checkBox_SS_attr.isChecked(),
                       upd_cf = self.checkBox_SS_updCf.isChecked(),**kwargs
-                      )._setup()
+                      ).setup()
         
         res_ttl, res_df = model.run(res_per_asset=self.checkBox_r2rpa.isChecked())
         
@@ -341,15 +338,16 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
     
     def _risk_plots(self,model, res_ttl,d):
         
-        ttl_df = None
+        #prep the data for plotting
+        model.raw_d['r_ttl'] = res_ttl.copy()
+        model.set_ttl()
+        
+        #loop and get each plot
         for y1lab, cbox in d.items():
             if not cbox.isChecked(): continue 
-            
-            if ttl_df is None: #load data
-                ttl_df = model.prep_ttl(tlRaw_df=res_ttl)
-            
+
             #plot it
-            fig = model.plot_riskCurve(ttl_df, y1lab=y1lab)
+            fig = model.plot_riskCurve(y1lab=y1lab)
             self.output_fig(fig)
 
     def run_risk3(self):
@@ -418,7 +416,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         # collect inputs
         #=======================================================================
-        self._set_setup() #probably redundant
+        self._set_setup()  #only need the common
         geo_vlay = self.comboBox_JGfinv.currentLayer()
 
         self.feedback.setProgress(5)
@@ -432,10 +430,10 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         
         #setup
-        kwargs = {attn:getattr(self, attn) for attn in ['logger', 'tag', 'cf_fp', 'out_dir', 'feedback']}
-        wrkr = results.djoin.Djoiner(**kwargs)
+        kwargs = {attn:getattr(self, attn) for attn in ['logger', 'tag', 'cf_fp', 'out_dir', 'feedback', 'init_q_d']}
+        wrkr = results.djoin.Djoiner(**kwargs).setup()
         
-        wrkr.init_model() #load teh control file
+
         
         self.feedback.setProgress(25)
         #=======================================================================
@@ -443,7 +441,7 @@ class Modelling_Dialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         """running with all defaults
             more customization is done on teh Resultd dialog"""
-        res_vlay = wrkr.run(geo_vlay, fp_attn=fp_attn) 
+        res_vlay = wrkr.run(geo_vlay, keep_fnl='all') 
         self.feedback.setProgress(80)
         
         #=======================================================================

@@ -43,6 +43,8 @@ class Djoiner(Qcoms, Model):
     """
     joining tabular data to vector geometry
     """
+    layname = None
+    
     #===========================================================================
     # expectations from parameter file
     #===========================================================================
@@ -76,28 +78,34 @@ class Djoiner(Qcoms, Model):
         assert hasattr(self, fp_attn), 'bad dfp_attn: %s'%fp_attn
         self.fp_attn=fp_attn
         
+        self.dtag_d={fp_attn:{'index_col':0}}
+        
+        self.resname='%s_%s_%s'%(fp_attn, self.tag, self.name)
+        
         self.logger.debug('init finished')
         
         
+    
+    def prep_model(self):
+        #copy the raw over to the cleaned
+        self.data_d[self.fp_attn] = self.raw_d[self.fp_attn]
         
+
+
         
     def run(self,#join tabular results back to the finv
               vlay_raw, #finv vlay (to join results to)
+              df_raw=None,
               cid=None, #linking column/field name
-              
-              #data to join
-              data_fp=None, #filepath to res_per asset tabular results data
-              fp_attn = None, #if no data_fp is provided, attribute name to use
-              
-              #data cleaning
-              keep_fnl = 'all', #list of field names to keep from the vlay (or 'all' to keep all)
+
+            #data cleaning
               relabel = 'ari', #how to relable event fields using the ttl values
                 #None: no relabling
                 #aep: use aep values (this is typically teh form already)
                 #ari: convert to ari values
- 
-              layname = None,
+              keep_fnl = 'all', #list of field names to keep from the vlay (or 'all' to keep all)
 
+              layname = None,
 
               ): 
         """
@@ -109,27 +117,17 @@ class Djoiner(Qcoms, Model):
         #=======================================================================
 
         log = self.logger.getChild('djoin')
-        tag = self.tag
         if cid is None: cid = self.cid
-        
-        #special filepath extraction
-        if data_fp is None:
-            if fp_attn is None: fp_attn=self.fp_attn 
-            data_fp = getattr(self, fp_attn)
-            log.debug('using \'%s\' for data_fp and got : %s'%(fp_attn, data_fp))
-            
-            if layname is None:  layname='%s_%s_%s'%(fp_attn, tag, self.name)
-        else:
-            if layname is None:  layname='res_%s_%s'%(tag, self.name)
-            
-        assert os.path.exists(data_fp), '\'%s.%s\' got bad data_fp (fp_attn:%s): \'%s\''%(
-                    self.tag, self.name, fp_attn, data_fp)
-        
+        if layname is None: layname=self.resname
+        if layname is None: layname = 'djoin_%s_%s'%(self.tag, vlay_raw.name())
+        if df_raw is None: df_raw=self.data_d[self.fp_attn]
+
         #=======================================================================
         # get data
         #=======================================================================
+        lkp_df = self._prep_table(df_raw, relabel, log=log)
         vlay_df = self._prep_vlay(vlay_raw, keep_fnl, log=log)
-        lkp_df = self._prep_table(data_fp, relabel, log=log)
+
         
         #=======================================================================
         # join data
@@ -143,9 +141,7 @@ class Djoiner(Qcoms, Model):
 
         res_vlay = self.vlay_new_df2(res_df, geo_d=geo_d, crs = vlay_raw.crs(),
                                     layname=layname, logger=log)
-        
-        
-        
+
         
         log.info('finished on \'%s\''%res_vlay.name())
         
@@ -198,14 +194,14 @@ class Djoiner(Qcoms, Model):
         
         return df1
     
-    def _prep_table(self, data_fp, relabel, log=None):
+    def _prep_table(self, df_raw, relabel, log=None):
         if log is None: log = self.logger.getChild('_prep_table') 
         
         #basefn = os.path.splitext(os.path.split(data_fp)[1])[0]                          
-        df_raw = pd.read_csv(data_fp, index_col=None).dropna(
+        df_raw = df_raw.dropna(
             axis = 'columns', how='all').dropna(axis = 'index', how='all')
             
-        log.debug('loaded %s from %s'%(str(df_raw.shape), data_fp))
+        #log.debug('loaded %s from %s'%(str(df_raw.shape), data_fp))
         #=======================================================================
         # convert event probs
         #=======================================================================
@@ -222,8 +218,15 @@ class Djoiner(Qcoms, Model):
             rttl_df = rttl_df_raw.loc[np.invert(rttl_df_raw['note']=='integration'), :]
             assert 'ead' not in rttl_df['aep']
             
+            #check the raw event column types
+            #===================================================================
+            # col_types = np.array([type(e).__name__ for e in df_raw.columns])
+            # assert len(np.unique(col_types))==1, 'expected data column labels to be type: str'
+            #===================================================================
+            
             #find event columns
-            boolcol = df_raw.columns.isin(rttl_df['aep'].astype(str))
+            boolcol = df_raw.columns.astype(str).isin(rttl_df['aep'].astype(str))
+            assert boolcol.any(), 'failed to identify aep columns in raw data'
             
             #do the conversion
             if relabel == 'aep':
@@ -258,13 +261,15 @@ class Djoiner(Qcoms, Model):
         #===========================================================================
         # chcek link column
         #===========================================================================
-        assert self.cid in df.columns, 'requested link field \'%s\' not in the csv data!'%self.cid
+        assert self.cid ==df.index.name, 'requested link field \'%s\' not in the csv data!'%self.cid
         
         """always expect a 1:1 on these"""
-        if not df[self.cid].is_unique:
+        if not df.index.is_unique:
             raise Error('non-unique lookup keys \'%s\''%self.cid)
         
-        return df
+        
+        
+        return df.reset_index(drop=False)
     
     def fancy_join(self, 
                    lkp_df, vlay_df, 

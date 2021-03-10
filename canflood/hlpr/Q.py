@@ -78,26 +78,32 @@ stat_pars_d = {'First': 0, 'Last': 1, 'Count': 2, 'Sum': 3, 'Mean': 4, 'Median':
 
 class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native console
     
-    crsid_default = 'EPSG:4326' #default crsID
+    
     
     driverName = 'SpatiaLite' #default data creation driver type
     
 
     out_dName = driverName #default output driver/file type
-    SpatiaLite_pars = dict() #dictionary of spatialite pars
 
+    
+    q_hndls = ['crs', 'crsid', 'algo_init', 'qap']
+    
     algo_init = False #flag indicating whether the algos have been initialized
-    
     qap = None
-    
     mstore = None
     
-    #field name character limits
+
     
 
     
     def __init__(self,
                  feedback=None, 
+                 
+                  #init controls
+                 init_q_d = {}, #container of initilzied objects
+                 
+                 crsid = 'EPSG:4326', #default crsID
+                 
                  **kwargs
                  ):
         
@@ -113,45 +119,61 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         from hlpr.logr import basic_logger
         mod_logger = basic_logger() 
 
-        wrkr = Qcoms(logger=mod_logger, tag=tag, out_dir=out_dir).ini_standalone()
+        wrkr = Qcoms(logger=mod_logger, tag=tag, out_dir=out_dir)
         
         
         """
 
+
+        #=======================================================================
+        # defaults
+        #=======================================================================
         if feedback is None:
             """by default, building our own feedbacker
             passed to ComWrkr.setup_feedback()
             """
             feedback = MyFeedBackQ()
         
+        #=======================================================================
+        # cascade
+        #=======================================================================
         super().__init__(
             feedback = feedback, 
             **kwargs) #initilzie teh baseclass
         
-
-        self.fieldn_max_d=fieldn_max_d
-        
         #=======================================================================
-        # common Qgis setup
+        # attachments
+        #=======================================================================
+        self.fieldn_max_d=fieldn_max_d
+        self.crsid=crsid
+        #=======================================================================
+        # Qgis setup COMMON
         #=======================================================================
         """both Plugin and StandAlone runs should call these"""
         self.qproj = QgsProject.instance()
-        
-        """see below for setting the crs during StandAlone"""
-        self.crs = self.qproj.crs()
-        
-        if self.crs.authid()=='':
-            self.logger.warning('got empty CRS!') #should only trip on StandAlone runs
-            
+        self.set_vdrivers()
         
 
-        #layer store
         """
         each worker will have their own store
         used to wipe any intermediate layers
         """
         self.mstore = QgsMapLayerStore() #build a new map store
         
+        
+        #do your own init (standalone r uns)
+        if len(init_q_d) == 0:
+            self._init_standalone()
+        else:
+            #check everything is there
+            miss_l = set(self.q_hndls).difference(init_q_d.keys())
+            assert len(miss_l)==0, 'init_q_d missing handles: %s'%miss_l
+            
+            for k,v in init_q_d.items():
+                setattr(self, k, v)
+                
+                
+        self.proj_checks()
         #=======================================================================
         # attach inputs
         #=======================================================================
@@ -164,19 +186,19 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
     # standalone methods-----------
     #==========================================================================
         
-    def ini_standalone(self,  #initilize calls for standalone runs
-                       crs = None,
+    def _init_standalone(self,  #setup for qgis runs
+                       crsid = None,
                        ):
         """
         WARNING! do not call twice (phantom crash)
         """
-        log = self.logger.getChild('ini_standalone')
+        log = self.logger.getChild('_init_standalone')
+        if crsid is None: crsid = self.crsid
         #=======================================================================
         # #crs
         #=======================================================================
-        """for Standalone runs... not relying on crs coming from the qproj"""
-        if crs is None:  #use the default
-            crs = QgsCoordinateReferenceSystem(self.crsid_default)
+
+        crs = QgsCoordinateReferenceSystem(crsid)
             
         assert isinstance(crs, QgsCoordinateReferenceSystem), 'bad crs type'
         assert crs.isValid()
@@ -188,19 +210,20 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #=======================================================================
         # setup qgis
         #=======================================================================
+        
         self.qap = self.init_qgis()
         self.algo_init = self.init_algos()
         
-        self.set_vdrivers()
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        self.init_q_d = {k:getattr(self, k) for k in self.q_hndls}
+        
+
+        log.debug('Qproj._init_standalone finished')
         
         
-        if not self.proj_checks():
-            raise Error('failed checks')
-        
-        log.debug('Qproj.ini_standalone finished')
-        
-        
-        return self
+        return
     
     def init_qgis(self, #instantiate qgis
                   gui = False): 
@@ -289,7 +312,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         log = self.logger.getChild('set_crs')
         
         if authid is None: 
-            authid = self.crsid_default
+            authid = self.crsid
         
         #=======================================================================
         # if not isinstance(authid, int):
@@ -336,9 +359,27 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         assert not self.progressBar is None
         
+        #=======================================================================
+        # crs checks
+        #=======================================================================
+        assert isinstance(self.crs, QgsCoordinateReferenceSystem)
+        assert self.crs.isValid()
+        
+        assert self.crs.authid()==self.qproj.crs().authid(), 'crs mismatch'
+        assert self.crs.authid() == self.crsid, 'crs mismatch'
+        
+        assert not self.crs.authid()=='', 'got empty CRS!'
+        
         log.info('project passed all checks')
         
-        return True
+        return 
+    
+    def print_qt_version(self):
+        import inspect
+        from PyQt5 import Qt
+         
+        vers = ['%s = %s' % (k,v) for k,v in vars(Qt).items() if k.lower().find('version') >= 0 and not inspect.isbuiltin(v)]
+        print('\n'.join(sorted(vers)))
     
     #===========================================================================
     # LOAD/WRITE LAYERS-----------
@@ -437,15 +478,23 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
 
         #Import a Raster Layer
+        log.debug('QgsRasterLayer(%s, %s)'%(fp, basefn))
         rlayer = QgsRasterLayer(fp, basefn)
-        
+        """
+        QgsRasterLayer(C:\LS\03_TOOLS\CanFlood\_git\tutorials\1\haz_rast\haz_1000.tif, haz_1000)
+        """
+        #=======================================================================
+        # rlayer = QgsRasterLayer(r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\1\haz_rast\haz_1000.tif',
+        #                 'haz_1000')
+        #=======================================================================
         
         
         #===========================================================================
         # check
         #===========================================================================
-        assert rlayer.isValid(), "Layer failed to load!"
         assert isinstance(rlayer, QgsRasterLayer), 'failed to get a QgsRasterLayer'
+        assert rlayer.isValid(), "Layer failed to load!"
+        
         
         if not rlayer.crs() == self.qproj.crs():
             log.warning('loaded layer \'%s\' crs mismatch!'%rlayer.name())
@@ -456,6 +505,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         # aoi
         #=======================================================================
         if not aoi_vlay is None:
+            log.debug('clipping w/ %s'%aoi_vlay.name())
             assert isinstance(aoi_vlay, QgsVectorLayer)
             rlay2 = self.cliprasterwithpolygon(rlayer,aoi_vlay, logger=log, layname=rlayer.name())
             
@@ -4240,34 +4290,6 @@ def view(#view the vector data (or just a df) as a html frame
 
 if __name__ == '__main__':
     
-    #===========================================================================
-    # selection testing
-    #===========================================================================
-    vlay_fp = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\data\finv_cT2.gpkg'
-    aoi_fp = r'C:\LS\03_TOOLS\LML\_ins\aoi\20191225\chil\aoiT2_chil.gpkg'
-    
-    #===========================================================================
-    # load the layers
-    #===========================================================================
-    log = logging.getLogger('test')
-    vlay = load_vlay(vlay_fp, logger=log)
-    aoi_vlay = load_vlay(aoi_fp, logger=log)
-    
-    #===========================================================================
-    # execute
-    #===========================================================================
-    #build the instance
-    wrkr = Qcoms(logger=log).ini_standalone()
 
-    
-    res_vlay = wrkr.selectbylocation(vlay, aoi_vlay, result_type='layer', logger=log)
-    
-    log.info('finished w/ %s w/ %i feats (of %i)'%(
-        res_vlay.name(), res_vlay.dataProvider().featureCount(),
-        vlay.dataProvider().featureCount()))
-    
-    
-    #force_open_dir(wrkr.out_dir)
-    
-    print('finished')
+    print('???')
 

@@ -8,7 +8,7 @@ ui class for the BUILD toolset
 #python
 import sys, os, datetime, time
 
-from shutil import copyfile
+
 
 """see __init__.py for dependency check"""
 import pandas as pd
@@ -19,8 +19,9 @@ from PyQt5 import uic, QtWidgets
 from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
 
 #qgis
-from qgis.core import *
-
+#from qgis.core import *
+from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer, QgsMapLayerProxyModel, \
+    QgsWkbTypes, QgsMapLayer
 
 #==============================================================================
 # custom imports
@@ -75,10 +76,6 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.ras_dict = {}
         self.vec = None
 
-        
-        
-        
-        
         #=======================================================================
         # setup funcs
         #=======================================================================
@@ -415,7 +412,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
 
     #===========================================================================
-    # common methods----------
+    # HELPERS----------
     #===========================================================================
     def set_setup(self, set_cf_fp=True, set_finv=True, #attach parameters from setup tab
                   logger=None,): 
@@ -425,7 +422,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # #call the common
         #=======================================================================
         self._set_setup(set_cf_fp=set_cf_fp)
-        
+        self.inherit_fieldNames.append('init_q_d')
         #=======================================================================
         # custom setups
         #=======================================================================
@@ -434,6 +431,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         #file behavior
         self.loadRes = self.checkBox_loadres.isChecked()
+        
         
         #=======================================================================
         # #inventory vector layer---------
@@ -561,7 +559,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             
             
     #===========================================================================
-    # Run Actions------
+    # ACTIONS------
     #===========================================================================
 
     def build_scenario(self): #'Generate' on the setup tab
@@ -1107,13 +1105,12 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # assemble/prepare inputs
         #=======================================================================
-        tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
+        self._set_setup()
+ 
         finv_raw = self.comboBox_ivlay.currentLayer()
         rlay = self.comboBox_dtm.currentLayer()
         
-
-        cf_fp = self.get_cf_fp()
-        out_dir = self.lineEdit_wdir.text()
+ 
         
 
         #update some parameters
@@ -1140,11 +1137,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         if not isinstance(rlay, QgsRasterLayer):
             raise Error('unexpected type on raster layer')
             
-        if not os.path.exists(out_dir):
-            raise Error('working directory does not exist:  %s'%out_dir)
-        
-        if cid is None or cid=='':
-            raise Error('need to select a cid')
+
         
         if not cid in [field.name() for field in finv.fields()]:
             raise Error('requested cid field \'%s\' not found on the finv_raw'%cid)
@@ -1160,12 +1153,8 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
 
         #build the sample
-        wrkr = Rsamp(logger=self.logger, 
-                          tag=tag, #set by build_scenario() 
-                          feedback = self.feedback, #needs to be connected to progress bar
-                          cid=cid,
-                          out_dir = out_dir, fname='gels', cf_fp=cf_fp
-                          )
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        wrkr = Rsamp(fname='gels', cid=cid, **kwargs)
         
         res_vlay = wrkr.run([rlay], finv, psmp_stat=psmp_stat)
         
@@ -1173,7 +1162,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         wrkr.dtm_check(res_vlay)
         
         #save csv results to file
-        wrkr.write_res(res_vlay, out_dir = out_dir)
+        wrkr.write_res(res_vlay)
         
         #update ocntrol file
         wrkr.upd_cf_dtm()
@@ -1182,8 +1171,7 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # add to map
         #======================================================================
         if self.checkBox_loadres.isChecked():
-            self.qproj.addMapLayer(finv)
-            self.logger.info('added \'%s\' to canvas'%finv.name())
+            self._load_toCanvas(res_vlay, logger=log)
             
         self.feedback.upd_prog(None) #set the progress bar back down to zero
         self.logger.push('dsamp finished')    
@@ -1353,10 +1341,10 @@ class DataPrep_Dialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
         ofn = os.path.join(self.lineEdit_wdir.text(), 'evals_%i_%s.csv'%(len(aep_df.columns), tag))
         
-        from hlpr.Q import Qcoms
+        from hlpr.basic import ComWrkr
         
         #build a shell worker for these taxks
-        wrkr = Qcoms(logger=log, tag=tag, feedback=self.feedback, out_dir=out_dir)
+        wrkr = ComWrkr(logger=log, tag=tag, feedback=self.feedback, out_dir=out_dir)
         
         eaep_fp = wrkr.output_df(aep_df, ofn, 
                                   overwrite=self.overwrite, write_index=False)

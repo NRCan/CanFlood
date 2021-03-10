@@ -78,6 +78,11 @@ class CbaWrkr(RiskPlotr):
         self.logger.debug('%s.__init__ w/ feedback \'%s\''%(
             self.__class__.__name__, type(self.feedback).__name__))
         
+    def setup(self):
+        """special truncated loader"""
+        self.init_model()
+        return self
+        
     def copy_template(self, #copy the cba template worksheet
                           template_fp = None,
                           logger=None,
