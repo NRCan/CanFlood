@@ -237,7 +237,7 @@ class Dmg2(Model, DFunc, Plotr):
         # defaults
         #======================================================================
         log = self.logger.getChild('run')
-        
+        self.feedback.upd_prog(10, method='raw') #add from here
         
         #=======================================================================
         # get impacts-----
@@ -246,13 +246,13 @@ class Dmg2(Model, DFunc, Plotr):
         # dfunc, scale, and cap per bid
         #======================================================================
         bres_df = self.bdmg_raw()
-        self.feedback.upd_prog(20, method='portion')
+        self.feedback.upd_prog(5, method='append')
         
         bres_df = self.bdmg_scaled(res_df = bres_df)
-        self.feedback.upd_prog(5, method='portion')
+        self.feedback.upd_prog(5, method='append')
         
         bres_df = self.bdmg_capped(res_df=bres_df)
-        self.feedback.upd_prog(5, method='portion')
+        self.feedback.upd_prog(5, method='append')
         
         #=======================================================================
         # mitigations
@@ -263,17 +263,17 @@ class Dmg2(Model, DFunc, Plotr):
             #lower depth threshold
             if self.miLtcn in self.finv_cdf.columns:
                 bres_df, res_colg = self.bdmg_mitiT(res_df = bres_df, res_colg=res_colg)
-                self.feedback.upd_prog(5, method='portion')
+                self.feedback.upd_prog(5, method='append')
             
             #intermediate scale
             if self.miScn in self.finv_cdf.columns:
                 bres_df, res_colg = self.bdmg_mitiS(res_df = bres_df, res_colg=res_colg)
-                self.feedback.upd_prog(5, method='portion')
+                self.feedback.upd_prog(5, method='append')
             
             #intermediate value
             if self.miVcn in self.finv_cdf.columns:
                 bres_df, res_colg = self.bdmg_mitiV(res_df = bres_df, res_colg=res_colg)
-                self.feedback.upd_prog(5, method='portion')
+                self.feedback.upd_prog(5, method='append')
 
             #force positives
             """ mitigation vaslue shifts bdmg_mitiS() especially can lead to negative values"""
@@ -289,7 +289,7 @@ class Dmg2(Model, DFunc, Plotr):
         #=======================================================================
         """attaches cres_df to self"""
         bres_df, cres_df = self.bdmg_cleaned(res_df=bres_df, res_colg=res_colg)
-        self.feedback.upd_prog(5, method='portion')
+        self.feedback.upd_prog(70, method='raw')
         
         #=======================================================================
         # wrap----
@@ -321,7 +321,7 @@ class Dmg2(Model, DFunc, Plotr):
         log.info('finished w/ %s and TtlDmg = %.2f'%(
             str(cres_df.shape), cres_df.sum().sum()))
         
-        
+        self.feedback.upd_prog(80, method='raw')
         
         return cres_df
     

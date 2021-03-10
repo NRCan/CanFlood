@@ -156,6 +156,7 @@ class ModelDialog(QtWidgets.QDialog, FORM_CLASS,
         # variables
         #=======================================================================
         log = self.logger.getChild('run_risk1')
+        self.feedback.upd_prog(5)
         self._set_setup()
 
         #=======================================================================
@@ -166,12 +167,14 @@ class ModelDialog(QtWidgets.QDialog, FORM_CLASS,
         
         res_ttl, res_df = model.run(res_per_asset=self.checkBox_r1_rpa.isChecked())
         
+        self.feedback.upd_prog(80)
         #======================================================================
         # plots
         #======================================================================
         self._risk_plots(model, res_ttl,
             {'AEP':self.checkBox_r1_aep,'impacts':self.checkBox_r1_ari},
             )
+        self.feedback.upd_prog(90)
         #==========================================================================
         # output
         #==========================================================================
@@ -182,6 +185,7 @@ class ModelDialog(QtWidgets.QDialog, FORM_CLASS,
         if not res_df is None:
             out_fp2 = model.output_passet()
             
+        self.feedback.upd_prog(95)
         self.logger.push('Risk1 Complete')
         self.feedback.upd_prog(None) #set the progress bar back down to zero
         
@@ -200,11 +204,13 @@ class ModelDialog(QtWidgets.QDialog, FORM_CLASS,
     def run_impact2(self):
         log = self.logger.getChild('run_impact2')
         start = time.time()
+        self.feedback.upd_prog(5)
         #=======================================================================
         # retrive variable values
         #=======================================================================
-
+        
         self._set_setup()
+        self.feedback.upd_prog(10)
         #======================================================================
         # #build worker
         #======================================================================
@@ -212,45 +218,44 @@ class ModelDialog(QtWidgets.QDialog, FORM_CLASS,
         model = Dmg2(attriMode=self.checkBox_SS_attr.isChecked(),
                      upd_cf = self.checkBox_SS_updCf.isChecked(),**kwargs
                      ).setup()
-                     
-        self.feedback.setProgress(5)
-        
+                             
         #=======================================================================
         # #run the model        
         #=======================================================================
         cres_df = model.run()
-        self.feedback.setProgress(70)
+        self.feedback.upd_prog(81) 
         
         #attribution
         if self.checkBox_SS_attr.isChecked():
             _ = model.get_attribution(cres_df)
             model.output_attr(upd_cf = self.checkBox_SS_updCf.isChecked())
         
-        self.feedback.setProgress(80)
+        self.feedback.upd_prog(5, method='append') 
         #======================================================================
         # save reuslts
         #======================================================================
         out_fp = model.output_cdmg()
-        self.feedback.setProgress(85)
+
         
         #update parameter file
         if self.checkBox_SS_updCf.isChecked():
             model.update_cf()
-        self.feedback.setProgress(90)
+
             
         #calc summary
         if self.checkBox_i2bSmry.isChecked():
             _ = model.bdmg_smry()
-        self.feedback.setProgress(92)
+
             
         #output expanded results
         if self.checkBox_i2_outExpnd.isChecked():
             _ = model.output_bdmg()
-        self.feedback.setProgress(95)
+
         
         if self.checkBox_i2_ddf.isChecked():
             _=model.output_depths_df()
             
+        self.feedback.upd_prog(90) 
         #=======================================================================
         # plots
         #=======================================================================
@@ -286,8 +291,11 @@ class ModelDialog(QtWidgets.QDialog, FORM_CLASS,
         #======================================================================
         log = self.logger.getChild('run_risk2')
         start = time.time()
+        self.feedback.upd_prog(5)
+                               
+                               
         self._set_setup()
-
+        self.feedback.upd_prog(10)
         #======================================================================
         # run the model
         #======================================================================
@@ -297,14 +305,15 @@ class ModelDialog(QtWidgets.QDialog, FORM_CLASS,
                       ).setup()
         
         res_ttl, res_df = model.run(res_per_asset=self.checkBox_r2rpa.isChecked())
-        
+        self.feedback.upd_prog(80)
         #======================================================================
         # plots
         #======================================================================
         self._risk_plots(model, res_ttl,
             {'AEP':self.checkBox_r2_aep,'impacts':self.checkBox_r2_ari},
             )
-       
+        
+        self.feedback.upd_prog(90)
         #=======================================================================
         # output
         #=======================================================================
@@ -319,7 +328,7 @@ class ModelDialog(QtWidgets.QDialog, FORM_CLASS,
         #attribution
         if self.checkBox_SS_attr.isChecked():
             model.output_attr()
- 
+        self.feedback.upd_prog(99)
         #=======================================================================
         # wrap
         #=======================================================================

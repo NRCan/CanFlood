@@ -281,7 +281,7 @@ class Risk2(RiskModel, #This inherits 'Model'
 
         
 
-        self.feedback.setProgress(5)
+        self.feedback.setProgress(20)
 
         #======================================================================
         # resolve alternate damages (per evemt)-----------
@@ -311,7 +311,7 @@ class Risk2(RiskModel, #This inherits 'Model'
         _ = self.check_monot(ddf1)
         
         
-        self.feedback.setProgress(40)
+        self.feedback.upd_prog(10, method='append')
         #======================================================================
         # get ead per asset-----
         #======================================================================
@@ -324,7 +324,7 @@ class Risk2(RiskModel, #This inherits 'Model'
         #======================================================================
         # get EAD totals-------
         #======================================================================    
-        self.feedback.setProgress(80)    
+        self.feedback.upd_prog(10, method='append')   
         res_ttl = self.calc_ead(
             ddf1.sum(axis=0).to_frame().T, #rounding at end of calc_ead()
             drop_tails=False, #handle beslow 
@@ -333,7 +333,7 @@ class Risk2(RiskModel, #This inherits 'Model'
         #self.res_ser = res_ttl.iloc[:, 0].copy() #set for risk_plot()
         self.ead_tot = res_ttl.iloc[:,0]['ead'] #set for plot_riskCurve()
             
-        self.feedback.setProgress(95)
+        self.feedback.upd_prog(10, method='append')
 
         log.info('finished on %i assets and %i damage cols'%(
             len(ddf1), len(res_ttl)))
@@ -353,7 +353,7 @@ class Risk2(RiskModel, #This inherits 'Model'
         self.res_ttl=res_ttl #for convenioence outputters
         self.res_df = res_df
         log.info('finished')
-
+        self.feedback.upd_prog(10, method='append')
 
         return res_ttl, res_df
 

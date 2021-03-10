@@ -170,7 +170,7 @@ class Risk1(RiskModel):
         #dboolcol = ~ddf.columns.isin([cid, bid])
         log.info('running on %i assets and %i events'%(len(bdf), len(ddf.columns)-2))
         
-        self.feedback.setProgress(5)
+        self.feedback.upd_prog(20, method='raw')
         
 
 
@@ -213,7 +213,7 @@ class Risk1(RiskModel):
             #fill nulls with zero
             bidf = bidf.fillna(0)
         
-        self.feedback.setProgress(10)
+        self.feedback.upd_prog(10, method='append')
         #======================================================================
         # scale
         #======================================================================
@@ -254,7 +254,7 @@ class Risk1(RiskModel):
         #check the columns
         assert np.array_equal(bres_df.columns.values, aep_ser.unique()), 'column name problem'
         _ = self.check_monot(bres_df)
-        self.feedback.setProgress(50)
+        self.feedback.upd_prog(10, method='append')
         #======================================================================
         # get ead per asset------
         #======================================================================
@@ -265,7 +265,7 @@ class Risk1(RiskModel):
         else:
             res_df = None
         self.res_df = res_df
-        self.feedback.setProgress(90)
+        self.feedback.upd_prog(10, method='append')
         #======================================================================
         # totals
         #======================================================================        
@@ -290,8 +290,7 @@ class Risk1(RiskModel):
         # wrap
         #=======================================================================
         self._set_valstr()
-        
-        self.feedback.setProgress(95)
+
         log.info('finished')
 
 
