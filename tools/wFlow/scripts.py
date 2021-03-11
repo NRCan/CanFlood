@@ -42,11 +42,16 @@ from results.djoin import Djoiner
 from results.riskPlot import RiskPlotr
 from results.attribution import Attr
 from results.compare import Cmpr
+
+from misc.dikes.dcoms import Dcoms
+from misc.dikes.expo import Dexpo
+from misc.dikes.vuln import Dvuln
+from misc.dikes.rjoin import DikeJoiner
 #===============================================================================
 # methods---------
 #===============================================================================
 
-class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr): #handle one test session 
+class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session 
     
     #===========================================================================
     # #qgis attributes
@@ -321,7 +326,8 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
             if hasattr(Worker, 'init_model'): #models
                 kwargs.update({k:getattr(self, k) for k in ['base_dir', 'attriMode', 'upd_cf']})
                 
-
+            if hasattr(Worker, 'sid'): #Dike workers
+                kwargs.update({k:getattr(self, k) for k in ['dikeID', 'segID', 'cbfn', 'ifidN']})
                 
             kstr = ''.join(['\n    %s: %s'%(k,v) for k,v in kwargs.items()])
 
@@ -844,7 +850,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         # plots
         #=======================================================================
         if self.plot:
-            ttl_df = wrkr.prep_ttl(tlRaw_df=res_ttl)
+            ttl_df = wrkr.set_ttl(tlRaw_df=res_ttl)
             for y1lab in ['AEP', 'impacts']:
                 fig = wrkr.plot_riskCurve(ttl_df, y1lab=y1lab)
                 self.output_fig(fig)
@@ -1176,7 +1182,153 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
             self.output_fig(fig)
             
         return res_d
+    
+    #===========================================================================
+    # TOOLS DIKES-----------
+    #===========================================================================
+    def dikes_expo(self,
+                     pars_d,
+                    logger=None,
+                    rlay_d=None,
+                    rkwargs=None,
+                    
+                    #run contgrols
+                    breach_pts=True,
+                    
+                   ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('dikes_expo')
+        if pars_d is None: pars_d = self.pars_d
+        
+        
+        wrkr = self._get_wrkr(Dexpo)
+        #=======================================================================
+        # load the data
+        #=======================================================================
+        if rlay_d is None:
+            fp = os.path.join(self.base_dir, pars_d['raster_dir'])
+            rlay_d = self._retrieve('dikes_rlay_d',
+                   f = lambda logger=None: self.load_layers_dirs([fp], logger=logger))
+
+        #dtm layer
+        fp = os.path.join(self.base_dir, pars_d['dtm_fp'])
+        dtm_rlay = self._retrieve('dtm_rlay',
+               f = lambda logger=None: wrkr.load_dtm(fp, logger=logger))
+
             
+        #dikes layer
+        fp = os.path.join(self.base_dir, pars_d['dikes_fp'])
+        dike_vlay = self._retrieve('dike_vlay',
+           f = lambda logger=None: wrkr.load_vlay(fp, logger=logger))
+        
+        dike_vlay = wrkr.prep_dike(dike_vlay)
+        
+        
+        #==========================================================================
+        # execute
+        #==========================================================================
+        if rkwargs is None: rkwargs = self._get_kwargs(wrkr.__class__.__name__)
+        dxcol, vlay_d = wrkr.get_dike_expo(rlay_d, dike_vlay=dike_vlay, dtm_rlay=dtm_rlay,
+                                           **rkwargs)
+        
+        expo_df = wrkr.get_fb_smry()
+        
+        #get just the breach points
+        if breach_pts:
+            breach_vlay_d = wrkr.get_breach_vlays()
+        
+        #=======================================================================
+        # plots
+        #=======================================================================
+        if self.plot:
+
+            for sidVal in wrkr.sid_vals:
+                fig = wrkr.plot_seg_prof(sidVal)
+                wrkr.output_fig(fig)
+        #=======================================================================
+        # outputs
+        #=======================================================================
+        
+
+        
+        if self.write: 
+            wrkr.output_expo_dxcol()
+            _ = wrkr.output_expo_df()
+        
+            wrkr.output_vlays()
+            if breach_pts:
+                wrkr.output_breaches()
+                
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        res_d = {
+            'dExpo_dxcol':wrkr.expo_dxcol,
+            'dExpo':wrkr.expo_df
+            
+            }
+        
+        #set for siblings
+        self.data_d['dExpo'] = wrkr.expo_df.copy() 
+        
+        return res_d
+
+    def dikes_vuln(self,
+                     pars_d,
+                    logger=None,
+
+                    rkwargs=None,
+                    
+
+                    
+                   ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('dikes_vuln')
+        if pars_d is None: pars_d = self.pars_d
+        
+        
+        wrkr = self._get_wrkr(Dvuln)
+        
+        #=======================================================================
+        # get data
+        #=======================================================================
+        wrkr.load_expo(df=self.data_d['dExpo'])
+        
+        wrkr.load_fragFuncs(os.path.join(self.base_dir, pars_d['dcurves_fp']))
+        
+        #=======================================================================
+        # execute
+        #=======================================================================
+        if rkwargs is None: rkwargs = self._get_kwargs(wrkr.__class__.__name__)
+        
+        pf_df = wrkr.get_failP(**rkwargs)
+        wrkr.set_lenfx() #apply length effects
+        #=======================================================================
+        # write
+        #=======================================================================
+        if self.write:
+            wrkr.output_vdfs()
+            
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        res_d ={
+            'dike_pfail':wrkr.pf_df.copy(),
+            'dike_pfail_lfx':wrkr.pfL_df.copy()
+            }
+        
+        self.data_d.update(res_d) #add both for children
+        
+        return res_d
+
     #===========================================================================
     # TOOL BOXES-------
     #===========================================================================
@@ -1256,6 +1408,30 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
 
         
         return res_d #{output name: output object}
+    
+    def tb_dikes(self,
+              pars_d=None, #single assetModel run for this workflow
+              logger=None,
+                 ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('tb_dikes')
+        if pars_d is None: pars_d = self.pars_d
+        log.info('on %i: %s'%(len(pars_d), pars_d.keys()))
+        
+
+        #=======================================================================
+        # tools
+        #=======================================================================
+        res_d = self.dikes_expo(pars_d, logger=log)
+        
+        d = self.dikes_vuln(pars_d, logger=log)
+        res_d = {**res_d, **d}
+        
+        return res_d
     
     def run(self, **kwargs):
         raise Error('overwrite with your own run method!')

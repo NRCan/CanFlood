@@ -77,6 +77,8 @@ class Dcoms(ComWrkr):
         self.cbfn = cbfn
         self.ifidN = ifidN
         
+
+        
         #=======================================================================
         # checks
         #=======================================================================
@@ -88,7 +90,8 @@ class Dcoms(ComWrkr):
         
 
     def load_expo(self, #load the dike segment exposure data
-                  fp,
+                  fp=None,
+                  df=None,
                   prop_colns = None,
                   logger=None):
         """
@@ -99,7 +102,9 @@ class Dcoms(ComWrkr):
         
         log = logger.getChild('load_expo')
         
-        df = pd.read_csv(fp, header=0, index_col=0)
+        if df is None:
+            df = pd.read_csv(fp, header=0, index_col=0)
+        
         
 
         

@@ -27,6 +27,7 @@ from qgis.core import QgsCoordinateReferenceSystem, QgsMapLayerStore
 import pandas as pd
 import numpy as np
 
+start = datetime.datetime.now()
 
 #===============================================================================
 # cf helpers
@@ -392,16 +393,21 @@ class WorkFlow_t(WorkFlow): #wrapper for test workflows
         self.pick_d = data
             
 #===============================================================================
-# SPECIFIC TEST WORKFLOWS
+# SPECIFIC TEST WORKFLOWS----------
 #===============================================================================
-from wFlow.tutorials import Tut1a, Tut2a, Tut2b, Tut2c_mutex, Tut2c_max
+from wFlow.tutorials import Tut1a, Tut2a, Tut2b, Tut2c_mutex, Tut2c_max, Tut4a, Tut4b
 
+#===============================================================================
+# tutorial 1
+#===============================================================================
 class Tut1a_t(WorkFlow_t, Tut1a): #tutorial 1a
     
     #keys to include in test pickels
     tdata_keys = ['finv', 'expos', 'evals', 'r_ttl', 'eventypes', 'r_passet']
 
-        
+#===============================================================================
+# Turorial 2
+#===============================================================================
 class Tut2_t(WorkFlow_t): #generic for all tutorial 2s
     Test = Test_wf_L2
     tdata_keys = ['finv', 'expos', 'evals', 'r_ttl', 'eventypes', 'r_passet', 'gels', 'dmgs']
@@ -424,9 +430,24 @@ class Tut2c_max_t(Tut2c_max, Tut2b_t):
         super().__init__(**kwargs)
         self.tdata_keys = self.tdata_keys.copy() + ['cf_compare']
         
+#===============================================================================
+# Tutorial 4
+#===============================================================================
+class Tut4_t(WorkFlow_t):
+    """"same as Tut1"""
+    Test = Test_wf_basic
+    tdata_keys = ['finv', 'expos', 'evals', 'r_ttl', 'eventypes', 'r_passet']
+    
+class Tut4a_t(Tut4a, Tut4_t): #tutorial 1a
+    pass
 
-wFlow_l = [Tut2a_t, Tut1a_t, Tut2b_t, Tut2c_mutex_t, Tut2c_max_t]
-#wFlow_l = [Tut2c_mutex_t, Tut2c_max_t]
+class Tut4b_t(Tut4b, Tut4_t): #tutorial 1a
+    pass
+
+
+
+wFlow_l = [Tut2a_t, Tut1a_t, Tut2b_t, Tut2c_mutex_t, Tut2c_max_t, Tut4a_t, Tut4b_t]
+#wFlow_l = [Tut4a_t, Tut4b_t]
     
     
 
@@ -461,6 +482,12 @@ if __name__ == '__main__':
     #===========================================================================
     suite = wrkr.get_tests(wFlow_l)
     unittest.TextTestRunner(verbosity=3).run(suite)
+    
+    
+    #===========================================================================
+    # wrap
+    #===========================================================================
+    print('finished in %s'%(datetime.datetime.now() - start))
     
     
      

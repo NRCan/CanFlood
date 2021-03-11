@@ -272,13 +272,14 @@ class Tut4(WorkFlow): #tutorial 1a
         self.pars_d = {
                 
                 #data files
-                'finv_fp':r'tutorials\1\finv_tut1a.gpkg',
-                'raster_dir':r'tutorials\1\haz_rast',
-                'evals_fp':r'tests\_data\all2\evals_4_tut1a.csv',
-                #'fpol_dir':r'tutorials\1\haz_fpoly',
+                'raster_dir':r'tutorials\4\haz_rast',
+                'evals_fp':r'tests\_data\all2\evals_4_tut4a.csv',
+                'dtm_fp':r'tutorials\4\dtm_ct2.tif',
+
                 
                 #run controls
-                'felv':'datum', 'validate':'risk1'
+                'felv':'datum', 'validate':'dmg2', 'prec':6,
+                'as_inun':True, 'dthresh':0.5,
                         }
         
         self.tpars_d = { #kwargs for individual tools
@@ -287,9 +288,8 @@ class Tut4(WorkFlow): #tutorial 1a
                 }
             }
         super().__init__(**kwargs)
-    
-class Tut4a(Tut4):
-    name = 'tut4a'
+        
+        
     def run(self,  #workflow for tutorial 1a
 
               ):
@@ -308,14 +308,74 @@ class Tut4a(Tut4):
         
         
         log.info('finished w/ %i: %s'%(len(self.res_d),  list(self.res_d.keys())))
+    
+class Tut4a(Tut4):
+    name = 'tut4a'
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        
+        self.pars_d.update({
+            'finv_fp':r'tutorials\4\finv_tut4a_polygons.gpkg',
+            })
+
+class Tut4b(Tut4):
+    name = 'tut4b'
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        
+        self.pars_d.update({
+            'finv_fp':r'tutorials\4\finv_tut4b_lines.gpkg',
+            })
+        
+#===============================================================================
+# Tutorial 6---------
+#===============================================================================
+class Tut6a(WorkFlow): #tutorial 1a
+    name = 'tut6a'
+    crsid ='EPSG:3005'
+    def __init__(self, **kwargs):
+        self.pars_d = {
+                
+                #data files
+                'raster_dir':r'tutorials\6\haz_rast',
+                'evals_fp':r'tests\_data\all2\evals_4_tut4a.csv',
+                'dtm_fp':r'tutorials\6\dtm.tif',
+                'dikes_fp':r'tutorials\6\dikes.gpkg',
+                'dcurves_fp':r'tutorials\6\dike_fragility_20210201.xls'
+
+                
+                #run controls
+
+                        }
+        
+        self.tpars_d = { #kwargs for individual tools
+
+            }
+        super().__init__(dikeID='ID', 
+                         **kwargs)
+        
+        
+    def run(self,  #workflow for tutorial 1a
+
+              ):
+        log = self.logger.getChild('r')
+        
+        self.res_d = self.tb_dikes()
+        
+        
+        
+        
+        
 #===============================================================================
 # executeors------------
 #===============================================================================
-wFlow_l = [Tut2c_mutex, Tut2c_max] #used below and by test scripts to bundle workflows
+wFlow_l = [Tut6a] #used below and by test scripts to bundle workflows
 
 if __name__ == '__main__':
     
-    wrkr = Session(projName='tuts', write=True, plot=False)
+    wrkr = Session(projName='tuts', write=True, plot=True)
     #===========================================================================
     # build test pickesl
     #===========================================================================

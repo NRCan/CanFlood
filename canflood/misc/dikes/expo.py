@@ -70,6 +70,7 @@ class Dexpo(Qcoms, DPlotr):
         log.info('on %i layers'%len(layfp_d))
         
         if not basedir is None: assert os.path.exists(basedir)
+        assert isinstance(layfp_d, dict), 'bad type passed on layfp_d'
         #=======================================================================
         # load it
         #=======================================================================
@@ -221,6 +222,7 @@ class Dexpo(Qcoms, DPlotr):
         #=======================================================================
         # prechecks
         #=======================================================================
+        assert isinstance(dike_vlay, QgsVectorLayer)
         assert sid in [f.name() for f in dike_vlay.fields()], \
             'failed to get sid \'%s\'on dikes vlay fields'%(sid)
         
