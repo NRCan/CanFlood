@@ -3974,6 +3974,9 @@ def vlay_rename_fields(
         feedback=None,
 
         ):
+    """
+    todo: add this as a session method and clean up unused layers
+    """
     
     if logger is None: logger=mod_logger
     log=logger.getChild('vlay_rename_fields')

@@ -33,7 +33,7 @@ from hlpr.exceptions import QError as Error
     
 
 
-from hlpr.Q import Qcoms,vlay_get_fdf, vlay_get_fdata, view
+from hlpr.Q import Qcoms,vlay_get_fdf, vlay_get_fdata, view, vlay_rename_fields
 from hlpr.plot import Plotr
 
 #==============================================================================
@@ -771,38 +771,63 @@ class Rsamp(Plotr, Qcoms):
             #===================================================================
             log.info('getting pixel counts on %i polys'%finv.dataProvider().featureCount())
             
-            algo_nm = 'qgis:zonalstatistics'
+            #===================================================================
+            # algo_nm = 'qgis:zonalstatistics'
+            # """this edits the finv in place"""
+            # 
+            # 
+            # ins_d = {       'COLUMN_PREFIX':indxr, 
+            #                 'INPUT_RASTER':thr_rlay, 
+            #                 'INPUT_VECTOR':finv, 
+            #                 'RASTER_BAND':1, 
+            #                 'STATS':[0],#0: pixel counts, 1: sum
+            #                 }
+            #===================================================================
+            
+            
+            algo_nm = 'native:zonalstatisticsfb'
             
             ins_d = {       'COLUMN_PREFIX':indxr, 
                             'INPUT_RASTER':thr_rlay, 
-                            'INPUT_VECTOR':finv, 
+                            'INPUT':finv, 
                             'RASTER_BAND':1, 
-                            'STATS':[0],#0: pixel counts, 1: sum
+                            'STATISTICS':[0],#0: pixel counts, 1: sum
+                            'OUTPUT' : 'TEMPORARY_OUTPUT',
                             }
                 
             #execute the algo
             res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
-            """this edits the finv in place"""
+            
+            finvw = res_d['OUTPUT']
+            """
+            view(finvw)
+            view(finv)
+            """
+
             #===================================================================
             # check/correct field names
             #===================================================================
-            """
-            algos don't assign good field names.
-            collecting a conversion dictionary then adjusting below
-            """
             #get/updarte the field names
-            nfnl =  [field.name() for field in finv.fields()]
+            nfnl =  [field.name() for field in finvw.fields()]
             new_fn = set(nfnl).difference(ofnl) #new field names not in the old
-            
+             
             if len(new_fn) > 1:
                 """
-                possible error with Q3.12
+                possible error with algo changes
                 """
-                raise Error('zonalstatistics generated more new fields than expected: %i \n    %s'%(len(new_fn), new_fn))
+                raise Error('zonalstatistics generated more new fields than expected: %i \n    %s'%(
+                    len(new_fn), new_fn))
             elif len(new_fn) == 1:
                 names_d[list(new_fn)[0]] = rlay.name()
             else:
                 raise Error('bad fn match')
+            
+            #===================================================================
+            # #clean up the layers
+            #===================================================================
+            self.mstore.addMapLayer(finv)
+            self.mstore.removeMapLayer(finv)
+            finv = finvw
             
             
             #===================================================================
@@ -821,6 +846,9 @@ class Rsamp(Plotr, Qcoms):
         
         #get data frame
         df_raw  = vlay_get_fdf(finv, logger=log)
+        """
+        view(df_raw)
+        """
         df = df_raw.rename(columns=names_d)
 
         #multiply each column by corresponding raster's cell size
