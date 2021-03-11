@@ -63,7 +63,9 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
 
     def __init__(self, 
                  iface, 
-                 parent=None):
+                 parent=None,
+                 plogger=None,
+                 **kwargs):
         """
         called during startup by CanFlood.__init__
         """
@@ -81,22 +83,16 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         self.setupUi(self)
         
-        self.qproj_setup(iface=iface) #basic dialog worker setup
-        self.connect_slots()
+        self.qproj_setup(iface=iface, plogger=plogger) #basic dialog worker setup
+        self.connect_slots(**kwargs)
 
 
 
         
-    def _setup(self, #for standalone runs
+    def _setup(self, #for standalone runsf
                logger=None,
                 **kwargs): 
-        raise Error('fix me')
-        #=======================================================================
-        # logger
-        #=======================================================================
-        if logger is None:
-            logger = hlpr.logr.basic_logger()
-        self.logger=logger
+
          
         #=======================================================================
         # setup plugin and qgis
@@ -104,10 +100,8 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #from hlpr.Q import Qcoms
         super(QprojPlug, self).__init__() #call Qcoms init
         self.ini_standalone()
-        self.qproj_setup(plogger=logger)
-         
- 
-        self.connect_slots(**kwargs)
+
+
         return self
     
     def launch(self): #launch the gui from a plugin (and do some setup)
@@ -122,7 +116,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                       rlays=None, #set of rasters to populate list w/ (for standalone)
                       ):
         log = self.logger.getChild('connect_slots')
-        assert not self.iface is None
+        #assert not self.iface is None
 
         #======================================================================
         # pull project data

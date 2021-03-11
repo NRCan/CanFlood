@@ -484,9 +484,6 @@ wFlow_l = [Tut4a] #used below and by test scripts to bundle workflows
 if __name__ == '__main__':
     
     wrkr = Session(projName='tuts', write=True, plot=False)
-    #===========================================================================
-    # build test pickesl
-    #===========================================================================
     rlib = wrkr.run(wFlow_l)
     
 

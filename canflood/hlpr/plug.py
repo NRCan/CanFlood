@@ -81,7 +81,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
         if not iface is None:
             """only checking real iface for compatabilitgy"""
             assert isinstance(iface, QgisInterface), 'got bad iface type: %s'%type(iface)
-            self.iface = iface
+        self.iface = iface
             
         #=======================================================================
         # logger

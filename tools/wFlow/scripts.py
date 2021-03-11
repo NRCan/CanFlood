@@ -133,6 +133,7 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
             """C:\\LS\\03_TOOLS\\CanFlood\\_git"""
             base_dir = self.cf_dir
         self.base_dir=base_dir
+        assert os.path.exists(self.base_dir), self.base_dir
         
         self.overwrite=overwrite
         self.absolute_fp=absolute_fp
@@ -408,6 +409,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
                     **kwargs):
         if logger is None: logger=self.logger
         log=logger.getChild('load_layers')
+        assert isinstance(fp_l, list)
         
         d = dict()
         for fp_raw in fp_l:
@@ -437,7 +439,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         
         if logger is None: logger=self.logger
         log=logger.getChild('load_layers_dirs')
-        
+        assert isinstance(dir_l, list)
         #=======================================================================
         # collect all files
         #=======================================================================
