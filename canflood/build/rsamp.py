@@ -337,6 +337,8 @@ class Rsamp(Plotr, Qcoms):
             res_vlay = self.samp_vals(finv,rlayRaw_l, psmp_stat)
             res_name = '%s_%s_%i_%i'%(fname, self.tag, len(rlayRaw_l), res_vlay.dataProvider().featureCount())
             
+            if not 'Point' in self.gtype: res_name = res_name + '_%s'%psmp_stat.lower()
+            
         res_vlay.setName(res_name)
         #=======================================================================
         # wrap
@@ -363,6 +365,8 @@ class Rsamp(Plotr, Qcoms):
         self.feedback.setProgress(90)
 
         log.info('sampling finished')
+        
+        self.psmp_stat=psmp_stat #set for val_str
         
         return res_vlay
     
@@ -632,18 +636,6 @@ class Rsamp(Plotr, Qcoms):
             # sample.poly----------
             #===================================================================
             if 'Polygon' in gtype: 
-                #===============================================================
-                # params_d = {'COLUMN_PREFIX':indxr, 
-                #             'INPUT_RASTER':rlay, 
-                #             'INPUT_VECTOR':finv, 
-                #             'RASTER_BAND':1, 
-                #             'STATS':[psmp_code]}
-                # 
-                # #execute the algo
-                # res_d = processing.run(algo_nm, params_d, feedback=self.feedback)
-                # #extract and clean results
-                # finv = res_d['INPUT_VECTOR']
-                #===============================================================
                 
                 algo_nm = 'native:zonalstatisticsfb'
             
@@ -1395,11 +1387,8 @@ class Rsamp(Plotr, Qcoms):
         res_d = processing.run('native:joinattributestable', params_d, feedback=self.feedback)
         line_vlay = res_d['OUTPUT']
         
-        """
-        view(line_vlay)
-        """
-                
-                
+        log.debug('finished on %s w/ %i'%(line_vlay.name(), len(line_vlay)))
+        
 
         return line_vlay
         
@@ -1540,8 +1529,11 @@ class Rsamp(Plotr, Qcoms):
                      val_str=self.val_str,   **kwargs)
         
     def _set_valstr(self, df):
-        self.val_str= 'finv_fcnt=%i \nfinv_name=\'%s\' \nas_inun=%s \ndate=%s'%(
-            len(df), self.finv_name, self.as_inun, self.today_str)
+        self.val_str= 'finv_fcnt=%i \nfinv_name=\'%s\' \nas_inun=%s \ngtype=%s \ndate=%s'%(
+            len(df), self.finv_name, self.as_inun, self.gtype, self.today_str)
+        
+        if not 'Point' in self.gtype:
+            self.val_str = self.val_str + '\npsmp_stat=%s'%self.psmp_stat
         
     
 
