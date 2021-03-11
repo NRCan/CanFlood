@@ -272,11 +272,13 @@ class Preparor(Model, Qcoms):
                 drop_colns=['ogc_fid', 'fid'], #optional columns to drop from df
                 new_data = {},
                 newLayname = None,
+                logger=None,
                 ):
         #=======================================================================
         # defaults
         #=======================================================================
-        log = self.logger.getChild('to_finv')
+        if logger is None: logger=self.logger
+        log = logger.getChild('to_finv')
         if newLayname is None: newLayname = 'finv_%s'%in_vlay.name()
         
         #=======================================================================
@@ -354,6 +356,7 @@ class Preparor(Model, Qcoms):
     def build_nest_data(self, #convert data to nest like
                         nestID = 0, 
                         d_raw = {'scale':1.0, 'elv':0.0, 'tag':None, 'cap':None},
+                        logger=None,
                         ):
         
         if len(d_raw)==0: return dict()

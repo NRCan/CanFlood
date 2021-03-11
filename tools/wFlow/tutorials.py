@@ -227,9 +227,18 @@ class Tut2c_mutex(Tut2c): #tutorial 1a
             })
         
     def run(self):
-        
+        log = self.logger.getChild('r')
         #do the base execution
         super(Tut2c_mutex, self).run()
+        
+        """added the unique tools from tutorial 2a and 2b 
+            to make the full test suite more efficient"""
+        #results. risk plots (from tutorial 2a)
+        self.plot_risk_ttl(logger=log)
+        
+        #results. fail plots (from tutorial 2b)
+        d = self.plot_failSplit(logger=log)
+        self.res_d = {**self.res_d, **d}
         
         #set your cf_fp for your sibling
         self.session.data_d[self.name] = {'cf_fp':self.cf_fp}
@@ -255,14 +264,7 @@ class Tut2c_max(Tut2c): #tutorial 1a
         #do the base execution
         super(Tut2c_max, self).run()
         
-        """added the unique tools from tutorial 2a and 2b 
-            to make the full test suite more efficient"""
-        #results. risk plots (from tutorial 2a)
-        self.plot_risk_ttl(logger=log)
-        
-        #results. fail plots (from tutorial 2b)
-        d = self.plot_failSplit(logger=log)
-        self.res_d = {**self.res_d, **d}
+
         
         #results.compare
         cf_fp_sib = self.session.data_d[self.sibName]['cf_fp']
@@ -343,7 +345,89 @@ class Tut4b(Tut4):
 #===============================================================================
 class Tut5a(WorkFlow): #tutorial 1a
     name = 'tut5a'
-    crsid ='EPSG:3005'
+    crsid ='EPSG:3978'
+    prec = 6
+    
+    
+    def __init__(self, **kwargs):
+        self.pars_d = {
+                
+                #data files
+                'raster_dir':r'tests\_data\tuts\5a', #using local data instead of web data for the test
+                'finv_fp':r'tests\_data\tuts\5a\NPRI_lay3_3978.gpkg',
+                'aoi_fp':r'tutorials\5\tut5_aoi_3978.gpkg',
+                #'evals_fp':r'tests\_data\tuts\evals_5_tut5a.csv',
+                
+                #run controls
+                'felv':'datum', 'validate':'risk1', 
+                }
+        
+        self.finvConstructKwargs = {
+            'nest_data':{
+                'scale':1.0, 'elv':0.0
+                },
+            'nestID':0,
+            }
+        
+        self.rsampPrepKwargs = {
+            'clip_rlays':True, 'allow_rproj':True, 'allow_download':False, 
+            'scaleFactor':0.01,
+            }
+        
+
+                
+        super().__init__(cid ='OBJECTID',
+                         **kwargs)
+        
+    def run(self,  #workflow for tutorial 1a
+
+              ):
+        log = self.logger.getChild('r')
+        
+        #build
+        """using custom build routine for shortened tutorial"""
+        #=======================================================================
+        # self.res_d = self.tb_build(logger=log, fpoly=False, 
+        #                            finvConstructKwargs=self.finvConstructKwargs,
+        #                            rsampPrepKwargs=self.rsampPrepKwargs)
+        #=======================================================================
+        pars_d = self.pars_d
+        res_d = dict()
+        #=======================================================================
+        # prepare
+        #=======================================================================
+        cf_fp = self.prep_cf(pars_d, logger=log) #setuip the control file
+        
+
+        self.prep_finvConstruct(pars_d, **self.finvConstructKwargs)
+        
+        res_d['finv'] = self.prep_finv(pars_d, logger=log)
+        
+
+        #=======================================================================
+        # raster sample
+        #=======================================================================
+
+        self.rsamp_prep(pars_d, logger=log, **self.rsampPrepKwargs)
+        res_d['expos'] = self.rsamp_haz(pars_d, logger=log)
+        
+        #=======================================================================
+        # collect some data for the tests
+        #=======================================================================
+        
+        #raster layer crs
+        res_d['rlay_crs_d'] = {k:lay.crs().authid() for k, lay in self.data_d['rlay_d'].items()}
+            
+        
+
+        self.res_d = res_d
+        log.info('finished w/ %i: %s'%(len(self.res_d),  list(self.res_d.keys())))
+        
+        
+        
+        
+        
+        
 #===============================================================================
 # Tutorial 6---------
 #===============================================================================
@@ -375,6 +459,8 @@ class Tut6a(WorkFlow): #tutorial 1a
         self.tpars_d = { #kwargs for individual tools
 
             }
+        
+
         super().__init__(dikeID='ID', 
                          **kwargs)
         
@@ -393,7 +479,7 @@ class Tut6a(WorkFlow): #tutorial 1a
 #===============================================================================
 # executeors------------
 #===============================================================================
-wFlow_l = [Tut6a] #used below and by test scripts to bundle workflows
+wFlow_l = [Tut5a] #used below and by test scripts to bundle workflows
 
 if __name__ == '__main__':
     

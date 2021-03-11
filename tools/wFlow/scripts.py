@@ -26,6 +26,7 @@ from hlpr.exceptions import Error
 import hlpr.Q
 import hlpr.plot
 
+from hlpr.Q import view
 #===============================================================================
 # CF workers
 #===============================================================================
@@ -285,7 +286,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         
         
         self.com_hndls = list(session.com_hndls) +[
-            'out_dir', 'name', 'tag']
+            'out_dir', 'name', 'tag', 'cid']
         
         self.data_d = dict() #empty container for data
         
@@ -322,7 +323,10 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         else:
             
             
-            #collect common pars
+            #collect ComWrkr pars
+            """
+            prep_cf() appends 'cf_fp'
+            """
             for k in self.com_hndls:
                 kwargs[k] = getattr(self, k)
             
@@ -525,6 +529,50 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         
         return cf_fp
     
+    def prep_finvConstruct(self, 
+                   pars_d,
+                   nest_data = dict(),
+                   miti_data = dict(),
+                   nestID = 0,
+                    logger=None,
+                    dkey='finv_vlay',
+                    ):
+        
+        if logger is None: logger=self.logger
+        log = logger.getChild('prep_finvConstruct')
+        
+        wrkr = self._get_wrkr(Preparor)
+        
+        #=======================================================================
+        # load the data
+        #=======================================================================
+        finv_vlay = self._retrieve(dkey,
+               f = lambda logger=None: wrkr.load_vlay(
+                   os.path.join(self.base_dir, pars_d['finv_fp']), logger=logger)
+               )
+               
+               
+        #=======================================================================
+        # run converter
+        #=======================================================================
+        #prepare the nest data
+        if len(nest_data)>0:
+            nest_data2 = wrkr.build_nest_data(nestID=nestID, d_raw = nest_data, logger=log)
+        else:
+            nest_data2 = dict()
+
+        #build the finv
+        finv_vlay = wrkr.to_finv(finv_vlay,new_data={**nest_data2, **miti_data}, logger=log)
+        
+        self.data_d[dkey] = finv_vlay #set for subsequent workers
+        """
+        view(finv_vlay)
+        """
+        
+        
+        
+
+    
     def prep_finv(self, pars_d,
                     logger=None,
                     dkey='finv_vlay'):
@@ -549,6 +597,8 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         if not self.write: wrkr.upd_cf_finv('none')
         
         return df
+    
+    
     
     def prep_curves(self, pars_d,
                     logger=None):
@@ -625,6 +675,45 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #return loaded data
         return pd.read_csv(fp, **wrkr.dtag_d['evals'])
     
+    def rsamp_prep(self, pars_d,  #hazar draster sampler
+                  logger=None,
+                  dkey = 'rlay_d',
+                  rlay_d = None, #optional container of raster layers
+                  **kwargs):
+        
+        if logger is None: logger=self.logger
+        log = logger.getChild('rsamp_prep')
+        
+        wrkr = self._get_wrkr(Rsamp)
+        
+        #=======================================================================
+        # load the data
+        #=======================================================================
+        if rlay_d is None:
+            fp = os.path.join(self.base_dir, pars_d['raster_dir'])
+            rlay_d = self._retrieve(dkey,
+                   f = lambda logger=None: wrkr.load_rlays(fp, logger=logger))
+            
+        if 'aoi_fp' in pars_d:
+            fp = os.path.join(self.base_dir, pars_d['aoi_fp'])
+            aoi_vlay = self._retrieve('aoi_vlay',
+                   f = lambda logger=None: wrkr.load_vlay(fp, logger=logger))
+        else:
+            aoi_vlay=None
+        #=======================================================================
+        # execute
+        #=======================================================================
+        
+        rlay_l = wrkr.runPrep(list(rlay_d.values()), aoi_vlay = aoi_vlay,logger=log,
+                              **kwargs)
+        
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        self.data_d['rlay_d'] = {lay.name():lay for lay in rlay_l}
+        
+        
+    
     def rsamp_haz(self, pars_d,  #hazar draster sampler
                   logger=None,
                   dkey = 'rlay_d',
@@ -689,6 +778,10 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
             self.output_fig(fig)
         
         return df
+    """
+    for k in df.columns:
+        print(k)
+    """
 
     def rsamp_dtm(self, pars_d,  #hazar draster sampler
                   logger=None,
@@ -1387,7 +1480,20 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
               rlay_d=None, #optional rasters to sample
               fpol_d=None, #optional fail polys to sample
               logger=None,
+              
+              #tool kwargs
+              
+              finvConstructKwargs = {}, #kwargs for prep_finvConstruct
+              rsampPrepKwargs = {}, #kwargs for rsamp_prep
+              
               ):
+        """"
+        todo: improve tool kwarg handling 
+            tool boxes were supposed to be for 'typical' runs... 
+                but seems more efficient to pass kwargs rather than develop new functions at this level
+                
+            change _get_kwargs() to be WorkFLow function names? (rather than worker class names)
+        """
         #=======================================================================
         # defaults
         #=======================================================================
@@ -1402,6 +1508,9 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         cf_fp = self.prep_cf(pars_d, logger=log) #setuip the control file
         
+        if len(finvConstructKwargs)>0:
+            self.prep_finvConstruct(pars_d, **finvConstructKwargs)
+        
         res_d['finv'] = self.prep_finv(pars_d, logger=log)
         
         if 'curves_fp' in pars_d:
@@ -1411,6 +1520,8 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         # raster sample
         #=======================================================================
+        if len(rsampPrepKwargs)>0:
+            self.rsamp_prep(pars_d, logger=log, **rsampPrepKwargs)
         res_d['expos'] = self.rsamp_haz(pars_d, logger=log, rlay_d=rlay_d)
         
         #=======================================================================

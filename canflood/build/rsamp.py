@@ -399,7 +399,7 @@ class Rsamp(Plotr, Qcoms):
              clip_rlays=False,
              
              scaleFactor=1.00,
-             
+             logger=None,
              
              ):
         """
@@ -412,7 +412,8 @@ class Rsamp(Plotr, Qcoms):
         #=======================================================================
         # defaults
         #=======================================================================
-        log = self.logger.getChild('prep')
+        if logger is None: logger=self.logger
+        log = logger.getChild('prep')
         
         log.info('on \'%s\''%rlayRaw.name())
 
@@ -461,7 +462,7 @@ class Rsamp(Plotr, Qcoms):
             
             res_d['download'] = 'from \'%s\' to \'gdal\''%rlayRaw.providerType()
             
-            #mstore.addMapLayer(rlayRaw)
+            self.mstore.addMapLayer(rlayRaw)
 
         else:
             rlayDp = rlayRaw
@@ -490,7 +491,7 @@ class Rsamp(Plotr, Qcoms):
                 output=output, layname=newName)
             
             res_d['rproj'] = 'from %s to %s'%(rlayDp.crs().authid(), self.qproj.crs().authid())
-            #mstore.addMapLayer(rlayDp)
+            self.mstore.addMapLayer(rlayDp)
 
         else:
             log.debug('\'%s\' crs matches project crs: %s'%(rlayDp.name(), rlayDp.crs()))
@@ -507,7 +508,7 @@ class Rsamp(Plotr, Qcoms):
             rlayTrim = self.cliprasterwithpolygon(rlayProj,aoi_vlay, logger=log)
             
             res_d['clip'] = 'with \'%s\''%aoi_vlay.name()
-            #mstore.addMapLayer(rlayProj)
+            self.mstore.addMapLayer(rlayProj)
         else:
             rlayTrim = rlayProj
             
@@ -519,7 +520,7 @@ class Rsamp(Plotr, Qcoms):
             rlayScale = self.raster_mult(rlayTrim, scaleFactor, logger=log)
             
             res_d['scale'] = 'by %.4f'%scaleFactor
-            #mstore.addMapLayer(rlayTrim)
+            self.mstore.addMapLayer(rlayTrim)
         else:
             rlayScale = rlayTrim
             
@@ -576,7 +577,7 @@ class Rsamp(Plotr, Qcoms):
             print(k,v)
         
         """
-        #mstore.removeAllMapLayers() #clear all layers
+        #self.mstore.removeAllMapLayers() #clear all layers
         assert isinstance(resLay, QgsRasterLayer)
         
         

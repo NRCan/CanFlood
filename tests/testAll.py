@@ -79,7 +79,7 @@ class TestParent(unittest.TestCase): #unit test (one per test call)
         # attach
         #=======================================================================
         self.runr=runr
-        self.name=runr.tag
+        self.name='%s.%s'%(runr.name, runr.tag)
 
 
         super().__init__(*args, **kwargs) #initilzie the baseclass cascade
@@ -154,6 +154,21 @@ class Test_wf_basic(TestParent): #test for all risk model workflows
             nm = '%s.%s'%(self.name, k)
             self._df_chks(valC, valT, nm)
             
+
+
+            
+    def test_expos(self):
+        self.logger.info('test_expos on %s'%self.name)
+        #get the zipped checking data
+        chk_d = self._get_data(['expos', 'exlikes', 'r_passet', 'gels'])
+
+        #loop and compare each
+        for k, (valC, valT) in chk_d.items():
+            nm = '%s.%s'%(self.name, k)
+            assert len(valC.dtypes.unique())==1, 'got multiple dtypes'
+            self._df_chks(valC, valT, nm)
+            
+class Test_wf_L1(Test_wf_basic): #tests for level 1 models
     def test_rttl(self):
         keys = ['r_ttl']
         
@@ -182,20 +197,9 @@ class Test_wf_basic(TestParent): #test for all risk model workflows
             
             self.assertEqual(valC['noFail'].sum(), valT['noFail'].sum(), 
                              msg= nm + 'noFail count mismatch')
-
             
-    def test_expos(self):
-        self.logger.info('test_expos on %s'%self.name)
-        #get the zipped checking data
-        chk_d = self._get_data(['expos', 'exlikes', 'r_passet', 'gels'])
 
-        #loop and compare each
-        for k, (valC, valT) in chk_d.items():
-            nm = '%s.%s'%(self.name, k)
-            assert len(valC.dtypes.unique())==1, 'got multiple dtypes'
-            self._df_chks(valC, valT, nm)
-
-class Test_wf_L2(Test_wf_basic): #tests for level 2 models
+class Test_wf_L2(Test_wf_L1): #tests for level 2 models
     
     def test_dmgs(self):
         self.logger.info('test_dmgs on %s'%self.name)
@@ -208,7 +212,7 @@ class Test_wf_L2(Test_wf_basic): #tests for level 2 models
             assert len(valC.dtypes.unique())==1, 'got multiple dtypes'
             self._df_chks(valC, valT, nm)
 
-class Test_wf_cmpre(Test_wf_basic): #tests for models w/ compare
+class Test_wf_cmpre(Test_wf_L1): #tests for models w/ compare
     
     def test_cmpre(self):
         self.logger.info('test_cmpre on %s'%self.name)
@@ -219,6 +223,22 @@ class Test_wf_cmpre(Test_wf_basic): #tests for models w/ compare
         for k, (valC, valT) in chk_d.items():
             nm = '%s.%s'%(self.name, k)
             self._df_chks(valC, valT, nm)
+            
+class Test_wf_build(Test_wf_basic): #for truncated build tests
+    def test_rlayCRS(self):
+        keys = ['rlay_crs_d']
+        
+        chk_d = self._get_data(keys)
+
+        #loop and compare each
+        for k, (valC, valT) in chk_d.items():
+            nm = '%s.%s'%(self.name, k)
+            
+            
+            self.assertTrue(np.array_equal(
+                pd.Series(valC),
+                pd.Series(valT)
+                ), msg=nm + 'rlay crs mismatch')
             
 class Test_wf_dikes(TestParent):
     
@@ -264,7 +284,7 @@ class Session_t(Session): #handle one test session
         """will need to pass some of these to children"""
         super().__init__(
  
-            projName='tests2',
+            projName='test',
             plot=False, write=write,
             **kwargs) #Qcoms -> ComWrkr
         
@@ -283,7 +303,7 @@ class Session_t(Session): #handle one test session
     def get_tests(self, #generate the test suites
               wFLow_l,
               **kwargs):
-        
+        log = self.logger.getChild('get_tests')
         #=======================================================================
         # defaults
         #=======================================================================
@@ -293,7 +313,7 @@ class Session_t(Session): #handle one test session
         #===========================================================================
         suite = unittest.TestSuite() #start the suite container
 
-        d = dict()
+
         for fWrkr in wFLow_l:
             
             #===================================================================
@@ -311,7 +331,8 @@ class Session_t(Session): #handle one test session
                 suite.addTest(runr.Test(tMethodName, runr=runr))
             
             runr.mstore.removeAllMapLayers()
-        
+        log.info('constructed test suite from %i flows w/ %i tests in %s\n \n'%(
+            len(wFlow_l), suite.countTestCases(), datetime.datetime.now()-start))
         return suite
     
     def build_pickels(self, #build the input and output pickels 
@@ -422,13 +443,13 @@ class WorkFlow_t(WorkFlow): #wrapper for test workflows
 # SPECIFIC TEST WORKFLOWS----------
 #===============================================================================
 from wFlow.tutorials import Tut1a, Tut2a, Tut2b, Tut2c_mutex, Tut2c_max, Tut4a, Tut4b, \
-    Tut6a
+    Tut6a, Tut5a
 
 #===============================================================================
 # tutorial 1
 #===============================================================================
 class Tut1a_t(WorkFlow_t, Tut1a): #tutorial 1a
-    
+    Test = Test_wf_L1
     #keys to include in test pickels
     tdata_keys = ['finv', 'expos', 'evals', 'r_ttl', 'eventypes', 'r_passet']
 
@@ -462,7 +483,7 @@ class Tut2c_max_t(Tut2c_max, Tut2b_t):
 #===============================================================================
 class Tut4_t(WorkFlow_t):
     """"same as Tut1"""
-    Test = Test_wf_basic
+    Test = Test_wf_L1
     tdata_keys = ['finv', 'expos', 'evals', 'r_ttl', 'eventypes', 'r_passet']
     
 class Tut4a_t(Tut4a, Tut4_t): #tutorial 1a
@@ -470,6 +491,14 @@ class Tut4a_t(Tut4a, Tut4_t): #tutorial 1a
 
 class Tut4b_t(Tut4b, Tut4_t): #tutorial 1a
     pass
+
+#===============================================================================
+# tutorial 5
+#===============================================================================
+class Tut5a_t(WorkFlow_t, Tut5a):
+    """"same as Tut1"""
+    Test = Test_wf_build
+    tdata_keys = ['finv', 'expos','rlay_crs_d']
 
 #===============================================================================
 # Tutorial 6
@@ -483,9 +512,11 @@ class Tut6a_t(WorkFlow_t, Tut6a):
 wFlow_l = [Tut1a_t, 
            #Tut2a_t, #these are mostly redundant w/ 2c
            #Tut2b_t, 
-           Tut2c_mutex_t, Tut2c_max_t, Tut4a_t, Tut4b_t, Tut6a_t]
+           Tut2c_mutex_t, 
+           Tut2c_max_t,  #compares with Tut2c_mutex_t. write=True
+           Tut4a_t, Tut4b_t, Tut5a_t, Tut6a_t]
 
-#wFlow_l = [Tut6a_t]
+#wFlow_l = [Tut5a_t]
     
     
 
