@@ -110,9 +110,12 @@ class QprojPlug(Qcoms): #baseclass for plugins
                             feedback = MyFeedBackQ())
         
 
+        self.set_vdrivers()
+        
         #set some dummies for children
         self.qap = None #I dont think this ever gets referenced
         self.algo_init=True
+        
         #=======================================================================
         # default directories
         #=======================================================================

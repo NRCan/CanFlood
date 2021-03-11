@@ -78,7 +78,7 @@ class ComWrkr(object): #common methods for all classes
         #======================================================================
         # get defaults
         #======================================================================
-        self.logger = logger
+        self.logger = logger.getChild(self.__class__.__name__)
         #setup output directory
         if out_dir is None: out_dir = os.getcwd()
         

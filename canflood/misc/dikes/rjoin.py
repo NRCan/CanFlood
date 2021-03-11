@@ -62,18 +62,13 @@ class DikeJoiner(Qcoms, DPlotr):
         self.logger.debug('Diker.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
         
     def load_pfail_df(self,
-                      fp):
+                      df=None,
+                      fp=None,
+                      ):
         
-        #log = self.logger.getChild('load_pfail_df')
-        
-        #=======================================================================
-        # df = self.load_expo(fp, 
-        #     prop_colns = [self.dikeID, self.segID, self.segln, self.lfxn, self.celn, self.cbfn, self.ifidN],
-        #                     logger=log)
-        # del self.expo_df #clear out this ref
-        #=======================================================================
-        
-        df = pd.read_csv(fp, header=0, index_col=0)
+
+        if df is None:
+            df = pd.read_csv(fp, header=0, index_col=0)
         
         #=======================================================================
         # identify columns
@@ -99,6 +94,7 @@ class DikeJoiner(Qcoms, DPlotr):
     def load_ifz_fps(self, #load filepaths in an ifz map and replace with layer referneces
                  eifz_d, #ifz map w/ filepaths
                  aoi_vlay=None,
+                 base_dir=None,
                  ):
         """
         plugin runs dont need this.
@@ -116,6 +112,11 @@ class DikeJoiner(Qcoms, DPlotr):
         often users may duplicates layers/maps between events
             but our structure allows for unique vals 
             
+        #=======================================================================
+        # TODO:
+        #=======================================================================
+        setup to assign map based on name matching (between ifz and raster)
+            
         """
         log = self.logger.getChild('load_ifz')
         
@@ -132,17 +133,20 @@ class DikeJoiner(Qcoms, DPlotr):
         # loop and load
         #=======================================================================
         log.info('loading on %i events'%len(eifz_d))
-        for eTag, fp in eifz_d.copy().items():
+        for eTag, fp_raw in eifz_d.copy().items():
+            
             #===================================================================
-            # #keys check
-            # miss_l = set(['difz_fp', 'sid_ifz_d']).difference(e_d.keys())
-            # assert len(miss_l)==0, '\'%s\' got bad keys: %s'%(eTag, miss_l)
-            # 
+            # relative filepaths
             #===================================================================
+            if not base_dir is None:
+                fp = os.path.join(base_dir, fp_raw)
+            else:
+                fp = fp_raw
+
             #===================================================================
             # get the layer
             #===================================================================
-            #fp = e_d['difz_fp']
+
             #check if its already loaded
             if fp in fp_vlay_d:
                 vlay = self.fixgeometries(fp_vlay_d[fp], logger=log, layname=fp_vlay_d[fp].name())

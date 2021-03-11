@@ -194,14 +194,14 @@ class Tut2c(Tut2): #tutorial 1a
             })
         
 
-    def run(self,  #workflow for tutorial 1a
+    def run(self, 
               ):
         log = self.logger.getChild('r')
         
         #=======================================================================
         # load rasters
         #=======================================================================
-        rlay_d = self.load_layers_dirs(self.rlay_dirs)
+        rlay_d = self.load_layers_dirs(self.rlay_dirs, base_dir=self.base_dir)
         
         
         #build
@@ -254,6 +254,15 @@ class Tut2c_max(Tut2c): #tutorial 1a
         
         #do the base execution
         super(Tut2c_max, self).run()
+        
+        """added the unique tools from tutorial 2a and 2b 
+            to make the full test suite more efficient"""
+        #results. risk plots (from tutorial 2a)
+        self.plot_risk_ttl(logger=log)
+        
+        #results. fail plots (from tutorial 2b)
+        d = self.plot_failSplit(logger=log)
+        self.res_d = {**self.res_d, **d}
         
         #results.compare
         cf_fp_sib = self.session.data_d[self.sibName]['cf_fp']
@@ -332,6 +341,7 @@ class Tut4b(Tut4):
 #===============================================================================
 # Tutorial 6---------
 #===============================================================================
+ifz_fp = r'tutorials\6\dike_influence_zones.gpkg'
 class Tut6a(WorkFlow): #tutorial 1a
     name = 'tut6a'
     crsid ='EPSG:3005'
@@ -343,8 +353,14 @@ class Tut6a(WorkFlow): #tutorial 1a
                 'evals_fp':r'tests\_data\all2\evals_4_tut4a.csv',
                 'dtm_fp':r'tutorials\6\dtm.tif',
                 'dikes_fp':r'tutorials\6\dikes.gpkg',
-                'dcurves_fp':r'tutorials\6\dike_fragility_20210201.xls'
+                'dcurves_fp':r'tutorials\6\dike_fragility_20210201.xls',
 
+                'eifz_d':{
+                    '0010_noFail.tif':ifz_fp,
+                    '0050_noFail.tif':ifz_fp,
+                    '0200_noFail.tif':ifz_fp,
+                    '1000_noFail.tif':ifz_fp,
+                    }
                 
                 #run controls
 
@@ -375,7 +391,7 @@ wFlow_l = [Tut6a] #used below and by test scripts to bundle workflows
 
 if __name__ == '__main__':
     
-    wrkr = Session(projName='tuts', write=True, plot=True)
+    wrkr = Session(projName='tuts', write=True, plot=False)
     #===========================================================================
     # build test pickesl
     #===========================================================================

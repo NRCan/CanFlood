@@ -86,7 +86,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
     out_dName = driverName #default output driver/file type
 
     
-    q_hndls = ['crs', 'crsid', 'algo_init', 'qap']
+    q_hndls = ['crs', 'crsid', 'algo_init', 'qap', 'vlay_drivers']
     
     algo_init = False #flag indicating whether the algos have been initialized
     qap = None
@@ -161,7 +161,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #=======================================================================
         """both Plugin and StandAlone runs should call these"""
         self.qproj = QgsProject.instance()
-        self.set_vdrivers()
+        
         
 
         """
@@ -226,6 +226,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         self.qap = self.init_qgis()
         self.algo_init = self.init_algos()
         
+        self.set_vdrivers()
         #=======================================================================
         # wrap
         #=======================================================================
@@ -290,7 +291,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         return True
 
     def set_vdrivers(self):
-        
+        log = self.logger.getChild('set_vdrivers')
         #build vector drivers list by extension
         """couldnt find a good built-in to link extensions with drivers"""
         vlay_drivers = {'SpatiaLite':'sqlite', 'OGR':'shp'}
@@ -312,19 +313,21 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                 
         self.vlay_drivers = vlay_drivers
         
-        self.logger.debug('built driver:extensions dict: \n    %s'%vlay_drivers)
+        log.debug('built driver:extensions dict: \n    %s'%vlay_drivers)
         
         return
         
     def set_crs(self, #load, build, and set the project crs
                 crsid =  None, #integer
                 crs = None, #QgsCoordinateReferenceSystem
+                logger=None,
                 ):
         
         #=======================================================================
         # setup and defaults
         #=======================================================================
-        log = self.logger.getChild('set_crs')
+        if logger is None: logger=self.logger
+        log = logger.getChild('set_crs')
         
         if crsid is None: 
             crsid = self.crsid
@@ -357,12 +360,13 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         log.info('crs set to EPSG: %s, \'%s\''%(self.crs.authid(), self.crs.description()))
         self._upd_qd()
-        self.proj_checks()
+        self.proj_checks(logger=log)
         
         return self.crs
            
-    def proj_checks(self):
-        log = self.logger.getChild('proj_checks')
+    def proj_checks(self,
+                    logger=None):
+        #log = self.logger.getChild('proj_checks')
         
         if not self.driverName in self.vlay_drivers:
             raise Error('unrecognized driver name')
@@ -398,7 +402,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         for k,v in self.init_q_d.items():
             assert getattr(self, k) == v, k
         
-        log.info('project passed all checks')
+        #log.info('project passed all checks')
         
         return 
     

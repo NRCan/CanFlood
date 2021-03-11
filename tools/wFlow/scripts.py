@@ -143,6 +143,8 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
         #=======================================================================
         for k in self.flow_hndls + self.com_hndls:
             assert hasattr(self, k), k
+        
+        self.logger.debug('%s.__init__ finished \n'%self.__class__.__name__)
 
     #===========================================================================
     # CHILD HANDLING--------
@@ -153,12 +155,13 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
                    **kwargs):
         
         log = self.logger.getChild('r.%s'%WorkFlow.name)
-        
+        log.debug('on %s w/ %s'%(WorkFlow.__name__, WorkFlow.crsid))
         #=======================================================================
         # update crs
         #=======================================================================
         if not WorkFlow.crsid == self.crsid:
-            self.set_crs(WorkFlow.crsid)
+            log.debug('crsid mismatch... switching to crs of workflow')
+            self.set_crs(WorkFlow.crsid, logger=log)
 
         #===================================================================
         # # init the flow 
@@ -169,12 +172,18 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
         for k in list(self.com_hndls) + self.flow_hndls:
             kwargs[k] = getattr(self, k)
 
-        runr = WorkFlow(logger=log, session=self,**kwargs)
+        #init
+        kstr = ''.join(['\n    %s: %s'%(k,v) for k,v in kwargs.items()])
+        log.debug('building w/ %s'%kstr)
+        runr = WorkFlow(logger=self.logger, session=self,**kwargs)
 
         #===================================================================
         # execute the flow
         #===================================================================
+        log.debug('running \n\n')
         runr.run()
+        
+        log.debug('finished')
         return runr
         
 
@@ -184,7 +193,7 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
     #==========================================================================
 
     def run(self, #run a set of WorkFlows
-            wFLow_l, #set of workflows to run
+            wFlow_l, #set of workflows to run
             **kwargs
             ):
         """
@@ -192,10 +201,11 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
         
         """
         log=self.logger.getChild('r')
+        log.info('running %i flows: \n    %s'%(len(wFlow_l), wFlow_l))
  
  
         rlib = dict()
-        for fWrkr in wFLow_l:
+        for fWrkr in wFlow_l:
             runr = self._run_wflow(fWrkr, **kwargs)
             
             rlib[runr.name] = runr.res_d.copy()
@@ -415,7 +425,9 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
     
     def load_layers_dirs(self, #load layers from multiple directories
                          dir_l,
-                    layType = 'raster',
+                    ext = '.tif',
+                    aoi_vlay=None,
+                    base_dir=None, #optional incase dir_l is relative
                     logger=None,
                     **kwargs):
         
@@ -423,40 +435,38 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         log=logger.getChild('load_layers_dirs')
         
         #=======================================================================
-        # get the worker
+        # collect all files
         #=======================================================================
-        if layType == 'raster':
-            wrkr = self._get_wrkr(Rsamp)
-
-        else:
-            raise Error('unrecognized layType: %s'%layType)
+        fp_d = dict()
+        for data_dir in dir_l:
+            if not base_dir is None: data_dir = os.path.join(base_dir, data_dir)
+            assert os.path.exists(data_dir), data_dir
+            rfn_l = [e for e in os.listdir(data_dir) if e.endswith(ext)]
+            
+            #check these are not there
+            l = set(rfn_l).intersection(fp_d.keys())
+            assert len(l)==0, 'duplicate filenames found: \n%s'%l
+            
+            fp_d.update({fn:os.path.join(data_dir, fn) for fn in rfn_l})
         
         #=======================================================================
         # loop and load
         #=======================================================================
         d = dict()
-        for diri in dir_l:
-            if layType == 'raster':
-                new_d = wrkr.load_rlays(os.path.join(self.base_dir, diri), logger=log, **kwargs)
+        for fn, fp in fp_d.items():
+            assert os.path.exists(fp), fn
+            if ext == '.tif':
+                d[fn] = self.load_rlay(fp, logger=log,aoi_vlay=aoi_vlay, **kwargs)
             else:
                 raise Error()
-            
-            l = set(new_d.keys()).intersection(d.keys())
-            assert len(l)==0, 'got some overlap: %s'%l
-            
-            d = {**d, **new_d}
-            
-        #=======================================================================
-        # add all the layers
-        #=======================================================================
-        for k, layer in d.items():
-            self.mstore.addMapLayer(layer)
+
+            #add to my store
+            self.mstore.addMapLayer(d[fn])
             
         #=======================================================================
         # wrap
         #=======================================================================
 
-        del self.wrkr_d[wrkr.__class__.__name__] #need a fresh pull later on
         log.info('loaded %i'%len(d))
         return d
             
@@ -1329,6 +1339,45 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         
         return res_d
 
+    def dikes_join(self,
+                     pars_d,
+                    logger=None,
+
+                    rkwargs=None,
+                   ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('dikes_join')
+        if pars_d is None: pars_d = self.pars_d
+        
+        
+        wrkr = self._get_wrkr(DikeJoiner)
+        
+        #=======================================================================
+        # get data
+        #=======================================================================
+        wrkr.load_pfail_df(df = self.data_d['dike_pfail'])
+        wrkr.load_ifz_fps(pars_d['eifz_d'], base_dir=self.base_dir)
+        
+        #=======================================================================
+        # execute
+        #=======================================================================
+        if rkwargs is None: rkwargs = self._get_kwargs(wrkr.__class__.__name__)
+        
+        vlay_d = wrkr.join_pfails(**rkwargs)
+        
+        #=======================================================================
+        # output
+        #=======================================================================
+        if self.write:
+            wrkr.output_vlays()
+            
+        log.debug('finished')
+        return {'dike_pfail_d':vlay_d}
+        
     #===========================================================================
     # TOOL BOXES-------
     #===========================================================================
@@ -1430,6 +1479,11 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         
         d = self.dikes_vuln(pars_d, logger=log)
         res_d = {**res_d, **d}
+        
+        d = self.dikes_join(pars_d, logger=log)
+        res_d = {**res_d, **d}
+        
+        log.info('finished w/ %i: \n    %s'%(len(res_d), res_d.keys()))
         
         return res_d
     

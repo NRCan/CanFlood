@@ -96,11 +96,6 @@ class TestParent(unittest.TestCase): #unit test (one per test call)
         #print('tearing down %s (%s) %s \n'%(self.__class__.__name__, self.Model.tag, self._testMethodName))
         pass
     
-
-
-class Test_wf_basic(TestParent):
-    prec=4
-    
     def _get_data(self, keys):
         """
         keys passed NOT found in teh CALC set will be ignored
@@ -142,8 +137,12 @@ class Test_wf_basic(TestParent):
         sumC = round(valC.loc[:, boolcol].sum().sum(), self.prec)
         sumT = round(valT.loc[:, boolcol].sum().sum(), self.prec)        
         self.assertEqual(sumC, sumT, msg= nm + 'sum fail')
-            
     
+
+
+class Test_wf_basic(TestParent): #test for all risk model workflows
+    
+
     def test_finv(self):
         self.logger.info('test_finv on %s'%self.name)
         keys = ['finv']
@@ -209,7 +208,7 @@ class Test_wf_L2(Test_wf_basic): #tests for level 2 models
             assert len(valC.dtypes.unique())==1, 'got multiple dtypes'
             self._df_chks(valC, valT, nm)
 
-class Test_wf_cmpre(Test_wf_basic): #tests for level 2 models
+class Test_wf_cmpre(Test_wf_basic): #tests for models w/ compare
     
     def test_cmpre(self):
         self.logger.info('test_cmpre on %s'%self.name)
@@ -220,6 +219,33 @@ class Test_wf_cmpre(Test_wf_basic): #tests for level 2 models
         for k, (valC, valT) in chk_d.items():
             nm = '%s.%s'%(self.name, k)
             self._df_chks(valC, valT, nm)
+            
+class Test_wf_dikes(TestParent):
+    
+    def test_exposure(self):
+        keys = ['dExpo']
+        chk_d = self._get_data(keys)
+
+        #loop and compare each
+        for k, (valC, valT) in chk_d.items():
+            """
+            valC.loc[4301, '0200_noFail.tif']=0
+            """
+            nm = '%s.%s'%(self.name, k)
+            
+            self._df_chks(valC, valT, nm)
+            
+    def test_pfail(self):
+        keys= ['dike_pfail', 'dike_pfail_lfx']
+        
+        chk_d = self._get_data(keys)
+
+        #loop and compare each
+        for k, (valC, valT) in chk_d.items():
+            nm = '%s.%s'%(self.name, k)
+            self._df_chks(valC, valT, nm)
+    
+
 #===============================================================================
 # TEST HANLDER--------
 #===============================================================================
@@ -395,7 +421,8 @@ class WorkFlow_t(WorkFlow): #wrapper for test workflows
 #===============================================================================
 # SPECIFIC TEST WORKFLOWS----------
 #===============================================================================
-from wFlow.tutorials import Tut1a, Tut2a, Tut2b, Tut2c_mutex, Tut2c_max, Tut4a, Tut4b
+from wFlow.tutorials import Tut1a, Tut2a, Tut2b, Tut2c_mutex, Tut2c_max, Tut4a, Tut4b, \
+    Tut6a
 
 #===============================================================================
 # tutorial 1
@@ -444,10 +471,21 @@ class Tut4a_t(Tut4a, Tut4_t): #tutorial 1a
 class Tut4b_t(Tut4b, Tut4_t): #tutorial 1a
     pass
 
+#===============================================================================
+# Tutorial 6
+#===============================================================================
+class Tut6a_t(WorkFlow_t, Tut6a):
+    """"same as Tut1"""
+    Test = Test_wf_dikes
+    tdata_keys = ['dExpo_dxcol', 'dExpo', 'dike_pfail', 'dike_pfail_lfx']
 
 
-wFlow_l = [Tut2a_t, Tut1a_t, Tut2b_t, Tut2c_mutex_t, Tut2c_max_t, Tut4a_t, Tut4b_t]
-#wFlow_l = [Tut4a_t, Tut4b_t]
+wFlow_l = [Tut1a_t, 
+           #Tut2a_t, #these are mostly redundant w/ 2c
+           #Tut2b_t, 
+           Tut2c_mutex_t, Tut2c_max_t, Tut4a_t, Tut4b_t, Tut6a_t]
+
+#wFlow_l = [Tut6a_t]
     
     
 
