@@ -22,9 +22,10 @@ from qgis.gui import QgisInterface
 
 #pyQt
 from PyQt5.QtWidgets import QApplication, QWidget, QInputDialog, QLineEdit, QFileDialog, QGroupBox, QComboBox
-#from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import Qt, QAbstractTableModel, QObject
+from PyQt5.QtGui import QStandardItem, QStandardItemModel
+from PyQt5.QtCore import Qt, QAbstractTableModel, QObject 
 from PyQt5 import QtCore
+
 
 #==============================================================================
 # custom imports
@@ -793,6 +794,8 @@ def bind_layersListWidget(widget, #instanced widget
         
     widget.iface = iface
     widget.layerType = layerType
+    widget.setModel(QStandardItemModel())
+    
     #===========================================================================
     # populating and setting selection
     #===========================================================================
@@ -805,15 +808,22 @@ def bind_layersListWidget(widget, #instanced widget
             if not self.layerType is None:
                 layers = self._apply_filter(layers)
                 
-        self.clear()
-        assert isinstance(layers, list), 'bad type on layeres: %s'%type(layers)
         
-        #add all these
-        for layer in layers:
-            e = layer.name()
-            self.addItem(e)
-            #print('adding \'%s\''%e):
-        del layers
+        assert isinstance(layers, list), 'bad type on layeres: %s'%type(layers)
+        model = self.model()
+        
+        model.clear()
+
+        for item in [QStandardItem(l.name()) for l in layers]:
+            item.setCheckable(True)
+            item.setCheckState(False)
+            model.appendRow(item)
+            
+        print('yay')
+        
+        
+
+
             
     def _apply_filter(self, layers):
         return [rl for rl in layers if rl.type()==self.layerType]
@@ -830,19 +840,24 @@ def bind_layersListWidget(widget, #instanced widget
         self._set_selection_byName([l.name() for l in lays_l])
         
     def _set_selection_byName(self, names_l):
-        for indx in range(0, self.count()):
-            if self.item(indx).text() in names_l:
-                self.item(indx).setSelected(True)
+        model = self.model()
+        for indx in range(0,model.rowCount()):
+
+            if model.item(indx).text() in names_l:
+                model.item(indx).setCheckState(True)
             else:
-                self.item(indx).setSelected(False)
+                model.item(indx).setCheckState(False)
             
     #===========================================================================
     # retriving selection
     #===========================================================================
     def get_selected_layers(self):
         qproj = QgsProject.instance()
+        model = self.model()
         #collected selected text
-        nms_l = [e.text() for e in self.selectedItems()]
+        #nms_l = [e.text() for e in self.selectedItems()]
+        items = [model.item(i) for i in range(model.rowCount())]
+        nms_l = [item.text() for item in items]
         
         assert len(nms_l)>0, 'no selection!'
         #retrieve layers from canvas

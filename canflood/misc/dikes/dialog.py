@@ -179,19 +179,19 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         # wsl raster layers
         #=======================================================================
         #list widget
-        bind_layersListWidget(self.listWidget_expo_rlays, log, iface=self.iface, 
+        bind_layersListWidget(self.listView_expo_rlays, log, iface=self.iface, 
                               layerType=QgsMapLayer.RasterLayer) #add custom bindigns
         
-        self.listWidget_expo_rlays.populate_layers(layers=rlays) #populate
+        self.listView_expo_rlays.populate_layers(layers=rlays) #populate
         
         #connect buttons
-        self.pushButton_expo_sAll.clicked.connect(self.listWidget_expo_rlays.selectAll)
-        self.pushButton_expo_clear.clicked.connect(self.listWidget_expo_rlays.clearSelection)
-        self.pushButton_expo_sVis.clicked.connect(self.listWidget_expo_rlays.select_visible)
-        self.pushButton_expo_canvas.clicked.connect(self.listWidget_expo_rlays.select_canvas)
+        self.pushButton_expo_sAll.clicked.connect(self.listView_expo_rlays.selectAll)
+        self.pushButton_expo_clear.clicked.connect(self.listView_expo_rlays.clearSelection)
+        self.pushButton_expo_sVis.clicked.connect(self.listView_expo_rlays.select_visible)
+        self.pushButton_expo_canvas.clicked.connect(self.listView_expo_rlays.select_canvas)
         
         """not sure if this fix is needed... but possibleissue with kwarg passing"""
-        self.pushButton_expo_refr.clicked.connect(lambda x: self.listWidget_expo_rlays.populate_layers())
+        self.pushButton_expo_refr.clicked.connect(lambda x: self.listView_expo_rlays.populate_layers())
        
         
         
@@ -257,12 +257,17 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         
     def _set_setup(self): #attach parameters from setup tab
-        
+        """TODO:
+        migrate to common _set_setup
+        """
+        self._set_setup(set_cf_fp=False)
         #secssion controls
-        self.tag = self.linEdit_ScenTag.text()
-        self.out_dir = self.lineEdit_wdir.text()
+        #=======================================================================
+        # self.tag = self.linEdit_ScenTag.text()
+        # self.out_dir = self.lineEdit_wdir.text()
+        #=======================================================================
         
-        if not os.path.exists(self.out_dir): os.makedirs(self.out_dir)
+        #if not os.path.exists(self.out_dir): os.makedirs(self.out_dir)
 
         
         #project aoi
@@ -270,8 +275,8 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         #file behavior
         self.loadRes = self.checkBox_loadres.isChecked()
-        self.overwrite=self.checkBox_SSoverwrite.isChecked()
-        self.absolute_fp = self.radioButton_SS_fpAbs.isChecked()
+        #self.overwrite=self.checkBox_SSoverwrite.isChecked()
+        #self.absolute_fp = self.radioButton_SS_fpAbs.isChecked()
         
         #dikes layer
         self.dike_vlay = self.comboBox_dikesVlay.currentLayer()
@@ -283,8 +288,9 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.ifidN = self.mFieldComboBox_ifidN.currentField()
         
         """just put this here for easy upedating"""
-        self.inherit_fieldNames = ['logger', 'out_dir', 'segID', 'dikeID', 'tag',
-                                    'cbfn', 'ifidN', 'overwrite', 'absolute_fp']
+        self.inherit_fieldNames = set(
+            self.inherit_fieldNames).update([ 'segID', 'dikeID',
+                                    'cbfn', 'ifidN', 'init_q_d'])
         #=======================================================================
         # prechecks
         #=======================================================================
@@ -303,7 +309,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # collect inputs
         #=======================================================================
-        rlays_d = self.listWidget_expo_rlays.get_selected_layers()
+        rlays_d = self.listView_expo_rlays.get_selected_layers()
         
         #tside
         if self.radioButton_v_tside_left.isChecked():
