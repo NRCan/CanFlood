@@ -462,7 +462,7 @@ class Dexpo(Qcoms, DPlotr):
         #=======================================================================
         # clean up
         #=======================================================================
-        cPts_vlay  = vlay_rename_fields(cPts_vlay, {'dtm_1':self.celn})
+        cPts_vlay  = vlay_rename_fields(cPts_vlay, {'dtm1':self.celn})
         
         tr_colns.append(self.celn)
         cPts_vlay = self.deletecolumn(cPts_vlay, tr_colns, logger=log, invert=True,
