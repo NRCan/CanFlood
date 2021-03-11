@@ -110,6 +110,9 @@ class Test_wf_basic(TestParent):
         calc_d = {k:v for k,v in self.runr.res_d.items() if k in keys} #requested keys from calc set
         test_d = self.runr.pick_d #test library 
         
+        """
+        self.runr.res_d['si_ttl']
+        """
         #=======================================================================
         # key check
         #=======================================================================
@@ -120,13 +123,10 @@ class Test_wf_basic(TestParent):
         return {k:(v, test_d[k]) for k,v in calc_d.items()}
     
     def _df_chks(self, valC, valT, nm):
-        
-        #self.assertIsInstance(valC, type(valT), msg=nm + 'bad type: %s'%(type(valC)))
 
         assert isinstance(valC, pd.DataFrame), nm
         
         #column dtypes
-        
         self.assertEqual(valC.dtypes[0].char, valT.dtypes[0].char, msg=nm)
         
         #shape
@@ -207,7 +207,18 @@ class Test_wf_L2(Test_wf_basic): #tests for level 2 models
             nm = '%s.%s'%(self.name, k)
             assert len(valC.dtypes.unique())==1, 'got multiple dtypes'
             self._df_chks(valC, valT, nm)
+
+class Test_wf_cmpre(Test_wf_basic): #tests for level 2 models
     
+    def test_cmpre(self):
+        self.logger.info('test_cmpre on %s'%self.name)
+        #get the zipped checking data
+        chk_d = self._get_data(['cf_compare'])
+
+        #loop and compare each
+        for k, (valC, valT) in chk_d.items():
+            nm = '%s.%s'%(self.name, k)
+            self._df_chks(valC, valT, nm)
 #===============================================================================
 # TEST HANLDER--------
 #===============================================================================
@@ -219,6 +230,7 @@ class Session_t(Session): #handle one test session
     pickel_dir = r'tests\_data\all2\pickles' #folder with the pickes in it
     
     def __init__(self,
+                 write=False,
                  **kwargs):
         
         #init the cascade 
@@ -226,7 +238,7 @@ class Session_t(Session): #handle one test session
         super().__init__(
  
             projName='tests2',
-            plot=False, write=False,
+            plot=False, write=write,
             **kwargs) #Qcoms -> ComWrkr
         
         #=======================================================================
@@ -330,7 +342,7 @@ class WorkFlow_t(WorkFlow): #wrapper for test workflows
         if ofp is None:
             ofp = os.path.join(self.session.pickel_dir, '%s.pickle'%self.name)
         
-        log.info('on %s'%type(data))
+        log.debug('on %s'%type(data))
         
         
         #check data
@@ -347,7 +359,7 @@ class WorkFlow_t(WorkFlow): #wrapper for test workflows
             # Pickle the 'data' dictionary using the highest protocol available.
             pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
             
-        log.info('wrote to %s'%ofp)
+        log.info('wrote pick w/ %i: %s \n    %s'%(len(data), list(data.keys()), ofp))
         return ofp
     
     def load_pick(self, #load your test library data from the pickle
@@ -382,7 +394,7 @@ class WorkFlow_t(WorkFlow): #wrapper for test workflows
 #===============================================================================
 # SPECIFIC TEST WORKFLOWS
 #===============================================================================
-from wFlow.tutorials import Tut1a, Tut2a
+from wFlow.tutorials import Tut1a, Tut2a, Tut2b, Tut2c_mutex, Tut2c_max
 
 class Tut1a_t(WorkFlow_t, Tut1a): #tutorial 1a
     
@@ -390,14 +402,31 @@ class Tut1a_t(WorkFlow_t, Tut1a): #tutorial 1a
     tdata_keys = ['finv', 'expos', 'evals', 'r_ttl', 'eventypes', 'r_passet']
 
         
-class Tut2a_t(WorkFlow_t, Tut2a): #tutorial 1a
+class Tut2_t(WorkFlow_t): #generic for all tutorial 2s
     Test = Test_wf_L2
-    #keys to include in test pickels
     tdata_keys = ['finv', 'expos', 'evals', 'r_ttl', 'eventypes', 'r_passet', 'gels', 'dmgs']
+    
+class Tut2a_t(Tut2_t, Tut2a): 
+    pass
+
+
+class Tut2b_t(Tut2_t, Tut2b): 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.tdata_keys = self.tdata_keys.copy() + ['exlikes']
+        
+class Tut2c_mutex_t(Tut2c_mutex, Tut2b_t):
+    pass
+
+class Tut2c_max_t(Tut2c_max, Tut2b_t):
+    Test = Test_wf_cmpre
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.tdata_keys = self.tdata_keys.copy() + ['cf_compare']
         
 
-        
-wFlow_l = [Tut2a_t, Tut1a_t]
+wFlow_l = [Tut2a_t, Tut1a_t, Tut2b_t, Tut2c_mutex_t, Tut2c_max_t]
+#wFlow_l = [Tut2c_mutex_t, Tut2c_max_t]
     
     
 
@@ -421,7 +450,7 @@ if __name__ == '__main__':
     execute the test suite using TextTestRunner
     """
     
-    wrkr = Session_t()
+    wrkr = Session_t(write=True)
     #===========================================================================
     # build test pickesl
     #===========================================================================

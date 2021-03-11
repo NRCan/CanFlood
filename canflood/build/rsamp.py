@@ -1458,6 +1458,7 @@ class Rsamp(Plotr, Qcoms):
         
         
     def upd_cf_dtm(self, cf_fp=None):
+        if cf_fp is None: cf_fp=self.cf_fp
         return self.set_cf_pars(
             {
             'dmg_fps':(

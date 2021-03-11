@@ -40,6 +40,8 @@ from model.dmg2 import Dmg2
 
 from results.djoin import Djoiner
 from results.riskPlot import RiskPlotr
+from results.attribution import Attr
+from results.compare import Cmpr
 #===============================================================================
 # methods---------
 #===============================================================================
@@ -402,10 +404,55 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
             self.mstore.addMapLayer(layer)
             d[layer.name()] = layer
             
-            
+        log.info('loaded %i'%len(d))
         return d
-            
     
+    def load_layers_dirs(self, #load layers from multiple directories
+                         dir_l,
+                    layType = 'raster',
+                    logger=None,
+                    **kwargs):
+        
+        if logger is None: logger=self.logger
+        log=logger.getChild('load_layers_dirs')
+        
+        #=======================================================================
+        # get the worker
+        #=======================================================================
+        if layType == 'raster':
+            wrkr = self._get_wrkr(Rsamp)
+
+        else:
+            raise Error('unrecognized layType: %s'%layType)
+        
+        #=======================================================================
+        # loop and load
+        #=======================================================================
+        d = dict()
+        for diri in dir_l:
+            if layType == 'raster':
+                new_d = wrkr.load_rlays(os.path.join(self.base_dir, diri), logger=log, **kwargs)
+            else:
+                raise Error()
+            
+            l = set(new_d.keys()).intersection(d.keys())
+            assert len(l)==0, 'got some overlap: %s'%l
+            
+            d = {**d, **new_d}
+            
+        #=======================================================================
+        # add all the layers
+        #=======================================================================
+        for k, layer in d.items():
+            self.mstore.addMapLayer(layer)
+            
+        #=======================================================================
+        # wrap
+        #=======================================================================
+
+        del self.wrkr_d[wrkr.__class__.__name__] #need a fresh pull later on
+        log.info('loaded %i'%len(d))
+        return d
             
     #===========================================================================
     # TOOLS.BUILD-------
@@ -705,6 +752,15 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
             wrkr.out_fp = 'none'
         wrkr.update_cf()
         
+        #=======================================================================
+        # plot
+        #=======================================================================
+        if self.plot:
+            fig = wrkr.plot_hist()
+            self.output_fig(fig)
+            fig = wrkr.plot_boxes()
+            self.output_fig(fig)
+        
         return res_df
 
     def validate(self, pars_d,  #validation
@@ -904,7 +960,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
               logger=None,
               rkwargs = None, #flow control keys for this run
               plot = None, #some workers may want to delay plotting
-              prep_kwargs={},
+
               ): #run risk1
         #=======================================================================
         # defaults
@@ -921,7 +977,11 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         
         #get control keys for this tool
         if rkwargs is None: rkwargs = self._get_kwargs(wrkr.__class__.__name__)
-        wrkr.setup_fromData(self.data_d, prep_kwargs=prep_kwargs) #setup w/ the pre-loaded data
+        
+        #pull out setup kwargs
+        skwargs = {k:rkwargs.pop(k) for k in rkwargs.copy().keys() if k in ['prep_kwargs']}
+        
+        wrkr.setup_fromData(self.data_d, **skwargs) #setup w/ the pre-loaded data
         
         #=======================================================================
         # execute
@@ -929,6 +989,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         res_ttl, res_df = wrkr.run(**rkwargs)
             
         """
+        wrkr.attriMode
         for k,v in wrkr.data_d.items():
             print(k, type(v))
         
@@ -949,16 +1010,20 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
             wrkr.output_ttl()
             wrkr.output_etype()
             if not res_df is None: wrkr.output_passet()
+            if wrkr.attriMode: wrkr.output_attr()
             
         #=======================================================================
         # wrap
         #=======================================================================
-        res_d = dict()
-        res_d['r_ttl'] = res_ttl
-        res_d['eventypes'] = wrkr.eventType_df
+        res_d = {
+            'r_ttl': res_ttl,
+            'eventypes':wrkr.eventType_df}
+        
         if not res_df is None:
             res_d['r_passet'] = res_df
-
+        
+        if wrkr.attriMode:
+            res_d[wrkr.attrdtag_out] = wrkr.att_df.copy()
             
         #set for results workers
         self.data_d = {**self.data_d, **res_d}
@@ -972,7 +1037,9 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
               pars_d=None,
                     logger=None,
                     dkey='finv_vlay',
-                    dkey_tab='r_passet'):
+                    dkey_tab='r_passet',
+                    rkwargs=None,
+                    ):
         #=======================================================================
         # defaults
         #=======================================================================
@@ -997,7 +1064,8 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         # execute
         #=======================================================================
-        jvlay = wrkr.run(finv_vlay, keep_fnl='all')
+        if rkwargs is None: rkwargs = self._get_kwargs(wrkr.__class__.__name__)
+        jvlay = wrkr.run(finv_vlay, **rkwargs)
         
         #=======================================================================
         # write result
@@ -1013,6 +1081,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
                       pars_d=None,
                     logger=None,
                     ylabs = ['AEP', 'impacts'], #types of plots to generate
+                    rkwargs=None,
                     ):
         #=======================================================================
         # defaults
@@ -1032,11 +1101,82 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         # get plots
         #=======================================================================
+        if rkwargs is None: rkwargs = self._get_kwargs(wrkr.__class__.__name__)
         for ylab in ylabs:
-            fig = wrkr.plot_riskCurve(y1lab=ylab)
+            fig = wrkr.plot_riskCurve(y1lab=ylab, **rkwargs)
             self.output_fig(fig)
         
+    def plot_failSplit(self,  #single risk plot of total results
+
+                    logger=None,
+                    ylabs = ['AEP', 'impacts'], #types of plots to generate
+                    rkwargs=None,
+                    ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('plot_risk_ttl')
+
         
+        #=======================================================================
+        # setup worker
+        #=======================================================================
+        wrkr = self._get_wrkr(Attr)
+        wrkr.setup_fromData(self.data_d) #setup w/ the pre-loaded data
+        
+        si_ttl = wrkr.get_slice_noFail()
+        
+        #=======================================================================
+        # get plots
+        #=======================================================================
+        if rkwargs is None: rkwargs = self._get_kwargs(wrkr.__class__.__name__)
+        
+        for ylab in ylabs:
+            fig = wrkr.plot_slice(si_ttl, y1lab=ylab, logger=log, **rkwargs)
+            self.output_fig(fig)
+            
+        return {'si_ttl':si_ttl}
+    
+    def compare(self, #run compare tools 
+                    fps_d, 
+                    logger=None,
+                    cf_compare=True,
+                    ylabs = ['AEP', 'impacts'], #types of plots to generate
+
+                    ):
+        """
+        no point in passing parameters...
+        """
+        assert self.write, 'write needs to be enabled for spawning the children'
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('plot_risk_ttl')
+
+        
+        wrkr = self._get_wrkr(Cmpr, fps_d=fps_d)
+        wrkr.setup_fromData(self.data_d) #setup w/ the pre-loaded data
+        #=======================================================================
+        # comapre control files
+        #=======================================================================
+        res_d = dict()
+        if cf_compare:
+            mdf = wrkr.cf_compare()
+            res_d['cf_compare'] = mdf.copy()
+            if self.write:
+                mdf.to_csv(os.path.join(wrkr.out_dir, 'CFcompare_%s_%i.csv'%(wrkr.tag, len(mdf.columns))))
+                
+        #=======================================================================
+        # plots
+        #=======================================================================
+        for ylab in ylabs:
+            fig = wrkr.riskCurves(y1lab=ylab, logger=log)
+            self.output_fig(fig)
+            
+        return res_d
+            
     #===========================================================================
     # TOOL BOXES-------
     #===========================================================================

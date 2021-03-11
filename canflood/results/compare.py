@@ -71,8 +71,13 @@ class Cmpr(RiskPlotr):
     def setup(self):
         """even though we only have one setup function... keeping this hear to match other workers"""
         self.init_model() #attach control file
-        _ = self.load_scenarios()
+        
+        self.prep_model() 
+        
         return self
+    
+    def prep_model(self, **kwargs):
+        _ = self.load_scenarios(**kwargs)
         
     def load_scenarios(self,
                  fps_d=None, #container of filepaths 

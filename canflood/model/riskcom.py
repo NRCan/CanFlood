@@ -262,7 +262,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         
         #check the column expectations
         miss_l = set(self.exp_ttl_colns).difference(tlRaw_df.columns)
-        assert len(miss_l)==0
+        assert len(miss_l)==0, 'missing some columns: %s'%miss_l
 
         assert 'ead' in tlRaw_df.iloc[:,0].values, 'dmg_ser missing ead entry'
         
@@ -548,14 +548,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             mdex = atr_dxcol_raw.columns
             nameRank_d= {lvlName:i for i, lvlName in enumerate(mdex.names)}
             edf = edf.sort_index(axis=1, ascending=False)
-            """
-            view(edf)
-            view(atr_dxcol_raw)
-            view(atr_dxcol)
-            view(bool_dxcol)
-            view(mult_dxcol)
-            pd.__version__
-            """
+
             if event_rels == 'max':
                 """                
                 turns out we need to get the ACTUAL expected value matrix
