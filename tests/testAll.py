@@ -254,7 +254,7 @@ class Session_t(Session): #handle one test session
     #===========================================================================
     # program vars
     #===========================================================================
-    pickel_dir = r'tests\_data\all2\pickles' #folder with the pickes in it
+    pickel_dir = r'tests\_data\pickles' #folder with the pickes in it
     
     def __init__(self,
                  write=False,

@@ -17,7 +17,7 @@ class Tut1a(WorkFlow): #tutorial 1a
                 #data files
                 'finv_fp':r'tutorials\1\finv_tut1a.gpkg',
                 'raster_dir':r'tutorials\1\haz_rast',
-                'evals_fp':r'tests\_data\all2\evals_4_tut1a.csv',
+                'evals_fp':r'tests\_data\tuts\evals_4_tut1a.csv',
                 #'fpol_dir':r'tutorials\1\haz_fpoly',
                 
                 #run controls
@@ -65,8 +65,8 @@ class Tut2(WorkFlow): #tutorial 1a
                 #data files
                 'finv_fp':r'tutorials\2\finv_tut2.gpkg',
                 'raster_dir':r'tutorials\2\haz_rast',
-                'evals_fp':r'tests\_data\all2\evals_4_tut2a.csv',
-                'curves_fp':r'tests\_data\all2\IBI2015_DamageCurves.xls',
+                'evals_fp':r'tests\_data\tuts\evals_4_tut2a.csv',
+                'curves_fp':r'tests\_data\tuts\IBI2015_DamageCurves.xls',
                 'dtm_fp':r'tutorials\2\dtm_tut2.tif',
                 'fpol_dir':r'tutorials\2\haz_fpoly',
                 
@@ -138,7 +138,7 @@ class Tut2b(Tut2): #tutorial 1a
         
 
         self.pars_d.update({
-            'evals_fp':r'tests\_data\all2\evals_4_tut2b.csv',
+            'evals_fp':r'tests\_data\tuts\evals_4_tut2b.csv',
             'event_rels':'mutEx', #for RiskModel.. nto likeSamp
             })
         
@@ -190,7 +190,7 @@ class Tut2c(Tut2): #tutorial 1a
         
 
         self.pars_d.update({
-            'evals_fp':r'tests\_data\all2\evals_4_tut2c.csv',
+            'evals_fp':r'tests\_data\tuts\evals_4_tut2c.csv',
             })
         
 
@@ -282,7 +282,7 @@ class Tut4(WorkFlow): #tutorial 1a
                 
                 #data files
                 'raster_dir':r'tutorials\4\haz_rast',
-                'evals_fp':r'tests\_data\all2\evals_4_tut4a.csv',
+                'evals_fp':r'tests\_data\tuts\evals_4_tut4a.csv',
                 'dtm_fp':r'tutorials\4\dtm_ct2.tif',
 
                 
@@ -337,7 +337,13 @@ class Tut4b(Tut4):
         self.pars_d.update({
             'finv_fp':r'tutorials\4\finv_tut4b_lines.gpkg',
             })
-        
+
+#===============================================================================
+# Tutorial 5-------------
+#===============================================================================
+class Tut5a(WorkFlow): #tutorial 1a
+    name = 'tut5a'
+    crsid ='EPSG:3005'
 #===============================================================================
 # Tutorial 6---------
 #===============================================================================
@@ -350,7 +356,7 @@ class Tut6a(WorkFlow): #tutorial 1a
                 
                 #data files
                 'raster_dir':r'tutorials\6\haz_rast',
-                'evals_fp':r'tests\_data\all2\evals_4_tut4a.csv',
+                'evals_fp':r'tests\_data\tuts\evals_4_tut4a.csv',
                 'dtm_fp':r'tutorials\6\dtm.tif',
                 'dikes_fp':r'tutorials\6\dikes.gpkg',
                 'dcurves_fp':r'tutorials\6\dike_fragility_20210201.xls',

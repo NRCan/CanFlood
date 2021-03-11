@@ -1,7 +1,0 @@
-rEventName,aep,noFail
-haz_1000yr_cT3,0.001,True
-haz_1000yr_fail_A_cT4,0.001,False
-haz_1000yr_fail_B_cT4,0.001,False
-haz_200yr_cT2,0.005,True
-haz_100yr_cT2,0.01,True
-haz_50yr_cT3,0.02,True
