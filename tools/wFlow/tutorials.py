@@ -479,7 +479,7 @@ class Tut6a(WorkFlow): #tutorial 1a
 #===============================================================================
 # executeors------------
 #===============================================================================
-wFlow_l = [Tut5a] #used below and by test scripts to bundle workflows
+wFlow_l = [Tut4a] #used below and by test scripts to bundle workflows
 
 if __name__ == '__main__':
     

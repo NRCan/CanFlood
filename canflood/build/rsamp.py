@@ -602,7 +602,7 @@ class Rsamp(Plotr, Qcoms):
             assert psmp_stat in self.psmp_codes, 'unrecognized psmp_stat' 
             psmp_code = self.psmp_codes[psmp_stat] #sample each raster
             algo_nm = 'qgis:zonalstatistics'
-            """I think this is renamed in newer versions"""
+
             
             
         elif 'Point' in gtype:
@@ -627,22 +627,39 @@ class Rsamp(Plotr, Qcoms):
                 indxr+1, len(raster_l), finv.name(), rlay.name()))
             
             ofnl =  [field.name() for field in finv.fields()]
+            self.mstore.addMapLayer(finv)
             #===================================================================
             # sample.poly----------
             #===================================================================
             if 'Polygon' in gtype: 
-                params_d = {'COLUMN_PREFIX':indxr, 
-                            'INPUT_RASTER':rlay, 
-                            'INPUT_VECTOR':finv, 
-                            'RASTER_BAND':1, 
-                            'STATS':[psmp_code]}
+                #===============================================================
+                # params_d = {'COLUMN_PREFIX':indxr, 
+                #             'INPUT_RASTER':rlay, 
+                #             'INPUT_VECTOR':finv, 
+                #             'RASTER_BAND':1, 
+                #             'STATS':[psmp_code]}
+                # 
+                # #execute the algo
+                # res_d = processing.run(algo_nm, params_d, feedback=self.feedback)
+                # #extract and clean results
+                # finv = res_d['INPUT_VECTOR']
+                #===============================================================
                 
-                
-                
+                algo_nm = 'native:zonalstatisticsfb'
+            
+                ins_d = {       'COLUMN_PREFIX':indxr, 
+                                'INPUT_RASTER':rlay, 
+                                'INPUT':finv, 
+                                'RASTER_BAND':1, 
+                                'STATISTICS':[psmp_code],#0: pixel counts, 1: sum
+                                'OUTPUT' : 'TEMPORARY_OUTPUT',
+                                }
+                    
                 #execute the algo
-                res_d = processing.run(algo_nm, params_d, feedback=self.feedback)
-                #extract and clean results
-                finv = res_d['INPUT_VECTOR']
+                res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
+                
+                
+                finv = res_d['OUTPUT']
         
             #=======================================================================
             # sample.Line--------------
@@ -671,6 +688,7 @@ class Rsamp(Plotr, Qcoms):
             #===================================================================
             # sample.wrap
             #===================================================================
+            assert isinstance(finv, QgsVectorLayer)
             assert len(finv.fields()) == self.finv_fcnt + indxr +1, \
                 'bad field length on %i'%indxr
                 
@@ -702,9 +720,12 @@ class Rsamp(Plotr, Qcoms):
             
         self.names_d = names_d #needed by write()
         
-        log.info('finished w/ %s'%self.names_d)
+        log.debug('finished w/ \n%s'%self.names_d)
         
         return finv
+    """
+    view(finv)
+    """
     
     def samp_inun(self, #inundation percent for polygons
                   finv, raster_l, dtm_rlay, dthresh,
@@ -770,20 +791,6 @@ class Rsamp(Plotr, Qcoms):
             # #get cell counts per polygon
             #===================================================================
             log.info('getting pixel counts on %i polys'%finv.dataProvider().featureCount())
-            
-            #===================================================================
-            # algo_nm = 'qgis:zonalstatistics'
-            # """this edits the finv in place"""
-            # 
-            # 
-            # ins_d = {       'COLUMN_PREFIX':indxr, 
-            #                 'INPUT_RASTER':thr_rlay, 
-            #                 'INPUT_VECTOR':finv, 
-            #                 'RASTER_BAND':1, 
-            #                 'STATS':[0],#0: pixel counts, 1: sum
-            #                 }
-            #===================================================================
-            
             
             algo_nm = 'native:zonalstatisticsfb'
             

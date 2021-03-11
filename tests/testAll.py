@@ -132,6 +132,10 @@ class TestParent(unittest.TestCase): #unit test (one per test call)
         miss_l = set(valC.columns).symmetric_difference(valT.columns)
         self.assertEqual(len(miss_l), 0, msg=nm + 'column mismatch: %s'%miss_l)
         
+        #null counts
+        self.assertEqual(valC.isna().sum().sum(), valT.isna().sum().sum(),
+                         msg = nm + 'null count mismatch')
+        
         #float checks
         boolcol = valC.dtypes.apply(lambda x:np.issubdtype(x, np.number))
         sumC = round(valC.loc[:, boolcol].sum().sum(), self.prec)
@@ -224,7 +228,7 @@ class Test_wf_cmpre(Test_wf_L1): #tests for models w/ compare
             nm = '%s.%s'%(self.name, k)
             self._df_chks(valC, valT, nm)
             
-class Test_wf_build(Test_wf_basic): #for truncated build tests
+class Test_wf_rprep(Test_wf_basic): #for truncated build tests
     def test_rlayCRS(self):
         keys = ['rlay_crs_d']
         
@@ -439,9 +443,7 @@ class WorkFlow_t(WorkFlow): #wrapper for test workflows
         
         self.pick_d = data
             
-#===============================================================================
-# SPECIFIC TEST WORKFLOWS----------
-#===============================================================================
+
 from wFlow.tutorials import Tut1a, Tut2a, Tut2b, Tut2c_mutex, Tut2c_max, Tut4a, Tut4b, \
     Tut6a, Tut5a
 
@@ -497,7 +499,7 @@ class Tut4b_t(Tut4b, Tut4_t): #tutorial 1a
 #===============================================================================
 class Tut5a_t(WorkFlow_t, Tut5a):
     """"same as Tut1"""
-    Test = Test_wf_build
+    Test = Test_wf_rprep
     tdata_keys = ['finv', 'expos','rlay_crs_d']
 
 #===============================================================================
@@ -507,16 +509,78 @@ class Tut6a_t(WorkFlow_t, Tut6a):
     """"same as Tut1"""
     Test = Test_wf_dikes
     tdata_keys = ['dExpo_dxcol', 'dExpo', 'dike_pfail', 'dike_pfail_lfx']
+    
+    
+#===============================================================================
+# extrasx
+#===============================================================================
+class L1_t(WorkFlow_t): 
+    crsid ='EPSG:3005'
+    Test = Test_wf_basic
+    tdata_keys = ['finv', 'expos']
+    
+    def __init__(self, **kwargs):
+        self.pars_d = {
+                'raster_dir':r'tutorials\4\haz_rast',
+                'as_inun':False,'felv':'datum'
+                        }
+        
+        self.tpars_d = { #kwargs for individual tools
+            'Rsamp':{
+                'psmp_stat':'Max'
+                }
+            }
+        
 
+        super().__init__(**kwargs)
+        
+    def run(self):
+        log = self.logger.getChild('r')
+        
+        res_d = dict()
+        pars_d = self.pars_d
+        
+        cf_fp = self.prep_cf(pars_d, logger=log) #setuip the control file
+        res_d['finv'] = self.prep_finv(pars_d, logger=log)
+        res_d['expos'] = self.rsamp_haz(pars_d, logger=log)
+        
+        self.res_d = res_d
+        
+class PolyL1_t(L1_t):
+    name='PolyL1'
+    """
+    L1 polygons (not %inundation) partial using tut4 data
+    """
+    def __init__(self, **kwargs):
+
+
+        super().__init__(**kwargs)
+        
+        self.pars_d.update({
+                'finv_fp':r'tutorials\4\finv_tut4a_polygons.gpkg',
+                        })
+    
+class LineL1_t(L1_t):
+    name='LineL1'
+    """
+    L1 lines (not %inundation) partial using tut4 data
+    """
+    def __init__(self, **kwargs):
+
+        super().__init__(**kwargs)
+        
+        self.pars_d.update({
+                'finv_fp':r'tutorials\4\finv_tut4b_lines.gpkg',
+                        })
 
 wFlow_l = [Tut1a_t, 
            #Tut2a_t, #these are mostly redundant w/ 2c
            #Tut2b_t, 
            Tut2c_mutex_t, 
            Tut2c_max_t,  #compares with Tut2c_mutex_t. write=True
-           Tut4a_t, Tut4b_t, Tut5a_t, Tut6a_t]
+           Tut4a_t, Tut4b_t, Tut5a_t, Tut6a_t, PolyL1_t, LineL1_t]
 
-#wFlow_l = [Tut6a_t]
+#wFlow_l = [PolyL1_t]
     
     
 
