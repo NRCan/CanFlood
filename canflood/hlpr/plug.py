@@ -357,7 +357,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
             except Exception as e:
                 log.warning('failed set current layer w/ \n    %s'%e)
         else:
-            log.debug('pass non vectorlayer: %s'%layer.name())
+            log.debug('passed layer w/ unrecognized type: %s'%(type(layer)))
             
         return 
     
@@ -866,6 +866,9 @@ def bind_layersListWidget(widget, #instanced widget
             
     def check_all(self):
         self.model().set_checked_all(state=Qt.Checked)
+        
+    def check_byName(self, layName_l):
+        self.model().set_checked_byVal(layName_l)
             
     #===========================================================================
     # retriving selection
@@ -900,7 +903,7 @@ def bind_layersListWidget(widget, #instanced widget
     # bind them
     #===========================================================================
     for fName in ['populate_layers', '_apply_filter', 'select_visible', 'select_canvas', 
-                  'get_selected_layers', 'clear_checks','check_all']:
+                  'get_selected_layers', 'clear_checks','check_all', 'check_byName']:
         setattr(widget, fName, types.MethodType(eval(fName), widget)) 
         
 def bind_MapLayerComboBox(widget, #add some bindings to layer combo boxes

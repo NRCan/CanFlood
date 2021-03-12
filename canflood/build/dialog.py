@@ -28,6 +28,7 @@ from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer, QgsMapLayerPro
 #==============================================================================
 #get hlpr funcs
 import hlpr.plug
+from hlpr.plug import bind_layersListWidget
 from hlpr.basic import get_valid_filename, force_open_dir 
 from hlpr.exceptions import QError as Error
 
@@ -71,11 +72,6 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # attachments
         #=======================================================================
-
-        self.ras = []
-        self.ras_dict = {}
-        self.vec = None
-
         #=======================================================================
         # setup funcs
         #=======================================================================
@@ -94,7 +90,8 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.logger.debug('BuildDialog initilized')
         
 
-    def connect_slots(self):
+    def connect_slots(self,
+                      rlays=None):
         log = self.logger.getChild('connect_slots')
 
         #======================================================================
@@ -239,27 +236,32 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.pushButton_inv_const.clicked.connect(self.construct_finv)
         
         
-
-
-
         #======================================================================
         # TAB: HAZARD SAMPLER---------
         #======================================================================
         
         #=======================================================================
-        # raster layer selection box
+        # wsl raster layers
         #=======================================================================
-        # Set GUI elements
-        #self.comboBox_ras.setFilters(QgsMapLayerProxyModel.RasterLayer)
-        """
-        todo: swap this out with better selection widget
-        """
-        #selection       
-        self.pushButton_remove.clicked.connect(self._HS_remove)
-        self.pushButton_HS_clear.clicked.connect(self._HS_clearBox)
-        self.pushButton_add_all.clicked.connect(self._HS_addAll)
+        #list widget
+        bind_layersListWidget(self.listView_expo_rlays, log, iface=self.iface, 
+                              layerType=QgsMapLayer.RasterLayer) #add custom bindigns
         
-        #self.comboBox_ras.currentTextChanged.connect(self._HS_comboAdd)
+        
+        
+        #connect buttons
+        self.pushButton_expo_sAll.clicked.connect(self.listView_expo_rlays.check_all)
+        self.pushButton_expo_clear.clicked.connect(self.listView_expo_rlays.clear_checks)
+        self.pushButton_expo_sVis.clicked.connect(self.listView_expo_rlays.select_visible)
+        self.pushButton_expo_canvas.clicked.connect(self.listView_expo_rlays.select_canvas)
+        
+        """not sure if this fix is needed... but possibleissue with kwarg passing"""
+        self.pushButton_expo_refr.clicked.connect(lambda x: self.listView_expo_rlays.populate_layers())
+       
+        #populate the widget
+        if not rlays is None: #for debug runs
+            self.listView_expo_rlays.populate_layers(layers=rlays) 
+        self.launch_actions['hazlay selection'] = lambda: self.listView_expo_rlays.populate_layers()
         
         #=======================================================================
         # inundation
@@ -802,7 +804,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # assemble/prepare inputs
         #=======================================================================
         self.set_setup(set_finv=False)
-        rlayRaw_l = list(self.ras_dict.values())
+        rlayRaw_l = list(self.listView_expo_rlays.get_selected_layers().values())
         aoi_vlay = self.aoi_vlay
 
         #raster prep parameters
@@ -854,21 +856,19 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # load results
         #=======================================================================
-        
-        self._HS_clearBox() #clear the raster selection box
-        assert len(self.ras_dict)==0
+
+        self.listView_expo_rlays.clear_checks()
             
             
         if self.checkBox_loadres.isChecked():
-
             for rlay in rlay_l:
-                assert isinstance(rlay, QgsRasterLayer)
                 self._load_toCanvas(rlay, logger=log)
+                
+            #update the widget
+            self.listView_expo_rlays.populate_layers() #referesh all
+            self.listView_expo_rlays.check_byName([l.name() for l in rlay_l]) 
 
 
-                #update th erasterBox
-                self.ras_dict.update( { rlay.name() : rlay} )
-                self.listWidget_ras.addItem(str(rlay.name()))
 
         else:
             log.warning('prepped rasters not loaded to canvas!')
@@ -896,7 +896,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # assemble/prepare inputs
         #=======================================================================
         finv_raw = self.comboBox_ivlay.currentLayer()
-        rlay_l = list(self.ras_dict.values())
+        rlay_l = list(self.listView_expo_rlays.get_selected_layers().values())
         
 
         #cf_fp = self.get_cf_fp()
@@ -1437,33 +1437,9 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         return
     
     #==========================================================================
-    # HazardSampler Raster Box---------------
+    # Helpers--------------
     #==========================================================================
 
-    def _HS_clearBox(self):
-        if len(self.ras_dict) > 0:
-            self.listWidget_ras.clear()
-            self.ras_dict = {}
-    
-    def _HS_remove(self):
-        if (self.listWidget_ras.currentItem()) is not None:
-            value = self.listWidget_ras.currentItem().text()
-            item = self.listWidget_ras.takeItem(self.listWidget_ras.currentRow())
-            item = None
-            for k in list(self.ras_dict):
-                if k == value:
-                    self.ras_dict.pop(value)
-
-    def _HS_addAll(self): #scan the canvas and intelligently add all the rasters
-        layers = self.iface.mapCanvas().layers()
-        #layers_vec = [layer for layer in layers if layer.type() == QgsMapLayer.VectorLayer]
-        layers_ras = [layer for layer in layers if layer.type() == QgsMapLayer.RasterLayer]
-        x = [str(self.listWidget_ras.item(i).text()) for i in range(self.listWidget_ras.count())]
-        for layer in layers_ras:
-            if (layer.name()) not in x:
-                self.ras_dict.update( { layer.name() : layer} )
-                self.listWidget_ras.addItem(str(layer.name()))
-                
     def _CP_clear(self): #clear all the drop downs
         
         for sname, (mlcb_haz, mlcb_lpol) in self.ls_cb_d.items():

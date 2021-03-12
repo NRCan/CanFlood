@@ -644,7 +644,11 @@
              </property>
              <layout class="QHBoxLayout" name="horizontalLayout_2">
               <item>
-               <widget class="QListView" name="listView_expo_rlays"/>
+               <widget class="QListView" name="listView_expo_rlays">
+                <property name="alternatingRowColors">
+                 <bool>true</bool>
+                </property>
+               </widget>
               </item>
               <item>
                <layout class="QVBoxLayout" name="verticalLayout_6">

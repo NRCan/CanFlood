@@ -382,9 +382,18 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         if self.checkBox_expo_plot.isChecked():
             wrkr._init_plt()
+            #check for exessive plot windows
+            if len(wrkr.sid_vals)>5:
+                plt_window = False
+                log.warning('got %i plots... setting plt_window=False'%len(wrkr.sid_vals))
+            elif len(wrkr.sid_vals)>100:
+                raise Error('too many plots!')
+            else:
+                plt_window = self.plt_window
+                
             for sidVal in wrkr.sid_vals:
                 fig = wrkr.plot_seg_prof(sidVal)
-                self.output_fig(fig)
+                self.output_fig(fig, plt_window=plt_window)
                 
         self.feedback.setProgress(95)
         #=======================================================================
