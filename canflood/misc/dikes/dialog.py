@@ -87,26 +87,17 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.connect_slots(**kwargs)
 
 
-
-        
-    def _setup(self, #for standalone runsf
-               logger=None,
-                **kwargs): 
-
-         
-        #=======================================================================
-        # setup plugin and qgis
-        #=======================================================================
-        #from hlpr.Q import Qcoms
-        super(QprojPlug, self).__init__() #call Qcoms init
-        self.ini_standalone()
-
-
-        return self
     
     def launch(self): #launch the gui from a plugin (and do some setup)
         """called by CanFlood.py menu click
         should improve load time by moving the connections to after the menu click"""
+        log = self.logger.getChild('launch')
+        for fName, f in self.launch_actions.items():
+            log.debug('%s: %s'%(fName, f))
+            try:
+                f()
+            except Exception as e:
+                log.warning('failed to execute \'%s\' w/ \n    %s'%(fName, e))
         
  
 
@@ -150,7 +141,8 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         bind_MapLayerComboBox(self.comboBox_dikesVlay, 
                       layerType=QgsMapLayerProxyModel.LineLayer, iface=self.iface)
          
-        self.comboBox_dikesVlay.attempt_selection('dikes')
+
+        self.launch_actions['dikes layer selection'] = lambda: self.comboBox_dikesVlay.attempt_selection('dikes')
         
         #connect field boxes
         self.comboBox_dikesVlay.layerChanged.connect(
@@ -182,18 +174,21 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         bind_layersListWidget(self.listView_expo_rlays, log, iface=self.iface, 
                               layerType=QgsMapLayer.RasterLayer) #add custom bindigns
         
-        self.listView_expo_rlays.populate_layers(layers=rlays) #populate
+        
         
         #connect buttons
-        self.pushButton_expo_sAll.clicked.connect(self.listView_expo_rlays.selectAll)
-        self.pushButton_expo_clear.clicked.connect(self.listView_expo_rlays.clearSelection)
+        self.pushButton_expo_sAll.clicked.connect(self.listView_expo_rlays.check_all)
+        self.pushButton_expo_clear.clicked.connect(self.listView_expo_rlays.clear_checks)
         self.pushButton_expo_sVis.clicked.connect(self.listView_expo_rlays.select_visible)
         self.pushButton_expo_canvas.clicked.connect(self.listView_expo_rlays.select_canvas)
         
         """not sure if this fix is needed... but possibleissue with kwarg passing"""
         self.pushButton_expo_refr.clicked.connect(lambda x: self.listView_expo_rlays.populate_layers())
        
-        
+        #populate the widget
+        if not rlays is None: #for debug runs
+            self.listView_expo_rlays.populate_layers(layers=rlays) 
+        self.launch_actions['hazlay selection'] = lambda: self.listView_expo_rlays.populate_layers()
         
         #=======================================================================
         # dtm
@@ -201,7 +196,8 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         bind_MapLayerComboBox(self.mMapLayerComboBox_dtm, 
                               layerType=QgsMapLayerProxyModel.RasterLayer, iface=self.iface)
  
-        self.mMapLayerComboBox_dtm.attempt_selection('dtm')
+        self.launch_actions['dtm layer selection'] = lambda: self.mMapLayerComboBox_dtm.attempt_selection('dtm')
+
         #=======================================================================
         # run
         #=======================================================================
@@ -256,7 +252,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         log.info("finished")
         
         
-    def _set_setup(self): #attach parameters from setup tab
+    def set_setup(self): #attach parameters from setup tab
         """TODO:
         migrate to common _set_setup
         """
@@ -289,7 +285,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         """just put this here for easy upedating"""
         self.inherit_fieldNames = set(
-            self.inherit_fieldNames).update([ 'segID', 'dikeID',
+            self.inherit_fieldNames + [ 'segID', 'dikeID',
                                     'cbfn', 'ifidN', 'init_q_d'])
         #=======================================================================
         # prechecks
@@ -303,7 +299,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
     def run_expo(self): #execute dike exposure routeines
         log = self.logger.getChild('run_expo')
         log.debug('start')
-        self._set_setup() #attach all the commons
+        self.set_setup() #attach all the commons
         self.feedback.setProgress(5)
         from misc.dikes.expo import Dexpo
         #=======================================================================
@@ -388,7 +384,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             wrkr._init_plt()
             for sidVal in wrkr.sid_vals:
                 fig = wrkr.plot_seg_prof(sidVal)
-                wrkr.output_fig(fig)
+                self.output_fig(fig)
                 
         self.feedback.setProgress(95)
         #=======================================================================
@@ -406,7 +402,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
     def run_vuln(self):
         log = self.logger.getChild('run_vuln')
         log.debug('start')
-        self._set_setup() #attach all the commons
+        self.set_setup() #attach all the commons
         self.feedback.setProgress(5)
         from misc.dikes.vuln import Dvuln
         #=======================================================================
@@ -465,7 +461,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         log = self.logger.getChild('run_rjoin')
         log.debug('start')
-        self._set_setup() #attach all the commons
+        self.set_setup() #attach all the commons
         self.feedback.setProgress(5)
         from misc.dikes.rjoin import DikeJoiner
         

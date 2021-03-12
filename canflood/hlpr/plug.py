@@ -338,7 +338,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
         """
         TODO: migrate to bind function
         """
-        
+        log = self.logger.getChild('mfcb_connect')
         mfcb.clear()
         if isinstance(layer, QgsVectorLayer):
             try:
@@ -347,7 +347,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
                 #try and match
                 for field in layer.fields():
                     if not fn_no_str is None:
-                        if field.Name()==fn_no_str: continue #keep looking
+                        if field.name()==fn_no_str: continue #keep looking
                         
                     if fn_str in field.name():
                         break
@@ -355,9 +355,9 @@ class QprojPlug(Qcoms): #baseclass for plugins
                 mfcb.setField(field.name())
                 
             except Exception as e:
-                self.logger.warning('failed set current layer w/ \n    %s'%e)
+                log.warning('failed set current layer w/ \n    %s'%e)
         else:
-            self.logger.warning('failed to get a vectorlayer')
+            log.debug('pass non vectorlayer: %s'%layer.name())
             
         return 
     
@@ -593,7 +593,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
         #=======================================================================
         """avoiding importing matplotlib here"""
         #assert isinstance(fig, self.matplotlib.figure.Figure)
-        log.debug('on %s'%fig)
+        log.debug('plt_window=%s on  %s'%(plt_window, fig))
         #======================================================================
         # save file
         #======================================================================
@@ -781,6 +781,34 @@ class pandasModel(QAbstractTableModel):
 #===============================================================================
 # widget binds-------------
 #===============================================================================
+class ListModel(QStandardItemModel): #wrapper for list functions with check boxes
+    
+    def add_checkable_data(self, data_l):
+        
+        for item in data_l:
+            item.setCheckable(True)
+            item.setCheckState(Qt.Unchecked)
+            self.appendRow(item)
+            
+    def get_items(self):
+        return [self.item(i) for i in range(self.rowCount())]
+    def get_checked(self, state=Qt.Checked): #retrieve all items taht are checked
+        return [i for i in self.get_items() if i.checkState()==state]
+
+    def set_checked_byVal(self, val_l): #assign check state to items based on those matching the values
+        for item in self.get_items():
+            if item.text() in val_l:
+                item.setCheckState(Qt.Checked)
+            else:
+                item.setCheckState(Qt.Unchecked)
+                
+    def set_checked_all(self, state=Qt.Unchecked):
+        for item in self.get_items():
+            item.setCheckState(state)
+
+
+
+
 def bind_layersListWidget(widget, #instanced widget
                           log,
                           layerType=None, #optional layertype to enforce
@@ -794,7 +822,7 @@ def bind_layersListWidget(widget, #instanced widget
         
     widget.iface = iface
     widget.layerType = layerType
-    widget.setModel(QStandardItemModel())
+    widget.setModel(ListModel())
     
     #===========================================================================
     # populating and setting selection
@@ -813,16 +841,8 @@ def bind_layersListWidget(widget, #instanced widget
         model = self.model()
         
         model.clear()
-
-        for item in [QStandardItem(l.name()) for l in layers]:
-            item.setCheckable(True)
-            item.setCheckState(False)
-            model.appendRow(item)
-            
-        print('yay')
         
-        
-
+        model.add_checkable_data([QStandardItem(l.name()) for l in layers])
 
             
     def _apply_filter(self, layers):
@@ -831,35 +851,33 @@ def bind_layersListWidget(widget, #instanced widget
     def select_visible(self):
         #print('selecint only visible layers')
         lays_l = self.iface.mapCanvas().layers()
-        self._set_selection_byName([l.name() for l in lays_l])
+        self.model().set_checked_byVal([l.name() for l in lays_l])
         
     def select_canvas(self):
  
         lays_l = self.iface.layerTreeView().selectedLayers()
         #log.info('setting selection to %i layers from layerTreeView'%len(lays_l))
-        self._set_selection_byName([l.name() for l in lays_l])
+        self.model().set_checked_byVal([l.name() for l in lays_l])
         
-    def _set_selection_byName(self, names_l):
-        model = self.model()
-        for indx in range(0,model.rowCount()):
 
-            if model.item(indx).text() in names_l:
-                model.item(indx).setCheckState(True)
-            else:
-                model.item(indx).setCheckState(False)
+    def clear_checks(self):
+        self.model().set_checked_all()
+        
+            
+    def check_all(self):
+        self.model().set_checked_all(state=Qt.Checked)
             
     #===========================================================================
     # retriving selection
     #===========================================================================
     def get_selected_layers(self):
         qproj = QgsProject.instance()
-        model = self.model()
-        #collected selected text
-        #nms_l = [e.text() for e in self.selectedItems()]
-        items = [model.item(i) for i in range(model.rowCount())]
+
+        items = self.model().get_checked()
         nms_l = [item.text() for item in items]
         
         assert len(nms_l)>0, 'no selection!'
+        
         #retrieve layers from canvas
         lays_d = {nm:qproj.mapLayersByName(nm) for nm in nms_l}
         
@@ -882,7 +900,7 @@ def bind_layersListWidget(widget, #instanced widget
     # bind them
     #===========================================================================
     for fName in ['populate_layers', '_apply_filter', 'select_visible', 'select_canvas', 
-                  '_set_selection_byName', 'get_selected_layers']:
+                  'get_selected_layers', 'clear_checks','check_all']:
         setattr(widget, fName, types.MethodType(eval(fName), widget)) 
         
 def bind_MapLayerComboBox(widget, #add some bindings to layer combo boxes

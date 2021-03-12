@@ -65,7 +65,7 @@
           </sizepolicy>
          </property>
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="tab_setup">
           <property name="sizePolicy">
@@ -345,6 +345,58 @@
                  </item>
                 </layout>
                </widget>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_23">
+                <item>
+                 <widget class="QLabel" name="label_15">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>Plot Handling:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QRadioButton" name="radioButton_s_pltW">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="toolTip">
+                   <string>When plots are generated, launch a separate window for customization</string>
+                  </property>
+                  <property name="text">
+                   <string>Launch seperate window (one per dike segment!)</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                  <attribute name="buttonGroup">
+                   <string notr="true">buttonGroup_plot</string>
+                  </attribute>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QRadioButton" name="radioButton">
+                  <property name="toolTip">
+                   <string>When plots are generated, just save a default version straight to file</string>
+                  </property>
+                  <property name="text">
+                   <string>Save to file</string>
+                  </property>
+                  <attribute name="buttonGroup">
+                   <string notr="true">buttonGroup_plot</string>
+                  </attribute>
+                 </widget>
+                </item>
+               </layout>
               </item>
              </layout>
             </widget>
@@ -2816,5 +2868,6 @@
  <buttongroups>
   <buttongroup name="buttonGroup_v_tside"/>
   <buttongroup name="buttonGroup_v_lfx"/>
+  <buttongroup name="buttonGroup_plot"/>
  </buttongroups>
 </ui>
