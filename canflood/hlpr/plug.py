@@ -21,7 +21,7 @@ from qgis.core import QgsVectorLayer, Qgis, QgsProject, QgsLogger, QgsMessageLog
 from qgis.gui import QgisInterface
 
 #pyQt
-from PyQt5.QtWidgets import QApplication, QWidget, QInputDialog, QLineEdit, QFileDialog, QGroupBox, QComboBox
+from PyQt5.QtWidgets import QFileDialog, QGroupBox, QComboBox
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
 from PyQt5.QtCore import Qt, QAbstractTableModel, QObject 
 from PyQt5 import QtCore
@@ -880,18 +880,28 @@ def bind_layersListWidget(widget, #instanced widget
     def get_selected_layers(self):
         qproj = QgsProject.instance()
 
-        items = self.model().get_checked()
+        items = self.model().get_checked() #names of layers checked by user
         nms_l = [item.text() for item in items]
         
         assert len(nms_l)>0, 'no selection!'
         
+        
         #retrieve layers from canvas
-        lays_d = {nm:qproj.mapLayersByName(nm) for nm in nms_l}
+        lays_d = {nm:qproj.mapLayersByName(nm) for nm in nms_l} 
+        
+        
+        
         
         #check we only got one hit
         d = dict()
-        for k,hits in lays_d.items(): 
-            assert len(hits)==1, 'failed to match \'%s\''%k
+        for k,hits_all in lays_d.items():
+            
+            """when a raster and vector layer have the same name"""
+            hits = self._apply_filter(hits_all) #remove any not matching the type
+            
+            
+            assert not len(hits)>1, 'matched multiple layers for \'%s\'... layers need unique names'%k
+            assert not len(hits)==0, 'failed to match any layers with \'%s\''%k
             
             lay = hits[0]
             assert isinstance(lay, QgsMapLayer), 'bad type on %s: %s'%(k, type(lay))
