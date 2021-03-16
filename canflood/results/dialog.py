@@ -312,10 +312,10 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         kwargs = {attn:getattr(self, attn) for attn in ['logger', 'tag', 'cf_fp', 
                                             'out_dir', 'feedback', 'init_q_d']}
         
-        wrkr = results.djoin.Djoiner(**kwargs)
+        wrkr = results.djoin.Djoiner(**kwargs).setup()
         
         """shortened setup... loading the data here"""
-        wrkr.init_model() #load teh control file
+        #wrkr.init_model() #load teh control file
         
         
         #=======================================================================
