@@ -673,11 +673,15 @@ class logger(object): #workaround for qgis logging pythonic
         
     def getChild(self, new_childnm):
         
+        if hasattr(self.parent, 'logger'):
+            log_nm = '%s.%s'%(self.parent.logger.log_nm, new_childnm)
+        else:
+            log_nm = new_childnm
+        
         #build a new logger
         child_log = logger(self.parent, 
                            statusQlab=self.statusQlab,
-                           log_nm = '%s.%s'%(self.parent.logger.log_nm, new_childnm)
-                           )
+                           log_nm=log_nm)
         
 
         
