@@ -80,9 +80,6 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
 
         
     def prep_model(self):
-        """
-        only calling for direct risk plotting calls
-        parent classes should overwrite this"""
 
         
         self.set_ttl() #load and prep the total results

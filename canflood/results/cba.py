@@ -83,6 +83,9 @@ class CbaWrkr(RiskPlotr):
         
         super().__init__(figsize=figsize, **kwargs)
         
+        self.dtag_d={**self.dtag_d,**{
+            'r_ttl':{'index_col':None}}}
+        
         #=======================================================================
         # paramters directory
         #=======================================================================
@@ -98,10 +101,13 @@ class CbaWrkr(RiskPlotr):
         self.logger.debug('%s.__init__ w/ feedback \'%s\''%(
             self.__class__.__name__, type(self.feedback).__name__))
         
-    def setup(self):
-        """special truncated loader"""
-        self.init_model()
-        return self
+    def prep_model(self):
+
+        
+        self.set_ttl() #load and prep the total results
+
+        
+        return 
         
     def copy_template(self, #copy the cba template worksheet
                           template_fp = None,
@@ -144,6 +150,8 @@ class CbaWrkr(RiskPlotr):
             'base_year':int(datetime.datetime.now().strftime('%Y')),
             }.items():
             
+            if nvalB is None or nvalB=='':
+                log.warning('failed to get a value for \'%s\'... skippin'%evalA)
             #===================================================================
             # #find first location with this expectstion
             #===================================================================
