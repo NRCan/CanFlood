@@ -11,17 +11,19 @@ Happy flood risk modelling!
 
 ## Installation Instructions 
 
-1) Ensure Qgis 3.16.4 LTR is installed and working on your system ([Qgis all releases download page](https://qgis.org/downloads/)). The required python packages [requirements](https://github.com/IBIGroupCanWest/CanFlood/tree/master/requirements) should be automatically installed. Ensure the 'processing' plugin is installed and enabled in QGIS.
+1) Ensure QGIS 3.16.4 LTR is installed and working on your system ([Qgis all releases download page](https://qgis.org/downloads/)). Ensure the 'processing' plugin is installed and enabled in QGIS.
 
-2) Download the latest CanFlood zip from the above [plugin_zips folder](https://github.com/IBIGroupCanWest/CanFlood/tree/master/plugin_zips) to your computer (click the latest .zip, click the 'download' button. DO NOT right click ... 'Save As').
+2) Ensure the required python packages or dependencies [requirements](https://github.com/IBIGroupCanWest/CanFlood/tree/master/requirements) are installed. Typically, this step is skipped and users just attempt to use the tool until an error is thrown. As of last test, a default install of QGIS 3.16.4 included all the CanFlood dependencies except 'openpyxl' (needed by the 'results - BCA' tools). Instructions for installing additional python packages in QGIS are provided [here](https://github.com/IBIGroupCanWest/CanFlood/issues/6).
 
-3) If you're re-installing or upgrading, it is safest to first uninstall CanFlood and restart QGIS before continuing with a new install.  
+3) Download the latest CanFlood zip from the above [plugin_zips folder](https://github.com/IBIGroupCanWest/CanFlood/tree/master/plugin_zips) to your computer (click the latest .zip, click the 'download' button. DO NOT right click ... 'Save As').
 
-4) In QGIS, install CanFlood to your profile from the newly downloaded zip  (Plugins > Manage and Install... > Install from Zip > navigate to the .zip > Install Plugin).
+4) If you're re-installing or upgrading, it is safest to first uninstall CanFlood and restart QGIS before continuing with a new install.  
 
-5) In QGIS, Turn the plugin on if needed(Plugins > Manage and Install ... > Installed > check 'CanFlood'). If a dependency error is thrown, see 'troubleshooting' below.  If successful, you should see the three CanFlood buttons on your toolbar and a 'CanFlood' entry in the 'Plugins' menu.
+5) In QGIS, install CanFlood to your profile from the newly downloaded zip  (Plugins > Manage and Install... > Install from Zip > navigate to the .zip > Install Plugin).
 
-6) We recommend implementing the QGIS DEBUG logger for more detailed readouts and CanFlood model debugging. See [this post](https://stackoverflow.com/a/61669864/9871683) for insturctions.
+6) In QGIS, Turn the plugin on if needed(Plugins > Manage and Install ... > Installed > check 'CanFlood'). If a dependency error is thrown, see 'troubleshooting' below.  If successful, you should see the three CanFlood buttons on your toolbar and a 'CanFlood' entry in the 'Plugins' menu.
+
+7) We recommend implementing the QGIS DEBUG logger for more detailed readouts and CanFlood model debugging. See [this post](https://stackoverflow.com/a/61669864/9871683) for insturctions.
 
 ### tl;dr
 download the latest zip from [here](https://github.com/IBIGroupCanWest/CanFlood/tree/master/plugin_zips) and install from zip in QGIS. 
