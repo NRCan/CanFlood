@@ -13,7 +13,7 @@ Happy flood risk modelling!
 
 1) Ensure QGIS 3.16.4 LTR is installed and working on your system ([Qgis all releases download page](https://qgis.org/downloads/)). Ensure the 'processing' plugin is installed and enabled in QGIS.
 
-2) Ensure the required python packages or dependencies [requirements](https://github.com/IBIGroupCanWest/CanFlood/tree/master/requirements) are installed. Typically, this step is skipped and users just attempt to use the tool until an error is thrown. As of last test, a default install of QGIS 3.16.4 included all the CanFlood dependencies except 'openpyxl' (needed by the 'results - BCA' tools). Instructions for installing additional python packages in QGIS are provided [here](https://github.com/IBIGroupCanWest/CanFlood/issues/6).
+2) Ensure the required python packages or dependencies shown in the [requirements file](https://github.com/IBIGroupCanWest/CanFlood/tree/master/requirements) are installed. Typically, this step is skipped and users just attempt to use the tool until an error is thrown. As of last test, a default install of QGIS 3.16.4 included all the CanFlood dependencies except 'openpyxl' (needed by the 'results - BCA' tools). Instructions for installing additional python packages in QGIS are provided [here](https://github.com/IBIGroupCanWest/CanFlood/issues/6).
 
 3) Download the latest CanFlood zip from the above [plugin_zips folder](https://github.com/IBIGroupCanWest/CanFlood/tree/master/plugin_zips) to your computer (click the latest .zip, click the 'download' button. DO NOT right click ... 'Save As').
 
