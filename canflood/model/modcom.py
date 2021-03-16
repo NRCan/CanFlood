@@ -304,17 +304,6 @@ class Model(ComWrkr,
         #everything but the layers
         self.raw_d = {k:v.copy() for k,v in data.items() if not hasattr(v, 'crs')}
         
-        """
-        
-        self.raw_d.keys()
-        v = data['curves']
-        len(data['finv_vlay'])
-        data['finv_vlay'].crs()
-        
-        for k,v in data.items():
-            
-            print(k,hasattr(v, '__len__'),  type(v))
-        """
         #=======================================================================
         # #check requirements
         #=======================================================================
