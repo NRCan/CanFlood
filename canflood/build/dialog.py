@@ -499,66 +499,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #set as teh new layer
         self.comboBox_ivlay.setLayer(vlay)
         self.finv_vlay = vlay
-                
-    def slice_aoi(self, vlay): #apply the aoi slice
-        """
-        todo: migrate off this
-        """
-        aoi_vlay = self.comboBox_aoi.currentLayer()
-        log = self.logger.getChild('slice_aoi')
-        
-        
-        #=======================================================================
-        # selection
-        #=======================================================================
-        if self.checkBox_sels.isChecked():
-            if not aoi_vlay is None: 
-                raise Error('only one method of aoi selection is allowed')
-            
-            log.info('slicing finv \'%s\' w/ %i selected feats'%(
-                vlay.name(), vlay.selectedFeatureCount()))
-            
-            res_vlay = self.saveselectedfeatures(vlay, logger=log)
-        #=======================================================================
-        # check for no selection
-        #=======================================================================
-        elif aoi_vlay is None:
-            log.debug('no aoi selected... not slicing')
-            return vlay
 
-        #=======================================================================
-        # slice
-        #=======================================================================
-        else:
-            vlay.removeSelection()
-            log.info('slicing finv \'%s\' and %i feats w/ aoi \'%s\''%(
-                vlay.name(),vlay.dataProvider().featureCount(), aoi_vlay.name()))
-            
-            self.check_aoi(aoi_vlay)
-            
-            res_vlay =  self.selectbylocation(vlay, aoi_vlay, result_type='layer', logger=log)
-            
-            assert isinstance(res_vlay, QgsVectorLayer)
-            
-            vlay.removeSelection()
-            
-            res_vlay.setName('%s_aoi'%vlay.name())
-        
-        #=======================================================================
-        # wrap
-        #=======================================================================
-        """no... we use this as a backend pre-filter alot
-        only load excplicitly called slice values
-        if self.checkBox_loadres.isChecked():
-            self.qproj.addMapLayer(res_vlay)
-            self.logger.info('added \'%s\' to canvas'%res_vlay.name())
-            """
-            
-        
-            
-        return res_vlay
-            
-            
     #===========================================================================
     # ACTIONS------
     #===========================================================================
