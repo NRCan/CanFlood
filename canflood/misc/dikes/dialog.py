@@ -478,7 +478,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #==========================================================================
         # load the data
         #==========================================================================
-        wrkr.load_pfail_df(self.lineEdit_ja_pfail_fp.text())
+        wrkr.load_pfail_df(fp=self.lineEdit_ja_pfail_fp.text())
         
         #get influence polygons {rasterLayerName:polygonLayer}   
         eifz_d = self.scrollAreaWidgetContents_ja.get_linked_layers(keyByFirst=True) 

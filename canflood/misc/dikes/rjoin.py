@@ -68,8 +68,11 @@ class DikeJoiner(Qcoms, DPlotr):
         
 
         if df is None:
+            assert not fp=='', 'must specify a filepath for pfails'
+            assert os.path.exists(fp), 'passed filepath for pfails does not exist\n    %s'%fp
             df = pd.read_csv(fp, header=0, index_col=0)
         
+        assert isinstance(df, pd.DataFrame)
         #=======================================================================
         # identify columns
         #=======================================================================
