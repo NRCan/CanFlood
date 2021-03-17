@@ -448,7 +448,6 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             
             aoi_vlay = self.comboBox_aoi.currentLayer()
             
-
             #selected finv features
             if self.checkBox_sels.isChecked():
                 assert aoi_vlay is None, 'specify \'Selected features only\' or an AOI layer'
@@ -477,7 +476,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             # cid
             #===================================================================
             self.cid = self.mFieldComboBox_cid.currentField() #user selected fied
-            
+            self.inherit_fieldNames.append('cid')
             #===================================================================
             # checks
             #===================================================================
@@ -675,7 +674,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
     def store_finv(self): #aoi slice and convert the finv vector to csv file
         log = self.logger.getChild('store_finv')
-
+        log.debug('start')
         #=======================================================================
         # retrieve data
         #=======================================================================
@@ -685,6 +684,10 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # extract, download, and update cf
         #=======================================================================
+        """
+        for k,v in kwargs.items():
+            print(k,v)
+        """
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
         wrkr = Preparor(**kwargs) 
         
@@ -891,11 +894,11 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         log = self.logger.getChild('run_rsamp')
         start = datetime.datetime.now()
         log.info('start \'run_rsamp\' at %s'%start)
-        self.set_setup()
+        self.set_setup(set_finv=True)
         #=======================================================================
         # assemble/prepare inputs
         #=======================================================================
-        finv_raw = self.comboBox_ivlay.currentLayer()
+        #finv_raw = self.comboBox_ivlay.currentLayer()
         rlay_l = list(self.listView_expo_rlays.get_selected_layers().values())
         
 
@@ -903,7 +906,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #out_dir = self.lineEdit_wdir.text()
         #tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
 
-        cid = self.mFieldComboBox_cid.currentField() #user selected field
+        #cid = self.mFieldComboBox_cid.currentField() #user selected field
         psmp_stat = self.comboBox_HS_stat.currentText()
         
         
@@ -921,18 +924,21 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             dthresh, dtm_rlay = None, None
             
 
-        #=======================================================================
-        # slice finv to aoi
-        #=======================================================================
-        finv = self.slice_aoi(finv_raw)
-
-        #======================================================================
-        # precheck
-        #======================================================================
-        if finv is None:
-            raise Error('got nothing for finv')
-        if not isinstance(finv, QgsVectorLayer):
-            raise Error('did not get a vector layer for finv')
+#===============================================================================
+#         #=======================================================================
+#         # slice finv to aoi
+#         #=======================================================================
+#         finv = self.slice_aoi(finv_raw)
+# 
+#         #======================================================================
+#         # precheck
+#         #======================================================================
+#         if finv is None:
+#             raise Error('got nothing for finv')
+#         if not isinstance(finv, QgsVectorLayer):
+#             raise Error('did not get a vector layer for finv')
+#===============================================================================
+        finv = self.finv_vlay
         
         gtype = QgsWkbTypes().displayString(finv.wkbType())
         
@@ -942,11 +948,13 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             assert rlay.crs()==self.qproj.crs(), 'layer CRS does not match project'
             
         
-        if cid is None or cid=='':
-            raise Error('need to select a cid')
-        
-        if not cid in [field.name() for field in finv.fields()]:
-            raise Error('requested cid field \'%s\' not found on the finv_raw'%cid)
+        #=======================================================================
+        # if cid is None or cid=='':
+        #     raise Error('need to select a cid')
+        # 
+        # if not cid in [field.name() for field in finv.fields()]:
+        #     raise Error('requested cid field \'%s\' not found on the finv_raw'%cid)
+        #=======================================================================
         
 
         
@@ -971,7 +979,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         #build the sample
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
-        wrkr = Rsamp(cid=cid, **kwargs)
+        wrkr = Rsamp(**kwargs)
         
 
         #execute the tool
@@ -1087,42 +1095,34 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # assemble/prepare inputs
         #=======================================================================
-        self.set_setup()
+        self.set_setup(set_finv=True)
  
-        finv_raw = self.comboBox_ivlay.currentLayer()
+        #finv_raw = self.comboBox_ivlay.currentLayer()
         rlay = self.comboBox_dtm.currentLayer()
         
  
         
 
         #update some parameters
-        cid = self.mFieldComboBox_cid.currentField() #user selected field
+        #cid = self.mFieldComboBox_cid.currentField() #user selected field
         psmp_stat = self.comboBox_HS_stat.currentText()
         
 
         #======================================================================
         # aoi slice
         #======================================================================
-        finv = self.slice_aoi(finv_raw)
+        finv = self.finv_vlay
         
 
         #======================================================================
         # precheck
         #======================================================================
-                
-        if finv is None:
-            raise Error('got nothing for finv')
-        if not isinstance(finv, QgsVectorLayer):
-            raise Error('did not get a vector layer for finv')
+
         
 
         if not isinstance(rlay, QgsRasterLayer):
             raise Error('unexpected type on raster layer')
-            
 
-        
-        if not cid in [field.name() for field in finv.fields()]:
-            raise Error('requested cid field \'%s\' not found on the finv_raw'%cid)
             
         #check if we got a valid sample stat
         gtype = QgsWkbTypes().displayString(finv.wkbType())
@@ -1136,7 +1136,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
         #build the sample
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
-        wrkr = Rsamp(fname='gels', cid=cid, **kwargs)
+        wrkr = Rsamp(fname='gels', **kwargs)
         
         res_vlay = wrkr.run([rlay], finv, psmp_stat=psmp_stat)
         

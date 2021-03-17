@@ -253,17 +253,8 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         
     def set_setup(self): #attach parameters from setup tab
-        """TODO:
-        migrate to common _set_setup
-        """
+
         self._set_setup(set_cf_fp=False)
-        #secssion controls
-        #=======================================================================
-        # self.tag = self.linEdit_ScenTag.text()
-        # self.out_dir = self.lineEdit_wdir.text()
-        #=======================================================================
-        
-        #if not os.path.exists(self.out_dir): os.makedirs(self.out_dir)
 
         
         #project aoi
@@ -271,9 +262,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         #file behavior
         self.loadRes = self.checkBox_loadres.isChecked()
-        #self.overwrite=self.checkBox_SSoverwrite.isChecked()
-        #self.absolute_fp = self.radioButton_SS_fpAbs.isChecked()
-        
+
         #dikes layer
         self.dike_vlay = self.comboBox_dikesVlay.currentLayer()
         
@@ -285,8 +274,8 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         """just put this here for easy upedating"""
         self.inherit_fieldNames = set(
-            self.inherit_fieldNames + [ 'segID', 'dikeID',
-                                    'cbfn', 'ifidN', 'init_q_d'])
+            self.inherit_fieldNames + ['segID', 'dikeID',
+                                    'cbfn', 'ifidN'])
         #=======================================================================
         # prechecks
         #=======================================================================
@@ -300,6 +289,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         log = self.logger.getChild('run_expo')
         log.debug('start')
         self.set_setup() #attach all the commons
+        self.inherit_fieldNames.add('init_q_d')
         self.feedback.setProgress(5)
         from misc.dikes.expo import Dexpo
         #=======================================================================
@@ -471,6 +461,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         log = self.logger.getChild('run_rjoin')
         log.debug('start')
         self.set_setup() #attach all the commons
+        self.inherit_fieldNames.add('init_q_d')
         self.feedback.setProgress(5)
         from misc.dikes.rjoin import DikeJoiner
         

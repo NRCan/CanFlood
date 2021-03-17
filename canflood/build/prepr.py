@@ -151,6 +151,8 @@ class Preparor(Model, Qcoms):
         if cid is None: cid=self.cid
         if tag is None: tag=self.tag
         self.felv = felv
+        
+        log.debug('on %s'%vlay.name())
         #=======================================================================
         # prechecks
         #=======================================================================
@@ -167,7 +169,7 @@ class Preparor(Model, Qcoms):
             raise Error('user selected invalid cid \'%s\''%cid)  
         
         
-        assert cid in [field.name() for field in vlay.fields()], '%s missing cid %s'%(vlay.name(), cid)
+        assert cid in [field.name() for field in vlay.fields()], '%s missing cid \'%s\''%(vlay.name(), cid)
         
         #label checks
         assert isinstance(tag, str)
