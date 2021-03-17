@@ -132,8 +132,9 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
                            default_wdir = os.path.join(os.path.expanduser('~'), 'CanFlood', 'dikes'))
         
         #aoi
+        """not implemented
         self.comboBox_aoi.setFilters(QgsMapLayerProxyModel.PolygonLayer) #SS. Project AOI
-        self.comboBox_aoi.setCurrentIndex(-1) #by default, lets have this be blan
+        self.comboBox_aoi.setCurrentIndex(-1) #by default, lets have this be blan"""
 
         #=======================================================================
         # #dikes
@@ -258,7 +259,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
 
         
         #project aoi
-        self.aoi_vlay = self.comboBox_aoi.currentLayer()
+        #self.aoi_vlay = self.comboBox_aoi.currentLayer()
         
         #file behavior
         self.loadRes = self.checkBox_loadres.isChecked()
