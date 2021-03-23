@@ -34,13 +34,13 @@ from hlpr.exceptions import QError as Error
 # non-Qgis
 #===============================================================================
 
-from results.riskPlot import Plotr as riskPlotr
+from results.riskPlot import RiskPlotr
 from hlpr.basic import view
 
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Attr(riskPlotr):
+class Attr(RiskPlotr):
     
     #===========================================================================
     # program vars
@@ -55,8 +55,8 @@ class Attr(riskPlotr):
     exp_pars_md = {
         'results_fps':{
              'attrimat03':{'ext':('.csv',)},
-             'r2_ttl':{'ext':('.csv',)},
-             'r2_passet':{'ext':('.csv',)},
+             'r_ttl':{'ext':('.csv',)},
+             'r_passet':{'ext':('.csv',)},
              'eventypes':{'ext':('.csv',)}
              }
         }
@@ -66,36 +66,31 @@ class Attr(riskPlotr):
     
 
 
-    def __init__(self,
-                 cf_fp='',
-
-                  *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         
-        super().__init__(cf_fp, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         
         self.attriMode=True #always for this worker
+        
+        self.dtag_d={'r_ttl':{'index_col':None},
+                     'r_passet':{'index_col':0},
+                     'eventypes':{'index_col':None},
+                     self.attrdtag_in:{'index_col':0, 'header':list(range(0,3))}}
         
         self.logger.debug('%s.__init__ w/ feedback \'%s\''%(
             self.__class__.__name__, type(self.feedback).__name__))
         
-    def _setup(self):
-        log = self.logger.getChild('setup')
+    def prep_model(self):
+        log = self.logger.getChild('prep_model')
         
-        #load the control file
-        self.init_model()
-        self._init_plt()
+
         
-        #upldate your group plot style container
-        self.upd_impStyle()
+        self.set_ttl() #load and prep the total results
         
-        #load and prep the total results
-        _ = self.load_ttl(logger=log)
-        _ = self.prep_ttl(logger=log)
+        self.set_passet()
+        self.set_etypes()
         
-        self.load_passet()
-        self.load_etypes()
-        
-        self.load_attrimat(dxcol_lvls=3)
+        self.set_attrimat()
         
         #=======================================================================
         # attrim----
@@ -146,13 +141,11 @@ class Attr(riskPlotr):
         log.debug('finished')
  
         
-        return self
-        
+        return 
 
-        
-    def load_passet(self, #load the per-asset results
+    def set_passet(self, #load the per-asset results
                    fp = None,
-                   dtag = 'r2_passet',
+                   dtag = 'r_passet',
 
                    logger=None,
                     
@@ -166,17 +159,16 @@ class Attr(riskPlotr):
         if logger is None: logger=self.logger
         
         log = logger.getChild('load_passet')
-        if fp is None: fp = getattr(self, dtag)
-        cid = self.cid
+ 
         
         #=======================================================================
         # precheck
         #=======================================================================
-        assert os.path.exists(fp), 'bad filepath for per_asset results: %s'%fp
+
         #======================================================================
         # load it
         #======================================================================
-        df_raw = pd.read_csv(fp, index_col=0)
+        df_raw = self.raw_d[dtag]
         """
         df_raw.columns
         df.columns
@@ -217,7 +209,7 @@ class Attr(riskPlotr):
         self.cindex = df.index.copy() #set this for checks later
         self.data_d[dtag] = df
         
-    def load_etypes(self,
+    def set_etypes(self,
                    fp = None,
                    dtag = 'eventypes',
 
@@ -232,15 +224,12 @@ class Attr(riskPlotr):
         #=======================================================================
         if logger is None: logger=self.logger
         
-        log = logger.getChild('eventypes')
-        if fp is None: fp = getattr(self, dtag)
-        
-        assert os.path.exists(fp), 'bad filepath for eventypes: %s'%fp
-        
+        log = logger.getChild('set_etypes')
+
         #=======================================================================
         # load
         #=======================================================================
-        df_raw = pd.read_csv(fp, index_col=None)
+        df_raw = self.raw_d[dtag]
         
         #=======================================================================
         # check
@@ -261,13 +250,7 @@ class Attr(riskPlotr):
         
         
         self.data_d[dtag] = df
-        
 
-        """
-        df_raw.columns
-        df.columns
-        """
-        
         
     def get_slice_noFail(self, #slice of noFail and fail
                          
@@ -303,8 +286,8 @@ class Attr(riskPlotr):
         view(atr_dxcol)
         view(s1_dxcol)
         view(s1i_ttl)
-        self.data_d['ttl']
-        view(self.data_d['r2_passet'])
+
+        view(self.data_d['r_passet'])
         """
         #multiply by impacts
         s1i_dxcol = self.get_mult(s1_dxcol, logger=log)
@@ -395,7 +378,7 @@ class Attr(riskPlotr):
         #=======================================================================
         if logger is None: logger=self.logger
         log=logger.getChild('get_ttl')
-        rp_df = self.data_d['r2_passet'].copy()
+        rp_df = self.data_d['r_passet'].copy()
         
         #=======================================================================
         # precheck
@@ -440,65 +423,7 @@ class Attr(riskPlotr):
         
         return mdxcol
     
-    def get_ttl(self, #get a total impacts summary from an impacts dxcol 
-                df, # index: {aep, impacts}
-                logger=None,
-                ):
-        """
-        see also Plotr.prep_ttl()
-        """
-        
-        #=======================================================================
-        # precheck
-        #=======================================================================
-        assert isinstance(df, pd.DataFrame)
-        miss_l = set(['aep', 'impacts']).symmetric_difference(df.columns)
-        assert len(miss_l)==0, 'bad column labels: %s'%df.columns.tolist()
-        
-                     
-        
-        #=======================================================================
-        # get ead and tail values
-        #=======================================================================
-        """should apply the same ltail/rtail parameters from the cf"""
-        
-        if df['impacts'].sum()==0:
-            ead = 0.0
-            df1 = df.copy()
-            
-        elif df['impacts'].sum()>0:
-            dfc = df.loc[:, ('aep', 'impacts')].set_index('aep').T
-            ttl_ser = self.calc_ead(dfc,
-                drop_tails=False, logger=logger, )
-            
-            ead = ttl_ser['ead'][0] 
-            df1 = ttl_ser.drop('ead', axis=1).T.reset_index()
-            
- 
-        else:
-            raise Error('negative impacts!')
-            
-        assert isinstance(ead, float)
-        assert df1['impacts'].min()>=0
-        #=======================================================================
-        # add ari 
-        #=======================================================================
-        self._get_ttl_ari(df1) #add ari column
-        
-        #=======================================================================
-        # add plot columns from ttl
-        #=======================================================================
-        ttl_df=self.data_d['ttl'].copy()
-        df1 = df1.merge(ttl_df.loc[:, ('aep', 'plot')], on='aep', how='inner')
-        
-        #=======================================================================
-        # wrap
-        #=======================================================================
-        
-        self.slice_ead = ead #set for plotter
-        
-        return df1, ead
-    
+
     def get_stack(self, #get a set of stacked data for a stack plot
                   lvlName='nestID', #level from which to build stacked data from
                     #eventually we could support different unstacking dimensions.. but nestID is the only obviuos one now
@@ -541,7 +466,7 @@ class Attr(riskPlotr):
         for coln, cser in sdf.items():
             tdf, ead_d[coln] = self.get_ttl(cser.to_frame().reset_index().rename(columns={coln:'impacts'}))
             
-
+            assert 'ari' in tdf.columns, coln
             if sdf1 is None:
                 sdf1 = tdf.drop('impacts', axis=1)
 
@@ -587,7 +512,7 @@ class Attr(riskPlotr):
         
         if plotTag is None: plotTag='%s byFail'%self.tag
         
-        if ttl_df is None: ttl_df=self.data_d['ttl'].copy()
+        if ttl_df is None: ttl_df=self.data_d['r_ttl'].copy()
         
         #slice default attributes
         if slice_impStyle_d is None: slice_impStyle_d=self.slice_impStyle_d

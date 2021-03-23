@@ -1,0 +1,11 @@
+[description]
+name = HAZUS_USACE-Galveston
+location = USA
+
+[variables]
+asset_types1 = buildings, essential facilities
+asset_types2 = contents, structure, inventory
+native_platform = HAZUS
+classification_scheme = (FEMA 2012)
+impact_units = pct
+

@@ -1,0 +1,16 @@
+[description]
+name = Acres_1968
+creation_date = 1968
+location = Galt, ON
+
+[variables]
+reference = b"Acres Limited. 1968. 'Guidelines for Analysis - Volume 2 - Flood Damages.\xe2\x80\x9d Governments of Canada and Ontario.\n"
+asset_types1 = residential buildings
+asset_types2 = structure, contents
+classification_scheme = (Acres Limited 1968)
+flood_type = low velocity (less than 5 m.p.h.), of short duration (two days), and to contain only a small amount of sediment in suspension (one-half inch of silt being the maximum amount deposited in any structure)
+impact_units = $CAD
+cost_base = min(depreciated, restore, replace)
+cost_year = 1968
+empirical_synthetic = synthetic
+

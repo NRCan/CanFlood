@@ -32,71 +32,136 @@ from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProj
 from hlpr.exceptions import QError as Error
     
 
-from hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata
+from hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata, view
 #from hlpr.basic import *
-
+from model.modcom import Model
 
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Djoiner(Qcoms):
+class Djoiner(Qcoms, Model):
     """
     joining tabular data to vector geometry
     """
+    layname = None
+    
+    #===========================================================================
+    # expectations from parameter file
+    #===========================================================================
+    exp_pars_md = {
+        'parameters':{
+            'cid':{'type':str}
+            },
+
+        }
+    
+    exp_pars_op={
+
+        'risk_fps':{
+             'dmgs':{'ext':('.csv',)},
+             },
+        'results_fps':{
+             'r_passet':{'ext':('.csv',)},
+             }
+        }
+    
 
     
+    
     def __init__(self,
+                 fp_attn = 'r_passet', #default attribute name to pull tabulat data from
                  **kwargs
                  ):
-        
 
-        #mod_logger.info('simple wrapper inits')
-        
-
-        
         super().__init__(**kwargs) #initilzie teh baseclass
+        
+        assert hasattr(self, fp_attn), 'bad dfp_attn: %s'%fp_attn
+        self.fp_attn=fp_attn
+        
+        self.dtag_d={fp_attn:{'index_col':0},
+                     'r_ttl':{'index_col':None}}
+        
+        
         
         self.logger.debug('init finished')
         
         
+    
+    def prep_model(self):
+        #copy the raw over to the cleaned
+        self.data_d[self.fp_attn] = self.raw_d[self.fp_attn]
+        self.resname='%s_%s_%s'%(self.fp_attn, self.tag, self.name)
+        
+
+
+        
     def run(self,#join tabular results back to the finv
               vlay_raw, #finv vlay (to join results to)
-              data_fp, #filepath to res_per asset tabular results data
-              link_coln, #linking column/field name
+              df_raw=None,
+              cid=None, #linking column/field name
+
+            #data cleaning
+              relabel = 'ari', #how to relable event fields using the ttl values
+                #None: no relabling
+                #aep: use aep values (this is typically teh form already)
+                #ari: convert to ari values
               keep_fnl = 'all', #list of field names to keep from the vlay (or 'all' to keep all)
+
               layname = None,
-              tag = None,
-              logger = None,
+
               ): 
         """
         todo: clean this up and switch over to joinattributestable algo
-        TODO: inherit cid from parent
+ 
         """
-        
         #=======================================================================
         # defaults
         #=======================================================================
-        if logger is None: logger = self.logger
-        log = logger.getChild('djoin')
-        if tag is None: tag = self.tag
-        cid = link_coln
-        
+
+        log = self.logger.getChild('djoin')
+        if cid is None: cid = self.cid
+        if layname is None: layname=self.resname
+        if layname is None: layname = 'djoin_%s_%s'%(self.tag, vlay_raw.name())
+        if df_raw is None: df_raw=self.data_d[self.fp_attn]
+
         #=======================================================================
-        # precheck
+        # get data
         #=======================================================================
-        assert vlay_raw.crs()==self.qproj.crs()
+        lkp_df = self._prep_table(df_raw, relabel, log=log)
+        vlay_df = self._prep_vlay(vlay_raw, keep_fnl, log=log)
 
         
         #=======================================================================
-        # get the left data from the vlay geomtry
+        # join data
         #=======================================================================
+        res_df = self.fancy_join(vlay_df, lkp_df, logger=log)
+
+        #=======================================================================
+        # generate hte new layer--------   
+        #=======================================================================
+        geo_d = vlay_get_fdata(vlay_raw, geo_obj=True, logger=log)
+
+        res_vlay = self.vlay_new_df2(res_df, geo_d=geo_d, crs = vlay_raw.crs(),
+                                    layname=layname, logger=log)
+
         
+        log.info('finished on \'%s\''%res_vlay.name())
+        
+        return res_vlay
+     
+    def _prep_vlay(self, vlay_raw, keep_fnl, log=None):
+        if log is None: log = self.logger.getChild('_prep_vlay') 
+        
+        assert vlay_raw.crs()==self.qproj.crs(), 'crs mismatch: \n    %s\n    %s'%(
+        vlay_raw.crs(), self.qproj.crs())
+        
+
         df_raw = vlay_get_fdf(vlay_raw, logger=log, feedback=self.feedback
                               ).drop(['ogc_fid', 'fid'],axis=1, errors='ignore' )
                               
         df_raw['fid'] = df_raw.index
         
-        
+
         #======================================================================
         # drop to keeper fields
         #======================================================================
@@ -110,8 +175,8 @@ class Djoiner(Qcoms):
                 raise Error('%i requested keeper fields not in data: \n    %s'%(len(miss_l), miss_l))
             
             #make sure the linker is in there
-            if not link_coln in keep_fnl:
-                keep_fnl.append(link_coln)
+            if not self.cid in keep_fnl:
+                keep_fnl.append(self.cid)
                 
             if not 'fid' in keep_fnl:
                 keep_fnl.append('fid')
@@ -126,225 +191,155 @@ class Djoiner(Qcoms):
         else:
             raise Error('unexpected type on keep_fnl')
         
+        if not df1[self.cid].is_unique:
+            raise Error('non-unique vlay keys')
         
+        return df1
+    
+    def _prep_table(self, df_raw, relabel, log=None):
+        if log is None: log = self.logger.getChild('_prep_table') 
+        
+        #basefn = os.path.splitext(os.path.split(data_fp)[1])[0]                          
+        df_raw = df_raw.dropna(
+            axis = 'columns', how='all').dropna(axis = 'index', how='all')
+            
+        #log.debug('loaded %s from %s'%(str(df_raw.shape), data_fp))
+        #=======================================================================
+        # convert event probs
+        #=======================================================================
+        if not relabel is None: #aep to ari
+            #===================================================================
+            # attn = 'r_ttl'
+            # #load the events data
+            # assert hasattr(self, attn)
+            # attv = getattr(self, attn)
+            # assert not attv=='', 'passed empty %s filepath!'%attn
+            # assert os.path.exists(attv), 'bad %s filepath: \'%s\''%(attn, attv)
+            # rttl_df_raw = pd.read_csv(attv)
+            #===================================================================
+            rttl_df_raw = self.raw_d['r_ttl']
+            
+            #drop the aep row
+            rttl_df = rttl_df_raw.loc[np.invert(rttl_df_raw['note']=='integration'), :]
+            assert 'ead' not in rttl_df['aep']
+            
+            #check the raw event column types
+            #===================================================================
+            # col_types = np.array([type(e).__name__ for e in df_raw.columns])
+            # assert len(np.unique(col_types))==1, 'expected data column labels to be type: str'
+            #===================================================================
+            
+            #find event columns
+            boolcol = df_raw.columns.astype(str).isin(rttl_df['aep'].astype(str))
+            assert boolcol.any(), 'failed to identify aep columns in raw data'
+            
+            #do the conversion
+            if relabel == 'aep':
+                #convert columns to float
+                """not really necessary... but consistent typesetting may be useful"""
+                d = {coln:float(coln) for coln in df_raw.columns[boolcol]}
+                
+            elif relabel == 'ari':
+                """very similar to _get_ttl_ari()"""
+                ar = df_raw.columns[boolcol].astype(float).values
+                
+                ar_ari = 1/np.where(ar==0, #replaced based on zero value
+                           sorted(ar)[1]/10, #dummy value for zero (take the second smallest value and divide by 10)
+                           ar)
+                                                   
+                d = dict(zip(df_raw.columns[boolcol], ar_ari.astype(np.int)))
+                
+                #add padd
+                d = {k:'%05d'%v for k,v in d.items()}
+            
+            else:raise Error('unrecognized relable key: \'%s\''%relabel)
+            
+            #add prefix
+            d = {k:'%s_%s'%(relabel, v) for k,v in d.items()}
+            df = df_raw.rename(columns=d)
+            
 
-        #=======================================================================
-        # get the join table
-        #=======================================================================     
-        basefn = os.path.splitext(os.path.split(data_fp)[1])[0]                          
-        lkp_df1 = pd.read_csv(data_fp, index_col=None)
-        
-        # cleaning
-        lkp_df = lkp_df1.dropna(axis = 'columns', how='all').dropna(axis = 'index', how='all')
-        
-
-        
-        
-        #=======================================================================
-        # layer name
-        #=======================================================================
-        if layname is None: 
-            layname='%s_%s_djoin'%(tag, basefn)
+        else:
+            df = df_raw.copy()
+                
         
         #===========================================================================
         # chcek link column
         #===========================================================================
-        boolcol = np.isin(df1.columns, lkp_df.columns) #find the column intersection
-        
-        if not np.any(boolcol):
-            raise IOError('no intersecting columns in the loaded sets!')
-        
-        pos_cols = df1.columns[boolcol].tolist() #get these
-        
-        if len(pos_cols) == 0:
-            raise Error('no overlapping columns/field names!')
-        
-        if not link_coln in lkp_df.columns:
-            raise Error('requested link field \'%s\' not in the csv data!'%link_coln)
+        assert self.cid ==df.index.name, 'requested link field \'%s\' not in the csv data!'%self.cid
         
         """always expect a 1:1 on these"""
-        if not lkp_df[link_coln].is_unique:
-            raise Error('non-unique lookup keys \'%s\''%link_coln)
-            
-        if not df1[link_coln].is_unique:
-            raise Error('non-unique vlay keys')
+        if not df.index.is_unique:
+            raise Error('non-unique lookup keys \'%s\''%self.cid)
         
         
-            
-        #check key intersect
+        
+        return df.reset_index(drop=False)
+    
+    def fancy_join(self, 
+                   lkp_df, vlay_df, 
+                   logger=None):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log=logger.getChild('fancy_join')
+        #=======================================================================
+        # #check key intersect
+        #=======================================================================
         """we allow the results lkp_df to be smaller than the vector layer"""
-        l = set(lkp_df[cid]).difference(df1[link_coln])
+        l = set(lkp_df[self.cid]).difference(vlay_df[self.cid])
         if not len(l)==0:
             
-            bx = ~lkp_df[cid].isin(df1[link_coln])
+            bx = ~lkp_df[self.cid].isin(vlay_df[self.cid])
             with pd.option_context('display.max_rows', None, 
                            'display.max_columns', None,
                            'display.width',1000):
                 log.debug('missing entries %i (of %i)\n%s'%(bx.sum(), len(bx), lkp_df[bx]))
             
             
-            raise Error('%i (of %i) \'%s\' entries in the results not found in the finv_vlay \'%s\'.. .see logger: \n    %s'%(
-            len(l), len(lkp_df), cid, vlay_raw.name(), l))
+            raise Error('%i (of %i) \'%s\' entries in the results not found in the finv_vlay. .see logger: \n    %s'%(
+            len(l), len(lkp_df), self.cid, l))
+            
+        #=======================================================================
+        # column intersect
+        #=======================================================================
+        icols = set(lkp_df.columns).union(vlay_df.columns)
+        icols.remove(self.cid)
+        
+        if len(icols)>0:
+            log.warning('got %i overlapping columns...taking data from vlay \n    %s'%(len(icols), icols))
         
         #===========================================================================
-        # do the lookup
+        # join-----------
         #===========================================================================
-        boolidx = df1[cid].isin(lkp_df[cid].values)
+        boolidx = vlay_df[self.cid].isin(lkp_df[self.cid].values)
         
-        res_df = df1.loc[boolidx, :].merge(lkp_df, 
+        res_df = vlay_df.loc[boolidx, :].merge(lkp_df, 
                                 how='inner', #only use intersect keys
-                               on = link_coln,
+                               on = self.cid,
                                validate= '1:1', #check if merge keys are unique in right dataset
                                indicator=False, #flag where the rows came from (_merge)
                                )
         
-        assert len(res_df) == len(lkp_df)
+
+        assert res_df.columns.is_unique
+        #reset index
+        assert res_df['fid'].is_unique
+        res_df = res_df.set_index('fid', drop=True).sort_index(axis=0)
+        
+        
+        if not np.array_equal(res_df.index, vlay_df.index):
+            """aoi slicing?"""
+            log.warning('index mismatch')
         
         log.info('merged %s w/ %s to get %s'%(
-            str(df1.shape), str(lkp_df.shape), str(res_df.shape)))    
+            str(vlay_df.shape), str(lkp_df.shape), str(res_df.shape)))   
         
-
-        
-        #=======================================================================
-        # generate hte new layer     
-        #=======================================================================
-        #get the raw goemetry
-        geo_d = vlay_get_fdata(vlay_raw, geo_obj=True, logger=log)
-        
-        #expand it
-        """shouldnt be necessary for 1:1"""
-        if not res_df['fid'].is_unique:
-            raise Error('bad link')
-            #==================================================================
-            # log.info('non unique keys (1:m) join... expanding geometry')
-            # rfid_geo_d = hp_basic.expand_dict(geo_d, res_df['fid'].to_dict(),
-            #                                   constructor=QgsGeometry)
-            # res_df= res_df.drop('fid', axis=1)
-            #==================================================================
-        else:
-            rfid_geo_d = geo_d
-            res_df = res_df.set_index('fid', drop=True)
-        
-        
-        
-        res_vlay = self.vlay_new_df2(res_df, geo_d=rfid_geo_d, crs = vlay_raw.crs(),
-                                    layname=layname, logger=log)
-        
-        
-        log.info('finished on \'%s\''%res_vlay.name())
-        
-        return res_vlay
-     
+        return res_df
     
 
-#===============================================================================
-# if __name__ =="__main__": 
-#     print('start')
-#     out_dir = os.path.join(os.getcwd(), 'djoin')
-#     
-#     #==========================================================================
-#     # dev data
-#     #==========================================================================
-#     #==========================================================================
-#     # data_d = {
-#     #     'cconv':(
-#     #         r'C:\LS\03_TOOLS\CanFlood\_ins\20200225\finv_cconv_20200224_aoiT4.gpkg',
-#     #         r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200224\scenario1_risk_passet.csv'
-#     #         )
-#     #     
-#     #     }
-#     #==========================================================================
-#     
-#     #===========================================================================
-#     # tutorials
-#     #===========================================================================
-#     runpars_d={
-#         'Tut1a':{
-#             'finv_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\data\finv_cT2b.gpkg',
-#             'data_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\res_1a\risk1_Tut1_tut1a_passet.csv',
-#             'keep_fn':'all',
-#             'link_coln':'xid',
-#             },
-#         
-#         }
-# 
-#     runpars_d={
-#         'Tut1b':{
-#             'finv_fp':r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\1\data\finv_cT2b.gpkg',
-#             'data_fp':r'C:\Users\cefect\CanFlood\build\1b\results\risk1_run1_tut2b_passet.csv',
-#             'keep_fn':'all',
-#             'link_coln':'xid',
-#             },
-#         
-#         }
-#         
-#     #==========================================================================
-#     # 20200304
-#     #==========================================================================
-#     #===========================================================================
-#     # runpars_d = {
-#     #     'ICIrec':{
-#     #         'finv_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200304\finv\ICI_rec\finv_ICIrec_20200304_aoi05f.gpkg',
-#     #         'data_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\ICI_rec\risk1\risk1_ICIrec_scenario1_passet.csv',
-#     #         'keep_fn':'all',
-#     #         'link_coln':'xid',
-#     #         },
-#     #     'TDDres':{
-#     #         'finv_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200304\finv\TDD_res\finv_cconv_20200224_TDDres.gpkg',
-#     #         'data_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDD_res\risk1\risk1_TDDres_TDDres_passet.csv',
-#     #         'keep_fn':'all',
-#     #         'link_coln':'xid',
-#     #         },
-#     #     'TDDnrp':{
-#     #         'finv_fp':r'C:\LS\03_TOOLS\CanFlood\_ins\20200304\finv\TDD_nrp\finv_cconv_20200224_TDDnrp.gpkg',
-#     #         'data_fp':r'C:\LS\03_TOOLS\CanFlood\_wdirs\20200304\TDDnrp\risk1\risk1_TDDnrp_scenario1_passet.csv',
-#     #         'keep_fn':'all',
-#     #         'link_coln':'xid',          
-#     #         }
-#     #     }
-#     #===========================================================================
-#     
-#     #==========================================================================
-#     # execute
-#     #==========================================================================
-#     wrkr = Djoiner(logger=mod_logger, out_dir=out_dir)
-#     
-#     for tag, pars_d in runpars_d.items():
-#         log = mod_logger.getChild(tag)
-#         vlay_raw = load_vlay(pars_d['finv_fp'])
-#         
-#         """
-#                       vlay_raw, #layer to join csv to (finv)
-#               data_fp, #filepath to tabular data
-#               link_coln, #linking column/field name
-#               keep_fnl = 'all', #list of field names to keep from the vlay (or 'all' to keep all)
-#         """
-#         
-#         res_vlay = wrkr.run(
-#             vlay_raw, 
-#             pars_d['data_fp'],pars_d['link_coln'], tag=tag,
-#             keep_fnl=pars_d['keep_fn'],
-#             logger=log)
-#         
-#         #==========================================================================
-#         # save results
-#         #==========================================================================
-#         ofp = os.path.join(out_dir, '%s.gpkg'%res_vlay.name())
-#         vlay_write(res_vlay, ofp, overwrite=True)
-#         
-#         log.info('finished')    
-#         
-#         
-#     
-#     force_open_dir(out_dir)
-#     
-#     print('finished')
-#     
-# 
-#     
-#===============================================================================
-    
-       
+
 
 
         

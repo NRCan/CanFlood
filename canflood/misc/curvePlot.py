@@ -14,7 +14,7 @@ TODO: Consolidate w/ riskPlot
 #==========================================================================
 # logger setup-----------------------
 #==========================================================================
-import logging, configparser, datetime
+import logging, configparser, datetime, itertools
 
 
 
@@ -37,49 +37,53 @@ from hlpr.exceptions import QError as Error
 # setup matplotlib
 #===============================================================================
 
-import matplotlib
-matplotlib.use('Qt5Agg') #sets the backend (case sensitive)
-import matplotlib.pyplot as plt
-
-#set teh styles
-plt.style.use('default')
-
-#font
-matplotlib_font = {
-        'family' : 'serif',
-        'weight' : 'normal',
-        'size'   : 8}
-
-matplotlib.rc('font', **matplotlib_font)
-matplotlib.rcParams['axes.titlesize'] = 10 #set the figure title size
-
-#spacing parameters
-matplotlib.rcParams['figure.autolayout'] = False #use tight layout
+#===============================================================================
+# import matplotlib
+# matplotlib.use('Qt5Agg') #sets the backend (case sensitive)
+# import matplotlib.pyplot as plt
+# 
+# #set teh styles
+# plt.style.use('default')
+# 
+# #font
+# matplotlib_font = {
+#         'family' : 'serif',
+#         'weight' : 'normal',
+#         'size'   : 8}
+# 
+# matplotlib.rc('font', **matplotlib_font)
+# matplotlib.rcParams['axes.titlesize'] = 10 #set the figure title size
+# 
+# #spacing parameters
+# matplotlib.rcParams['figure.autolayout'] = False #use tight layout
+#===============================================================================
     
 
-from hlpr.basic import ComWrkr
+#from hlpr.basic import ComWrkr
 #import hlpr.basic
-
-
+from model.modcom import DFunc
+from hlpr.plot import Plotr
 
 
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class CurvePlotr(ComWrkr):
-    
+class CurvePlotr(DFunc, Plotr):
+    subplot=111
     
     def __init__(self,
                  name='Results',
                  
-                 
-                figsize = (6,4), #6,4 seems good for documnets
-                subplot = 111,
-                
-                #writefig
-                fmt = 'svg' ,#format for figure saving
-                dpi = 300,
-                transparent = False,
+                #===============================================================
+                #  
+                # figsize = (6,4), #6,4 seems good for documnets
+                # subplot = 111,
+                # 
+                # #writefig
+                # fmt = 'svg' ,#format for figure saving
+                # dpi = 300,
+                # transparent = False,
+                #===============================================================
 
 
                  **kwargs
@@ -96,8 +100,8 @@ class CurvePlotr(ComWrkr):
         
         self.name = name
         
-        self.figsize, self.subplot, self.fmt, self.dpi, self.transparent = figsize, subplot, fmt, dpi, transparent
-        
+        #self.figsize, self.subplot, self.fmt, self.dpi, self.transparent = figsize, subplot, fmt, dpi, transparent
+        self._init_plt()
         self.logger.info('init finished')
         
     def load_data(self, fp):
@@ -112,43 +116,55 @@ class CurvePlotr(ComWrkr):
     
     def plotAll(self, #plot everything in a single group
                 cLib_d, #container of functions
+                lib_as_df = True, #indicator for format of passed lib
                 title=None,
                 logger=None,
+
                 **lineKwargs
                 ):
         #=======================================================================
         # defaults
         #=======================================================================
         if logger is None: logger=self.logger
-        
+
         
         log = logger.getChild('plotAll')
         log.info('plotting w/ %i'%len(cLib_d))
         
         if title is None: title='%s vFunc plot of %i curves'%(self.tag, len(cLib_d))
-        
+        self.plt.close()
         #=======================================================================
         # convert clib
         #=======================================================================
+        if lib_as_df:
+            assert isinstance(cLib_d[list(cLib_d.keys())[0]], pd.DataFrame), 'expected frame'
+            cLib_d = {k:df.set_index(df.columns[0], drop=True).iloc[:,0].to_dict() for k, df in cLib_d.items()}
             
-        cLib_d = {k:df.set_index(0, drop=True).iloc[:,0].to_dict() for k, df in cLib_d.items()}
+            """
+            for k,v in cLib_d.items():
+                print(k, type(v))
+            """
 
         
         #===============================================================
         # loop and plot
         #===============================================================
         ax = None
-        
+        marker = itertools.cycle(('+', '1', 'o', '2', 'x', '3', '4'))
+                                 
         for cName, crv_d in cLib_d.items():
             if cName.startswith('_'): continue #skip these
 
             
-            ax = self.plotCurve(crv_d, ax=ax,**lineKwargs)
+            ax = self.plotCurve(crv_d, ax=ax,
+                                marker=next(marker),
+                                **lineKwargs)
             
         #post format
         fig = ax.figure
         fig.suptitle(title)
         ax.legend()
+        ax.grid()
         
         return fig
             
@@ -342,7 +358,7 @@ class CurvePlotr(ComWrkr):
         #=======================================================================
         # precheck
         #=======================================================================
-        self.check_curve(crv_d, logger=log)
+        self.check_crvd(crv_d, logger=log)
         
         #=======================================================================
         # extract data
@@ -358,28 +374,40 @@ class CurvePlotr(ComWrkr):
             if dd_f:
                 dd_d[k]=v
                 
-        log.info('collected %i dd vals: \n    %s'%(len(dd_d), dd_d))
+        log.debug('collected %i dd vals: \n    %s'%(len(dd_d), dd_d))
         dser = pd.Series(dd_d, name=crv_d['tag'])
         
         #=======================================================================
         # assemble parameters
         #=======================================================================
         pars_d = dict()
-        for par, cpar in {'ylab':'exposure_var', 
-                          'xlab':'impact_var',
-                          'color':'color'}.items():
-            
-            if cpar in crv_d:
-                pars_d[par]=crv_d[cpar]
-            else:
-                pars_d[par]=None
+        #=======================================================================
+        # for par, cpar in {'ylab':'exposure_units', 
+        #                   'xlab':'impact_var',
+        #                   'color':'color'}.items():
+        #     
+        #     if cpar in crv_d:
+        #         pars_d[par]=crv_d[cpar]
+        #     else:
+        #         pars_d[par]=None
+        #=======================================================================
+        
+        #add fillers
+        cd1 = crv_d.copy()
+        for k in ['exposure_var', 'exposure_units', 'impact_var', 'impact_units', 'color']:
+            if not k in cd1:
+                cd1[k] = None
+        
+        pars_d['ylab'] = '%s (%s)'%(cd1['exposure_var'], cd1['exposure_units'])
+        pars_d['xlab'] = '%s (%s)'%(cd1['impact_var'], cd1['impact_units'])
+        #pars_d['color'] = cd1['color']
                           
         
         return self.line(dser.values, dser.index.values,
                          
                          ylab=pars_d['ylab'],
                          xlab=pars_d['xlab'],
-                         color=pars_d['color'],
+                         #color=pars_d['color'],
                          label=crv_d['tag'],
                           **lineKwargs)
         
@@ -392,15 +420,22 @@ class CurvePlotr(ComWrkr):
                 title = None,
                 ylab=None,
                 xlab=None,
-                **kwargs):
+                
+                xlim=None,
+
+                **kwargs, #splill over kwargs
+                ):
         
         #=======================================================================
         # defaults
         #=======================================================================
-        
+        plt= self.plt
         figsize=self.figsize
         subplot=self.subplot
         
+        """
+        plt.show()
+        """
         #=======================================================================
         # setup axis
         #=======================================================================
@@ -408,10 +443,13 @@ class CurvePlotr(ComWrkr):
 
             fig = plt.figure(figsize=figsize,
                      tight_layout=False,
-                     constrained_layout = True,
+                     constrained_layout = False,
                      )
 
             ax = fig.add_subplot(subplot)  
+            
+            if not xlim is None:
+                ax.set_xlim(xlim)
             
             #set the suptitle
             if isinstance(title, str):
@@ -420,6 +458,8 @@ class CurvePlotr(ComWrkr):
                 ftitle='figure'
                 
             fig.suptitle(ftitle)
+            
+            
             
         else:
             fig = plt.gcf()
@@ -442,7 +482,12 @@ class CurvePlotr(ComWrkr):
         #==========================================================================
         #log.debug('plotting \"%s\' w/ \n    %s \n    %s'%( title, xvals, yvals))
         
-        ax.plot(xvals, yvals, **kwargs)
+        ax.plot(xvals, yvals, 
+                #markerfacecolor='black',
+                #markersize=markersize, 
+                #fillstyle='full',
+
+                **kwargs)
         
         """
         plt.show()

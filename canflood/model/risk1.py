@@ -17,7 +17,7 @@ import os, logging
 import pandas as pd
 import numpy as np
 
-from scipy import interpolate, integrate
+#from scipy import interpolate, integrate
 
 #==============================================================================
 # custom imports
@@ -27,14 +27,12 @@ from scipy import interpolate, integrate
 mod_logger = logging.getLogger('risk1') #get the root logger
 
 from hlpr.exceptions import QError as Error
-
-#from hlpr.Q import *
-#from hlpr.basic import *
-from results.riskPlot import Plotr
+ 
+from model.riskcom import RiskModel
 
 
 
-class Risk1(Plotr):
+class Risk1(RiskModel):
     """
     model for summarizing inundation counts (positive depths)
     """
@@ -67,6 +65,9 @@ class Risk1(Plotr):
          }
     
     exp_pars_op = {#optional expectations
+       'parameters':{
+            'impact_units': {'type':str}
+            },
         'dmg_fps':{
             'gels':{'ext':('.csv',)},
                  },
@@ -76,13 +77,15 @@ class Risk1(Plotr):
         
         }
     
+
+    
     #number of groups to epxect per prefix
     group_cnt = 2
     
     #minimum inventory expectations
     finv_exp_d = {
-        'f0_scale':{'type':np.number},
-        'f0_elv':{'type':np.number}
+        'scale':{'type':np.number},
+        'elv':{'type':np.number}
         }
     """
     NOTE: for as_inun=True, 
@@ -93,44 +96,38 @@ class Risk1(Plotr):
     
 
     
-    #==========================================================================
-    # plot controls
-    #==========================================================================
-    plot_fmt = '{0:.0f}' #floats w/ 2 decimal
-    y1lab = 'impacts'
-    
-    def __init__(self,
-                 cf_fp='',
-                 **kwargs
-                 ):
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs) #initilzie Model
         
-        #init the baseclass
-        super().__init__(cf_fp=cf_fp, **kwargs) #initilzie Model
+        self.dtag_d={**self.dtag_d,**{
+            'expos':{'index_col':0}
+            }}
         
-        
+
         
         self.logger.debug('finished __init__ on Risk1')
         
+
         
-    def _setup(self): 
+        
+    def prep_model(self, #attach and prepare data for  model run
+
+               ): 
         """
         called by Dialog and standalones
         """
-        self.init_model()
-        self.resname = 'risk1_%s_%s'%(self.tag, self.name)
-        #self.load_data()
-        #======================================================================
-        # load data files
-        #======================================================================
-        self.load_finv()
-        self.load_evals()
-        self.load_expos(dtag='expos')
+
+            
+            
+        self.set_finv()
+        self.set_evals() 
+        self.set_expos()
         
         if not self.exlikes == '':
-            self.load_exlikes()
+            self.set_exlikes()
         
         if self.felv == 'ground':
-            self.load_gels()
+            self.set_gels()
             self.add_gels()
         
 
@@ -138,10 +135,9 @@ class Risk1(Plotr):
         self.build_depths()
         
         
-        
         self.logger.debug('finished setup_data on Risk1')
         
-        return self
+        return 
 
     def run(self,
             res_per_asset=False, #whether to generate results per asset
@@ -149,6 +145,9 @@ class Risk1(Plotr):
             ):
         """
         main caller for L1 risk model
+        
+        TODO: clean this up and divide into more functions
+            need to support impact only runs
         """
         #======================================================================
         # defaults
@@ -171,7 +170,7 @@ class Risk1(Plotr):
         #dboolcol = ~ddf.columns.isin([cid, bid])
         log.info('running on %i assets and %i events'%(len(bdf), len(ddf.columns)-2))
         
-        self.feedback.setProgress(5)
+        self.feedback.upd_prog(20, method='raw')
         
 
 
@@ -214,7 +213,7 @@ class Risk1(Plotr):
             #fill nulls with zero
             bidf = bidf.fillna(0)
         
-        self.feedback.setProgress(10)
+        self.feedback.upd_prog(10, method='append')
         #======================================================================
         # scale
         #======================================================================
@@ -255,46 +254,49 @@ class Risk1(Plotr):
         #check the columns
         assert np.array_equal(bres_df.columns.values, aep_ser.unique()), 'column name problem'
         _ = self.check_monot(bres_df)
+        self.feedback.upd_prog(10, method='append')
         #======================================================================
         # get ead per asset------
         #======================================================================
         if res_per_asset:
-            self.feedback.setProgress(50)
-            res_df = self.calc_ead(bres_df, drop_tails=self.drop_tails, logger=log).round(self.prec)
+            
+            res_df = self.calc_ead(bres_df)
                         
         else:
             res_df = None
-        
-        self.feedback.setProgress(90)
+        self.res_df = res_df
+        self.feedback.upd_prog(10, method='append')
         #======================================================================
         # totals
         #======================================================================        
-        res_ser = self.calc_ead(bres_df.sum(axis=0).to_frame().T, logger=log).iloc[0]
+        res_ttl = self.calc_ead(bres_df.sum(axis=0).to_frame().T,
+                                drop_tails=False,
+                                ).T #1 column df
         
-        self.res_ser = res_ser.copy() #set for risk_plot()
-        self.feedback.setProgress(95)
+        self.ead_tot = res_ttl.iloc[:,0]['ead'] #set for plot_riskCurve()
+        
+        """old plotters
+        self.res_ser = res_ttl.copy() #set for risk_plot()
+        """
+        
+        log.info('finished on %i assets and %i damage cols'%(len(bres_df), len(res_ttl)))
+        #=======================================================================
+        # #format total results for writing
+        #=======================================================================
+        self.res_ttl = self._fmt_resTtl(res_ttl)
             
         
         #=======================================================================
         # wrap
         #=======================================================================
-        log.info('finished on %i assets and %i damage cols'%(len(bres_df), len(res_ser)))
+        self._set_valstr()
 
-        #format resul series
-        res = res_ser.to_frame()
-        res.index.name = 'aep'
-        res.columns = ['impacts']
-        
-        #remove tails
-        if self.drop_tails:
-            res = res.iloc[1:-2,:] #slice of ends 
-            res.loc['ead'] = res_ser['ead'] #add ead back
-        
-         
         log.info('finished')
 
 
-        return res.round(self.prec), res_df
+        return self.res_ttl, self.res_df
+    
+
     
 
 if __name__ =="__main__": 

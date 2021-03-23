@@ -1,0 +1,19 @@
+[description]
+name = Huzinga_2017
+creation_date = 2017
+location = US
+
+[variables]
+reference = b"Huizinga, Jan, Hans de Moel, Wojciech Szewczyk, and others. 2017. 'Global Flood Depth-Damage Functions.\xe2\x80\x9d https://ec.europa.eu/jrc/en/publication/global-flood-depth-damage-functions-methodology-and-database-guidelines."
+asset_types1 = buildings, infrastructure, agriculture
+asset_types2 = Residential buildings     
+	Commercial buildings     
+	Industrial buildings     
+	Transport     
+	Infrastructure - roads     
+	Agriculture  
+classification_scheme = none
+impact_units = pct
+cost_year = 2010
+empirical_synthetic = mixed
+

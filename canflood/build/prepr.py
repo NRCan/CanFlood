@@ -36,34 +36,27 @@ from hlpr.exceptions import QError as Error
 from hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata
 from hlpr.basic import get_valid_filename
 
+from model.modcom import Model #for data checks
+
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Preparor(Qcoms):
-    """
+class Preparor(Model, Qcoms):
 
-    
-    each time the user performs an action, 
-        a new instance of this should be spawned
-        this way all the user variables can be freshley pulled
-    """
-    
-    
 
-    def __init__(self,
-
-                  *args, **kwargs):
+    def __init__(self,**kwargs):
         
-        super().__init__(*args, **kwargs)
         
+        super().__init__(**kwargs)
 
-        
         self.logger.debug('Preparor.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
         
         
     def copy_cf_template(self, #start a new control file by copying the template
-                  wdir,
-                  cf_fp=None,
+                  wdir=None, #optional build path to copy to
+                  cf_fp=None, #path to copy to
+                  
+                  cf_src = None, #template fiilepath
                   logger=None
                   ):
         
@@ -72,34 +65,35 @@ class Preparor(Qcoms):
         #=======================================================================
         if logger is None: logger=self.logger
         log = logger.getChild('copy_cf_template')
+
+
         
-        if cf_fp is None: cf_fp = os.path.join(wdir, 'CanFlood_%s.txt'%self.tag)
+        
         #=======================================================================
-        # copy control file template
+        # #get the default template from the program files
         #=======================================================================
-        
-        
-        #get the default template from the program files
-        cf_src = os.path.join(
-                os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                 '_pars/CanFlood_control_01.txt')
+        if cf_src is None:
+            cf_src = os.path.join(
+                    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                     '_pars/CanFlood_control_01.txt')
         
         assert os.path.exists(cf_src)
         
         
-        #get new file name
-        
-        
-        #see if this exists
-        if os.path.exists(cf_fp):
-            msg = 'generated control file already exists. overwrite=%s \n     %s'%(
-                self.overwrite, cf_fp)
-            if self.overwrite:
-                log.warning(msg)
-            else:
-                raise Error(msg)
+        #=======================================================================
+        # #get new file name
+        #=======================================================================
+        if cf_fp is None: 
+            if wdir is None: 
+                wdir=self.out_dir
+            assert os.path.exists(wdir)
+            cf_fp = os.path.join(wdir, 'CanFlood_%s.txt'%self.tag)
             
+        if os.path.exists(cf_fp):assert self.overwrite
             
+        #=======================================================================
+        # copy control file template
+        #=======================================================================
         #copy over the default template
         shutil.copyfile(cf_src, cf_fp)
         
@@ -113,6 +107,7 @@ class Preparor(Qcoms):
     def upd_cf_first(self, #seting initial values to the control file
                      scenarioName=None,
                      curves_fp=None,
+                     **kwargs
                      ):
         """
         todo: change this to accept kwargs
@@ -127,20 +122,24 @@ class Preparor(Qcoms):
             datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S'))
         
         
-        new_pars_d = {'parameters':({'name':scenarioName},note_str)}
+        new_pars_d = {'parameters':(
+            dict(**{'name':scenarioName}, **kwargs),note_str)}
         
         #add curves
         if isinstance(curves_fp, str):
             new_pars_d['dmg_fps'] = ({'curves':curves_fp},)
+            
+
+            
         
         
-        return self.update_cf(new_pars_d)
+        return self.set_cf_pars(new_pars_d)
         
     def finv_to_csv(self, #convert the finv to csv
                     vlay,
                     felv='datum', #should probabl just leave this if none
                     cid=None, tag=None,
-                    logger=None,
+                    logger=None, write=True,
                     ):
         
         #=======================================================================
@@ -151,11 +150,13 @@ class Preparor(Qcoms):
         
         if cid is None: cid=self.cid
         if tag is None: tag=self.tag
+        self.felv = felv
         
+        log.debug('on %s'%vlay.name())
         #=======================================================================
         # prechecks
         #=======================================================================
-        assert os.path.exists(self.cf_fp), 'bad cf_fp: %s'%self.cf_fp
+        
         assert vlay.crs()==self.qproj.crs(), 'finv CRS (%s) does not match projects (%s)'%(
             vlay.crs(), self.qproj.crs())
         
@@ -168,7 +169,10 @@ class Preparor(Qcoms):
             raise Error('user selected invalid cid \'%s\''%cid)  
         
         
-        assert cid in [field.name() for field in vlay.fields()]
+        assert cid in [field.name() for field in vlay.fields()], '%s missing cid \'%s\''%(vlay.name(), cid)
+        
+        #label checks
+        assert isinstance(tag, str)
 
         #=======================================================================
         # #extract data
@@ -183,19 +187,32 @@ class Preparor(Qcoms):
         for gindx in self.invalid_cids:   
             df = df.drop(gindx, axis=1, errors='ignore')
             
-        #more cid checks
-        if not cid in df.columns:
-            raise Error('cid not found in finv_df')
+        df = df.set_index(cid, drop=True)
         
-        assert df[cid].is_unique
-        assert 'int' in df[cid].dtypes.name, 'cid \'%s\' bad type'%cid
+        #drop empty columns
+        boolcol = df.isna().all(axis=0)
+        if boolcol.any():
+            df = df.loc[:, ~boolcol]
+            log.warning('%s dropping %i (of %i) empty fields'%(tag, boolcol.sum(), len(boolcol)))
+            
         
+            
+        #=======================================================================
+        # post checks
+        #=======================================================================
+        self.check_finv(df, cid=cid, logger=log)
         self.feedback.upd_prog(50)
+        
+        if not write: 
+            """mostly a skip for testing"""
+
+            return df
         
         #=======================================================================
         # #write to file
         #=======================================================================
-        out_fp = os.path.join(self.out_dir, get_valid_filename('finv_%s_%s.csv'%(self.tag, vlay.name())))
+        out_fp = os.path.join(self.out_dir, 
+                              get_valid_filename('finv_%s_%i_%s.csv'%(tag, len(df), vlay.name().replace('finv_', ''))))
         
         #see if this exists
         if os.path.exists(out_fp):
@@ -207,58 +224,71 @@ class Preparor(Qcoms):
                 raise Error(msg)
             
             
-        df.to_csv(out_fp, index=False)  
+        df.to_csv(out_fp, index=True)  
         
         log.info("inventory csv written to file:\n    %s"%out_fp)
-        
+        assert os.path.exists(out_fp)
         self.feedback.upd_prog(80)
         #=======================================================================
         # write to control file
         #=======================================================================
-        assert os.path.exists(out_fp)
-        
-        self.update_cf(
-            {
-            'dmg_fps':(
-                {'finv':out_fp}, 
-                '#\'finv\' file path set from BuildDialog.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
-                ),
-            'parameters':(
-                {'cid':str(cid),
-                 'felv':felv},
-                )
-             },
-
-            )
+        self.upd_cf_finv(out_fp)
         
         self.feedback.upd_prog(99)
         
-        return out_fp
+        
+        return df
+    
+    def upd_cf_finv(self, out_fp):
+        
+        assert os.path.exists(self.cf_fp), 'bad cf_fp: %s'%self.cf_fp
+        
+        #=======================================================================
+        # """
+        # writing the filepath to the vector layer wont work...
+        #     often we're working with memory layers
+        #     the transition from spatial to non-spatial and back to spatial losses these connections
+        # """
+        # 
+        #=======================================================================
+        self.set_cf_pars(
+            {
+            'dmg_fps':(
+                {'finv':out_fp}, 
+                '#\'finv\' file path set from prepr.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
+                ),
+            'parameters':(
+                {'cid':self.cid,
+                 'felv':self.felv},
+                ),
+
+             },
+
+            )
+    
+ 
             
     
     def to_finv(self, #clean a raw vlay an add some finv colums
                 in_vlay,
                 drop_colns=['ogc_fid', 'fid'], #optional columns to drop from df
-                nestID = 0, 
-                new_data = {'scale':1.0, 'elv':0.0, 'tag':None, 'cap':None},
+                new_data = {},
                 newLayname = None,
+                logger=None,
                 ):
         #=======================================================================
         # defaults
         #=======================================================================
-        log = self.logger.getChild('to_finv')
+        if logger is None: logger=self.logger
+        log = logger.getChild('to_finv')
         if newLayname is None: newLayname = 'finv_%s'%in_vlay.name()
         
         #=======================================================================
         # precheck
         #=======================================================================
         assert isinstance(in_vlay, QgsVectorLayer)
-        assert isinstance(nestID, int)
-        
-        miss_l = set(new_data.keys()).difference(['scale', 'elv', 'tag', 'cap'])
-        assert len(miss_l)==0, 'got some unrecognzied'
-        
-        #assert 'Point' in QgsWkbTypes().displayString(in_vlay.wkbType())
+
+ 
         dp = in_vlay.dataProvider()
         
         log.info('on %s w/ %i feats and %i new colums'%(in_vlay.name(), dp.featureCount(), len(new_data)))
@@ -283,39 +313,30 @@ class Preparor(Qcoms):
         log.info('replaced %i (of %i) null values'%(df1.isna().sum().sum(), df1.size))
 
         #drop empty fields
-
         df2 = df1.dropna(axis=1, how='all')
         log.info('dropped %i empty columns'%(len(df1.columns) - len(df2.columns)))
         
         self.feedback.upd_prog(60)
-        
-        #=======================================================================
-        # prep input data
-        #=======================================================================
-        d = dict()
-        for kRaw, vRaw in new_data.items():
-            if vRaw is None:
-                if kRaw == 'tag':
-                    v = '' #get the right data type for empty tag fields?
-                else:
-                    v = np.nan
-            else:
-                v = vRaw
-                
-            d['f%i_%s'%(nestID, kRaw)] = v
-            
+
         #=======================================================================
         # add fields
         #=======================================================================
         #build the new data
-        log.info('adding field data:\n    %s'%d)
- 
-        
+        log.info('adding field data:\n    %s'%new_data)
+
         #join the two
-        res_df = pd.DataFrame(index=df_raw.index, data=d).join(df2)
+        res_df = df2.join(pd.DataFrame(index=df_raw.index, data=new_data))
 
 
         self.feedback.upd_prog(70)
+        
+        #=======================================================================
+        # chekc data
+        #=======================================================================
+        """" no? not for this intermediate function?
+        self.check_finv()
+        
+        """
         #=======================================================================
         # reconstruct layer
         #=======================================================================
@@ -333,6 +354,45 @@ class Preparor(Qcoms):
         
         self.feedback.upd_prog(99)
         return  finv_vlay
+    
+    def build_nest_data(self, #convert data to nest like
+                        nestID = 0, 
+                        d_raw = {'scale':1.0, 'elv':0.0, 'tag':None, 'cap':None},
+                        logger=None,
+                        ):
+        
+        if len(d_raw)==0: return dict()
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert isinstance(nestID, int)
+        
+        miss_l = set(d_raw.keys()).difference(['scale', 'elv', 'tag', 'cap'])
+        assert len(miss_l)==0, 'got some unrecognzied'
+        
+        
+        #chekc mandatory keys
+        miss_l = set(['scale', 'elv']).difference(d_raw.keys())
+        assert len(miss_l)==0, 'missing mandatory inventory columns: %s'%miss_l
+        
+        #=======================================================================
+        # prep input data
+        #=======================================================================
+        d = dict()
+        for kRaw, vRaw in d_raw.items():
+            if vRaw is None:
+                if kRaw == 'tag':
+                    v = '' #get the right data type for empty tag fields?
+                else:
+                    v = np.nan
+            else:
+                v = vRaw
+                
+            d['f%i_%s'%(nestID, kRaw)] = v
+            
+        
+            
+        return d
  
 
 

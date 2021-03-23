@@ -27,12 +27,12 @@ from hlpr.exceptions import QError as Error
 #from hlpr.Q import *
 from hlpr.basic import view
 #from model.modcom import Model
-from results.riskPlot import Plotr
-
+#from results.riskPlot import Plotr
+from model.riskcom import RiskModel
 #==============================================================================
 # functions----------------------
 #==============================================================================
-class Risk2(Plotr, #This inherits 'Model'
+class Risk2(RiskModel, #This inherits 'Model'
              
             ):
     """Risk T2 tool for calculating expected value for a set of events from impact results
@@ -71,7 +71,8 @@ class Risk2(Plotr, #This inherits 'Model'
              'integrate':   {'values':('trapz',)}, 
              'prec':        {'type':int}, 
              'as_inun':     {'type':bool},
-             'event_rels':   {'type':str, 'values':('max', 'mutEx', 'indep')}
+             'event_rels':   {'type':str, 'values':('max', 'mutEx', 'indep')},
+             
              },
             
         'dmg_fps':{
@@ -89,6 +90,9 @@ class Risk2(Plotr, #This inherits 'Model'
                 }
     
     exp_pars_op = {#optional expectations
+        'parameters':{
+            'impact_units': {'type':str}
+            },
         'risk_fps':{
             'exlikes':{'ext':('.csv',)},
                     },
@@ -98,60 +102,145 @@ class Risk2(Plotr, #This inherits 'Model'
                     }
                 }
     
-    #==========================================================================
-    # plot controls----
-    #==========================================================================
-    plot_fmt = '{:,.0f}'
-    y1lab = 'impacts'
-    
+    #===========================================================================
+    # METHODS-------------
+    #===========================================================================
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs) #initilzie Model
+ 
 
-    
-    
-    def __init__(self,
-                 cf_fp='',
-                 **kwargs
-                 ):
         
-        #init the baseclass
-        super().__init__(cf_fp=cf_fp, **kwargs) #initilzie Model
-        self._init_plt() #setup matplotlib
-        
-        self.logger.debug('finished __init__ on Risk')
+        self.dtag_d={**self.dtag_d,**{
+            'dmgs':{'index_col':0},
+            self.attrdtag_in:{'index_col':0, 'header':list(range(0,2))}
+            }}
+                
+                
+        self.logger.debug('finished __init__ on Risk2')
         
         
-    def _setup(self):
-        #======================================================================
-        # setup funcs
-        #======================================================================
-        self.init_model() #mostly just attaching and checking parameters from file
-        
-        self.resname = 'risk2_%s_%s'%(self.name, self.tag)
-        
+    def prep_model(self,
+                   event_slice=False,
+                   ):
+
         if self.as_inun:
             raise Error('risk2 inundation percentage not implemented')
         
         #data loaders
-        self.load_finv()
-        self.load_evals()
-        self.load_dmgs()
+        self.set_finv()
+        self.set_evals() 
+        self.set_dmgs()
         
         if not self.exlikes == '':
-            self.load_exlikes()
+            self.set_exlikes(event_slice=event_slice)
 
             
         if self.attriMode:
             """the control file parameter name changes depending on the model"""
-            self.load_attrimat(dxcol_lvls=2)
+            self.set_attrimat()
             self.promote_attrim()
         
-        """consider makeing riskPloter a child of modcom?"""    
-        self.upd_impStyle() 
+        #activate plot styles
+
+        
+        self.logger.debug('finished  on Risk2')
+        
+        return
+
+    def set_dmgs(self,#loading any exposure type data (expos, or exlikes)
+
+                   dtag = 'dmgs',
+                   check_monot=False, #whether to check monotonciy
+                   logger=None,
+                   ):
+        #======================================================================
+        # defaults
+        #======================================================================
+        if logger is None: logger=self.logger
+        
+        log = logger.getChild('set_dmgs')
+ 
+        cid = self.cid
+        
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        
+        assert 'finv' in self.data_d, 'call load_finv first'
+        assert 'evals' in self.data_d, 'call load_evals first'
+        assert isinstance(self.expcols, pd.Index), 'bad expcols'
+        assert isinstance(self.cindex, pd.Index), 'bad cindex'
+ 
+        #======================================================================
+        # load it
+        #======================================================================
+        df_raw = self.raw_d[dtag]
+        
+        #======================================================================
+        # precheck
+        #======================================================================
+        assert df_raw.index.name == cid, 'expected \'%s\' index on %s'%(self.cid, dtag)
+ 
+        assert df_raw.columns.dtype.char == 'O','bad event names on %s'%dtag
+        
+
+        
+        #======================================================================
+        # clean it
+        #======================================================================
+        df = df_raw.copy()
+        
+        #drop dmg suffix
+        """2021-01-13: dropped the _dmg suffix during dmg2.run()
+        left this cleaning for backwards compatailibity"""
+        boolcol = df.columns.str.endswith('_dmg')
+        enm_l = df.columns[boolcol].str.replace('_dmg', '').tolist()
+        
+        ren_d = dict(zip(df.columns[boolcol].values, enm_l))
+        df = df.rename(columns=ren_d)
+        
+        #set new index
+ 
+        
+        #apply rounding
+        df = df.round(self.prec)
+        
+        #======================================================================
+        # postcheck
+        #======================================================================
+        #assert len(enm_l) > 1, 'failed to identify sufficient damage columns'
+        
+
+        #check cid index match
+        assert np.array_equal(self.cindex, df.index), \
+            'provided \'%s\' index (%i) does not match finv index (%i)'%(dtag, len(df), len(self.cindex))
+        
+        #check rEvents
+        miss_l = set(self.expcols).difference(df.columns)
+            
+        assert len(miss_l) == 0, '%i events on \'%s\' not found in aep_ser: \n    %s'%(
+            len(miss_l), dtag, miss_l)
         
         
-        self.logger.debug('finished _setup() on Risk2')
+        #check dtype of columns
+        for ename, chk_dtype in df.dtypes.items():
+            assert np.issubdtype(chk_dtype, np.number), 'bad dtype %s.%s'%(dtag, ename)
+            
         
-        return self
+        #======================================================================
+        # postcheck2
+        #======================================================================
+        if check_monot:
+            self.check_monot(df, aep_ser = self.data_d['evals'])
+
+
+        #======================================================================
+        # set it
+        #======================================================================
         
+        self.data_d[dtag] = df
+        
+        log.info('finished building %s as %s'%(dtag, str(df.shape)))
 
 
     def promote_attrim(self, dtag=None): #add new index level
@@ -194,7 +283,7 @@ class Risk2(Plotr, #This inherits 'Model'
 
         
 
-        self.feedback.setProgress(5)
+        self.feedback.setProgress(20)
 
         #======================================================================
         # resolve alternate damages (per evemt)-----------
@@ -224,12 +313,12 @@ class Risk2(Plotr, #This inherits 'Model'
         _ = self.check_monot(ddf1)
         
         
-        self.feedback.setProgress(40)
+        self.feedback.upd_prog(10, method='append')
         #======================================================================
         # get ead per asset-----
         #======================================================================
         if res_per_asset:
-            res_df = self.calc_ead(ddf1, drop_tails=self.drop_tails, logger=log)
+            res_df = self.calc_ead(ddf1)
                         
         else:
             res_df = None
@@ -237,17 +326,16 @@ class Risk2(Plotr, #This inherits 'Model'
         #======================================================================
         # get EAD totals-------
         #======================================================================    
-        self.feedback.setProgress(80)    
+        self.feedback.upd_prog(10, method='append')   
         res_ttl = self.calc_ead(
             ddf1.sum(axis=0).to_frame().T, #rounding at end of calc_ead()
             drop_tails=False, #handle beslow 
-            logger=log,
             ).T #1 column df
             
         #self.res_ser = res_ttl.iloc[:, 0].copy() #set for risk_plot()
         self.ead_tot = res_ttl.iloc[:,0]['ead'] #set for plot_riskCurve()
             
-        self.feedback.setProgress(95)
+        self.feedback.upd_prog(10, method='append')
 
         log.info('finished on %i assets and %i damage cols'%(
             len(ddf1), len(res_ttl)))
@@ -256,88 +344,23 @@ class Risk2(Plotr, #This inherits 'Model'
         #=======================================================================
         # #format total results for writing
         #=======================================================================
-        res_ttl.index.name = 'aep'
-        res_ttl.columns = ['impacts']
-        
-        #add labels
-        miss_l = set(self.extrap_vals_d.keys()).difference(res_ttl.index)
-        assert len(miss_l)==0
-
-
-        res_ttl = res_ttl.join(
-            pd.Series(np.full(len(self.extrap_vals_d), 'extrap'), 
-                  index=self.extrap_vals_d, name='note')
-            )
-        
-        res_ttl.loc['ead', 'note'] = 'integration'
-        res_ttl.loc[:, 'note'] = res_ttl.loc[:, 'note'].fillna('impact_sum')
-        
-        #plot lables
-        res_ttl['plot'] = True
-        res_ttl.loc['ead', 'plot'] = False
-        
-        res_ttl=res_ttl.reset_index(drop=False)
+        res_ttl = self._fmt_resTtl(res_ttl)
         
         #=======================================================================
         # wrap----
         #=======================================================================
-        #plotting string
-        self.val_str = 'annualized impacts = %s \nltail=\'%s\',  rtail=\'%s\''%(
-            self.impactFmtFunc(self.ead_tot), self.ltail, self.rtail) + \
-            '\nassets = %i, event_rels = \'%s\', prec = %i'%(
-                self.asset_cnt, self.event_rels, self.prec)
+        self._set_valstr()
             
         
         self.res_ttl=res_ttl #for convenioence outputters
         self.res_df = res_df
         log.info('finished')
-
+        self.feedback.upd_prog(10, method='append')
 
         return res_ttl, res_df
+
     
-    def output_ttl(self,  #helper to o utput the total results file
-                    dtag='r2_ttl',
-                   ofn=None,
-                   upd_cf= True,
-                   logger=None,
-                   ):
- 
-        if ofn is None:
-            ofn = '%s_%s'%(self.resname, 'ttl') 
-            
-        out_fp = self.output_df(self.res_ttl, ofn, write_index=False, logger=logger)
-        
-        if upd_cf:
-            self.update_cf( {
-                    'results_fps':(
-                        {dtag:out_fp}, 
-                        '#\'%s\' file path set from output_ttl at %s'%(
-                            dtag, datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
-                        ), }, cf_fp = self.cf_fp )
-        
-        return out_fp
-    
-    def output_passet(self,  #helper to o utput the total results file
-                      dtag='r2_passet',
-                   ofn=None,
-                   upd_cf= True,
-                   logger=None,
-                   ):
-        """using these to help with control file writing"""
-        if ofn is None:
-            ofn = '%s_%s'%(self.resname, dtag)
-            
-        out_fp = self.output_df(self.res_df, ofn, logger=logger)
-        
-        if upd_cf:
-            self.update_cf( {
-                    'results_fps':(
-                        {dtag:out_fp}, 
-                        '#\'%s\' file path set from output_passet at %s'%(
-                            dtag, datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
-                        ), }, cf_fp = self.cf_fp )
-        
-        return out_fp
+
         
     
 

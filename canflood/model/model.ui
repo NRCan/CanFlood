@@ -46,7 +46,7 @@
         <x>0</x>
         <y>0</y>
         <width>680</width>
-        <height>612</height>
+        <height>607</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_5">
@@ -67,7 +67,7 @@
          <property name="currentIndex">
           <number>0</number>
          </property>
-         <widget class="QWidget" name="tab">
+         <widget class="QWidget" name="tab_wel">
           <attribute name="title">
            <string>Welcome!</string>
           </attribute>
@@ -90,7 +90,7 @@
               <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:9.75pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Welcome to CanFlood!&lt;/span&gt;&lt;/p&gt;
 &lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;img src=&quot;:/plugins/canflood_inprep/icons/logo_100x100.png&quot; /&gt;&lt;/p&gt;
@@ -99,7 +99,7 @@ p, li { white-space: pre-wrap; }
 &lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;To build/configure a Control File, see the 'Build' collection.&lt;/span&gt;&lt;/p&gt;
 &lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8.25pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
             </widget>
            </item>
@@ -118,7 +118,7 @@ p, li { white-space: pre-wrap; }
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="tab_2">
+         <widget class="QWidget" name="tab_setup">
           <attribute name="title">
            <string>Setup</string>
           </attribute>
@@ -145,7 +145,14 @@ p, li { white-space: pre-wrap; }
               <item>
                <layout class="QHBoxLayout" name="_6">
                 <item>
-                 <widget class="QLineEdit" name="lineEdit_wd"/>
+                 <widget class="QLineEdit" name="lineEdit_wdir">
+                  <property name="text">
+                   <string/>
+                  </property>
+                  <property name="placeholderText">
+                   <string>Select working directory for this session</string>
+                  </property>
+                 </widget>
                 </item>
                 <item>
                  <widget class="QPushButton" name="pushButton_wd">
@@ -181,7 +188,11 @@ p, li { white-space: pre-wrap; }
               <item>
                <layout class="QHBoxLayout" name="_16">
                 <item>
-                 <widget class="QLineEdit" name="lineEdit_cf_fp"/>
+                 <widget class="QLineEdit" name="lineEdit_cf_fp">
+                  <property name="placeholderText">
+                   <string>Specify CanFlood control file path</string>
+                  </property>
+                 </widget>
                 </item>
                 <item>
                  <widget class="QToolButton" name="pushButton_cf">
@@ -220,7 +231,7 @@ p, li { white-space: pre-wrap; }
                  </widget>
                 </item>
                 <item>
-                 <widget class="QRadioButton" name="radioButton_S_fpAbs">
+                 <widget class="QRadioButton" name="radioButton_SS_fpAbs">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                     <horstretch>0</horstretch>
@@ -281,20 +292,10 @@ p, li { white-space: pre-wrap; }
               <item>
                <layout class="QHBoxLayout" name="horizontalLayout_4">
                 <item>
-                 <widget class="QLabel" name="label_8">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="text">
-                   <string>Layer:</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
                  <widget class="QgsMapLayerComboBox" name="comboBox_JGfinv">
+                  <property name="toolTip">
+                   <string>Select your inventory layer here to automatically generate results as layers</string>
+                  </property>
                   <property name="allowEmptyLayer">
                    <bool>true</bool>
                   </property>
@@ -302,67 +303,6 @@ p, li { white-space: pre-wrap; }
                    <bool>true</bool>
                   </property>
                  </widget>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_5">
-                <item>
-                 <widget class="QLabel" name="label_9">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="maximumSize">
-                   <size>
-                    <width>100</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>Index FieldName:</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QgsFieldComboBox" name="mFieldComboBox_JGfinv">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="minimumSize">
-                   <size>
-                    <width>200</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="maximumSize">
-                   <size>
-                    <width>200</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
-                  <property name="allowEmptyFieldName">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <spacer name="horizontalSpacer">
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>40</width>
-                    <height>20</height>
-                   </size>
-                  </property>
-                 </spacer>
                 </item>
                </layout>
               </item>
@@ -381,6 +321,43 @@ p, li { white-space: pre-wrap; }
               <string>Run Controls:</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_14">
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_8">
+                <item>
+                 <widget class="QLabel" name="label_6">
+                  <property name="text">
+                   <string>Run Tag:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLineEdit" name="linEdit_ScenTag">
+                  <property name="maximumSize">
+                   <size>
+                    <width>150</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>run1</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </item>
               <item>
                <layout class="QHBoxLayout" name="horizontalLayout">
                 <item>
@@ -410,13 +387,6 @@ p, li { white-space: pre-wrap; }
                  </widget>
                 </item>
                 <item>
-                 <widget class="QCheckBox" name="checkBox_SS_attr">
-                  <property name="text">
-                   <string>Generate attribution matrix</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
                  <spacer name="horizontalSpacer_3">
                   <property name="orientation">
                    <enum>Qt::Horizontal</enum>
@@ -432,18 +402,53 @@ p, li { white-space: pre-wrap; }
                </layout>
               </item>
               <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_8">
+               <widget class="QCheckBox" name="checkBox_SS_attr">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Control whether model routines should generate the attribution matrix, a dataset required for some results tools like 'Plot Stack'&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
+                <property name="text">
+                 <string>Generate attribution matrix (slow)</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_16">
                 <item>
-                 <widget class="QLabel" name="label_6">
+                 <widget class="QLabel" name="label_13">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
                   <property name="text">
-                   <string>Run Tag:</string>
+                   <string>Plot Handling:</string>
                   </property>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QLineEdit" name="linEdit_Stag">
+                 <widget class="QRadioButton" name="radioButton_s_pltW">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
                   <property name="text">
-                   <string>run1</string>
+                   <string>Launch seperate window</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QRadioButton" name="radioButton">
+                  <property name="text">
+                   <string>Save to file</string>
                   </property>
                  </widget>
                 </item>
@@ -467,7 +472,7 @@ p, li { white-space: pre-wrap; }
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="tab_proj">
+         <widget class="QWidget" name="tab_r1">
           <attribute name="title">
            <string>Risk (L1)</string>
           </attribute>
@@ -486,7 +491,7 @@ p, li { white-space: pre-wrap; }
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_5">
               <item>
-               <widget class="QCheckBox" name="checkBox_r2rpa_2">
+               <widget class="QCheckBox" name="checkBox_r1_rpa">
                 <property name="text">
                  <string>Calculate Annualized Impacts per asset (slow) (res_per_asset)</string>
                 </property>
@@ -502,23 +507,49 @@ p, li { white-space: pre-wrap; }
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_9">
               <item>
-               <widget class="QCheckBox" name="checkBox_r2ep_2">
-                <property name="text">
-                 <string>Generate summary plot of total annualized impacts (plot)</string>
+               <widget class="QGroupBox" name="groupBox_10">
+                <property name="title">
+                 <string>Plot Controls</string>
                 </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="checkBox_r2ires_2">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="text">
-                 <string>Run 'Results - Join Geo' upon completion (set Vector Geometry on the 'Setup' tab)</string>
-                </property>
-                <property name="checkable">
-                 <bool>true</bool>
-                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_15">
+                 <item>
+                  <layout class="QHBoxLayout" name="horizontalLayout_11">
+                   <item>
+                    <widget class="QCheckBox" name="checkBox_r1_ari">
+                     <property name="text">
+                      <string>ARI vs. Impacts</string>
+                     </property>
+                     <property name="checked">
+                      <bool>false</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QCheckBox" name="checkBox_r1_aep">
+                     <property name="text">
+                      <string>Impacts vs. AEP</string>
+                     </property>
+                     <property name="checked">
+                      <bool>false</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <spacer name="horizontalSpacer_4">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>40</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
                </widget>
               </item>
              </layout>
@@ -982,7 +1013,7 @@ p, li { white-space: pre-wrap; }
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="tab_3">
+         <widget class="QWidget" name="tab_i2">
           <attribute name="title">
            <string>Impacts (L2)</string>
           </attribute>
@@ -990,7 +1021,7 @@ p, li { white-space: pre-wrap; }
            <item>
             <widget class="QLabel" name="label_2">
              <property name="text">
-              <string>Exposure per event calculated with vulnerability functions</string>
+              <string>Impacts per event calculated with vulnerability functions</string>
              </property>
             </widget>
            </item>
@@ -1001,9 +1032,23 @@ p, li { white-space: pre-wrap; }
              </property>
              <layout class="QVBoxLayout" name="verticalLayout">
               <item>
+               <widget class="QCheckBox" name="checkBox_i2bSmry">
+                <property name="text">
+                 <string>Output calculation summary (bdmg_smry)</string>
+                </property>
+               </widget>
+              </item>
+              <item>
                <widget class="QCheckBox" name="checkBox_i2_outExpnd">
                 <property name="text">
                  <string>Output expanded component impacts (dmgs_expnd)</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="checkBox_i2_ddf">
+                <property name="text">
+                 <string>Output depths (depths_df)</string>
                 </property>
                </widget>
               </item>
@@ -1014,6 +1059,41 @@ p, li { white-space: pre-wrap; }
                 </property>
                 <property name="checked">
                  <bool>false</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_9">
+             <property name="title">
+              <string>Summary Plots:</string>
+             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_10">
+              <item>
+               <widget class="QCheckBox" name="checkBox_i2_phist">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Histograms</string>
+                </property>
+                <property name="checked">
+                 <bool>false</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="checkBox_i2_pbox">
+                <property name="text">
+                 <string>Box Plots</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -1478,7 +1558,7 @@ p, li { white-space: pre-wrap; }
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="tab_4">
+         <widget class="QWidget" name="tab_r2">
           <attribute name="title">
            <string>Risk (L2)</string>
           </attribute>
@@ -1513,20 +1593,49 @@ p, li { white-space: pre-wrap; }
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_4">
               <item>
-               <widget class="QCheckBox" name="checkBox_r2plot">
-                <property name="text">
-                 <string>Generate summary plot of total expected value (plot)</string>
+               <widget class="QGroupBox" name="groupBox_11">
+                <property name="title">
+                 <string>Plot Controls</string>
                 </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="checkBox_r2ires">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="text">
-                 <string>Run 'Results - Join Geo' upon completion (set Vector Geometry on the 'Setup' tab)</string>
-                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_16">
+                 <item>
+                  <layout class="QHBoxLayout" name="horizontalLayout_12">
+                   <item>
+                    <widget class="QCheckBox" name="checkBox_r2_ari">
+                     <property name="text">
+                      <string>ARI vs. Impacts</string>
+                     </property>
+                     <property name="checked">
+                      <bool>false</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QCheckBox" name="checkBox_r2_aep">
+                     <property name="text">
+                      <string>Impacts vs. AEP</string>
+                     </property>
+                     <property name="checked">
+                      <bool>false</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <spacer name="horizontalSpacer_5">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>40</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
                </widget>
               </item>
              </layout>
@@ -2009,7 +2118,7 @@ p, li { white-space: pre-wrap; }
            <item>
             <widget class="QLabel" name="label_4">
              <property name="text">
-              <string>Execute the SOFDA research model from a SOFDA control file (see SOFDA_UsersManual)</string>
+              <string>Execute the SOFDA research model from a SOFDA control file (see 'SOFDA_UsersManual')</string>
              </property>
             </widget>
            </item>
@@ -2577,11 +2686,6 @@ p, li { white-space: pre-wrap; }
   </layout>
  </widget>
  <customwidgets>
-  <customwidget>
-   <class>QgsFieldComboBox</class>
-   <extends>QComboBox</extends>
-   <header>qgsfieldcombobox.h</header>
-  </customwidget>
   <customwidget>
    <class>QgsMapLayerComboBox</class>
    <extends>QComboBox</extends>

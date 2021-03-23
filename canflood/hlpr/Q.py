@@ -67,32 +67,43 @@ npc_pytype_d = {'?':bool,
 
 type_qvar_py_d = {10:str, 2:int, 135:float, 6:float, 4:int, 1:bool, 16:datetime.datetime, 12:str} #QVariant.types to pythonic types
 
+#parameters for lots of statistic algos
+stat_pars_d = {'First': 0, 'Last': 1, 'Count': 2, 'Sum': 3, 'Mean': 4, 'Median': 5,
+                'St dev (pop)': 6, 'Minimum': 7, 'Maximum': 8, 'Range': 9, 'Minority': 10,
+                 'Majority': 11, 'Variety': 12, 'Q1': 13, 'Q3': 14, 'IQR': 15}
+
 #==============================================================================
 # classes -------------
 #==============================================================================
 
 class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native console
     
-    crsid_default = 'EPSG:4326' #default crsID
+    
     
     driverName = 'SpatiaLite' #default data creation driver type
     
 
     out_dName = driverName #default output driver/file type
-    SpatiaLite_pars = dict() #dictionary of spatialite pars
 
+    
+    q_hndls = ['crs', 'crsid', 'algo_init', 'qap', 'vlay_drivers']
+    
     algo_init = False #flag indicating whether the algos have been initialized
-    
     qap = None
-    
     mstore = None
     
-    #field name character limits
+
     
 
     
     def __init__(self,
                  feedback=None, 
+                 
+                  #init controls
+                 init_q_d = {}, #container of initilzied objects
+                 
+                 crsid = 'EPSG:4326', #default crsID if no init_q_d is passed
+                 
                  **kwargs
                  ):
         
@@ -103,50 +114,78 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         QprojPlugs don't execute super cascade
         
         #=======================================================================
-        # standAlone use
+        # Qgis inheritance
         #=======================================================================
-        from hlpr.logr import basic_logger
-        mod_logger = basic_logger() 
+        for single standalone runs
+            all the handles will be generated and Qgis instanced
+            
+        for console runs
+            handles should be passed to avoid re-instancing Qgis
+            
+        for session standalone runs
+            handles passed
+            
+            for swapping crs
+                run set_crs() on the session prior to spawning the child
+            
 
-        wrkr = Qcoms(logger=mod_logger, tag=tag, out_dir=out_dir).ini_standalone()
         
         
         """
 
+
+        #=======================================================================
+        # defaults
+        #=======================================================================
         if feedback is None:
             """by default, building our own feedbacker
             passed to ComWrkr.setup_feedback()
             """
             feedback = MyFeedBackQ()
         
+        #=======================================================================
+        # cascade
+        #=======================================================================
         super().__init__(
             feedback = feedback, 
             **kwargs) #initilzie teh baseclass
         
-
-        self.fieldn_max_d=fieldn_max_d
-        
+        log = self.logger
         #=======================================================================
-        # common Qgis setup
+        # attachments
+        #=======================================================================
+        self.fieldn_max_d=fieldn_max_d
+        self.crsid=crsid
+        #=======================================================================
+        # Qgis setup COMMON
         #=======================================================================
         """both Plugin and StandAlone runs should call these"""
         self.qproj = QgsProject.instance()
         
-        """see below for setting the crs during StandAlone"""
-        self.crs = self.qproj.crs()
-        
-        if self.crs.authid()=='':
-            self.logger.warning('got empty CRS!') #should only trip on StandAlone runs
-            
         
 
-        #layer store
         """
         each worker will have their own store
         used to wipe any intermediate layers
         """
         self.mstore = QgsMapLayerStore() #build a new map store
         
+        
+        #do your own init (standalone r uns)
+        if len(init_q_d) == 0:
+            self._init_standalone()
+        else:
+            #check everything is there
+            miss_l = set(self.q_hndls).difference(init_q_d.keys())
+            assert len(miss_l)==0, 'init_q_d missing handles: %s'%miss_l
+                            
+            #set the handles
+            for k,v in init_q_d.items():
+                setattr(self, k, v)
+
+                
+        self._upd_qd()
+        self.proj_checks()
         #=======================================================================
         # attach inputs
         #=======================================================================
@@ -159,19 +198,19 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
     # standalone methods-----------
     #==========================================================================
         
-    def ini_standalone(self,  #initilize calls for standalone runs
-                       crs = None,
+    def _init_standalone(self,  #setup for qgis runs
+                       crsid = None,
                        ):
         """
         WARNING! do not call twice (phantom crash)
         """
-        log = self.logger.getChild('ini_standalone')
+        log = self.logger.getChild('_init_standalone')
+        if crsid is None: crsid = self.crsid
         #=======================================================================
         # #crs
         #=======================================================================
-        """for Standalone runs... not relying on crs coming from the qproj"""
-        if crs is None:  #use the default
-            crs = QgsCoordinateReferenceSystem(self.crsid_default)
+
+        crs = QgsCoordinateReferenceSystem(crsid)
             
         assert isinstance(crs, QgsCoordinateReferenceSystem), 'bad crs type'
         assert crs.isValid()
@@ -183,22 +222,24 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #=======================================================================
         # setup qgis
         #=======================================================================
+        
         self.qap = self.init_qgis()
         self.algo_init = self.init_algos()
         
         self.set_vdrivers()
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        self._upd_qd()
+        
+
+        log.debug('Qproj._init_standalone finished')
         
         
-        
-        
-        
-        if not self.proj_checks():
-            raise Error('failed checks')
-        
-        log.debug('Qproj.ini_standalone finished')
-        
-        
-        return self
+        return
+    
+    def _upd_qd(self): #set a fresh parameter set
+        self.init_q_d = {k:getattr(self, k) for k in self.q_hndls}
     
     def init_qgis(self, #instantiate qgis
                   gui = False): 
@@ -250,7 +291,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         return True
 
     def set_vdrivers(self):
-        
+        log = self.logger.getChild('set_vdrivers')
         #build vector drivers list by extension
         """couldnt find a good built-in to link extensions with drivers"""
         vlay_drivers = {'SpatiaLite':'sqlite', 'OGR':'shp'}
@@ -272,44 +313,60 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                 
         self.vlay_drivers = vlay_drivers
         
-        self.logger.debug('built driver:extensions dict: \n    %s'%vlay_drivers)
+        log.debug('built driver:extensions dict: \n    %s'%vlay_drivers)
         
         return
         
     def set_crs(self, #load, build, and set the project crs
-                authid =  None):
+                crsid =  None, #integer
+                crs = None, #QgsCoordinateReferenceSystem
+                logger=None,
+                ):
         
         #=======================================================================
         # setup and defaults
         #=======================================================================
-        log = self.logger.getChild('set_crs')
+        if logger is None: logger=self.logger
+        log = logger.getChild('set_crs')
         
-        if authid is None: 
-            authid = self.crsid_default
+        if crsid is None: 
+            crsid = self.crsid
         
-        if not isinstance(authid, int):
-            raise IOError('expected integer for crs')
+        #=======================================================================
+        # if not isinstance(crsid, int):
+        #     raise IOError('expected integer for crs')
+        #=======================================================================
         
         #=======================================================================
         # build it
         #=======================================================================
-        self.crs = QgsCoordinateReferenceSystem(authid)
+        if crs is None:
+            crs = QgsCoordinateReferenceSystem(crsid)
+
+        assert isinstance(crs, QgsCoordinateReferenceSystem)
+        self.crs=crs #overwrite
         
         if not self.crs.isValid():
-            raise IOError('CRS built from %i is invalid'%authid)
+            raise IOError('CRS built from %i is invalid'%self.crs.authid())
         
         #=======================================================================
         # attach to project
         #=======================================================================
         self.qproj.setCrs(self.crs)
+        self.crsid = self.crs.authid()
         
         if not self.qproj.crs().description() == self.crs.description():
             raise Error('qproj crs does not match sessions')
         
-        log.info('Session crs set to EPSG: %i, \'%s\''%(authid, self.crs.description()))
+        log.info('crs set to EPSG: %s, \'%s\''%(self.crs.authid(), self.crs.description()))
+        self._upd_qd()
+        self.proj_checks(logger=log)
+        
+        return self.crs
            
-    def proj_checks(self):
-        log = self.logger.getChild('proj_checks')
+    def proj_checks(self,
+                    logger=None):
+        #log = self.logger.getChild('proj_checks')
         
         if not self.driverName in self.vlay_drivers:
             raise Error('unrecognized driver name')
@@ -324,9 +381,37 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         assert not self.progressBar is None
         
-        log.info('project passed all checks')
+        #=======================================================================
+        # crs checks
+        #=======================================================================
+        assert isinstance(self.crs, QgsCoordinateReferenceSystem)
+        assert self.crs.isValid()
         
-        return True
+        assert self.crs.authid()==self.qproj.crs().authid(), 'crs mismatch'
+        assert self.crs.authid() == self.crsid, 'crs mismatch'
+        
+        assert not self.crs.authid()=='', 'got empty CRS!'
+        
+        #=======================================================================
+        # handle checks
+        #=======================================================================
+        assert isinstance(self.init_q_d, dict)
+        miss_l = set(self.q_hndls).difference(self.init_q_d.keys())
+        assert len(miss_l)==0, 'init_q_d missing handles: %s'%miss_l
+        
+        for k,v in self.init_q_d.items():
+            assert getattr(self, k) == v, k
+        
+        #log.info('project passed all checks')
+        
+        return 
+    
+    def print_qt_version(self):
+        import inspect
+        from PyQt5 import Qt
+         
+        vers = ['%s = %s' % (k,v) for k,v in vars(Qt).items() if k.lower().find('version') >= 0 and not inspect.isbuiltin(v)]
+        print('\n'.join(sorted(vers)))
     
     #===========================================================================
     # LOAD/WRITE LAYERS-----------
@@ -336,7 +421,9 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                   fp, 
                   logger=None, 
                   providerLib='ogr',
-                  aoi_vlay = None):
+                  aoi_vlay = None,
+                  allow_none=True, #control check in saveselectedfeastures
+                  ):
         
         assert os.path.exists(fp), 'requested file does not exist: %s'%fp
         
@@ -371,13 +458,22 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         """only add intermediate layers to store
         self.mstore.addMapLayer(vlay_raw)"""
         
+        if not vlay_raw.crs()==self.qproj.crs():
+            log.warning('crs mismatch: \n    %s\n    %s'%(
+            vlay_raw.crs(), self.qproj.crs()))
+        
         #=======================================================================
         # aoi slice
         #=======================================================================
         if isinstance(aoi_vlay, QgsVectorLayer):
             log.info('slicing by aoi %s'%aoi_vlay.name())
             
-            vlay = self.selectbylocation(vlay_raw, aoi_vlay, logger=log, result_type='layer')
+            vlay = self.selectbylocation(vlay_raw, aoi_vlay, allow_none=allow_none,
+                                 logger=log, result_type='layer')
+            
+            #check for no selection
+            if vlay is None:
+                return None
             
             vlay.setName(vlay_raw.name()) #reset the name
             
@@ -400,7 +496,9 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
 
         return vlay
     
-    def load_rlay(self, fp, logger=None):
+    def load_rlay(self, fp, 
+                  aoi_vlay = None,
+                  logger=None):
         if logger is None: logger = self.logger
         log = logger.getChild('load_rlay')
         
@@ -412,24 +510,45 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
 
         #Import a Raster Layer
+        log.debug('QgsRasterLayer(%s, %s)'%(fp, basefn))
         rlayer = QgsRasterLayer(fp, basefn)
-        
+        """
+        QgsRasterLayer(C:\LS\03_TOOLS\CanFlood\_git\tutorials\1\haz_rast\haz_1000.tif, haz_1000)
+        """
+        #=======================================================================
+        # rlayer = QgsRasterLayer(r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\1\haz_rast\haz_1000.tif',
+        #                 'haz_1000')
+        #=======================================================================
         
         
         #===========================================================================
-        # wrap
+        # check
         #===========================================================================
-        assert rlayer.isValid(), "Layer failed to load!"
         assert isinstance(rlayer, QgsRasterLayer), 'failed to get a QgsRasterLayer'
+        assert rlayer.isValid(), "Layer failed to load!"
+        
         
         if not rlayer.crs() == self.qproj.crs():
             log.warning('loaded layer \'%s\' crs mismatch!'%rlayer.name())
-        #assert rlayer.crs() == self.crs, 'crs mismatch'
 
-        
         log.debug('loaded \'%s\' from \n    %s'%(rlayer.name(), fp))
         
-        return rlayer
+        #=======================================================================
+        # aoi
+        #=======================================================================
+        if not aoi_vlay is None:
+            log.debug('clipping w/ %s'%aoi_vlay.name())
+            assert isinstance(aoi_vlay, QgsVectorLayer)
+            rlay2 = self.cliprasterwithpolygon(rlayer,aoi_vlay, logger=log, layname=rlayer.name())
+            
+            #clean up
+            mstore = QgsMapLayerStore() #build a new store
+            mstore.addMapLayers([rlayer]) #add the layers to the store
+            mstore.removeAllMapLayers() #remove all the layers
+        else:
+            rlay2 = rlayer
+        
+        return rlay2
     
     
     def write_rlay(self, #make a local copy of the passed raster layer
@@ -592,12 +711,102 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         
         return out_fp
+    
+    def vlay_write(self, #write  a VectorLayer
+        vlay,
+        out_fp=None, 
+
+        driverName='GPKG',
+        fileEncoding = "CP1250", 
+        opts = QgsVectorFileWriter.SaveVectorOptions(), #empty options object
+        overwrite=None,
+        logger=None):
+        """
+        help(QgsVectorFileWriter.SaveVectorOptions)
+        QgsVectorFileWriter.SaveVectorOptions.driverName='GPKG'
+        opt2 = QgsVectorFileWriter.BoolOption(QgsVectorFileWriter.CreateOrOverwriteFile)
+        help(QgsVectorFileWriter)
 
         
+        """
+        
+        #==========================================================================
+        # defaults
+        #==========================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('vlay_write')
+        if overwrite is None: overwrite=self.overwrite
+        
+        if out_fp is None: out_fp = os.path.join(self.out_dir, '%s.gpkg'%vlay.name())
+        
+        #===========================================================================
+        # assemble options
+        #===========================================================================
+        opts.driverName = driverName
+        opts.fileEncoding = fileEncoding
         
         
+        #===========================================================================
+        # checks
+        #===========================================================================
+        #file extension
+        fhead, ext = os.path.splitext(out_fp)
+        
+        if not 'gpkg' in ext:
+            raise Error('unexpected extension: %s'%ext)
+        
+        if os.path.exists(out_fp):
+            msg = 'requested file path already exists!. overwrite=%s \n    %s'%(
+                overwrite, out_fp)
+            if overwrite:
+                log.warning(msg)
+                os.remove(out_fp) #workaround... should be away to overwrite with the QgsVectorFileWriter
+            else:
+                raise Error(msg)
+            
+        
+        if vlay.dataProvider().featureCount() == 0:
+            raise Error('\'%s\' has no features!'%(
+                vlay.name()))
+            
+        if not vlay.isValid():
+            Error('passed invalid layer')
+            
+        #=======================================================================
+        # write
+        #=======================================================================
+        
+        error = QgsVectorFileWriter.writeAsVectorFormatV2(
+                vlay, out_fp, 
+                QgsCoordinateTransformContext(),
+                opts,
+                )
+        
+        
+        #=======================================================================
+        # wrap and check
+        #=======================================================================
+          
+        if error[0] == QgsVectorFileWriter.NoError:
+            log.info('layer \' %s \' written to: \n     %s'%(vlay.name(),out_fp))
+            return out_fp
+         
+        raise Error('FAILURE on writing layer \' %s \'  with code:\n    %s \n    %s'%(vlay.name(),error, out_fp))
+        
+
     
-    
+    def load_dtm(self, #convienece loader for assining the correct attribute 
+                 fp, 
+                 logger=None,
+                 **kwargs):
+        if logger is None: logger=self.logger
+        log=logger.getChild('load_dtm')
+        
+        self.dtm_rlay = self.load_rlay(fp, logger=log, **kwargs)
+        
+        return self.dtm_rlay
+        
+
     #==========================================================================
     # GENERIC METHODS-----------------
     #==========================================================================
@@ -612,6 +821,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             
             layname='df',
             
+            index = False, #whether to include the index as a field
             logger=None, 
 
             ):
@@ -623,17 +833,30 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #=======================================================================
         # setup
         #=======================================================================
-        if crs is None: crs = self.crs
+        if crs is None: crs = self.qproj.crs()
         if logger is None: logger = self.logger
             
         log = logger.getChild('vlay_new_df')
         
-
+        
+        #=======================================================================
+        # index fix
+        #=======================================================================
+        df = df_raw.copy()
+        
+        if index:
+            if not df.index.name is None:
+                coln = df.index.name
+                df.index.name = None
+            else:
+                coln = 'index'
+                
+            df[coln] = df.index
             
         #=======================================================================
         # precheck
         #=======================================================================
-        df = df_raw.copy()
+        
         
         #make sure none of hte field names execeed the driver limitations
         max_len = self.fieldn_max_d[self.driverName]
@@ -747,7 +970,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                              list(feats_d.values()),
                              logger=log,
                              )
-        
+        self.createspatialindex(vlay, logger=log)
         #=======================================================================
         # post check
         #=======================================================================
@@ -789,13 +1012,13 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #=======================================================================
         algo_nm = 'qgis:deletecolumn'
         if logger is None: logger=self.logger
-        log = self.logger.getChild('deletecolumn')
+        log = logger.getChild('deletecolumn')
         self.vlay = in_vlay
 
         #=======================================================================
         # field manipulations
         #=======================================================================
-        fieldn_l = self._field_handlr(in_vlay, fieldn_l,  invert=invert)
+        fieldn_l = self._field_handlr(in_vlay, fieldn_l,  invert=invert, logger=log)
         
             
 
@@ -886,8 +1109,10 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                                            jlay_fieldn_l, 
                                            invert=False)
         
-        jgeot = vlay_get_bgeo_type(join_vlay)
-        mgeot = vlay_get_bgeo_type(self.vlay)
+        #=======================================================================
+        # jgeot = vlay_get_bgeo_type(join_vlay)
+        # mgeot = vlay_get_bgeo_type(self.vlay)
+        #=======================================================================
         
         mfcnt = self.vlay.dataProvider().featureCount()
         #jfcnt = join_vlay.dataProvider().featureCount()
@@ -898,6 +1123,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #=======================================================================
         # geometry expectation prechecks
         #=======================================================================
+        """should take any geo
         if not (jgeot == 'polygon' or mgeot == 'polygon'):
             raise Error('one of the layres has to be a polygon')
         
@@ -925,6 +1151,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         if not expect_j_overlap:
             if not method==0:
                 raise Error('for expect_j_overlap=False, method must = 0 (1:m) for validation')
+                """
 
                
         #=======================================================================
@@ -1072,6 +1299,215 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         return res_vlay, new_fn_l, join_cnt
     
     
+    def joinbylocationsummary(self,
+                                vlay, #polygon layer to sample from
+                                 join_vlay, #layer from which to extract attribue values onto th ebottom vlay
+                                 jlay_fieldn_l, #list of field names to extract from the join_vlay
+                                 jvlay_selected_only = False, #only consider selected features on the join layer
+
+                                 predicate_l = ['intersects'],#list of geometric serach predicates
+                                 smry_l = ['sum'], #data summaries to apply
+                                 discard_nomatch = False, #Discard records which could not be joined
+                                 
+                                 use_raw_fn=False, #whether to convert names back to the originals
+                                 layname=None,
+                                 
+                     ):
+        """
+        WARNING: This ressets the fids
+        
+        discard_nomatch: 
+            TRUE: two resulting layers have no features in common
+            FALSE: in layer retains all non matchers, out layer only has the non-matchers?
+        
+        """
+        
+        """
+        view(join_vlay)
+        """
+        #=======================================================================
+        # presets
+        #=======================================================================
+        algo_nm = 'qgis:joinbylocationsummary'
+        
+        predicate_d = {'intersects':0,'contains':1,'equals':2,'touches':3,'overlaps':4,'within':5, 'crosses':6}
+        summaries_d = {'count':0, 'unique':1, 'min':2, 'max':3, 'range':4, 'sum':5, 'mean':6}
+
+        log = self.logger.getChild('joinbylocationsummary')
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if isinstance(jlay_fieldn_l, set):
+            jlay_fieldn_l = list(jlay_fieldn_l)
+            
+            
+        #convert predicate to code
+        pred_code_l = [predicate_d[pred_name] for pred_name in predicate_l]
+            
+        #convert summaries to code
+        sum_code_l = [summaries_d[smry_str] for smry_str in smry_l]
+        
+        
+        if layname is None:  layname = '%s_jsmry'%vlay.name()
+            
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        if not isinstance(jlay_fieldn_l, list):
+            raise Error('expected a list')
+        
+        #check requested join fields
+        fn_l = [f.name() for f in join_vlay.fields()]
+        s = set(jlay_fieldn_l).difference(fn_l)
+        assert len(s)==0, 'requested join fields not on layer: %s'%s
+        
+        #check crs
+        assert join_vlay.crs().authid() == vlay.crs().authid()
+                
+        #=======================================================================
+        # assemble pars
+        #=======================================================================
+        main_input=vlay
+
+        if jvlay_selected_only:
+            join_input = self._get_sel_obj(join_vlay)
+        else:
+            join_input = join_vlay
+
+        #assemble pars
+        ins_d = { 'DISCARD_NONMATCHING' : discard_nomatch,
+                  'INPUT' : main_input,
+                   'JOIN' : join_input,
+                   'JOIN_FIELDS' : jlay_fieldn_l,
+                  'OUTPUT' : 'TEMPORARY_OUTPUT', 
+                  'PREDICATE' : pred_code_l, 
+                  'SUMMARIES' : sum_code_l,
+                   }
+        
+        log.debug('executing \'%s\' with ins_d: \n    %s'%(algo_nm, ins_d))
+ 
+        res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
+ 
+        res_vlay = res_d['OUTPUT']
+ 
+        #===========================================================================
+        # post formatting
+        #===========================================================================
+        res_vlay.setName(layname) #reset the name
+        
+        #get new field names
+        nfn_l = set([f.name() for f in res_vlay.fields()]).difference([f.name() for f in vlay.fields()])
+        
+        """
+        view(res_vlay)
+        """
+        #=======================================================================
+        # post check
+        #=======================================================================
+        for fn in nfn_l:
+            rser = vlay_get_fdata(res_vlay, fieldn=fn, logger=log, fmt='ser')
+            if rser.isna().all().all():
+                log.warning('%s \'%s\' got all nulls'%(vlay.name(), fn))
+
+        
+        #=======================================================================
+        # rename fields
+        #=======================================================================
+        if use_raw_fn:
+            assert len(smry_l)==1, 'rename only allowed for single sample stat'
+            rnm_d = {s:s.replace('_%s'%smry_l[0],'') for s in nfn_l}
+            
+            s = set(rnm_d.values()).symmetric_difference(jlay_fieldn_l)
+            assert len(s)==0, 'failed to convert field names'
+            
+            res_vlay = vlay_rename_fields(res_vlay, rnm_d, logger=log)
+            
+            nfn_l = jlay_fieldn_l
+        
+        
+        
+        log.info('sampled \'%s\' w/ \'%s\' (%i hits) and \'%s\'to get %i new fields \n    %s'%(
+            join_vlay.name(), vlay.name(), res_vlay.dataProvider().featureCount(), 
+            smry_l, len(nfn_l), nfn_l))
+        
+        return res_vlay, nfn_l
+
+    def joinattributestable(self, #join csv edata to a vector layer
+                            vlay, table_fp, fieldNm, 
+                            
+                      method = 1,  #join type
+                              #- 0: Create separate feature for each matching feature (one-to-many)
+                              #- 1: Take attributes of the first matching feature only (one-to-one)
+
+                      csv_params = {'encoding':'System',
+                                    'type':'csv',
+                                    'maxFields':'10000',
+                                    'detectTypes':'yes',
+                                    'geomType':'none',
+                                    'subsetIndex':'no',
+                                    'watchFile':'no'},
+                      
+                     logger=None, 
+                      layname=None,
+                      ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger = self.logger
+        
+        if layname is None: 
+            layname = '%s_j'%vlay.name()
+        
+        algo_nm = 'native:joinattributestable'
+        log = self.logger.getChild('joinattributestable')
+
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        assert isinstance(vlay, QgsVectorLayer)
+        assert os.path.exists(table_fp)
+        assert fieldNm in [f.name() for f in vlay.fields()], 'vlay missing link field %s'%fieldNm
+        
+        #=======================================================================
+        # setup table layer
+        #=======================================================================
+        uriW = QgsDataSourceUri()
+        for pName, pValue in csv_params.items():
+            uriW.setParam(pName, pValue)
+        
+        table_uri = r'file:///' + table_fp.replace('\\','/') +'?'+ str(uriW.encodedUri(), 'utf-8')
+       
+        table_vlay = QgsVectorLayer(table_uri,'table',"delimitedtext")
+        
+        assert fieldNm in [f.name() for f in table_vlay.fields()], 'table missing link field %s'%fieldNm
+        #=======================================================================
+        # assemble p ars
+        #=======================================================================
+        
+        ins_d = { 'DISCARD_NONMATCHING' : True, 
+                 'FIELD' : 'xid', 'FIELDS_TO_COPY' : [],
+                  'FIELD_2' : 'xid', 
+                  'INPUT' : vlay, 
+                  'INPUT_2' : table_vlay,
+                  'METHOD' : method, 
+                  'OUTPUT' : 'TEMPORARY_OUTPUT', 'PREFIX' : '' }
+        
+        #=======================================================================
+        # execute
+        #=======================================================================
+        log.debug('executing \'native:buffer\' with ins_d: \n    %s'%ins_d)
+        
+        res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
+        
+        res_vlay = res_d['OUTPUT']
+
+        res_vlay.setName(layname) #reset the name
+        
+        log.debug('finished w/ %i feats'%res_vlay.dataProvider().featureCount())
+
+        return res_vlay
+
     def cliprasterwithpolygon(self,
                               rlay_raw,
                               poly_vlay,
@@ -1153,7 +1589,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
           
         return res_rlay
     
-    def cliprasterwithpolygon2(self,
+    def cliprasterwithpolygon2(self, #with saga
                               rlay_raw,
                               poly_vlay,
                               ofp = None,
@@ -1850,140 +2286,6 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         return 
 
-    def joinbylocationsummary(self,
-                                vlay, #polygon layer to sample from
-                                 join_vlay, #layer from which to extract attribue values onto th ebottom vlay
-                                 jlay_fieldn_l, #list of field names to extract from the join_vlay
-                                 jvlay_selected_only = False, #only consider selected features on the join layer
-
-                                 predicate_l = ['intersects'],#list of geometric serach predicates
-                                 smry_l = ['sum'], #data summaries to apply
-                                 discard_nomatch = False, #Discard records which could not be joined
-                                 
-                                 use_raw_fn=False, #whether to convert names back to the originals
-                                 layname=None,
-                                 
-                     ):
-        """
-        WARNING: This ressets the fids
-        
-        discard_nomatch: 
-            TRUE: two resulting layers have no features in common
-            FALSE: in layer retains all non matchers, out layer only has the non-matchers?
-        
-        """
-        
-        """
-        view(join_vlay)
-        """
-        #=======================================================================
-        # presets
-        #=======================================================================
-        algo_nm = 'qgis:joinbylocationsummary'
-        
-        predicate_d = {'intersects':0,'contains':1,'equals':2,'touches':3,'overlaps':4,'within':5, 'crosses':6}
-        summaries_d = {'count':0, 'unique':1, 'min':2, 'max':3, 'range':4, 'sum':5, 'mean':6}
-
-        log = self.logger.getChild('joinbylocationsummary')
-        
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        if isinstance(jlay_fieldn_l, set):
-            jlay_fieldn_l = list(jlay_fieldn_l)
-            
-            
-        #convert predicate to code
-        pred_code_l = [predicate_d[pred_name] for pred_name in predicate_l]
-            
-        #convert summaries to code
-        sum_code_l = [summaries_d[smry_str] for smry_str in smry_l]
-        
-        
-        if layname is None:  layname = '%s_jsmry'%vlay.name()
-            
-        #=======================================================================
-        # prechecks
-        #=======================================================================
-        if not isinstance(jlay_fieldn_l, list):
-            raise Error('expected a list')
-        
-        #check requested join fields
-        fn_l = [f.name() for f in join_vlay.fields()]
-        s = set(jlay_fieldn_l).difference(fn_l)
-        assert len(s)==0, 'requested join fields not on layer: %s'%s
-        
-        #check crs
-        assert join_vlay.crs().authid() == vlay.crs().authid()
-                
-        #=======================================================================
-        # assemble pars
-        #=======================================================================
-        main_input=vlay
-
-        if jvlay_selected_only:
-            join_input = self._get_sel_obj(join_vlay)
-        else:
-            join_input = join_vlay
-
-        #assemble pars
-        ins_d = { 'DISCARD_NONMATCHING' : discard_nomatch,
-                  'INPUT' : main_input,
-                   'JOIN' : join_input,
-                   'JOIN_FIELDS' : jlay_fieldn_l,
-                  'OUTPUT' : 'TEMPORARY_OUTPUT', 
-                  'PREDICATE' : pred_code_l, 
-                  'SUMMARIES' : sum_code_l,
-                   }
-        
-        log.debug('executing \'%s\' with ins_d: \n    %s'%(algo_nm, ins_d))
- 
-        res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
- 
-        res_vlay = res_d['OUTPUT']
- 
-        #===========================================================================
-        # post formatting
-        #===========================================================================
-        res_vlay.setName(layname) #reset the name
-        
-        #get new field names
-        nfn_l = set([f.name() for f in res_vlay.fields()]).difference([f.name() for f in vlay.fields()])
-        
-        """
-        view(res_vlay)
-        """
-        #=======================================================================
-        # post check
-        #=======================================================================
-        for fn in nfn_l:
-            rser = vlay_get_fdata(res_vlay, fieldn=fn, logger=log, fmt='ser')
-            if rser.isna().all().all():
-                log.warning('%s \'%s\' got all nulls'%(vlay.name(), fn))
-
-        
-        #=======================================================================
-        # rename fields
-        #=======================================================================
-        if use_raw_fn:
-            assert len(smry_l)==1, 'rename only allowed for single sample stat'
-            rnm_d = {s:s.replace('_%s'%smry_l[0],'') for s in nfn_l}
-            
-            s = set(rnm_d.values()).symmetric_difference(jlay_fieldn_l)
-            assert len(s)==0, 'failed to convert field names'
-            
-            res_vlay = vlay_rename_fields(res_vlay, rnm_d, logger=log)
-            
-            nfn_l = jlay_fieldn_l
-        
-        
-        
-        log.info('sampled \'%s\' w/ \'%s\' (%i hits) and \'%s\'to get %i new fields \n    %s'%(
-            join_vlay.name(), vlay.name(), res_vlay.dataProvider().featureCount(), 
-            smry_l, len(nfn_l), nfn_l))
-        
-        return res_vlay, nfn_l
-
 
     def warpreproject(self, #repojrect a raster
                               rlay_raw,
@@ -2065,6 +2367,76 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
           
         return res_rlay
     
+    #===========================================================================
+    # ALGOS - CUSTOM--------
+    #===========================================================================
+    def vlay_pts_dist(self, #get the distance between points in a given order
+        vlay_raw, 
+        ifn = 'fid', #fieldName to index by
+        request = None,
+        
+        result = 'vlay_append', #result type
+        logger=None):
+        #===========================================================================
+        # defaults
+        #===========================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('vlay_pts_dist')
+        
+        
+        if request is None: 
+            request =  QgsFeatureRequest(
+                ).addOrderBy(ifn, ascending=True
+                             ).setSubsetOfAttributes([ifn], vlay_raw.fields())
+                             
+        #===========================================================================
+        # precheck
+        #===========================================================================
+        assert 'Point' in QgsWkbTypes().displayString(vlay_raw.wkbType()), 'passed bad geo type'
+        
+        #see if indexer is unique
+        ifn_d = vlay_get_fdata(vlay_raw, fieldn=ifn, logger=log)
+        assert len(set(ifn_d.values()))==len(ifn_d)
+        #===========================================================================
+        # loop and calc
+        #===========================================================================
+        
+        d = dict()
+        first, geo_prev = True, None 
+        for i, feat in enumerate(vlay_raw.getFeatures(request)):
+            assert not feat.attribute(ifn) in d, 'indexer is not unique!'
+            geo = feat.geometry()
+            if first:
+                first=False
+            else:
+                d[feat.attribute(ifn)] = geo.distance(geo_prev)
+                
+            geo_prev = geo
+    
+        log.info('got %i distances using \"%s\''%(len(d), ifn))
+        #===========================================================================
+        # check
+        #===========================================================================
+        assert len(d) == (vlay_raw.dataProvider().featureCount() -1)
+        
+        
+        #===========================================================================
+        # results typing 
+        #===========================================================================
+        if result == 'dict': return d
+        elif result == 'vlay_append':
+            #data manip
+            ncoln = '%s_dist'%ifn
+            df_raw = vlay_get_fdf(vlay_raw, logger=log)
+            df = df_raw.join(pd.Series(d, name=ncoln), on=ifn)
+            
+            assert df[ncoln].isna().sum()==1, 'expected 1 null'
+            
+            #reassemble
+            geo_d = vlay_get_fdata(vlay_raw, geo_obj=True, logger=log)
+            return self.vlay_new_df2(df, geo_d=geo_d, logger=log,
+                                   layname='%s_%s'%(vlay_raw.name(), ncoln))
+    
     
     
     #==========================================================================
@@ -2074,9 +2446,10 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                       vlay, #layer to check for field presence
                       fieldn_l, #list of fields to handle
                       invert = False,
+                      logger=None,
                       ):
-        
-        log = self.logger.getChild('_field_handlr')
+        if logger is None: logger=self.logger
+        log = logger.getChild('_field_handlr')
 
         #=======================================================================
         # all flag
@@ -2107,7 +2480,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
     
     
-        vlay_check(vlay, exp_fieldns=fieldn_l)
+        #vlay_check(vlay, exp_fieldns=fieldn_l)
         
         
         #=======================================================================
@@ -2119,7 +2492,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             #get the difference
             fieldn_l = list(big_fn_s.difference(set(fieldn_l)))
             
-            self.logger.debug('inverted selection from %i to %i fields'%
+            log.debug('inverted selection from %i to %i fields'%
                       (len(big_fn_s),  len(fieldn_l)))
             
             
@@ -2202,16 +2575,15 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
     
     def _in_out_checking(self,res_vlay,
                          ):
-        
         """placeholder"""
-        #===========================================================================
-        # setups and defaults
-        #===========================================================================
-        log = self.logger.getChild('_in_out_checking')
+        
+    def __exit__(self, #destructor
+                 *args,**kwargs):
+        
+        self.mstore.removeAllMapLayers()
+        
+        super().__exit__(*args,**kwargs) #initilzie teh baseclass
 
-
-            
-        return
     
 
 class MyFeedBackQ(QgsProcessingFeedback):
@@ -2618,7 +2990,7 @@ def vlay_write( #write  a VectorLayer
       
     if error[0] == QgsVectorFileWriter.NoError:
         log.info('layer \' %s \' written to: \n     %s'%(vlay.name(),out_fp))
-        return 
+        return out_fp
      
     raise Error('FAILURE on writing layer \' %s \'  with code:\n    %s \n    %s'%(vlay.name(),error, out_fp))
     
@@ -2885,7 +3257,7 @@ def vlay_get_fdata( #get data for a single field from all the features
     #===========================================================================
     # loop through and collect hte data
     #===========================================================================
-    if db_f: req_log(request, logger=log)
+    #if db_f: req_log(request, logger=log)
     d = dict() #empty container for results
     for feat in vlay.getFeatures(request):
         
@@ -3602,6 +3974,9 @@ def vlay_rename_fields(
         feedback=None,
 
         ):
+    """
+    todo: add this as a session method and clean up unused layers
+    """
     
     if logger is None: logger=mod_logger
     log=logger.getChild('vlay_rename_fields')
@@ -3670,12 +4045,15 @@ def vlay_key_convert(#convert a list of ids in one form to another
             
         #by field values
         elif id1_type == 'field': #limit by field value
+            raise Error(' not implemented')
             #build an expression so we only query features with values matching the id1_l
-            qexp = exp_vals_in_field(id1_l, id_fieldn, qfields = vlay.fields(),  logger=log)
-            request =  QgsFeatureRequest(qexp)
-            
-            log.debug('pulling \'fid_fval_d\' from %i \'%s\' fvals'%(
-                len(id1_l), id_fieldn))
+            #===================================================================
+            # qexp = exp_vals_in_field(id1_l, id_fieldn, qfields = vlay.fields(),  logger=log)
+            # request =  QgsFeatureRequest(qexp)
+            # 
+            # log.debug('pulling \'fid_fval_d\' from %i \'%s\' fvals'%(
+            #     len(id1_l), id_fieldn))
+            #===================================================================
         else:
             raise Error('unrecognized id1_type')
             
@@ -3743,6 +4121,7 @@ def vlay_key_convert(#convert a list of ids in one form to another
             
   
 
+        
 
 #==============================================================================
 # type checks-----------------
@@ -3945,34 +4324,6 @@ def view(#view the vector data (or just a df) as a html frame
 
 if __name__ == '__main__':
     
-    #===========================================================================
-    # selection testing
-    #===========================================================================
-    vlay_fp = r'C:\LS\03_TOOLS\_git\CanFlood\tutorials\2\data\finv_cT2.gpkg'
-    aoi_fp = r'C:\LS\03_TOOLS\LML\_ins\aoi\20191225\chil\aoiT2_chil.gpkg'
-    
-    #===========================================================================
-    # load the layers
-    #===========================================================================
-    log = logging.getLogger('test')
-    vlay = load_vlay(vlay_fp, logger=log)
-    aoi_vlay = load_vlay(aoi_fp, logger=log)
-    
-    #===========================================================================
-    # execute
-    #===========================================================================
-    #build the instance
-    wrkr = Qcoms(logger=log).ini_standalone()
 
-    
-    res_vlay = wrkr.selectbylocation(vlay, aoi_vlay, result_type='layer', logger=log)
-    
-    log.info('finished w/ %s w/ %i feats (of %i)'%(
-        res_vlay.name(), res_vlay.dataProvider().featureCount(),
-        vlay.dataProvider().featureCount()))
-    
-    
-    #force_open_dir(wrkr.out_dir)
-    
-    print('finished')
+    print('???')
 

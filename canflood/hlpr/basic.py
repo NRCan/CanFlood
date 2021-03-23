@@ -17,9 +17,9 @@ helper functions w/o qgis api
 # imports------------
 #==============================================================================
 #python
-import os, configparser, logging, re
+import os, configparser, logging, re, datetime
 import pandas as pd
-pd.set_option('display.max_rows',10)
+pd.set_option('display.max_rows',5)
 import numpy as np
 
 
@@ -27,15 +27,7 @@ import numpy as np
 #==============================================================================
 # custom
 #==============================================================================
-#standalone runs
-if __name__ =="__main__": 
-    from hlpr.logr import basic_logger
-    mod_logger = basic_logger()   
-
-    
-#plugin runs
-else:
-    mod_logger = logging.getLogger('basic') #get the root logger
+mod_logger = logging.getLogger('basic') #get the root logger
 
 from hlpr.exceptions import QError as Error
 
@@ -44,21 +36,23 @@ from hlpr.exceptions import QError as Error
 #==============================================================================
 class ComWrkr(object): #common methods for all classes
     
+    name = None
     progressBar = None
     feedback = None
     
-    #mandatory keys for curves
-    crv_keys = ('tag', 'exposure')
-    invalid_cids = ['fid', 'ogc_fid']
-    
-    
+    absolute_fp=True
 
     
+    invalid_cids = ['fid', 'ogc_fid']
     
+
     def __init__(self, 
                  tag='session', 
+                 name=None,
                  cid='xid', #default used by inventory constructors
+                 
                  cf_fp='',
+                 absolute_fp=True, #whether filepaths in control file are absolute (False=Relative). 
 
                  overwrite=True, 
                  out_dir=None, 
@@ -84,7 +78,7 @@ class ComWrkr(object): #common methods for all classes
         #======================================================================
         # get defaults
         #======================================================================
-        self.logger = logger
+        self.logger = logger.getChild(self.__class__.__name__)
         #setup output directory
         if out_dir is None: out_dir = os.getcwd()
         
@@ -96,14 +90,16 @@ class ComWrkr(object): #common methods for all classes
         #======================================================================
         # attach
         #======================================================================
-        
+        if not name is None: self.name=name
         self.tag = tag
         self.cid = cid
         self.overwrite=overwrite
         self.out_dir = out_dir
         self.cf_fp = cf_fp
         self.prec = prec
-        
+        self.today_str = datetime.datetime.now().strftime('%Y-%m-%d %H:%M') #nice for labelling plots
+        self.absolute_fp=absolute_fp
+        self.cf_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__))) #'C:\\LS\\03_TOOLS\\CanFlood\\_git'
         #=======================================================================
         # feedback
         #=======================================================================
@@ -210,16 +206,19 @@ class ComWrkr(object): #common methods for all classes
 
         
         
-    def update_cf(self, #update one parameter  control file 
+    def set_cf_pars(self, #update one parameter  control file 
                   new_pars_d, #new paraemeters 
                     # {section : ({valnm : value } OR string (for notes)})
                   cf_fp = None):
+        """
+        should this be on the MOdel only?
+        """
         
-        log = self.logger.getChild('update_cf')
+        log = self.logger.getChild('set_cf_pars')
         
         #get defaults
         if cf_fp is None: cf_fp = self.cf_fp
-        
+        assert isinstance(cf_fp, str), '%s got bad cf_fp type: %s'%(self.name, type(cf_fp))
         assert os.path.exists(cf_fp), 'bad cf_fp: \n    %s'%cf_fp
         
         #initiliae the parser
@@ -236,7 +235,7 @@ class ComWrkr(object): #common methods for all classes
                 if isinstance(subval, dict):
                     for valnm, value in subval.items():
                         assert isinstance(value, str), \
-                        'got bad type on %s.%s: \'%s\''%(section, valnm, type(value))
+                            'failed to get a str on %s.%s: \'%s\''%(section, valnm, type(value))
                         
                         pars.set(section, valnm, value)
                         
@@ -252,10 +251,64 @@ class ComWrkr(object): #common methods for all classes
         with open(cf_fp, 'w') as configfile:
             pars.write(configfile)
             
-        log.info('updated contyrol file w/ %i pars at :\n    %s'%(
+        log.info('updated control file w/ %i pars at :\n    %s'%(
             len(new_pars_d), cf_fp))
         
         return
+    
+    def _get_from_cpar(self, #special parameter extraction recognizing object's t ype
+                      cpars,
+                      sectName,
+                      varName,
+                      logger = None):
+        
+        """each parameter should exist on teh class instance.
+                we use this to set the type"""
+        
+        if logger is None: logger=self.logger
+        log = logger.getChild('_get_from_cpar')
+        #=======================================================================
+        # get native type on class
+        #=======================================================================
+        assert hasattr(self, varName), '\'%s\' does not exist on %s'%(varName, self)
+        
+        
+        #get class instance's native type
+        ntype = type(getattr(self, varName))
+        
+        #==============================================================
+        # retrive and typeset  (using native t ype)            
+        #==============================================================
+        assert isinstance(cpars, configparser.ConfigParser)
+        
+        csect = cpars[sectName]
+        pval_raw = csect[varName] #raw value (always a string)
+        
+        #boolean
+        if ntype == bool:
+            pval = csect.getboolean(varName)
+        
+        #no check or type conversion
+        elif getattr(self, varName) is None:
+            pval = pval_raw 
+
+        #other types
+        else:
+            try:
+                pval = ntype(pval_raw)
+            except Exception as e:
+                raise Error('failed to set %s.%s  with input \'%s\' (%s) to %s \n %s'%(
+                    sectName, varName, pval_raw, type(pval_raw), ntype, e))
+        
+        #=======================================================================
+        # blank set
+        #=======================================================================
+        """seems like we're setup for ''.... not sure the value in switching everything over
+        if pval == '':
+            pval = np.nan"""
+        
+        log.debug('retrieved \'%s.%s\'=\'%s\' w/ type: \'%s\''%(sectName, varName, pval, type(pval)))
+        return pval
     
     
     def output_df(self, #dump some outputs
@@ -310,76 +363,14 @@ class ComWrkr(object): #common methods for all classes
         
         return out_fp
     
-    def output_fig(self, fig,
-                   out_dir = None, overwrite=None,
-                   
-                   #figure file controls
-                 fmt='svg', 
-                  transparent=True, 
-                  dpi = 150,
-                  fname = None, #filename
-                  ):
-        #======================================================================
-        # defaults
-        #======================================================================
-        if out_dir is None: out_dir = self.out_dir
-        if overwrite is None: overwrite = self.overwrite
-        log = self.logger.getChild('output')
-        
-        #======================================================================
-        # output
-        #======================================================================
-        #file setup
-        if fname is None:
-            try:
-                fname = fig._suptitle.get_text()
-            except:
-                fname = self.name
-            
-        out_fp = os.path.join(out_dir, '%s.%s'%(fname, fmt))
-            
-        if os.path.exists(out_fp):
-            msg = 'passed output file path already esists :\n    %s'%out_fp
-            if overwrite: 
-                log.warning(msg)
-            else: 
-                raise Error(msg)
-            
-        #write the file
-        try: 
-            fig.savefig(out_fp, dpi = dpi, format = fmt, transparent=transparent)
-            log.info('saved figure to file:   %s'%out_fp)
-        except Exception as e:
-            raise Error('failed to write figure to file w/ \n    %s'%e)
-        
-        return out_fp
+    def __exit__(self, #destructor
+                 *args,**kwargs):
+        pass
     
-    def check_curve(self, #validate the passed curve_d  
-                    crv_d,
-                    logger=None):
-        if logger is None: logger=self.logger
-        log = logger.getChild('check_curve')
-        
-        assert isinstance(crv_d, dict)
-        
-        log.debug('on %i'%len(crv_d))
-        
-        #srip hitespace
-        crv_d1 = dict()
-        for k, v in crv_d.items():
-            if isinstance(k, str):
-                newk = k.strip()
-            else:
-                newk = k
-                
-            crv_d1[newk] = v
-            
-        
-        #check keys
-        l = set(self.crv_keys).difference(crv_d1.keys())
-        assert len(l)==0, 'curve is missing keys: %s'%l
 
-        return True
+    
+
+
     
 class MyFeedBack(object): #simple custom feedback object
     
@@ -668,9 +659,9 @@ def linr( #fancy check if left elements are in right elements
                       )
                     )
         if np.any(boolar):
-            logger.debug(msg)
+            log.debug(msg)
         elif result_type=='exact' and (not np.array_equal(l_ar, r_ar)):
-            logger.debug(msg)
+            log.debug(msg)
         
     #===========================================================================
     # reformat and return result

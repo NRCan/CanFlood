@@ -30,11 +30,12 @@ from PyQt5 import QtGui
 #==============================================================================
 
 import hlpr.plug
-from hlpr.basic import get_valid_filename, force_open_dir, ComWrkr
+from hlpr.basic import get_valid_filename, view
 from hlpr.exceptions import QError as Error
 from hlpr.plug import MyFeedBackQ, QprojPlug, pandasModel
 from misc.curvePlot import CurvePlotr
 
+from model.modcom import DFunc
 
 #===============================================================================
 # logger
@@ -54,7 +55,7 @@ FORM_CLASS, _ = uic.loadUiType(ui_fp)
 # class objects-------
 #===============================================================================
 
-class vDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
+class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
     """
     constructed by  BuildDialog
     """
@@ -64,14 +65,15 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
     
     linEdit_ScenTag = 'scenario'
     lineEdit_wd = None
+    
+    inherit_atts = ['radioButton_s_pltW', 'lineEdit_wdir', 'lineEdit_curve', 'linEdit_ScenTag',
+                    'checkBox_SSoverwrite', 'radioButton_SS_fpAbs']
 
     def __init__(self, 
                  iface, 
                  parent=None,
                  plogger=None):
-        """these will only ini tthe first baseclass (QtWidgets.QDialog)
-        
-        required"""
+        """called on stawrtup"""
         super(vDialog, self).__init__(parent) #only calls QtWidgets.QDialog
         
 
@@ -86,11 +88,7 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
 
         self.setupUi(self)
         
-        # Set up the user interface from Designer through FORM_CLASS.
-        # After self.setupUi() you can access any designer object by doing
-        # self.<objectname>, and you can use autoconnect slots - see
-        # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
-        # #widgets-and-dialogs-with-auto-connect
+ 
 
 
         #=======================================================================
@@ -122,11 +120,25 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.logger.debug('rDialog initilized')
         
     def _setup(self):
+        """
+        called on launch
+        """
         _ = self.get_libData()
         self.connect_slots()
+        
+        #simple setups
+        self.tag = self.linEdit_ScenTag.text()
+        self.out_dir = self.lineEdit_wdir.text()
+        self.overwrite=self.checkBox_SSoverwrite.isChecked()
+        self.absolute_fp = self.radioButton_SS_fpAbs.isChecked()
+        self.plt_window = self.radioButton_s_pltW.isChecked()
+        
         return self
 
     def connect_slots(self):
+        """
+        called on launch
+        """
         log = self.logger.getChild('connect_slots')
 
         #======================================================================
@@ -156,7 +168,7 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
         #build a df of what we want to display
         df = pd.DataFrame.from_dict({k: v['meta.d'] for k,v in vdata_d.items()}
-                                    ).T.reset_index()
+                                    ).T.reset_index(drop=True).sort_values('name')
         
         #lModel = QStringListModel(list(vdata_d.keys()))
         self.dfModel = pandasModel(df)
@@ -189,8 +201,6 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         # wrap
         #=======================================================================
         
-
-    
     def displayDetails(self): #display details on the selected library
         #log = self.logger.getChild('displayDetails')
         
@@ -308,10 +318,8 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         
 
         return fn, fp 
-
-        
-        
-    def dislpayCsDetails(self): #display the selected curve set details
+ 
+    def dislpayCsDetails(self): #display the selected curve set (xls) details
         """called when a curve set is selected"""
 
         
@@ -323,7 +331,16 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # build data for this
         #=======================================================================
-        df = pd.Series(self.vdata_d[self.libName]['curves_d'][fileName], name='values'
+        #=======================================================================
+        # assert self.libName in self.vdata_d, self.libName
+        # assert fileName in self.vdata_d[self.libName]['curves_d'], 'requested filename not found: %s'%filePath
+        # 
+        # data = self.vdata_d[self.libName]['curves_d'][fileName]
+        #=======================================================================
+        
+        data = self._load_cs(filePath)
+        
+        df = pd.Series(data, name='values'
                   ).to_frame().reset_index().rename(columns={'index':'var'})
 
 
@@ -348,9 +365,15 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         # disconntected sessions
         #=======================================================================
         if isinstance(self.linEdit_ScenTag, str):
-            return self.linEdit_ScenTag, os.getcwd()
+            tag, out_dir = self.linEdit_ScenTag, os.getcwd()
         else:
-            return self.linEdit_ScenTag.text(), self.lineEdit_wd.text()
+            tag, out_dir = self.linEdit_ScenTag.text(), self.lineEdit_wdir.text()
+            
+        assert isinstance(tag, str)
+        assert isinstance(out_dir, str), 'must specify a working directory'
+        assert not out_dir=='', 'must specify a working directory'
+        
+        return tag, out_dir
 
         
     def plot_set(self):
@@ -380,7 +403,7 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         fig = wrkr.plotAll(cLib_d)
         
         #output
-        ofp = wrkr.output_fig(fig)
+        ofp = self.output_fig(fig)
         
         #=======================================================================
         # try:
@@ -392,8 +415,11 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         return
         
         
-    def get_libData(self,
-                    vfunc_dir=None):
+    def get_libData(self, #setup all the data for display
+                    vfunc_dir=None,
+                    
+
+                    ):
         
         #=======================================================================
         # defaults
@@ -426,7 +452,7 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             
     
             #=======================================================================
-            # from meta  file
+            # from meta  file---
             #=======================================================================
             #open the file
             log.debug('loading from %s'%fp)
@@ -443,44 +469,31 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             d['meta.v'] = {k:v for k,v in cPars['variables'].items()}
                 
             #=======================================================================
-            # data contents
+            # data contents---
             #=======================================================================
-            fns = [e for e in os.listdir(basedir) if e.endswith('.xls')]
-            d['curveSet_fns'] = fns
-            d['curveSet_cnt'] = len(fns)
+            #get all filepaths in folder tree
+            curve_fps = set()
+            for dirpath, _, fns in os.walk(basedir):
+                curve_fps.update([os.path.join(dirpath, e) for e in fns if e.endswith('.xls')])
+                
+            #fns = [e for e in os.listdir(basedir) if e.endswith('.xls')]
+            d['curveSet_fps'] = curve_fps
+            d['curveSet_cnt'] = len(curve_fps)
             
             #===================================================================
             # #curve set values
             #===================================================================
             """
-            display these on 
+            data to display when .xls is selected in the bottom window
+            curves_d is keyed by filename (filepath is bad for key lookup)
             """
-            curves_d = dict()
-            for fn in fns:
-                fp = os.path.join(basedir, fn)
-                assert os.path.exists(fp), fp
+            #===================================================================
+            # d['curves_d'] = dict()
+            # for fp in curve_fps:
+            #     d['curves_d'][os.path.basename(fp)] = self._load_cs(fp,log)
+            #===================================================================
                 
-                cs_d = dict()
-                
-                
-                df_d_raw = pd.read_excel(fp, sheet_name=None, header=None, index_col=None)
-                
-                df_d = {k:v for k,v in df_d_raw.items() if not k.startswith('_')} #drop dummy tabs
-                
-                cs_d['cnt'] = len(df_d)
-                cs_d['tags'] = list(df_d.keys())
-                curves_d[fn] = cs_d
-                
-            #summarize
-            d['curves_d'] = curves_d
 
-            
-            """no.. just give details on each .xls
-            d['curve_cnt'] = pd.DataFrame.from_dict(curves_d).T['cnt'].sum()
-            
-            l1 = [v['tags'] for v in curves_d.values()]
-            d['curve_tags'] = set([e for subl in l1 for e in subl])
-            d['curve_tags_cnt'] = len(d['curve_tags'])"""
             #===================================================================
             # wrap this library
             #===================================================================
@@ -511,6 +524,40 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         log.info('finished collecting on %i librarires'%len(vdata_d))
         self.vdata_d = vdata_d.copy()
         return vdata_d
+    
+                    
+    def _load_cs(self, #load details from a curve set xls
+                 fp,
+                #columns from curves to add in meta
+                cs_colns = ['scale_var', 'exposure_var', 'impact_var'], 
+                 log=None,                
+                 ):
+        
+            assert os.path.exists(fp), fp
+            cs_d = dict()
+            
+            
+            clib_d_raw = pd.read_excel(fp, sheet_name=None, header=0, index_col=0)
+            
+            clib_d = {k:v for k,v in clib_d_raw.items() if not k.startswith('_')} #drop dummy tabs
+            
+            cs_d['cnt'] = len(clib_d)
+            cs_d['tags'] = list(clib_d.keys())
+            
+            #get additional meta from curve data
+            if not '_smry' in clib_d:
+                smry_df = self._get_smry(clib_d, 
+                                         add_colns=cs_colns,
+                                         clib_fmt_df=True, 
+                                         logger=log)
+            else:
+                smry_df = clib_d['_smry']
+            
+            """just taking first... not checking if its actually unique"""
+            smry_d = smry_df.loc[:, smry_df.columns.isin(cs_colns)
+                        ].drop_duplicates().iloc[0].to_dict()
+                        
+            return {**cs_d, **smry_d}
         
         
         
@@ -528,7 +575,7 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         fileName, filePath = self._get_cset_selection()
         log.debug('user selected %s'%filePath)
         
-        
+        assert isinstance(fileName, str), 'must select an xls library!'
         #=======================================================================
         # copy it over
         #=======================================================================

@@ -28,17 +28,14 @@ from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProj
 #==============================================================================
 # custom imports
 #==============================================================================
-
 from hlpr.exceptions import QError as Error
 
-
-#from hlpr.basic import 
-
 from hlpr.Q import view, Qcoms, vlay_get_fdf, vlay_get_fdata, vlay_new_df
+from hlpr.plot import Plotr
 #==============================================================================
 # classes-------------
 #==============================================================================
-class LikeSampler(Qcoms):
+class LikeSampler(Plotr, Qcoms):
     """
     Generate conditional probability data set ('exlikes') for each asset
     
@@ -54,10 +51,16 @@ class LikeSampler(Qcoms):
     """
     event_rels = 'indep'
     
+    
+    impactfmt_str = '.2f' #formatting impact values on plots
+    
+    
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, 
+                        
+                         **kwargs)
         
-        #self.resname = 'exlikes_%s'%self.tag
+
         
     def load_layers(self, #load data to project (for standalone runs)
                     lpol_fp_d, #{event name:polygon filepath}
@@ -125,6 +128,49 @@ class LikeSampler(Qcoms):
             
         log.debug('finished w/ %i'%len(lpol_d))
         return lpol_d
+    
+    def load_lpols2(self, #loading fail polys where the names match
+                   lpol_dir,
+                   ext = '.gpkg', #files to include with matching extension
+                    providerLib='ogr',
+                    logger=None,
+                    **kwargs
+                   ):
+        """
+        mostly for testing... loads and links based on file name
+            (very picky input)
+        see load_lpols() for more flexible input
+        """
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log=logger.getChild('load_lpols')
+
+        assert os.path.exists(lpol_dir)
+        
+        #=======================================================================
+        # collect matching files
+        #=======================================================================
+        fps = [os.path.join(lpol_dir, e) for e in os.listdir(lpol_dir) if e.endswith(ext)]
+        
+        
+        log.info('on %i layers\n    %s'%(len(fps), fps))
+        
+        #=======================================================================
+        # loop and load
+        #=======================================================================
+        lpol_d = dict()
+        for fp in fps:
+            log.debug("on %s"%fp)
+            
+            ename=os.path.basename(fp).replace(ext, '')
+            #load it
+            lpol_d[ename] = self.load_vlay(fp, logger=log, providerLib=providerLib,
+                                           **kwargs)
+            
+        log.debug('finished w/ %i'%len(lpol_d))
+        return lpol_d
             
     def run(self, #sample conditional probability polygon 'lfield' values with finv geometry
             finv, #inventory layer
@@ -133,6 +179,7 @@ class LikeSampler(Qcoms):
             lfield = 'p_fail', #field with likelihhood value
             
            event_rels=None, #ev calculation method
+                #WARNING: not necessaarily the same as the parameter used by RiskModel
                 #mutEx: assume each event is mutually exclusive (only one can happen)
                     #lower bound
                 #indep: assume each event is independent (failure of one does not influence the other)
@@ -147,6 +194,7 @@ class LikeSampler(Qcoms):
         if cid is  None: cid=self.cid
         if event_rels is None: event_rels=self.event_rels
         self.event_rels=event_rels #reset for plotting
+        assert isinstance(lpol_d, dict)
         #======================================================================
         # #check/load the data
         #======================================================================
@@ -391,8 +439,10 @@ class LikeSampler(Qcoms):
             
             log.info('finished w/ %s event_rels = \'%s\'.. see log'%(str(res_df.shape), event_rels))        
         except: log.error('logging error')
+        
+        self.res_df = res_df
 
-        return res_df #will have NaNs where there is no intersect
+        return self.res_df #will have NaNs where there is no intersect
     
     """
     view(res_df)
@@ -506,15 +556,47 @@ class LikeSampler(Qcoms):
         
         return res_vlay
     
-    def check(self):
-        pass #placeholder
+    def check(self,
+              res_df=None, #data to check
+              aep_ser=None):
+        
+        if res_df is None: res_df = self.res_df.copy()
+        
+        #=======================================================================
+        # check evals
+        #=======================================================================
+        if not aep_ser is None:
+            
+            #make sure all our event names have some aep data
+            miss_l = set(res_df.columns).difference(aep_ser.index)
+            assert len(miss_l)==0, '%s missing some evals data: %s'%(self.tag, miss_l)
+            
+            
+            #make sure all the columns w/ duplicate aeps are in the results
+            cplx_evn_d, cnt = self._get_cplx_evn(aep_ser)
+            assert cnt>0, 'no complex events in aep_ser'
+            
+            for aep, exp_l in cplx_evn_d.items():
+                if len(exp_l)>1: #complex events
+                    l = set(exp_l).intersection(res_df.columns) #eventNames in both
+                    assert len(l)>=1, '%s passed in evals not found in exlikes'%aep
+                    
+                    
+            
+                    
+            
+            
+            
+
     
     def write_res(self, res_df,ofn=None, **kwargs):
         if ofn is None: ofn = 'exlikes_%s'%self.tag
-        return self.output_df(res_df, ofn,write_index=True, **kwargs)
+        self.out_fp= self.output_df(res_df, ofn,write_index=True, **kwargs)
+        return self.out_fp
     
-    def upd_cf(self, cf_fp): #configured control file updater
-        return self.update_cf(
+    def update_cf(self, cf_fp=None): #configured control file updater
+        if cf_fp is None: cf_fp=self.cf_fp
+        return self.set_cf_pars(
             {'risk_fps':(
                 {'exlikes':self.out_fp}, 
                 '#\'exlikes\' file path set from lisamp.py at %s'%(datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')),
@@ -523,219 +605,41 @@ class LikeSampler(Qcoms):
             cf_fp = cf_fp
             )
         
-    def plot_hist_all(self, df, #plot failure histogram of all layers
-                      
-                    #figure parametrs
-                    figsize     = (6.5, 4), 
-                    grid=True,
-                      
-                      ): #plot all the histograms stacked
+    #===========================================================================
+    # PLOTS-----
+    #===========================================================================
         
-        """
-        dont want to initiate matplotlib in the module...
-            just using a nasty single f unction
-        """
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        log = self.logger.getChild('plot')
-        title = '%s Conditional P histogram on %i events'%(self.tag, len(df.columns))
-        
-        #=======================================================================
-        # manipulate data
-        #=======================================================================
-        #get a collectio nof arrays from a dataframe's columns
-        data = [ser.values for _, ser in df.items()]
-        #======================================================================
-        # setup
-        #======================================================================
-        
-        import matplotlib
-        matplotlib.use('Qt5Agg') #sets the backend (case sensitive)
-        import matplotlib.pyplot as plt
-        
-        #set teh styles
-        plt.style.use('default')
-        
-        #font
-        matplotlib_font = {
-                'family' : 'serif',
-                'weight' : 'normal',
-                'size'   : 8}
-        
-        matplotlib.rc('font', **matplotlib_font)
-        matplotlib.rcParams['axes.titlesize'] = 10 #set the figure title size
-        
-        #spacing parameters
-        matplotlib.rcParams['figure.autolayout'] = False #use tight layout
-        
-        
-        
-        #======================================================================
-        # figure setup
-        #======================================================================
-        plt.close()
-        fig = plt.figure(figsize=figsize,
-                     tight_layout=False,
-                     constrained_layout = True,
-                     )
-        
-        #axis setup
-        ax1 = fig.add_subplot(111)
-        
-        #aep units
-        ax1.set_xlim(0, 1.0)
- 
-        
-        # axis label setup
-        fig.suptitle(title)
-        ax1.set_xlabel('Pfail')
-        ax1.set_ylabel('asset count')
-        """
-        plt.show()
-        
-        pd.__version__
-        """
+    def plot_hist(self, #plot failure histogram of all layers
+                      df=None,**kwargs): 
 
+        if df is None: df=self.res_df
+        title = '%s Conditional P Histogram on %i Events'%(self.tag, len(df.columns))
         
-        #=======================================================================
-        # plot thie histogram
-        #=======================================================================
-        histVals_ar, bins_ar, patches = ax1.hist(
-            data, bins='auto', stacked=False, label=df.columns.to_list(),
-            alpha=0.9)
-        
-        
-        #=======================================================================
-        # Add text string 'annot' to lower left of plot
-        #=======================================================================
-        val_str = '%i assets \nevent_rels=\'%s\''%(len(df), self.event_rels)
-        xmin, xmax1 = ax1.get_xlim()
-        ymin, ymax1 = ax1.get_ylim()
-        
-        x_text = xmin + (xmax1 - xmin)*.5 # 1/10 to the right of the left ax1is
-        y_text = ymin + (ymax1 - ymin)*.5 #1/10 above the bottom ax1is
-        anno_obj = ax1.text(x_text, y_text, val_str)
-        
-        #=======================================================================
-        # post formatting
-        #=======================================================================
-        if grid: 
-            ax1.grid()
+        self._set_valstr(df)
+        return self.plot_impact_hist(df,
+                     title=title, xlab = 'Pfail',
+                     xlims_t = (0, 1.0),
+                     val_str=self.val_str, **kwargs)
         
 
-        #legend
-        h1, l1 = ax1.get_legend_handles_labels() #pull legend handles from axis 1
+    def plot_boxes(self, #plot boxplots of results
+                     df=None, 
+                      **kwargs): 
 
-        ax1.legend(h1, l1, loc=1) #turn legend on with combined handles
+        if df is None: 
+            df=self.res_df.replace({0:np.nan})
+        title = '%s Conditional P Boxplots on %i Events'%(self.tag, len(df.columns))
         
-        
-        return fig
-        
+        self._set_valstr(df)
 
-    def plot_box_all(self, df, #plot failure histogram of all layers
-                      
-                    #figure parametrs
-                    figsize     = (6.5, 4), 
-                    grid=True,
-                      
-                      ): #plot all the histograms stacked
+        return self.plot_impact_boxes(df,
+                     title=title, xlab = 'hazard layer', ylab = 'Pfail',
+                     ylims_t = (0, 1.0),smry_method='mean',
+                     val_str=self.val_str,   **kwargs)
         
-        """
-        dont want to initiate matplotlib in the module...
-            just using a nasty single f unction
-        """
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        log = self.logger.getChild('plot')
-        title = '%s Conditional P boxplots on %i events'%(self.tag, len(df.columns))
-        
-        #=======================================================================
-        # manipulate data
-        #=======================================================================
-        #get a collectio nof arrays from a dataframe's columns
-        data = [ser.values for _, ser in df.items()]
-        #======================================================================
-        # setup
-        #======================================================================
-        
-        import matplotlib
-        matplotlib.use('Qt5Agg') #sets the backend (case sensitive)
-        import matplotlib.pyplot as plt
-        
-        #set teh styles
-        plt.style.use('default')
-        
-        #font
-        matplotlib_font = {
-                'family' : 'serif',
-                'weight' : 'normal',
-                'size'   : 8}
-        
-        matplotlib.rc('font', **matplotlib_font)
-        matplotlib.rcParams['axes.titlesize'] = 10 #set the figure title size
-        
-        #spacing parameters
-        matplotlib.rcParams['figure.autolayout'] = False #use tight layout
-        
-        
-        
-        #======================================================================
-        # figure setup
-        #======================================================================
-        plt.close()
-        fig = plt.figure(figsize=figsize,
-                     tight_layout=False,
-                     constrained_layout = True,
-                     )
-        
-        #axis setup
-        ax1 = fig.add_subplot(111)
-        
-        #aep units
-        ax1.set_ylim(0, 1.0)
- 
-        
-        # axis label setup
-        fig.suptitle(title)
-        ax1.set_xlabel('hazard layer')
-        ax1.set_ylabel('Pfail')
-        """
-        plt.show()
-        
-        pd.__version__
-        """
-
-        
-        #=======================================================================
-        # plot thie histogram
-        #=======================================================================
-        boxRes_d = ax1.boxplot(data, whis=1.5)
-        
-
-
-        #=======================================================================
-        # format axis labels
-        #======================================================= ================
-        #apply the new labels
-        ax1.set_xticklabels(df.columns, rotation=90, va='center', y=.5, color='red')
-        
-        
-        #=======================================================================
-        # Add text string 'annot' to lower left of plot
-        #=======================================================================
-        val_str = '%i assets \nevent_rels=\'%s\''%(len(df), self.event_rels)
-        xmin, xmax1 = ax1.get_xlim()
-        ymin, ymax1 = ax1.get_ylim()
-        
-        x_text = xmin + (xmax1 - xmin)*.5 # 1/10 to the right of the left ax1is
-        y_text = ymin + (ymax1 - ymin)*.8 #1/10 above the bottom ax1is
-        anno_obj = ax1.text(x_text, y_text, val_str)
-
-        
-        
-        return fig
+    def _set_valstr(self, df):
+        self.val_str= 'finv_fcnt=%i \nevent_rels=\'%s\' \ndate=%s'%(
+            len(df), self.event_rels, self.today_str)
         
 
 

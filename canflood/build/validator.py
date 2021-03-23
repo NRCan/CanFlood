@@ -31,28 +31,29 @@ import pandas as pd
 from hlpr.exceptions import QError as Error
     
 
-from hlpr.Q import Qcoms
+from hlpr.basic import ComWrkr
 """do we need the pyqgis handles?"""
 #from hlpr.basic import *
 
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class Vali(Qcoms):
+class Vali(ComWrkr):
     """
     
     model validator worker
     
     kept separate from the model workers to keep init sequences clean
+    
+     TODO: add some more data checks?
 
     """
     valid_par = None #validation parmater for control file writing
     valid = False
 
-    def __init__(self,
-                  *args, **kwargs):
+    def __init__(self, **kwargs):
         
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
         
         #initlize the config parser
         if os.path.exists(self.cf_fp):
@@ -93,16 +94,12 @@ class Vali(Qcoms):
                  modObj #model object to run check against
                  ):
         
-      
-        cpars = self.cpars
-        wrkr = modObj(self.cf_fp) #initilize it
+
+        wrkr = modObj(cf_fp = self.cf_fp, logger=self.logger) #initilize it
         #=======================================================================
         # check against expectations
         #=======================================================================
-        errors = []
-        for chk_d, opt_f in ((modObj.exp_pars_md,False), (modObj.exp_pars_op,True)):
-            _, l = wrkr.cf_chk_pars(cpars, copy.copy(chk_d), optional=opt_f)
-            errors = errors + l
+        errors = wrkr.validate(self.cpars)
             
         #record which validation prameter this referes to (for control file updating)
         self.valid_par = modObj.valid_par
@@ -128,7 +125,7 @@ class Vali(Qcoms):
         #=======================================================================
         # write result to control file
         #=======================================================================
-        self.update_cf(
+        self.set_cf_pars(
             {
                 'validation':({valid_par:str(self.valid)},
                 '# \'%s\' validated by validator.py at %s'%(

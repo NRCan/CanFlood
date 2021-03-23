@@ -4,6 +4,8 @@
 @author: cefect
 
 convert asset geometry results to new spatial grids
+
+not plugged into UI yet
 '''
 
 #==========================================================================

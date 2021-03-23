@@ -30,6 +30,7 @@ from hlpr.exceptions import QError as Error
 from hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata, vlay_new_df
 #from hlpr.basic import *
 
+from model.modcom import DFunc
 #==============================================================================
 # parametessr
 #==============================================================================
@@ -45,7 +46,7 @@ truefalse_d = {
 
 mod_name = 'rfda'
 
-class RFDAconv(Qcoms):
+class RFDAconv(DFunc, Qcoms):
     
     # legacy index numbers
     legacy_ind_d = {0:'id1',1:'address',2:'id2',10:'class', 11:'struct_type', 13:'area', 
@@ -217,6 +218,15 @@ class RFDAconv(Qcoms):
                     df_raw,
                     bsmt_ht =None, #for combination curves,
                     nrpParkAD = 215.0, #default $/m2 for NRP uderground parking
+                    
+                    
+                    #metatdata default
+                    metac_d = {
+                        'desc':'rfda format converted to CanFlood format',
+                        'location':'Calgary and Edmonton, AB',
+                        'date': 2014,
+                        },
+                    
                     logger=None,
                     ):
         """
@@ -233,19 +243,9 @@ class RFDAconv(Qcoms):
         
         log = logger.getChild('to_curveset')
         
+
         
-        
-        crve_d = {'tag':None,
-                        'desc':'rfda converted curves',
-                        'source':'CanFlood.%s_%s_%s'%(mod_name, self.tag, datetime.datetime.today().strftime('%Y%m%d')),
-                        'location':'?',
-                        'date':'?',
-                        'vuln_units':'?',
-                        'dep_units':'m',
-                        'scale':'?',
-                        'exposure_var':'depth',
-                        'impact_var':'?',
-                        'exposure':'impact'}
+
         
         
         
@@ -256,6 +256,17 @@ class RFDAconv(Qcoms):
         assert isinstance(bsmt_ht, float)
         
         log.debug('on %s'%str(df_raw.shape))
+        
+        
+        #=======================================================================
+        # update the defaults
+        #=======================================================================
+        crve_d = self.crve_d.copy() #start with a copy
+        for k,v in {**{ 
+            'source':'CanFlood.%s_%s_%s'%(mod_name, self.tag, datetime.datetime.today().strftime('%Y%m%d')),
+            #'bsmt_ht':bsmt_ht,
+            }, **metac_d}.items():
+            crve_d[k] = v
         #==============================================================================
         # load
         #==============================================================================
@@ -504,11 +515,11 @@ class RFDAconv(Qcoms):
                             }}
         
         #==============================================================================
-        # convert
+        # convert and check
         #==============================================================================
         df_d = dict()
         for cname, d in res_d.items():
-            self.check_curve(d)
+            self.check_crvd(d)
             df_d[cname] = pd.Series(d).to_frame()
             
         #======================================================================
@@ -528,7 +539,7 @@ class RFDAconv(Qcoms):
         if out_dir is None: out_dir = self.out_dir
         
         
-        ofp = os.path.join(out_dir, '%s_cset.xls'%basefn)
+        ofp = os.path.join(out_dir, '%s_%s_cset.xls'%(self.tag, basefn))
         
         
         #write to multiple tabs

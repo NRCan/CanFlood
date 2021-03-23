@@ -15,7 +15,7 @@ from .resources import *
 
 
 import os.path
-from qgis.core import Qgis, QgsMessageLog
+from qgis.core import Qgis, QgsMessageLog, QgsStyle
 
 
 
@@ -29,12 +29,12 @@ relative references seem to work in Qgis.. but IDE doesnt recognize
 from .hlpr.exceptions import QError as Error
 
 
-from .build.BuildDialog import DataPrep_Dialog
-from .model.ModelDialog import Modelling_Dialog
-from .results.ResultsDialog import Results_Dialog
+from build.dialog import BuildDialog
+from model.dialog import ModelDialog
+from results.dialog import ResultsDialog
 from .misc.wc import WebConnect
 from .misc.rfda import rfda_dialog
-
+from .misc.dikes.dialog import DikesDialog
 
 
 
@@ -46,6 +46,9 @@ class CanFlood:
     menu_name = "&CanFlood"
     act_menu_l = []
     act_toolbar_l = []
+    
+    cf_fp = '' #control file pathf or passing between dialogs
+    finv_vlay = None #finv layer for passing
 
     def __init__(self, iface):
         """Constructor.
@@ -58,33 +61,22 @@ class CanFlood:
 
         
         self.iface = iface
-        
-
 
         # Create the dialog (after translation) and keep reference
-        self.dlg1 = DataPrep_Dialog(self.iface)
-        self.dlg2 = Modelling_Dialog(self.iface)
-        self.dlg3 = Results_Dialog(self.iface)
+        self.dlg1 = BuildDialog(self.iface, session=self)
+        self.dlg2 = ModelDialog(self.iface, session=self)
+        self.dlg3 = ResultsDialog(self.iface, session=self)
         
         self.dlg_rfda = rfda_dialog.rDialog(self.iface)
-        
-
-        
-
-        # Declare instance attributes
-        """not sure how this gets populated
-        used by 'unload' to unload everything
-        self.actions = []"""
+        self.dlg_dikes = DikesDialog(self.iface)
 
 
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
         self.first_start = None
         
+        self.pars_dir = os.path.join(os.path.dirname(__file__), '_pars')
         
-        #start with an empty ref
-        #self.canflood_menu = None
-
 
 
     def initGui(self): #add UI elements to Qgis
@@ -92,8 +84,6 @@ class CanFlood:
         called on Qgis Load?
         
         """
-        
-
         #=======================================================================
         # toolbar--------
         #=======================================================================
@@ -112,7 +102,7 @@ class CanFlood:
          
         self.button_build.setObjectName('Build')
         self.button_build.setCheckable(False)
-        self.button_build.triggered.connect(self.dlg1.show)
+        self.button_build.triggered.connect(self.dlg1.launch)
         
         #add button to th etoolbar
         self.toolbar.addAction(self.button_build)
@@ -127,7 +117,7 @@ class CanFlood:
         
         self.button_model.setObjectName('Model')
         self.button_model.setCheckable(False)
-        self.button_model.triggered.connect(self.dlg2.show)
+        self.button_model.triggered.connect(self.dlg2.launch)
         
         #add it
         self.toolbar.addAction(self.button_model)
@@ -142,7 +132,7 @@ class CanFlood:
         
         self.button_results.setObjectName('button_results')
         self.button_results.setCheckable(False)
-        self.button_results.triggered.connect(self.dlg3.show)
+        self.button_results.triggered.connect(self.dlg3.launch)
         
         #add
         self.toolbar.addAction(self.button_results)
@@ -176,20 +166,28 @@ class CanFlood:
         #add to the menu
         self.iface.addPluginToMenu(self.menu_name, self.action_rfda)
         
+        #=======================================================================
+        # dikes
+        #=======================================================================
+        icon = QIcon(os.path.dirname(__file__) + "/icons/dike.png")
+        self.action_dikes = QAction(QIcon(icon), 'Dike Fragility Mapper', self.iface.mainWindow())
+        self.action_dikes.triggered.connect(self.dlg_dikes.launch)
+        self.act_menu_l.append(self.action_dikes) #add for cleanup
+        
+        #add to the menu
+        self.iface.addPluginToMenu(self.menu_name, self.action_dikes)
+        
+        #=======================================================================
+        # styles
+        #=======================================================================
+        icon = QIcon(os.path.dirname(__file__) + "/icons/paint-palette.png")
+        self.action_styles = QAction(QIcon(icon), 'Add Styles', self.iface.mainWindow())
+        self.action_styles.triggered.connect(self.load_style_xml)
+        self.act_menu_l.append(self.action_styles) #add for cleanup
+        
+        #add to the menu
+        self.iface.addPluginToMenu(self.menu_name, self.action_styles)
 
-    #===========================================================================
-    # def showToolbarDataPrep(self):
-    #     
-    #     # Using exec_() creating a blocking dialog, show creates a non-blocking dialog
-    #     #self.dlg1.exec_()
-    #     self.dlg1.show()
-    # 
-    # def showToolbarProjectModelling(self):
-    #     self.dlg2.show()
-    # 
-    # def showToolbarProjectResults(self):
-    #     self.dlg3.show()
-    #===========================================================================
 
         
         
@@ -206,6 +204,30 @@ class CanFlood:
         self.iface.reloadConnections()
         
         wc1.logger.push('added %i connections'%(len(newCons_d)))
+        
+    def load_style_xml(self): #load the xml style file
+        #=======================================================================
+        #setup the logger
+        #=======================================================================
+        from hlpr.plug import logger
+        log = logger(self)
+        
+        #=======================================================================
+        # filepath
+        #=======================================================================
+        
+        fp = os.path.join(self.pars_dir, 'CanFlood.xml')
+        assert os.path.exists(fp), 'requested xml filepath does not exist: %s'%fp
+        
+        #=======================================================================
+        # add the sylte
+        #=======================================================================
+        style = QgsStyle.defaultStyle() #get the users style database
+
+        if style.importXml(fp):
+            log.push('imported styles from %s'%fp)
+        else:
+            log.error('failed to import styles')
         
     
     def unload(self):
@@ -242,7 +264,7 @@ class CanFlood:
         
 
     def run(self):
-        """Run method that performs all the real work"""
+
         # show the dialog
         self.dlg.show()
         # Run the dialog event loop
