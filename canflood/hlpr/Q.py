@@ -609,10 +609,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                 log.warning(msg)
             else:
                 raise Error(msg)
-                
-        
 
-            
         #=======================================================================
         # extract info from layer
         #=======================================================================
