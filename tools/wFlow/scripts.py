@@ -18,7 +18,7 @@ import numpy as np
 
 
 #===============================================================================
-# cf helpers
+# cf_simp helpers
 #===============================================================================
 from hlpr.logr import basic_logger
  
@@ -282,7 +282,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         self.session = session
 
-        self.cf_tmpl_fp = os.path.join(self.session.base_dir, r'canflood\_pars\CanFlood_control_01.txt')
+        self.cf_tmpl_fp = os.path.join(self.session.cf_dir, r'canflood\_pars\CanFlood_control_01.txt')
         assert os.path.exists(self.cf_tmpl_fp), self.cf_tmpl_fp
         
         
