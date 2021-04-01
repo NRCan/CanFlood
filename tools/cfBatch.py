@@ -69,11 +69,7 @@ class CFbatch(Runner): #handerl of batch CanFlood runs (build, model, results)
     #===========================================================================
     # program vars---------
     #===========================================================================
-    
 
-    
-    
-    
     meta_d = dict() #summary counter for reporting
     #===========================================================================
     # #run handles per tool
