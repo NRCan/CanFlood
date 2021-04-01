@@ -499,6 +499,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
     def load_rlay(self, fp, 
                   aoi_vlay = None,
                   logger=None):
+        
         if logger is None: logger = self.logger
         log = logger.getChild('load_rlay')
         

@@ -964,7 +964,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         # output
         #=======================================================================
         if self.write:
-            wrkr.output_ttl()
+            if len(res_ttl)>0: wrkr.output_ttl()
             wrkr.output_etype()
             if not res_df is None: wrkr.output_passet()
             
@@ -1476,7 +1476,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
     #===========================================================================
     # TOOL BOXES-------
     #===========================================================================
-    def tb_build(self,  #workflow for tutorial 1a
+    def tb_build(self,  #build tools
               pars_d=None, #single assetModel run for this workflow
               fpoly = True, #whether to build exlikes
               rlay_d=None, #optional rasters to sample
