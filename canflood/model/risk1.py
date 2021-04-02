@@ -285,7 +285,10 @@ class Risk1(RiskModel):
         # impacts only----
         #=======================================================================
         else:
-            self.res_df = bres_df
+            self.res_df = bres_df.rename(
+                columns={e[1]:e[0] for e in self.eventType_df.drop('noFail', axis=1).values})
+            
+            
             self.res_ttl  = pd.Series()
 
         
