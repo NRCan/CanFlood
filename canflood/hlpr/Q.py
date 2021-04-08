@@ -3988,6 +3988,10 @@ def vlay_rename_fields(
     #get fieldname index conversion for layer
     fni_d = {f.name():vlay.dataProvider().fieldNameIndex(f.name()) for f in vlay.fields()}
     
+    #check it
+    for k in rnm_d.keys():
+        assert k in fni_d.keys(), 'requested field \'%s\' not on layer'%k
+    
     #re-index rename request
     fiRn_d = {fni_d[k]:v for k,v in rnm_d.items()}
 

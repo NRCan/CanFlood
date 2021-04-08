@@ -120,6 +120,7 @@ class Dexpo(Qcoms, DPlotr):
         #jcolns = [self.sid, 'f0_dtag', self.cbfn, self.segln]
         miss_l =  set([dikeID, segID, 'f0_dtag', cbfn, self.ifidN]).difference(fnl)
         assert len(miss_l)==0, 'missing expected columns on dike layer: %s'%miss_l
+        assert not 'length' in [s.lower() for s in fnl], '\'length\' field not allowed on dikes layer'
         
         """try forcing
         assert 'int' in df[segID].dtype.name, 'bad dtype on dike layer %s'%segID
@@ -135,6 +136,10 @@ class Dexpo(Qcoms, DPlotr):
 
         vlay = processing.run('qgis:exportaddgeometrycolumns', d, feedback=self.feedback)['OUTPUT']
         mstore.addMapLayer(vlay)
+        
+        """
+        view(vlay)
+        """
         #rename the vield
         vlay = vlay_rename_fields(vlay, {'length':self.segln})
         mstore.addMapLayer(vlay)
