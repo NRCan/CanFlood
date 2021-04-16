@@ -199,7 +199,7 @@ class Dexpo(Qcoms, DPlotr):
                     sid = None,
                     
                     #cross profile (transect) parameters
-                    simp_dike = 2, #value to simplify dike cl by
+                    simp_dike = 0, #value to simplify dike cl by
                     dist_dike = 40, #distance along dike to draw perpindicular profiles
                     dist_trans = 100, #length (from dike cl) of transect 
                     tside = 'Left', #side of dike line to draw transect
@@ -251,7 +251,10 @@ class Dexpo(Qcoms, DPlotr):
         # simplify
         #=======================================================================
         """because transects draws at each vertex, we wanna reduce the number.
-        each vertex will still be on the original line"""
+        each vertex will still be on the original line
+        
+        NO! better to use the raw alignment... .
+        even a small simplification can move the sampling off the DTM's dike crest"""
         if simp_dike > 0:
             d = { 'INPUT' : dike_vlay, 'METHOD' : 0, 'OUTPUT' : 'TEMPORARY_OUTPUT', 
                  'TOLERANCE' : simp_dike}
