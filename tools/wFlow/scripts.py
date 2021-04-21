@@ -12,7 +12,7 @@ executing a CanFlood workflow froma python console
 #===============================================================================
 import inspect, logging, os,  datetime, shutil, gc, weakref
 
-from qgis.core import QgsCoordinateReferenceSystem, QgsMapLayerStore, QgsMapLayer
+from qgis.core import QgsCoordinateReferenceSystem, QgsMapLayerStore, QgsMapLayer, QgsVectorLayer
 import pandas as pd
 import numpy as np
 
@@ -321,6 +321,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
             prep_cf() appends 'cf_fp'
             """
             for k in self.com_hndls:
+                #'out_dir', 'name', 'tag', 'cid' ['absolute_fp', 'overwrite']
                 kwargs[k] = getattr(self, k)
             
             #colect init pars
@@ -583,7 +584,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
                f = lambda logger=None: wrkr.load_vlay(
                    os.path.join(self.base_dir, pars_d['finv_fp']), logger=logger)
                                    )
-
+        assert isinstance(finv_vlay, QgsVectorLayer), self.name
         #=======================================================================
         # execute
         #=======================================================================
@@ -812,7 +813,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         df = wrkr.write_res(res_vlay, write=self.write)
         
         if not self.write: wrkr.out_fp = 'none' #placeholder
-        wrkr.upd_cf_dtm()
+        wrkr.upd_cf_dtm(cf_fp = self.cf_fp)
         
         return df
     
@@ -1618,7 +1619,9 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
             wrkr.__exit__(*args,**kwargs)
             
         #del self.wrkr_d
-
+        
+        #remove data objects
+        del self.data_d
         
         super().__exit__(*args,**kwargs) #initilzie teh baseclass
         gc.collect()
