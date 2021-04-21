@@ -34,7 +34,7 @@ from hlpr.exceptions import QError as Error
     
 
 from hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata
-from hlpr.basic import get_valid_filename
+from hlpr.basic import get_valid_filename, view
 
 from model.modcom import Model #for data checks
 
@@ -171,6 +171,8 @@ class Preparor(Model, Qcoms):
         
         assert cid in [field.name() for field in vlay.fields()], '%s missing cid \'%s\''%(vlay.name(), cid)
         
+         
+        
         #label checks
         assert isinstance(tag, str)
 
@@ -182,12 +184,28 @@ class Preparor(Model, Qcoms):
             vlay.name(), vlay.dataProvider().featureCount()))
                 
         df = vlay_get_fdf(vlay, feedback=self.feedback)
+        
+        """
+        view(df.dtypes)
+        """
+        #check index nulls
+        bx = df[cid].isna()
+        assert not bx.any(), '%s got %i (of %i) nulls on %s'%(vlay.name(), bx.sum(), len(bx), cid)
           
-        #drop geometery indexes
+        #drop geometery indexes (e.g., fid)
         for gindx in self.invalid_cids:   
             df = df.drop(gindx, axis=1, errors='ignore')
             
+        #force type on index
+        try:
+            df.loc[:, cid] = df[cid].astype(np.int32)
+        except Exception as e:
+            raise Error('failed to typeset cid index  \'%s\' w/ int32 \n%s'%(cid, e))
         df = df.set_index(cid, drop=True)
+        
+        """
+        df.index
+        """
         
         #drop empty columns
         boolcol = df.isna().all(axis=0)

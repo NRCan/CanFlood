@@ -3,6 +3,8 @@ Created on Feb. 14, 2021
 
 @author: cefect
 
+2021-04-20: I think this is obsolete now... see wFlow
+
 CanFlood asset groups build, model, results batch runs.
 
 

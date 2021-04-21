@@ -667,7 +667,7 @@ class Model(ComWrkr,
                 continue
             
             #check it
-            assert os.path.exists(fp), '%s got pad filepath: \n    %s'%(dtag, fp)
+            assert os.path.exists(fp), '\'%s\' got pad filepath: \n    %s'%(dtag, fp)
             
             #load by type
             ext = os.path.splitext(fp)[1]
@@ -2249,9 +2249,15 @@ class Model(ComWrkr,
             self.tag, boolcol.sum(), df.columns[boolcol].tolist())
         
         assert not df.isna().all(axis=1).any()
+        
+        #=======================================================================
+        # index checks
+        #=======================================================================
+        assert 'int' in df.index.dtype.name, 'expected int type index'
         #=======================================================================
         # #cid checks
         #=======================================================================
+        
         if not df.index.name == cid:
             if not cid in df.columns:
                 raise Error('cid not found in finv_df')
@@ -2265,6 +2271,7 @@ class Model(ComWrkr,
         dxcol = self._get_finv_dxcol(df_raw)
 
         """
+        view(df_raw)
         df_raw.dtypes
         view(dxcol)
         dxcol.dtypes
@@ -2341,7 +2348,8 @@ class Model(ComWrkr,
         df1.columns = mdex
         df1.index.name = df.index.name
         
-        assert np.array_equal(df1.index, df.index)
+        if not np.array_equal(df1.index, df.index):
+            raise Error('bad index')
         """
         view(df1)
         df1.dtypes

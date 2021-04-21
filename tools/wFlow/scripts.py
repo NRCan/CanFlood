@@ -83,7 +83,7 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
     #===========================================================================
     # program vars
     #===========================================================================
-
+    crsid = None #set forr your project?
 
 
     def __init__(self,
@@ -175,7 +175,7 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
             kwargs[k] = getattr(self, k)
 
         #init
-        kstr = ''.join(['\n    %s: %s'%(k,v) for k,v in kwargs.items()])
+        kstr = ''.join(['\n    %s: %s'%(k,v) for k,v in kwargs.items()]) #plot string
         log.debug('building w/ %s'%kstr)
         runr = WorkFlow(logger=self.logger, session=self,**kwargs)
 
@@ -258,25 +258,16 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         # precheck
         #=======================================================================
         assert isinstance(self.name, str), 'must overwrite the \'name\' attribute with a subclass'
-        
-        #=======================================================================
-        # update q handles
-        #=======================================================================
 
-        
         #=======================================================================
         # init cascade
         #=======================================================================
 
-        
         super().__init__(out_dir=os.path.join(session.out_dir, self.name),
                          tag = '%s'%datetime.datetime.now().strftime('%Y%m%d'),
                          crsid=self.crsid, #overrwrite the default with your default
-
-                         
                          **kwargs) #Session -> Qcoms -> ComWrkr
-                
-                
+
         #=======================================================================
         # attachments
         #=======================================================================
@@ -293,8 +284,6 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         
         self.wrkr_d = dict() #container for loaded workers
         
-
-        
         #=======================================================================
         # checks
         #=======================================================================
@@ -308,6 +297,9 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
 
                   **kwargs
                   ): 
+        #=======================================================================
+        # defaults
+        #=======================================================================
         if logger is None: logger=self.logger
         log = logger.getChild('get_wrkr')
         cn =  Worker.__name__
@@ -531,7 +523,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         
         return cf_fp
     
-    def prep_finvConstruct(self, 
+    def prep_finvConstruct(self, #convert data to nest like
                    pars_d,
                    nest_data = dict(),
                    miti_data = dict(),
@@ -725,8 +717,10 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         
         if logger is None: logger=self.logger
         log = logger.getChild('rsamp_haz')
+        assert 'raster_dir' in pars_d, '%s missing raster_dir'%self.name
         
         wrkr = self._get_wrkr(Rsamp)
+        
         
         #=======================================================================
         # load the data
@@ -1151,6 +1145,12 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
                     dkey_tab='r_passet',
                     rkwargs=None,
                     ):
+        """to run djoin on L2 dmg impacts only:
+            pass the following tot his caller:
+                    dkey_tab = 'dmgs'
+                    rkwargs={'relabel':None}
+                """
+            
         #=======================================================================
         # defaults
         #=======================================================================
@@ -1510,7 +1510,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         cf_fp = self.prep_cf(pars_d, logger=log) #setuip the control file
         
-        if len(finvConstructKwargs)>0:
+        if len(finvConstructKwargs)>0: #convert data to nest like
             self.prep_finvConstruct(pars_d, **finvConstructKwargs)
         
         res_d['finv'] = self.prep_finv(pars_d, logger=log)
@@ -1524,6 +1524,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         if len(rsampPrepKwargs)>0:
             self.rsamp_prep(pars_d, logger=log, **rsampPrepKwargs)
+            
         res_d['expos'] = self.rsamp_haz(pars_d, logger=log, rlay_d=rlay_d)
         
         #=======================================================================
