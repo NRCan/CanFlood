@@ -1000,14 +1000,18 @@ class Model(ComWrkr,
 
         
         df_raw = self.raw_d[dtag]
-        assert df_raw.columns.dtype.char == 'O','bad event names on %s'%dtag
-        assert df_raw.index.name==self.cid, 'expected first column to be a \'%s\' index'%self.cid
+        
+
         df = df_raw.sort_index(axis=1).sort_index(axis=0)
         #======================================================================
         # postcheck
         #======================================================================
+        assert df.columns.dtype.char == 'O','bad event names on %s'%dtag
+        assert df.index.name==self.cid, 'expected first column to be a \'%s\' index'%self.cid
+        assert df.index.is_unique, 'got non-unique index \'%s\''%self.cid
+        
         """
-        NO! exlikes generally is shorter
+        exlikes generally is shorter
         allowing the expos to be larger than the finv 
         
         """
@@ -1037,9 +1041,7 @@ class Model(ComWrkr,
             
             boolcol = ~pd.Series(index=df.columns, dtype=bool) #all trues
         
-        
-
-            
+ 
         #======================================================================
         # slice
         #======================================================================
@@ -1062,7 +1064,8 @@ class Model(ComWrkr,
             log.warning('\'%s\' got %i (of %i) null values'%(
                 dtag, booldf.sum().sum(), booldf.size))
         
-        assert np.array_equal(self.cindex, df.index), 'cid mismatch'
+        if not np.array_equal(self.cindex, df.index):
+            raise Error('cid mismatch')
         
 
         if check_monot and 'evals' in self.data_d:
@@ -2254,6 +2257,7 @@ class Model(ComWrkr,
         # index checks
         #=======================================================================
         assert 'int' in df.index.dtype.name, 'expected int type index'
+        assert df.index.is_unique, '%s got non-unique index'%self.name
         #=======================================================================
         # #cid checks
         #=======================================================================

@@ -920,6 +920,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
     def risk1(self,
               pars_d=None,
               logger=None,
+              plot=None, #for impact only runs we usually pass False here
               rkwargs = None, #flow control keys for this run
               ): #run risk1
         #=======================================================================
@@ -928,6 +929,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         if logger is None: logger=self.logger
         log=logger.getChild('risk1')
         if pars_d is None: pars_d = self.pars_d
+        if plot is None: plot=self.plot
         
         
         #=======================================================================
@@ -939,7 +941,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         if rkwargs is None: rkwargs = self._get_kwargs(wrkr.__class__.__name__)
         
 
-        wrkr.setup_fromData(self.data_d) #setup w/ the pre-loaded data
+        wrkr.setup_fromData(self.data_d, logger=log) #setup w/ the pre-loaded data
         
         #=======================================================================
         # execute
@@ -949,7 +951,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         # plots
         #=======================================================================
-        if self.plot:
+        if plot:
             ttl_df = wrkr.set_ttl(tlRaw_df=res_ttl)
             for y1lab in ['AEP', 'impacts']:
                 fig = wrkr.plot_riskCurve(ttl_df, y1lab=y1lab)
