@@ -2709,7 +2709,8 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         
         view(ddf)
         """        
-        sdf['dmg_mono']=pd.DataFrame(np.diff(ddf)>=0, index=sdf.index).all(axis=1)
+            
+        sdf['dmg_mono']=pd.Series({k:np.all(np.diff(ser.dropna())>=0) for k, ser in ddf.iterrows()})
         
         sdf['dep_mono']=pd.Series({i:np.all(np.diff(row.dropna().index.tolist())>0) for i, row in ddf.iterrows()})
         

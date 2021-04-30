@@ -3,7 +3,8 @@ Created on Feb. 8, 2021
 
 @author: cefect
 
-converting 'Depth Damage Functions.xlsx' to CanFlood format
+converting 'Depth Damage Functions.xlsx' to CanFlood format 
+    from NIcky's spreadsheet
 '''
 #===============================================================================
 # imports---------
