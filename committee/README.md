@@ -2,6 +2,21 @@
 
 [Terms of Reference](https://github.com/IBIGroupCanWest/CanFlood/blob/master/committee/Terms%20of%20Reference%20CanFlood_EN.docx)
 
+## Meeting 3
+Thank you everyone for your participation! 
+
+Here is a [link to the recording](https://drive.google.com/file/d/1TK2bvfw-cVxONJwQ6JyyjxFBtWfogkbU/view?usp=sharing)
+
+Here is a [link to the presentation](https://github.com/IBIGroupCanWest/CanFlood/blob/master/committee/tasks/CanFlood%20-%20committee%20meet%203%20-%20presentation.pdf)
+
+
+### Thank You!
+Thank you again for your detailed review of the draft CanFlood software. Your feedback was invaluable, and the time you spent reviewing the tool is appreciated. 
+
+If you have any difficulties with the tool, please share them on the [Issues Tab](https://github.com/IBIGroupCanWest/CanFlood/issues) to help future users benefit from our conversations. You can also use this forum to let us know if you have any issues or further suggestions for development or the manual. We will be updating the manual over the next several weeks based on your feedback before the release of the tool.
+
+The beta tool (Version 1.0) will be released at the end of March, and a webinar will be scheduled to share the tool with a broader audience. Note that the tool is open source, so additions and changes can be coded by anyone, including you! We are still working out our maintenance and support plans, but please consider yourself a potential contributor.
+
 ## Meeting 2
 
 Here is a [link to the presentation](https://github.com/IBIGroupCanWest/CanFlood/blob/master/committee/tasks/02/CanFlood%20-%20commitee%20meet%202%20(2021%2001%2028).pptx.pdf)
