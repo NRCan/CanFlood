@@ -27,7 +27,7 @@ changelog= 1.0.1 [2021-05] tweak dikes.vuln, update graphics, update links, test
 # Tags are comma separated with spaces allowed
 tags=flood risk, dikes, levees, annualized loss, flood, model
 
-homepage=https://github.com/IBIGroupCanWest/CanFlood
+homepage=https://github.com/NRCan/CanFlood
 category=Plugins
 icon=icons/logo_23x23.png
 # experimental flag
