@@ -1,7 +1,7 @@
 ﻿# CanFlood
 Flood Risk modelling toolbox for Canada
 
-## Beta 1.0.0 Release
+## Beta 1.0 Release
 
 [Launch Party!](https://www.ibiviz.com/CanFlood/)
 
