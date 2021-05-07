@@ -1,11 +1,11 @@
 ﻿# CanFlood
 Flood Risk modelling toolbox for Canada
 
-## Beta 1.0.0 Release
+## Beta 1.0 Release
 
 [Launch Party!](https://www.ibiviz.com/CanFlood/)
 
-Updated and tested against QGIS 3.16.4
+Updated and tested against QGIS 3.16.6
 
 We welcome/encourage any comments, bugs, or issues you have or find. Please create a GitHub 'issue' ticket (on the issue tab) to let us know about these things.
 
