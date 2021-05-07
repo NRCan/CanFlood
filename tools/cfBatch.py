@@ -3,6 +3,8 @@ Created on Feb. 14, 2021
 
 @author: cefect
 
+2021-04-20: I think this is obsolete now... see wFlow
+
 CanFlood asset groups build, model, results batch runs.
 
 
@@ -69,11 +71,7 @@ class CFbatch(Runner): #handerl of batch CanFlood runs (build, model, results)
     #===========================================================================
     # program vars---------
     #===========================================================================
-    
 
-    
-    
-    
     meta_d = dict() #summary counter for reporting
     #===========================================================================
     # #run handles per tool

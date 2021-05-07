@@ -499,6 +499,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
     def load_rlay(self, fp, 
                   aoi_vlay = None,
                   logger=None):
+        
         if logger is None: logger = self.logger
         log = logger.getChild('load_rlay')
         
@@ -609,10 +610,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                 log.warning(msg)
             else:
                 raise Error(msg)
-                
-        
 
-            
         #=======================================================================
         # extract info from layer
         #=======================================================================
@@ -3989,6 +3987,10 @@ def vlay_rename_fields(
     
     #get fieldname index conversion for layer
     fni_d = {f.name():vlay.dataProvider().fieldNameIndex(f.name()) for f in vlay.fields()}
+    
+    #check it
+    for k in rnm_d.keys():
+        assert k in fni_d.keys(), 'requested field \'%s\' not on layer'%k
     
     #re-index rename request
     fiRn_d = {fni_d[k]:v for k,v in rnm_d.items()}

@@ -12,13 +12,13 @@ executing a CanFlood workflow froma python console
 #===============================================================================
 import inspect, logging, os,  datetime, shutil, gc, weakref
 
-from qgis.core import QgsCoordinateReferenceSystem, QgsMapLayerStore, QgsMapLayer
+from qgis.core import QgsCoordinateReferenceSystem, QgsMapLayerStore, QgsMapLayer, QgsVectorLayer
 import pandas as pd
 import numpy as np
 
 
 #===============================================================================
-# cf helpers
+# cf_simp helpers
 #===============================================================================
 from hlpr.logr import basic_logger
  
@@ -83,7 +83,7 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
     #===========================================================================
     # program vars
     #===========================================================================
-
+    crsid = None #set forr your project?
 
 
     def __init__(self,
@@ -175,7 +175,7 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
             kwargs[k] = getattr(self, k)
 
         #init
-        kstr = ''.join(['\n    %s: %s'%(k,v) for k,v in kwargs.items()])
+        kstr = ''.join(['\n    %s: %s'%(k,v) for k,v in kwargs.items()]) #plot string
         log.debug('building w/ %s'%kstr)
         runr = WorkFlow(logger=self.logger, session=self,**kwargs)
 
@@ -258,31 +258,22 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         # precheck
         #=======================================================================
         assert isinstance(self.name, str), 'must overwrite the \'name\' attribute with a subclass'
-        
-        #=======================================================================
-        # update q handles
-        #=======================================================================
 
-        
         #=======================================================================
         # init cascade
         #=======================================================================
 
-        
         super().__init__(out_dir=os.path.join(session.out_dir, self.name),
                          tag = '%s'%datetime.datetime.now().strftime('%Y%m%d'),
                          crsid=self.crsid, #overrwrite the default with your default
-
-                         
                          **kwargs) #Session -> Qcoms -> ComWrkr
-                
-                
+
         #=======================================================================
         # attachments
         #=======================================================================
         self.session = session
 
-        self.cf_tmpl_fp = os.path.join(self.session.base_dir, r'canflood\_pars\CanFlood_control_01.txt')
+        self.cf_tmpl_fp = os.path.join(self.session.cf_dir, r'canflood\_pars\CanFlood_control_01.txt')
         assert os.path.exists(self.cf_tmpl_fp), self.cf_tmpl_fp
         
         
@@ -292,8 +283,6 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         self.data_d = dict() #empty container for data
         
         self.wrkr_d = dict() #container for loaded workers
-        
-
         
         #=======================================================================
         # checks
@@ -308,6 +297,9 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
 
                   **kwargs
                   ): 
+        #=======================================================================
+        # defaults
+        #=======================================================================
         if logger is None: logger=self.logger
         log = logger.getChild('get_wrkr')
         cn =  Worker.__name__
@@ -329,6 +321,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
             prep_cf() appends 'cf_fp'
             """
             for k in self.com_hndls:
+                #'out_dir', 'name', 'tag', 'cid' ['absolute_fp', 'overwrite']
                 kwargs[k] = getattr(self, k)
             
             #colect init pars
@@ -531,7 +524,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         
         return cf_fp
     
-    def prep_finvConstruct(self, 
+    def prep_finvConstruct(self, #convert data to nest like
                    pars_d,
                    nest_data = dict(),
                    miti_data = dict(),
@@ -591,7 +584,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
                f = lambda logger=None: wrkr.load_vlay(
                    os.path.join(self.base_dir, pars_d['finv_fp']), logger=logger)
                                    )
-
+        assert isinstance(finv_vlay, QgsVectorLayer), self.name
         #=======================================================================
         # execute
         #=======================================================================
@@ -725,8 +718,10 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         
         if logger is None: logger=self.logger
         log = logger.getChild('rsamp_haz')
+        assert 'raster_dir' in pars_d, '%s missing raster_dir'%self.name
         
         wrkr = self._get_wrkr(Rsamp)
+        
         
         #=======================================================================
         # load the data
@@ -818,7 +813,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         df = wrkr.write_res(res_vlay, write=self.write)
         
         if not self.write: wrkr.out_fp = 'none' #placeholder
-        wrkr.upd_cf_dtm()
+        wrkr.upd_cf_dtm(cf_fp = self.cf_fp)
         
         return df
     
@@ -925,6 +920,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
     def risk1(self,
               pars_d=None,
               logger=None,
+              plot=None, #for impact only runs we usually pass False here
               rkwargs = None, #flow control keys for this run
               ): #run risk1
         #=======================================================================
@@ -933,6 +929,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         if logger is None: logger=self.logger
         log=logger.getChild('risk1')
         if pars_d is None: pars_d = self.pars_d
+        if plot is None: plot=self.plot
         
         
         #=======================================================================
@@ -944,7 +941,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         if rkwargs is None: rkwargs = self._get_kwargs(wrkr.__class__.__name__)
         
 
-        wrkr.setup_fromData(self.data_d) #setup w/ the pre-loaded data
+        wrkr.setup_fromData(self.data_d, logger=log) #setup w/ the pre-loaded data
         
         #=======================================================================
         # execute
@@ -954,7 +951,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         # plots
         #=======================================================================
-        if self.plot:
+        if plot:
             ttl_df = wrkr.set_ttl(tlRaw_df=res_ttl)
             for y1lab in ['AEP', 'impacts']:
                 fig = wrkr.plot_riskCurve(ttl_df, y1lab=y1lab)
@@ -964,7 +961,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         # output
         #=======================================================================
         if self.write:
-            wrkr.output_ttl()
+            if len(res_ttl)>0: wrkr.output_ttl()
             wrkr.output_etype()
             if not res_df is None: wrkr.output_passet()
             
@@ -1151,6 +1148,12 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
                     dkey_tab='r_passet',
                     rkwargs=None,
                     ):
+        """to run djoin on L2 dmg impacts only:
+            pass the following tot his caller:
+                    dkey_tab = 'dmgs'
+                    rkwargs={'relabel':None}
+                """
+            
         #=======================================================================
         # defaults
         #=======================================================================
@@ -1476,7 +1479,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
     #===========================================================================
     # TOOL BOXES-------
     #===========================================================================
-    def tb_build(self,  #workflow for tutorial 1a
+    def tb_build(self,  #build tools
               pars_d=None, #single assetModel run for this workflow
               fpoly = True, #whether to build exlikes
               rlay_d=None, #optional rasters to sample
@@ -1510,7 +1513,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         cf_fp = self.prep_cf(pars_d, logger=log) #setuip the control file
         
-        if len(finvConstructKwargs)>0:
+        if len(finvConstructKwargs)>0: #convert data to nest like
             self.prep_finvConstruct(pars_d, **finvConstructKwargs)
         
         res_d['finv'] = self.prep_finv(pars_d, logger=log)
@@ -1524,6 +1527,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         if len(rsampPrepKwargs)>0:
             self.rsamp_prep(pars_d, logger=log, **rsampPrepKwargs)
+            
         res_d['expos'] = self.rsamp_haz(pars_d, logger=log, rlay_d=rlay_d)
         
         #=======================================================================
@@ -1617,7 +1621,9 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
             wrkr.__exit__(*args,**kwargs)
             
         #del self.wrkr_d
-
+        
+        #remove data objects
+        del self.data_d
         
         super().__exit__(*args,**kwargs) #initilzie teh baseclass
         gc.collect()

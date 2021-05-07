@@ -667,7 +667,7 @@ class Model(ComWrkr,
                 continue
             
             #check it
-            assert os.path.exists(fp), '%s got pad filepath: \n    %s'%(dtag, fp)
+            assert os.path.exists(fp), '\'%s\' got pad filepath: \n    %s'%(dtag, fp)
             
             #load by type
             ext = os.path.splitext(fp)[1]
@@ -1000,14 +1000,18 @@ class Model(ComWrkr,
 
         
         df_raw = self.raw_d[dtag]
-        assert df_raw.columns.dtype.char == 'O','bad event names on %s'%dtag
-        assert df_raw.index.name==self.cid, 'expected first column to be a \'%s\' index'%self.cid
+        
+
         df = df_raw.sort_index(axis=1).sort_index(axis=0)
         #======================================================================
         # postcheck
         #======================================================================
+        assert df.columns.dtype.char == 'O','bad event names on %s'%dtag
+        assert df.index.name==self.cid, 'expected first column to be a \'%s\' index'%self.cid
+        assert df.index.is_unique, 'got non-unique index \'%s\''%self.cid
+        
         """
-        NO! exlikes generally is shorter
+        exlikes generally is shorter
         allowing the expos to be larger than the finv 
         
         """
@@ -1037,9 +1041,7 @@ class Model(ComWrkr,
             
             boolcol = ~pd.Series(index=df.columns, dtype=bool) #all trues
         
-        
-
-            
+ 
         #======================================================================
         # slice
         #======================================================================
@@ -1062,7 +1064,8 @@ class Model(ComWrkr,
             log.warning('\'%s\' got %i (of %i) null values'%(
                 dtag, booldf.sum().sum(), booldf.size))
         
-        assert np.array_equal(self.cindex, df.index), 'cid mismatch'
+        if not np.array_equal(self.cindex, df.index):
+            raise Error('cid mismatch')
         
 
         if check_monot and 'evals' in self.data_d:
@@ -2249,9 +2252,16 @@ class Model(ComWrkr,
             self.tag, boolcol.sum(), df.columns[boolcol].tolist())
         
         assert not df.isna().all(axis=1).any()
+        
+        #=======================================================================
+        # index checks
+        #=======================================================================
+        assert 'int' in df.index.dtype.name, 'expected int type index'
+        assert df.index.is_unique, '%s got non-unique index'%self.name
         #=======================================================================
         # #cid checks
         #=======================================================================
+        
         if not df.index.name == cid:
             if not cid in df.columns:
                 raise Error('cid not found in finv_df')
@@ -2265,6 +2275,7 @@ class Model(ComWrkr,
         dxcol = self._get_finv_dxcol(df_raw)
 
         """
+        view(df_raw)
         df_raw.dtypes
         view(dxcol)
         dxcol.dtypes
@@ -2341,7 +2352,8 @@ class Model(ComWrkr,
         df1.columns = mdex
         df1.index.name = df.index.name
         
-        assert np.array_equal(df1.index, df.index)
+        if not np.array_equal(df1.index, df.index):
+            raise Error('bad index')
         """
         view(df1)
         df1.dtypes
@@ -2697,7 +2709,8 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         
         view(ddf)
         """        
-        sdf['dmg_mono']=pd.DataFrame(np.diff(ddf)>=0, index=sdf.index).all(axis=1)
+            
+        sdf['dmg_mono']=pd.Series({k:np.all(np.diff(ser.dropna())>=0) for k, ser in ddf.iterrows()})
         
         sdf['dep_mono']=pd.Series({i:np.all(np.diff(row.dropna().index.tolist())>0) for i, row in ddf.iterrows()})
         

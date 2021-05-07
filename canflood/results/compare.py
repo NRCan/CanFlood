@@ -126,7 +126,7 @@ class Cmpr(RiskPlotr):
 
 
             # add to family
-            assert sWrkr.name not in d, 'scenario \'%s\' already loaded!'%sWrkr.name
+            assert sWrkr.name not in d, 'scenario \'%s\' already loaded!...\'name\' must be unique'%sWrkr.name
     
             d[sWrkr.name] = sWrkr
             

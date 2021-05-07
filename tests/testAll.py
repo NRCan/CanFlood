@@ -12,10 +12,11 @@ testing workflows rather than models
 each test method is 1 workflow
     each call should be for one set of inputs
     
-let's also use pickles 
+using pickels to hold comparison data
 
-NO! we don't need the fancy multi-asset handling
-    using the CFbatch to link together all the tools
+see below for instructions on use
+
+
 '''
 
 #===============================================================================
@@ -252,9 +253,7 @@ class Test_wf_dikes(TestParent):
 
         #loop and compare each
         for k, (valC, valT) in chk_d.items():
-            """
-            valC.loc[4301, '0200_noFail.tif']=0
-            """
+
             nm = '%s.%s'%(self.name, k)
             
             self._df_chks(valC, valT, nm)
@@ -573,14 +572,18 @@ class LineL1_t(L1_t):
                 'finv_fp':r'tutorials\4\finv_tut4b_lines.gpkg',
                         })
 
-wFlow_l = [Tut1a_t, 
-           #Tut2a_t, #these are mostly redundant w/ 2c
-           #Tut2b_t, 
+wFlow_l = [
+        Tut1a_t, 
+           #Tut2a_t,Tut2b_t, #these are mostly redundant w/ 2c
+            
            Tut2c_mutex_t, 
            Tut2c_max_t,  #compares with Tut2c_mutex_t. write=True
-           Tut4a_t, Tut4b_t, Tut5a_t, Tut6a_t, PolyL1_t, LineL1_t]
+           Tut4a_t, Tut4b_t, Tut5a_t, 
+           Tut6a_t, 
+           PolyL1_t, LineL1_t,
+           ]
 
-#wFlow_l = [PolyL1_t]
+ 
     
     
 
@@ -588,13 +591,20 @@ if __name__ == '__main__':
     
     """
     #===========================================================================
-    # INSTRUCTIONS: BUILDING TESTS
+    # INSTRUCTIONS: BUILDING NEW TESTS
     #===========================================================================
     build a WorkFlow subclass of the workflow you want to test
     
     wrap it with a WorkFlow_t to add teh test methods
     
     run the session to build_pickels()
+    
+    #===========================================================================
+    # INSTRUCTIONS: UPDATING TEST COMPARISON DATAT
+    #===========================================================================
+    comment out all the other tests in wFlow_l
+    fix comments below to only execute build_picles()
+    revert comments
     
     #===========================================================================
     # INSTRUCTIONS: RUNNING TESTS
@@ -608,7 +618,7 @@ if __name__ == '__main__':
     #===========================================================================
     # build test pickesl
     #===========================================================================
-    #ofp = wrkr.build_pickels(wFlow_l)
+    #ofp = wrkr.build_pickels(wFlow_l) #update or write test pickle
     
     #===========================================================================
     # run tests

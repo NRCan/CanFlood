@@ -36,27 +36,7 @@ from hlpr.exceptions import QError as Error
 #===============================================================================
 # setup matplotlib
 #===============================================================================
-
-#===============================================================================
-# import matplotlib
-# matplotlib.use('Qt5Agg') #sets the backend (case sensitive)
-# import matplotlib.pyplot as plt
-# 
-# #set teh styles
-# plt.style.use('default')
-# 
-# #font
-# matplotlib_font = {
-#         'family' : 'serif',
-#         'weight' : 'normal',
-#         'size'   : 8}
-# 
-# matplotlib.rc('font', **matplotlib_font)
-# matplotlib.rcParams['axes.titlesize'] = 10 #set the figure title size
-# 
-# #spacing parameters
-# matplotlib.rcParams['figure.autolayout'] = False #use tight layout
-#===============================================================================
+ 
     
 
 #from hlpr.basic import ComWrkr
@@ -176,9 +156,12 @@ class CurvePlotr(DFunc, Plotr):
                   pgCn='plot_group',
                   pfCn='plot_f',
                   
-                
+                  title=None,
                   
+                
+                  lib_as_df = False, #indicator for format of passed lib
                   logger=None,
+                  
                   **lineKwargs
                   ):
         
@@ -188,6 +171,8 @@ class CurvePlotr(DFunc, Plotr):
         #======================================================================
         if logger is None: logger=self.logger
         log = logger.getChild('plotGroup')
+        
+        if title is None: title='%s vFunc plot'%(self.tag)
         
 
         
@@ -202,15 +187,13 @@ class CurvePlotr(DFunc, Plotr):
             #re-tag the columns
 
             colns = hndl_df.iloc[0,:].values
-            assert pd.isnull(colns[0]), 'expect the first _smry column to not have a label'
-            """
-            todo: make this more flexible
-            """
-            colns[0] = 'cName'
-            hndl_df.columns = colns
-            
-            #drop the old columns
-            hndl_df = hndl_df.set_index('cName', drop=False).iloc[1:,:]
+            if pd.isnull(colns[0]):
+
+                colns[0] = 'cName'
+                hndl_df.columns = colns
+                
+                #drop the old columns
+                hndl_df = hndl_df.set_index('cName', drop=False).iloc[1:,:]
 
             
    
@@ -233,12 +216,12 @@ class CurvePlotr(DFunc, Plotr):
         #=======================================================================
         # convert clib
         #=======================================================================
-        d = dict()
-        for cName, curve_df in cLib_d.items():
-            d[cName] = curve_df.set_index(0, drop=True).iloc[:,0].to_dict()
-            
-        cLib_d = d
-            
+        if lib_as_df:
+            for cName, data in cLib_d.copy().items():
+                if isinstance(data, pd.DataFrame):
+                    cLib_d[cName] = data.set_index(0, drop=True).iloc[:,0].to_dict()
+
+
         #=======================================================================
         # precheck
         #=======================================================================
@@ -302,18 +285,19 @@ class CurvePlotr(DFunc, Plotr):
                 # loop and plot
                 #===============================================================
                 ax = None
+                marker = itertools.cycle(('+', '1', 'o', '2', 'x', '3', '4'))
                 
                 for cName, row in pdf.iterrows():
                     #get this curve
                     crv_d = cLib_d[cName]
                     
-                    ax = self.plotCurve(crv_d, ax=ax,**lineKwargs)
+                    ax = self.plotCurve(crv_d, ax=ax,marker=next(marker),**lineKwargs)
                     
                 #post format
                 fig = ax.figure
-                fig.suptitle(pgroup)
+                fig.suptitle(pgroup + title)
                 ax.legend()
-                    
+                ax.grid()
                 #===============================================================
                 # group loop
                 #===============================================================
@@ -381,16 +365,7 @@ class CurvePlotr(DFunc, Plotr):
         # assemble parameters
         #=======================================================================
         pars_d = dict()
-        #=======================================================================
-        # for par, cpar in {'ylab':'exposure_units', 
-        #                   'xlab':'impact_var',
-        #                   'color':'color'}.items():
-        #     
-        #     if cpar in crv_d:
-        #         pars_d[par]=crv_d[cpar]
-        #     else:
-        #         pars_d[par]=None
-        #=======================================================================
+ 
         
         #add fillers
         cd1 = crv_d.copy()

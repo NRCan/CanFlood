@@ -141,13 +141,13 @@ class Risk1(RiskModel):
 
     def run(self,
             res_per_asset=False, #whether to generate results per asset
-            
+            calc_risk=True, #whether to run integration algo
             ):
         """
         main caller for L1 risk model
         
         TODO: clean this up and divide into more functions
-            need to support impact only runs
+            extend impact only support to GUI and tests
         """
         #======================================================================
         # defaults
@@ -169,14 +169,17 @@ class Risk1(RiskModel):
         #identifier for depth columns
         #dboolcol = ~ddf.columns.isin([cid, bid])
         log.info('running on %i assets and %i events'%(len(bdf), len(ddf.columns)-2))
-        
         self.feedback.upd_prog(20, method='raw')
-        
 
-
+        #=======================================================================
+        # clean exposure
+        #=======================================================================
         boolcol = ddf.columns.isin([bid, cid])
         
         ddf1 = ddf.loc[:, ~boolcol]
+        
+        if calc_risk:
+            assert len(ddf1.columns)>3, 'must pass at least 3 exposure columns to calculate ead'
         
         #======================================================================
         # convert exposures to binary
@@ -255,41 +258,51 @@ class Risk1(RiskModel):
         assert np.array_equal(bres_df.columns.values, aep_ser.unique()), 'column name problem'
         _ = self.check_monot(bres_df)
         self.feedback.upd_prog(10, method='append')
+        
         #======================================================================
         # get ead per asset------
         #======================================================================
-        if res_per_asset:
+        if calc_risk:
+            if res_per_asset:
+                res_df = self.calc_ead(bres_df)
+                            
+            else:
+                res_df = None
+            self.res_df = res_df
+            self.feedback.upd_prog(10, method='append')
+            #======================================================================
+            # totals
+            #======================================================================        
+            res_ttl = self.calc_ead(bres_df.sum(axis=0).to_frame().T,
+                                    drop_tails=False,
+                                    ).T #1 column df
             
-            res_df = self.calc_ead(bres_df)
-                        
+            self.ead_tot = res_ttl.iloc[:,0]['ead'] #set for plot_riskCurve()
+            
+            self.res_ttl = self._fmt_resTtl(res_ttl)
+            self._set_valstr()
+        #=======================================================================
+        # impacts only----
+        #=======================================================================
         else:
-            res_df = None
-        self.res_df = res_df
-        self.feedback.upd_prog(10, method='append')
-        #======================================================================
-        # totals
-        #======================================================================        
-        res_ttl = self.calc_ead(bres_df.sum(axis=0).to_frame().T,
-                                drop_tails=False,
-                                ).T #1 column df
+            self.res_df = bres_df.rename(
+                columns={e[1]:e[0] for e in self.eventType_df.drop('noFail', axis=1).values})
+            
+            
+            self.res_ttl  = pd.Series()
+
         
-        self.ead_tot = res_ttl.iloc[:,0]['ead'] #set for plot_riskCurve()
-        
-        """old plotters
-        self.res_ser = res_ttl.copy() #set for risk_plot()
-        """
-        
-        log.info('finished on %i assets and %i damage cols'%(len(bres_df), len(res_ttl)))
+        log.info('finished on %i assets and %i damage cols'%(len(bres_df), len(self.res_ttl)))
         #=======================================================================
         # #format total results for writing
         #=======================================================================
-        self.res_ttl = self._fmt_resTtl(res_ttl)
+        
             
         
         #=======================================================================
         # wrap
         #=======================================================================
-        self._set_valstr()
+        
 
         log.info('finished')
 
