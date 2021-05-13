@@ -5,7 +5,7 @@
 [general]
 name=CanFlood
 qgisMinimumVersion=3.16
-qgisMaximumVersion=3.18
+qgisMaximumVersion=3.99
 description=Flood risk modelling toolbox
 version=1.0.1
 author=Seth Bryant
