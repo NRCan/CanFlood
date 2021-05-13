@@ -30,7 +30,7 @@ tags=flood risk, dikes, levees, annualized loss, flood, model
 
 homepage=https://github.com/NRCan/CanFlood
 category=Plugins
-icon=icons/logo_20210419_23x23.png
+icon=icons/logo_20210510_22x22.png
 # experimental flag
 experimental=False
 
