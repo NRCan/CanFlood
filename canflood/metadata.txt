@@ -20,7 +20,8 @@ repository=https://github.com/NRCan/CanFlood
 
 hasProcessingProvider=no
 
-changelog= 1.0.1 [2021-05] tweak dikes.vuln, update graphics, update links, test 3.16.6
+changelog= 1.0.2 [2021-05] increase qgisMaximumVersion limit
+ - 1.0.1 [2021-05] tweak dikes.vuln, update graphics, update links, test 3.16.6
  - 1.0.0 [2021-03] migrate to QGIS 3.16. public release.
 
 
