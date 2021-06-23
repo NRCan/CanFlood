@@ -84,7 +84,7 @@ class CurvePlotr(DFunc, Plotr):
         self._init_plt()
         self.logger.info('init finished')
         
-    def load_data(self, fp):
+    def load_data(self, fp): #load a curve set
         log = self.logger.getChild('load_data')
         #precheck
         assert os.path.exists(fp)

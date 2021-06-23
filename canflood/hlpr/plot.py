@@ -51,7 +51,7 @@ class Plotr(ComWrkr):
     #===========================================================================
     # controls
     #===========================================================================
-
+    set_cnt_max = 10 #maximum number of datasets to allow on a plot
     
     #===========================================================================
     # defaults
@@ -320,12 +320,11 @@ class Plotr(ComWrkr):
         fig.suptitle(title)
         ax1.set_xlabel(xlab)
         ax1.set_ylabel(ylab)
-        """
-        plt.show()
-        matplotlib.__version__ 
-        pd.__version__
-        """
-
+ 
+        #check for max
+        if len(data) > self.set_cnt_max:
+            log.warning('data set count exceeds max: %i... skipping'%len(data))
+            return fig
         
         #=======================================================================
         # plot thie histogram
@@ -424,13 +423,11 @@ class Plotr(ComWrkr):
         fig.suptitle(title)
         ax1.set_xlabel(xlab)
         ax1.set_ylabel(ylab)
-        """
-        plt.show()
-        matplotlib.__version__ 
-        pd.__version__
-        """
 
-        
+        #check for max
+        if len(data) > self.set_cnt_max:
+            log.warning('data set count exceeds max: %i... skipping'%len(data))
+            return fig
         #=======================================================================
         # plot thie histogram
         #=======================================================================
@@ -438,8 +435,7 @@ class Plotr(ComWrkr):
             data, bins='auto', stacked=False, label=df.columns.to_list(),
             alpha=0.9,
             **pkwargs)
-        
-        
+
         #=======================================================================
         # post
         #=======================================================================

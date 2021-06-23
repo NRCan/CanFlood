@@ -131,6 +131,9 @@ class Cmpr(RiskPlotr):
             d[sWrkr.name] = sWrkr
             
             log.debug('loaded \'%s\''%sWrkr.name)
+            
+
+            
         
         self.sWrkr_d = d
         log.info('compiled %i scenarios: %s'%(len(self.sWrkr_d), list(self.sWrkr_d.keys())))
@@ -252,12 +255,12 @@ class Cmpr(RiskPlotr):
                     new_wrkr=True, #whether to build a new worker
                     ):
         
-        log = self.logger.getChild('collect_ttls')
+        log = self.logger.getChild('build_composite')
         if sWrkr_d is None: sWrkr_d = wdict(self.sWrkr_d)
        
         #more logicla for single plots
         self.name=self.tag
-        
+        log.debug('on %i'%len(sWrkr_d))
         #=======================================================================
         # collect data
         #=======================================================================
@@ -265,6 +268,9 @@ class Cmpr(RiskPlotr):
         ead_d = dict()
         for childName, sWrkr in sWrkr_d.items():
             dfi_raw = sWrkr.data_d['r_ttl'].copy()  #set by prep_ttl() 
+            """
+            view(dfi_raw)
+            """
             dfi = dfi_raw.loc[:, 'impacts'].rename(childName).astype(float).to_frame()
             
             ead_d[childName] = sWrkr.ead_tot

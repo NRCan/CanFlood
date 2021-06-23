@@ -128,7 +128,7 @@ class Dvuln(DPlotr):
     
     def get_failP(self, #get the failure probabilyt of each segment
                   dfuncs_d = None,
-                  expo_df = None,
+                  expo_df = None, #freeboard data (without crest buffer)
                   ): 
         """
         unlike the damage model... our 'inventory' and exposure data is on the same frame
@@ -157,14 +157,14 @@ class Dvuln(DPlotr):
         # add crest buffers----------
         #=======================================================================
 
-        edf = expo_df.loc[:, self.etag_l]
+        edf_raw = expo_df.loc[:, self.etag_l]
         
         cb_ser = expo_df[self.cbfn] #pull out buffer data
         assert cb_ser.notna().all(), 'got nulls on %s data'%self.cbfn
         if cb_ser.min()<0:
             log.warning('%s got some negative values!!!'%self.cbfn)
         
-        edf = edf = edf.add(cb_ser, axis=0)
+        edf = edf_raw.add(cb_ser, axis=0)
         
         log.info('added %s values \n    %s'%(self.cbfn, cb_ser.to_dict()))
         
@@ -172,8 +172,7 @@ class Dvuln(DPlotr):
         # get valid exposure entries
         #=======================================================================
         """
-        view(edf)
-        
+
         TODO: consider filling in with boundary falues first
         """
         #flag exposures outside boundary as False (also flags Nulls as false)
@@ -181,8 +180,10 @@ class Dvuln(DPlotr):
             edf >= min(self.minFB_d.values()),
             edf <= max(self.maxFB_d.values()),
             ))
-        
-        
+        """
+        view(edf)
+        """
+        assert vbooldf.any().any(), 'all exposures outside bounds'
 
         
         #=======================================================================
@@ -244,7 +245,7 @@ class Dvuln(DPlotr):
             # post checks
             #===================================================================
 
-            
+        assert isinstance(rdf, pd.DataFrame), 'failed to get any valid calcs'
         #=======================================================================
         # fill boundary values-----
         #=======================================================================

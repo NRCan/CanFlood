@@ -112,7 +112,7 @@ class DikeJoiner(Qcoms, DPlotr):
         each ifz poly feature corresponds to a dike (sid) segment (for that event) (1 ifzID: many sid)
         these ifz polys can be overlapping
         
-        often users may duplicates layers/maps between events
+        often users may duplicate layers/maps between events
             but our structure allows for unique vals 
             
         #=======================================================================
@@ -214,6 +214,9 @@ class DikeJoiner(Qcoms, DPlotr):
                     pf_df = None, 
                     
                     pf_min = 0.0, #threshold below which to ignore
+                    
+                    split_dikes=False, #generate a fpoly layer for each dike
+                        #where a breach raster 
                     ):
         
         #=======================================================================
@@ -281,11 +284,12 @@ class DikeJoiner(Qcoms, DPlotr):
             idf = pf_df.drop(l, axis=1).rename(columns={eTag:self.pfn}) 
             
             idf.loc[:, self.pfn] = idf[self.pfn].round(self.prec) #force rouind (again)
+
+            #idf = idf.join(pd.Series(sid_ifz_d, name=self.ifidN))
+            idf['eTag'] = eTag #nice to have this on there
             """
             view(idf)
             """
-            #idf = idf.join(pd.Series(sid_ifz_d, name=self.ifidN))
-            idf['eTag'] = eTag #nice to have this on there
             
             #apply threshold
             boolidx = idf[self.pfn]<=pf_min
@@ -314,9 +318,21 @@ class DikeJoiner(Qcoms, DPlotr):
             geo_d = {sk:QgsGeometry(geoR_d[ik]) for sk, ik in sid_ifz_d2.items()}
             
             
-            
-            res_d[eTag] = self.vlay_new_df2(idf, geo_d=geo_d, logger=log, index=True,
-                                     layname='%s_%s_ifz'%(self.tag, eTag))
+            if not split_dikes:
+                res_d[eTag] = self.vlay_new_df2(idf, geo_d=geo_d, logger=log, index=True,
+                                         layname='%s_%s_ifz'%(self.tag, eTag))
+                
+            else: #separate layers per dike
+                did_l = idf[self.dikeID].unique()
+                log.info('splitting into %i layers by \'%s\''%(len(did_l), self.dikeID))
+                for did in did_l:
+                    df_i = idf.loc[idf[self.dikeID]==did, :]
+                    
+                    geo_d_i = {k:geo_d[k] for k in df_i.index.values} #get these fatures
+                    res_d['%s.%s'%(eTag, did)] = self.vlay_new_df2(df_i, geo_d=geo_d_i, logger=log, index=True,
+                                         layname='%s_%s_%s_ifz'%(self.tag, eTag, did))
+                    
+ 
             
             log.debug('df %s'%str(idf.shape))
             

@@ -89,6 +89,7 @@ class Djoiner(Qcoms, Model):
     
     def prep_model(self):
         #copy the raw over to the cleaned
+        assert self.fp_attn in self.raw_d, 'missing \'%s\' in data'%self.fp_attn 
         self.data_d[self.fp_attn] = self.raw_d[self.fp_attn]
         self.resname='%s_%s_%s'%(self.fp_attn, self.tag, self.name)
         
@@ -122,6 +123,7 @@ class Djoiner(Qcoms, Model):
         if cid is None: cid = self.cid
         if layname is None: layname=self.resname
         if layname is None: layname = 'djoin_%s_%s'%(self.tag, vlay_raw.name())
+        assert isinstance(layname, str), 'got bad type on layname: %s'%type(layname)
         if df_raw is None: df_raw=self.data_d[self.fp_attn]
 
         #=======================================================================
@@ -141,7 +143,11 @@ class Djoiner(Qcoms, Model):
         #=======================================================================
         geo_d = vlay_get_fdata(vlay_raw, geo_obj=True, logger=log)
 
-        res_vlay = self.vlay_new_df2(res_df, geo_d=geo_d, crs = vlay_raw.crs(),
+        #reformat column names as strings
+        df = res_df.copy()
+        df.columns = res_df.columns.astype(str)
+        
+        res_vlay = self.vlay_new_df2(df, geo_d=geo_d, crs = vlay_raw.crs(),
                                     layname=layname, logger=log)
 
         

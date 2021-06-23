@@ -12,7 +12,7 @@ executing a CanFlood workflow froma python console
 #===============================================================================
 import inspect, logging, os,  datetime, shutil, gc, weakref
 
-from qgis.core import QgsCoordinateReferenceSystem, QgsMapLayerStore, QgsMapLayer, QgsVectorLayer
+from qgis.core import QgsMapLayer, QgsVectorLayer
 import pandas as pd
 import numpy as np
 
@@ -238,7 +238,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
     #===========================================================================
     name = None
     pars_d = None #parameters for control file
-    tpars_d = None #parameters for passing to tools
+    tpars_d = dict() #parameters for passing to tools
     
     #===========================================================================
     # flow control attributes
@@ -308,7 +308,6 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         # pull previously loaded
         #=======================================================================
         if cn in self.wrkr_d:
-            
             log.debug('pulled \'%s\' from container'%cn)
         #=======================================================================
         # start your own
@@ -399,6 +398,8 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
                     fp_l,
                     layType = 'raster',
                     logger=None,
+                    base_dir=None,
+                    addMapLayer=True,
                     **kwargs):
         if logger is None: logger=self.logger
         log=logger.getChild('load_layers')
@@ -406,7 +407,11 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         
         d = dict()
         for fp_raw in fp_l:
-            fp = os.path.join(self.base_dir, fp_raw)
+            if not base_dir is None:
+                fp = os.path.join(base_dir, fp_raw)
+            else:
+                fp = fp_raw
+                
             assert os.path.exists(fp), fp
             
             if layType == 'raster':
@@ -416,7 +421,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
             else:
                 raise Error('unrecognized layType: %s'%layType)
             
-            self.mstore.addMapLayer(layer)
+            if addMapLayer: self.mstore.addMapLayer(layer)
             d[layer.name()] = layer
             
         log.info('loaded %i'%len(d))
@@ -451,23 +456,43 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         # loop and load
         #=======================================================================
-        d = dict()
-        for fn, fp in fp_d.items():
-            assert os.path.exists(fp), fn
-            if ext == '.tif':
-                d[fn] = self.load_rlay(fp, logger=log,aoi_vlay=aoi_vlay, **kwargs)
-            else:
-                raise Error()
-
-            #add to my store
-            self.mstore.addMapLayer(d[fn])
-            
-        #=======================================================================
-        # wrap
-        #=======================================================================
-
-        log.info('loaded %i'%len(d))
+        d = self.load_layers(list(fp_d.values()), 
+                         layType={'.tif':'raster'}[ext],
+                         logger=log,
+                         aoi_vlay=aoi_vlay, **kwargs)
+        
+ 
         return d
+    
+ 
+            
+    
+    def load_layers_tree(self, #load all layers in a tree
+                         data_dir,
+                         ext='.tif',
+                         logger=None,
+                         **kwargs):
+        if logger is None: logger=self.logger
+        log=logger.getChild('load_layers_tree')
+        
+        
+        #get all files matching extension
+        fps_l = list()
+        for dirpath, _, fns in os.walk(data_dir):
+            fps_l = fps_l + [os.path.join(dirpath, e) for e in fns if e.endswith(ext)]
+            
+        log.info('found %i matching files in %s'%(len(fps_l), data_dir))
+
+        #load each
+        d = self.load_layers(fps_l, 
+                 layType={'.tif':'raster'}[ext],
+                 logger=log,
+                  **kwargs)
+        
+ 
+        return d
+
+        
             
     #===========================================================================
     # TOOLS.BUILD-------
@@ -846,6 +871,8 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         rkwargs = self._get_kwargs(wrkr.__class__.__name__)
         kwargs = {k:pars_d[k] for k in [] if k in pars_d}
+        
+        """for event_rels, need to use tpars_d"""
         res_df = wrkr.run(finv_vlay, fpol_d,  **{**kwargs, **rkwargs})
         
         #=======================================================================
@@ -856,7 +883,8 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
             wrkr.write_res(res_df)
         else:
             wrkr.out_fp = 'none'
-        wrkr.update_cf()
+            
+        wrkr.update_cf(self.cf_fp)
         
         #=======================================================================
         # plot
@@ -1046,11 +1074,11 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         # plots
         #=======================================================================
         if self.plot:
-            fig = wrkr.plot_boxes()
-            self.output_fig(fig)
+            fig = wrkr.plot_boxes(logger=log)
+            self.output_fig(fig, logger=log)
             
-            fig = wrkr.plot_hist()
-            self.output_fig(fig)
+            fig = wrkr.plot_hist(logger=log)
+            self.output_fig(fig, logger=log)
 
         #=======================================================================
         # wrap
@@ -1085,6 +1113,9 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         
         #get control keys for this tool
         if rkwargs is None: rkwargs = self._get_kwargs(wrkr.__class__.__name__)
+        """
+        self.tpars_d
+        """
         
         #pull out setup kwargs
         skwargs = {k:rkwargs.pop(k) for k in rkwargs.copy().keys() if k in ['prep_kwargs']}
@@ -1094,14 +1125,10 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         # execute
         #=======================================================================
+        """for event_rels, pass in the pars_d
+                see prep_cf()"""
         res_ttl, res_df = wrkr.run(**rkwargs)
-            
-        """
-        wrkr.attriMode
-        for k,v in wrkr.data_d.items():
-            print(k, type(v))
-        
-        """
+ 
         #=======================================================================
         # plots
         #=======================================================================
@@ -1153,7 +1180,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
                     dkey_tab = 'dmgs'
                     rkwargs={'relabel':None}
                 """
-            
+        raise Error('getting string type on some risk fields with nulls')
         #=======================================================================
         # defaults
         #=======================================================================
@@ -1231,7 +1258,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         if logger is None: logger=self.logger
         log = logger.getChild('plot_risk_ttl')
-
+        assert self.attriMode
         
         #=======================================================================
         # setup worker
@@ -1267,7 +1294,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         # defaults
         #=======================================================================
         if logger is None: logger=self.logger
-        log = logger.getChild('plot_risk_ttl')
+        log = logger.getChild('compare')
 
         
         wrkr = self._get_wrkr(Cmpr, fps_d=fps_d)
@@ -1285,11 +1312,46 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         # plots
         #=======================================================================
-        for ylab in ylabs:
-            fig = wrkr.riskCurves(y1lab=ylab, logger=log)
-            self.output_fig(fig)
+        if self.plot:
+            for ylab in ylabs:
+                fig = wrkr.riskCurves(y1lab=ylab, logger=log)
+                self.output_fig(fig, logger=log)
             
         return res_d
+    
+    def merge(self, fps_d,
+              logger=None,
+              ylabs = ['AEP', 'impacts'], #types of plots to generate
+              ):
+        
+        assert self.write, 'write needs to be enabled for spawning the children'
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('merge')
+
+        
+        wrkr = self._get_wrkr(Cmpr, fps_d=fps_d)
+        wrkr.setup_fromData(self.data_d) #setup w/ the pre-loaded data
+        
+        #=======================================================================
+        # get data
+        #=======================================================================
+        cdxind, cWrkr = wrkr.build_composite()
+        
+        
+        #=======================================================================
+        # plots
+        #=======================================================================
+        if self.plot:
+            for ylab in ylabs:
+                fig = wrkr.riskCurves(y1lab=ylab, logger=log)
+                self.output_fig(fig, logger=log)
+        
+        
+        
     
     #===========================================================================
     # TOOLS DIKES-----------
@@ -1408,8 +1470,20 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         # get data
         #=======================================================================
-        wrkr.load_expo(df=self.data_d['dExpo'])
+        #collect inputs for load_expo
+        """should be a nicer way to do this"""
+        if 'dExpo' in self.data_d:
+            df = self.data_d['dExpo']
+        else:
+            df=None
+        if 'dexpo_fp' in self.pars_d:
+            fp = self.pars_d['dexpo_fp']
+        else:
+            fp=None
+            
+        wrkr.load_expo(fp=fp, df=df)
         
+        #fragility functions
         wrkr.load_fragFuncs(os.path.join(self.base_dir, pars_d['dcurves_fp']))
         
         #=======================================================================

@@ -126,7 +126,7 @@ class LikeSampler(Plotr, Qcoms):
             lpol_d[ename] = self.load_vlay(fp, logger=log, providerLib=providerLib,
                                            **kwargs)
             
-        log.debug('finished w/ %i'%len(lpol_d))
+        log.info('finished w/ %i'%len(lpol_d))
         return lpol_d
     
     def load_lpols2(self, #loading fail polys where the names match

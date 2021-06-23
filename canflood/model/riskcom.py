@@ -4,14 +4,14 @@ Created on Mar. 9, 2021
 @author: cefect
 '''
 
-import configparser, os, inspect, logging, copy, itertools, datetime
+import os, inspect, logging, copy, itertools, datetime
 import pandas as pd
 idx = pd.IndexSlice
 import numpy as np
 from scipy import interpolate, integrate
 
 from hlpr.exceptions import QError as Error
-from hlpr.plot import Plotr
+from hlpr.plot import Plotr, view
 from model.modcom import Model
 
 
@@ -105,11 +105,14 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
                 valid = False
                 rpt_df = cplx_df[boolidx].join(
                     cplx_df[boolidx].sum(axis=1).rename('sum'))
-                log.debug('aep%.4f: \n\n%s'%(aep, rpt_df))
+                
+                with pd.option_context('display.max_rows', 500,'display.max_columns', None,'display.width',1000):
+                    log.debug('aep%.4f: \n\n%s'%(aep, rpt_df))
+                    
                 log.error('aep%.4f w/ %i exEvents failed %i (of %i) Psum<1 checks (Pmax=%.2f).. see logger \n    %s'%(
                     aep, len(exp_l), boolidx.sum(), len(boolidx),cplx_df.sum(axis=1).max(), exp_l))
                 
-        assert valid, 'some complex event probabilities exceed 1'
+        assert valid, 'some complex event probabilities exceed 1... see logger'
             
         #=======================================================================
         # #identify those events that need filling
@@ -117,9 +120,17 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         fill_exn_d = dict()
         for aep, exn_l in cplx_evn_d.items(): 
             
+            """
+            edf.columns
+            view(edf.loc[:, edf.columns.isin(exn_l)])
+            """
+            
             miss_l = set(exn_l).difference(edf.columns)
             if not len(miss_l)<2:
-                raise Error('can only fill one exposure column per complex event: %s'%miss_l)
+                """
+                check if you forgot to specify a hazard layer during exlikes sampling
+                """
+                raise Error('can only fill one exposure column per complex event\n     %s'%miss_l)
             
             if len(miss_l)==1:
                 fill_exn_d[aep] = list(miss_l)[0]
@@ -199,7 +210,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             boolidx = cplx_df.sum(axis=1)!=1.0 #find those exceeding 1.0
 
             if boolidx.any():
-                """allowing this to mass when event_rels=max"""
+                """allowing this to pass when event_rels=max"""
                 valid = False
                 log.warning('aep%.4f failed %i (of %i) Psum<=1 checks (Pmax=%.2f)'%(
                     aep, boolidx.sum(), len(boolidx), cplx_df.sum(axis=1).max()))
@@ -251,7 +262,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         
  
         if logger is None: logger=self.logger
-        log = logger.getChild('prep_ttl')
+        log = logger.getChild('set_ttl')
         if tlRaw_df is None: tlRaw_df = self.raw_d[dtag]
         #=======================================================================
         # precheck
@@ -300,7 +311,12 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         df2 = df1.loc[df1['plot'], :].copy() #drop those not flagged for plotting
         
         #typeset aeps
-        df2.loc[:, 'aep'] = df2['aep'].astype(np.float64).round(self.prec)
+        df2.loc[:, 'aep'] = df2['aep'].astype(np.float64)
+        
+        """
+        view(df2)
+        df2['aep'].astype(np.float64).values
+        """
 
         #=======================================================================
         # #invert aep (w/ zero handling)
@@ -330,8 +346,8 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
     # CALCULATORS-------
     #===========================================================================
     def ev_multis(self, #calculate (discrete) expected value from events w/ multiple exposure sets
-           ddf, #damages per exposure set (
-           edf, #secondary liklihoods per exposure set ('exlikes'). see load_exlikes()
+           ddf, #damages per exposure set 
+           edf, #secondary liklihoods per exposure set ('exlikes'). see set_exlikes()
                 # nulls were replaced by 0.0 (e.g., asset not provided a secondary probability)
                 # missing colums were replaced by 1.0 (e.g., non-failure events)
             
@@ -368,6 +384,8 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         if logger is None: logger=self.logger
         log = logger.getChild('ev_multis')
         cplx_evn_d = self.cplx_evn_d #{aep: [eventName1, eventName2,...]}
+        
+        """needs to be consistent with what was done during set_exlikes()"""
         if event_rels is None: event_rels = self.event_rels
 
         #======================================================================
@@ -988,7 +1006,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         result = float(f(0)) #y value at x=0
         
         if not result >=0:
-            raise Error('got negative extrapolation: %.2f'%result)
+            raise Error('got negative extrapolation on \'%s\': %.2f'%(ser.name, result))
         
         return result 
     

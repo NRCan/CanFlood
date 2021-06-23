@@ -120,7 +120,7 @@ class Risk2(RiskModel, #This inherits 'Model'
         
         
     def prep_model(self,
-                   event_slice=False,
+                   event_slice=False,  #allow the expolike data to pass MORE events than required 
                    ):
 
         if self.as_inun:
@@ -273,7 +273,8 @@ class Risk2(RiskModel, #This inherits 'Model'
         return 
 
     def run(self, #main runner fucntion
-            res_per_asset=False,
+            res_per_asset=False, 
+            #event_rels=None, NO! needs to be consistent with loading
             ):
         #======================================================================
         # defaults
@@ -290,7 +291,7 @@ class Risk2(RiskModel, #This inherits 'Model'
         #======================================================================
 
         #=======================================================================
-        # #take maximum expected value at each asset
+        # conditional exposure
         #=======================================================================
         if 'exlikes' in self.data_d:
             ddf1 = self.ev_multis(ddf, self.data_d['exlikes'], aep_ser, logger=log)

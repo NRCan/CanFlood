@@ -446,10 +446,10 @@ class Tut6a(WorkFlow): #tutorial 1a
                 'dcurves_fp':r'tutorials\6\dike_fragility_20210201.xls',
 
                 'eifz_d':{
-                    '0010_noFail.tif':ifz_fp,
-                    '0050_noFail.tif':ifz_fp,
-                    '0200_noFail.tif':ifz_fp,
-                    '1000_noFail.tif':ifz_fp,
+                    '0010_noFail':ifz_fp,
+                    '0050_noFail':ifz_fp,
+                    '0200_noFail':ifz_fp,
+                    '1000_noFail':ifz_fp,
                     }
                 
                 #run controls
@@ -479,7 +479,7 @@ class Tut6a(WorkFlow): #tutorial 1a
 #===============================================================================
 # executeors------------
 #===============================================================================
-wFlow_l = [Tut4a] #used below and by test scripts to bundle workflows
+wFlow_l = [Tut6a] #used below and by test scripts to bundle workflows
 
 if __name__ == '__main__':
     
