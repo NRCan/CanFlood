@@ -308,6 +308,12 @@ class Plotr(ComWrkr):
         #======================================================================
         plt.close()
         fig = plt.figure(figsize=figsize, constrained_layout = True)
+        
+        #check for max
+        if len(data) > self.set_cnt_max:
+            log.warning('data set count exceeds max: %i... skipping'%len(data))
+            return fig
+        
         #axis setup
         ax1 = fig.add_subplot(111)
         
@@ -321,10 +327,7 @@ class Plotr(ComWrkr):
         ax1.set_xlabel(xlab)
         ax1.set_ylabel(ylab)
  
-        #check for max
-        if len(data) > self.set_cnt_max:
-            log.warning('data set count exceeds max: %i... skipping'%len(data))
-            return fig
+
         
         #=======================================================================
         # plot thie histogram
@@ -591,8 +594,15 @@ class Plotr(ComWrkr):
         #=======================================================================
         # precheck
         #=======================================================================
+        """
+        self.plt.show()
+        """
         
         assert isinstance(fig, self.matplotlib.figure.Figure)
+        if not len(fig.axes) >0:
+            log.warning('passed empty figure... skipping')
+            return 'no'
+        
         log.debug('on %s'%fig)
         #======================================================================
         # output

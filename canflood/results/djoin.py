@@ -149,6 +149,11 @@ class Djoiner(Qcoms, Model):
         
         res_vlay = self.vlay_new_df2(df, geo_d=geo_d, crs = vlay_raw.crs(),
                                     layname=layname, logger=log)
+        
+        """
+        view(df)
+        view(df.isna())
+        """
 
         
         log.info('finished on \'%s\''%res_vlay.name())

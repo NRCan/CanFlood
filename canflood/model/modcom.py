@@ -869,7 +869,7 @@ class Model(ComWrkr,
         #======================================================================
         adf = self.raw_d[dtag]
         
-        assert len(adf) ==1, 'expected only 1 row on aeps'
+        assert len(adf) ==1, 'expected only 1 row on aeps, got %s'%str(adf.shape)
         
 
         #convert to a series

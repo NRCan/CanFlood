@@ -514,6 +514,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         log.debug('QgsRasterLayer(%s, %s)'%(fp, basefn))
         rlayer = QgsRasterLayer(fp, basefn)
         """
+        hanging for some reason...
         QgsRasterLayer(C:\LS\03_TOOLS\CanFlood\_git\tutorials\1\haz_rast\haz_1000.tif, haz_1000)
         """
         #=======================================================================
@@ -960,8 +961,6 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         else:
             gtype='None'
 
-            
-            
         #===========================================================================
         # buidl the new layer
         #===========================================================================

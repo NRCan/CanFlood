@@ -172,6 +172,13 @@ class Dcoms(ComWrkr):
         assert len(etag_l)>0, 'failed to get any eTags'
         etag_l.sort()
         
+        #=======================================================================
+        # post check
+        #=======================================================================
+        bads_l = 'name'
+        ovr_l = set(etag_l).intersection(bads_l)
+        assert len(ovr_l)==0, 'got some bad values in the etag_l: \n    %s'%ovr_l
+        
         return etag_l
         
         

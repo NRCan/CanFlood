@@ -159,6 +159,12 @@ class Dvuln(DPlotr):
 
         edf_raw = expo_df.loc[:, self.etag_l]
         
+        
+        #check types
+        boolcol = edf_raw.dtypes.apply(lambda x:np.issubdtype(x, np.number))
+        assert boolcol.all(), 'got some bad types \n    %s'%edf_raw.dtypes
+ 
+        
         cb_ser = expo_df[self.cbfn] #pull out buffer data
         assert cb_ser.notna().all(), 'got nulls on %s data'%self.cbfn
         if cb_ser.min()<0:

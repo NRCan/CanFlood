@@ -401,6 +401,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
                     base_dir=None,
                     addMapLayer=True,
                     **kwargs):
+        
         if logger is None: logger=self.logger
         log=logger.getChild('load_layers')
         assert isinstance(fp_l, list)
@@ -472,6 +473,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
                          ext='.tif',
                          logger=None,
                          **kwargs):
+        
         if logger is None: logger=self.logger
         log=logger.getChild('load_layers_tree')
         
@@ -1180,7 +1182,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
                     dkey_tab = 'dmgs'
                     rkwargs={'relabel':None}
                 """
-        raise Error('getting string type on some risk fields with nulls')
+        
         #=======================================================================
         # defaults
         #=======================================================================
@@ -1447,14 +1449,10 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         
         return res_d
 
-    def dikes_vuln(self,
+    def dikes_vuln(self, #run dike vulnerability tool
                      pars_d,
                     logger=None,
-
                     rkwargs=None,
-                    
-
-                    
                    ):
         
         #=======================================================================
@@ -1476,6 +1474,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
             df = self.data_d['dExpo']
         else:
             df=None
+            
         if 'dexpo_fp' in self.pars_d:
             fp = self.pars_d['dexpo_fp']
         else:

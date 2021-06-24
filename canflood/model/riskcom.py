@@ -75,6 +75,10 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             log.warning('got %i (of %i) nulls!... filling with zeros'%(booldf.sum().sum(), booldf.size))
         edf = edf.fillna(0.0)
         
+        #=======================================================================
+        # if self.event_rels=='indep':
+        #     raise Error('2021-06-23: I dont think the sum to 1 assumption is valid for independent events')
+        #=======================================================================
         #==================================================================
         # check/add event probability totals----
         #==================================================================
@@ -111,20 +115,16 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
                     
                 log.error('aep%.4f w/ %i exEvents failed %i (of %i) Psum<1 checks (Pmax=%.2f).. see logger \n    %s'%(
                     aep, len(exp_l), boolidx.sum(), len(boolidx),cplx_df.sum(axis=1).max(), exp_l))
-                
-        assert valid, 'some complex event probabilities exceed 1... see logger'
+         
+        """seems like event_rels=indep should allow for the simple summation to exceed 1"""       
+        assert valid, 'some complex event probabilities exceed 1 w/ \'%s\'... see logger'%self.event_rels
             
         #=======================================================================
         # #identify those events that need filling
         #=======================================================================
         fill_exn_d = dict()
         for aep, exn_l in cplx_evn_d.items(): 
-            
-            """
-            edf.columns
-            view(edf.loc[:, edf.columns.isin(exn_l)])
-            """
-            
+
             miss_l = set(exn_l).difference(edf.columns)
             if not len(miss_l)<2:
                 """
