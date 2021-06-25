@@ -283,6 +283,10 @@ class Djoiner(Qcoms, Model):
         if not df.index.is_unique:
             raise Error('non-unique lookup keys \'%s\''%self.cid)
         
+        try:
+            df = df.round(self.prec)
+        except:
+            log.warning('failed to round')
         
         
         return df.reset_index(drop=False)

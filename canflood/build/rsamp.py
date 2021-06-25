@@ -195,7 +195,7 @@ class Rsamp(Plotr, Qcoms):
             rlay_d[fn] = self.load_rlay(fp, logger=log,aoi_vlay=aoi_vlay, **kwargs)
             
 
-            
+        assert len(rlay_d)>0, 'failed to load any rasters!'
             
         log.info('loaded %i'%len(rlay_d))
         
@@ -239,7 +239,7 @@ class Rsamp(Plotr, Qcoms):
         # precheck
         #======================================================================
         #assert self.crs == self.qproj.crs(), 'crs mismatch!'
-        
+        assert len(rlayRaw_l)>0, 'no rasters passed!'
         
         #check the finv_raw
         assert isinstance(finv_raw, QgsVectorLayer), 'bad type on finv_raw'

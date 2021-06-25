@@ -366,7 +366,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         
         if dtag in self.data_d:
             data = self.data_d[dtag]
-            log.info('pulled \'%s\'=%s from data_d'%(dtag, type(data)))
+            log.info('pulled \'%s\' %s from data_d'%(dtag, type(data)))
         else:
             data = f(logger=log) #execute the method
             self.data_d[dtag] = data
@@ -426,6 +426,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
             d[layer.name()] = layer
             
         log.info('loaded %i'%len(d))
+        assert len(d)>0
         return d
     
     def load_layers_dirs(self, #load layers from multiple directories
@@ -473,25 +474,36 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
                          ext='.tif',
                          logger=None,
                          **kwargs):
-        
+        #=======================================================================
+        # defaults
+        #=======================================================================
         if logger is None: logger=self.logger
         log=logger.getChild('load_layers_tree')
+        assert os.path.exists(data_dir), 'passed bad data_dir: \n    %s'%data_dir
         
-        
-        #get all files matching extension
+        #=======================================================================
+        # #get all files matching extension
+        #=======================================================================
         fps_l = list()
         for dirpath, _, fns in os.walk(data_dir):
             fps_l = fps_l + [os.path.join(dirpath, e) for e in fns if e.endswith(ext)]
             
+        assert len(fps_l)>0, 'failed to identify any matching files'
         log.info('found %i matching files in %s'%(len(fps_l), data_dir))
+        
 
-        #load each
+        #=======================================================================
+        # #load each
+        #=======================================================================
         d = self.load_layers(fps_l, 
                  layType={'.tif':'raster'}[ext],
                  logger=log,
                   **kwargs)
         
- 
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        
         return d
 
         
@@ -758,6 +770,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
             rlay_d = self._retrieve(dkey,
                    f = lambda logger=None: wrkr.load_rlays(fp, logger=logger))
 
+        assert len(rlay_d)>0
         #dtm layer
         if 'dtm_fp' in pars_d:
             fp = os.path.join(self.base_dir, pars_d['dtm_fp'])

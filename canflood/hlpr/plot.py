@@ -301,7 +301,7 @@ class Plotr(ComWrkr):
         #=======================================================================
         #get a collectio nof arrays from a dataframe's columns
         data = [ser.dropna().values for _, ser in df.items()]
-
+        log.debug('on %i'%len(data))
         
         #======================================================================
         # figure setup
