@@ -535,7 +535,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #loop and pull
         new_pars_d =dict()
         for sect, keys in {
-            'parameters':['impact_units', 'rtail', 'event_rels', 'felv', 'prec'],
+            'parameters':['impact_units', 'rtail', 'event_rels', 'felv', 'prec', 'ltail'],
             'dmg_fps':['curves'],
             'plotting':['impactfmt_str', 'color'],
             #'risk_fps':['evals'],

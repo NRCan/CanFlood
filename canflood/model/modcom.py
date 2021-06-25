@@ -75,7 +75,7 @@ class Model(ComWrkr,
             'extrapolate'    set the zero impact event by extrapolating from the 
                             least extreme impact
             'none'            no enforcing of a zero impact event (not recommended)
-            'flat'           duplicates the minimum AEP as the zero damage event 
+            'flat'           duplicates the minimum AEP as the zero damage event (NOT IMPLEMENTED)
             float           use the passed value as the zero impacts aep value
         
         drop_tails -- EAD extrapolation: whether to remove the extrapolated values

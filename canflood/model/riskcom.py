@@ -689,6 +689,9 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             except Exception as e:
                 raise Error('failed to convert \'ltail\'=\'%s\' to numeric \n    %s'%(ltail, e))
             
+        if rtail == 'flat':
+            raise Error('rtail=flat. not implemented')
+        
         if not rtail in ['extrapolate', 'none']:
             rtail = float(rtail)
             
@@ -744,7 +747,10 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             
             #flat projection
             if ltail == 'flat':
-                df.loc[:,0] = df.iloc[:,0] 
+                """
+                view(df)
+                """
+                df.loc[:,0] = df.iloc[:,-1] 
                 
                 if len(df)==1: 
                     self.extrap_vals_d[0] = df.loc[:,0].mean().round(self.prec) #store for later
