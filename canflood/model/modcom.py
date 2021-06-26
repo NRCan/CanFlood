@@ -63,7 +63,7 @@ class Model(ComWrkr,
             
         
         ltail -- zero probability event  handle  (default 'extrapolate')
-            'flat'           set the zero probability event equal to the most 
+            'flat'            zero probability event equal to the most 
                             extreme impacts in the passed series
             'extrapolate'    set the zero probability event by extrapolating from 
                             the most extreme impact (interp1d)
@@ -71,7 +71,7 @@ class Model(ComWrkr,
             float            use the passed value as the zero probability impact value
              
         
-        rtail -- zreo impacts event  handle    (default float(0.5))
+        rtail -- zero impacts event  handle    (default float(0.5))
             'extrapolate'    set the zero impact event by extrapolating from the 
                             least extreme impact
             'none'            no enforcing of a zero impact event (not recommended)
