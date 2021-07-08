@@ -964,6 +964,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
               pars_d=None,
               logger=None,
               plot=None, #for impact only runs we usually pass False here
+              calc_risk=True,
               rkwargs = None, #flow control keys for this run
               ): #run risk1
         #=======================================================================
@@ -989,12 +990,12 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         # execute
         #=======================================================================
-        res_ttl, res_df = wrkr.run(**rkwargs)
+        res_ttl, res_df = wrkr.run(calc_risk=calc_risk,**rkwargs)
             
         #=======================================================================
         # plots
         #=======================================================================
-        if plot:
+        if plot and calc_risk:
             ttl_df = wrkr.set_ttl(tlRaw_df=res_ttl)
             for y1lab in ['AEP', 'impacts']:
                 fig = wrkr.plot_riskCurve(ttl_df, y1lab=y1lab)
@@ -1016,15 +1017,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         res_d['eventypes'] = wrkr.eventType_df
         if not res_df is None:
             res_d['r_passet'] = res_df
-        
-        """"
-        wrkr.exlikes
-        self.data_d.keys()
-        data_d['finv']
-        self.cf_fp
-        self.res_d.keys()
-        self.com_hndls
-        """
+ 
         self.data_d = {**self.data_d, **res_d}
         return res_d
     

@@ -940,6 +940,7 @@ class Model(ComWrkr,
         if self.exlikes == '': #no failure
             assert len(aep_ser.unique())==len(aep_ser), \
             'got duplicated \'evals\' but no \'exlikes\' data was provided.. see logger'
+            """TODO: let this pass for L1's doing impacts only"""
         else:
             assert len(aep_ser.unique())!=len(aep_ser), \
             'got unique \'evals\' but \'exlikes\' data is provided... see logger'
