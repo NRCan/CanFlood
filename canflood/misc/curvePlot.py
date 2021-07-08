@@ -84,11 +84,13 @@ class CurvePlotr(DFunc, Plotr):
         self._init_plt()
         self.logger.info('init finished')
         
-    def load_data(self, fp): #load a curve set
+    def load_data(self, fp, 
+                    index=None, header=None
+                    ): #load a curve set
         log = self.logger.getChild('load_data')
         #precheck
         assert os.path.exists(fp)
-        data_d = pd.read_excel(fp, sheet_name=None, index=None, header=None)
+        data_d = pd.read_excel(fp, sheet_name=None,index=index, header=header )
         
         log.info('loaded %i tabs'%len(data_d))
         
@@ -153,8 +155,8 @@ class CurvePlotr(DFunc, Plotr):
     
     def plotGroup(self, #plot a group of figures w/ handles
                   cLib_d,
-                  pgCn='plot_group',
-                  pfCn='plot_f',
+                  pgCn='plot_group', #group plots
+                  pfCn='plot_f', #plot flag
                   
                   title=None,
                   
@@ -194,6 +196,9 @@ class CurvePlotr(DFunc, Plotr):
                 
                 #drop the old columns
                 hndl_df = hndl_df.set_index('cName', drop=False).iloc[1:,:]
+            else:
+                pass
+                raise Error('working?')
 
             
    
@@ -290,12 +295,12 @@ class CurvePlotr(DFunc, Plotr):
                 for cName, row in pdf.iterrows():
                     #get this curve
                     crv_d = cLib_d[cName]
-                    
+                    log.debug('plotting %s'%cName)
                     ax = self.plotCurve(crv_d, ax=ax,marker=next(marker),**lineKwargs)
                     
                 #post format
                 fig = ax.figure
-                fig.suptitle(pgroup + title)
+                fig.suptitle(pgroup + ' ' + title)
                 ax.legend()
                 ax.grid()
                 #===============================================================
@@ -336,7 +341,7 @@ class CurvePlotr(DFunc, Plotr):
         # defaults
         #=======================================================================
         if logger is None: logger=self.logger
-        assert 'tag' in crv_d
+        assert 'tag' in crv_d, 'missing tag in \n    %s'%crv_d
         log = logger.getChild('plot%s'%crv_d['tag'])
         
         #=======================================================================
@@ -417,7 +422,7 @@ class CurvePlotr(DFunc, Plotr):
         if ax is None:
 
             fig = plt.figure(figsize=figsize,
-                     tight_layout=False,
+                     tight_layout=True,
                      constrained_layout = False,
                      )
 
