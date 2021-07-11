@@ -379,7 +379,7 @@ class CurvePlotr(DFunc, Plotr):
                 cd1[k] = None
         
         pars_d['ylab'] = '%s (%s)'%(cd1['exposure_var'], cd1['exposure_units'])
-        pars_d['xlab'] = '%s (%s)'%(cd1['impact_var'], cd1['impact_units'])
+        pars_d['xlab'] = '%s (%s/%s)'%(cd1['impact_var'], cd1['impact_units'], cd1['scale_units'])
         #pars_d['color'] = cd1['color']
                           
         
