@@ -13,6 +13,9 @@ We welcome/encourage any comments, bugs, or issues you have or find. Please crea
 
 Happy flood risk modelling!
 
+## Documentation
+See the latest users manual in the [manuals folder](https://github.com/NRCan/CanFlood/tree/master/manual)
+
 ## Installation Instructions 
 
 1) Ensure QGIS 3.16.4 LTR is installed and working on your system ([Qgis all releases download page](https://qgis.org/downloads/)). Ensure the 'processing' plugin is installed and enabled in QGIS.
