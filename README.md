@@ -1,6 +1,8 @@
 ﻿# CanFlood
 Flood Risk modelling toolbox for Canada
 
+![alt text](https://github.com/NRCan/CanFlood/blob/master/img/logo_20210419_500.png)
+
 ## Beta 1.0 Release
 
 [Launch Party!](https://www.ibiviz.com/CanFlood/)
