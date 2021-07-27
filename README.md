@@ -1,5 +1,5 @@
 ﻿# CanFlood
-Flood Risk modelling toolbox for Canada
+Open source flood risk modelling toolbox for Canada
 
 ![alt text](https://github.com/NRCan/CanFlood/blob/master/img/logo_20210419_500.png)
 
