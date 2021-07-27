@@ -3976,7 +3976,8 @@ def vlay_rename_fields(
 
         ):
     """
-    todo: add this as a session method and clean up unused layers
+    todo: replace with coms.hp.Qproj.vlay_rename_fields
+    
     """
     
     if logger is None: logger=mod_logger
