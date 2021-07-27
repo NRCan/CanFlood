@@ -33,8 +33,8 @@ start = datetime.datetime.now()
 #===============================================================================
 # cf helpers
 #===============================================================================
-import hlpr.basic
-from hlpr.logr import basic_logger
+#import hlpr.basic
+#from hlpr.logr import basic_logger
  
 from hlpr.exceptions import Error
 

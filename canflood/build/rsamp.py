@@ -21,7 +21,7 @@ import pandas as pd
 
 #Qgis imports
 from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject, \
-    QgsWkbTypes, QgsProcessingFeedback, QgsCoordinateTransform
+    QgsWkbTypes, QgsProcessingFeedback, QgsCoordinateTransform, QgsCoordinateTransformContext
     
 from qgis.analysis import QgsRasterCalculatorEntry, QgsRasterCalculator
 import processing
@@ -1120,6 +1120,9 @@ class Rsamp(Plotr, Qcoms):
                         layname = None,
                         logger = None,
                         ):
+        """
+        TODO: migrate to some common function
+        """
         
         #=======================================================================
         # defaults
@@ -1178,9 +1181,13 @@ class Rsamp(Plotr, Qcoms):
         #=======================================================================
         # execute
         #=======================================================================
-        """throwing depreciation warning"""
-        rcalc = QgsRasterCalculator(formula, outputFile, outputFormat, outputExtent,
-                            nOutputColumns, nOutputRows, rasterEntries)
+
+        rcalc = QgsRasterCalculator(formula, outputFile, 
+                                    outputFormat, 
+                                    outputExtent,
+                                    self.qproj.crs(),
+                            nOutputColumns, nOutputRows, rasterEntries,
+                            QgsCoordinateTransformContext())
         
         result = rcalc.processCalculation(feedback=self.feedback)
         
@@ -1275,7 +1282,9 @@ class Rsamp(Plotr, Qcoms):
         #=======================================================================
         """throwing depreciation warning"""
         rcalc = QgsRasterCalculator(formula, outputFile, outputFormat, outputExtent,
-                            nOutputColumns, nOutputRows, rasterEntries)
+                                    self.qproj.crs(),
+                            nOutputColumns, nOutputRows, rasterEntries,
+                             QgsCoordinateTransformContext())
         
         result = rcalc.processCalculation(feedback=self.feedback)
         

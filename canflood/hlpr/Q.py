@@ -423,6 +423,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                   providerLib='ogr',
                   aoi_vlay = None,
                   allow_none=True, #control check in saveselectedfeastures
+                  addSpatialIndex=True,
                   ):
         
         assert os.path.exists(fp), 'requested file does not exist: %s'%fp
@@ -483,8 +484,15 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             
         else: 
             vlay = vlay_raw
+            
+        #=======================================================================
+        # clean------
+        #=======================================================================
+        #spatial index
+        if addSpatialIndex and (not vlay_raw.hasSpatialIndex()==QgsFeatureSource.SpatialIndexPresent):
+            self.createspatialindex(vlay_raw, logger=log)
         
-        self.createspatialindex(vlay, logger=log)
+ 
         #=======================================================================
         # wrap
         #=======================================================================
