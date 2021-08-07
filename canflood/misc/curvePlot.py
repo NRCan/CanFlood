@@ -41,7 +41,7 @@ from hlpr.exceptions import QError as Error
 
 #from hlpr.basic import ComWrkr
 #import hlpr.basic
-from model.modcom import DFunc
+from model.modcom import DFunc, view
 from hlpr.plot import Plotr
 
 
@@ -185,20 +185,27 @@ class CurvePlotr(DFunc, Plotr):
         #=======================================================================
         if '_smry' in cLib_d:
             hndl_df =cLib_d.pop('_smry')
+            """
+            view(hndl_df)
+            """
             
             #re-tag the columns
+            """this must have been for cleaning some raw data...
+                any raw data should be cleaned on import"""
 
-            colns = hndl_df.iloc[0,:].values
-            if pd.isnull(colns[0]):
-
-                colns[0] = 'cName'
-                hndl_df.columns = colns
-                
-                #drop the old columns
-                hndl_df = hndl_df.set_index('cName', drop=False).iloc[1:,:]
-            else:
-                pass
-                raise Error('working?')
+#===============================================================================
+#             colns = hndl_df.iloc[0,:].values
+#             if pd.isnull(colns[0]):
+# 
+#                 colns[0] = 'cName'
+#                 hndl_df.columns = colns
+#                 
+#                     #drop the old columns
+#                 hndl_df = hndl_df.set_index('cName', drop=False).iloc[1:,:]
+#             else:
+#                 pass
+#                 raise Error('working?')
+#===============================================================================
 
             
    
