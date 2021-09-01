@@ -289,6 +289,8 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
                    #hatch format
                    h_alpha = 0.9,
                    
+                   #figure config
+                   title=None, #None: generate from data
                    figsize=None, impactFmtFunc=None, plotTag=None,
                    val_str=None,
                    logger=None,):
@@ -315,6 +317,8 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
         if val_str is None:
             val_str =  'ltail=\'%s\',  rtail=\'%s\''%(self.ltail, self.rtail) + \
                         '\naevent_rels = \'%s\', prec = %i'%(self.event_rels, self.prec)
+                        
+ 
         #=======================================================================
         # prechecks
         #=======================================================================
@@ -337,10 +341,12 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
          
          
         if y1lab == 'AEP':
-            title = '%s %s AEP-Impacts plot for %i stacks'%(self.tag, plotTag, len(dxind.columns))
+            if title is None:
+                title = '%s %s AEP-Impacts plot for %i stacks'%(self.tag, plotTag, len(dxind.columns))
             xlab=self.impact_name
         elif y1lab == self.impact_name:
-            title = '%s %s Impacts-ARI plot for %i stacks'%(self.tag, plotTag, len(dxind.columns))
+            if title is None:
+                title = '%s %s Impacts-ARI plot for %i stacks'%(self.tag, plotTag, len(dxind.columns))
             xlab='ARI'
         else:
             raise Error('bad y1lab: %s'%y1lab)
@@ -353,9 +359,6 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
         #=======================================================================
         # figure setup
         #=======================================================================
-        """
-        plt.show()
-        """
         plt.close()
         fig = plt.figure(figsize=figsize, constrained_layout = True)
         
@@ -378,6 +381,7 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
             """I dont see any native support for x axis stacks"""
             
             yar = mindex.levels[nameRank_d['aep']].values
+            assert len(yar)==len(mindex), 'check the mindex doesnt have phantom labels'
             xCum_ar = 0
             for colName, cser in dxind.items():
                 ax1.fill_betweenx(yar, xCum_ar, xCum_ar+cser.values, label=colName, 
