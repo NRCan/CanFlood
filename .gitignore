@@ -138,3 +138,7 @@ Qda4/.project
 *.gpkg-shm
 *.aux.xml
 
+
+#VisualBasic
+.vscode
+
