@@ -35,7 +35,7 @@ from hlpr.exceptions import QError as Error
     
 
 
-from hlpr.Q import Qcoms,vlay_get_fdf, vlay_get_fdata, view, vlay_rename_fields
+from hlpr.Q import Qcoms,vlay_get_fdf, vlay_get_fdata, view
 from hlpr.plot import Plotr
 
 #==============================================================================
@@ -213,7 +213,8 @@ class Rsamp(Plotr, Qcoms):
             cid = None, #index field name on finv
                         
             #exposure value controls
-            psmp_stat='Max', #for polygon finvs, statistic to sample
+            psmp_stat=None, #for complex geo finvs, statistic to sample
+            psmp_fieldName = None, #for complex geo finvs, field name with sampling statistic
             
             #inundation sampling controls
             as_inun=False, #whether to sample for inundation (rather than wsl values)
@@ -236,17 +237,18 @@ class Rsamp(Plotr, Qcoms):
         if fname is None: fname=self.fname
         self.as_inun = as_inun
         self.finv_name = finv_raw.name() #for plotters
+        self.gtype = QgsWkbTypes().displayString(finv_raw.wkbType())
         log.info('executing on %i rasters'%(len(rlayRaw_l)))
 
+        
         #======================================================================
         # precheck
         #======================================================================
-        #assert self.crs == self.qproj.crs(), 'crs mismatch!'
         assert len(rlayRaw_l)>0, 'no rasters passed!'
         
         #check the finv_raw
         assert isinstance(finv_raw, QgsVectorLayer), 'bad type on finv_raw'
-        """rasteres are checked below"""
+
         assert finv_raw.crs() == self.qproj.crs(), 'finv_raw crs %s doesnt match projects \'%s\'' \
             %(finv_raw.crs().authid(), self.qproj.crs().authid())
         assert cid in [field.name() for field in finv_raw.fields()], \
@@ -263,13 +265,21 @@ class Rsamp(Plotr, Qcoms):
         
         self.rname_l = rname_l
         
+        #check sampling parameter logic
+        """see samp_vals()"""
+        
         #======================================================================
         # prep the finv for sampling
         #======================================================================
         self.finv_name = finv_raw.name()
         
-        #drop all the fields except the cid
-        finv = self.deletecolumn(finv_raw, [cid], invert=True)
+        #drop all data fields
+        if not psmp_fieldName is None:
+            keep_fnl = [cid, psmp_fieldName]
+        else:
+            keep_fnl = [cid]
+            
+        finv = self.deletecolumn(finv_raw, keep_fnl, invert=True)
         
         #fix the geometry
         finv = self.fixgeometries(finv, logger=log)
@@ -277,67 +287,85 @@ class Rsamp(Plotr, Qcoms):
 
         #check field lengths
         self.finv_fcnt = len(finv.fields())
-        assert self.finv_fcnt== 1, 'failed to drop all the fields'
+        assert self.finv_fcnt==len(keep_fnl), 'failed to drop all the fields'
         
-        self.gtype = QgsWkbTypes().displayString(finv.wkbType())
+        
         
         if self.gtype.endswith('Z'):
             log.warning('passed finv has Z values... these are not supported')
             
         self.feedback.setProgress(20)
-        #=======================================================================
-        # prep the raster layers------
-        #=======================================================================
-
-        self.feedback.setProgress(40)
-        #=======================================================================
-        #inundation runs--------
-        #=======================================================================
-        if as_inun:
-            #===================================================================
-            # #prep DTM
-            #===================================================================
-            if clip_dtm:
-                
-                """makes the raster clipping a bitcleaner
-                
-                2020-05-06
-                ran 2 tests, and this INCREASED run times by ~20%
-                set default to clip_dtm=False
-                """
-                log.info('trimming dtm \'%s\' by finv extents'%(dtm_rlay.name()))
-                finv_buf = self.polygonfromlayerextent(finv,
-                                        round_to=dtm_rlay.rasterUnitsPerPixelX()*3,#buffer by 3x the pixel size
-                                         logger=log )
+  
         
-                
-                #clip to just the polygons
-                dtm_rlay1 = self.cliprasterwithpolygon(dtm_rlay,finv_buf, logger=log)
-            else:
-                dtm_rlay1 = dtm_rlay
-                
-            self.feedback.setProgress(60)
-            #===================================================================
-            # sample by goetype
-            #===================================================================
-            if 'Polygon' in self.gtype:
-                res_vlay = self.samp_inun(finv,rlayRaw_l, dtm_rlay1, dthresh)
-            elif 'Line' in self.gtype:
-                res_vlay = self.samp_inun_line(finv, rlayRaw_l, dtm_rlay1, dthresh)
-            else:
-                raise Error('\'%s\' got unexpected gtype: %s'%(finv.name(), self.gtype))
+        #=======================================================================
+        # simple geometries-----
+        #=======================================================================
+        if 'Point' in self.gtype:
             
-            res_name = '%s_%s_%i_%i_d%.2f'%(
-                fname, self.tag, len(rlayRaw_l), res_vlay.dataProvider().featureCount(), dthresh)
-        
+            res_vlay = self.samp_vals_pts(finv, rlayRaw_l)
+                               
+            res_name = '%s_%s_%i_%i'%(fname, self.tag, len(rlayRaw_l), 
+                                      res_vlay.dataProvider().featureCount())
+                               
         #=======================================================================
-        #WSL value sampler------
+        # complex geos--------
         #=======================================================================
         else:
-            res_vlay = self.samp_vals(finv,rlayRaw_l, psmp_stat)
-            res_name = '%s_%s_%i_%i'%(fname, self.tag, len(rlayRaw_l), res_vlay.dataProvider().featureCount())
+ 
+            #=======================================================================
+            #inundation runs--------
+            #=======================================================================
+            if as_inun:
+                #===================================================================
+                # #prep DTM
+                #===================================================================
+                if clip_dtm:
+                    
+                    """makes the raster clipping a bitcleaner
+                    
+                    2020-05-06
+                    ran 2 tests, and this INCREASED run times by ~20%
+                    set default to clip_dtm=False
+                    """
+                    log.info('trimming dtm \'%s\' by finv extents'%(dtm_rlay.name()))
+                    finv_buf = self.polygonfromlayerextent(finv,
+                                            round_to=dtm_rlay.rasterUnitsPerPixelX()*3,#buffer by 3x the pixel size
+                                             logger=log )
             
-            if not 'Point' in self.gtype: res_name = res_name + '_%s'%psmp_stat.lower()
+                    
+                    #clip to just the polygons
+                    dtm_rlay1 = self.cliprasterwithpolygon(dtm_rlay,finv_buf, logger=log)
+                else:
+                    dtm_rlay1 = dtm_rlay
+                
+                #===================================================================
+                # sample by goetype
+                #===================================================================
+                if 'Polygon' in self.gtype:
+                    res_vlay = self.samp_inun(finv,rlayRaw_l, dtm_rlay1, dthresh)
+                elif 'Line' in self.gtype:
+                    res_vlay = self.samp_inun_line(finv, rlayRaw_l, dtm_rlay1, dthresh)
+                else:
+                    raise Error('\'%s\' got unexpected gtype: %s'%(finv.name(), self.gtype))
+                
+                res_name = '%s_%s_%i_%i_d%.2f'%(
+                    fname, self.tag, len(rlayRaw_l), res_vlay.dataProvider().featureCount(), dthresh)
+        
+            #=======================================================================
+            #WSL value sampler------
+            #=======================================================================
+            else:
+                res_vlay = self.samp_vals(finv,rlayRaw_l, 
+                              psmp_stat=psmp_stat, psmp_fieldName=psmp_fieldName)
+                
+                #get the resulting field name
+                res_name = '%s_%s_%i_%i'%(fname, self.tag, len(rlayRaw_l), 
+                                          res_vlay.dataProvider().featureCount())
+                
+                if not psmp_stat is None: 
+                    res_name = res_name + '_%s'%psmp_stat.lower()
+                else:
+                    res_name = res_name + '_%s'%psmp_fieldName
             
         res_vlay.setName(res_name)
         #=======================================================================
@@ -348,10 +376,7 @@ class Rsamp(Plotr, Qcoms):
         try:
             df = vlay_get_fdf(res_vlay, logger=log).set_index(cid, drop=True
                                           ).rename(columns=self.names_d)
-            """
-            view(df)
-            d.keys()
-            """
+
             #get sorted index by values
             sum_ser = pd.Series({k:cser.dropna().sum() for k, cser in df.items()}).sort_values()
             
@@ -588,22 +613,136 @@ class Rsamp(Plotr, Qcoms):
         return resLay
     
 
+    def samp_vals_pts(self, #sample a set of rasters with a vectorlayer
+                  finv, raster_l,
 
+                  ):
+        """"
+        2021-10-18:split out function from polygons/line sammpler
+        """
+
+        #=======================================================================
+        # defaults
+        #=======================================================================
         
+        log = self.logger.getChild('samp_vals_pts')
+        algo_nm = 'qgis:rastersampling'
+            
+
+        #=======================================================================
+        # sample loop
+        #=======================================================================
+        names_d = dict()
         
+        log.info('sampling %i raster layers w/ algo \'%s\' and gtype: %s'%(
+            len(raster_l), algo_nm, self.gtype))
+        
+        for indxr, rlay in enumerate(raster_l):
+            
+            log.info('%i/%i sampling \'%s\' on \'%s\''%(
+                indxr+1, len(raster_l), finv.name(), rlay.name()))
+            
+            ofnl =  [field.name() for field in finv.fields()]
+            self.mstore.addMapLayer(finv)
+
+            finv = processing.run(algo_nm, 
+                          { 'COLUMN_PREFIX' : rlay.name(),
+                         'INPUT' : finv,
+                          'OUTPUT' : 'TEMPORARY_OUTPUT',
+                           'RASTERCOPY' : rlay},
+                           feedback=self.feedback)['OUTPUT']
+ 
+            #===================================================================
+            # sample.wrap
+            #===================================================================
+            assert isinstance(finv, QgsVectorLayer)
+            assert len(finv.fields()) == self.finv_fcnt + indxr +1, \
+                'bad field length on %i'%indxr
+                
+            finv.setName('%s_%i'%(self.finv_name, indxr))
+            
+            #===================================================================
+            # correct field names
+            #===================================================================
+            """
+            algos don't assign good field names.
+            collecting a conversion dictionary then adjusting below
+            
+            TODO: propagate these field renames to the loaded result layers
+            """
+            #get/updarte the field names
+            nfnl =  [field.name() for field in finv.fields()]
+            new_fn = set(nfnl).difference(ofnl) #new field names not in the old
+            
+            if len(new_fn) > 1:
+                raise Error('bad mismatch: %i \n    %s'%(len(new_fn), new_fn))
+            elif len(new_fn) == 1:
+                names_d[list(new_fn)[0]] = rlay.name()
+            else:
+                raise Error('bad fn match')
+                 
+                
+            log.debug('sampled %i values on raster \'%s\''%(
+                finv.dataProvider().featureCount(), rlay.name()))
+            
+        self.names_d = names_d #needed by write()
+        
+        log.debug('finished w/ \n%s'%self.names_d)
+        
+        return finv
+    """
+    view(finv)
+    """
+    
     def samp_vals(self, #sample a set of rasters with a vectorlayer
-                  finv, raster_l,psmp_stat):
+                  finv, raster_l,
+                  psmp_stat=None,
+                  psmp_fieldName=None,
+                  ):
         """
         this is NOT for inundation percent
-        can handle all 3 geometries"""
+        can handle all 3 geometries
+        
+        2021-10-18: added support for per-asset statistic sampling
+        """
+        #=======================================================================
+        # defaults
+        #=======================================================================
         
         log = self.logger.getChild('samp_vals')
+        gtype=self.gtype
+        #=======================================================================
+        # check parameter logic
+        #=======================================================================
+        if 'Point' in self.gtype:
+            assert psmp_stat is None and psmp_fieldName is None, 'no statistics allowed for points'
+        else:
+            assert isinstance(psmp_stat, str) or isinstance(psmp_fieldName, str),\
+                'can not pass psmp_stat and psmp_fieldName'
+                
+            if not psmp_stat is None:
+                assert psmp_stat in self.psmp_codes, 'unrecognized psmp_stat'
+            else:
+                assert psmp_fieldName in [f.name() for f in finv.fields()], \
+                    'missing psmp_fieldName \'%s\' on finv'%psmp_fieldName
+                    
+                #data checks on sampling field name
+                pser = vlay_get_fdata(finv, fieldn=psmp_fieldName, logger=log, fmt='ser')
+                assert not pser.isna().any(), 'got %i nulls in sampling field \'%s\''%(
+                    pser.isna().sum(), psmp_fieldName)
+                
+                miss_l = set(pser.unique()).difference(self.psmp_codes.keys())
+                assert len(miss_l)==0, 'got %i unrecognized sampling statistc keys on \'%s\': \n    %s'%(
+                    len(miss_l), psmp_fieldName, miss_l)
+                
+                raise Error('check field type and values')
+        
         #=======================================================================
         # setup parameters
         #=======================================================================
-        gtype=self.gtype
+        
         if 'Polygon' in gtype: 
-            assert psmp_stat in self.psmp_codes, 'unrecognized psmp_stat' 
+            
             psmp_code = self.psmp_codes[psmp_stat] #sample each raster
             algo_nm = 'native:zonalstatisticsfb'
 
@@ -634,7 +773,7 @@ class Rsamp(Plotr, Qcoms):
             # sample.poly----------
             #===================================================================
             if 'Polygon' in gtype: 
-
+                
                 finv = processing.run(algo_nm,
                     {       'COLUMN_PREFIX':indxr, 
                                 'INPUT_RASTER':rlay, 
