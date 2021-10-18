@@ -29,7 +29,7 @@ from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer, QgsMapLayerPro
 #get hlpr funcs
 import hlpr.plug
 from hlpr.plug import bind_layersListWidget
-from hlpr.basic import get_valid_filename, force_open_dir 
+#from hlpr.basic import get_valid_filename, force_open_dir 
 from hlpr.exceptions import QError as Error
 
 #get sub-models
@@ -835,27 +835,21 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         log = self.logger.getChild('run_rsamp')
         start = datetime.datetime.now()
         log.info('start \'run_rsamp\' at %s'%start)
-        self.set_setup(set_finv=True)
+        self.feedback.setProgress(1)
+        self.set_setup(set_finv=True) #common setup routines and attachments
         #=======================================================================
         # assemble/prepare inputs
         #=======================================================================
-        #finv_raw = self.comboBox_ivlay.currentLayer()
         rlay_l = list(self.listView_expo_rlays.get_selected_layers().values())
-        
 
-        #cf_fp = self.get_cf_fp()
-        #out_dir = self.lineEdit_wdir.text()
-        #tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
-
-        #cid = self.mFieldComboBox_cid.currentField() #user selected field
         psmp_stat = self.comboBox_HS_stat.currentText()
         
         
-        #inundation
+        #as inundation percentage
         as_inun = self.checkBox_HS_in.isChecked()
         
-        if as_inun:
-            dthresh = self.mQgsDoubleSpinBox_HS.value()
+        if as_inun: #get associated layers and do some checks
+            dthresh = self.mQgsDoubleSpinBox_HS.value() #depth threshold
             dtm_rlay=self.comboBox_HS_DTM.currentLayer()
             
             assert isinstance(dthresh, float), 'must provide a depth threshold'
@@ -865,53 +859,32 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             dthresh, dtm_rlay = None, None
             
 
-#===============================================================================
-#         #=======================================================================
-#         # slice finv to aoi
-#         #=======================================================================
-#         finv = self.slice_aoi(finv_raw)
-# 
-#         #======================================================================
-#         # precheck
-#         #======================================================================
-#         if finv is None:
-#             raise Error('got nothing for finv')
-#         if not isinstance(finv, QgsVectorLayer):
-#             raise Error('did not get a vector layer for finv')
-#===============================================================================
-        finv = self.finv_vlay
+        finv = self.finv_vlay #set by set_setup()
         
-        gtype = QgsWkbTypes().displayString(finv.wkbType())
         
+        self.feedback.setProgress(5)
+        #=======================================================================
+        # checks
+        #=======================================================================
         for rlay in rlay_l:
             if not isinstance(rlay, QgsRasterLayer):
                 raise Error('unexpected type on raster layer')
-            assert rlay.crs()==self.qproj.crs(), 'layer CRS does not match project'
+            assert rlay.crs()==self.qproj.crs(), 'raster layer CRS does not match project'
             
-        
-        #=======================================================================
-        # if cid is None or cid=='':
-        #     raise Error('need to select a cid')
-        # 
-        # if not cid in [field.name() for field in finv.fields()]:
-        #     raise Error('requested cid field \'%s\' not found on the finv_raw'%cid)
-        #=======================================================================
-        
 
-        
-        
         #geometry specific input checks
+        gtype = QgsWkbTypes().displayString(finv.wkbType())
         if 'Polygon' in gtype or 'Line' in gtype:
             if not as_inun:
                 assert psmp_stat in ('Mean','Median','Min','Max'), 'select a valid sample statistic'
             else:
                 assert psmp_stat == '', 'expects no sample statistic for %Inundation'
+                
         elif 'Point' in gtype:
             assert not as_inun, '%Inundation only valid for polygon type geometries'
+            
         else:
             raise Error('unrecognized gtype: %s'%gtype)
-        
-
         
         self.feedback.setProgress(10)
         #======================================================================
