@@ -1015,36 +1015,20 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # assemble/prepare inputs
         #=======================================================================
         self.set_setup(set_finv=True)
- 
-        #finv_raw = self.comboBox_ivlay.currentLayer()
         rlay = self.comboBox_dtm.currentLayer()
-        
- 
-        
 
-        #update some parameters
-        #cid = self.mFieldComboBox_cid.currentField() #user selected field
+        #get parameters from Hazard Sampler tab
         psmp_stat = self.comboBox_HS_stat.currentText()
-        
-
-        #======================================================================
-        # aoi slice
-        #======================================================================
-        finv = self.finv_vlay
-        
-
+ 
         #======================================================================
         # precheck
         #======================================================================
-
-        
-
         if not isinstance(rlay, QgsRasterLayer):
             raise Error('unexpected type on raster layer')
 
             
         #check if we got a valid sample stat
-        gtype = QgsWkbTypes().displayString(finv.wkbType())
+        gtype = QgsWkbTypes().displayString(self.finv_vlay.wkbType())
         if not 'Point' in gtype:
             assert not psmp_stat=='', \
             'for %s type finvs must specifcy a sample statistic on the Hazard Sampler tab'%gtype
@@ -1057,7 +1041,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
         wrkr = Rsamp(fname='gels', **kwargs)
         
-        res_vlay = wrkr.run([rlay], finv, psmp_stat=psmp_stat)
+        res_vlay = wrkr.run([rlay], self.finv_vlay, psmp_stat=psmp_stat)
         
         #check it
         wrkr.dtm_check(res_vlay)
