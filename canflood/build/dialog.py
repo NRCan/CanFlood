@@ -92,6 +92,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
     def connect_slots(self,
                       rlays=None):
+        
         log = self.logger.getChild('connect_slots')
 
         #======================================================================
@@ -301,20 +302,24 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             
             
         #disable sample stats when %inundation is checked
-        def tog_SampStat(): #toggle the sample stat dropdown
-            pstate = self.checkBox_HS_in.isChecked()
-            #if checked, enable the second box
-            self.comboBox_HS_stat.setDisabled(pstate) #disable it
-            self.comboBox_HS_stat.setCurrentIndex(-1) #set selection to none
-            
-        self.checkBox_HS_in.stateChanged.connect(tog_SampStat)
+        #=======================================================================
+        # def tog_SampStat(): #toggle the sample stat dropdown
+        #     pstate = self.checkBox_HS_in.isChecked()
+        #     #if checked, enable the second box
+        #     self.comboBox_HS_stat.setDisabled(pstate) #disable it
+        #     self.comboBox_HS_stat.setCurrentIndex(-1) #set selection to none
+        #     
+        # self.checkBox_HS_in.stateChanged.connect(tog_SampStat)
+        #=======================================================================
         
         
         #=======================================================================
         # #execute buttons
         #=======================================================================
         self.pushButton_HSgenerate.clicked.connect(self.run_rsamp)
-        self.pushButton_HS_prep.clicked.connect(self.run_rPrep)
+
+        """TODO: connect this to a new dialog
+        self.pushButton_HS_rprep.clicked.connect(self.run_rPrep)""" 
         #======================================================================
         # TAB: EVENT VARIABLES---------
         #======================================================================
