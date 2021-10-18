@@ -487,10 +487,10 @@ class Tut4_t(WorkFlow_t):
     Test = Test_wf_L1
     tdata_keys = ['finv', 'expos', 'evals', 'r_ttl', 'eventypes', 'r_passet']
     
-class Tut4a_t(Tut4a, Tut4_t): #tutorial 1a
+class Tut4a_t(Tut4a, Tut4_t):  
     pass
 
-class Tut4b_t(Tut4b, Tut4_t): #tutorial 1a
+class Tut4b_t(Tut4b, Tut4_t):  
     pass
 
 #===============================================================================

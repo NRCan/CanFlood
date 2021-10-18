@@ -10,6 +10,8 @@ Created on Feb. 9, 2020
 import logging, configparser, datetime
 start = datetime.datetime.now()
 
+from warnings import warn
+
 
 #==============================================================================
 # imports------------
@@ -97,10 +99,11 @@ class Rsamp(Plotr, Qcoms):
                     providerLib='ogr'
                     ):
         
+        
         """
         special input loader for StandAlone runs"""
         log = self.logger.getChild('load_layers')
-        
+        warn('to be removed', DeprecationWarning)
         
         #======================================================================
         # load rasters
@@ -249,9 +252,7 @@ class Rsamp(Plotr, Qcoms):
         assert cid in [field.name() for field in finv_raw.fields()], \
             'requested cid field \'%s\' not found on the finv_raw'%cid
             
-
-
-        
+ 
         #check the rasters
         rname_l = []
         for rlay in rlayRaw_l:
@@ -269,7 +270,6 @@ class Rsamp(Plotr, Qcoms):
         
         #drop all the fields except the cid
         finv = self.deletecolumn(finv_raw, [cid], invert=True)
-        
         
         #fix the geometry
         finv = self.fixgeometries(finv, logger=log)
@@ -599,16 +599,14 @@ class Rsamp(Plotr, Qcoms):
         
         log = self.logger.getChild('samp_vals')
         #=======================================================================
-        # build the loop
+        # setup parameters
         #=======================================================================
         gtype=self.gtype
         if 'Polygon' in gtype: 
             assert psmp_stat in self.psmp_codes, 'unrecognized psmp_stat' 
             psmp_code = self.psmp_codes[psmp_stat] #sample each raster
-            algo_nm = 'qgis:zonalstatistics'
+            algo_nm = 'native:zonalstatisticsfb'
 
-            
-            
         elif 'Point' in gtype:
             algo_nm = 'qgis:rastersampling'
             
@@ -636,22 +634,17 @@ class Rsamp(Plotr, Qcoms):
             # sample.poly----------
             #===================================================================
             if 'Polygon' in gtype: 
-                
-                algo_nm = 'native:zonalstatisticsfb'
-            
-                ins_d = {       'COLUMN_PREFIX':indxr, 
+
+                finv = processing.run(algo_nm,
+                    {       'COLUMN_PREFIX':indxr, 
                                 'INPUT_RASTER':rlay, 
                                 'INPUT':finv, 
                                 'RASTER_BAND':1, 
                                 'STATISTICS':[psmp_code],#0: pixel counts, 1: sum
                                 'OUTPUT' : 'TEMPORARY_OUTPUT',
-                                }
-                    
-                #execute the algo
-                res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
-                
-                
-                finv = res_d['OUTPUT']
+                                },
+                     feedback=self.feedback)['OUTPUT']
+
         
             #=======================================================================
             # sample.Line--------------
@@ -662,17 +655,14 @@ class Rsamp(Plotr, Qcoms):
             # sample.Points----------------
             #======================================================================
             elif 'Point' in gtype: 
-                #build the algo params
-                params_d = { 'COLUMN_PREFIX' : rlay.name(),
+                
+                finv = processing.run(algo_nm, 
+                              { 'COLUMN_PREFIX' : rlay.name(),
                              'INPUT' : finv,
                               'OUTPUT' : 'TEMPORARY_OUTPUT',
-                               'RASTERCOPY' : rlay}
-                
-                #execute the algo
-                res_d = processing.run(algo_nm, params_d, feedback=self.feedback)
-        
-                #extract and clean results
-                finv = res_d['OUTPUT']
+                               'RASTERCOPY' : rlay},
+                               feedback=self.feedback)['OUTPUT']
+
 
             else:
                 raise Error('unexpected geo type: %s'%gtype)
