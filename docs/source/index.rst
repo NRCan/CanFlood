@@ -1,4 +1,4 @@
-Documentation for CanFlood |version|
+Documentation for CanFlood
 --------------------------------
 
 Please have a look into the documents below.
