@@ -289,31 +289,26 @@ class Rsamp(Plotr, Qcoms):
         self.finv_fcnt = len(finv.fields())
         assert self.finv_fcnt==len(keep_fnl), 'failed to drop all the fields'
         
-        
-        
         if self.gtype.endswith('Z'):
             log.warning('passed finv has Z values... these are not supported')
             
         self.feedback.setProgress(20)
   
-        
+        #get the results name
+        res_name = '%s_%s_%i_%i'%(fname, self.tag, len(rlayRaw_l),finv.dataProvider().featureCount())
         #=======================================================================
-        # simple geometries-----
+        # simple geometries (Points)-----
         #=======================================================================
         if 'Point' in self.gtype:
-            
             res_vlay = self.samp_vals_pts(finv, rlayRaw_l)
-                               
-            res_name = '%s_%s_%i_%i'%(fname, self.tag, len(rlayRaw_l), 
-                                      res_vlay.dataProvider().featureCount())
-                               
+            
         #=======================================================================
         # complex geos--------
         #=======================================================================
         else:
  
             #=======================================================================
-            #inundation runs--------
+            #threshold area (inundation)--------
             #=======================================================================
             if as_inun:
                 #===================================================================
@@ -348,22 +343,28 @@ class Rsamp(Plotr, Qcoms):
                 else:
                     raise Error('\'%s\' got unexpected gtype: %s'%(finv.name(), self.gtype))
                 
-                res_name = '%s_%s_%i_%i_d%.2f'%(
-                    fname, self.tag, len(rlayRaw_l), res_vlay.dataProvider().featureCount(), dthresh)
+                res_name = res_name + 'd%.2f'%(dthresh)
         
             #=======================================================================
-            #WSL value sampler------
+            # value sampler------
             #=======================================================================
             else:
-                res_vlay = self.samp_vals(finv,rlayRaw_l, 
-                              psmp_stat=psmp_stat, psmp_fieldName=psmp_fieldName)
-                
-                #get the resulting field name
-                res_name = '%s_%s_%i_%i'%(fname, self.tag, len(rlayRaw_l), 
-                                          res_vlay.dataProvider().featureCount())
-                
-                if not psmp_stat is None: 
+                #===============================================================
+                # Global staitsitc
+                #===============================================================
+                if not psmp_stat is None:
+                    assert psmp_fieldName is None
+
+                    res_vlay = self.samp_vals_cplx(finv,rlayRaw_l, psmp_stat=psmp_stat)
+                    
                     res_name = res_name + '_%s'%psmp_stat.lower()
+                    
+                #===============================================================
+                # per-asset stat
+                #===============================================================
+                    
+
+                    
                 else:
                     res_name = res_name + '_%s'%psmp_fieldName
             
@@ -613,9 +614,8 @@ class Rsamp(Plotr, Qcoms):
         return resLay
     
 
-    def samp_vals_pts(self, #sample a set of rasters with a vectorlayer
+    def samp_vals_pts(self, #sample a set of rasters with a points vectorlayer
                   finv, raster_l,
-
                   ):
         """"
         2021-10-18:split out function from polygons/line sammpler
@@ -632,7 +632,7 @@ class Rsamp(Plotr, Qcoms):
         #=======================================================================
         # sample loop
         #=======================================================================
-        names_d = dict()
+        self.names_d = dict()
         
         log.info('sampling %i raster layers w/ algo \'%s\' and gtype: %s'%(
             len(raster_l), algo_nm, self.gtype))
@@ -643,7 +643,7 @@ class Rsamp(Plotr, Qcoms):
                 indxr+1, len(raster_l), finv.name(), rlay.name()))
             
             ofnl =  [field.name() for field in finv.fields()]
-            self.mstore.addMapLayer(finv)
+            self.mstore.addMapLayer(finv) #not sure when/where we clear this
 
             finv = processing.run(algo_nm, 
                           { 'COLUMN_PREFIX' : rlay.name(),
@@ -651,41 +651,11 @@ class Rsamp(Plotr, Qcoms):
                           'OUTPUT' : 'TEMPORARY_OUTPUT',
                            'RASTERCOPY' : rlay},
                            feedback=self.feedback)['OUTPUT']
+                           
+            #report and handle names
+            self._smp_loop_wrap(finv, ofnl, rlay, indxr, log)
  
-            #===================================================================
-            # sample.wrap
-            #===================================================================
-            assert isinstance(finv, QgsVectorLayer)
-            assert len(finv.fields()) == self.finv_fcnt + indxr +1, \
-                'bad field length on %i'%indxr
-                
-            finv.setName('%s_%i'%(self.finv_name, indxr))
-            
-            #===================================================================
-            # correct field names
-            #===================================================================
-            """
-            algos don't assign good field names.
-            collecting a conversion dictionary then adjusting below
-            
-            TODO: propagate these field renames to the loaded result layers
-            """
-            #get/updarte the field names
-            nfnl =  [field.name() for field in finv.fields()]
-            new_fn = set(nfnl).difference(ofnl) #new field names not in the old
-            
-            if len(new_fn) > 1:
-                raise Error('bad mismatch: %i \n    %s'%(len(new_fn), new_fn))
-            elif len(new_fn) == 1:
-                names_d[list(new_fn)[0]] = rlay.name()
-            else:
-                raise Error('bad fn match')
-                 
-                
-            log.debug('sampled %i values on raster \'%s\''%(
-                finv.dataProvider().featureCount(), rlay.name()))
-            
-        self.names_d = names_d #needed by write()
+ 
         
         log.debug('finished w/ \n%s'%self.names_d)
         
@@ -694,61 +664,35 @@ class Rsamp(Plotr, Qcoms):
     view(finv)
     """
     
-    def samp_vals(self, #sample a set of rasters with a vectorlayer
-                  finv, raster_l,
-                  psmp_stat=None,
-                  psmp_fieldName=None,
+    def samp_vals_cplx(self, #sample a set of rasters with a complex vectorlayer (global stat)
+                  finv, 
+                  raster_l,
+                  psmp_stat='Max', #global statistic to use for samplingn algo
                   ):
         """
-        this is NOT for inundation percent
-        can handle all 3 geometries
+        sampling raster values (not inundation)_
         
-        2021-10-18: added support for per-asset statistic sampling
+        2021-10-18: split out points
         """
         #=======================================================================
         # defaults
         #=======================================================================
         
-        log = self.logger.getChild('samp_vals')
+        log = self.logger.getChild('samp_vals_cplx')
         gtype=self.gtype
         #=======================================================================
         # check parameter logic
         #=======================================================================
-        if 'Point' in self.gtype:
-            assert psmp_stat is None and psmp_fieldName is None, 'no statistics allowed for points'
-        else:
-            assert isinstance(psmp_stat, str) or isinstance(psmp_fieldName, str),\
-                'can not pass psmp_stat and psmp_fieldName'
-                
-            if not psmp_stat is None:
-                assert psmp_stat in self.psmp_codes, 'unrecognized psmp_stat'
-            else:
-                assert psmp_fieldName in [f.name() for f in finv.fields()], \
-                    'missing psmp_fieldName \'%s\' on finv'%psmp_fieldName
-                    
-                #data checks on sampling field name
-                pser = vlay_get_fdata(finv, fieldn=psmp_fieldName, logger=log, fmt='ser')
-                assert not pser.isna().any(), 'got %i nulls in sampling field \'%s\''%(
-                    pser.isna().sum(), psmp_fieldName)
-                
-                miss_l = set(pser.unique()).difference(self.psmp_codes.keys())
-                assert len(miss_l)==0, 'got %i unrecognized sampling statistc keys on \'%s\': \n    %s'%(
-                    len(miss_l), psmp_fieldName, miss_l)
-                
-                raise Error('check field type and values')
+        assert psmp_stat in self.psmp_codes, 'unrecognized psmp_stat'
+ 
         
         #=======================================================================
         # setup parameters
         #=======================================================================
-        
         if 'Polygon' in gtype: 
-            
             psmp_code = self.psmp_codes[psmp_stat] #sample each raster
             algo_nm = 'native:zonalstatisticsfb'
 
-        elif 'Point' in gtype:
-            algo_nm = 'qgis:rastersampling'
-            
         elif 'Line' in gtype:
             algo_nm = 'native:pointsalonglines'
         else:
@@ -757,7 +701,7 @@ class Rsamp(Plotr, Qcoms):
         #=======================================================================
         # sample loop
         #=======================================================================
-        names_d = dict()
+        self.names_d = dict()
         
         log.info('sampling %i raster layers w/ algo \'%s\' and gtype: %s'%(
             len(raster_l), algo_nm, gtype))
@@ -790,64 +734,36 @@ class Rsamp(Plotr, Qcoms):
             #=======================================================================
             elif 'Line' in gtype: 
                 finv = self.line_sample_stats(finv, rlay,[psmp_stat], logger=log)
-            #======================================================================
-            # sample.Points----------------
-            #======================================================================
-            elif 'Point' in gtype: 
                 
-                finv = processing.run(algo_nm, 
-                              { 'COLUMN_PREFIX' : rlay.name(),
-                             'INPUT' : finv,
-                              'OUTPUT' : 'TEMPORARY_OUTPUT',
-                               'RASTERCOPY' : rlay},
-                               feedback=self.feedback)['OUTPUT']
-
-
             else:
                 raise Error('unexpected geo type: %s'%gtype)
             
-            #===================================================================
-            # sample.wrap
-            #===================================================================
-            assert isinstance(finv, QgsVectorLayer)
-            assert len(finv.fields()) == self.finv_fcnt + indxr +1, \
-                'bad field length on %i'%indxr
-                
-            finv.setName('%s_%i'%(self.finv_name, indxr))
+            #report and handle names
+            self._smp_loop_wrap(finv, ofnl, rlay, indxr, log)
             
-            #===================================================================
-            # correct field names
-            #===================================================================
-            """
-            algos don't assign good field names.
-            collecting a conversion dictionary then adjusting below
-            
-            TODO: propagate these field renames to the loaded result layers
-            """
-            #get/updarte the field names
-            nfnl =  [field.name() for field in finv.fields()]
-            new_fn = set(nfnl).difference(ofnl) #new field names not in the old
-            
-            if len(new_fn) > 1:
-                raise Error('bad mismatch: %i \n    %s'%(len(new_fn), new_fn))
-            elif len(new_fn) == 1:
-                names_d[list(new_fn)[0]] = rlay.name()
-            else:
-                raise Error('bad fn match')
-                 
-                
-            log.debug('sampled %i values on raster \'%s\''%(
-                finv.dataProvider().featureCount(), rlay.name()))
-            
-        self.names_d = names_d #needed by write()
-        
+ 
         log.debug('finished w/ \n%s'%self.names_d)
         
         return finv
-    """
-    view(finv)
-    """
+
     
+    def samp_passet(self, #sample complex asset values using per-asset stats
+                    finv,
+                    psmp_fieldName
+                    ): 
+        
+        assert psmp_fieldName in [f.name() for f in finv.fields()], \
+            'missing psmp_fieldName \'%s\' on finv'%psmp_fieldName
+            
+        #data checks on sampling field name
+        pser = vlay_get_fdata(finv, fieldn=psmp_fieldName, logger=log, fmt='ser')
+        assert not pser.isna().any(), 'got %i nulls in sampling field \'%s\''%(
+            pser.isna().sum(), psmp_fieldName)
+        
+        miss_l = set(pser.unique()).difference(self.psmp_codes.keys())
+        assert len(miss_l)==0, 'got %i unrecognized sampling statistc keys on \'%s\': \n    %s'%(
+            len(miss_l), psmp_fieldName, miss_l)
+ 
     def samp_inun(self, #inundation percent for polygons
                   finv, raster_l, dtm_rlay, dthresh,
                    ):
@@ -1242,6 +1158,49 @@ class Rsamp(Plotr, Qcoms):
             self.dep_rlay_d[dep_rlay_nm] = dep_rlay
             
         return dep_rlay
+    
+    def _smp_loop_wrap(self, #common wraps for sampling loops
+                       finv, 
+                       ofnl,
+                       rlay,
+                       indxr,
+                       log,
+                       ):
+        
+        #===================================================================
+        # sample.wrap
+        #===================================================================
+        assert isinstance(finv, QgsVectorLayer)
+        assert len(finv.fields()) == self.finv_fcnt + indxr +1, \
+            'bad field length on %i'%indxr
+            
+        finv.setName('%s_%i'%(self.finv_name, indxr))
+        
+        #===================================================================
+        # correct field names
+        #===================================================================
+        """
+        algos don't assign good field names.
+        collecting a conversion dictionary then adjusting below
+        
+        TODO: propagate these field renames to the loaded result layers
+        """
+        #get/updarte the field names
+        nfnl =  [field.name() for field in finv.fields()]
+        new_fn = set(nfnl).difference(ofnl) #new field names not in the old
+        
+        if len(new_fn) > 1:
+            raise Error('bad mismatch: %i \n    %s'%(len(new_fn), new_fn))
+        elif len(new_fn) == 1:
+            self.names_d[list(new_fn)[0]] = rlay.name()
+        else:
+            raise Error('bad fn match')
+             
+            
+        log.debug('sampled %i values on raster \'%s\''%(
+            finv.dataProvider().featureCount(), rlay.name()))
+        
+        return 
     
     def raster_subtract(self, #performs raster calculator rlayBig - rlaySmall
                         rlayBig, rlaySmall,
