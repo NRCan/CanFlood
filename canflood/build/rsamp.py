@@ -306,8 +306,7 @@ class Rsamp(Plotr, Qcoms):
         # complex geos--------
         #=======================================================================
         else:
- 
-            #=======================================================================
+             #=======================================================================
             #threshold area (inundation)--------
             #=======================================================================
             if as_inun:
@@ -362,10 +361,8 @@ class Rsamp(Plotr, Qcoms):
                 #===============================================================
                 # per-asset stat
                 #===============================================================
-                    
-
-                    
                 else:
+                    res_vlay = self.samp_passet(finv,rlayRaw_l, psmp_stat=psmp_fieldName)
                     res_name = res_name + '_%s'%psmp_fieldName
             
         res_vlay.setName(res_name)
@@ -749,13 +746,44 @@ class Rsamp(Plotr, Qcoms):
     
     def samp_passet(self, #sample complex asset values using per-asset stats
                     finv,
-                    psmp_fieldName
+                    raster_l,
+                    psmp_fieldName='sample_stat', #field name containing sampling statistic
                     ): 
+        """
+        similar to samp_vals_cplx() (using a single statistic)
+            but here we process in groups using a statistc found in the attribute table
+            alternatively, we could harmonize into one function by pre-processing...
+            but I'd rather keep things separate to maximize clarity and efficency
+            on the more common samp_vals_cplx()
+        """
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        
+        log = self.logger.getChild('samp_passet')
+        gtype=self.gtype
+         
+        #=======================================================================
+        # setup parameters
+        #=======================================================================
+        if 'Polygon' in gtype: 
+            algo_nm = 'native:zonalstatisticsfb'
+
+        elif 'Line' in gtype:
+            algo_nm = 'native:pointsalonglines'
+        else:
+            raise Error('unsupported gtype: %s'%gtype)
+        
+
+            
+        #=======================================================================
+        # #data checks on sampling field name
+        #=======================================================================
         
         assert psmp_fieldName in [f.name() for f in finv.fields()], \
             'missing psmp_fieldName \'%s\' on finv'%psmp_fieldName
             
-        #data checks on sampling field name
+            
         pser = vlay_get_fdata(finv, fieldn=psmp_fieldName, logger=log, fmt='ser')
         assert not pser.isna().any(), 'got %i nulls in sampling field \'%s\''%(
             pser.isna().sum(), psmp_fieldName)
@@ -763,6 +791,24 @@ class Rsamp(Plotr, Qcoms):
         miss_l = set(pser.unique()).difference(self.psmp_codes.keys())
         assert len(miss_l)==0, 'got %i unrecognized sampling statistc keys on \'%s\': \n    %s'%(
             len(miss_l), psmp_fieldName, miss_l)
+        
+        #=======================================================================
+        # sample loop
+        #=======================================================================
+        self.names_d = dict()
+        
+        log.info('sampling %i raster layers w/ algo \'%s\' and gtype: %s'%(
+            len(raster_l), algo_nm, gtype))
+        
+        for indxr, rlay in enumerate(raster_l):
+            
+            log.info('%i/%i sampling \'%s\' on \'%s\''%(
+                indxr+1, len(raster_l), finv.name(), rlay.name()))
+            
+            ofnl =  [field.name() for field in finv.fields()]
+            self.mstore.addMapLayer(finv)
+            
+            
  
     def samp_inun(self, #inundation percent for polygons
                   finv, raster_l, dtm_rlay, dthresh,
@@ -1401,6 +1447,7 @@ class Rsamp(Plotr, Qcoms):
                     line_vlay, #line vectorylayer with geometry to sample from
                     rlay, #raster to sample
                     sample_stats, #list of stats to sample
+                    selected=False,
                     logger=None,
                     ):
         """
@@ -1420,9 +1467,16 @@ class Rsamp(Plotr, Qcoms):
         #===============================================================
         # #convert to points
         #===============================================================
+        #selection handling
+        if selected:
+            input_obj = self._get_sel_obj(line_vlay)
+        else:
+            input_obj = line_vlay
+            
+            
         params_d = { 'DISTANCE' : rlay.rasterUnitsPerPixelX(), 
                     'END_OFFSET' : 0, 
-                    'INPUT' : line_vlay, 
+                    'INPUT' : input_obj, 
                     'OUTPUT' : 'TEMPORARY_OUTPUT', 
                     'START_OFFSET' : 0 }
         
