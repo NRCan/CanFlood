@@ -297,7 +297,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                         self.groupBox_HS_AT.setDisabled(False)
                         self.groupBox_HS_VS.setDisabled(True) #disable the Value Sampling box
                     else:
-                        log.error('bad selection on comboBox_HS_EC_type: \'%s\''%(
+                        log.debug('bad selection on comboBox_HS_EC_type: \'%s\''%(
                             self.comboBox_HS_EC_type.currentText()))
         #type box
         self.HSvalueSamplingType_d = {'global':'Global', 'passet':'Per-Asset'}
@@ -359,7 +359,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                     self.comboBox_HS_VS_stat.addItems([f.name() for f in vlay.fields()])
 
                 else:
-                    log.error('bad selection on comboBox_HS_VS_type: \'%s\''%selection)
+                    log.debug('bad selection on comboBox_HS_VS_type: \'%s\''%selection)
             
         
         
@@ -919,7 +919,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             if ec_type == 'value':
                 
                 vs_type = dict(zip(self.HSvalueSamplingType_d.values(), self.HSvalueSamplingType_d.keys())
-                               )[self.comboBox_HS_VS_type.currenText()]
+                               )[self.comboBox_HS_VS_type.currentText()]
                                
                 if vs_type == 'global':
                     psmp_stat = self.comboBox_HS_VS_stat.currentText()

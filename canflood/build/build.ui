@@ -2065,7 +2065,7 @@ p, li { white-space: pre-wrap; }
                  </size>
                 </property>
                 <property name="text">
-                 <string>Type:</string>
+                 <string>Stat. Type:</string>
                 </property>
                </widget>
               </item>
@@ -2529,6 +2529,9 @@ p, li { white-space: pre-wrap; }
              <layout class="QHBoxLayout" name="horizontalLayout_29">
               <item>
                <widget class="QPushButton" name="pushButton_HSgenerate">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                   <horstretch>0</horstretch>
