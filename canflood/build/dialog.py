@@ -387,7 +387,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         def rpDia(): #helper to connect slots and 
             """only executing setup once called to simplify initial loading"""
             _ = self.RPrepDialog._setup()
-            #self.RPrepDialog.pushButton_HS_rprep.clicked.connect(self.run_rPrep)
+            self.RPrepDialog.pushButton_HS_prep.clicked.connect(self.run_rPrep)
             
             self.RPrepDialog.show()
             
@@ -832,10 +832,10 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         aoi_vlay = self.aoi_vlay
 
         #raster prep parameters
-        clip_rlays = self.subDia.checkBox_HS_clip.isChecked()
-        allow_download = self.subDia.checkBox_HS_dpConv.isChecked()
-        allow_rproj = self.subDia.checkBox_HS_rproj.isChecked()
-        scaleFactor = self.subDia.doubleSpinBox_HS_sf.value()
+        clip_rlays = subDia.checkBox_HS_clip.isChecked()
+        allow_download = subDia.checkBox_HS_dpConv.isChecked()
+        allow_rproj = subDia.checkBox_HS_rproj.isChecked()
+        scaleFactor = subDia.doubleSpinBox_HS_sf.value()
 
         
         #=======================================================================
