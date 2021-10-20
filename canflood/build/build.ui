@@ -2030,7 +2030,10 @@ p, li { white-space: pre-wrap; }
           </attribute>
           <layout class="QGridLayout" name="_9">
            <item row="2" column="0">
-            <widget class="QGroupBox" name="groupBox_30">
+            <widget class="QGroupBox" name="groupBox_HS_VS">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -2076,7 +2079,7 @@ p, li { white-space: pre-wrap; }
                 </property>
                 <property name="minimumSize">
                  <size>
-                  <width>150</width>
+                  <width>100</width>
                   <height>0</height>
                  </size>
                 </property>
@@ -2124,7 +2127,7 @@ p, li { white-space: pre-wrap; }
                </widget>
               </item>
               <item>
-               <widget class="QComboBox" name="comboBox_HS_stat">
+               <widget class="QComboBox" name="comboBox_HS_VS_stat">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -2152,7 +2155,10 @@ p, li { white-space: pre-wrap; }
             </widget>
            </item>
            <item row="3" column="0">
-            <widget class="QGroupBox" name="groupBox_6">
+            <widget class="QGroupBox" name="groupBox_HS_AT">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -2198,7 +2204,7 @@ p, li { white-space: pre-wrap; }
                 </property>
                 <property name="minimumSize">
                  <size>
-                  <width>150</width>
+                  <width>200</width>
                   <height>0</height>
                  </size>
                 </property>
@@ -2483,12 +2489,15 @@ p, li { white-space: pre-wrap; }
               <item>
                <widget class="QLabel" name="label_10">
                 <property name="text">
-                 <string>Type</string>
+                 <string>Type:</string>
                 </property>
                </widget>
               </item>
               <item>
                <widget class="QComboBox" name="comboBox_HS_EC_type">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -2497,7 +2506,7 @@ p, li { white-space: pre-wrap; }
                 </property>
                 <property name="minimumSize">
                  <size>
-                  <width>100</width>
+                  <width>150</width>
                   <height>0</height>
                  </size>
                 </property>
@@ -5761,7 +5770,7 @@ p, li { white-space: pre-wrap; }
   <tabstop>checkBox_sels</tabstop>
   <tabstop>comboBox_aoi</tabstop>
   <tabstop>lineEdit_wdir</tabstop>
-  <tabstop>comboBox_HS_stat</tabstop>
+  <tabstop>comboBox_HS_VS_stat</tabstop>
   <tabstop>fieldsTable_EL</tabstop>
   <tabstop>radioButton_ELari</tabstop>
   <tabstop>radioButton_ELaep</tabstop>

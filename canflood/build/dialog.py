@@ -275,8 +275,30 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
         #populate the exposure type
         self.hs_expoType_d = {'value':'Values', 'area':'Area-Threshold'}
-        self.comboBox_HS_EC_type.addItems(list(self.hs_expoType_d .values()))
+        self.comboBox_HS_EC_type.addItems(list(self.hs_expoType_d.values()))
         
+
+        
+        #force logic ontofindChildren type controls
+        def force_expoTypeControlLogic():
+            self.logger.debug('force_expoTypeControlLogic called')
+            vlay = self.comboBox_ivlay.currentLayer()
+            if isinstance(vlay,QgsVectorLayer): 
+                gtype = QgsWkbTypes().displayString(vlay.wkbType())
+                if not 'Point' in gtype: #complex geometry
+
+                    #value selected. freeze area controls
+                    if self.comboBox_HS_EC_type.currentText() == self.hs_expoType_d['value']:
+                        self.groupBox_HS_AT.setDisabled(True)
+                        self.groupBox_HS_VS.setDisabled(False) 
+        
+                    #area threshold selected
+                    elif self.comboBox_HS_EC_type.currentText() == self.hs_expoType_d['area']:
+                        self.groupBox_HS_AT.setDisabled(False)
+                        self.groupBox_HS_VS.setDisabled(True) #disable the Value Sampling box
+                    else:
+                        log.error('bad selection on comboBox_HS_EC_type: \'%s\''%(
+                            self.comboBox_HS_EC_type.currentText()))
         
         #force logic onto exposure type
         def force_expoTypeLogic():
@@ -289,8 +311,14 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                 
                 if 'Point' in gtype: #simple geometry
                     self.comboBox_HS_EC_type.setDisabled(True)                    
+                    #turn off complex controls
+                    self.groupBox_HS_AT.setDisabled(True)
+                    self.groupBox_HS_VS.setDisabled(True) 
                 else:
                     self.comboBox_HS_EC_type.setDisabled(False)
+                    force_expoTypeControlLogic()
+                    
+
                     
             else:
                 #disable until a finv is selected
@@ -298,29 +326,38 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                 self.comboBox_HS_EC_type.setCurrentIndex(-1)
                 self.comboBox_HS_EC_type.setDisabled(True)
                     
+        #link to the finv
         self.comboBox_ivlay.layerChanged.connect(force_expoTypeLogic) 
-        
-        #force logic ontofindChildren type controls
-        def force_expoTypeControlLogic():
-            
-            #value selected. freeze area controls
-            if self.comboBox_HS_EC_type.currentText() == self.hs_expoType_d['value']:
-                self.groupBox_HS_AT.setDisabled(True)
-                self.groupBox_HS_VS.setDisabled(False) 
-
-            #area threshold selected
-            elif self.comboBox_HS_EC_type.currentText() == self.hs_expoType_d['area']:
-                self.groupBox_HS_AT.setDisabled(False)
-                self.groupBox_HS_VS.setDisabled(True) #disable the Value Sampling box
-
-        
-        
+       
+        #link to the type combobox
         self.comboBox_HS_EC_type.currentTextChanged.connect(force_expoTypeControlLogic)
+        
+        
         #=======================================================================
         # value sampling
         #=======================================================================
+        #type box
+        self.HSvalueSamplingType_d = {'global':'Global', 'passet':'Per-Asset'}
+        
+        self.comboBox_HS_VS_type.addItems(list(self.HSvalueSamplingType_d.values()))
+        self.comboBox_HS_VS_type.setCurrentIndex(-1)
+        
+        #statistic or field box
+        def force_vsStatBox(): #populate the comboox according to the selected type
+            vlay = self.comboBox_ivlay.currentLayer()
+            if isinstance(vlay,QgsVectorLayer):
+                selection = self.comboBox_HS_VS_type.currentText()
+                #user selected global
+                if selection == self.HSvalueSamplingType_d['global']:
+                    self.comboBox_HS_VS_stat.addItems(['','Mean','Median','Min','Max'])
+                elif selection == self.HSvalueSamplingType_d['passet']:
+                    self.comboBox_HS_VS_stat.addItems([f.name() for f in vlay.fields()])
+                else:
+                    log.error('bad selection on comboBox_HS_VS_type: \'%s\''%selection)
+            
         
         
+        self.comboBox_HS_VS_type.currentTextChanged.connect(force_vsStatBox)
         
         #display sampling stats options to user 
         def upd_stat():
