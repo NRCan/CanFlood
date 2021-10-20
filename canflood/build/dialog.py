@@ -40,6 +40,7 @@ from build.validator import Vali
 
 #get sub-dialogs
 from .vfunc_dialog import vDialog
+from .rprep_dialog import RPrepDialog
 
 #===============================================================================
 # load UI file
@@ -81,6 +82,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.qproj_setup(iface=iface, **kwargs)
         
         self.vDialog = vDialog(iface) #init and attach vfunc library dialog(connected below)
+        self.RPrepDialog=RPrepDialog(iface)
         
         self.connect_slots()
         
@@ -373,7 +375,24 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.pushButton_HSgenerate.clicked.connect(self.run_rsamp)
 
         """TODO: connect this to a new dialog
-        self.pushButton_HS_rprep.clicked.connect(self.run_rPrep)""" 
+        self.pushButton_HS_rprep.clicked.connect(self.run_rPrep)"""
+        
+                #=======================================================================
+        # vfunc
+        #=======================================================================
+        #give commmon widgets
+        for wName in self.RPrepDialog.inherit_atts:
+            assert hasattr(self, wName), wName
+            setattr(self.RPrepDialog, wName, getattr(self, wName))
+
+        #connect launcher button
+        def rpDia(): #helper to connect slots and 
+            """only executing setup once called to simplify initial loading"""
+            _ = self.RPrepDialog._setup()
+            self.RPrepDialog.show()
+            
+        self.pushButton_HS_rprep.clicked.connect(vDia)
+
         #======================================================================
         # TAB: EVENT VARIABLES---------
         #======================================================================

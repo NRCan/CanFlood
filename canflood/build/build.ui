@@ -63,8 +63,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>659</width>
-        <height>586</height>
+        <width>676</width>
+        <height>584</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -101,7 +101,7 @@
           </size>
          </property>
          <property name="currentIndex">
-          <number>3</number>
+          <number>0</number>
          </property>
          <property name="movable">
           <bool>false</bool>
@@ -3772,7 +3772,7 @@ p, li { white-space: pre-wrap; }
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>562</width>
+                   <width>113</width>
                    <height>599</height>
                   </rect>
                  </property>
@@ -5807,9 +5807,9 @@ p, li { white-space: pre-wrap; }
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="buttonGroup_EV_eventRels"/>
-  <buttongroup name="buttonGroup_ELfmt"/>
   <buttongroup name="buttonGroup_LS_rels"/>
+  <buttongroup name="buttonGroup_ELfmt"/>
+  <buttongroup name="buttonGroup_EV_eventRels"/>
   <buttongroup name="buttonGroup_S_filepaths"/>
  </buttongroups>
 </ui>
