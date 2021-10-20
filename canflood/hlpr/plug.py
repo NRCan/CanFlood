@@ -134,8 +134,6 @@ class QprojPlug(Qcoms): #baseclass for plugins
         lets each dialog attach custom functions when they are launched
             useful for automatically setting some dialog boxes
             
-        could consider adding all of the above to this....
-        
         prioritizinmg inheritanve over customs
         """
         for fName, f in self.launch_actions.items():

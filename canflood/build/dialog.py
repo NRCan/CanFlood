@@ -84,14 +84,16 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         self.connect_slots()
         
-        
-        
-        
         self.logger.debug('BuildDialog initilized')
         
 
     def connect_slots(self,
                       rlays=None):
+        """
+        using the cointaier (dict) self.launch_actions to store functions
+            that should be called once the dialog is launched
+            see self.launch()
+        """
         
         log = self.logger.getChild('connect_slots')
 
@@ -180,7 +182,6 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # TAB: INVENTORY------------
         #=======================================================================
-        
         #=======================================================================
         # vfunc
         #=======================================================================
@@ -189,8 +190,6 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             assert hasattr(self, wName), wName
             setattr(self.vDialog, wName, getattr(self, wName))
 
-        
-        
         #connect launcher button
         def vDia(): #helper to connect slots and 
             """only executing setup once called to simplify initial loading"""
@@ -224,8 +223,6 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         #connect button
         self.pushButton_Inv_store.clicked.connect(self.store_finv)
-        
-        
         #=======================================================================
         # NRPI
         #=======================================================================
@@ -240,7 +237,6 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
         # TAB: HAZARD SAMPLER---------
         #======================================================================
-        
         #=======================================================================
         # wsl raster layers
         #=======================================================================
@@ -267,7 +263,6 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # inundation
         #=======================================================================
-        
         hlpr.plug.bind_MapLayerComboBox(self.comboBox_HS_DTM, 
                       layerType=QgsMapLayerProxyModel.RasterLayer, iface=self.iface)
         
@@ -275,16 +270,36 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.launch_actions['attempt dtm2'] = lambda: self.comboBox_HS_DTM.attempt_selection('dtm')
         
         #=======================================================================
-        # #complex
+        # #exposure type
         #=======================================================================
-        #display the gtype when the finv changes
-        def upd_gtype():
+
+        #populate the exposure type
+        self.hs_expoType_d = {'value':'Values', 'area':'Area-Threshold'}
+        self.comboBox_HS_EC_type.addItems(list(self.hs_expoType_d .values()))
+        
+        
+        #force logic onto exposure type
+        def force_expoType_logic():
             vlay = self.comboBox_ivlay.currentLayer()
+
             if isinstance(vlay,QgsVectorLayer):
                 gtype = QgsWkbTypes().displayString(vlay.wkbType())
-                self.label_HS_finvgtype.setText(gtype)
-            
-        self.comboBox_ivlay.layerChanged.connect(upd_gtype) #SS inventory vector layer
+                self.label_HS_finvgtype.setText(gtype) #set the label
+                self.comboBox_HS_EC_type.setCurrentIndex(0)
+                
+                if 'Point' in gtype: #simple geometry
+                    self.comboBox_HS_EC_type.setDisabled(True)                    
+                else:
+                    self.comboBox_HS_EC_type.setDisabled(False)
+                    
+            else:
+                #disable until a finv is selected
+                self.label_HS_finvgtype.setText('select a finv on the \'Inventory\' tab')
+                self.comboBox_HS_EC_type.setCurrentIndex(-1)
+                self.comboBox_HS_EC_type.setDisabled(True)
+                    
+        self.comboBox_ivlay.layerChanged.connect(force_expoType_logic) 
+        
         
         #display sampling stats options to user 
         def upd_stat():
