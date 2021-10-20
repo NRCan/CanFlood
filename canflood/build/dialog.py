@@ -880,11 +880,13 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # load results onto list widget
         #=======================================================================
-        log.debug('loading %i result layers onto widget'%len(rlay_l))
+        
         self.listView_expo_rlays.clear_checks()
             
             
         if self.checkBox_loadres.isChecked():
+            log.debug('loading %i result layers onto widget'%len(rlay_l))
+            
             for rlay in rlay_l:
                 self._load_toCanvas(rlay, logger=log)
                 
