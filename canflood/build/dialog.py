@@ -374,11 +374,9 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         self.pushButton_HSgenerate.clicked.connect(self.run_rsamp)
 
-        """TODO: connect this to a new dialog
-        self.pushButton_HS_rprep.clicked.connect(self.run_rPrep)"""
-        
-                #=======================================================================
-        # vfunc
+
+        #=======================================================================
+        # Raster Prep
         #=======================================================================
         #give commmon widgets
         for wName in self.RPrepDialog.inherit_atts:
@@ -389,9 +387,11 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         def rpDia(): #helper to connect slots and 
             """only executing setup once called to simplify initial loading"""
             _ = self.RPrepDialog._setup()
+            #self.RPrepDialog.pushButton_HS_rprep.clicked.connect(self.run_rPrep)
+            
             self.RPrepDialog.show()
             
-        self.pushButton_HS_rprep.clicked.connect(vDia)
+        self.pushButton_HS_rprep.clicked.connect(rpDia)
 
         #======================================================================
         # TAB: EVENT VARIABLES---------
@@ -820,8 +820,10 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         log.info('start \'run_rPrep\' at %s'%start)
  
         
-        
-        
+        """the buttons have been moved onto the sub-dialog
+        but we're keeping all the functions here for better integration
+        treats the popout as more of an extension"""
+        subDia = self.RPrepDialog 
         #=======================================================================
         # assemble/prepare inputs
         #=======================================================================
@@ -830,10 +832,10 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         aoi_vlay = self.aoi_vlay
 
         #raster prep parameters
-        clip_rlays = self.checkBox_HS_clip.isChecked()
-        allow_download = self.checkBox_HS_dpConv.isChecked()
-        allow_rproj = self.checkBox_HS_rproj.isChecked()
-        scaleFactor = self.doubleSpinBox_HS_sf.value()
+        clip_rlays = self.subDia.checkBox_HS_clip.isChecked()
+        allow_download = self.subDia.checkBox_HS_dpConv.isChecked()
+        allow_rproj = self.subDia.checkBox_HS_rproj.isChecked()
+        scaleFactor = self.subDia.doubleSpinBox_HS_sf.value()
 
         
         #=======================================================================
