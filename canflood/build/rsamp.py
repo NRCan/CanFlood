@@ -379,7 +379,8 @@ class Rsamp(Plotr, Qcoms):
             sum_ser = pd.Series({k:cser.dropna().sum() for k, cser in df.items()}).sort_values()
             
             #set this new index
-            self.res_df = df.loc[:, sum_ser.index]
+            self.res_df = df.loc[:, sum_ser.index].sort_index()
+
         
         except Exception as e:
             log.warning('failed to convert vlay to dataframe w/ \n    %s'%e)
