@@ -299,8 +299,10 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                     else:
                         log.error('bad selection on comboBox_HS_EC_type: \'%s\''%(
                             self.comboBox_HS_EC_type.currentText()))
+        #type box
+        self.HSvalueSamplingType_d = {'global':'Global', 'passet':'Per-Asset'}
         
-        #force logic onto exposure type
+        #force logic onto exposure type when the finv selection changes
         def force_expoTypeLogic():
             vlay = self.comboBox_ivlay.currentLayer()
 
@@ -314,6 +316,8 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                     #turn off complex controls
                     self.groupBox_HS_AT.setDisabled(True)
                     self.groupBox_HS_VS.setDisabled(True) 
+                    self.comboBox_HS_VS_type.setCurrentIndex(-1)
+                    
                 else:
                     self.comboBox_HS_EC_type.setDisabled(False)
                     force_expoTypeControlLogic()
@@ -336,22 +340,24 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # value sampling
         #=======================================================================
-        #type box
-        self.HSvalueSamplingType_d = {'global':'Global', 'passet':'Per-Asset'}
+
         
         self.comboBox_HS_VS_type.addItems(list(self.HSvalueSamplingType_d.values()))
         self.comboBox_HS_VS_type.setCurrentIndex(-1)
         
         #statistic or field box
         def force_vsStatBox(): #populate the comboox according to the selected type
+            self.comboBox_HS_VS_stat.clear()
             vlay = self.comboBox_ivlay.currentLayer()
             if isinstance(vlay,QgsVectorLayer):
                 selection = self.comboBox_HS_VS_type.currentText()
                 #user selected global
                 if selection == self.HSvalueSamplingType_d['global']:
-                    self.comboBox_HS_VS_stat.addItems(['','Mean','Median','Min','Max'])
+                    
+                    self.comboBox_HS_VS_stat.addItems(['Mean','Median','Min','Max'])
                 elif selection == self.HSvalueSamplingType_d['passet']:
                     self.comboBox_HS_VS_stat.addItems([f.name() for f in vlay.fields()])
+
                 else:
                     log.error('bad selection on comboBox_HS_VS_type: \'%s\''%selection)
             
@@ -359,31 +365,6 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         self.comboBox_HS_VS_type.currentTextChanged.connect(force_vsStatBox)
         
-        #display sampling stats options to user 
-        def upd_stat():
-            vlay = self.comboBox_ivlay.currentLayer()
-            self.comboBox_HS_stat.clear()
-            if isinstance(vlay,QgsVectorLayer):
-                gtype = QgsWkbTypes().displayString(vlay.wkbType())
-                self.comboBox_HS_stat.setCurrentIndex(-1)
-                
-                if 'Polygon' in gtype or 'Line' in gtype:
-                    self.comboBox_HS_stat.addItems(
-                        ['','Mean','Median','Min','Max'])
-                
-        self.comboBox_ivlay.layerChanged.connect(upd_stat) #SS inventory vector layer
-            
-            
-        #disable sample stats when %inundation is checked
-        #=======================================================================
-        # def tog_SampStat(): #toggle the sample stat dropdown
-        #     pstate = self.checkBox_HS_in.isChecked()
-        #     #if checked, enable the second box
-        #     self.comboBox_HS_stat.setDisabled(pstate) #disable it
-        #     self.comboBox_HS_stat.setCurrentIndex(-1) #set selection to none
-        #     
-        # self.checkBox_HS_in.stateChanged.connect(tog_SampStat)
-        #=======================================================================
         
         
         #=======================================================================
@@ -916,30 +897,53 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.feedback.setProgress(1)
         self.set_setup(set_finv=True) #common setup routines and attachments
         #=======================================================================
-        # assemble/prepare inputs
+        # assemble/prepare inputs-----
         #=======================================================================
         rlay_l = list(self.listView_expo_rlays.get_selected_layers().values())
 
-        psmp_stat = self.comboBox_HS_stat.currentText()
-        
-        
-        #as inundation percentage
-        as_inun = self.checkBox_HS_in.isChecked()
-        
-        if as_inun: #get associated layers and do some checks
-            dthresh = self.mQgsDoubleSpinBox_HS.value() #depth threshold
-            dtm_rlay=self.comboBox_HS_DTM.currentLayer()
-            
-            assert isinstance(dthresh, float), 'must provide a depth threshold'
-            assert isinstance(dtm_rlay, QgsRasterLayer), 'must select a DTM layer'
-            
-        else:
-            dthresh, dtm_rlay = None, None
-            
-
         finv = self.finv_vlay #set by set_setup()
+        gtype = QgsWkbTypes().displayString(finv.wkbType())
         
+        #=======================================================================
+        # #exposure configuration
+        #=======================================================================
+        psmp_stat, psmp_fieldName, dthresh, dtm_rlay = None, None, None, None #defaults
+        as_inun=False
         
+        if not 'Point' in gtype:
+        
+            ec_type = dict(zip(self.hs_expoType_d.values(), self.hs_expoType_d.keys()))[
+                self.comboBox_HS_EC_type.currentText()]
+            
+            #value sampling
+            if ec_type == 'value':
+                
+                vs_type = dict(zip(self.HSvalueSamplingType_d.values(), self.HSvalueSamplingType_d.keys())
+                               )[self.comboBox_HS_VS_type.currenText()]
+                               
+                if vs_type == 'global':
+                    psmp_stat = self.comboBox_HS_VS_stat.currentText()
+                    
+                    assert psmp_stat in ('Mean','Median','Min','Max'), 'select a valid sample statistic'
+                    
+                elif vs_type == 'passet':
+                    psmp_fieldName=self.comboBox_HS_VS_stat.currentText()
+                else:
+                    raise Error('bad vs_type: \"%s\''%vs_type)
+            
+            #area-threshold
+            elif ec_type == 'area':
+                as_inun=True
+                
+                dthresh = self.mQgsDoubleSpinBox_HS.value() #depth threshold
+                dtm_rlay=self.comboBox_HS_DTM.currentLayer()
+                
+                assert isinstance(dthresh, float), 'must provide a depth threshold'
+                assert isinstance(dtm_rlay, QgsRasterLayer), 'must select a DTM layer'
+            
+            else:
+                raise Error('bad ec_type: \"%s\''%ec_type)
+            
         self.feedback.setProgress(5)
         #=======================================================================
         # checks
@@ -950,19 +954,6 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             assert rlay.crs()==self.qproj.crs(), 'raster layer CRS does not match project'
             
 
-        #geometry specific input checks
-        gtype = QgsWkbTypes().displayString(finv.wkbType())
-        if 'Polygon' in gtype or 'Line' in gtype:
-            if not as_inun:
-                assert psmp_stat in ('Mean','Median','Min','Max'), 'select a valid sample statistic'
-            else:
-                assert psmp_stat == '', 'expects no sample statistic for %Inundation'
-                
-        elif 'Point' in gtype:
-            assert not as_inun, '%Inundation only valid for polygon type geometries'
-            
-        else:
-            raise Error('unrecognized gtype: %s'%gtype)
         
         self.feedback.setProgress(10)
         #======================================================================
@@ -976,7 +967,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
         #execute the tool
         res_vlay = wrkr.run(rlay_l, finv,
-                            psmp_stat=psmp_stat,
+                            psmp_stat=psmp_stat, psmp_fieldName=psmp_fieldName,
                             as_inun=as_inun, dtm_rlay=dtm_rlay, dthresh=dthresh,
                             )
         
