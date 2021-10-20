@@ -290,7 +290,7 @@ class Tut4(WorkFlow): #tutorial 1a
                 
                 #run controls
                 'felv':'datum', 'validate':'dmg2', 'prec':6,
-                'as_inun':True, 'dthresh':0.5,
+                
                         }
         
         self.tpars_d = { #kwargs for individual tools
@@ -328,6 +328,7 @@ class Tut4a(Tut4):
         
         self.pars_d.update({
             'finv_fp':r'tutorials\4\finv_tut4a_polygons.gpkg',
+            'as_inun':True, 'dthresh':0.5,
             })
 
 class Tut4b(Tut4):
@@ -338,8 +339,13 @@ class Tut4b(Tut4):
         
         self.pars_d.update({
             'finv_fp':r'tutorials\4\finv_tut4b_lines.gpkg',
+            'as_inun':True, 'dthresh':0.5,
             })
 
+
+
+        
+        
 #===============================================================================
 # Tutorial 5-------------
 #===============================================================================
@@ -429,7 +435,7 @@ class Tut5a(WorkFlow): #tutorial 1a
         
         
 #===============================================================================
-# Tutorial 6---------
+#Tutorial 6---------
 #===============================================================================
 ifz_fp = r'tutorials\6\dike_influence_zones.gpkg'
 class Tut6a(WorkFlow): #tutorial 1a
@@ -472,14 +478,74 @@ class Tut6a(WorkFlow): #tutorial 1a
         
         self.res_d = self.tb_dikes()
         
+#===============================================================================
+#Tutorial 7---------
+#===============================================================================
+"""value sampling types"""
+class Tut7(WorkFlow): #tutorial 1a
+    
+    crsid ='EPSG:3005'
+    def __init__(self, **kwargs):
+        self.pars_d = {
+                
+                #data files
+                'raster_dir':r'tutorials\7\haz_rast',
+                'evals_fp':r'tests\_data\tuts\evals_4_tut7.csv',
+                'dtm_fp':r'tutorials\7\dtm_ct2.tif',
+
+                
+                #run controls
+                'felv':'datum', 'validate':'dmg2', 'prec':3,
+                
+                        }
+        
+        self.tpars_d = { #kwargs for individual tools
+            'Risk1':{
+                'res_per_asset':True,
+                }
+            }
+        super().__init__(**kwargs)
         
         
+    def run(self,  #workflow for tutorial 1a
+
+              ):
+        log = self.logger.getChild('r')
+        
+        #build
+        self.res_d = self.tb_build(logger=log, fpoly=False)
+        
+        #model.risk1
+        d= self.risk1(logger=log)
+        self.res_d = {**self.res_d, **d}
+        
+        #results.djoin
+        d = self.djoin(logger=log)
+        self.res_d = {**self.res_d, **d}
+        
+        
+        log.info('finished w/ %i: %s'%(len(self.res_d),  list(self.res_d.keys())))
+        
+class Tut7a(Tut7):
+    name = 'Tut7a'
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        
+        self.pars_d.update({
+            'finv_fp':r'tutorials\7\finv_tut7_polys.gpkg', #setup for R2.. but just using R1
+
+            })
+        
+        self.tpars_d.update({
+             'Rsamp':{'psmp_fieldName':'sample_stat'}
+            })
         
         
 #===============================================================================
 # executeors------------
 #===============================================================================
-wFlow_l = [Tut6a] #used below and by test scripts to bundle workflows
+wFlow_l = [Tut7a] #used below and by test scripts to bundle workflows
 
 if __name__ == '__main__':
     
