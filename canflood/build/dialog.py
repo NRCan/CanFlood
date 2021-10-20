@@ -279,7 +279,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         
         #force logic onto exposure type
-        def force_expoType_logic():
+        def force_expoTypeLogic():
             vlay = self.comboBox_ivlay.currentLayer()
 
             if isinstance(vlay,QgsVectorLayer):
@@ -298,7 +298,28 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                 self.comboBox_HS_EC_type.setCurrentIndex(-1)
                 self.comboBox_HS_EC_type.setDisabled(True)
                     
-        self.comboBox_ivlay.layerChanged.connect(force_expoType_logic) 
+        self.comboBox_ivlay.layerChanged.connect(force_expoTypeLogic) 
+        
+        #force logic ontofindChildren type controls
+        def force_expoTypeControlLogic():
+            
+            #value selected. freeze area controls
+            if self.comboBox_HS_EC_type.currentText() == self.hs_expoType_d['value']:
+                self.groupBox_HS_AT.setDisabled(True)
+                self.groupBox_HS_VS.setDisabled(False) 
+
+            #area threshold selected
+            elif self.comboBox_HS_EC_type.currentText() == self.hs_expoType_d['area']:
+                self.groupBox_HS_AT.setDisabled(False)
+                self.groupBox_HS_VS.setDisabled(True) #disable the Value Sampling box
+
+        
+        
+        self.comboBox_HS_EC_type.currentTextChanged.connect(force_expoTypeControlLogic)
+        #=======================================================================
+        # value sampling
+        #=======================================================================
+        
         
         
         #display sampling stats options to user 
