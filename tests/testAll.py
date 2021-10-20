@@ -434,9 +434,11 @@ class WorkFlow_t(WorkFlow): #wrapper for test workflows
         
         self.pick_d = data
             
-
+#===============================================================================
+# IMPORT TUTORIALS----------------
+#===============================================================================
 from wFlow.tutorials import Tut1a, Tut2a, Tut2b, Tut2c_mutex, Tut2c_max, Tut4a, Tut4b, \
-    Tut6a, Tut5a
+    Tut6a, Tut5a, Tut7a
 
 #===============================================================================
 # tutorial 1
@@ -500,6 +502,17 @@ class Tut6a_t(WorkFlow_t, Tut6a):
     """"same as Tut1"""
     Test = Test_wf_dikes
     tdata_keys = ['dExpo_dxcol', 'dExpo', 'dike_pfail', 'dike_pfail_lfx']
+    
+#===============================================================================
+# Tutorial 7
+#===============================================================================
+class Tut7_t(WorkFlow_t):
+    """"same as Tut1"""
+    Test = Test_wf_L1
+    tdata_keys = ['finv', 'expos', 'evals', 'r_ttl', 'eventypes', 'r_passet']
+    
+class Tut7a_t(Tut7a, Tut7_t):  
+    pass
     
     
 #===============================================================================
@@ -571,8 +584,9 @@ wFlow_l = [
            #Tut2c_mutex_t, 
            #Tut2c_max_t,  #compares with Tut2c_mutex_t. write=True
            #Tut4a_t, Tut4b_t, 
-           Tut5a_t, 
+           #Tut5a_t, 
            #Tut6a_t, 
+           Tut7a_t,
            #PolyL1_t, LineL1_t,
            ]
 
