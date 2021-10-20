@@ -2513,22 +2513,26 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         log = self.logger.getChild('_get_sel_obj')
         
+        assert isinstance(vlay, QgsVectorLayer)
         if vlay.selectedFeatureCount() == 0:
-            raise Error('Nothing selected. exepects some pre selection')
+            raise Error('Nothing selected on \'%s\'. exepects some pre selection'%(vlay.name()))
+ 
         
-        """consider moving this elsewhere"""
         #handle project layer store
-        if QgsProject.instance().mapLayer(vlay.id()) is None:
+        if self.qproj.mapLayer(vlay.id()) is None:
             #layer not on project yet. add it
-            if QgsProject.instance().addMapLayer(vlay, False) is None:
+            if self.qproj.addMapLayer(vlay, False) is None:
                 raise Error('failed to add map layer \'%s\''%vlay.name())
-
-        
-       
-        log.debug('based on %i selected features from \'%s\': %s'
-                  %(len(vlay.selectedFeatureIds()), vlay.name(), vlay.selectedFeatureIds()))
             
-        return QgsProcessingFeatureSourceDefinition(vlay.id(), True)
+
+        log.debug('based on %i selected features from \'%s\''%(len(vlay.selectedFeatureIds()), vlay.name()))
+        
+        return QgsProcessingFeatureSourceDefinition(source=vlay.id(), 
+                                                    selectedFeaturesOnly=True, 
+                                                    featureLimit=-1, 
+                                                    geometryCheck=QgsFeatureRequest.GeometryAbortOnInvalid)
+        
+ 
     
     
     def _get_sel_res(self, #handler for returning selection like results

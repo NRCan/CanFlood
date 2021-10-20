@@ -134,8 +134,6 @@ class QprojPlug(Qcoms): #baseclass for plugins
         lets each dialog attach custom functions when they are launched
             useful for automatically setting some dialog boxes
             
-        could consider adding all of the above to this....
-        
         prioritizinmg inheritanve over customs
         """
         for fName, f in self.launch_actions.items():
@@ -194,6 +192,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
         log=logger.getChild('load_toCanvas')
         if groupName is None: groupName = self.groupName
         if style_fn == '': style_fn=None
+        log.debug('loading \'%s\': %s'%(type(layers), layers))
         #=======================================================================
         # precheck
         #=======================================================================
@@ -211,7 +210,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
             group = None
             
         def add_layer(lay):
-            
+            assert isinstance(lay, QgsMapLayer), 'passed bad layer\'%s\''%lay
             if not group is None:
                 group.addLayer(lay)
                 self.qproj.addMapLayer(lay, False) #add tot he project, but hide

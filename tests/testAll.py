@@ -158,10 +158,7 @@ class Test_wf_basic(TestParent): #test for all risk model workflows
         for k, (valC, valT) in chk_d.items():
             nm = '%s.%s'%(self.name, k)
             self._df_chks(valC, valT, nm)
-            
 
-
-            
     def test_expos(self):
         self.logger.info('test_expos on %s'%self.name)
         #get the zipped checking data
@@ -400,11 +397,6 @@ class WorkFlow_t(WorkFlow): #wrapper for test workflows
         for k,v in data.items():
             assert not hasattr(v, 'crs'), k
         
-
-            
-        """
-        data.keys()
-        """
         
         with open(ofp, 'wb') as f:
             # Pickle the 'data' dictionary using the highest protocol available.
@@ -442,9 +434,11 @@ class WorkFlow_t(WorkFlow): #wrapper for test workflows
         
         self.pick_d = data
             
-
+#===============================================================================
+# IMPORT TUTORIALS----------------
+#===============================================================================
 from wFlow.tutorials import Tut1a, Tut2a, Tut2b, Tut2c_mutex, Tut2c_max, Tut4a, Tut4b, \
-    Tut6a, Tut5a
+    Tut6a, Tut5a, Tut7a
 
 #===============================================================================
 # tutorial 1
@@ -487,10 +481,10 @@ class Tut4_t(WorkFlow_t):
     Test = Test_wf_L1
     tdata_keys = ['finv', 'expos', 'evals', 'r_ttl', 'eventypes', 'r_passet']
     
-class Tut4a_t(Tut4a, Tut4_t): #tutorial 1a
+class Tut4a_t(Tut4a, Tut4_t):  
     pass
 
-class Tut4b_t(Tut4b, Tut4_t): #tutorial 1a
+class Tut4b_t(Tut4b, Tut4_t):  
     pass
 
 #===============================================================================
@@ -508,6 +502,17 @@ class Tut6a_t(WorkFlow_t, Tut6a):
     """"same as Tut1"""
     Test = Test_wf_dikes
     tdata_keys = ['dExpo_dxcol', 'dExpo', 'dike_pfail', 'dike_pfail_lfx']
+    
+#===============================================================================
+# Tutorial 7
+#===============================================================================
+class Tut7_t(WorkFlow_t):
+    """"same as Tut1"""
+    Test = Test_wf_L1
+    tdata_keys = ['finv', 'expos', 'evals', 'r_ttl', 'eventypes', 'r_passet']
+    
+class Tut7a_t(Tut7a, Tut7_t):  
+    pass
     
     
 #===============================================================================
@@ -573,14 +578,16 @@ class LineL1_t(L1_t):
                         })
 
 wFlow_l = [
-           Tut1a_t, 
+           #Tut1a_t, 
            #Tut2a_t,Tut2b_t, #these are mostly redundant w/ 2c
             
-           Tut2c_mutex_t, 
-           Tut2c_max_t,  #compares with Tut2c_mutex_t. write=True
-           Tut4a_t, Tut4b_t, Tut5a_t, 
-           Tut6a_t, 
-           PolyL1_t, LineL1_t,
+           #Tut2c_mutex_t, 
+           #Tut2c_max_t,  #compares with Tut2c_mutex_t. write=True
+           #Tut4a_t, Tut4b_t, 
+           #Tut5a_t, 
+           #Tut6a_t, 
+           Tut7a_t,
+           #PolyL1_t, LineL1_t,
            ]
 
  

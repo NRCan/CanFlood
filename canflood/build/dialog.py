@@ -29,7 +29,7 @@ from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer, QgsMapLayerPro
 #get hlpr funcs
 import hlpr.plug
 from hlpr.plug import bind_layersListWidget
-from hlpr.basic import get_valid_filename, force_open_dir 
+#from hlpr.basic import get_valid_filename, force_open_dir 
 from hlpr.exceptions import QError as Error
 
 #get sub-models
@@ -40,6 +40,7 @@ from build.validator import Vali
 
 #get sub-dialogs
 from .vfunc_dialog import vDialog
+from .rprep_dialog import RPrepDialog
 
 #===============================================================================
 # load UI file
@@ -81,17 +82,21 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.qproj_setup(iface=iface, **kwargs)
         
         self.vDialog = vDialog(iface) #init and attach vfunc library dialog(connected below)
+        self.RPrepDialog=RPrepDialog(iface)
         
         self.connect_slots()
-        
-        
-        
         
         self.logger.debug('BuildDialog initilized')
         
 
     def connect_slots(self,
                       rlays=None):
+        """
+        using the cointaier (dict) self.launch_actions to store functions
+            that should be called once the dialog is launched
+            see self.launch()
+        """
+        
         log = self.logger.getChild('connect_slots')
 
         #======================================================================
@@ -179,7 +184,6 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # TAB: INVENTORY------------
         #=======================================================================
-        
         #=======================================================================
         # vfunc
         #=======================================================================
@@ -188,8 +192,6 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             assert hasattr(self, wName), wName
             setattr(self.vDialog, wName, getattr(self, wName))
 
-        
-        
         #connect launcher button
         def vDia(): #helper to connect slots and 
             """only executing setup once called to simplify initial loading"""
@@ -223,8 +225,6 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         #connect button
         self.pushButton_Inv_store.clicked.connect(self.store_finv)
-        
-        
         #=======================================================================
         # NRPI
         #=======================================================================
@@ -239,7 +239,6 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
         # TAB: HAZARD SAMPLER---------
         #======================================================================
-        
         #=======================================================================
         # wsl raster layers
         #=======================================================================
@@ -266,7 +265,6 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # inundation
         #=======================================================================
-        
         hlpr.plug.bind_MapLayerComboBox(self.comboBox_HS_DTM, 
                       layerType=QgsMapLayerProxyModel.RasterLayer, iface=self.iface)
         
@@ -274,47 +272,127 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.launch_actions['attempt dtm2'] = lambda: self.comboBox_HS_DTM.attempt_selection('dtm')
         
         #=======================================================================
-        # #complex
+        # #exposure type
         #=======================================================================
-        #display the gtype when the finv changes
-        def upd_gtype():
-            vlay = self.comboBox_ivlay.currentLayer()
-            if isinstance(vlay,QgsVectorLayer):
-                gtype = QgsWkbTypes().displayString(vlay.wkbType())
-                self.label_HS_finvgtype.setText(gtype)
-            
-        self.comboBox_ivlay.layerChanged.connect(upd_gtype) #SS inventory vector layer
+
+        #populate the exposure type
+        self.hs_expoType_d = {'value':'Values', 'area':'Area-Threshold'}
+        self.comboBox_HS_EC_type.addItems(list(self.hs_expoType_d.values()))
         
-        #display sampling stats options to user 
-        def upd_stat():
+
+        
+        #force logic ontofindChildren type controls
+        def force_expoTypeControlLogic():
+            self.logger.debug('force_expoTypeControlLogic called')
             vlay = self.comboBox_ivlay.currentLayer()
-            self.comboBox_HS_stat.clear()
+            if isinstance(vlay,QgsVectorLayer): 
+                gtype = QgsWkbTypes().displayString(vlay.wkbType())
+                if not 'Point' in gtype: #complex geometry
+
+                    #value selected. freeze area controls
+                    if self.comboBox_HS_EC_type.currentText() == self.hs_expoType_d['value']:
+                        self.groupBox_HS_AT.setDisabled(True)
+                        self.groupBox_HS_VS.setDisabled(False) 
+        
+                    #area threshold selected
+                    elif self.comboBox_HS_EC_type.currentText() == self.hs_expoType_d['area']:
+                        self.groupBox_HS_AT.setDisabled(False)
+                        self.groupBox_HS_VS.setDisabled(True) #disable the Value Sampling box
+                    else:
+                        log.debug('bad selection on comboBox_HS_EC_type: \'%s\''%(
+                            self.comboBox_HS_EC_type.currentText()))
+        #type box
+        self.HSvalueSamplingType_d = {'global':'Global', 'passet':'Per-Asset'}
+        
+        #force logic onto exposure type when the finv selection changes
+        def force_expoTypeLogic():
+            vlay = self.comboBox_ivlay.currentLayer()
+
             if isinstance(vlay,QgsVectorLayer):
                 gtype = QgsWkbTypes().displayString(vlay.wkbType())
-                self.comboBox_HS_stat.setCurrentIndex(-1)
+                self.label_HS_finvgtype.setText(gtype) #set the label
+                self.comboBox_HS_EC_type.setCurrentIndex(0)
                 
-                if 'Polygon' in gtype or 'Line' in gtype:
-                    self.comboBox_HS_stat.addItems(
-                        ['','Mean','Median','Min','Max'])
-                
-        self.comboBox_ivlay.layerChanged.connect(upd_stat) #SS inventory vector layer
+                if 'Point' in gtype: #simple geometry
+                    self.comboBox_HS_EC_type.setDisabled(True)                    
+                    #turn off complex controls
+                    self.groupBox_HS_AT.setDisabled(True)
+                    self.groupBox_HS_VS.setDisabled(True) 
+                    self.comboBox_HS_VS_type.setCurrentIndex(-1)
+                    
+                else:
+                    self.comboBox_HS_EC_type.setDisabled(False)
+                    force_expoTypeControlLogic()
+                    
+
+                    
+            else:
+                #disable until a finv is selected
+                self.label_HS_finvgtype.setText('select a finv on the \'Inventory\' tab')
+                self.comboBox_HS_EC_type.setCurrentIndex(-1)
+                self.comboBox_HS_EC_type.setDisabled(True)
+                    
+        #link to the finv
+        self.comboBox_ivlay.layerChanged.connect(force_expoTypeLogic) 
+       
+        #link to the type combobox
+        self.comboBox_HS_EC_type.currentTextChanged.connect(force_expoTypeControlLogic)
+        
+        
+        #=======================================================================
+        # value sampling
+        #=======================================================================
+
+        
+        self.comboBox_HS_VS_type.addItems(list(self.HSvalueSamplingType_d.values()))
+        self.comboBox_HS_VS_type.setCurrentIndex(-1)
+        
+        #statistic or field box
+        def force_vsStatBox(): #populate the comboox according to the selected type
+            self.comboBox_HS_VS_stat.clear()
+            vlay = self.comboBox_ivlay.currentLayer()
+            if isinstance(vlay,QgsVectorLayer):
+                selection = self.comboBox_HS_VS_type.currentText()
+                #user selected global
+                if selection == self.HSvalueSamplingType_d['global']:
+                    
+                    self.comboBox_HS_VS_stat.addItems(['Mean','Median','Min','Max'])
+                elif selection == self.HSvalueSamplingType_d['passet']:
+                    self.comboBox_HS_VS_stat.addItems([f.name() for f in vlay.fields()])
+
+                else:
+                    log.debug('bad selection on comboBox_HS_VS_type: \'%s\''%selection)
             
-            
-        #disable sample stats when %inundation is checked
-        def tog_SampStat(): #toggle the sample stat dropdown
-            pstate = self.checkBox_HS_in.isChecked()
-            #if checked, enable the second box
-            self.comboBox_HS_stat.setDisabled(pstate) #disable it
-            self.comboBox_HS_stat.setCurrentIndex(-1) #set selection to none
-            
-        self.checkBox_HS_in.stateChanged.connect(tog_SampStat)
+        
+        
+        self.comboBox_HS_VS_type.currentTextChanged.connect(force_vsStatBox)
+        
         
         
         #=======================================================================
         # #execute buttons
         #=======================================================================
         self.pushButton_HSgenerate.clicked.connect(self.run_rsamp)
-        self.pushButton_HS_prep.clicked.connect(self.run_rPrep)
+
+
+        #=======================================================================
+        # Raster Prep
+        #=======================================================================
+        #give commmon widgets
+        for wName in self.RPrepDialog.inherit_atts:
+            assert hasattr(self, wName), wName
+            setattr(self.RPrepDialog, wName, getattr(self, wName))
+
+        #connect launcher button
+        def rpDia(): #helper to connect slots and 
+            """only executing setup once called to simplify initial loading"""
+            _ = self.RPrepDialog._setup()
+            self.RPrepDialog.pushButton_HS_prep.clicked.connect(self.run_rPrep)
+            
+            self.RPrepDialog.show()
+            
+        self.pushButton_HS_rprep.clicked.connect(rpDia)
+
         #======================================================================
         # TAB: EVENT VARIABLES---------
         #======================================================================
@@ -742,8 +820,10 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         log.info('start \'run_rPrep\' at %s'%start)
  
         
-        
-        
+        """the buttons have been moved onto the sub-dialog
+        but we're keeping all the functions here for better integration
+        treats the popout as more of an extension"""
+        subDia = self.RPrepDialog 
         #=======================================================================
         # assemble/prepare inputs
         #=======================================================================
@@ -752,10 +832,10 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         aoi_vlay = self.aoi_vlay
 
         #raster prep parameters
-        clip_rlays = self.checkBox_HS_clip.isChecked()
-        allow_download = self.checkBox_HS_dpConv.isChecked()
-        allow_rproj = self.checkBox_HS_rproj.isChecked()
-        scaleFactor = self.doubleSpinBox_HS_sf.value()
+        clip_rlays = subDia.checkBox_HS_clip.isChecked()
+        allow_download = subDia.checkBox_HS_dpConv.isChecked()
+        allow_rproj = subDia.checkBox_HS_rproj.isChecked()
+        scaleFactor = subDia.doubleSpinBox_HS_sf.value()
 
         
         #=======================================================================
@@ -798,13 +878,15 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
 
         #=======================================================================
-        # load results
+        # load results onto list widget
         #=======================================================================
-
+        
         self.listView_expo_rlays.clear_checks()
             
             
         if self.checkBox_loadres.isChecked():
+            log.debug('loading %i result layers onto widget'%len(rlay_l))
+            
             for rlay in rlay_l:
                 self._load_toCanvas(rlay, logger=log)
                 
@@ -835,82 +917,65 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         log = self.logger.getChild('run_rsamp')
         start = datetime.datetime.now()
         log.info('start \'run_rsamp\' at %s'%start)
-        self.set_setup(set_finv=True)
+        self.feedback.setProgress(1)
+        self.set_setup(set_finv=True) #common setup routines and attachments
         #=======================================================================
-        # assemble/prepare inputs
+        # assemble/prepare inputs-----
         #=======================================================================
-        #finv_raw = self.comboBox_ivlay.currentLayer()
         rlay_l = list(self.listView_expo_rlays.get_selected_layers().values())
-        
 
-        #cf_fp = self.get_cf_fp()
-        #out_dir = self.lineEdit_wdir.text()
-        #tag = self.linEdit_ScenTag.text() #set the secnario tag from user provided name
-
-        #cid = self.mFieldComboBox_cid.currentField() #user selected field
-        psmp_stat = self.comboBox_HS_stat.currentText()
-        
-        
-        #inundation
-        as_inun = self.checkBox_HS_in.isChecked()
-        
-        if as_inun:
-            dthresh = self.mQgsDoubleSpinBox_HS.value()
-            dtm_rlay=self.comboBox_HS_DTM.currentLayer()
-            
-            assert isinstance(dthresh, float), 'must provide a depth threshold'
-            assert isinstance(dtm_rlay, QgsRasterLayer), 'must select a DTM layer'
-            
-        else:
-            dthresh, dtm_rlay = None, None
-            
-
-#===============================================================================
-#         #=======================================================================
-#         # slice finv to aoi
-#         #=======================================================================
-#         finv = self.slice_aoi(finv_raw)
-# 
-#         #======================================================================
-#         # precheck
-#         #======================================================================
-#         if finv is None:
-#             raise Error('got nothing for finv')
-#         if not isinstance(finv, QgsVectorLayer):
-#             raise Error('did not get a vector layer for finv')
-#===============================================================================
-        finv = self.finv_vlay
-        
+        finv = self.finv_vlay #set by set_setup()
         gtype = QgsWkbTypes().displayString(finv.wkbType())
         
+        #=======================================================================
+        # #exposure configuration
+        #=======================================================================
+        psmp_stat, psmp_fieldName, dthresh, dtm_rlay = None, None, None, None #defaults
+        as_inun=False
+        
+        if not 'Point' in gtype:
+        
+            ec_type = dict(zip(self.hs_expoType_d.values(), self.hs_expoType_d.keys()))[
+                self.comboBox_HS_EC_type.currentText()]
+            
+            #value sampling
+            if ec_type == 'value':
+                
+                vs_type = dict(zip(self.HSvalueSamplingType_d.values(), self.HSvalueSamplingType_d.keys())
+                               )[self.comboBox_HS_VS_type.currentText()]
+                               
+                if vs_type == 'global':
+                    psmp_stat = self.comboBox_HS_VS_stat.currentText()
+                    
+                    assert psmp_stat in ('Mean','Median','Min','Max'), 'select a valid sample statistic'
+                    
+                elif vs_type == 'passet':
+                    psmp_fieldName=self.comboBox_HS_VS_stat.currentText()
+                else:
+                    raise Error('bad vs_type: \"%s\''%vs_type)
+            
+            #area-threshold
+            elif ec_type == 'area':
+                as_inun=True
+                
+                dthresh = self.mQgsDoubleSpinBox_HS.value() #depth threshold
+                dtm_rlay=self.comboBox_HS_DTM.currentLayer()
+                
+                assert isinstance(dthresh, float), 'must provide a depth threshold'
+                assert isinstance(dtm_rlay, QgsRasterLayer), 'must select a DTM layer'
+            
+            else:
+                raise Error('bad ec_type: \"%s\''%ec_type)
+            
+        self.feedback.setProgress(5)
+        #=======================================================================
+        # checks
+        #=======================================================================
         for rlay in rlay_l:
             if not isinstance(rlay, QgsRasterLayer):
                 raise Error('unexpected type on raster layer')
-            assert rlay.crs()==self.qproj.crs(), 'layer CRS does not match project'
+            assert rlay.crs()==self.qproj.crs(), 'raster layer CRS does not match project'
             
-        
-        #=======================================================================
-        # if cid is None or cid=='':
-        #     raise Error('need to select a cid')
-        # 
-        # if not cid in [field.name() for field in finv.fields()]:
-        #     raise Error('requested cid field \'%s\' not found on the finv_raw'%cid)
-        #=======================================================================
-        
-
-        
-        
-        #geometry specific input checks
-        if 'Polygon' in gtype or 'Line' in gtype:
-            if not as_inun:
-                assert psmp_stat in ('Mean','Median','Min','Max'), 'select a valid sample statistic'
-            else:
-                assert psmp_stat == '', 'expects no sample statistic for %Inundation'
-        elif 'Point' in gtype:
-            assert not as_inun, '%Inundation only valid for polygon type geometries'
-        else:
-            raise Error('unrecognized gtype: %s'%gtype)
-        
 
         
         self.feedback.setProgress(10)
@@ -925,7 +990,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
         #execute the tool
         res_vlay = wrkr.run(rlay_l, finv,
-                            psmp_stat=psmp_stat,
+                            psmp_stat=psmp_stat, psmp_fieldName=psmp_fieldName,
                             as_inun=as_inun, dtm_rlay=dtm_rlay, dthresh=dthresh,
                             )
         
@@ -1037,36 +1102,20 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # assemble/prepare inputs
         #=======================================================================
         self.set_setup(set_finv=True)
- 
-        #finv_raw = self.comboBox_ivlay.currentLayer()
         rlay = self.comboBox_dtm.currentLayer()
-        
- 
-        
 
-        #update some parameters
-        #cid = self.mFieldComboBox_cid.currentField() #user selected field
+        #get parameters from Hazard Sampler tab
         psmp_stat = self.comboBox_HS_stat.currentText()
-        
-
-        #======================================================================
-        # aoi slice
-        #======================================================================
-        finv = self.finv_vlay
-        
-
+ 
         #======================================================================
         # precheck
         #======================================================================
-
-        
-
         if not isinstance(rlay, QgsRasterLayer):
             raise Error('unexpected type on raster layer')
 
             
         #check if we got a valid sample stat
-        gtype = QgsWkbTypes().displayString(finv.wkbType())
+        gtype = QgsWkbTypes().displayString(self.finv_vlay.wkbType())
         if not 'Point' in gtype:
             assert not psmp_stat=='', \
             'for %s type finvs must specifcy a sample statistic on the Hazard Sampler tab'%gtype
@@ -1079,7 +1128,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
         wrkr = Rsamp(fname='gels', **kwargs)
         
-        res_vlay = wrkr.run([rlay], finv, psmp_stat=psmp_stat)
+        res_vlay = wrkr.run([rlay], self.finv_vlay, psmp_stat=psmp_stat)
         
         #check it
         wrkr.dtm_check(res_vlay)
