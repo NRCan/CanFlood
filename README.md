@@ -17,7 +17,7 @@ We welcome/encourage any comments, bugs, or issues you have or find. Please crea
 Happy flood risk modelling!
 
 ## Documentation
-See the latest users manual in the [manuals folder](https://github.com/NRCan/CanFlood/tree/master/manual)
+Select 'stable' in the [documentation](https://canflood.readthedocs.io/en/stable/#)
 
 ## Installation Instructions 
 
