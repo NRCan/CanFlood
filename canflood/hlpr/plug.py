@@ -192,6 +192,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
         log=logger.getChild('load_toCanvas')
         if groupName is None: groupName = self.groupName
         if style_fn == '': style_fn=None
+        log.debug('loading \'%s\': %s'%(type(layers), layers))
         #=======================================================================
         # precheck
         #=======================================================================
@@ -209,7 +210,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
             group = None
             
         def add_layer(lay):
-            
+            assert isinstance(lay, QgsMapLayer), 'passed bad layer\'%s\''%lay
             if not group is None:
                 group.addLayer(lay)
                 self.qproj.addMapLayer(lay, False) #add tot he project, but hide

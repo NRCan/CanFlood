@@ -878,9 +878,9 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
 
         #=======================================================================
-        # load results
+        # load results onto list widget
         #=======================================================================
-
+        log.debug('loading %i result layers onto widget'%len(rlay_l))
         self.listView_expo_rlays.clear_checks()
             
             

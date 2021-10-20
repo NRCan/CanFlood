@@ -427,6 +427,8 @@ class Rsamp(Plotr, Qcoms):
 
             
         self.feedback.setProgress(90)
+        
+        self.logger.debug('finished all %i'%len(res_l))
             
         return res_l
             
