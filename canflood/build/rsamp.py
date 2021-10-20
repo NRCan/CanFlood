@@ -423,7 +423,8 @@ class Rsamp(Plotr, Qcoms):
             res_l.append(rlay)
             
             self.feedback.upd_prog(70/len(rlayRaw_l), method='append')
-            assert isinstance(rlay, QgsRasterLayer)
+            self.logger.debug('finished on %s'%rlay.name())
+
             
         self.feedback.setProgress(90)
             
@@ -598,29 +599,11 @@ class Rsamp(Plotr, Qcoms):
         #=======================================================================
         # wrap
         #=======================================================================
-        
-        
-        
         log.info('finished w/ %i prep operations on \'%s\' \n    %s'%(
             len(res_d), resLay.name(), res_d))
         
-        #clean up the store
-        #=======================================================================
-        # _ = mstore.takeMapLayer(rlayRaw) #take out the raw (without deleteing) 
-        # try:
-        #     _ = mstore.takeMapLayer(resLay) #try and pull out the result layer
-        # except:
-        #     log.warning('failed to remove \'%s\' from store'%resLay.name())
-        #=======================================================================
-        
-        """
-        for k,v in mstore.mapLayers().items():
-            print(k,v)
-        
-        """
-        #self.mstore.removeAllMapLayers() #clear all layers
+ 
         assert isinstance(resLay, QgsRasterLayer)
-        
         
         return resLay
     
