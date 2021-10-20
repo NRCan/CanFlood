@@ -192,7 +192,7 @@ class Rsamp(Plotr, Qcoms):
         #=======================================================================
         # loop and assemble
         #=======================================================================
-        log.info('loading %i rlays'%len(rfp_d))
+        log.debug('loading %i rlays'%len(rfp_d))
         rlay_d = dict()
         for fn, fp in rfp_d.items():
             rlay_d[fn] = self.load_rlay(fp, logger=log,aoi_vlay=aoi_vlay, **kwargs)
@@ -200,7 +200,7 @@ class Rsamp(Plotr, Qcoms):
 
         assert len(rlay_d)>0, 'failed to load any rasters!'
             
-        log.info('loaded %i'%len(rlay_d))
+        log.info('loaded %i rlays: %s'%(len(rlay_d), list(rlay_d.keys())))
         
         return rlay_d
     
@@ -292,6 +292,8 @@ class Rsamp(Plotr, Qcoms):
         if self.gtype.endswith('Z'):
             log.warning('passed finv has Z values... these are not supported')
             
+        self.names_d = dict() #setting an empty as some paths dont fill this anymore
+            
         self.feedback.setProgress(20)
   
         #get the results name
@@ -301,6 +303,7 @@ class Rsamp(Plotr, Qcoms):
         #=======================================================================
         if 'Point' in self.gtype:
             res_vlay = self.samp_vals_pts(finv, rlayRaw_l)
+            assert not as_inun
             
         #=======================================================================
         # complex geos--------
@@ -366,6 +369,16 @@ class Rsamp(Plotr, Qcoms):
                     res_name = res_name + '_passet'
             
         res_vlay.setName(res_name)
+        
+        #=======================================================================
+        # check field names
+        #=======================================================================
+        if not as_inun:
+            """still handling renaming at the end for inundation runs"""
+            miss_l = set(self.rname_l).difference([f.name() for f in res_vlay.fields()])
+            assert len(miss_l)==0, 'field name mismatch: %s'%miss_l
+        
+        
         #=======================================================================
         # wrap
         #=======================================================================
@@ -644,21 +657,25 @@ class Rsamp(Plotr, Qcoms):
             self.mstore.addMapLayer(finv) #not sure when/where we clear this
 
             finv = processing.run(algo_nm, 
-                          { 'COLUMN_PREFIX' : rlay.name(),
-                         'INPUT' : finv,
-                          'OUTPUT' : 'TEMPORARY_OUTPUT',
-                           'RASTERCOPY' : rlay},
+              { 'COLUMN_PREFIX' : rlay.name(),'INPUT' : finv,
+               'OUTPUT' : 'TEMPORARY_OUTPUT','RASTERCOPY' : rlay},
                            feedback=self.feedback)['OUTPUT']
                            
             #report and handle names
-            self._smp_loop_wrap(finv, ofnl, rlay, indxr, log)
+            finv = self._smp_loop_wrap(finv, ofnl, rlay, indxr, log)
+            
+            log.info('finished %i w/ %s'%(indxr, [f.name() for f in finv.fields()]))
  
- 
+        #=======================================================================
+        # check
+        #=======================================================================
+        
         
         log.debug('finished w/ \n%s'%self.names_d)
         
         return finv
     """
+    [f.name() for f in finv.fields()]
     view(finv)
     """
     
@@ -949,11 +966,7 @@ class Rsamp(Plotr, Qcoms):
             res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
             
             finvw = res_d['OUTPUT']
-            """
-            view(finvw)
-            view(finv)
-            """
-
+ 
             #===================================================================
             # check/correct field names
             #===================================================================
@@ -1316,7 +1329,7 @@ class Rsamp(Plotr, Qcoms):
         return dep_rlay
     
     def _smp_loop_wrap(self, #common wraps for sampling loops
-                       finv, 
+                       finv_raw, 
                        ofnl,
                        rlay,
                        indxr,
@@ -1326,20 +1339,20 @@ class Rsamp(Plotr, Qcoms):
         #===================================================================
         # sample.wrap
         #===================================================================
-        assert isinstance(finv, QgsVectorLayer)
-        assert len(finv.fields()) == self.finv_fcnt + indxr +1, \
+        assert isinstance(finv_raw, QgsVectorLayer)
+        assert len(finv_raw.fields()) == self.finv_fcnt + indxr +1, \
             'bad field length on %i'%indxr
             
-        finv.setName('%s_%i'%(self.finv_name, indxr))
-        
+        finv_raw.setName('%s_%i'%(self.finv_name, indxr))
+        self.mstore.addMapLayer(finv_raw)
         #===================================================================
         # rename the field added by the algos to the rasterlayer's name
         #===================================================================
-        assert not rlay.name() in [f.name() for f in finv.fields()]
+        assert not rlay.name() in [f.name() for f in finv_raw.fields()]
         
  
         #get/updarte the field names
-        nfnl =  [field.name() for field in finv.fields()]
+        nfnl =  [field.name() for field in finv_raw.fields()]
         new_fn_l = set(nfnl).difference(ofnl) #new field names not in the old
         
         assert len(new_fn_l)==1
@@ -1348,7 +1361,7 @@ class Rsamp(Plotr, Qcoms):
         #set the new name
         finv = processing.run('native:renametablefield', 
                        { 'FIELD' : new_fn, 'NEW_NAME' : rlay.name(),
-                  'INPUT' : finv, 'OUTPUT' : 'TEMPORARY_OUTPUT'},
+                  'INPUT' : finv_raw, 'OUTPUT' : 'TEMPORARY_OUTPUT'},
                        )['OUTPUT']
  
         
