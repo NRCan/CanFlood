@@ -619,8 +619,8 @@ The Inventory Compiler is a simple tool used to prepare an inventory vector laye
 
 The Hazard Sampler tool generates the exposure dataset ('expos') from a set of hazard event rasters. Generally, these hazard event rasters represent the WSL results of some hazard model (e.g. HEC-RAS) at specific probabilities. The hazard sampler has two basic modes:
 
-  • **WSL**: Sample raster values at each asset (default). For line and polygon assets, this requires the user specify a sampling statistic.
-  • **Inundation**: Calculate percent-inundation of each asset (for line and polygon geometry only). This requires a DTM layer and a ‘Depth Threshold’ be specified.
+  • **Value Sampling**: Sample raster values at each asset; generally the default when you're interested in the depth at an asset. For line and polygon assets, this requires the user specify a sampling statistic (either globally or per-asset).
+  • **Area-Threshold Sampling**: Calculate the percent-of each asset length or area above some threshold raster value; useful for calculating the percent of inundation of road segments or agricultural crop polygons. This requires a DTM layer and a ‘Depth Threshold’ be specified.
 
 .. _Figure5-1:
 
@@ -628,7 +628,8 @@ The Hazard Sampler tool generates the exposure dataset ('expos') from a set of h
 
 *Figure 5-1: Risk calculation definition diagram where the dashed line is the WSL value of event ‘ei’*
 
-Using the definitions in Figure5-1_, the WSL exposure from an event *i* to a single asset *j* with height *elv* :sub:`j` is calculated as: 
+Using the definitions in Figure5-1_, the WSL exposure from an event i to a single asset j with height *elv :sub:`j`* is calculated as:
+ 
                            *expo* :sub:`i,j` = *WSL* :sub:`bl, ei` - *elv* :sub:`j`
 
 The hazard sampler performs the following general steps to the set of user-supplied hazard layers and inventory layer:
@@ -637,7 +638,15 @@ The hazard sampler performs the following general steps to the set of user-suppl
   2) For each layer, sample the raster value or calculate the percent inundation of each asset;
   3) Save the results in the ‘expos’ csv file to the working directory and write this path to the Control File;
   4) Load the results layer to canvas (optional)
+  
+**Value Sampling for Complex Geometries**
 
+Unlike Point geometries, inventories with line or polygon geometries require some *sampling statistic* (e.g., 'Min', 'Max', 'Mean') to tell CanFlood how the raster value should be calculated from each asset geometry. Two options for specifying the sampling statistic are provided:
+
+  • **Global**: A single sampling statistic is specified and used for all asset geometries (e.g., take the 'Max' raster value encountered within each polygon).
+  • **Per-Asset**: A sampling statistic is specified for each asset via some field value on the inventory (e.g., take the 'Max' value for some assets and the 'Min' value for others). This is most useful for large asset geometries and rasters with high variance (e.g., building polygons sampling DTMs in areas with significant terrain)
+  
+  
 **Raster Preparation**
 
 The raster sampler expects all the hazard layers to have the following properties:
