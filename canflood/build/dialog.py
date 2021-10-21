@@ -39,7 +39,7 @@ from build.prepr import Preparor
 from build.validator import Vali
 
 #get sub-dialogs
-from .vfunc_dialog import vDialog
+from build.dialog_vfunc import vDialog
 from build.dialog_rprep import RPrepDialog
 
 #===============================================================================
