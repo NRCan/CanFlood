@@ -40,7 +40,7 @@ from build.validator import Vali
 
 #get sub-dialogs
 from .vfunc_dialog import vDialog
-from .rprep_dialog import RPrepDialog
+from build.dialog_rprep import RPrepDialog
 
 #===============================================================================
 # load UI file
