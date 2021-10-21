@@ -17,7 +17,7 @@ We welcome/encourage any comments, bugs, or issues you have or find. Please crea
 Happy flood risk modelling!
 
 ## Documentation
-Select 'stable' in the [documentation](https://canflood.readthedocs.io/en/stable/#)
+Select 'latest' in the [documentation](https://canflood.readthedocs.io/en/stable/#)
 
 ## Installation Instructions 
 
