@@ -64,8 +64,9 @@ class QprojPlug(Qcoms): #baseclass for plugins
     
     def qproj_setup(self,
                     iface = None,
-                    plogger=None,
+                    plogger=None, #alternate logger for standalone tests
                     session=None, #main CanFlood.CanFlood session worker 
+ 
                     ): #project inits for Dialog Classes
 
         #=======================================================================
@@ -98,6 +99,8 @@ class QprojPlug(Qcoms): #baseclass for plugins
         # Qsetupts
         #=======================================================================
         self.qproj = QgsProject.instance()
+
+            
         
         self.crs = self.qproj.crs()
         
@@ -739,12 +742,17 @@ class logger(object): #workaround for qgis logging pythonic
         
         #Qgis bar
         if push:
-            self.iface.messageBar().pushMessage(self.log_tabnm, msg_raw, level=qlevel)
+            try:
+                self.iface.messageBar().pushMessage(self.log_tabnm, msg_raw, level=qlevel)
+            except:
+                QgsLogger.debug('failed to push to interface') #used for standalone tests
         
         #Optional widget
         if status or push:
             if not self.statusQlab is None:
                 self.statusQlab.setText(msg_raw)
+
+
                 
 class pandasModel(QAbstractTableModel):
     """from here:

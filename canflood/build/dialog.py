@@ -1126,7 +1126,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # get defautls
         #=======================================================================
-        log = self.logger.getCild('_get_rsamp_pars')
+        log = self.logger.getChild('_get_rsamp_pars')
         finv = self.finv_vlay #set by set_setup()
         gtype = QgsWkbTypes().displayString(finv.wkbType())
         
