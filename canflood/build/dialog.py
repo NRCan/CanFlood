@@ -78,12 +78,13 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         
         self.setupUi(self)
-        
+
         self.qproj_setup(iface=iface, **kwargs)
-        
+
         self.vDialog = vDialog(iface) #init and attach vfunc library dialog(connected below)
         self.RPrepDialog=RPrepDialog(iface)
         
+
         self.connect_slots()
         
         self.logger.debug('BuildDialog initilized')
@@ -913,6 +914,9 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
 
     
+
+
+
     def run_rsamp(self): #execute raster sampler
         log = self.logger.getChild('run_rsamp')
         start = datetime.datetime.now()
@@ -925,47 +929,13 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         rlay_l = list(self.listView_expo_rlays.get_selected_layers().values())
 
         finv = self.finv_vlay #set by set_setup()
-        gtype = QgsWkbTypes().displayString(finv.wkbType())
+ 
         
         #=======================================================================
         # #exposure configuration
         #=======================================================================
-        psmp_stat, psmp_fieldName, dthresh, dtm_rlay = None, None, None, None #defaults
-        as_inun=False
-        
-        if not 'Point' in gtype:
-        
-            ec_type = dict(zip(self.hs_expoType_d.values(), self.hs_expoType_d.keys()))[
-                self.comboBox_HS_EC_type.currentText()]
-            
-            #value sampling
-            if ec_type == 'value':
-                
-                vs_type = dict(zip(self.HSvalueSamplingType_d.values(), self.HSvalueSamplingType_d.keys())
-                               )[self.comboBox_HS_VS_type.currentText()]
-                               
-                if vs_type == 'global':
-                    psmp_stat = self.comboBox_HS_VS_stat.currentText()
-                    
-                    assert psmp_stat in ('Mean','Median','Min','Max'), 'select a valid sample statistic'
-                    
-                elif vs_type == 'passet':
-                    psmp_fieldName=self.comboBox_HS_VS_stat.currentText()
-                else:
-                    raise Error('bad vs_type: \"%s\''%vs_type)
-            
-            #area-threshold
-            elif ec_type == 'area':
-                as_inun=True
-                
-                dthresh = self.mQgsDoubleSpinBox_HS.value() #depth threshold
-                dtm_rlay=self.comboBox_HS_DTM.currentLayer()
-                
-                assert isinstance(dthresh, float), 'must provide a depth threshold'
-                assert isinstance(dtm_rlay, QgsRasterLayer), 'must select a DTM layer'
-            
-            else:
-                raise Error('bad ec_type: \"%s\''%ec_type)
+        #pull parameters from dialog
+        psmp_stat, psmp_fieldName, as_inun, dtm_rlay, dthresh = self._get_rsamp_pars()
             
         self.feedback.setProgress(5)
         #=======================================================================
@@ -1103,10 +1073,10 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         self.set_setup(set_finv=True)
         rlay = self.comboBox_dtm.currentLayer()
+        finv = self.finv_vlay
 
-        #get parameters from Hazard Sampler tab
-        psmp_stat = self.comboBox_HS_stat.currentText()
- 
+        psmp_stat, psmp_fieldName, as_inun, _, _ = self._get_rsamp_pars()
+        self.feedback.setProgress(5)
         #======================================================================
         # precheck
         #======================================================================
@@ -1115,11 +1085,13 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
             
         #check if we got a valid sample stat
-        gtype = QgsWkbTypes().displayString(self.finv_vlay.wkbType())
+        gtype = QgsWkbTypes().displayString(finv.wkbType())
         if not 'Point' in gtype:
-            assert not psmp_stat=='', \
-            'for %s type finvs must specifcy a sample statistic on the Hazard Sampler tab'%gtype
-            """the module does a more robust check"""
+            assert (psmp_stat is None) or (psmp_fieldName is None), 'sampling statistic requried'
+        else:
+            assert (psmp_stat is None) and (psmp_fieldName is None), 'no sampling stat allowed for point type finv' 
+            
+        assert not as_inun, 'dtm sampler can not use area-threshold sampling'
         #======================================================================
         # execute
         #======================================================================
@@ -1128,7 +1100,8 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
         wrkr = Rsamp(fname='gels', **kwargs)
         
-        res_vlay = wrkr.run([rlay], self.finv_vlay, psmp_stat=psmp_stat)
+        res_vlay = wrkr.run([rlay], finv,
+                            psmp_stat=psmp_stat, psmp_fieldName=psmp_fieldName)
         
         #check it
         wrkr.dtm_check(res_vlay)
@@ -1148,7 +1121,53 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.feedback.upd_prog(None) #set the progress bar back down to zero
         self.logger.push('dsamp finished')    
         
-    def run_lisamp(self): #sample dtm raster
+    def _get_rsamp_pars(self): #extract raster sampling paraeters from dialog
+        
+        #=======================================================================
+        # get defautls
+        #=======================================================================
+        log = self.logger.getCild('_get_rsamp_pars')
+        finv = self.finv_vlay #set by set_setup()
+        gtype = QgsWkbTypes().displayString(finv.wkbType())
+        
+        psmp_stat, psmp_fieldName, dthresh, dtm_rlay = None, None, None, None #defaults
+        as_inun = False
+        
+        #=======================================================================
+        # build from logic and user selections
+        #=======================================================================
+        
+        if not 'Point' in gtype:
+            ec_type = dict(zip(self.hs_expoType_d.values(), self.hs_expoType_d.keys()))[
+                self.comboBox_HS_EC_type.currentText()]
+            #value sampling
+            if ec_type == 'value':
+                vs_type = dict(zip(self.HSvalueSamplingType_d.values(), self.HSvalueSamplingType_d.keys()))[self.comboBox_HS_VS_type.currentText()]
+                if vs_type == 'global':
+                    psmp_stat = self.comboBox_HS_VS_stat.currentText()
+                    assert psmp_stat in ('Mean', 'Median', 'Min', 'Max'), 'select a valid sample statistic'
+                elif vs_type == 'passet':
+                    psmp_fieldName = self.comboBox_HS_VS_stat.currentText()
+                else:
+                    raise Error('bad vs_type: \"%s\'' % vs_type)
+            #area-threshold
+            elif ec_type == 'area':
+                as_inun = True
+                dthresh = self.mQgsDoubleSpinBox_HS.value() #depth threshold
+                dtm_rlay = self.comboBox_HS_DTM.currentLayer()
+                assert isinstance(dthresh, float), 'must provide a depth threshold'
+                assert isinstance(dtm_rlay, QgsRasterLayer), 'must select a DTM layer'
+            else:
+                raise Error('bad ec_type: \"%s\'' % ec_type)
+            
+            
+        log.debug('for gtype \'%s\' got \n'%gtype + \
+                  '    psmp_stat=%s, psmp_fieldName=%s, dthresh=%s, dtm_rlay=%s'%(
+                      psmp_stat, psmp_fieldName, dthresh, dtm_rlay))
+            
+        return psmp_stat, psmp_fieldName, as_inun, dtm_rlay, dthresh
+        
+    def run_lisamp(self): #liklihood polygon sampling
         
         self.logger.info('user pressed \'run_lisamp\'')
         
