@@ -590,7 +590,7 @@ wFlow_l = [
            PolyL1_t, LineL1_t,
            ]
 
-wFlow_l = [Tut7a_t]
+#wFlow_l = [Tut7a_t]
 
  
     
@@ -629,7 +629,7 @@ if __name__ == '__main__':
     #===========================================================================
     # build test pickesl
     #===========================================================================
-    ofp = wrkr.build_pickels(wFlow_l) #update or write test pickle
+    #ofp = wrkr.build_pickels(wFlow_l) #update or write test pickle
     
     #===========================================================================
     # run tests
