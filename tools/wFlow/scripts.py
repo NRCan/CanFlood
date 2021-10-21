@@ -824,6 +824,9 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
                   logger=None,
                   rkwargs=None,
                   ):
+        """
+        kwargs not setup to be different from the rsamp
+        """
         
         if logger is None: logger=self.logger
         log = logger.getChild('rsamp_dtm')

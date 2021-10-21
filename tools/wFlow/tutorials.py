@@ -495,7 +495,7 @@ class Tut7(WorkFlow): #tutorial 1a
 
                 
                 #run controls
-                'felv':'datum', 'validate':'dmg2', 'prec':3,
+                'felv':'ground', 'validate':'dmg2', 'prec':3,
                 
                         }
         

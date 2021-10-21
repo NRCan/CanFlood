@@ -509,7 +509,7 @@ class Tut6a_t(WorkFlow_t, Tut6a):
 class Tut7_t(WorkFlow_t):
     """"same as Tut1"""
     Test = Test_wf_L1
-    tdata_keys = ['finv', 'expos', 'evals', 'r_ttl', 'eventypes', 'r_passet']
+    tdata_keys = ['finv', 'expos', 'evals', 'r_ttl', 'eventypes', 'r_passet', 'gels']
     
 class Tut7a_t(Tut7a, Tut7_t):  
     pass
@@ -590,6 +590,8 @@ wFlow_l = [
            PolyL1_t, LineL1_t,
            ]
 
+wFlow_l = [Tut7a_t]
+
  
     
     
@@ -610,8 +612,9 @@ if __name__ == '__main__':
     # INSTRUCTIONS: UPDATING TEST COMPARISON DATAT
     #===========================================================================
     comment out all the other tests in wFlow_l
-    fix comments below to only execute build_picles()
+    fix comments below to also execute build_picles()
     revert comments
+    NOTE: ensure 'tdata_keys' on the worker are approriate
     
     #===========================================================================
     # INSTRUCTIONS: RUNNING TESTS
@@ -619,13 +622,14 @@ if __name__ == '__main__':
     
     run the session to get_tests()
     execute the test suite using TextTestRunner
+    ensure 'build_pickels' is commented out
     """
     
     wrkr = Session_t(write=True)
     #===========================================================================
     # build test pickesl
     #===========================================================================
-    #ofp = wrkr.build_pickels(wFlow_l) #update or write test pickle
+    ofp = wrkr.build_pickels(wFlow_l) #update or write test pickle
     
     #===========================================================================
     # run tests
