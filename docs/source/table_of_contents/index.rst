@@ -1693,8 +1693,8 @@ These plots are the two standard risk curve formats for the same total results d
 
 Users should first complete Tutorials 1 and 2a. Tutorial 2b uses the same input data as 2a but expands the analysis to demonstrate the risk analysis of a simple levee failure through incorporating a single companion failure event into the model. This companion failure event is composed of two layers:
 
-  • *haz_1000_fail_B_tut2*: ‘failure raster’ indicating the WSL that would be realized were any of the levee segments to fail during the event; and
-  • *haz_1000_fail_B_tut2*: conditional exposure probability polygon layer with features indicating the extent and probability of failure of each levee segment during the flood event (‘failure polygons’). Notice this layer contains two features that overlap in places, corresponding potential flooding from two breach sites in the levee system. This layer will be used to tell CanFlood when and how to sample the failure raster.
+  • *haz_1000_fail_A_tut2*: ‘failure raster’ indicating the WSL that would be realized were any of the levee segments to fail during the event; and
+  • *haz_1000_fail_A_tut2*: conditional exposure probability polygon layer with features indicating the extent and probability of failure of each levee segment during the flood event (‘failure polygons’). Notice this layer contains two features that overlap in places, corresponding potential flooding from two breach sites in the levee system. This layer will be used to tell CanFlood when and how to sample the failure raster.
 
 This simplification by using these two layers facilitates the specification of multiple failure probabilities but where any failure (or combination of failures) would realize the same WSL (Section5.1.5_’s ‘complex conditionals’). Ensure these layers are loaded into the same QGIS project as was used for Tutorial 2a.
 
@@ -1749,7 +1749,7 @@ In this plot, the red line represents the contribution to risk without the compa
 
 It is recommended that users first complete Tutorial 2b. Tutorial 2c uses the same input data as 2b but expands the analysis to demonstrate the incorporation of more complex levee failure with two companion failure events into the model.
 
-In the same QGIS project as was used for Tutorial 2a, ensure the following are also added to the project:
+In the same QGIS project as was used for Tutorial 2b, ensure the following are also added to the project:
 
   • *haz_1000_fail_B_tut2.gpkg*: failure polygon ‘B’;
   • *haz_1000_fail_B_tut2.tif*: failure raster ‘B’.
@@ -1962,7 +1962,7 @@ Navigate to the ‘Inventory’ tab, ensure ‘Elevation type’ is set to ‘da
 
 **Hazard Sampler**
 
-Navigate to the ‘Hazard Sampler’ tool, load the four hazard rasters into the dialog window, check ‘Box plots’, check ‘Exposure as Inundation%’, set the ‘Depth Threshold’ to 0.5, and select the DTM layer as shown:
+Navigate to the ‘Hazard Sampler’ tool, load the four hazard rasters into the dialog window, check ‘Box plots’, under Exposure Configuration select ‘Area-Threshold’ as the type, set the ‘Depth Threshold’ to 0.5, and select the DTM layer as shown:
 
 .. image:: /_static/tutorials_6_8_1_img_1.jpg
 
@@ -2115,7 +2115,7 @@ Navigate to the ‘Inventory’ tab. To convert the downloaded NPRI data into an
 
 Now you’re ready to sample the GAR15 hazard layers with your new NPRI inventory. Unlike the hazard layers used in previous tutorials, the GAR15 hazard layers provide *depth* (rather than WSL) data in *centimeters* (rather than meters) in a coordinate system other than that of our project. Further, these hazard layers’ extents are much larger than what is needed by our project; and because they are web-layers, many of the QGIS processing tools will not work. Therefore, we’ll need to apply the four ‘Raster Preparation’ tools described in Table 5-2 before proceeding with the ‘Hazard Sampler’.
 
-Navigate to the ‘Hazard Sampler’ tab, ensure the five GAR2015 layers are listed in the window, and click ‘Sample’. You should get an error telling you the layer CRS does not match that of the project. To resolve this, configure the Raster Preparation handles as shown and **click ‘Prep’**:
+Navigate to the ‘Hazard Sampler’ tab, ensure the five GAR2015 layers are listed in the window, and click ‘Sample’. You should get an error telling you the layer CRS does not match that of the project. To resolve this, click the "Raster Prep' button and configure the Raster Preparation handles as shown and **click ‘Prep’** and then 'OK':
 
 .. image:: /_static/tutorials_6_10_2_img_3.jpg
 
@@ -2258,9 +2258,34 @@ Complete the typical setup as instructed in Tutorial 1a.
 
 **Hazard Sampler**
 
-Navigate to the ‘Hazard Sampler’ tool, check mark the four hazard rasters, set the 'Type' parameter to 'Values', set the 'Stat. Type' parameter to 'Per-Asset', then select the 'sample_stat' field to tell CanFlood to pull the sampling statistic from this field. Verify your dialog looks like the below then click 'Sample'.
+Navigate to the ‘Hazard Sampler’ tool, check mark the four hazard rasters, set the 'Type' parameter to 'Values', set the 'Stat. Type' parameter to 'Per-Asset', then select the 'sample_stat' field to tell CanFlood to pull the sampling statistic from this field. Verify your dialog looks like the below then **click 'Sample'**.
 
-.. image:: /_static/tut7a_HS.JPG
+.. image:: /_static/tutorials_6_12_img_1.JPG
+
+Complete the rest of the build process by running the ‘Event Variables’, ‘DTM Sampler’ and ‘Validation’  tools as outlined in Tutorial 1a.
+
+6.12.2. Run the Model
+=====================
+
+Open the ‘Model’ dialog and follow the steps in Tutorial 1a to setup this model run.  Then execute the ‘Risk (L1)’ model to generate the following files:
+
+	• risk1_tut7a_passet.csv: expected value of inundation per asset; 
+	• risk1_tut7a_ttl.csv: total results, expected value of total inundation per event; 
+	• tut7a.run1 Impact-ARI plot on 6 events.svg: a plot of the total results. 
+
+In order to understand and visualize the effect of setting the hazard sampling statistic to ‘Per-Asset’, you can try re-building and running the same model with the hazard statistic set to ‘Global’ and then compare the results.
+
+6.12.3. View Results
+=====================
+To visualize the difference between these two model configurations, open the ‘Results’ toolset and select a working directory and the original ‘Per-Asset’ control file as the ‘main control file’ on the ‘Setup’ tab. Before generating the comparison files, configure the plot style by opening the same main control file, and changing the following ‘[plotting]’ parameters: 
+• ‘color = red’ 
+• ‘linestyle = solid’ 
+• ‘impactfmt_str = ,.0f’ 
+
+To generate a comparison plot of these two scenarios, navigate to the ‘Compare/Combine’ tab, select the ‘Control File’ for both model configurations (Per-Asset & Global) generated in the previous step, ensure ‘Control Files’ is checked under ‘Comparison Controls’ then **click ‘Compare’**.  Your results should look similar to this:
+
+.. image:: /_static/tutorials_6_12_img_2.JPG
+
 
 .. _references:
 
