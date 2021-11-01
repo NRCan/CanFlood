@@ -2233,7 +2233,7 @@ These results layers are automatically stylized as failure polygons, showing the
 6.12. Tutorial 7a: Sampling on Complex Geometries
 *************************************************
 
-This tutorial demonstrates Value Sampling using sampling statistics specified Per-Asset. This can be useful when you would like to sample using heterogeneous statistics within a single inventory (e.g., 'Max' ground elevation for some buildings and 'Min' elevation for others). Begin by downloading the tutorial data from the `tutorials 7 <https://github.com/NRCan/CanFlood/tree/master/tutorials/6>`__ folder and loading it into a new QGIS project:
+This tutorial demonstrates *Value Sampling* using sampling statistics specified *Per-Asset*. This can be useful when you would like to sample using heterogeneous statistics within a single inventory (e.g., 'Max' ground elevation for some buildings and 'Min' elevation for others). Begin by downloading the tutorial data from the `tutorials 7 <https://github.com/NRCan/CanFlood/tree/master/tutorials/7>`__ folder and loading it into a new QGIS project:
 
   • *haz_rast*: hazard event rasters with WSL value predictions for the study area for four probabilities.
 
@@ -2278,9 +2278,10 @@ In order to understand and visualize the effect of setting the hazard sampling s
 6.12.3. View Results
 =====================
 To visualize the difference between these two model configurations, open the ‘Results’ toolset and select a working directory and the original ‘Per-Asset’ control file as the ‘main control file’ on the ‘Setup’ tab. Before generating the comparison files, configure the plot style by opening the same main control file, and changing the following ‘[plotting]’ parameters: 
-• ‘color = red’ 
-• ‘linestyle = solid’ 
-• ‘impactfmt_str = ,.0f’ 
+
+    • ‘color = red’ 
+    • ‘linestyle = solid’ 
+    • ‘impactfmt_str = ,.0f’ 
 
 To generate a comparison plot of these two scenarios, navigate to the ‘Compare/Combine’ tab, select the ‘Control File’ for both model configurations (Per-Asset & Global) generated in the previous step, ensure ‘Control Files’ is checked under ‘Comparison Controls’ then **click ‘Compare’**.  Your results should look similar to this:
 
