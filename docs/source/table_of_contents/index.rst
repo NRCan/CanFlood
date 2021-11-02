@@ -2273,7 +2273,7 @@ Open the ‘Model’ dialog and follow the steps in Tutorial 1a to setup this mo
 	• risk1_tut7a_ttl.csv: total results, expected value of total inundation per event; 
 	• tut7a.run1 Impact-ARI plot on 6 events.svg: a plot of the total results. 
 
-In order to understand and visualize the effect of setting the hazard sampling statistic to ‘Per-Asset’, you can try re-building and running the same model with the hazard statistic set to ‘Global’ and then compare the results.
+In order to understand and visualize the effect of setting the hazard sampling statistic to ‘Per-Asset’, you can try re-building and running the same model with the hazard statistic type set to ‘Global’ and the statistic set to 'Mean', then compare the results.
 
 6.12.3. View Results
 =====================
