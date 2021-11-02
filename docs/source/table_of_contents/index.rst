@@ -1,15 +1,15 @@
-============================
+=================
 Table of Contents
-============================
+=================
 
 .. contents:: Table of Contents
 
 
 .. _notes_and_acknowledgements:
 
-============================
+==========================
 Notes and Acknowledgements
-============================
+==========================
 
 CanFlood is an open-source experimental flood risk modelling platform. Natural Resources Canada and IBI Group assume no liability for any errors or inaccuracies. The tools provided in CanFlood are for convenience only, and the user is responsible for developing their own tests and confidence in any model results.
 
@@ -42,9 +42,9 @@ By using this program you voluntarily accept these terms and conditions. If you 
 
 .. _glossary:
 
-============================
+========
 Glossary
-============================
+========
 
 Annual Exceedance Probabilities (AEP)
                                      The inverse of ARI.
@@ -72,9 +72,9 @@ Web Coverage Service (WCS)
 
 .. _introduction:
 
-============================
+===============
 1. Introduction
-============================
+===============
 
 CanFlood is an object-based, transparent, open-source flood risk calculation toolbox built for Canada. CanFlood facilitates flood risk calculations with three ‘toolsets’:
 
@@ -92,9 +92,9 @@ The CanFlood plugin is NOT a flood risk model, instead it is a modelling platfor
 
 .. _Section1.1:
 
-*******************
+**************
 1.1 Background
-*******************
+**************
 
 The devastation of the 2013 Southern Alberta and Toronto Floods triggered a transition in Canada from the traditional standards-based approach, where flood protection is designed for a single level-of-safety, towards a risk-based approach. This new risk-based approach recognizes that robust planning must consider vulnerability and the full range of floods that may harm a community rather than focus on a single, arbitrary, design event. Further, a risk-based view allows decision makers to quantitatively optimize mitigations for their community, helping jurisdictions with shrinking budgets spread protections further. The foundation of decisions made under a risk-based flood management is a risk assessment, which is:
 
@@ -133,21 +133,21 @@ Considering the limitation of existing tools, and the growing need to minimize f
 
 **International Guidelines**
 
-+------------------------+------------+----------+----------+----------+----------+----------+----------+
-|Jurisdiction/ Authority |     Guideline (Reference)                                                    |          
-+========================+============+==========+==========+==========+==========+==========+==========+
-| United Kingdom         | Flood and coastal erosion risk management – Manual                           |
-|                        | (Penning-Rowsell et al. 2013)                                                |
-+------------------------+------------+----------+----------+----------+----------+----------+----------+
-| United States          | Multi-Hazard Loss Estimation Methodology, Flood Model:                       |
-|                        |                                                                              |
-|                        | Hazus-MH MR2 Technical Manual (FEMA 2012)                                    |
-|                        | Risk-Based Analysis For Flood Damage Reduction Studies (USACE 1996)          |
-|                        |                                                                              |
-|                        | Tying flood insurance to flood risk for low-lying structures in the          |
-|                        | floodplain (National Research Council 2015)                                  |
-|                        | Principles of Risk Analysis for Water Resources (IWR and USACE 2017)         |
-+------------------------+------------+---------------------+----------+----------+----------+----------+
++-------------------------+----------------------------------------------------------------------+-+-+++++
+| Jurisdiction/ Authority | Guideline (Reference)                                                | | |   |
++=========================+======================================================================+=+=+++++
+| United Kingdom          | Flood and coastal erosion risk management – Manual                   | |     |
+|                         | (Penning-Rowsell et al. 2013)                                        | |     |
++-------------------------+----------------------------------------------------------------------+-+-+++++
+| United States           | Multi-Hazard Loss Estimation Methodology, Flood Model:               | |     |
+|                         |                                                                      | |     |
+|                         | Hazus-MH MR2 Technical Manual (FEMA 2012)                            | |     |
+|                         | Risk-Based Analysis For Flood Damage Reduction Studies (USACE 1996)  | |     |
+|                         |                                                                      | |     |
+|                         | Tying flood insurance to flood risk for low-lying structures in the  | |     |
+|                         | floodplain (National Research Council 2015)                          | |     |
+|                         | Principles of Risk Analysis for Water Resources (IWR and USACE 2017) | |     |
++-------------------------+----------------------------------------------------------------------+-+-+++++
 
 
 1.1.3 Risk- vs. Event-Based Models
@@ -155,9 +155,9 @@ Considering the limitation of existing tools, and the growing need to minimize f
 
 Historically, flood management has involved decisions based on a single hypothetical, often arbitrary, ‘design event’ (e.g., 100-year discharge). This approach has left many communities under-defended and likely contributes to the rising flood losses recently seen in Canada (Frechette 2016). In response to this, modern flood management recognizes the necessity of comprehensive risk-based assessments that evaluate a range of events and their probability and consequences in management planning. CanFlood was designed to support modern risk-based management by integrating a range of flood events (e.g., 10-year, 50-year, 100-year, 200-year events) and their probabilities into risk-based models that calculate risk-metrics. However, because CanFlood calculates event-based impacts prior to any risk calculations, users can use CanFlood in event- or impact-based assessments by performing all but the final risk-calculation step.  
 
-*******************
+******************
 1.2 Intended Users
-*******************
+******************
 
 The CanFlood plugin is for users with spatial and vulnerability data desiring to perform an object-based flood risk assessment (FRA) in Canada. CanFlood is meant for flood risk practitioners with the following expertise:
 
@@ -168,9 +168,9 @@ See Section1.1.2_ for a summary of guidelines and procedures related to FRAs in 
 
 .. _Section1.3:
 
-***********************
+*********************
 1.3 Risk Model Levels
-***********************
+*********************
 
 Flood risk analysis objectives and applications are as diverse as the communities they serve. To accommodate this wide range, CanFlood contains three types of risk models with increasing complexity as summarized in Table1-1_ and discussed in Section5.2_. To support the construction and analysis of these risk models, CanFlood also includes the ‘Build’ and ‘Results’ toolsets respectively (Section5.1_ and Section5.3_). Connecting all these together to perform an analysis is discussed in Section4.5_ and similar tutorials are provided in Section6_.
 
@@ -243,9 +243,9 @@ Flood risk analysis objectives and applications are as diverse as the communitie
 
 .. _Section1.4:
 
-*******************
+*****************
 1.4 Control Files
-*******************
+*****************
 
 CanFlood models are designed to write and read from small ‘Control Files’. These make it easy to build and share a specific model or scenario, and to keep a record of how the results set were generated. These also facilitate making a small change to a common input file (e.g., the asset inventory), and having this change replicated across all scenario runs. Control Files don’t contain any (large) data, only parameter values and pointers to the datasets required by a CanFlood model. Diligent and consistent file storage and naming conventions are essential for a pleasant modelling experience. Most Control File parameters and Data Files can be configured in the ‘Build’ toolset; however, some advanced parameters must be configured manually (see Section5.2_ for a full description of the Control File Parameters) [1]_ . The collection of model inputs and configured control file is called a ‘model package’ as shown in Figure1-1_ . More information on input files is provided in Section0_ .
 
@@ -259,9 +259,9 @@ Figure 1-1. More information on input files is provided in Section0_ .
 
 .. _Section0:
 
-============================
+===============
 2. Installation
-============================
+===============
 
 
 All installation instructions can be found on GitHub:
@@ -275,9 +275,9 @@ Additional tools are provided under QGIS’s plugins menu.
 
 .. _applications_and_workflows:
 
-==============================
+=============================
 3. Applications and Workflows
-==============================
+=============================
 
 The CanFlood plugin holds a collection of tools designed to support flood risk modellers with range of common tasks. To accomplish this, CanFlood is flexible: allowing users to link together whichever tools and sequences are needed to complete the task at hand. Performing a flood risk assessment using CanFlood requires expertise in flood risk modelling, some procedures like those referenced in Section1.1.2_ , and generally employs the following steps:
 
@@ -312,9 +312,9 @@ The remainder of this section summarizes some typical analysis types or workflow
 
 .. _Section3.1:
 
-*****************************************
+****************************************
 3.1. Risk (L1) Exposure-Based Assessment
-*****************************************
+****************************************
 
 Exposure-based (L1) assessments quantify the probability of binary exposure of assets to flooding (wet vs. dry). This can be useful for initial assessments, where resources and data are limited, to identify areas for further study. In CanFlood, this is accomplished by collecting data, building a Risk (L1) model, running the model, and evaluating the results. Unlike vulnerability-based assessments (L2, Section3.2_), exposure-based (L1) assessments do not capture the influence of flood depth on risk. In other words, a house with some ponding in the yard would be counted the same as a house fully under-water. However, exposure-based (L1) assessments can be used to estimate additional risk-metrics through application of CanFlood’s scaling parameters (e.g., estimating crop-loss by multiplying the area inundated by some loss/area constant). Exposure-based (L1) assessments can incorporate an assessment of defense failure if exposure probability data is available (Section3.3_). Figure3-1_ and Figure3-2_ summarize a typical Risk (L1) workflow. For more information on the Risk (L1) model, see Section5.2.1_.
 
@@ -326,9 +326,9 @@ Exposure-based (L1) assessments quantify the probability of binary exposure of a
 
 .. _Section3.2:
 
-**********************************************
+*********************************************
 3.2. Risk (L2) Vulnerability-Based Assessment
-**********************************************
+*********************************************
 
 Vulnerability-based (L2) assessments quantify the risk of some flood impacts to assets where the impact can be related to depth. Risk models that consider vulnerability as a function of flood depth are commonly used to evaluate flood risk to buildings, building contents, and infrastructure. In CanFlood, such an assessment is conducted by collecting data, constructing or collecting vulnerability functions, building a Risk (L2) model, running said model, then evaluating the results. Often the most challenging element of this process is the collection or construction of vulnerability functions (Section4.3_) which future versions of CanFlood may provide support for. Vulnerability-based (L2) assessments generally incorporate an assessment of defense failure (Section3.3_). Figure3-1_ and Figure3-3_ summarize a typical Risk (L2) workflow. For more information on the Risk (L2) model, see Section5.2.3_.
 
@@ -340,16 +340,16 @@ Vulnerability-based (L2) assessments quantify the risk of some flood impacts to 
 
 .. _Section3.3:
 
-**********************
+********************
 3.3. Defense Failure
-**********************
+********************
 
 Many developed areas in Canada rely on some form of flood defense infrastructure (e.g., levees or drainage pumps) to reduce the exposure of assets. Any such infrastructure has the potential to fail during a flood event. Ignoring this failure potential (P :sub:`fail` =0) will underestimate the real flood risk in an area (negative model bias). Assuming such infrastructure will always fail (P :sub:`fail` =1) can drastically overestimate flood risk (positive model bias). Either assumption will reduce confidence in the model and the quality of any flood management decisions made from it. In many areas in Canada, flood protection plays such a significant role in exposure mechanics that a binary treatment of failure probability (P :sub:`fail` = 0 or 1) would render the model’s calculated risk metric useless. Recognizing the importance of flood protection infrastructure in Canadian flood risk management, CanFlood Risk (L1) and Risk (L2) workflows facilitate the incorporation of defense failure into risk calculations.
 
 A common application of this capability is the incorporation of levee fragility into a risk model. Often such study areas will have groups of levee-protected assets, where each asset is vulnerable to a breach point anywhere along a levee ring. This situation can be analyzed by discretizing the levee into segments, estimating the influence area of a breach along each segment (for event *j*), estimating the conditional probability of that breach occurring (during event *j*), and developing hazard rasters for the breach conditions. Qualified hydrotechnical and geotechnical professionals should be engaged to perform this analysis and generate the inputs required by CanFlood as summarized in Section4.2_.
 
 3.3.1. Workflow
-================
+===============
 
 Defense failure is incorporated into risk calculations during CanFlood’s Risk (L1) and Risk (L2) workflows with the following general steps:
 
@@ -370,7 +370,7 @@ Figure3-4_ summarizes CanFlood’s full expected value algorithm.
 *Figure 3-4: CanFlood's Risk (L1 and L2) tool expected value (E(X)) calculation algorithm*
 
 3.3.2. Event Relations
-=======================
+======================
 
 To calculate expected values (in more complex models), the application of both the ‘Conditional P’ tool and the risk models requires accounting for the relationship between the events supplied by the user. In other words, when multiple failures are specified, one must specify how those failures should/should-not be combined. Calculating and incorporating failure correlations between elements in a defense system requires a sophisticated and mechanistic understanding of the system that is beyond the scope of CanFlood. As an alternative approximation, CanFlood includes two basic assumptions, summarized in Figure3-5_, for the relationship between failure elements. These alternate assumptions are provided to allow the user to test the sensitivity of the model to failure element correlations; if the model is found to have a high sensitivity to this parameter, more sophisticated defense system analysis should be pursued.
 
@@ -382,17 +382,17 @@ To calculate expected values (in more complex models), the application of both t
 
 .. _inputs_and_data_requirements:
 
-=================================
+===============================
 4. Inputs and Data Requirements
-=================================
+===============================
 
 CanFlood models are only as useful as the datasets they are built with. Below is a summary of the main datasets the user must collect and compile prior to building a CanFlood model.
 
 .. _Section4.1:
 
-***********************
+********************
 4.1. Asset Inventory
-***********************
+********************
 
 The asset inventory (‘finv’) is a comprehensive list of the objects or assets whose exposure will be evaluated by the CanFlood model routines. The asset inventory is a spatial dataset that requires the following fields when employed in Risk (L1) models:
 
@@ -410,9 +410,9 @@ Additional fields are allowed but ignored by CanFlood. The ‘X’ placeholder s
 
 .. _Section4.2:
 
-*******************
+******************
 4.2. Hazard Events
-*******************
+******************
 
 CanFlood requires a set of ‘hazard events’ to calculate flood exposure and risk. For a risk calculation, each event should have:
 
@@ -441,59 +441,59 @@ An example is provided below with a description. During the Impacts (L2) model, 
 
 *Table 4-1: CanFlood impact function format requirements and description.*
 
-+------------------------+---------------------------+-----------------------+------------------------+
-| Field                  | Example Value             | Description           | Required               |          
-+========================+===========================+=======================+========================+
-| tag                    | 02Office.inEq.comp        | Linking variable used | TRUE                   |
-|                        |                           | to assign this        |                        |
-|                        |                           | function to an asset  |                        |
-|                        |                           | in the inventory      |                        |
-+------------------------+---------------------------+-----------------------+------------------------+
-| desc                   | some description          | Long form description | FALSE                  |
-|                        |                           | of the impact         |                        |
-|                        |                           | function.             |                        |
-+------------------------+---------------------------+-----------------------+------------------------+
-| source                 | BCStats NRP Survey (2020) | Primary data source   | FALSE                  |
-|                        |                           | for the impact        |                        |
-|                        |                           | function.             |                        |
-+------------------------+---------------------------+-----------------------+------------------------+
-| location               | BCs LowerMainland         | Geographic location   | FALSE                  |
-|                        |                           | of applicable         |                        |
-|                        |                           | assets                |                        |
-+------------------------+---------------------------+-----------------------+------------------------+
-| date                   | 2020                      | Applicable period     | FALSE                  |
-+------------------------+---------------------------+-----------------------+------------------------+
-| impact_units           | $CAD                      | Units of impact       | FALSE                  |
-|                        |                           | output(after scaling) |                        |
-+------------------------+---------------------------+-----------------------+------------------------+
-| exposure _units        | m                         | Units of expected     | FALSE                  |
-|                        |                           | impact input          |                        |
-+------------------------+---------------------------+-----------------------+------------------------+
-| scale_units            | m2                        | Units of expected     | FALSE                  |
-|                        |                           | scale input           |                        |
-+------------------------+---------------------------+-----------------------+------------------------+
-| exposure_var           | water height from         | Variable of expected  | FALSE                  |
-|                        | main floor                | exposure input        |                        |
-+------------------------+---------------------------+-----------------------+------------------------+
-| impact_var             | building repair and       | Variable of impact    | FALSE                  |
-|                        | restoration cost          | output (after         |                        |
-|                        | estimation                | scaling)              |                        |
-+------------------------+---------------------------+-----------------------+------------------------+
-| scale_var              | main floor area           | Description of        | FALSE                  |
-|                        |                           | expected scale        |                        |
-|                        |                           | variable              |                        |
-+------------------------+---------------------------+-----------------------+------------------------+
-| exposure               | impact                    | Header for exposure-  | TRUE                   |
-|                        |                           | impact function       |                        |
-+------------------------+---------------------------+-----------------------+------------------------+
-| 0                      | 0                         | First exposure-impact | TRUE                   |
-|                        |                           | entry                 |                        |
-+------------------------+---------------------------+-----------------------+------------------------+
-| 0.305                  | 394.56                    | ...                   | TRUE                   |
-+------------------------+---------------------------+-----------------------+------------------------+
-| 0.914                  | 543.05                    | Last exposure-impact  | TRUE                   |
-|                        |                           | entry                 |                        |
-+------------------------+---------------------------+-----------------------+------------------------+
++-----------------+---------------------------+-----------------------+----------+-+
+| Field           | Example Value             | Description           | Required | |
++=================+===========================+=======================+==========+=+
+| tag             | 02Office.inEq.comp        | Linking variable used | TRUE     | |
+|                 |                           | to assign this        |          | |
+|                 |                           | function to an asset  |          | |
+|                 |                           | in the inventory      |          | |
++-----------------+---------------------------+-----------------------+----------+-+
+| desc            | some description          | Long form description | FALSE    | |
+|                 |                           | of the impact         |          | |
+|                 |                           | function.             |          | |
++-----------------+---------------------------+-----------------------+----------+-+
+| source          | BCStats NRP Survey (2020) | Primary data source   | FALSE    | |
+|                 |                           | for the impact        |          | |
+|                 |                           | function.             |          | |
++-----------------+---------------------------+-----------------------+----------+-+
+| location        | BCs LowerMainland         | Geographic location   | FALSE    | |
+|                 |                           | of applicable         |          | |
+|                 |                           | assets                |          | |
++-----------------+---------------------------+-----------------------+----------+-+
+| date            | 2020                      | Applicable period     | FALSE    | |
++-----------------+---------------------------+-----------------------+----------+-+
+| impact_units    | $CAD                      | Units of impact       | FALSE    | |
+|                 |                           | output(after scaling) |          | |
++-----------------+---------------------------+-----------------------+----------+-+
+| exposure _units | m                         | Units of expected     | FALSE    | |
+|                 |                           | impact input          |          | |
++-----------------+---------------------------+-----------------------+----------+-+
+| scale_units     | m2                        | Units of expected     | FALSE    | |
+|                 |                           | scale input           |          | |
++-----------------+---------------------------+-----------------------+----------+-+
+| exposure_var    | water height from         | Variable of expected  | FALSE    | |
+|                 | main floor                | exposure input        |          | |
++-----------------+---------------------------+-----------------------+----------+-+
+| impact_var      | building repair and       | Variable of impact    | FALSE    | |
+|                 | restoration cost          | output (after         |          | |
+|                 | estimation                | scaling)              |          | |
++-----------------+---------------------------+-----------------------+----------+-+
+| scale_var       | main floor area           | Description of        | FALSE    | |
+|                 |                           | expected scale        |          | |
+|                 |                           | variable              |          | |
++-----------------+---------------------------+-----------------------+----------+-+
+| exposure        | impact                    | Header for exposure-  | TRUE     | |
+|                 |                           | impact function       |          | |
++-----------------+---------------------------+-----------------------+----------+-+
+| 0               | 0                         | First exposure-impact | TRUE     | |
+|                 |                           | entry                 |          | |
++-----------------+---------------------------+-----------------------+----------+-+
+| 0.305           | 394.56                    | ...                   | TRUE     | |
++-----------------+---------------------------+-----------------------+----------+-+
+| 0.914           | 543.05                    | Last exposure-impact  | TRUE     | |
+|                 |                           | entry                 |          | |
++-----------------+---------------------------+-----------------------+----------+-+
 
 ********************************
 4.4. Digital Terrain Model (DTM)
@@ -503,9 +503,9 @@ A project DTM is only required for those models with relative asset heights (elv
 
 .. _Section4.5:
 
-**********************
+*********************
 4.5. Dike Information
-**********************
+*********************
 
 To use the ‘Dike Fragility Mapper’ module (Section5.4.1_) to generate the ‘failure polygon’ set, the following information on the study area’s diking system is required:
 
@@ -530,17 +530,17 @@ To use the ‘Dike Fragility Mapper’ module (Section5.4.1_) to generate the �
 
 .. _toolsets:
 
-============================
+===========
 5. Toolsets
-============================
+===========
 
 This section describes the use and function of CanFlood’s toolsets in detail.
 
 .. _Section5.1:
 
-***********************
-5.1. Build                                   
-***********************
+**********
+5.1. Build
+**********
 
 .. image:: /_static/build_image.jpg
    :align: right
@@ -551,43 +551,43 @@ The build toolset contains a suite of tools summarized in Table5-1_ intended to 
 
 *Table 5-1: Build tools summary*
 
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
-| Tab Name               | Tool Name                 | Description           | Inputs         | Outputs                |
-+========================+===========================+=======================+================+========================+
-| Setup                  | Start Control File        | Creates a Control     | name and       | Control File           |
-|                        |                           | File template         | precision      | Template               |
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
-| Inventory              | Inventory Constructor     | Builds a finv         | vector layer,  | inventory vector       |
-|                        |                           | template              | attributes     | layer (‘finv’)         |
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
-| Inventory              | Vuln. Function Library    | GUI for selecting a   |                | Vulnerability          |
-|                        |                           | Function set          |                | Function Set           |
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
-| Inventory              | Inventory Compiler        | Clip and extract finv | ‘finv’,        | inventory tabular      |
-|                        |                           | data to tabular format| parameters     | data (‘finv’)          |
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
-| Hazard Sampler         | Raster Preparation        | Manipulate hazard     | hazard rasters | hazard rasters         |
-|                        |                           | rasters               |                |                        |
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
-| Hazard Sampler         | Sample Rasters            | Sample hazard raster  | hazard rasters,| exposure dataset       |
-|                        |                           | values                | ‘finv’, DTM    | ('expos')              |
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
-| Event Variables        | Store Evals               | Write event           | hazard event   | event variables        |
-|                        |                           | probabilities to file | probabilities  | (‘evals’)              |
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
-| Conditional P          | Conditional P             | Resolve conditional   | ‘finv’, failure| exposure               |
-|                        |                           | exposure probabilities| polygons       | prob.(‘exlikes’)       |
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
-| DTM Sampler            | DTM Sampler               | Sample DTM raster at  | ‘finv’, DTM    | ground elevations      |
-|                        |                           | asset geometry        |                | (‘gels’)               |
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
-| Validation             | Validation                | Validate against      | complete model |                        |
-|                        |                           | model requirements    | package        |                        |
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
++-----------------+------------------------+------------------------+-----------------+-------------------+
+| Tab Name        | Tool Name              | Description            | Inputs          | Outputs           |
++=================+========================+========================+=================+===================+
+| Setup           | Start Control File     | Creates a Control      | name and        | Control File      |
+|                 |                        | File template          | precision       | Template          |
++-----------------+------------------------+------------------------+-----------------+-------------------+
+| Inventory       | Inventory Constructor  | Builds a finv          | vector layer,   | inventory vector  |
+|                 |                        | template               | attributes      | layer (‘finv’)    |
++-----------------+------------------------+------------------------+-----------------+-------------------+
+| Inventory       | Vuln. Function Library | GUI for selecting a    |                 | Vulnerability     |
+|                 |                        | Function set           |                 | Function Set      |
++-----------------+------------------------+------------------------+-----------------+-------------------+
+| Inventory       | Inventory Compiler     | Clip and extract finv  | ‘finv’,         | inventory tabular |
+|                 |                        | data to tabular format | parameters      | data (‘finv’)     |
++-----------------+------------------------+------------------------+-----------------+-------------------+
+| Hazard Sampler  | Raster Preparation     | Manipulate hazard      | hazard rasters  | hazard rasters    |
+|                 |                        | rasters                |                 |                   |
++-----------------+------------------------+------------------------+-----------------+-------------------+
+| Hazard Sampler  | Sample Rasters         | Sample hazard raster   | hazard rasters, | exposure dataset  |
+|                 |                        | values                 | ‘finv’, DTM     | ('expos')         |
++-----------------+------------------------+------------------------+-----------------+-------------------+
+| Event Variables | Store Evals            | Write event            | hazard event    | event variables   |
+|                 |                        | probabilities to file  | probabilities   | (‘evals’)         |
++-----------------+------------------------+------------------------+-----------------+-------------------+
+| Conditional P   | Conditional P          | Resolve conditional    | ‘finv’, failure | exposure          |
+|                 |                        | exposure probabilities | polygons        | prob.(‘exlikes’)  |
++-----------------+------------------------+------------------------+-----------------+-------------------+
+| DTM Sampler     | DTM Sampler            | Sample DTM raster at   | ‘finv’, DTM     | ground elevations |
+|                 |                        | asset geometry         |                 | (‘gels’)          |
++-----------------+------------------------+------------------------+-----------------+-------------------+
+| Validation      | Validation             | Validate against       | complete model  |                   |
+|                 |                        | model requirements     | package         |                   |
++-----------------+------------------------+------------------------+-----------------+-------------------+
 
 
 5.1.1. Setup
-================
+============
 
 This tab facilitates the creation of a Control File from user specified parameters and inventory, as well as providing general file control variables for the other tools in the toolset.
 
@@ -615,12 +615,12 @@ The Inventory Compiler is a simple tool used to prepare an inventory vector laye
 .. _Section5.1.3:
 
 5.1.3. Hazard Sampler
-======================
+=====================
 
 The Hazard Sampler tool generates the exposure dataset ('expos') from a set of hazard event rasters. Generally, these hazard event rasters represent the WSL results of some hazard model (e.g. HEC-RAS) at specific probabilities. The hazard sampler has two basic modes:
 
-  • **WSL**: Sample raster values at each asset (default). For line and polygon assets, this requires the user specify a sampling statistic.
-  • **Inundation**: Calculate percent-inundation of each asset (for line and polygon geometry only). This requires a DTM layer and a ‘Depth Threshold’ be specified.
+  • **Value Sampling**: Sample raster values at each asset; generally the default when you're interested in the depth at an asset. For line and polygon assets, this requires the user specify a sampling statistic (either globally or per-asset).
+  • **Area-Threshold Sampling**: Calculate the percent-of each asset length or area above some threshold raster value; useful for calculating the percent of inundation of road segments or agricultural crop polygons. This requires a DTM layer and a ‘Depth Threshold’ be specified.
 
 .. _Figure5-1:
 
@@ -628,7 +628,8 @@ The Hazard Sampler tool generates the exposure dataset ('expos') from a set of h
 
 *Figure 5-1: Risk calculation definition diagram where the dashed line is the WSL value of event ‘ei’*
 
-Using the definitions in Figure5-1_, the WSL exposure from an event *i* to a single asset *j* with height *elv* :sub:`j` is calculated as: 
+Using the definitions in Figure5-1_, the WSL exposure from an event i to a single asset j with height *elv* :sub:`j` is calculated as:
+ 
                            *expo* :sub:`i,j` = *WSL* :sub:`bl, ei` - *elv* :sub:`j`
 
 The hazard sampler performs the following general steps to the set of user-supplied hazard layers and inventory layer:
@@ -637,7 +638,15 @@ The hazard sampler performs the following general steps to the set of user-suppl
   2) For each layer, sample the raster value or calculate the percent inundation of each asset;
   3) Save the results in the ‘expos’ csv file to the working directory and write this path to the Control File;
   4) Load the results layer to canvas (optional)
+  
+**Value Sampling for Complex Geometries**
 
+Unlike Point geometries, inventories with line or polygon geometries require some *sampling statistic* (e.g., 'Min', 'Max', 'Mean') to tell CanFlood how the raster value should be calculated from each asset geometry. Two options for specifying the sampling statistic are provided:
+
+  • **Global**: A single sampling statistic is specified and used for all asset geometries (e.g., take the 'Max' raster value encountered within each polygon).  
+  • **Per-Asset**: A sampling statistic is specified for each asset via some field value on the inventory (e.g., take the 'Max' value for some assets and the 'Min' value for others). This is most useful for large asset geometries and rasters with high variance (e.g., building polygons sampling DTMs in areas with significant terrain)
+  
+  
 **Raster Preparation**
 
 The raster sampler expects all the hazard layers to have the following properties:
@@ -654,23 +663,23 @@ To help rasters conform to these expectations, CanFlood includes a ‘Raster Pre
 
 *Table 5-2: Raster Preparation tools*
 
-+------------------------+---------------------------+-----------------------+--------------------------------+
-| Tool Name              | Handle                    | Description                                            |
-+========================+===========================+=======================+================================+
-| Downloader             | Allow dataProvider        | If the layer’s dataProvider is not ‘gdal’              | 
-|                        | conversion                | (i.e., web-layers), a local copy of the layer is       |
-|                        |                           | made to the user’s ‘TEMP’ directory.                   |
-+------------------------+---------------------------+-----------------------+--------------------------------+
-| Re-projector           | Allow re-projection       | If the layer’s CRS does not match that of the project, | 
-|                        |                           | the ‘gdalwarp’ utility is used to re-project the layer.|
-+------------------------+---------------------------+-----------------------+--------------------------------+
-| AOI clipper            | Clip to AOI               | This uses the ‘gdalwarp’ utility to clip the           |
-|                        |                           | raster by the AOI mask layer.                          |
-+------------------------+---------------------------+-----------------------+--------------------------------+
-| Value Scaler           | ScaleFactor               | For ScaleFactors not equal to 1.0, this uses the Raster|
-|                        |                           | Calculator to scale the raster values by the passed    |
-|                        |                           | ScaleFactor (useful for simple unit conversions).      |
-+------------------------+---------------------------+-----------------------+--------------------------------+
++--------------+---------------------+---------------------------------------------------------+-+
+| Tool Name    | Handle              | Description                                             | |
++==============+=====================+=========================================================+=+
+| Downloader   | Allow dataProvider  | If the layer’s dataProvider is not ‘gdal’               | |
+|              | conversion          | (i.e., web-layers), a local copy of the layer is        | |
+|              |                     | made to the user’s ‘TEMP’ directory.                    | |
++--------------+---------------------+---------------------------------------------------------+-+
+| Re-projector | Allow re-projection | If the layer’s CRS does not match that of the project,  | |
+|              |                     | the ‘gdalwarp’ utility is used to re-project the layer. | |
++--------------+---------------------+---------------------------------------------------------+-+
+| AOI clipper  | Clip to AOI         | This uses the ‘gdalwarp’ utility to clip the            | |
+|              |                     | raster by the AOI mask layer.                           | |
++--------------+---------------------+---------------------------------------------------------+-+
+| Value Scaler | ScaleFactor         | For ScaleFactors not equal to 1.0, this uses the Raster | |
+|              |                     | Calculator to scale the raster values by the passed     | |
+|              |                     | ScaleFactor (useful for simple unit conversions).       | |
++--------------+---------------------+---------------------------------------------------------+-+
 
 After executing these tools, a new set of rasters are loaded to the project.
 
@@ -682,37 +691,37 @@ To support a wide range of vulnerability analysis, the Hazard Sampler tool is ca
 
 *Table 5-3: Hazard Sampler configuration by geometry type and exposure type and [relevant tutorial.*]
 
-+------------------------+---------------------------------------------+---------------------------------------------+
-| Geometry               |                       WSL                   |                 Inundation                  |
-|                        +------------------------+--------------------+------------------------+--------------------+
-|                        | Parameters             | Exposure           | Parameters             | Exposure           |
-+========================+========================+====================+========================+====================+
-| Point                  | Default                | WSL                | Default                | WSL :sup:`1`       |
-|                        | [Tutorial 2a]          |                    | [Tutorial 1a]          |                    |
-+------------------------+------------------------+--------------------+------------------------+--------------------+
-| Line4 :sup:`4`         | Sample Statistic       | WSL Statistic      | % inundation,          | % inundation       |  
-|                        | :sup:`3, 5`            |                    | Depth Thresh :sup:`2`  |                    |
-|                        |                        |                    | [Tutorial 4b]          |                    |
-+------------------------+------------------------+--------------------+------------------------+--------------------+
-| Polygon :sup:`4`       | Sample Statistic       | WSL Statistic      | % inundation,          | % inundation       |
-|                        | :sup:`3`               |                    | Depth Thresh :sup:`2`  |                    |
-|                        |                        |                    | [Tutorial 4a]          |                    |
-+------------------------+------------------------+--------------------+------------------------+--------------------+
-| 1. To apply a threshold depth, the f_elv values can be manually manipulated. WSL exposure values are converted to  |
-|    binary-exposure (i.e., inundated or not inundated) by the Risk (L1) model.                                      |
-| 2. Requires a DTM raster be specified on the ‘DTM Sampler’ tab. Model tools expect the asset inventory (‘finv’) to |
-|    contain a ‘f_elv’ column with all zero values and parameter.felv=’datum’. Respects NULL raster cell values as   |
-|    not inundated.                                                                                                  |
-| 3. Ignores NoData values when calculating statistics.                                                              |
-| 4. M and Z values are not supported.                                                                               |
-| 5. Throws a ‘feature(s) from input layer could not be matched’ error when null values are encountered. This error  |
-|    is safe to ignore.                                                                                              |
-+------------------------+-------------------------+--------------------+------------------------+-------------------+
++--------------------------------------------------------------------------------------------------------------------+------------------+---------------+-----------------------+--------------+-+
+| Geometry                                                                                                           | WSL              | Inundation    |                       |                |
+| +------------------------+--------------------+------------------------+--------------------+                      |                  |                                                        |
+|                                                                                                                    | Parameters       | Exposure      | Parameters            | Exposure     | |
++====================================================================================================================+==================+===============+=======================+==============+=+
+| Point                                                                                                              | Default          | WSL           | Default               | WSL :sup:`1` | |
+|                                                                                                                    | [Tutorial 2a]    |               | [Tutorial 1a]         |              | |
++--------------------------------------------------------------------------------------------------------------------+------------------+---------------+-----------------------+--------------+-+
+| Line4 :sup:`4`                                                                                                     | Sample Statistic | WSL Statistic | % inundation,         | % inundation | |
+|                                                                                                                    | :sup:`3, 5`      |               | Depth Thresh :sup:`2` |              | |
+|                                                                                                                    |                  |               | [Tutorial 4b]         |              | |
++--------------------------------------------------------------------------------------------------------------------+------------------+---------------+-----------------------+--------------+-+
+| Polygon :sup:`4`                                                                                                   | Sample Statistic | WSL Statistic | % inundation,         | % inundation | |
+|                                                                                                                    | :sup:`3`         |               | Depth Thresh :sup:`2` |              | |
+|                                                                                                                    |                  |               | [Tutorial 4a]         |              | |
++--------------------------------------------------------------------------------------------------------------------+------------------+---------------+-----------------------+--------------+-+
+| 1. To apply a threshold depth, the f_elv values can be manually manipulated. WSL exposure values are converted to  |                  |                                                        |
+| binary-exposure (i.e., inundated or not inundated) by the Risk (L1) model.                                         |                  |                                                        |
+| 2. Requires a DTM raster be specified on the ‘DTM Sampler’ tab. Model tools expect the asset inventory (‘finv’) to |                  |                                                        |
+| contain a ‘f_elv’ column with all zero values and parameter.felv=’datum’. Respects NULL raster cell values as      |                  |                                                        |
+| not inundated.                                                                                                     |                  |                                                        |
+| 3. Ignores NoData values when calculating statistics.                                                              |                  |                                                        |
+| 4. M and Z values are not supported.                                                                               |                  |                                                        |
+| 5. Throws a ‘feature(s) from input layer could not be matched’ error when null values are encountered. This error  |                  |                                                        |
+| is safe to ignore.                                                                                                 |                  |                                                        |
++--------------------------------------------------------------------------------------------------------------------+------------------+---------------+-----------------------+--------------+-+
 
 .. _Section5.1.4:
 
 5.1.4. Event Variables
-=======================
+======================
 
 The Event Variables ‘Store Evals’ tool stores the user specified event probabilities into the event variables ('evals') dataset. The Hazard Sampler tool must be run first to populate the Event Variables table.
 
@@ -725,7 +734,7 @@ The following apply to the Event Variables and connected tools:
 .. _Section5.1.5:
 
 5.1.5. Conditional P
-=====================
+====================
 
 To incorporate defense failure (Section1.4_), CanFlood ‘Risk (L1)’ and ‘Risk (L2)’ models expect a resolved exposure probabilities (‘exlikes’) data set that specifies the conditional exposure probability of each asset to each hazard failure raster. The ‘Conditional P’ tool provides a conversion from a collection of failure influence area polygons and rasters (i.e., the outputs of a flood protection reliability analysis) to the resolved exposure probabilities (‘exlikes’) dataset. For each conditional failure event, the ‘Conditional P’ tool expects the user to provide a pair composed of the following layers:
 
@@ -740,20 +749,20 @@ CanFlood distinguishes ‘complex’ and ‘simple’ conditional exposure proba
 
 *Table 5-4: Conditional exposure probability polygon treatment summary.*
 
-+-------------------+------------------+------------------------------------------+-----------------------+
-| Type              | Features         | Treatment                                | Example (Figure 5-5)  |
-+===================+==================+==========================================+=======================+
-| trivial           | none             | Failure not considered, no resolved      | n/a                   |
-|                   |                  | exposure probabilities (‘exlikes’)       |                       |
-|                   |                  | required                                 |                       |
-+-------------------+------------------+------------------------------------------+-----------------------+
-| simple            | not overlapping  | ‘Conditional P’ tool joins the specified | f2, f3                |
-|                   |                  | attribute value from the polygon feature |                       |
-|                   |                  | onto each asset to generate resolved     |                       |
-|                   |                  | exposure probabilities (‘exlikes’).      |                       |
-+-------------------+------------------+------------------------------------------+-----------------------+
-| complex           | overlapping      | see below                                | f1                    |
-+-------------------+------------------+------------------------------------------+-----------------------+
++---------+-----------------+------------------------------------------+----------------------+
+| Type    | Features        | Treatment                                | Example (Figure 5-5) |
++=========+=================+==========================================+======================+
+| trivial | none            | Failure not considered, no resolved      | n/a                  |
+|         |                 | exposure probabilities (‘exlikes’)       |                      |
+|         |                 | required                                 |                      |
++---------+-----------------+------------------------------------------+----------------------+
+| simple  | not overlapping | ‘Conditional P’ tool joins the specified | f2, f3               |
+|         |                 | attribute value from the polygon feature |                      |
+|         |                 | onto each asset to generate resolved     |                      |
+|         |                 | exposure probabilities (‘exlikes’).      |                      |
++---------+-----------------+------------------------------------------+----------------------+
+| complex | overlapping     | see below                                | f1                   |
++---------+-----------------+------------------------------------------+----------------------+
 
 .. _Figure5-2:
 
@@ -767,37 +776,37 @@ For complex conditionals, ‘Conditional P’ provides two algorithms to resolve
 
 *Table 5-5: Conditional exposure probability polygon resolution algorithms for complex conditional*
 
-+-------------------+-------------------------------------------------------------+
-| Relation          | Algorithm Summary                                           | 
-+===================+=============================================================+
-| Mutually Exclusive| .. image:: /_static/algorithm_summary_1.jpg                 | 
-|                   |                                                             |                     
-+-------------------+------------------+------------------------------------------+
-| Independent       | .. image:: /_static/algorithm_summary_2.jpg                 | 
-| :sup:`1`          |                                                             |  
-+-------------------+------------------+------------------------------------------+
-| Where P(X) is the resolved failure probability for a single asset on a given    |
-| event and P(i) isthe failure probably value sampled from a failure polygons     |                       
-| feature.                                                                        |  
-|                                                                                 |                     
-| 1) Bedford and Cooke (2001)                                                     |                       
-+-------------------+------------------+------------------------------------------+
++------------------------------------------------------------------------------+---------------------------------------------+-+
+| Relation                                                                     | Algorithm Summary                           | |
++==============================================================================+=============================================+=+
+| Mutually Exclusive                                                           | .. image:: /_static/algorithm_summary_1.jpg | |
+|                                                                              |                                             | |
++------------------------------------------------------------------------------+---------------------------------------------+-+
+| Independent                                                                  | .. image:: /_static/algorithm_summary_2.jpg | |
+| :sup:`1`                                                                     |                                             | |
++------------------------------------------------------------------------------+---------------------------------------------+-+
+| Where P(X) is the resolved failure probability for a single asset on a given |                                             | |
+| event and P(i) isthe failure probably value sampled from a failure polygons  |                                             | |
+| feature.                                                                     |                                             | |
+|                                                                              |                                             | |
+| 1) Bedford and Cooke (2001)                                                  |                                             | |
++------------------------------------------------------------------------------+---------------------------------------------+-+
 
 5.1.6. DTM Sampler
-====================
+==================
 
 The DTM Sampler tool uses the same module as the Hazard Sampler to sample DTM raster values at each asset provided in the inventory vector layer. This tool outputs the ground elevation (‘gels’) dataset and writes the corresponding reference to the control file. This dataset is required by any model where the inventory (‘finv’) data’s height or elevation parameters are specified relative to ground (felv=’ground’).
 
 5.1.7. Validation
-===================
+=================
 
 The Validation tool performs a series of checks on the specified control file to ensure the data requirements of the specified model are satisfied. If the checks are satisfied, the corresponding validation flag is set in the control file, allowing the model tool to run.
 
 .. _Section5.2:
 
-***********************
+**********
 5.2. Model
-***********************
+**********
 
 .. image:: /_static/run_image.jpg
    :align: right
@@ -833,28 +842,28 @@ CanFlood’s L1 Risk tool provides a preliminary assessment of flood risk with b
 
 *Table 5-6: Risk (L1) CanFlood model package requirements.*
 
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
-| Name                   | Description               | Build Tool            | Code           | Reqd.                  |
-+========================+===========================+=======================+================+========================+
-| Control File           | Data file paths and       | Start Control File    |                | yes                    |
-|                        | parameters                |                       |                |                        |
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
-| Inventory              | Tabular asset inventory   | Inventory Compiler    | finv           | yes                    |
-|                        | data                      |                       |                |                        |
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
-| Exposure               | WSL or %inundated         | Hazard Sampler        | expos          | yes                    |
-|                        | exposure data             |                       |                |                        |
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
-| Event Probabilities    | Probability of each       | Event Variables       | evals          | yes                    |
-|                        | hazard event              | of applicable         |                |                        |
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
-| Exposure Probabilities | Conditional probability   | Conditional P         | exlikes        | for failure            |
-|                        | of each asset realizing   |                       |                |                        |
-|                        | the failure raster        |                       |                |                        |
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
-| Ground Elevations      | Elevation of ground at    | DTM Sampler           | gels           | for felv=ground        |
-|                        | each asset                |                       |                |                        |
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
++------------------------+-------------------------+--------------------+---------+-----------------+
+| Name                   | Description             | Build Tool         | Code    | Reqd.           |
++========================+=========================+====================+=========+=================+
+| Control File           | Data file paths and     | Start Control File |         | yes             |
+|                        | parameters              |                    |         |                 |
++------------------------+-------------------------+--------------------+---------+-----------------+
+| Inventory              | Tabular asset inventory | Inventory Compiler | finv    | yes             |
+|                        | data                    |                    |         |                 |
++------------------------+-------------------------+--------------------+---------+-----------------+
+| Exposure               | WSL or %inundated       | Hazard Sampler     | expos   | yes             |
+|                        | exposure data           |                    |         |                 |
++------------------------+-------------------------+--------------------+---------+-----------------+
+| Event Probabilities    | Probability of each     | Event Variables    | evals   | yes             |
+|                        | hazard event            | of applicable      |         |                 |
++------------------------+-------------------------+--------------------+---------+-----------------+
+| Exposure Probabilities | Conditional probability | Conditional P      | exlikes | for failure     |
+|                        | of each asset realizing |                    |         |                 |
+|                        | the failure raster      |                    |         |                 |
++------------------------+-------------------------+--------------------+---------+-----------------+
+| Ground Elevations      | Elevation of ground at  | DTM Sampler        | gels    | for felv=ground |
+|                        | each asset              |                    |         |                 |
++------------------------+-------------------------+--------------------+---------+-----------------+
 
 The Risk (L1) module can be used to estimate a range of simple-metrics through creative use of the asset inventory (‘finv’) fields discussed in Section4.1_. When the ‘scale’ factor is set to 1, ‘height’ to zero, and no conditional probabilities are used (typical for inundation analysis), most of the calculation becomes trivial as the result is simply the impact values provided by the ‘expos’ table (with the exception of the expected value calculation).
 
@@ -864,80 +873,80 @@ Outputs provided by this tool are summarized in the following table:
 
 *Table 5-7: Risk model output file summary.*
 
-+-------------------+-----------+----------------------------------------------------+
-| Output Name       | Code      | Description                                        |
-+===================+===========+====================================================+
-| total results     | r_ttl     | table of sum of impacts (for all assets) per event |
-|                   |           | and expected value of all events (EAD)             |                  
-+-------------------+-----------+----------------------------------------------------+
-| per-asset results | r_passet  | table of impacts per asset per event and expected  |
-|                   |           | value of all events per asset                      |
-+-------------------+-----------+----------------------------------------------------+
-| risk curve        |           | risk curve plot of total impacts                   |
-+-------------------+-----------+----------------------------------------------------+
++-------------------+----------+----------------------------------------------------+-+
+| Output Name       | Code     | Description                                        | |
++===================+==========+====================================================+=+
+| total results     | r_ttl    | table of sum of impacts (for all assets) per event | |
+|                   |          | and expected value of all events (EAD)             | |
++-------------------+----------+----------------------------------------------------+-+
+| per-asset results | r_passet | table of impacts per asset per event and expected  | |
+|                   |          | value of all events per asset                      | |
++-------------------+----------+----------------------------------------------------+-+
+| risk curve        |          | risk curve plot of total impacts                   | |
++-------------------+----------+----------------------------------------------------+-+
 
 .. _Section5.2.2:
 
 5.2.2. Impacts (L2)
-=====================
+===================
 
 CanFlood’s ‘Impacts (L2)’ tool is designed to perform a ‘classic’ object-based deterministic flood damage assessment using vulnerability curves, asset heights, and WSL values to estimate flood impacts from multiple events. This tool calculates the impacts on each asset from each hazard event (if the provided raster WSL was realized). ‘Impacts (L2)’ does not consider or account for event probabilities (conditional or otherwise) as these are handled in the Risk (L2) module (see Section5.2.3_). Model package requirements are summarized in the following table:
 
 *Table 5-8: Impacts (L2) model package requirements.*
 
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
-| Name                   | Description               | Build Tool            | Code           | Reqd.                  |
-+========================+===========================+=======================+================+========================+
-| Control File           | Data file paths and       | Start Control File    |                | yes                    |
-|                        | parameters                |                       |                |                        |
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
-| Inventory              | Tabular asset inventory   | Inventory Compiler    | finv           | yes                    |
-|                        | data                      |                       |                |                        |
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
-| Exposure               | WSL or %inundated         | Hazard Sampler        | expos          | yes                    |
-|                        | exposure data             |                       |                |                        |
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
-| Ground Elevations      | Elevation of ground at    | DTM Sampler           | gels           | for                    |
-|                        | each asset                |                       |                | felv=ground            |
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
-| Vulnerability Function | Collection of functions   | Vulnerability         | curves         | yes                    |
-| Set                    | relating exposure to      | Function Library      |                |                        |
-|                        | impact                    |                       |                |                        |
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
++------------------------+-------------------------+--------------------+--------+-------------+
+| Name                   | Description             | Build Tool         | Code   | Reqd.       |
++========================+=========================+====================+========+=============+
+| Control File           | Data file paths and     | Start Control File |        | yes         |
+|                        | parameters              |                    |        |             |
++------------------------+-------------------------+--------------------+--------+-------------+
+| Inventory              | Tabular asset inventory | Inventory Compiler | finv   | yes         |
+|                        | data                    |                    |        |             |
++------------------------+-------------------------+--------------------+--------+-------------+
+| Exposure               | WSL or %inundated       | Hazard Sampler     | expos  | yes         |
+|                        | exposure data           |                    |        |             |
++------------------------+-------------------------+--------------------+--------+-------------+
+| Ground Elevations      | Elevation of ground at  | DTM Sampler        | gels   | for         |
+|                        | each asset              |                    |        | felv=ground |
++------------------------+-------------------------+--------------------+--------+-------------+
+| Vulnerability Function | Collection of functions | Vulnerability      | curves | yes         |
+| Set                    | relating exposure to    | Function Library   |        |             |
+|                        | impact                  |                    |        |             |
++------------------------+-------------------------+--------------------+--------+-------------+
 
 Impacts (L2) outputs are summarized in the following table, where only the ‘dmgs’ output is required by the Risk (L2) model:
 
 *Table 5-9: Impacts (L2) outputs.*
 
-+---------------------+-----------+----------------------------------------------------+
-| Output Name         | Code      | Description                                        |
-+=====================+===========+====================================================+
-| total impacts       | dmgs      | total impacts calculated for each asset            |
-+---------------------+-----------+----------------------------------------------------+
-| expanded            | dmgs_expnd| complete impacts calculated on each nested         |
-| component impacts   |           | function of each asset (see below)                 |                  
-+---------------------+-----------+----------------------------------------------------+
-| impacts calculation | bdmg_smry | workbook summarizing components of the             |
-| summary             |           | impact calculation (see below)                     |
-+---------------------+-----------+----------------------------------------------------+
-| depths              | depths_df | depth values calculated for each asset             |
-+---------------------+-----------+----------------------------------------------------+
-| impact histogram    |           | summary plot of total impact values per-asset      |
-| summary             |           |                                                    |
-+---------------------+-----------+----------------------------------------------------+
-| impact box plot     |           | summary plot of total impact values per-asset      |
-+---------------------+-----------+----------------------------------------------------+
++---------------------+------------+-----------------------------------------------+-+
+| Output Name         | Code       | Description                                   | |
++=====================+============+===============================================+=+
+| total impacts       | dmgs       | total impacts calculated for each asset       | |
++---------------------+------------+-----------------------------------------------+-+
+| expanded            | dmgs_expnd | complete impacts calculated on each nested    | |
+| component impacts   |            | function of each asset (see below)            | |
++---------------------+------------+-----------------------------------------------+-+
+| impacts calculation | bdmg_smry  | workbook summarizing components of the        | |
+| summary             |            | impact calculation (see below)                | |
++---------------------+------------+-----------------------------------------------+-+
+| depths              | depths_df  | depth values calculated for each asset        | |
++---------------------+------------+-----------------------------------------------+-+
+| impact histogram    |            | summary plot of total impact values per-asset | |
+| summary             |            |                                               | |
++---------------------+------------+-----------------------------------------------+-+
+| impact box plot     |            | summary plot of total impact values per-asset | |
++---------------------+------------+-----------------------------------------------+-+
 
 **Nested Functions**
 
 
 To facilitate complex assets (e.g. a house vulnerable to structural and contents damages), Impacts (L2) supports composite vulnerability functions parameterized with the 4 key attributes (‘tag’, ‘scale’, ‘cap’, ‘elv’) with the ‘f’ prefix and ‘nestID’ numerator (e.g. f0, f1, f2, etc.) discussed in Section 4.1. In this way, CanFlood can simulate a complex vulnerability function by combining the set of simple component functions to estimate flood damage. An example entry in the asset inventory (‘finv’) for a single-family dwelling may look like:
 
-+-------+--------+----------+--------+--------+--------+--------+----------+---------+
-| xid   | f0_tag | f0_scale | f0_cap | f0_elv | f1_cap | f1_elv | f1_scale | f1_tag  |
-+-------+--------+----------+--------+--------+--------+--------+----------+---------+
-| 14879 | BA_S   | 117.99   | 91300  | 11.11  | 20000  | 11.11  | 117.99   | BA_C    |
-+-------+--------+----------+--------+--------+--------+--------+----------+---------+
++-------+--------+----------+--------+--------+--------+--------+----------+--------+
+| xid   | f0_tag | f0_scale | f0_cap | f0_elv | f1_cap | f1_elv | f1_scale | f1_tag |
++-------+--------+----------+--------+--------+--------+--------+----------+--------+
+| 14879 | BA_S   | 117.99   | 91300  | 11.11  | 20000  | 11.11  | 117.99   | BA_C   |
++-------+--------+----------+--------+--------+--------+--------+----------+--------+
 
 Where BA_S corresponds to a vulnerability function for estimating structural cleanup/repair, and BA_C estimates household contents damages (both scaled by the floor area). Additional fX columns could be added as component vulnerability functions for basements, garages, and so on. Each of group of four key attributes is referred to as a ‘nested function’, where the collection of nested functions comprises the complete vulnerability function of an asset.
 
@@ -1000,22 +1009,22 @@ Model package requirements for the Risk (L2) tool are summarized in the followin
 
 *Table 5-10: Risk (L2) model package requirements.*
 
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
-| Name                   | Description               | Build Tool            | Code           | Reqd.                  |
-+========================+===========================+=======================+================+========================+
-| Control File           | Data file paths and       | Start Control File    |                | yes                    |
-|                        | parameters                |                       |                |                        |
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
-| Event Probabilities    | Probability of each       | Event Variables       | evals          | yes                    |
-|                        | hazard event              |                       |                |                        |
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
-| Exposure Probabilities | Conditional probability of| Conditional P         | exlikes        | for failure            |
-|                        | each asset realizing the  |                       |                |                        |
-|                        | failure raster            |                       |                |                        |
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
-| Total impacts          | Output of Impacts         | N/A                   | dmgs           | yes                    |
-|                        | (L2) model                |                       |                |                        |
-+------------------------+---------------------------+-----------------------+----------------+------------------------+
++------------------------+----------------------------+--------------------+---------+-------------+
+| Name                   | Description                | Build Tool         | Code    | Reqd.       |
++========================+============================+====================+=========+=============+
+| Control File           | Data file paths and        | Start Control File |         | yes         |
+|                        | parameters                 |                    |         |             |
++------------------------+----------------------------+--------------------+---------+-------------+
+| Event Probabilities    | Probability of each        | Event Variables    | evals   | yes         |
+|                        | hazard event               |                    |         |             |
++------------------------+----------------------------+--------------------+---------+-------------+
+| Exposure Probabilities | Conditional probability of | Conditional P      | exlikes | for failure |
+|                        | each asset realizing the   |                    |         |             |
+|                        | failure raster             |                    |         |             |
++------------------------+----------------------------+--------------------+---------+-------------+
+| Total impacts          | Output of Impacts          | N/A                | dmgs    | yes         |
+|                        | (L2) model                 |                    |         |             |
++------------------------+----------------------------+--------------------+---------+-------------+
 
 Outputs provided by this tool are summarized in Table5-7_.
 
@@ -1065,18 +1074,18 @@ Table5-11_ summarizes the treatment of hazard events based on the count of failu
 
 *Table 5-11: Hazard event treatment by failure event count.*
 
-+-----------+----------+------------------------------+------------------------+
-| Type      | Count    | Treatment :sup:`1`           | Example (Figure5-5_)   |
-+===========+==========+==============================+========================+
-| trivial   | 0        | E(X)fail=0                   | e3                     |
-|           |          | E(X)nofail from equation 2   |                        |
-+-----------+----------+------------------------------+------------------------+
-| simple    | 1        | ‘max’ or ‘mutEx’             | e2                     |
-+-----------+----------+------------------------------+------------------------+
-| complex   | >1       | ‘max’, ‘mutEx’ or ‘indep’    | e1                     |
-+-----------+----------+------------------------------+------------------------+
-| 1) See Table5-12_                                                            |
-+------------------------------------------------------------------------------+
++-------------------+-------+----------------------------+----------------------+
+| Type              | Count | Treatment :sup:`1`         | Example (Figure5-5_) |
++===================+=======+============================+======================+
+| trivial           | 0     | E(X)fail=0                 | e3                   |
+|                   |       | E(X)nofail from equation 2 |                      |
++-------------------+-------+----------------------------+----------------------+
+| simple            | 1     | ‘max’ or ‘mutEx’           | e2                   |
++-------------------+-------+----------------------------+----------------------+
+| complex           | >1    | ‘max’, ‘mutEx’ or ‘indep’  | e1                   |
++-------------------+-------+----------------------------+----------------------+
+| 1) See Table5-12_ |       |                                                   |
++-------------------+-------+----------------------------+----------------------+
 
 **Events with Complex Failure**
 
@@ -1086,30 +1095,30 @@ Table5-12_ summarize the algorithms implemented in CanFlood to calculate expecte
 
 *Table5-12: Expected value algorithms for failure events.*
 
-+---------------------+----------+--------------------------------------------------------------------+
-| name                | Count    | summary                                                            |
-+=====================+==========+====================================================================+
-| Modified Maximum    | max      | .. image:: /_static/toolsets_model_table_5_12_eq_1.jpg             |
-|                     |          |                                                                    |
-+---------------------+----------+--------------------------------------------------------------------+
-| Mutually Exclusive  | mutEx    | .. image:: /_static/toolsets_model_table_5_12_eq_2.jpg             |
-|                     |          |                                                                    |
-+---------------------+----------+--------------------------------------------------------------------+
-| Independent         | indep    | a) Construct a matrix of all possible failure event combinations   |  
-|                     |          |    (positives=1 and negatives=0)                                   |
-|                     |          |                                                                    |
-|                     |          | b) Substitute matrix values with P and (1-P)                       |
-|                     |          |                                                                    |
-|                     |          | c) Multiply the set to obtain the probability of the combination   |
-|                     |          |    (P :sub:`comb`)                                                 |
-|                     |          |                                                                    | 
-|                     |          | d) Multiply P :sub:`comb` by the maximum impact of events within   |
-|                     |          |    the set to obtain the combination’s impact (C :sub:`comb`)      |
-|                     |          |                                                                    |
-|                     |          | e) .. image:: /_static/toolsets_model_table_5_12_eq_3.jpg          |         
-+---------------------+----------+--------------------------------------------------------------------+
-| P(o) = 1-sum(C :sub:`i`)                                                                            |
-+-----------------------------------------------------------------------------------------------------+
++--------------------------+-------+------------------------------------------------------------------+-+
+| name                     | Count | summary                                                          | |
++==========================+=======+==================================================================+=+
+| Modified Maximum         | max   | .. image:: /_static/toolsets_model_table_5_12_eq_1.jpg           | |
+|                          |       |                                                                  | |
++--------------------------+-------+------------------------------------------------------------------+-+
+| Mutually Exclusive       | mutEx | .. image:: /_static/toolsets_model_table_5_12_eq_2.jpg           | |
+|                          |       |                                                                  | |
++--------------------------+-------+------------------------------------------------------------------+-+
+| Independent              | indep | a) Construct a matrix of all possible failure event combinations | |
+|                          |       | (positives=1 and negatives=0)                                    | |
+|                          |       |                                                                  | |
+|                          |       | b) Substitute matrix values with P and (1-P)                     | |
+|                          |       |                                                                  | |
+|                          |       | c) Multiply the set to obtain the probability of the combination | |
+|                          |       | (P :sub:`comb`)                                                  | |
+|                          |       |                                                                  | |
+|                          |       | d) Multiply P :sub:`comb` by the maximum impact of events within | |
+|                          |       | the set to obtain the combination’s impact (C :sub:`comb`)       | |
+|                          |       |                                                                  | |
+|                          |       | e) .. image:: /_static/toolsets_model_table_5_12_eq_3.jpg        | |
++--------------------------+-------+------------------------------------------------------------------+-+
+| P(o) = 1-sum(C :sub:`i`) |       |                                                                    |
++--------------------------+-------+------------------------------------------------------------------+-+
 
 
 .. _Section5.2.4:
@@ -1133,9 +1142,9 @@ For additional information and guidance, see `Appendix B <appendix_b_>`__.
 
 .. _section5.3:
 
-***********************
+************
 5.3. Results
-***********************
+************
 
 .. image:: /_static/visual_image.jpg
    :align: right
@@ -1143,7 +1152,7 @@ For additional information and guidance, see `Appendix B <appendix_b_>`__.
 The ‘Results’ toolset is a collection of tools to assist the user in performing secondary data analysis and visualization on CanFlood models. The remainder of this section describes the function of the tools within this toolset.
 
 5.3.1. Join Geo
-================
+===============
 
 This tab provides a tool to join the non-spatial risk results back onto the inventory geometry for spatial post-processing. A basic version of this tool can be run automatically by the ‘Risk (L1)’ and ‘Risk (L2)’ tools. On the ‘Join Geo’ tab, the user can perform additional customization of these layers, including applying pre-packaged layer styles.
 
@@ -1170,7 +1179,7 @@ This tool generates risk curves showing the total contributions from each compos
 This tool generates composite risk curve showing the total results with a second curve showing the contribution from the ‘non-failure’ portion of each event (i.e., subtracting any contributions from companion failure events) on a single plot.
 
 5.3.3. Compare/Combine
-========================
+======================
 
 This tab provides two tools for combining or comparing multiple CanFlood models within a single analysis. For example, a flood risk analysis considering agricultural losses and residential building damages would generally construct two separate models (i.e., separate control files) and combine the results at the end to understand the total risk. Alternatively, an analysis may wish to compare two mitigation alternatives.
 
@@ -1189,7 +1198,7 @@ The combine tool collects the total results dataset (‘r_ttl’) and parameters
   • *Plot combine*: creates a stacked risk curve showing the contribution towards the total risk of each selected control file.
 
 5.3.4. Benefit-Cost Analysis
-=============================
+============================
 
 This tab provides two tools to support basic benefit-cost calculations commonly used in flood mitigation options assessments. Benefit-cost analysis (BCA) is a complex process discussed elsewhere (Merz et al. 2010; Smith et al. 2016; IWR and USACE 2017) that carries many challenges and short-comings when applied to decisions around flood mitigation (O’Connell and O’Donnell 2014; Hosein 2016). In short, BCA compares the net-present value of an intervention’s costs (e.g., construction, maintenance) to the benefit or flood-loss avoidance gained by the intervention. Through the application of a discounting rate in these net-present value calculations, BCA are sensitive to the timing or accrual of benefits and costs. A typical workflow in CanFlood implementing BCA is provided below:
 
@@ -1222,16 +1231,16 @@ After populating the ‘data’ and ‘smry’ tabs, the workbook should display
 
 This tool generates a financial time-series plot of the benefit and cost data contained in the BCA worksheet.
 
-***********************
+*********************
 5.4. Additional Tools
-***********************
+*********************
 
 The following section describes some additional tools provided in the CanFlood platform that support flood risk modelling in Canada. These can be accessed from the CanFlood menu (Plugins > CanFlood).
 
 .. _Section5.4.1:
 
 5.4.1. Dike Fragility Mapper
-===============================
+============================
 
 For risk models that incorporate dike defense failure, a dataset containing the conditional probabilities of each asset realizing the failure, called the resolved exposure probability (‘exlikes’) dataset, is required by the Risk (L1) and Risk (L2) modules. Generally, this dataset is generated from a set of ‘failure polygons’ using the ‘Conditional P’ tool in the build toolset (Section5.1.5_). While some projects may have these ‘failure polygons’ available, often only event rasters and the dike information discussed in Section4.5_ is available. For cases like this, the workflow summarized in Figure5-7_ can be employed, beginning with the ‘Dike Fragility Mapper’ tool which provides a collection of algorithms that can be used to generate failure polygons from typical dike information.
 
@@ -1292,7 +1301,7 @@ When applying the Dike Fragility Mapper to your project, the following should be
   • Fragility functions should be developed and tagged to each raster segment by a qualified geotechnical expert using field data.
 
 5.4.2. Add Connections
-========================
+======================
 
 CanFlood’s ‘Add Connections’ |addConnectionsImage| tool adds a pre-compiled set of web-resources to a user’s QGIS profile for easy access and configuration (i.e., adding credentials). The set of web-resources added by this tool are configured in the ‘canflood\_pars\WebConnections.ini’ file (in the user’s plugin directory). `Appendix A <appendix_a_>`__ summarizes the web-connections added by this tool.
 
@@ -1309,7 +1318,7 @@ Many plugins and tools used by QGIS (and CanFlood) do not support such web-layer
    :width: 22
 
 5.4.3. RFDA Converter
-======================
+=====================
 
 The Rapid Flood Damage Assessment (RFDA) tool was developed by the Province of Alberta in 2014 as a QGIS 2 plugin. RFDA did not include any spatial analysis or risk calculations. RFDA inventories are in Excel spreadsheet format (.xls) indexed by column location (not labels). Curves are tagged to assets using a concatenation of columns 11 and 12. Many columns in the inventory are ignored in RFDA. These are the functional columns:
 
@@ -1356,7 +1365,7 @@ This tool converts the RFDA format curves into a CanFlood curve set (one curve p
 This allows the user to customize which curves are applied and how to each asset (with CanFlood’s ‘composite vulnerability function’ feature).
 
 5.4.4. Add Styles
-==================
+=================
 
 To augment the symbol styles packed in QGIS for modifying the display of vector layer features, CanFlood includes a small library of styles typical for GIS flood projects. This library is an .xml file in the plugin directory, and can be added to your style manager through the CanFlood menu as shown below:
 
@@ -1374,17 +1383,17 @@ The QGIS ‘Styling Manager’ |stylingManager| provides an interface for organi
 
 .. _Section6:
 
-============================
+============
 6. Tutorials
-============================
+============
 
 This section provides a few tutorials to get a user started in CanFlood. It is suggested to work through the tutorials sequentially, referring to Section 5 when more detailed information is desired. For all tutorials, the project CRS can safely be set from any of the data layers, unless otherwise specified. Tutorials are written assuming users are familiar with QGIS and object-based flood risk modelling. All tutorial data can be found in the latest `‘tutorial_data’ zip <https://github.com/IBIGroupCanWest/CanFlood/blob/master/tutorial_data_20210315.zip>`__ on the project page.
 
 .. _Section6.1:
 
-**********************************************
+***************************
 6.1. Tutorial 1a: Risk (L1)
-**********************************************
+***************************
 
 This tutorial guides the user through the simplest application of risk modelling in CanFlood, called a level 1 (L1) analysis, where only binary exposure is calculated. This ‘exposed vs. not exposed’ analysis can be useful for preliminary analysis where there is insufficient information to model more complex object vulnerability.
 
@@ -1425,7 +1434,7 @@ For this example, each inventory entry or ‘asset’ could represent a home wit
 .. _Section6.1.2:
 
 6.1.2. Build the Model
-===============================
+======================
 
 Press the ‘Build’ button |buildimage| to begin building a CanFlood model.
 
@@ -1478,7 +1487,7 @@ The control file should now be fully built for an L1 analysis and the necessary 
 .. image:: /_static/tutorials_6_1_2_img_6.jpg
 
 6.1.3. Run the Model
-===============================
+====================
 
 Click the ‘Model’ button |runimage| to launch the Model toolset dialog.
 
@@ -1497,7 +1506,7 @@ Navigate to the ‘Risk (L1)’ tab. Check the first two boxes as shown below an
 .. image:: /_static/tutorials_6_1_3_img_2.jpg
 
 6.1.4. View Results
-===============================
+===================
 
 Navigate to the selected working directory. You should see 3 files created:
 
@@ -1538,7 +1547,7 @@ Notice the six impact fields (boxed in red above) have had their names converted
 Tutorial 2 demonstrates the use of CanFlood’s ‘Risk (L2)’model (Section5.2.3_). This emulates a more detailed risk assessment where the vulnerability of each asset is known and described as a function of flood depth (rather than simple binary flood presence as in tutorial 1). This tutorial also demonstrates an inventory with ‘relative’ heights and CanFlood’s ‘composite vulnerability function’ feature where multiple functions are applied to the same asset.
 
 6.2.1. Load data to project
-===============================
+===========================
 
 Download the tutorial 2 data from the ‘tutorials\2\data’ folder:
 
@@ -1562,7 +1571,7 @@ Load these into a QGIS project, it should look something like this:
 .. image:: /_static/tutorials_6_2_1_img_1.jpg
 
 6.2.2. Build the Model
-===============================
+======================
 
 Open the ‘Build’ |buildimage| toolset.
 
@@ -1611,7 +1620,7 @@ Move to the ‘Validation’ tab, **check the boxes for both L2 models**, then *
 This shows that the Risk (L2) model is missing the ‘dmgs’ data file and will not run. This is expected behavior as CanFlood separates the exposure calculation (Impacts L2) from the risk calculation. We will calculate this ‘dmgs’ data file and validate for Risk (L2) in the next section. You’re now ready to run the Impacts (L2) model!
 
 6.2.3. Run the Model
-===============================
+====================
 
 Open the ‘Model’ |runimage| dialog. Configure the ‘Setup’ tab as shown below, selecting your own paths and control file, and ensuring the ‘Outputs Directory’ is a sub-directory of your previous ‘Working Directory’ [12]_:
 
@@ -1636,7 +1645,7 @@ Move to the ‘Risk (L2)’ tab. Check all the boxes shown below and **click ‘
 A set of results files should have been generated (discussed below). For a complete description of the Risk (L2) module, see Section5.2.3_.
 
 6.2.4. View Results
-===============================
+===================
 
 After completing the Risk (L2) run, navigate to your working directory. It should now contain these files:
 
@@ -1678,14 +1687,14 @@ These plots are the two standard risk curve formats for the same total results d
    :align: middle
    :width: 28
 
-**********************************************
+*********************************************
 6.3. Tutorial 2b: Risk (L2) with Dike Failure
-**********************************************
+*********************************************
 
 Users should first complete Tutorials 1 and 2a. Tutorial 2b uses the same input data as 2a but expands the analysis to demonstrate the risk analysis of a simple levee failure through incorporating a single companion failure event into the model. This companion failure event is composed of two layers:
 
-  • *haz_1000_fail_B_tut2*: ‘failure raster’ indicating the WSL that would be realized were any of the levee segments to fail during the event; and
-  • *haz_1000_fail_B_tut2*: conditional exposure probability polygon layer with features indicating the extent and probability of failure of each levee segment during the flood event (‘failure polygons’). Notice this layer contains two features that overlap in places, corresponding potential flooding from two breach sites in the levee system. This layer will be used to tell CanFlood when and how to sample the failure raster.
+  • *haz_1000_fail_A_tut2*: ‘failure raster’ indicating the WSL that would be realized were any of the levee segments to fail during the event; and
+  • *haz_1000_fail_A_tut2*: conditional exposure probability polygon layer with features indicating the extent and probability of failure of each levee segment during the flood event (‘failure polygons’). Notice this layer contains two features that overlap in places, corresponding potential flooding from two breach sites in the levee system. This layer will be used to tell CanFlood when and how to sample the failure raster.
 
 This simplification by using these two layers facilitates the specification of multiple failure probabilities but where any failure (or combination of failures) would realize the same WSL (Section5.1.5_’s ‘complex conditionals’). Ensure these layers are loaded into the same QGIS project as was used for Tutorial 2a.
 
@@ -1694,7 +1703,7 @@ To better understand the ‘failure polygons’ layer, let’s apply CanFlood’
 .. image:: /_static/tutorials_6_3_img_1.jpg
 
 6.3.1. Build the Model
-===============================
+======================
 
 Follow the steps in Tutorials 2a ‘Build the Model’ but with including the ‘failure raster’ (‘haz_1000_fail_A_tut2’, probability=1000ARI) in the ‘Hazard Sampler’ and ‘Event Variables’ steps. On the ‘Event Variables’ step, ensure ‘Failure Event Relation Treatment’ is set to ‘Mutually Exclusive’.
 
@@ -1715,7 +1724,7 @@ Two non-spatial summary plots of this data should also have been generated in yo
 These values are the conditional probabilities of each asset realizing the 1000-year companion failure event WSL. [13]_ See Section5.2.3_ for a complete description of this tool. Complete the model construction by running the ‘DTM Sampler’ and ‘Validation’ tools.
 
 6.3.2. Run the Model
-===============================
+====================
 
 Open the ‘Model’ dialog |runimage| and setup your session similar to Tutorial 2a but ensure ‘Generate attribution matrix’ is checked under ‘Run Controls’ (we’ll use this to make plots showing the different components that contribute to the risk totals).
 
@@ -1726,7 +1735,7 @@ Navigate to the ‘Impacts (L2)’ tab, check the ‘Run Risk (L2) upon completi
 .. _Section6.3.3:
 
 6.3.3. View Results
-===============================
+===================
 
 To better understand the influence of incorporating levee failure, this section will demonstrate how to generate a plot showing the total risk and the portion of that total risk that comes from assuming no failure. Open the ‘Results’ toolset and configure your session by selecting a working directory and the same Control File used above. Now navigate to the ‘Risk Plot’ tab, ensure both plot controls are checked, then **click ‘Plot Fail Split’**. This should generate two risk plot formulations, including the figure below:
 
@@ -1734,13 +1743,13 @@ To better understand the influence of incorporating levee failure, this section 
 
 In this plot, the red line represents the contribution to risk without the companion failure events, which should be nearly identical to the results from Tutorial 2a, and a second line showing the total results. [14]_ The area between these two lines illustrates the contribution to risk from incorporating levee failure into the model.
 
-*********************************************************************
+************************************************
 6.4. Tutorial 2c: Risk (L2) with Complex Failure
-*********************************************************************
+************************************************
 
 It is recommended that users first complete Tutorial 2b. Tutorial 2c uses the same input data as 2b but expands the analysis to demonstrate the incorporation of more complex levee failure with two companion failure events into the model.
 
-In the same QGIS project as was used for Tutorial 2a, ensure the following are also added to the project:
+In the same QGIS project as was used for Tutorial 2b, ensure the following are also added to the project:
 
   • *haz_1000_fail_B_tut2.gpkg*: failure polygon ‘B’;
   • *haz_1000_fail_B_tut2.tif*: failure raster ‘B’.
@@ -1748,7 +1757,7 @@ In the same QGIS project as was used for Tutorial 2a, ensure the following are a
 These layers represent an additional companion failure event ‘B’ for the 1000-year event where the failure WSL and probabilities are different but complimentary from those of Tutorial 2b’s companion failure event ‘A’. These could be outputs from two modelled breach scenarios.
 
 6.4.1. Build the Model
-===============================
+======================
 
 Follow the steps in Tutorials 2b ‘Build the Model’ but with including the additional companion failure event ‘B’ in the ‘Hazard Sampler’, ‘Event Variables’ and ‘Conditional P’ steps. For the latter two, ensure both event relation treatments are set to ‘Mutually Exclusive’. Looking at the ‘Conditional P’ boxplot shows the difference in failure probabilities specified by the two companion failure events:
 
@@ -1757,7 +1766,7 @@ Follow the steps in Tutorials 2b ‘Build the Model’ but with including the ad
 Complete the model construction by running the ‘DTM Sampler’ and ‘Validation’ tools.
 
 6.4.2. Run the Model
-===============================
+====================
 
 Open the ‘Model’ dialog |runimage| and follow the steps in Tutorial 2b to setup this model run.
 
@@ -1768,7 +1777,7 @@ Execute the ‘Impacts (L2)’ and ‘Risk (L2)’ models similar to Tutorial 2b
 To explore the influence of the ‘event_rels’ parameter, open the control file, change the ‘event_rels’ parameter to ‘max’, change the ‘name’ parameter to something unique (e.g., ‘tut2c_max’), then save the file with a different name. On the ‘Setup’ tab, point to this modified control file, a new outputs directory, and run both models again as described above [15]_.
 
 6.4.3. View Results
-===============================
+===================
 
 After executing the ‘Risk (L2)’ model for the ‘event_rels=mutEx’ and ‘event_rels=max’ control files, two similar collections of output files should have been generated in the two separate output directories specified during model setup. To visualize the difference between these two model configurations, **open the ‘Results’ toolset** and select a working directory and the original ‘event_rels=mutEx’ control file as the ‘main control file’ on the ‘Setup’ tab [16]_. Before generating the comparison files, configure the plot style by opening the same main control file, and changing the following ‘[plotting]’ parameters:
 
@@ -1797,14 +1806,14 @@ Re-running the comparison tool on the four Tutorial 2 control files constructed 
 
 .. image:: /_static/tutorials_6_4_3_img_4.jpg
 
-**********************************************
+*******************************************
 6.5. Tutorial 2d: Risk (L2) with Mitigation
-**********************************************
+*******************************************
 
 It is recommended that users first complete Tutorial 2a before proceeding. Tutorial 2d uses the same input data as 2a but expands the analysis to demonstrate the incorporation of object (or property) level mitigation measures (PLPM) into the model. This can be useful for improving the accuracy of a model where two assets are functionally similar, using the same vulnerability function, but where one has some mechanism to reduce the exposure of the asset (e.g., a backflow valve). Similarly, this functionality can be used to investigate the benefits of introducing PLPMs with a comparative analysis.
 
 6.5.1. Build the Model
-===============================
+======================
 
 Follow the steps in Tutorials 2a ‘Build the Model’, with the exception of the ‘Inventory’ step, which we’ll modify to apply four new fields to the inventory vector layer (‘finv’) by configuring the ‘Inventory’ tab as shown below before **clicking ‘Construct finv’**:
 
@@ -1818,7 +1827,7 @@ Complete the ‘Hazard Sampler’, ‘Event Variables’, ‘DTM Sampler’, and
 
 
 6.5.2. Run the Model
-===============================
+====================
 
 Open the ‘Model’ dialog |runimage| and setup your session similar to Tutorial 2a.
 
@@ -1845,15 +1854,15 @@ Similarly, the ‘dmg2_smry’ spreadsheet ‘_smry’ tab for the mitigation ru
 This shows the total impacts achieved by the raw curves, then the ‘scaling’ algorithm (‘fX_scale’) the ‘capping’ algorithm (‘fX_cap’), followed by the algorithm that enforced the lower threshold (‘mi_Lthresh’), the mitigation scaling (‘mi_iScale’), the mitigation value addition (‘mi_iVal’), and the final result (identical to the previous row). This progression shows that the ‘capping’ algorithm had a large influence on the results and the mitigation value addition (‘mi_iVal’) had negligible influence.
 
 6.5.3. View the Results
-===============================
+=======================
 
 The ‘Compare’ Results tool can be used to show the influence on the risk curve and total risk:
 
 .. image:: /_static/tutorials_6_5_3_img_1.jpg
 
-**********************************************
+***************************************
 6.6. Tutorial 2e: Benefit-Cost Analysis
-**********************************************
+***************************************
 
 This tutorial demonstrates CanFlood’s Benefit-Cost Analysis (BCA) tools for supporting basic benefit-cost analysis for flood risk interventions like the mitigations considered in the previous tutorial. Before continuing with this tutorial, users should have completed and have available the results data for Tutorial 2a [18]_ and 2d:
 
@@ -1906,15 +1915,15 @@ To better understand the role of the discount rate, return to the worksheet, cha
 
 Notice the ‘payback year’ has not changed, but the relative size of the positive (green) and negative (red) areas has shifted and the ‘B/C ratio’ has dropped below 1. This reflects the more severe discounting of the future benefits brought by the larger 8% discount rate. In other words, by the time the future residents of the study area accrue significant benefits from the PLPMs, the current stakeholders wish they had spent the money on something else.
 
-*********************************************************************
+***********************************************
 6.7. Tutorial 3: Risk (L3) SOFDA research model
-*********************************************************************
+***********************************************
 
 Sample inputs for the SOFDA research model are provided in the tutorials\3\ folder. Refer to `Appendix B <appendix_b_>`__ for more information.
 
-*********************************************************************
+**************************************************************
 6.8. Tutorial 4a: Risk (L1) with Percent Inundation (Polygons)
-*********************************************************************
+**************************************************************
 
 This tutorial demonstrates a risk analysis of polygon type assets where the impact metric is percent inundated rather than depth. This can be useful for some coarse risk modelling, or for assets like agricultural fields where the loss can reasonably be calculated from the percent of the asset that is inundated.
 
@@ -1941,7 +1950,7 @@ Move the polygon inventory (‘finv’) layer to the top, apply the CanFlood ‘
 .. image:: /_static/tutorials_6_8_img_1.jpg
 
 6.8.1. Build the Model
-===============================
+======================
 
 **Setup**
 
@@ -1953,7 +1962,7 @@ Navigate to the ‘Inventory’ tab, ensure ‘Elevation type’ is set to ‘da
 
 **Hazard Sampler**
 
-Navigate to the ‘Hazard Sampler’ tool, load the four hazard rasters into the dialog window, check ‘Box plots’, check ‘Exposure as Inundation%’, set the ‘Depth Threshold’ to 0.5, and select the DTM layer as shown:
+Navigate to the ‘Hazard Sampler’ tool, load the four hazard rasters into the dialog window, check ‘Box plots’, under Exposure Configuration select ‘Area-Threshold’ as the type, set the ‘Depth Threshold’ to 0.5, and select the DTM layer as shown:
 
 .. image:: /_static/tutorials_6_8_1_img_1.jpg
 
@@ -1970,7 +1979,7 @@ These values are the calculated percent of each polygon with inundation greater 
 Run the ‘Event Variables’ and ‘Validation’ tools as instructed in Tutorial 1a.
 
 6.8.2. Run the Model
-===============================
+====================
 
 Open the ‘Model’ dialog |runimage| and follow the steps in Tutorial 1a to setup this model run. Navigate to the ‘Risk (L1)’ tool, check the boxes shown, and click ‘Run risk1’:
 
@@ -1979,7 +1988,7 @@ Open the ‘Model’ dialog |runimage| and follow the steps in Tutorial 1a to se
 The set of results files discussed below should have been generated.
 
 6.8.3. View the Results
-===============================
+=======================
 
 Navigate to your working directory. You should see the following results files have been generated:
 
@@ -2002,9 +2011,9 @@ Click **‘Join’**. You should see a new polygon vector layer loaded in your c
 
 .. image:: /_static/tutorials_6_8_3_img_3.jpg
 
-*********************************************************************
+***********************************************************
 6.9. Tutorial 4b: Risk (L1) with Percent Inundation (Lines)
-*********************************************************************
+***********************************************************
 
 Like Tutorial 4a, this tutorial demonstrates a risk analysis where the impact metric is percent inundated, but with line geometries rather than polygons. This can be useful for the analysis of flood risk to linear assets like roads.
 
@@ -2020,9 +2029,9 @@ The per-asset results should look like this:
 
 The first non-index ‘impact’ columns represent hazard events, with values showing the percent inundation of each segment multiplied by its ‘f0_scale’ value. This could represent the meters inundated (above the 0.5m depth threshold) per segment, if the ‘f0_scale’ value is the segment length (as is the case with the tutorial inventory). Alternatively, the ‘f0_scale’ value could be set to ‘1.0’ for all features which would cause the values to simply reflect the % inundation of each segment (mirrors the output of the Hazard Sampler tool) and the last column would calculate the expected percent annual inundation of the segment.
 
-*********************************************************************
+************************************************
 6.10. Tutorial 5a: Risk (L1) from NPRI and GAR15
-*********************************************************************
+************************************************
 
 This tutorial demonstrates how to construct a CanFlood ‘Risk (L1)’ model from two web-sources:
 
@@ -2034,7 +2043,7 @@ For more information on these data sets, see `Appendix A <appendix_a_>`__.
 Because this tutorial deals with data having disparate CRSs, users should be familiar with QGIS’s native handling of project and layer CRS discussed `here <https://docs.qgis.org/3.10/en/docs/user_manual/working_with_projections/working_with_projections.html>`__.
 
 6.10.1. Load Data to Project
-===============================
+============================
 
 Begin by setting your QGIS project’s CRS to ‘EPSG:3978’ (Project > Properties > CRS > select ‘EPSG:3978’) [25]_. Now you are ready to download, then add, the data layer for Tutorial 5:
 
@@ -2086,7 +2095,7 @@ You’ll have to load one layer at a time, and you may be prompted to ‘Select 
 .. image:: /_static/tutorials_6_10_1_img_5.jpg
 
 6.10.2. Build the Model
-===============================
+=======================
 
 This section describes how to complete the construction of a Risk (L1) model from the downloaded NPRI and GAR15 data. For instructions on the remainder of the Risk (L1) modelling process, see Section6.1_.
 
@@ -2106,7 +2115,7 @@ Navigate to the ‘Inventory’ tab. To convert the downloaded NPRI data into an
 
 Now you’re ready to sample the GAR15 hazard layers with your new NPRI inventory. Unlike the hazard layers used in previous tutorials, the GAR15 hazard layers provide *depth* (rather than WSL) data in *centimeters* (rather than meters) in a coordinate system other than that of our project. Further, these hazard layers’ extents are much larger than what is needed by our project; and because they are web-layers, many of the QGIS processing tools will not work. Therefore, we’ll need to apply the four ‘Raster Preparation’ tools described in Table 5-2 before proceeding with the ‘Hazard Sampler’.
 
-Navigate to the ‘Hazard Sampler’ tab, ensure the five GAR2015 layers are listed in the window, and click ‘Sample’. You should get an error telling you the layer CRS does not match that of the project. To resolve this, configure the Raster Preparation handles as shown and **click ‘Prep’**:
+Navigate to the ‘Hazard Sampler’ tab, ensure the five GAR2015 layers are listed in the window, and click ‘Sample’. You should get an error telling you the layer CRS does not match that of the project. To resolve this, click the "Raster Prep' button and configure the Raster Preparation handles as shown and **click ‘Prep’** and then 'OK':
 
 .. image:: /_static/tutorials_6_10_2_img_3.jpg
 
@@ -2114,9 +2123,9 @@ You should see five new rasters loaded to your canvas (with a ‘prepd’ suffix
 
 .. _Section6.11:
 
-*********************************************************************
+****************************************
 6.11. Tutorial 6a: Dike Failure Polygons
-*********************************************************************
+****************************************
 
 This tutorial demonstrates how to generate ‘failure polygons’ from typical dike information using CanFlood’s ‘Dike Fragility Mapper’ tool (Section5.4.1_). Before following this tutorial, users should be familiar with the hazard event data types described in Section4.2_ (esp. ‘failure polygons’) that are required of Risk (L1) and (L2) models with some failure. Begin by downloading the tutorial data from the `tutorials\6 <https://github.com/IBIGroupCanWest/CanFlood/tree/master/tutorials/6>`__ folder and loading it into a new QGIS project:
 
@@ -2208,7 +2217,7 @@ This step will use the previously calculated freeboard values and the user suppl
 Now click ‘Calc Fragility’ to generate the tabular failure probability data (‘pfail’).
 
 6.11.3. Join to Areas
-===============================
+=====================
 
 In this final step, we will join the previously calculated failure probabilities to the user supplied influence areas for each segment based on the links provided on the dikes layer. Navigate to the ‘Join Areas’ tab. You should see the ‘pfail’ data filepath in the corresponding field; if not, navigate to this file. If you successfully ran the ‘Dike Exposure’ tool this session, you should see the first column of raster layers selected; if not, select the four WSL rasters manually in the first column. For the second column, select the ‘dike_influence_zone’ polygon layer in the first drop-down, then click ‘Fill Down’ to populate the remaining drop-downs. Once finished, your dialog should look like the below:
 
@@ -2220,11 +2229,70 @@ Click **‘Map pFail’**. You should see four polygon layers loaded to your can
 
 These results layers are automatically stylized as failure polygons, showing the event raster name, source dike segment (‘sid’), and failure probability of each feature. Notice the 200-year contains 3-overlapping polygon features corresponding to the three segments with failure here, despite the original ‘dike_influznce_zones’ layer having two features. This mapping of polygons to dike segments is set on the dikes layer in the ‘Influence Area ID Field’ specified on the ‘Setup’ tab (‘ifzID’ in this case). In this way, 1:1 or many:many segment-polygon links can be specified, allowing the user to map each breach probability, or group segments to apply the calculated probabilities to a larger dike ring. See Section5.4.1_ for more information on this tool.
 
+*************************************************
+6.12. Tutorial 7a: Sampling on Complex Geometries
+*************************************************
+
+This tutorial demonstrates *Value Sampling* using sampling statistics specified *Per-Asset*. This can be useful when you would like to sample using heterogeneous statistics within a single inventory (e.g., 'Max' ground elevation for some buildings and 'Min' elevation for others). Begin by downloading the tutorial data from the `tutorials 7 <https://github.com/NRCan/CanFlood/tree/master/tutorials/7>`__ folder and loading it into a new QGIS project:
+
+  • *haz_rast*: hazard event rasters with WSL value predictions for the study area for four probabilities.
+
+      o *haz_0050_tut4.tif*
+
+      o *haz_0100_tut4.tif*
+
+      o *haz_0200_tut4.tif*
+
+      o *haz_1000_tut4.tif*
+
+  • *dtm_cT2.tif*: DTM layer (and corresponding stylized layer definition .qlr file)
+
+  • *finv_tut7_polys.gpkg*: flood asset inventory (’finv’) spatial layer (and corresponding stylized layer definition .qlr file)
+
+6.12.1. Build the Model
+=======================
+
+**Setup**
+
+Complete the typical setup as instructed in Tutorial 1a. 
+
+**Hazard Sampler**
+
+Navigate to the ‘Hazard Sampler’ tool, check mark the four hazard rasters, set the 'Type' parameter to 'Values', set the 'Stat. Type' parameter to 'Per-Asset', then select the 'sample_stat' field to tell CanFlood to pull the sampling statistic from this field. Verify your dialog looks like the below then **click 'Sample'**.
+
+.. image:: /_static/tutorials_6_12_img_1.JPG
+
+Complete the rest of the build process by running the ‘Event Variables’, ‘DTM Sampler’ and ‘Validation’  tools as outlined in Tutorial 1a.
+
+6.12.2. Run the Model
+=====================
+
+Open the ‘Model’ dialog and follow the steps in Tutorial 1a to setup this model run.  Then execute the ‘Risk (L1)’ model to generate the following files:
+
+	• risk1_tut7a_passet.csv: expected value of inundation per asset; 
+	• risk1_tut7a_ttl.csv: total results, expected value of total inundation per event; 
+	• tut7a.run1 Impact-ARI plot on 6 events.svg: a plot of the total results. 
+
+In order to understand and visualize the effect of setting the hazard sampling statistic to ‘Per-Asset’, you can try re-building and running the same model with the hazard statistic type set to ‘Global’ and the statistic set to 'Mean', then compare the results.
+
+6.12.3. View Results
+=====================
+To visualize the difference between these two model configurations, open the ‘Results’ toolset and select a working directory and the original ‘Per-Asset’ control file as the ‘main control file’ on the ‘Setup’ tab. Before generating the comparison files, configure the plot style by opening the same main control file, and changing the following ‘[plotting]’ parameters: 
+
+    • ‘color = red’ 
+    • ‘linestyle = solid’ 
+    • ‘impactfmt_str = ,.0f’ 
+
+To generate a comparison plot of these two scenarios, navigate to the ‘Compare/Combine’ tab, select the ‘Control File’ for both model configurations (Per-Asset & Global) generated in the previous step, ensure ‘Control Files’ is checked under ‘Comparison Controls’ then **click ‘Compare’**.  Your results should look similar to this:
+
+.. image:: /_static/tutorials_6_12_img_2.JPG
+
+
 .. _references:
 
-============================
+==========
 References
-============================
+==========
 
 Bedford, T., and Roger M. Cooke. 2001. Probabilistic Risk Analysis: Foundations and Methods. Cambridge, UK ; New York, NY, USA: Cambridge University Press.
 
@@ -2270,9 +2338,9 @@ URS. 2008. “Delta Risk Management Strategy (DRMS) Phase 1 - Levee Vulnerabilit
 
 USACE. 1996. “Risk-Based Analysis for Flood Damage Reduction Studies.” EM 1110-2-1619. https://www.publications.usace.army.mil/Portals/76/Publications/EngineerManuals/EM_1110-2-1619.pdf.
 
-=====================
+=========
 Footnotes
-=====================
+=========
 
 .. [1] All SOFDA inputs must be built and configured manually.
 
@@ -2353,47 +2421,47 @@ Footnotes
 
 .. _appendix_a:
 
-============================
+===========================
 Appendix A: Web Connections
-============================
+===========================
 
-+---------------+--------------------------------------------------------+----------------------+------------------+
-| Acronym       | Description                                            | Service              | Reference        |
-+===============+========================================================+======================+==================+
-| UNISDR_GAR15_GlobalRiskAssessment                                                                                |
-+---------------+--------------------------------------------------------+----------------------+------------------+
-| GAR15         | UNISDR’s data layers from the global risk assessment   | WCS                  | see below        | 
-|               | conducted for the Global Assessment Report on          |                      |                  |
-|               | Disaster Risk Reduction 2015 (GAR15) by the CIMA       |                      |                  |
-|               | Research Foundation. This data is hosted by the        |                      |                  |
-|               | Global Risk Data Platform and contains six global      |                      |                  | 
-|               | flood depth rasters (in cm; return periods = 25, 50,   |                      |                  |
-|               | 100, 200, 500, 1000 years) having 1km resolution.      |                      |                  |
-+---------------+--------------------------------------------------------+----------------------+------------------+
-| ECCC_NationalPollutantReleaseInventory_NPRI                                                                      |
-+---------------+--------------------------------------------------------+----------------------+------------------+
-| NPRI          | Government of Canada’s service to collect information  | ArcGisFeatureServer  | `homepage`_      | 
-|               | on the release, disposal and transfer of more than 320 |                      |                  |
-|               | substances. The web-service provides release reports   |                      |                  |
-|               | from the most recent year. The layer ‘NPRI-Reporting   |                      |                  |
-|               | Facilities’ shows the location of facilitates          |                      |                  | 
-|               | reporting any type of release.                         |                      |                  |
-+---------------+--------------------------------------------------------+----------------------+------------------+
-| NRCan_NationalHumanSettlementLayer_NHSL                                                                          |
-+---------------+--------------------------------------------------------+----------------------+------------------+
-| NHSL          | Collection of thematic datasets that describe the      | ArcGisFeatureServer  | `MapServer`_     | 
-|               | physical, social and economic characteristics of       |                      |                  |
-|               | urban centres and rural/remote communities across      |                      |                  |
-|               | Canada, and their vulnerability to natural hazards     |                      |                  |
-|               | of concern                                             |                      |                  | 
-+---------------+--------------------------------------------------------+----------------------+------------------+
-| NRCan_AutomaticallyExtractedBuildings                                                                            |
-+---------------+--------------------------------------------------------+----------------------+------------------+
-|               | Topographical feature class that delineates            | WMS                  | `Open Canada`_   | 
-|               | polygonal building footprints automatically            |                      |                  |
-|               | extracted from airborne Lidar data, high-resolution    |                      |                  |
-|               | optical imagery or other sources.                      |                      |                  |
-+---------------+--------------------------------------------------------+----------------------+------------------+
++---------------------------------------------+--------------------------------------------------------+---------------------+----------------+-+
+| Acronym                                     | Description                                            | Service             | Reference      | |
++=============================================+========================================================+=====================+================+=+
+| UNISDR_GAR15_GlobalRiskAssessment           |                                                        |                                        |
++---------------------------------------------+--------------------------------------------------------+---------------------+----------------+-+
+| GAR15                                       | UNISDR’s data layers from the global risk assessment   | WCS                 | see below      | |
+|                                             | conducted for the Global Assessment Report on          |                     |                | |
+|                                             | Disaster Risk Reduction 2015 (GAR15) by the CIMA       |                     |                | |
+|                                             | Research Foundation. This data is hosted by the        |                     |                | |
+|                                             | Global Risk Data Platform and contains six global      |                     |                | |
+|                                             | flood depth rasters (in cm; return periods = 25, 50,   |                     |                | |
+|                                             | 100, 200, 500, 1000 years) having 1km resolution.      |                     |                | |
++---------------------------------------------+--------------------------------------------------------+---------------------+----------------+-+
+| ECCC_NationalPollutantReleaseInventory_NPRI |                                                        |                                        |
++---------------------------------------------+--------------------------------------------------------+---------------------+----------------+-+
+| NPRI                                        | Government of Canada’s service to collect information  | ArcGisFeatureServer | `homepage`_    | |
+|                                             | on the release, disposal and transfer of more than 320 |                     |                | |
+|                                             | substances. The web-service provides release reports   |                     |                | |
+|                                             | from the most recent year. The layer ‘NPRI-Reporting   |                     |                | |
+|                                             | Facilities’ shows the location of facilitates          |                     |                | |
+|                                             | reporting any type of release.                         |                     |                | |
++---------------------------------------------+--------------------------------------------------------+---------------------+----------------+-+
+| NRCan_NationalHumanSettlementLayer_NHSL     |                                                        |                                        |
++---------------------------------------------+--------------------------------------------------------+---------------------+----------------+-+
+| NHSL                                        | Collection of thematic datasets that describe the      | ArcGisFeatureServer | `MapServer`_   | |
+|                                             | physical, social and economic characteristics of       |                     |                | |
+|                                             | urban centres and rural/remote communities across      |                     |                | |
+|                                             | Canada, and their vulnerability to natural hazards     |                     |                | |
+|                                             | of concern                                             |                     |                | |
++---------------------------------------------+--------------------------------------------------------+---------------------+----------------+-+
+| NRCan_AutomaticallyExtractedBuildings       |                                                        |                                        |
++---------------------------------------------+--------------------------------------------------------+---------------------+----------------+-+
+|                                             | Topographical feature class that delineates            | WMS                 | `Open Canada`_ | |
+|                                             | polygonal building footprints automatically            |                     |                | |
+|                                             | extracted from airborne Lidar data, high-resolution    |                     |                | |
+|                                             | optical imagery or other sources.                      |                     |                | |
++---------------------------------------------+--------------------------------------------------------+---------------------+----------------+-+
 
 .. _homepage: https://www.canada.ca/en/services/environment/pollution-waste-management/national-pollutant-release-inventory.html
 
@@ -2402,7 +2470,7 @@ Appendix A: Web Connections
 .. _Open Canada: https://open.canada.ca/data/en/dataset/7a5cda52-c7df-427f-9ced-26f19a8a64d6
 
 GAR15
-==========
+=====
 
 **Server**
 
@@ -2430,9 +2498,9 @@ Additional detail is provided in:
 
 .. _appendix_b:
 
-===============================
+=============================
 Appendix B: SOFDA User Manual
-===============================
+=============================
 
 https://github.com/IBIGroupCanWest/CanFlood/tree/master/manual/sofda/
 
