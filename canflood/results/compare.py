@@ -79,7 +79,7 @@ class Cmpr(RiskPlotr):
     def prep_model(self, **kwargs):
         _ = self.load_scenarios(**kwargs)
         
-    def load_scenarios(self,
+    def load_scenarios(self, #load a collection of Scenario works (from control files)
                  fps_d=None, #container of filepaths 
                  base_dir=None, #base directory to add
                  ):
@@ -251,6 +251,7 @@ class Cmpr(RiskPlotr):
     # aggregators
     #===========================================================================
     def build_composite(self, #merge data from a collection of asset models
+                        dkey='r_ttl', #worker data key to extract/merge
                     sWrkr_d=None, #container of scenario works to plot curve comparison
                     new_wrkr=True, #whether to build a new worker
                     ):
@@ -267,7 +268,7 @@ class Cmpr(RiskPlotr):
         mdf = None
         ead_d = dict()
         for childName, sWrkr in sWrkr_d.items():
-            dfi_raw = sWrkr.data_d['r_ttl'].copy()  #set by prep_ttl() 
+            dfi_raw = sWrkr.data_d[dkey].copy()  #set by prep_ttl() 
             """
             view(dfi_raw)
             """
@@ -288,6 +289,11 @@ class Cmpr(RiskPlotr):
                 
             else:
                 mdf = mdf.join(dfi)
+                """
+                sWrkr.data_d.keys()
+                view(dfi_raw)
+                view(mdf)
+                """
         
         
         #=======================================================================
@@ -312,7 +318,7 @@ class Cmpr(RiskPlotr):
             cttl_df = cttl_df.loc[:, l]
             
             #add the ead row at the bottom
-            cWrkr.data_d['r_ttl'] = cttl_df.append(pd.Series({
+            cWrkr.data_d[dkey] = cttl_df.append(pd.Series({
                 'aep':'ead', 'note':'integration', 'plot':False, self.impact_name:sum(ead_d.values())
                 }), ignore_index=True)
             

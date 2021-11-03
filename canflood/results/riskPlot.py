@@ -293,6 +293,7 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
                    title=None, #None: generate from data
                    figsize=None, impactFmtFunc=None, plotTag=None,
                    val_str=None,
+                   legendTitle=None,
                    logger=None,):
         #=======================================================================
         # defaults
@@ -387,6 +388,9 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
                 ax1.fill_betweenx(yar, xCum_ar, xCum_ar+cser.values, label=colName, 
                                   lw=0, alpha=h_alpha)
                 xCum_ar +=cser.values
+                
+            if pd.isnull(max(xCum_ar)):
+                raise Error('got null max')
 
         elif y1lab == self.impact_name:
             
@@ -414,7 +418,8 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
         #legend
         h1, l1 = ax1.get_legend_handles_labels()
         legLab_d = {e:'\'%s\' annualized = '%e + impactFmtFunc(sEAD_ser[e]) for e in l1}
-        legendTitle = self._get_val_str('*default')
+        if legendTitle is None:
+            legendTitle = self._get_val_str('*default')
         
         self._postFmt(ax1, 
                       val_str=val_str, #putting in legend ittle 
