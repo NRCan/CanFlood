@@ -1741,7 +1741,9 @@ class Model(ComWrkr,
         
         return df1, aep_ser.to_dict()
     
-    def _get_ttl_ari(self, df): #add an ari column to a frame (from the aep vals)
+    def _get_ttl_ari(self, #add an ari column to a frame (from the aep vals)
+                     df,# {index:['aep']}
+                     ): 
         
         ar = df.loc[:,'aep'].T.values
         
