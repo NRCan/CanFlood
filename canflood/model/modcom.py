@@ -11,7 +11,7 @@ Created on Feb. 9, 2020
 # imports------------
 #==============================================================================
 
-import configparser, os, inspect, logging, copy, itertools, datetime
+import configparser, os, inspect, logging, copy, datetime
 import pandas as pd
 idx = pd.IndexSlice
 import numpy as np
@@ -2399,9 +2399,6 @@ class Model(ComWrkr,
                 )
         return out_fp
     
-
-            
-
 
 
 class DFunc(ComWrkr, #damage function or DFunc handler

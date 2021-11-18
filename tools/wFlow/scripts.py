@@ -27,6 +27,9 @@ import hlpr.Q
 import hlpr.plot
 
 from hlpr.Q import view
+
+from hlpr.wf import Session as SessionCommon
+from hlpr.wf import WorkFlow as WFCommon
 #===============================================================================
 # CF workers
 #===============================================================================
@@ -52,7 +55,7 @@ from misc.dikes.rjoin import DikeJoiner
 # methods---------
 #===============================================================================
 
-class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session 
+class Session(SessionCommon, hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session 
     
     #===========================================================================
     # #qgis attributes
@@ -152,73 +155,10 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
     # CHILD HANDLING--------
     #===========================================================================
 
-    def _run_wflow(self, #execute a single workflow 
-                   WorkFlow, #workflow object to run
-                   **kwargs):
-        
-        log = self.logger.getChild('r.%s'%WorkFlow.name)
-        log.debug('on %s w/ %s'%(WorkFlow.__name__, WorkFlow.crsid))
-        #=======================================================================
-        # update crs
-        #=======================================================================
-        if not WorkFlow.crsid == self.crsid:
-            log.debug('crsid mismatch... switching to crs of workflow')
-            self.set_crs(WorkFlow.crsid, logger=log)
 
-        #===================================================================
-        # # init the flow 
-        #===================================================================
-        
-        #collect pars
-        """similar to _get_wrkr().. but less flexible"""
-        for k in list(self.com_hndls) + self.flow_hndls:
-            kwargs[k] = getattr(self, k)
-
-        #init
-        kstr = ''.join(['\n    %s: %s'%(k,v) for k,v in kwargs.items()]) #plot string
-        log.debug('building w/ %s'%kstr)
-        runr = WorkFlow(logger=self.logger, session=self,**kwargs)
-
-        #===================================================================
-        # execute the flow
-        #===================================================================
-        log.debug('running \n\n')
-        runr.run()
-        
-        log.debug('finished')
-        return runr
-        
-
-    
-    #==========================================================================
-    # RUNNERS----------
-    #==========================================================================
-
-    def run(self, #run a set of WorkFlows
-            wFlow_l, #set of workflows to run
-            **kwargs
-            ):
-        """
-        lets the user define their own methods for batching together workflows
-        
-        """
-        log=self.logger.getChild('r')
-        log.info('running %i flows: \n    %s'%(len(wFlow_l), wFlow_l))
- 
- 
-        rlib = dict()
-        for fWrkr in wFlow_l:
-            runr = self._run_wflow(fWrkr, **kwargs)
-            
-            rlib[runr.name] = runr.res_d.copy()
-            
-            runr.__exit__()
-            
-        log.info('finished on %i: \n    %s'%(len(rlib), list(rlib.keys())))
-        return rlib
             
 
-class WorkFlow(Session): #worker with methods to build a CF workflow from
+class WorkFlow(WFCommon, Session): #worker with methods to build a CF workflow from
     """
     #===========================================================================
     # INSTRUCTIONS
@@ -233,12 +173,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
     
     """
     
-    #===========================================================================
-    # required attributes
-    #===========================================================================
-    name = None
-    pars_d = None #parameters for control file
-    tpars_d = dict() #parameters for passing to tools
+
     
     #===========================================================================
     # flow control attributes
@@ -249,44 +184,19 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
     
     
     def __init__(self,
-                 session=None,
-
-                 #init_q_d = {},
+                 
                  **kwargs):
         
-        #=======================================================================
-        # precheck
-        #=======================================================================
-        assert isinstance(self.name, str), 'must overwrite the \'name\' attribute with a subclass'
+
 
         #=======================================================================
         # init cascade
         #=======================================================================
 
-        super().__init__(out_dir=os.path.join(session.out_dir, self.name),
-                         tag = '%s'%datetime.datetime.now().strftime('%Y%m%d'),
-                         crsid=self.crsid, #overrwrite the default with your default
-                         **kwargs) #Session -> Qcoms -> ComWrkr
+        super().__init__(**kwargs) #Session -> Qcoms -> ComWrkr
 
-        #=======================================================================
-        # attachments
-        #=======================================================================
-        self.session = session
 
         self.cf_tmpl_fp = os.path.join(self.session.cf_dir, r'canflood\_pars\CanFlood_control_01.txt')
-        assert os.path.exists(self.cf_tmpl_fp), self.cf_tmpl_fp
-        
-        
-        self.com_hndls = list(session.com_hndls) +[
-            'out_dir', 'name', 'tag', 'cid']
-        
-        self.data_d = dict() #empty container for data
-        
-        self.wrkr_d = dict() #container for loaded workers
-        
-        #=======================================================================
-        # checks
-        #=======================================================================
         assert isinstance(self.pars_d, dict)
 
     #===========================================================================
