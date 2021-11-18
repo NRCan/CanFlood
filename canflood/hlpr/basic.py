@@ -207,7 +207,7 @@ class ComWrkr(object): #common methods for all classes
 
         
         
-    def set_cf_pars(self, #update one parameter  control file 
+    def set_cf_pars(self, #update the control file w/ the passed parameters
                   new_pars_d, #new paraemeters 
                     # {section : ({valnm : value } OR string (for notes)})
                   cf_fp = None):

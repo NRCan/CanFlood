@@ -10,7 +10,7 @@ WorkFlow scripts common to tools and sensivity analysis
 # imports
 #===============================================================================
 import inspect, logging, os,  datetime, shutil, gc, weakref
-from hlpr.basic import ComWrkr, view
+from hlpr.basic import ComWrkr, view, Error
 
 class Session(ComWrkr):
     """
@@ -150,3 +150,28 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         # checks
         #=======================================================================
         assert isinstance(self.pars_d, dict)
+        
+        
+    def run(self, **kwargs):
+        raise Error('overwrite with your own run method!')
+    
+    
+    def __exit__(self, #destructor
+                 *args,**kwargs):
+        """
+        call this before moving onto the next workflow
+        """
+        #clear your own
+        self.mstore.removeAllMapLayers()
+        
+        #clear your children
+        for cn, wrkr in self.wrkr_d.items():
+            wrkr.__exit__(*args,**kwargs)
+            
+        #del self.wrkr_d
+        
+        #remove data objects
+        del self.data_d
+        
+        super().__exit__(*args,**kwargs) #initilzie teh baseclass
+        gc.collect()

@@ -151,10 +151,7 @@ class Session(SessionCommon, hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one 
         
         self.logger.debug('%s.__init__ finished \n'%self.__class__.__name__)
 
-    #===========================================================================
-    # CHILD HANDLING--------
-    #===========================================================================
-
+ 
 
             
 
@@ -433,15 +430,13 @@ class WorkFlow(WFCommon, Session): #worker with methods to build a CF workflow f
         
         #copy the template
         wrkr.tag = '%s_%s'%(self.name, self.tag)
-        cf_fp = wrkr.copy_cf_template() #just copy the default template
+        cf_fp = wrkr.copy_cf_template() # copy the default template (set self.cf_fp)
         
         
         #=======================================================================
         # #set some basics
         #=======================================================================
-        #fix filepaths
-       
-        
+
         #loop and pull
         new_pars_d =dict()
         for sect, keys in {
@@ -450,7 +445,9 @@ class WorkFlow(WFCommon, Session): #worker with methods to build a CF workflow f
             'plotting':['impactfmt_str', 'color'],
             #'risk_fps':['evals'],
             }.items():
-            d = {k:str(pars_d[k]) for k in keys if k in pars_d} #get these keys where present
+            
+            #get these keys where present
+            d = {k:str(pars_d[k]) for k in keys if k in pars_d} 
             
             if sect == 'parameters':
                 d['name']=self.name
@@ -458,7 +455,8 @@ class WorkFlow(WFCommon, Session): #worker with methods to build a CF workflow f
             if len(d)>0:
                 new_pars_d[sect] = tuple([d, '#set by testAll.py on %s'%wrkr.today_str])
 
-        wrkr.set_cf_pars(new_pars_d)
+        #update the control file with pars passed by user (found on self.cf_fp)
+        wrkr.set_cf_pars(new_pars_d, cf_fp=cf_fp)
 
         #=======================================================================
         # wrap
@@ -1596,29 +1594,7 @@ class WorkFlow(WFCommon, Session): #worker with methods to build a CF workflow f
         
         return res_d
     
-    def run(self, **kwargs):
-        raise Error('overwrite with your own run method!')
-    
-    
-    def __exit__(self, #destructor
-                 *args,**kwargs):
-        """
-        call this before moving onto the next workflow
-        """
-        #clear your own
-        self.mstore.removeAllMapLayers()
-        
-        #clear your children
-        for cn, wrkr in self.wrkr_d.items():
-            wrkr.__exit__(*args,**kwargs)
-            
-        #del self.wrkr_d
-        
-        #remove data objects
-        del self.data_d
-        
-        super().__exit__(*args,**kwargs) #initilzie teh baseclass
-        gc.collect()
+
 
 
 
