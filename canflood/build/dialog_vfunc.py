@@ -58,6 +58,8 @@ FORM_CLASS, _ = uic.loadUiType(ui_fp)
 class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
     """
     constructed by  BuildDialog
+        inherits QT objects specified in inherit_atts
+        see build.dialog.BuildDialog.connect_slots()
     """
     vdata_d = dict()
     dfModel3 = None
@@ -72,7 +74,9 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
     def __init__(self, 
                  iface, 
                  parent=None,
-                 plogger=None):
+                 plogger=None,
+                 #session=None, #needed to fit in with QGIS like workers 
+                 ):
         """called on stawrtup"""
         super(vDialog, self).__init__(parent) #only calls QtWidgets.QDialog
         
@@ -532,23 +536,29 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
                 cs_colns = ['scale_var', 'exposure_var', 'impact_var'], 
                  log=None,                
                  ):
-        
+            self.curves_fp = fp #needed by some DFunc methods
             assert os.path.exists(fp), fp
             cs_d = dict()
             
+            #===================================================================
+            # load the curves
+            #===================================================================
+            #load all the tabs
+            clib_d_raw = pd.read_excel(fp, sheet_name=None, header=None, index_col=0)
             
-            clib_d_raw = pd.read_excel(fp, sheet_name=None, header=0, index_col=0)
-            
-            clib_d = {k:v for k,v in clib_d_raw.items() if not k.startswith('_')} #drop dummy tabs
+            #drop dummy tabs
+            clib_d = {k:v for k,v in clib_d_raw.items() if not k.startswith('_')} 
             
             cs_d['cnt'] = len(clib_d)
             cs_d['tags'] = list(clib_d.keys())
             
             #get additional meta from curve data
             if not '_smry' in clib_d:
+                
                 smry_df = self._get_smry(clib_d, 
                                          add_colns=cs_colns,
                                          clib_fmt_df=True, 
+                                         set_index=False,
                                          logger=log)
             else:
                 smry_df = clib_d['_smry']

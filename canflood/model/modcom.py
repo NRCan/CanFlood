@@ -2455,6 +2455,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
     tag = 'dfunc'
     min_dep = None
     pars_d = {}
+    curves_fp=''
     
     def __init__(self,
                  tabn='damage_func', #optional tab name for logging
@@ -2638,7 +2639,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
                   
                   #library format
                   clib_fmt_df = False, #whether the curve data is a dataframe or not
-                  set_index = False, #for clib_fmt_df=True, whether the index has been set (or is on col 0 still)
+                  set_index = False, #for clib_fmt_df=True, whether to set the index (from column 0)
                   
                   
                   #handle column names
@@ -2657,6 +2658,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         
         """
         clib_d.keys()
+        clib_d[list(clib_d.keys())[0]]
         """
         #=======================================================================
         # precheck
@@ -2666,7 +2668,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         # conversion
         #=======================================================================
         if clib_fmt_df:
-            if not set_index:
+            if not set_index: #pull everything into dictionaries
                 clib_d = {k:df.iloc[:,0].to_dict() for k,df in clib_d.items()}
             else:
                 
@@ -2811,10 +2813,8 @@ class DFunc(ComWrkr, #damage function or DFunc handler
                     crv_d,
                     logger=None):
         
-        #=======================================================================
-        # if logger is None: logger=self.logger
-        # log = logger.getChild('check_crvd')
-        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('check_crvd')
         
         assert isinstance(crv_d, dict)
         
@@ -2825,14 +2825,19 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         #=======================================================================
         miss_l = set(self.cdf_chk_d.keys()).difference(crv_d.keys())
         if not len(miss_l)==0:
-            raise Error('dfunc \'%s\' missing keys: %s \n    %s'%(self.tabn, miss_l, self.curves_fp))
+            log.error('dfunc \'%s\' missing keys: %s \n    %s'%(self.tabn, miss_l, self.curves_fp))
+            return False
         
         #=======================================================================
         # value type
         #=======================================================================
         for k, v in self.cdf_chk_d.items():
-            assert k in crv_d, 'passed df for \'%s\' missing key \'%s\''%(self.tabn, k)
-            assert isinstance(crv_d[k], v), '%s got bad type on %s'%(self.tabn, k)
+            if not k in crv_d:
+                log.error('passed df for \'%s\' missing key \'%s\''%(self.tabn, k))
+                return False
+            if not isinstance(crv_d[k], v):
+                log.error( '%s got bad type on %s'%(self.tabn, k))
+                return False
             
         #=======================================================================
         # order
