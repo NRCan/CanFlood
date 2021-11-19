@@ -2642,7 +2642,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
                   
                   #library format
                   clib_fmt_df = False, #whether the curve data is a dataframe or not
-                  set_index = False, #for clib_fmt_df=True, whether the index has been set (or is on col 0 still)
+                  set_index = False, #for clib_fmt_df=True, whether to set the index (from column 0)
                   
                   
                   #handle column names
@@ -2661,6 +2661,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         
         """
         clib_d.keys()
+        clib_d[list(clib_d.keys())[0]]
         """
         #=======================================================================
         # precheck
@@ -2670,7 +2671,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         # conversion
         #=======================================================================
         if clib_fmt_df:
-            if not set_index:
+            if not set_index: #pull everything into dictionaries
                 clib_d = {k:df.iloc[:,0].to_dict() for k,df in clib_d.items()}
             else:
                 

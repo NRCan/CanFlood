@@ -540,10 +540,14 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
             assert os.path.exists(fp), fp
             cs_d = dict()
             
+            #===================================================================
+            # load the curves
+            #===================================================================
+            #load all the tabs
+            clib_d_raw = pd.read_excel(fp, sheet_name=None, header=None, index_col=0)
             
-            clib_d_raw = pd.read_excel(fp, sheet_name=None, header=0, index_col=0)
-            
-            clib_d = {k:v for k,v in clib_d_raw.items() if not k.startswith('_')} #drop dummy tabs
+            #drop dummy tabs
+            clib_d = {k:v for k,v in clib_d_raw.items() if not k.startswith('_')} 
             
             cs_d['cnt'] = len(clib_d)
             cs_d['tags'] = list(clib_d.keys())
@@ -554,6 +558,7 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
                 smry_df = self._get_smry(clib_d, 
                                          add_colns=cs_colns,
                                          clib_fmt_df=True, 
+                                         set_index=False,
                                          logger=log)
             else:
                 smry_df = clib_d['_smry']
