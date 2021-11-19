@@ -469,7 +469,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         log.push('pNoFail finished')
         
         
-    def _set_fps(self, logger=None):
+    def _set_fps(self, logger=None): #retrieve control file paths on Cmopare/Combine tab from user
         if logger is None: logger=self.logger
         log=logger.getChild('_set_fps')
         
@@ -477,19 +477,19 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         raw_d = {
             '1':{
                 'cf_fp':self.lineEdit_C_cf_1.text(),
-                #'ttl_fp':self.lineEdit_C_ttl_1.text(),
+ 
                 },
             '2':{
                 'cf_fp':self.lineEdit_C_cf_2.text(),
-                #'ttl_fp':self.lineEdit_C_ttl_2.text(),              
+           
                 },
             '3':{
                 'cf_fp':self.lineEdit_C_cf_3.text(),
-                #'ttl_fp':self.lineEdit_C_ttl_3.text(),
+ 
                 },
             '4':{
                 'cf_fp':self.lineEdit_C_cf_4.text(),
-                #'ttl_fp':self.lineEdit_C_ttl_4.text(),                
+              
                 }
             }
         
@@ -522,7 +522,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
 
         self._set_setup(set_cf_fp=True)
-        fps_d = self._set_fps()
+        fps_d = self._set_fps() #retrieve filepaths from user
         
         self.feedback.setProgress(10)
     
@@ -546,8 +546,6 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # #plot curves
         #=======================================================================
- 
-            
         if self.checkBox_C_ari.isChecked():
             fig = wrkr.riskCurves(y1lab='impacts')
             self.output_fig(fig)

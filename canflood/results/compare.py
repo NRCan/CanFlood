@@ -3,7 +3,7 @@ Created on Feb. 9, 2020
 
 @author: cefect
 
-Template for worker scripts
+comparison plots
 '''
 
 #==========================================================================
@@ -437,19 +437,7 @@ class Scenario(RiskPlotr): #simple class for a scenario
         self.parent=parent
         log.info('finished _init_')
         
-#===============================================================================
-#     def prep_model(self):
-# 
-#         
-#         """note these also store on the instance"""
-#         assert os.path.exists(self.r_ttl), '%s got bad \'r_ttl\': %s'%(self.name, self.r_ttl)
-#         tlRaw_df = self.load_ttl()
-#         ttl_df = self.prep_ttl(tlRaw_df)
-#  
-#         #=======================================================================
-#         # wrap
-#         #=======================================================================
-#===============================================================================
+ 
         
         
     def copy(self,

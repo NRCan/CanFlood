@@ -49,6 +49,7 @@ class ComWrkr(object): #common methods for all classes
     def __init__(self, 
                  tag='session', #label for the session
                  name=None, #label for the object
+                 layName_pfx=None, 
                  cid='xid', #default used by inventory constructors
                  
                  cf_fp='',
@@ -101,6 +102,13 @@ class ComWrkr(object): #common methods for all classes
         self.today_str = datetime.datetime.now().strftime('%Y-%m-%d %H:%M') #nice for labelling plots
         self.absolute_fp=absolute_fp
         self.cf_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__))) #'C:\\LS\\03_TOOLS\\CanFlood\\_git'
+        
+        
+        # labels
+        if layName_pfx is None:
+            layName_pfx = '%s_%s_%s'%(self.name, self.tag,  datetime.datetime.now().strftime('%m%d'))
+                
+        self.layName_pfx = layName_pfx
         #=======================================================================
         # feedback
         #=======================================================================

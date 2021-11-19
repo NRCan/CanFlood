@@ -255,9 +255,10 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             which is not great for data manipulation
         here we clean it up and only take those for plotting
         
-        see also Artr.get_ttl()
+        see also 
+            RiskModel.get_ttl()
             Model._fmt_resTtl()
-            riskPlot.load_ttl()
+ 
         """
         
  
@@ -286,6 +287,9 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         
         """
         TODO: harmonize this with 'impact_units' loaded from control file
+            generally set (in cf) by model.dmg2.Dmg2.run(set_impactUnits=True)
+            or read from control file
+            then written to r_ttl 
         """
         self.impact_name = list(df1.columns)[1] #get the label for the impacts
         

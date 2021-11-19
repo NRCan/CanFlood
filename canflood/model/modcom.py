@@ -1760,15 +1760,9 @@ class Model(ComWrkr,
         
         df = df_raw.copy()
         df.index.name = 'aep'
-        df.columns = [self.impact_units]
+        df.columns = [self.impact_units] #set from the control file
         
-        
-        """
-        self.rtail
-        """
-        #check extrapolation value matching
-
-
+ 
         #=======================================================================
         # #add labels
         #=======================================================================
@@ -2595,6 +2589,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
     def get_dmg(self, #get damage from depth using depth damage curve
                 depth):
         """
+        self.impact_units
         self.tabn
         pd.DataFrame(self.dd_ar).plot()
         view(pd.DataFrame(self.dd_ar))
