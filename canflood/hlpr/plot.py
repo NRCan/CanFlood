@@ -144,7 +144,7 @@ class Plotr(ComWrkr):
 
         
         
-        self.logger.debug('init finished')
+        self.logger.debug('Plotr.__init__ finished')
         
         """call explicitly... sometimes we want lots of children who shouldnt call this
         self._init_plt()"""
@@ -160,7 +160,7 @@ class Plotr(ComWrkr):
         
         """
 
-        
+        self.logger.debug('_init_plt')
         #=======================================================================
         # imports
         #=======================================================================

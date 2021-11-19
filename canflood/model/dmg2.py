@@ -108,7 +108,7 @@ class Dmg2(Model, DFunc, Plotr):
         
         
         
-        self.logger.debug('finished __init__ on Dmg2')
+        self.logger.debug('Dmg2.__init__ finished')
         
     def prep_model(self):
         #======================================================================

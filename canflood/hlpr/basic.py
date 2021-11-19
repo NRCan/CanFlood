@@ -47,8 +47,8 @@ class ComWrkr(object): #common methods for all classes
     
 
     def __init__(self, 
-                 tag='session', 
-                 name=None,
+                 tag='session', #label for the session
+                 name=None, #label for the object
                  cid='xid', #default used by inventory constructors
                  
                  cf_fp='',

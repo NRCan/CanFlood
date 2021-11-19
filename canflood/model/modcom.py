@@ -272,7 +272,7 @@ class Model(ComWrkr,
         # wrap
         #=======================================================================
         
-        self.logger.debug('finished Model.__init__')
+        self.logger.debug('Model.__init__ finished')
         
         
     def setup(self): #standard setup sequence
