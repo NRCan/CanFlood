@@ -58,6 +58,8 @@ FORM_CLASS, _ = uic.loadUiType(ui_fp)
 class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
     """
     constructed by  BuildDialog
+        inherits QT objects specified in inherit_atts
+        see build.dialog.BuildDialog.connect_slots()
     """
     vdata_d = dict()
     dfModel3 = None
@@ -72,7 +74,9 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
     def __init__(self, 
                  iface, 
                  parent=None,
-                 plogger=None):
+                 plogger=None,
+                 #session=None, #needed to fit in with QGIS like workers 
+                 ):
         """called on stawrtup"""
         super(vDialog, self).__init__(parent) #only calls QtWidgets.QDialog
         
@@ -532,7 +536,7 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
                 cs_colns = ['scale_var', 'exposure_var', 'impact_var'], 
                  log=None,                
                  ):
-        
+            self.curves_fp = fp #needed by some DFunc methods
             assert os.path.exists(fp), fp
             cs_d = dict()
             
@@ -546,6 +550,7 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
             
             #get additional meta from curve data
             if not '_smry' in clib_d:
+                
                 smry_df = self._get_smry(clib_d, 
                                          add_colns=cs_colns,
                                          clib_fmt_df=True, 
