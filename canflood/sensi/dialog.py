@@ -51,6 +51,22 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         self.connect_slots()
         
         
+    def launch(self): #launch the gui from a plugin (and do some setup)
+        """called by CanFlood.py menu click
+        should improve load time by moving the connections to after the menu click"""
+        log = self.logger.getChild('launch')
+        for fName, f in self.launch_actions.items():
+            log.debug('%s: %s'%(fName, f))
+            try:
+                f()
+            except Exception as e:
+                log.warning('failed to execute \'%s\' w/ \n    %s'%(fName, e))
+        
+ 
+
+        self.show()
+        
+        
     def connect_slots(self): #connect ui slots to functions 
         #======================================================================
         # general----------------
@@ -166,6 +182,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         tbw.setHorizontalHeaderLabels(['base'])
         
         #populate w/ parameter values
+        self.feedback.upd_prog(50)
         for row, (attn, val_raw) in enumerate(pars_d.items()):
             #drop to relative filename'
             val = val_raw
@@ -182,6 +199,8 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #add the first column
         self.add_cand_col()
         
+        
+        self.feedback.upd_prog(None) #set the progress bar back down to zero
         
         return
         

@@ -32,6 +32,7 @@ from .hlpr.exceptions import QError as Error
 from build.dialog import BuildDialog
 from model.dialog import ModelDialog
 from results.dialog import ResultsDialog
+from sensi.dialog import SensiDialog
 from .misc.wc import WebConnect
 from .misc.rfda import rfda_dialog
 from .misc.dikes.dialog import DikesDialog
@@ -69,6 +70,7 @@ class CanFlood:
         
         self.dlg_rfda = rfda_dialog.rDialog(self.iface)
         self.dlg_dikes = DikesDialog(self.iface)
+        self.dlg_sensi = SensiDialog(self.iface, session=self)
 
 
         # Check if plugin was started the first time in current QGIS session
@@ -157,6 +159,9 @@ class CanFlood:
         #=======================================================================
         # rfda
         #=======================================================================
+        """
+        TODO: replace this w/ a for loop
+        """
         #build the action
         icon = QIcon(os.path.dirname(__file__) + "/icons/rfda.png")
         self.action_rfda = QAction(QIcon(icon), 'RFDA Conversions', self.iface.mainWindow())
@@ -187,8 +192,16 @@ class CanFlood:
         
         #add to the menu
         self.iface.addPluginToMenu(self.menu_name, self.action_styles)
-
-
+        
+        #=======================================================================
+        # sensitivity analysis
+        #=======================================================================
+        icon = QIcon(os.path.dirname(__file__) + "/icons/target.png")
+        self.action_sensi = QAction(QIcon(icon), 'Sensitivity Analysis', self.iface.mainWindow())
+        self.action_sensi.triggered.connect(self.dlg_sensi.launch)
+        self.act_menu_l.append(self.action_sensi)
+        self.iface.addPluginToMenu(self.menu_name, self.action_sensi)
+        
         
         
     def webConnect(self):
