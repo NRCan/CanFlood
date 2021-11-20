@@ -43,7 +43,7 @@ class Dmg2(Model, DFunc, Plotr):
     #==========================================================================
     valid_par = 'dmg2'
     attrdtag_out = 'attrimat02'
-    #datafp_section = 'dmg_fps'
+ 
     
     group_cnt = 4
     
@@ -83,7 +83,8 @@ class Dmg2(Model, DFunc, Plotr):
     
     exp_pars_op = {#optional expectations
         'parameters':{
-            'apply_miti':{'type':bool}
+            'apply_miti':{'type':bool},
+            'curve_deviation':{'type':str},
             },
         'dmg_fps':{
             'gels':{'ext':('.csv',)},
@@ -124,7 +125,7 @@ class Dmg2(Model, DFunc, Plotr):
             
         self.set_expos()
     
-        #self.data_d['curves'] = pd.read_excel(self.curves, sheet_name=None, header=None, index_col=None)
+ 
         
         if self.felv == 'ground':
             self.set_gels()
@@ -153,12 +154,14 @@ class Dmg2(Model, DFunc, Plotr):
          
     def setup_dfuncs(self, # build curve workers from loaded xlsx data
                  df_d, #{tab name: raw curve data
+                 curve_deviation = None, #specify which curve deviation to build
                  ):
  
         #=======================================================================
         # defaults
         #=======================================================================
         log = self.logger.getChild('setup_dfuncs')
+        if curve_deviation is None: curve_deviation=self.curve_deviation
         minDep_d = dict() #minimum depth container
         
         #=======================================================================
@@ -171,10 +174,14 @@ class Dmg2(Model, DFunc, Plotr):
             raise Error('got some nulls')
 
         log.debug('loading for %i valid ftags in the finv'%len(ftags_valid))
+        
         #=======================================================================
         # #loop through each frame and build the func
         #=======================================================================
         for tabn, df in df_d.items():
+            #===================================================================
+            # evaluate tab name
+            #===================================================================
             if tabn.startswith('_'):
                 log.debug('skipping dummy tab \'%s\''%tabn)
                 continue
@@ -189,8 +196,11 @@ class Dmg2(Model, DFunc, Plotr):
             if not isinstance(df, pd.DataFrame):
                 raise Error('unexpected type on tab \'%s\': %s'%(tabn, type(df)))
             
-            #build it
-            dfunc = DFunc(tabn, curves_fp=self.curves).build(df, log)
+            #===================================================================
+            # #build it
+            #===================================================================
+            dfunc = DFunc(tabn, curves_fp=self.curves, curve_deviation=curve_deviation,
+                          ).build(df, log)
             
             #store it
             self.dfuncs_d[dfunc.tag] = dfunc

@@ -97,11 +97,14 @@ class Model(ComWrkr,
         impact_units -- value to label impacts axis with (generally set by Dmg2)
         
         apply_miti -- whether to apply mitigation algorthihims
+        
+        curve_deviation -- for L2 damage function libraries w/ deviations
 
             
             
         
     [dmg_fps]
+        curves -- for L2, filepath to damage function library .xls
         
 
         
@@ -147,6 +150,7 @@ class Model(ComWrkr,
 
     impact_units = 'impacts'
     apply_miti = False 
+    curve_deviation = 'base'
 
 
     #[dmg_fps]
@@ -2439,7 +2443,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
             'impact_var':'damage',
             'exposure':'impact'}
     
-    cdf_chk_d = {'tag':str, #parameters for checking the raw df
+    cdf_chk_d = {'tag':str, #parameters expected in crv_d (read from xls tab)
                  'exposure':str,
                  'impact_units':str}
     
@@ -2450,10 +2454,12 @@ class DFunc(ComWrkr, #damage function or DFunc handler
     min_dep = None
     pars_d = {}
     curves_fp=''
+    curve_deviation= 'base' #0: take first curve. otherwise, label lookup of curve deviation 
     
     def __init__(self,
                  tabn='damage_func', #optional tab name for logging
                  curves_fp = '', #filepath loaded from (for reporting)
+                 curve_deviation = 'base', #which curve deviation to build
                  monot=True,
                  **kwargs):
         
@@ -2467,6 +2473,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         """
         self.curves_fp = curves_fp
         self.monot=monot
+        self.curve_deviation=curve_deviation
         
         #init the baseclass
         super().__init__(**kwargs) #initilzie Model
@@ -2474,58 +2481,88 @@ class DFunc(ComWrkr, #damage function or DFunc handler
     
     def build(self,
               df_raw, #raw parameters to build the DFunc w/ 
-              logger):
+              logger,
+              curve_deviation=None,
+              ):
         
         
         #=======================================================================
         # defaults
         #=======================================================================
         log = logger.getChild('%s'%self.tabn)
+        if curve_deviation is None: curve_deviation=self.curve_deviation
         log.debug('on %s from %s'%(str(df_raw.shape), self.curves_fp))
         #=======================================================================
         # precheck
         #=======================================================================
-        self.check_cdf(df_raw)
+        try:
+            assert self.check_cdf(df_raw)
+        except Exception as e:
+            """letting this pass for backwards compatability"""
+            log.error('curve failed check w/ \n    %s'%e)
+        
+
+        #slice and clean
+        #if curve_deviation=='base':
+        #df = df_raw.iloc[:, 0:2].dropna(axis=0, how='all')
+        
+        df = df_raw.set_index(0, drop=True).dropna(how='all', axis=1)
+            
         
         #======================================================================
         # identify depth-damage data
         #======================================================================
-        #slice and clean
-        df = df_raw.iloc[:, 0:2].dropna(axis=0, how='all')
+        #=======================================================================
+        # """"
+        # todo: try 'get_loc'
+        # """
+        # #locate depth-damage data
+        # boolidx = df.iloc[:,0]=='exposure' #locate
+        # 
+        # assert boolidx.sum()==1, \
+        #     'got unepxected number of \'exposure\' values on %s'%(self.tabn)
+        #     
+        # depth_loc = df.index[boolidx].tolist()[0]
+        #=======================================================================
         
-        #validate the curve
-        #=======================================================================
-        # self.check_crvd(df.set_index(df.columns[0]).iloc[:,0].to_dict(),
-        #                  logger=log)
-        #=======================================================================
-        """"
-        todo: try 'get_loc'
+        #get the value specifying the start of the dd
+ 
+        depthLoc_key='exposure'
+        
+        depth_loc = df.index.get_loc(depthLoc_key)
+        
+        boolidx = pd.Series(df.index.isin(df.iloc[depth_loc:len(df), :].index), index=df.index,
+                            name='dd_vals')
+        
         """
-        #locate depth-damage data
-        boolidx = df.iloc[:,0]=='exposure' #locate
-        
-        assert boolidx.sum()==1, \
-            'got unepxected number of \'exposure\' values on %s'%(self.tabn)
-            
-        depth_loc = df.index[boolidx].tolist()[0]
-        
-        boolidx = df.index.isin(df.iloc[depth_loc:len(df), :].index)
-        
-        
+        this includes the 'exposure' row in the dd_df
+        view(df.join(boolidx))
+        """
+ 
         #======================================================================
         # attach other pars
         #======================================================================
         #get remainder of data
-        mser = df.loc[~boolidx, :].set_index(df.columns[0], drop=True ).iloc[:,0]
+        mser = df.loc[~boolidx, :].iloc[:,0]
         mser.index =  mser.index.str.strip() #strip the whitespace
         pars_d = mser.to_dict()
         
-        #check it
+        #=======================================================================
+        # parameter value check
+        #=======================================================================
         assert 'tag' in pars_d, '%s missing tag'%self.tabn
         assert isinstance(pars_d['tag'], str), 'bad tag parameter type: %s'%type(pars_d['tag'])
         
         assert pars_d['tag']==self.tabn, 'tag/tab mismatch (\'%s\', \'%s\')'%(
             pars_d['tag'], self.tabn)
+        
+        #handle curve deviation
+        if not curve_deviation=='base':
+            assert curve_deviation in df.loc['exposure', :].values, \
+                'requested curve_deviation \'%s\' not found on \'%s\''%(
+                    curve_deviation, self.tabn)
+                
+         
         
         for varnm, val in pars_d.items():  #loop and store on instance
             setattr(self, varnm, val)
@@ -2536,22 +2573,37 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         #======================================================================
         # extract depth-dmaage data
         #======================================================================
-        #extract depth-damage data
-        dd_df = df.loc[boolidx, :].reset_index(drop=True)
-        dd_df.columns = dd_df.iloc[0,:].to_list()
-        dd_df = dd_df.drop(dd_df.index[0], axis=0).reset_index(drop=True) #drop the depth-damage row
+ 
+        #get just the dd rows
+        ddf1 = df.loc[boolidx, :]
+        ddf1.index.name=None
         
+        #set headers from a row
+        ddf1.columns = ddf1.loc[depthLoc_key]
+        ddf1 = ddf1.drop(depthLoc_key)
+        
+        
+        #select deviation
+        if curve_deviation=='base':
+            ddcol = ddf1.columns[0] #taking first
+        else:
+            ddcol = curve_deviation
+            
+        #reindex for this deviation
+        ddf2 = ddf1.loc[:, ddcol].to_frame().reset_index().rename(columns={'index':depthLoc_key})
+        
+ 
         #typeset it
         try:
-            dd_df.iloc[:,0:2] = dd_df.iloc[:,0:2].astype(float)
+            ddf2 = ddf2.astype(np.float)
         except Exception as e:
-            raise Error('failed to typsset the ddf w/ \n    %s'%e)
+            raise Error('failed to typsset the ddf for \'%s\' w/ \n    %s'%(self.tabn, e))
         
         """
         view(dd_df)
         """
         
-        ar = dd_df.sort_values('exposure').T.values
+        ar = ddf2.sort_values(depthLoc_key).T.values
         """NO! leave unsorted
         ar = np.sort(np.array([dd_df.iloc[:,0].tolist(), dd_df.iloc[:,1].tolist()]), axis=1)"""
         self.dd_ar = ar
@@ -2784,24 +2836,27 @@ class DFunc(ComWrkr, #damage function or DFunc handler
 
         
     def check_cdf(self, #convenience for checking the df as loaded
-                  df, **kwargs): 
+                  df, 
+ 
+                  **kwargs): 
+        
         """
-        because we deal with multiple forms of the curve data
+        converting to dict for most checks
+        
+        not constructing, just simple field and type checks
+        
+        view(df)
         """
+ 
         
         assert isinstance(df, pd.DataFrame)
-        assert len(df.columns)==2
-        
-        assert df.iloc[:, 0].is_unique
-        
-        crv_d = df.set_index(0, drop=True).dropna().iloc[:, 0].to_dict()
+ 
+ 
+        crv_d = df.set_index(0, drop=True).iloc[:, 0].dropna().to_dict()
         
         
-        try:
-            self.check_crvd(crv_d)
-        except Exception as e:
-            """letting this pass for backwards compatability"""
-            self.logger.warning('curve failed check w/ \n    %s'%e)
+        return self.check_crvd(crv_d, **kwargs)
+
 
 
     def check_crvd(self, #validate the passed curve_d  
@@ -2827,9 +2882,6 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         # value type
         #=======================================================================
         for k, v in self.cdf_chk_d.items():
-            if not k in crv_d:
-                log.error('passed df for \'%s\' missing key \'%s\''%(self.tabn, k))
-                return False
             if not isinstance(crv_d[k], v):
                 log.error( '%s got bad type on %s'%(self.tabn, k))
                 return False
