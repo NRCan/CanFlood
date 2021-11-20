@@ -23,7 +23,7 @@ Session            handles each workflow
 because we're only using model workers, no need for fancy init handling
     except for Plotr (pass init_plt_d)
         
-
+didn't make much use of other workers here
 
 '''
 
@@ -37,7 +37,7 @@ import numpy as np
 
 from hlpr.logr import basic_logger
 
-from hlpr.basic import ComWrkr, view
+from hlpr.basic import view
 import hlpr.plot
 
 
@@ -286,12 +286,13 @@ class SensiSessionComs(Shared):
     def __init__(self,
                  logger=None,
                  baseName='base',
+                 name='sensi',
                  **kwargs):
         
         if logger is None: logger = basic_logger()
         
         
-        super().__init__(logger = logger,  
+        super().__init__(logger = logger,  name=name,
                          inher_d = {},
                          **kwargs) #Qcoms -> ComWrkr
         
@@ -300,25 +301,16 @@ class SensiSessionComs(Shared):
         self.logger.debug('SensiRunner.__init__ finished \n')
         
         self.baseName=baseName
+        
+        
+        self.resname = '%s_%s_%s'%(self.name, self.tag,  datetime.datetime.now().strftime('%m%d'))
     
- 
-
-
 class SensiSessRunner(SensiSessionComs): #running a sensitivity session
     
-
-    def build_batch_cfs(self, #build the set of model packages specified in the gui
-                        df, #matrix of variables read from the diailog
-                         
-                      ):
-        """
-        add random color to each cf
-        """
-        pass
-    
+ 
     def run_batch(self, #run a batch of sensitivity 
                cf_d, #{mtag, controlfile}
-               modelMode='L1', #type of model being executed
+               modLevel='L1', #type of model being executed
                rkwargs={}, #OPTIONAL model runner kwargs
                out_dir=None,
                baseName=None, #for checks and some reeporting
@@ -354,7 +346,7 @@ class SensiSessRunner(SensiSessionComs): #running a sensitivity session
                                 out_dir = os.path.join(out_dir, mtag), 
                                 **initKwargs) as cmod:
                 
-                f = getattr(cmod, modelMode)
+                f = getattr(cmod, modLevel)
                 
                 res_lib[mtag] = f(**rkwargs)
                 res_lib[mtag]['cf_fp']=cf_fp
@@ -393,7 +385,7 @@ class SensiSessRunner(SensiSessionComs): #running a sensitivity session
         #======================================================================
         # defaults
         #======================================================================
-        if out_fp is None: out_fp=os.path.join(self.out_dir, self.layName_pfx + '.pickle')
+        if out_fp is None: out_fp=os.path.join(self.out_dir, self.resname + '.pickle')
         if logger is None: logger=self.logger
         log = logger.getChild('write_pick')
         

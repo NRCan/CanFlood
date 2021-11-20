@@ -285,7 +285,7 @@ class Model(ComWrkr,
         
         self.load_df_ctrl()  #load data from control file
         
-        self.prep_model() 
+        self.prep_model() #caller specific prep
         
         return self
     
@@ -403,6 +403,7 @@ class Model(ComWrkr,
             self._init_fmtFunc()
             
         self.resname = '%s_%s_%s'%(self.valid_par, self.name, self.tag)
+        """TODO: consolidate this with ComWrkr.resname"""
         #=======================================================================
         # #wrap
         #=======================================================================
@@ -553,7 +554,6 @@ class Model(ComWrkr,
         #======================================================================
         cnt = 0
         if setAttr:
-            
             for sectName, spars_d in cpars_d.items():
                 for varnm, val in spars_d.items():
                     setattr(self, varnm, val)
@@ -638,6 +638,8 @@ class Model(ComWrkr,
         
         
         return cpars
+    
+
     
     #===========================================================================
     # LOADERS------
@@ -2503,8 +2505,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         
 
         #slice and clean
-        #if curve_deviation=='base':
-        #df = df_raw.iloc[:, 0:2].dropna(axis=0, how='all')
+ 
         
         df = df_raw.set_index(0, drop=True).dropna(how='all', axis=1)
             
@@ -2512,18 +2513,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         #======================================================================
         # identify depth-damage data
         #======================================================================
-        #=======================================================================
-        # """"
-        # todo: try 'get_loc'
-        # """
-        # #locate depth-damage data
-        # boolidx = df.iloc[:,0]=='exposure' #locate
-        # 
-        # assert boolidx.sum()==1, \
-        #     'got unepxected number of \'exposure\' values on %s'%(self.tabn)
-        #     
-        # depth_loc = df.index[boolidx].tolist()[0]
-        #=======================================================================
+ 
         
         #get the value specifying the start of the dd
  

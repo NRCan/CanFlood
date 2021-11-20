@@ -69,6 +69,7 @@ class Dmg2(Model, DFunc, Plotr):
              'prec':{'type':int}, 
              'ground_water':{'type':bool},
              },
+            
         'dmg_fps':{
              'finv':{'ext':('.csv',)},
              'curves':{'ext':('.xls',)},
@@ -200,6 +201,7 @@ class Dmg2(Model, DFunc, Plotr):
             # #build it
             #===================================================================
             dfunc = DFunc(tabn, curves_fp=self.curves, curve_deviation=curve_deviation,
+                          logger=self.logger
                           ).build(df, log)
             
             #store it

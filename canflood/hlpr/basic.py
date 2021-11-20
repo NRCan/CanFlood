@@ -49,7 +49,7 @@ class ComWrkr(object): #common methods for all classes
     def __init__(self, 
                  tag='session', #label for the session
                  name=None, #label for the object
-                 layName_pfx=None, 
+                 resname=None, 
                  cid='xid', #default used by inventory constructors
                  
                  cf_fp='',
@@ -105,10 +105,11 @@ class ComWrkr(object): #common methods for all classes
         
         
         # labels
-        if layName_pfx is None:
-            layName_pfx = '%s_%s_%s'%(self.name, self.tag,  datetime.datetime.now().strftime('%m%d'))
-                
-        self.layName_pfx = layName_pfx
+        if resname is None:
+            resname = '%s_%s_%s'%(self.name, self.tag,  datetime.datetime.now().strftime('%m%d'))
+            """TODO: consolidate this with Modcom.resname"""
+                 
+        self.resname = resname
         #=======================================================================
         # feedback
         #=======================================================================
@@ -235,6 +236,7 @@ class ComWrkr(object): #common methods for all classes
         _ = pars.read(cf_fp) #read it from the new location
         
         #loop and make updates
+        cnt = 0
         for section, val_t in new_pars_d.items():
             assert isinstance(val_t, tuple), '\"%s\' has bad subtype: %s'%(section, type(val_t))
             assert section in pars, 'requested section \'%s\' not in the pars!'%section
@@ -247,10 +249,12 @@ class ComWrkr(object): #common methods for all classes
                             'failed to get a str on %s.%s: \'%s\''%(section, valnm, type(value))
                         
                         pars.set(section, valnm, value)
+                        cnt+=1
                         
                 #single values(for notes mostly)
                 elif isinstance(subval, str):
                     pars.set(section, subval)
+                    cnt+=1
                     
                 else:
                     raise Error('unrecognized value type: %s'%type(subval))
@@ -261,7 +265,7 @@ class ComWrkr(object): #common methods for all classes
             pars.write(configfile)
             
         log.info('updated control file w/ %i pars at :\n    %s'%(
-            len(new_pars_d), cf_fp))
+            cnt, cf_fp))
         
         return
     
