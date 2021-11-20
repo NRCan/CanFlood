@@ -583,10 +583,8 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     # ACTIONS------
     #===========================================================================
 
-    def build_scenario(self): #'Generate' on the setup tab
+    def build_scenario(self): # Generate a CanFlood project from scratch
         """
-        Generate a CanFlood project from scratch
-        
         This tab facilitates the creation of a Control File from user specified parameters and inventory, 
             as well as providing general file control variables for the other tools in the toolset.
             
@@ -1254,18 +1252,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.logger.push('lisamp finished')    
         
         return
-        
-    def _pop_el_table(self): #developing the table widget
-        
-
-        l = ['e1', 'e2', 'e3']
-        tbl = self.fieldsTable_EL
-        tbl.setRowCount(len(l)) #add this many rows
-        
-        for rindx, ename in enumerate(l):
-            tbl.setItem(rindx, 0, QTableWidgetItem(ename))
-            
-        self.logger.push('populated likelihoods table with event names')
+ 
             
             
     
