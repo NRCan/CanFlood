@@ -165,6 +165,16 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         assert self.modLevel in ['L1', 'L2'], 'must specify a model level'
         self.inherit_fieldNames.append('modLevel')
         
+
+    def _change_tab(self, tabObjectName): #try to switch the tab on the gui
+        try:
+            tabw = self.tabWidget
+            index = tabw.indexOf(tabw.findChild(QWidget, tabObjectName))
+            assert index > 0, 'failed to find index?'
+            tabw.setCurrentIndex(index)
+        except Exception as e:
+            self.logger.error('failed to change to compile tab w/ \n    %s' % e)
+
     def load_base(self, #load teh base control file
                   ):
         #=======================================================================
@@ -246,13 +256,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         # change to Compile tab
         #=======================================================================
-        try:
-            tabw = self.tabWidget
-            index = tabw.indexOf(tabw.findChild(QWidget, 'tab_compile'))
-            assert index>0, 'failed to find index?'
-            tabw.setCurrentIndex(index)
-        except Exception as e:
-            log.error('failed to change to compile tab w/ \n    %s'%e)
+        self._change_tab('tab_compile')
  
  
         
@@ -380,10 +384,23 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         # construct candidate suite
         #=======================================================================
+        log.debug('on %s'%str(df_raw.shape))
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
         with SensiConstructor(**kwargs) as wrkr:
             wrkr.setup()
-            wrkr.build_candidates(df_raw, copyDataFiles=self.checkBox_P_copyData.isChecked())
+            meta_lib = wrkr.build_candidates(df_raw, copyDataFiles=self.checkBox_P_copyData.isChecked())
+            
+
+        log.info('compiled %i candidate models'%len(meta_lib))
+        
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        
+        #change tab
+        self._change_tab('tab_run')
+        
+        return
         
  
  
