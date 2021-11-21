@@ -1269,6 +1269,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             
         if res_ttl is None: res_ttl = self.data_d['r_ttl']
         if plotTag is None: plotTag=self.tag
+        log.debug('on %s'%res_ttl)
         #=======================================================================
         # prechecks
         #=======================================================================
@@ -1371,8 +1372,16 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         if lineLabel is  None: lineLabel=self.tag
 
         """
+        self.impStyle_d
         plt.show()
         """
+        #check values
+        if hatch_f:
+            d = {**{'h_color':h_color, 'h_alpha':h_alpha}, **impStyle_d}
+        else:
+            d= impStyle_d
+        for attn, att in d.items():
+            assert not att is None, 'got none on %s'%attn
         #======================================================================
         # fill the plot
         #======================================================================

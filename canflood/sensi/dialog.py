@@ -8,7 +8,7 @@ ui class for the sensitivity analysis menu
 #===============================================================================
 # imports------------
 #===============================================================================
-import os,  os.path, time
+import os,  os.path, time, datetime
 
 
 from PyQt5 import uic, QtWidgets
@@ -23,6 +23,7 @@ from hlpr.exceptions import QError as Error
 import hlpr.plug
 
 import numpy as np
+import pandas as pd
 
 
 #===============================================================================
@@ -37,6 +38,7 @@ FORM_CLASS, _ = uic.loadUiType(ui_fp)
 #===============================================================================
 from sensi.coms import SensiShared
 from sensi.sbuild import SensiConstructor
+from sensi.srun import SensiSessRunner
 
 
  
@@ -114,7 +116,8 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         #Working Directory 
         self._connect_wdir(self.pushButton_wd, self.pushButton_wd_open, self.lineEdit_wdir,
-                           default_wdir = os.path.join(os.path.expanduser('~'), 'CanFlood', 'build'))
+                           default_wdir = os.path.join(os.path.expanduser('~'), 
+                                       'CanFlood', 'sensi', datetime.datetime.now().strftime('%m%d')))
         
         
         #=======================================================================
@@ -122,8 +125,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         #bind custom methods to the table widget
         hlpr.plug.bind_TableWidget(self.tableWidget_P, log)
- 
-        
+         
         self.pushButton_P_addCand.clicked.connect(self.add_cand_col)
         
         self.pushButton_P_addColors.clicked.connect(self.add_random_colors)
@@ -131,14 +133,34 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         self.pushButton_P_compile.clicked.connect(self.compile_candidates)
         
         #=======================================================================
+        # run-----
+        #=======================================================================
+        hlpr.plug.bind_TableWidget(self.tableWidget_R, log)
+        
+        self.pushButton_R_run.clicked.connect(self.run_suite)
+        #=======================================================================
+        # Analyze----------
+        #=======================================================================
+        #pickel file
+        self.pushButton_A_browse.clicked.connect(
+                lambda: self.fileSelect_button(self.lineEdit_A_pick_fp, 
+                                          caption='Select suite results .pickle',
+                                          path = self.lineEdit_wdir.text(),
+                                          filters="Pickles (*.pickle)")
+                )
+        
+        self.pushButton_A_load.clicked.connect(self.load_pick)
+        #=======================================================================
         # dev
         #=======================================================================
         if dev:
             self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\tut_builds\8\20211119\CanFlood_tut8.txt')
             self.load_base()
-            for i in range(0,3):
+            for i in range(0,2):
                 self.add_cand_col()
             self.add_random_colors()
+            self.compile_candidates()
+            self.run_suite()
         
         
         
@@ -352,9 +374,13 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #convert to hex
         newColor_d = {i:matplotlib.colors.rgb2hex(tcolor) for i,tcolor in d.items()}
         
+        #replcae hashtag 
+        """parser treats hashtags as comments"""
+        newColor_d = {k:v.replace('#','?') for k,v in newColor_d.items()}
+        
         #reset the base
 
-        newColor_d[0] = oldColorVals_d[0] #dont convert to hex
+        newColor_d[0] = oldColorVals_d['base'] #dont convert to hex
         
         #=======================================================================
         # update the table
@@ -381,6 +407,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         """
         TODO: format those that dont match
         """
+        self.feedback.upd_prog(20)
         #=======================================================================
         # construct candidate suite
         #=======================================================================
@@ -392,15 +419,58 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
             
 
         log.info('compiled %i candidate models'%len(meta_lib))
-        
+        self.feedback.upd_prog(90)
         #=======================================================================
-        # wrap
+        # update run tab
         #=======================================================================
+        #collect control files
+        cf_fp_d = {mtag:d['cf_fp'] for mtag, d in meta_lib.items()}
+        cf_fp_d ={**{'base':self.cf_fp}, **cf_fp_d} #add the base
+        cf_fp_d = {k:{'cf_fp':v} for k,v in cf_fp_d.items()}
         
-        #change tab
         self._change_tab('tab_run')
+        self.tableWidget_R.populate(pd.DataFrame.from_dict(cf_fp_d).T)
+        
+
+        self.feedback.upd_prog(None)
         
         return
+    
+    def run_suite(self):
+        
+        log = self.logger.getChild('compile_cand')
+        tabw = self.tableWidget_R
+        self.set_setup(set_cf_fp=True)
+        
+        
+        #=======================================================================
+        # retrieve control files from table
+        #=======================================================================
+        cf_d=tabw.get_values(0, axis=1)
+        #=======================================================================
+        # execute sutie
+        #=======================================================================
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        with SensiSessRunner(**kwargs) as ses:
+            res_lib, meta_d= ses.run_batch(cf_d, modLevel='L2')
+            
+            res_df = ses.analy_evalTot(res_lib)
+            
+            output = ses.write_pick(res_lib)
+            
+        #=======================================================================
+        # update ui
+        #=======================================================================
+        self.lineEdit_A_pick_fp.setText(output)
+        
+        self.load_pick()
+        
+    def load_pick(self):
+        log = self.logger.getChild('load_pick')
+        self.set_setup(set_cf_fp=False)
+        
+        pick_fp = self.lineEdit_A_pick_fp.text()
+        
         
  
  

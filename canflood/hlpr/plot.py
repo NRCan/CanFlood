@@ -34,7 +34,17 @@ class Plotr(ComWrkr):
     #===========================================================================
     # parameters from control file
     #===========================================================================
-    """see modcom.Model for attributes"""
+    """some parents are not models... so these need to live here
+    also living on Model"""
+    color = 'black'
+    linestyle = 'dashdot'
+    linewidth = 2.0
+    alpha =     0.75        #0=transparent 1=opaque
+    marker =    'o'
+    markersize = 4.0
+    fillstyle = 'none'    #marker fill style
+    impactfmt_str = '.2e'
+        #',.0f' #Thousands separator
         
     impactFmtFunc = None
     
@@ -233,20 +243,28 @@ class Plotr(ComWrkr):
             
         default class values are used, unless matching parameters are passed in teh control file
             there are no checks on these ploting parameters
+            
+        TODO: find a better way to not have to run this so many times
         """
         #assert not self.cfPars_d is None, 'load the control file first!'
-        impStyle_d = dict()
+        d = dict()
         
         
         #loop through the default values
-        
         for k, v in self.impStyle_d.items():
             if hasattr(self, k):
-                impStyle_d[k] = getattr(self, k)
+                d[k] = getattr(self, k)
             else: #just use default
-                impStyle_d[k] = v
+                d[k] = v
                 
-        self.impStyle_d = impStyle_d
+        #re-insert hashtags
+        if 'color' in d:
+            d['color'] = d['color'].replace('?','#') 
+        
+                
+        self.impStyle_d = d
+        
+ 
         
         
 

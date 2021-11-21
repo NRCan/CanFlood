@@ -1163,7 +1163,9 @@ def bind_TableWidget( #add some custom bindings to a TableWidget
         #=======================================================================
         
         if axis == 0:
-            return {i:self.item(index, i).text() for i in range(0, self.columnCount())}
+            return {self.horizontalHeaderItem(i).text():self.item(index, i).text() for i in range(0, self.columnCount())}
+        elif axis ==1:
+            return {self.verticalHeaderItem(i).text():self.item(i, index).text() for i in range(0, self.rowCount())}
         else:
             raise Error('dome')
         
@@ -1219,6 +1221,25 @@ def bind_TableWidget( #add some custom bindings to a TableWidget
             else:
                 self.setItem(j,index,QTableWidgetItem(val))
                 
+    def populate(self, #populate with a dataframe
+                 df):
+        
+        self.clear() #clear everything
+        
+        #setup dimensions
+        self.setColumnCount(len(df.columns))
+        self.setRowCount(len(df.index))
+        
+        #set lables
+        self.setVerticalHeaderLabels(df.index.values.tolist())
+        self.setHorizontalHeaderLabels(df.columns.values.tolist())
+        
+        #set values
+        for j, (colName, col) in enumerate(df.items()):
+            for i, val in enumerate(col):
+                self.setItem(i,j, QTableWidgetItem(val))
+ 
+                
     
     def call_all_items( #call a method on all items
             self,
@@ -1249,7 +1270,8 @@ def bind_TableWidget( #add some custom bindings to a TableWidget
         'get_values':lambda self, indexName, axis=0: get_values(self, indexName, axis=axis),
         'get_df':lambda self:get_df(self),
         'set_values':lambda self, i,d,axis=0:set_values(self,i,d,axis=axis),
-        'call_all_items':lambda self, n, *args, **kwargs: call_all_items(self, n, *args, **kwargs)
+        'call_all_items':lambda self, n, *args, **kwargs: call_all_items(self, n, *args, **kwargs),
+        'populate':lambda self, df:populate(self, df),
         }.items():
         
         setattr(widget, fName, types.MethodType(func, widget))

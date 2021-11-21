@@ -224,8 +224,7 @@ class Model(ComWrkr,
     eventypes=''
     
     #[plotting]
-    """moved back here so we can check all attributes consistently"""
-
+    """these are living in both places now"""
     color = 'black'
     linestyle = 'dashdot'
     linewidth = 2.0
@@ -235,6 +234,7 @@ class Model(ComWrkr,
     fillstyle = 'none'    #marker fill style
     impactfmt_str = '.2e'
         #',.0f' #Thousands separator
+
     
     
     
@@ -332,7 +332,7 @@ class Model(ComWrkr,
         #=======================================================================
         # attribute validty check
         #=======================================================================
-        self._chk_attributes()
+        #self._chk_attributes()
         #=======================================================================
         # wrap
         #=======================================================================

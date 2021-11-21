@@ -37,7 +37,7 @@ import numpy as np
 
 from hlpr.logr import basic_logger
 
-from hlpr.basic import view
+from hlpr.basic import view, Error
 import hlpr.plot
 
 
@@ -63,7 +63,7 @@ class Shared(hlpr.plot.Plotr): #shared methods
     def __init__(self,
                  write=True, #whether to write outputs
                 inher_d = {},
-
+                modLevel='L1',
                  **kwargs):
         
  
@@ -76,10 +76,11 @@ class Shared(hlpr.plot.Plotr): #shared methods
         #=======================================================================
         """this should be the bottom of the cascade dealing w/ inheritance"""
         self.inher_d = {**inher_d, #add all thosefrom parents 
-                        **{'Shared':['init_plt_d','tag', 'absolute_fp', 'overwrite']}
+                        **{'Shared':['init_plt_d','tag', 'absolute_fp', 'overwrite',]}
                         }
         
         self.write=write
+        self.modLevel=modLevel
         #=======================================================================
         # checks
         #=======================================================================
@@ -269,7 +270,10 @@ class CandidateModel(Shared):
             if plot:
                 wrkr.set_ttl(tlRaw_df = res_ttl)
                 fig = wrkr.plot_riskCurve()
-                wrkr.output_fig(fig)
+                try:
+                    wrkr.output_fig(fig)
+                except Exception as e:
+                    raise Error('%s plot fail w/ \n    %s'%(self.name, e))
             
  
  
@@ -317,7 +321,7 @@ class SensiSessRunner(SensiSessionComs): #running a sensitivity session
  
     def run_batch(self, #run a batch of sensitivity 
                cf_d, #{mtag, controlfile}
-               modLevel='L1', #type of model being executed
+               modLevel=None, #type of model being executed
                rkwargs={}, #OPTIONAL model runner kwargs
                out_dir=None,
                baseName=None, #for checks and some reeporting
@@ -334,6 +338,7 @@ class SensiSessRunner(SensiSessionComs): #running a sensitivity session
         #======================================================================
         if out_dir is None: out_dir=self.out_dir
         if baseName is None: baseName=self.baseName
+        if modLevel is None: modLevel=self.modLevel
         log = self.logger.getChild('r')
         log.info('on %i: %s'%(len(cf_d), list(cf_d.keys())))
         start =  datetime.datetime.now()

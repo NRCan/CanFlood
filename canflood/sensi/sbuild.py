@@ -286,9 +286,8 @@ class SensiConstructor(SensiShared):
         #=======================================================================
         # wrap
         #=======================================================================
-        log.info('finished building  %i to \n    %s'%(len(meta_lib), basedir))
         
-        kstr = '\n'
+        kstr = 'finished building  %i to \n    %s'%(len(meta_lib), basedir) + '\n'
         for mtag, d in meta_lib.items():
             kstr = kstr + '    \'%s\':r\'%s\',\n'%(mtag, d['cf_fp'])
         
