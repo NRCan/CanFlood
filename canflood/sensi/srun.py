@@ -215,7 +215,7 @@ class CandidateModel(Shared):
             cf_fp=None,
             logger=None,
               write=None,
-   
+              plot=True,
               rkwarks_d = {'Dmg2':{}, 'Risk2':{}},
               ):
         """combine this w/ risk1?"""
@@ -263,6 +263,11 @@ class CandidateModel(Shared):
                 wrkr.output_etype()
                 if not res_df is None: 
                     wrkr.output_passet()
+                    
+            if plot:
+                wrkr.set_ttl(tlRaw_df = res_ttl)
+                fig = wrkr.plot_riskCurve()
+                wrkr.output_fig(fig)
             
  
  

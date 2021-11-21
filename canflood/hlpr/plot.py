@@ -236,6 +236,9 @@ class Plotr(ComWrkr):
         usually called twice
             1) before loading the control file, to build a default
             2) after, to update values
+            
+        default class values are used, unless matching parameters are passed in teh control file
+            there are no checks on these ploting parameters
         """
         #assert not self.cfPars_d is None, 'load the control file first!'
         impStyle_d = dict()

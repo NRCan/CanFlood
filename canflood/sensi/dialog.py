@@ -210,7 +210,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         # default
         #=======================================================================
-        log = self.logger.getChild('load_base')
+        log = self.logger.getChild('add_cand_col')
         
         self.set_setup(set_cf_fp=False)
         
@@ -218,7 +218,6 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         
         
         #add a column
-        
         i = tbw.columnCount()  #new index (base=0)
         tbw.insertColumn(i)
         mtag = 'cand%02i'%i
@@ -236,9 +235,16 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         
         log.info('added parameter column for \'%s\''%mtag)
         
-
+    def add_random_colors(self, #add a row of random colors
+                          ):
         
+        log = self.logger.getChild('add_random_colors')
+        self.set_setup(set_cf_fp=False)
+        tbw = self.tableWidget_P
         
+        #add a row
+        j = tbw.rowCount()
+        tbw.insertRow(j)
         
             
             

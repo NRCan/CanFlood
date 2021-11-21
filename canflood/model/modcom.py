@@ -507,8 +507,7 @@ class Model(ComWrkr,
         cf_chk_pars() should be run first to make sure parameter membership and type matches expectations
         
         here we just update every parameter value found:
-            on the class
-            in the ControlFile
+            on the class AND in the ControlFile
         """
         
         

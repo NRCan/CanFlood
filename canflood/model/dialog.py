@@ -301,6 +301,7 @@ class ModelDialog(QtWidgets.QDialog, FORM_CLASS,
         #======================================================================
         # plots
         #======================================================================
+        #for each y1lab, run plot_riskCurve
         self._risk_plots(model, res_ttl,
             {'AEP':self.checkBox_r2_aep,'impacts':self.checkBox_r2_ari},
             )
@@ -313,7 +314,7 @@ class ModelDialog(QtWidgets.QDialog, FORM_CLASS,
         model.output_ttl() #risk results
         model.output_etype() #event metadata
         
-        out_fp2=''
+ 
         if not res_df is None:
             out_fp2= model.output_passet()
             

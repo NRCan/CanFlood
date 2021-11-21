@@ -1250,10 +1250,8 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         
         """
         summary risk results plotter
-        
-        This is similar to what's  on modcom.risk_plot()
-        
-        self.impactfmt_str
+            see self._lineToAx() for formatting
+ 
         """
         
         #======================================================================
