@@ -9,7 +9,7 @@ constructing sensitivity analysis model candidates
 #===============================================================================
 # imports----------
 #===============================================================================
-import os, datetime, pickle, copy, shutil, configparser
+import os, datetime, pickle, copy, shutil, configparser, warnings
 import pandas as pd
 import numpy as np
  
@@ -18,12 +18,12 @@ from hlpr.basic import view
 
         
                      
-from sensi.coms import Shared
+from sensi.coms import SensiShared
 
     
     
 
-class CandidateModel(Shared):
+class CandidateModel(SensiShared):
     def __init__(self,
              mtag='candidateTag',
              logger=None,
@@ -119,13 +119,60 @@ class CandidateModel(Shared):
     
 
 
-class SensiConstructor(Shared):
+class SensiConstructor(SensiShared):
     
  
-    
+    def typeset_df(self, #typeset and prepthe prameter frame usig handles
+                   df_raw, #parameters: candidates
+                   logger=None,
+                   ):
+        """
+        we transpose the frame to preserve types on columns
+        """
+        
+        if logger is None: logger=self.logger
+        log=logger.getChild('typeset_df')
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert isinstance(df_raw, pd.DataFrame)
+        assert 'name' in df_raw.index, 'must specify a name row'
+        assert df_raw.loc['name', :].iloc[0] == self.name, 'base name does not match'
+        
+        log.info('on %s'%str(df_raw.shape))
+
+        #=======================================================================
+        # typeset
+        #=======================================================================
+        #loop and collect as typeset series
+        d = dict( )
+        for colName, col in df_raw.T.copy().items():
+            assert hasattr(self, colName), colName
+            
+            #retrieve default from class
+            classVal = getattr(self, colName)
+            
+            #special for booleans
+            if classVal.__class__.__name__=='bool':
+                d[colName] = col.str.lower().replace({'true':True,'false':False}).astype(classVal.__class__)
+            
+            else:            
+                d[colName] = col.astype(classVal.__class__)
+            
+            
+            
+        df = pd.concat(list(d.values()), axis=1, keys=d.keys())
+
+        log.debug('finished w/ %i typeset: \n    %s'%(len(df), df.dtypes.to_dict()))
+        return df #{candidates: paraeters}
+            
+        
+ 
+            
 
     def build_candidates(self, #build all the candidate models
-                         df_raw, #frame with parameters
+                         df_raw, #frame with parameters {par:candidate}
                          base_cf_fp = None, #base control file
                          base_cf_fn = None, #ase control file name
                          logger=None,
@@ -151,36 +198,38 @@ class SensiConstructor(Shared):
         
         
         #=======================================================================
-        # precheck
+        # prep the data
         #=======================================================================
-        assert isinstance(df_raw, pd.DataFrame)
-        assert 'name' in df_raw.index, 'must specify a name row'
-        assert df_raw.loc['name', :].iloc[0] == self.name, 'base name does not match'
         
-
+        df1 = self.typeset_df(df_raw, logger=log)
+        
+        
         #=======================================================================
         # #check base pars
         #=======================================================================
-        pars_d = df_raw.iloc[:,0].to_dict()
+        pars_d = df1.iloc[0,:].to_dict()
         for k,v in pars_d.items():
-            assert hasattr(self, k)
-            if not getattr(self, k) == str(v):
-                """this gets too complicated for parameters w/ variable types"""   
-                log.warning('mismatch \'%s\''%k)
+            assert hasattr(self, k), 'worker missing requested attribute \'%s\''%k
+            classVal = getattr(self, k)
+            assert v == classVal, 'mismatch on \'%s\': %s != %s'%(k, classVal, v)
+
         
-        df = df_raw.iloc[:,1:] #drop the base
+        df = df1.iloc[1:,:] #drop the base
  
         #=======================================================================
         # get sections
         #=======================================================================
-        attn_sect_d = self.get_sections(df.index.tolist(), logger=log)
+        attn_sect_d = self.get_sections(df.columns.tolist(), logger=log)
         #=======================================================================
         # loop and create each candidate
         #=======================================================================
         log.info('creating %i candidate models'%len(df.T))
         meta_lib = dict()
-        for mtag, col in df.items():
+        
+        #loop on rows bur presever types
+        for mtag, pars_d in df.to_dict(orient='index').items():
             log.debug('on %s'%mtag)
+ 
             
             #setup the new directory
             out_dir = os.path.join(basedir, mtag)
@@ -196,17 +245,17 @@ class SensiConstructor(Shared):
             
             #append sections and restructure
             pars_d1 = dict()
-            for section, gdf in col.to_frame().join(pd.Series(attn_sect_d, name='section')
-                                                    ).groupby('section'):
-                att_d = gdf[mtag].to_dict()
-                att_d = {k:str(v) for k,v in att_d.items()} #convert to all strings
-                pars_d1[section] = att_d
- 
-            
+            for attn, attv in pars_d.items():
+                sectName = attn_sect_d[attn]
+                if not sectName in pars_d1:
+                    pars_d1[sectName]=dict()
+                
+                pars_d1[sectName][attn] = attv
+                
             
             #update the control file w/ the new paramters
             with CandidateModel(out_dir=out_dir, cf_fp=cf_fp, logger=log, 
-                                mtag=mtag, name=col['name']) as wrkr:
+                                mtag=mtag, name=pars_d['name']) as wrkr:
                 
                 #load the base control file
                 wrkr.init_model()
@@ -232,7 +281,7 @@ class SensiConstructor(Shared):
             
  
  
-            meta_lib[mtag] = {'cf_fp':cf_fp, 'name':col['name'], 'new_pars':len(col)-1}
+            meta_lib[mtag] = {'cf_fp':cf_fp, 'name':pars_d['name'], 'new_pars':len(pars_d)-1}
             
         #=======================================================================
         # wrap

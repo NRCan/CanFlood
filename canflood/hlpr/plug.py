@@ -15,13 +15,14 @@ helper functions for use in plugins
 #python
 import logging, configparser, datetime, sys, os, types
 import pandas as pd
+import numpy as np
 
 #Qgis imports
 from qgis.core import QgsVectorLayer, Qgis, QgsProject, QgsLogger, QgsMessageLog, QgsMapLayer
 from qgis.gui import QgisInterface
 
 #pyQt
-from PyQt5.QtWidgets import QFileDialog, QGroupBox, QComboBox
+from PyQt5.QtWidgets import QFileDialog, QGroupBox, QComboBox, QTableWidgetItem
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
 from PyQt5.QtCore import Qt, QAbstractTableModel, QObject 
 from PyQt5 import QtCore
@@ -34,7 +35,7 @@ from PyQt5 import QtCore
 from hlpr.exceptions import QError as Error
 from hlpr.Q import MyFeedBackQ, Qcoms
 import hlpr.Q
-from hlpr.basic import force_open_dir
+from hlpr.basic import force_open_dir, view
 from hlpr.plt_qt import PltWindow
 
 #==============================================================================
@@ -88,6 +89,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
         #=======================================================================
         # logger
         #=======================================================================
+        """not sure how this is working"""
         if plogger is None: 
             """this needs iface to be set"""
             plogger = logger(self) 
@@ -819,7 +821,9 @@ class ListModel(QStandardItemModel): #wrapper for list functions with check boxe
 
 
 
-
+#===============================================================================
+# WIDGET CUSTOM BINDINGS------------
+#===============================================================================
 def bind_layersListWidget(widget, #instanced widget
                           log,
                           layerType=None, #optional layertype to enforce
@@ -1107,9 +1111,153 @@ def bind_fieldSelector( #setup a groupbox collection for field selection
     #set the default
     groupBox.set_selection(default_selection)
     
+
+def bind_TableWidget( #add some custom bindings to a TableWidget
+        widget, #instanced widget
+        log,
+ 
+        ):
+    
+    
+    def get_indexer(self, #flexible index retrieval
+                    indexer,
+                    axis=0):
+        
+        if isinstance(indexer, str):
+            #get headers
+            headers_d = self.get_headers(axis=axis)
+            return headers_d[indexer]
+        elif isinstance(indexer, int):
+            return indexer
+        else:
+            raise Error('bad type')
+        
+    
+    def get_headers( #retrieve the header labeels
+                     self,
+            axis=0,
+            ):
+        
+        
+        if axis ==0: #rows
+            return {self.verticalHeaderItem(i).text():i for i in range(0,self.rowCount(),1)}
+        elif axis==1: #columns
+            return {self.horizontalHeaderItem(i).text():i for i in range(0,self.columnCount(),1)}
+        else:
+            raise Error('dome')
+    
+    def get_values( #retrieve values by label or index
+                    self,
+            indexer, #label (str) or index (int)
+            axis=0, #axis to retrieve on
+            ):
+        
+ 
+        #=======================================================================
+        # retrieve indexer
+        #=======================================================================
+        index = self.get_indexer(indexer, axis=axis)
+        
+        #=======================================================================
+        # get rows
+        #=======================================================================
+        
+        if axis == 0:
+            return {i:self.item(index, i).text() for i in range(0, self.columnCount())}
+        else:
+            raise Error('dome')
+        
+    def get_df(#retreive the full table df
+               self,
+               ):
+        
+ 
+        #populate dict
+        d = dict()
+        for j in range(0, self.columnCount()):
+            d[j] = dict()
+            for i in range(0, self.rowCount()):
+                d[j][i] = self.item(i,j).text()
+                
+        #build the dataframe
+        df = pd.DataFrame.from_dict(d)
+        df.columns = self.get_headers(axis=1)
+        df.index = self.get_headers(axis=0)
+        
+        #handle types
+        bx = df==''
+        if bx.any().any():
+            df = df.where(~bx, other=np.nan)
+        
+        """
+        view(df)
+        """
+        
+                
+        return df.infer_objects()
+        
+    
+ 
+        
+    def set_values(#set values from a dict on a single row/column
+            self,
+            indexer,
+            vals_d, #values on indexer to set {indx2:newVal}
+            axis=0
+            ):
+        
+        #get index
+        index = self.get_indexer(indexer, axis=axis)
+        
+        #=======================================================================
+        # set value
+        #=======================================================================
+        for j, val in vals_d.items():
+            assert isinstance(j, int)
+            if axis==0:
+                self.setItem(index, j, QTableWidgetItem(val))
+            else:
+                self.setItem(j,index,QTableWidgetItem(val))
+                
+    
+    def call_all_items( #call a method on all items
+            self,
+            methodName,
+            *args,**kwargs):
+        
+        #loop through each item
+        d = dict()
+        for j in range(0, self.columnCount()):
+            d[j] = dict()
+            for i in range(0, self.rowCount()):
+                
+                f = getattr(self.item(i,j), methodName)
+                d[j][i] = f(*args, **kwargs)
+                
+ 
+        
+         
+            
+                
+    #===========================================================================
+    # #bind
+    #===========================================================================
+    #loop through each new method, and bind as a lambda
+    for fName, func in {
+        'get_indexer':lambda self,i, axis=0: get_indexer(self,i, axis=axis),
+        'get_headers':lambda self, axis=0: get_headers(self, axis=axis),
+        'get_values':lambda self, indexName, axis=0: get_values(self, indexName, axis=axis),
+        'get_df':lambda self:get_df(self),
+        'set_values':lambda self, i,d,axis=0:set_values(self,i,d,axis=axis),
+        'call_all_items':lambda self, n, *args, **kwargs: call_all_items(self, n, *args, **kwargs)
+        }.items():
+        
+        setattr(widget, fName, types.MethodType(func, widget))
+                
+    
  
 #==============================================================================
-# functions-----------
+# HELPER FUNCTIONS-----------
 #==============================================================================
 def get_layerbyName(layName, #flexible search for layers by name
                     qproj = None,

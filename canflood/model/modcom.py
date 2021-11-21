@@ -43,24 +43,8 @@ class Model(ComWrkr,
     Control File Parameters:
     [parameters]
         
-        name -- name of the scenario/model run
-        
-        cid -- index column for the 3 inventoried data sets (finv, expos, gels)
-        
-        prec -- float precision for calculations
-        
-        ground_water -- flag to include negative depths in the analysis
-        
-        felv -- 'datum' or 'ground': whether felv values provided in the
-                     inventory are heights or elevations
 
-        event_probs -- format of event probabilities (in 'evals' data file) 
-                        (default 'ari')
-                        
-            'aep'           event probabilities in aeps file expressed as 
-                            annual exceedance probabilities
-            'ari'           expressed as annual recurrance intervals
-            
+        TODO: migrate these down below
         
         ltail -- zero probability event  handle  (default 'extrapolate')
             'flat'            zero probability event equal to the most 
@@ -130,7 +114,68 @@ class Model(ComWrkr,
         impactfmt_str -- python formatter to use for formatting the impact results values
     
     """
-    
+    master_pars = {
+        'parameters':{
+            'name':str,         #name of the scenario/model run
+            'cid':str,          #index column for the 3 inventoried data sets (finv, expos, gels)
+            'prec':int,         #float precision for calculations
+            'ground_water':bool,#flag to include negative depths in the analysis
+            'felv':str,         #'datum' or 'ground': whether felv values provided in the inventory are heights or elevations
+            'event_probs':str,  #format of event probabilities (in 'evals' data file) . (default 'ari')
+                                    #'aep':event probabilities in aeps file expressed as  annual exceedance probabilities
+                                    #'ari': expressed as annual recurrance intervals
+            'ltail':None,       #zero probability event  handle  (default 'extrapolate')   
+            
+                                    #'flat'            zero probability event equal to the most extreme impacts in the passed series
+                            
+                                    #'extrapolate'    set the zero probability event by extrapolating from  the most extreme impact (interp1d)
+                            
+                                    #'none'           do not extrapolate (not recommended)
+                                    #float            use the passed value as the zero probability impact value        
+            'rtail':None,
+            'drop_tails':bool,
+            'integrate':str,
+            'as_inun':bool,
+            'event_rels':str,
+            'impact_units':str,
+            'apply_miti':bool,
+            'curve_deviation':str,
+            },
+        'dmg_fps':{
+            'curves':str,
+            'finv':str,
+            'expos':str,
+            'gels':str,
+            },
+        'risk_fps':{
+            'dmgs':str,
+            'exlikes':str,
+            'evals':str
+            },
+        'validation':{
+            'risk1':bool,
+            'dmg2':bool,
+            'risk2':bool,
+            'risk3':bool
+            },
+        'results_fps' :{
+            'attrimat02':str,
+            'attrimat03':str,
+            'r_passet':str,
+            'r_ttl':str,
+            'eventypes':str
+            },
+        'plotting':{
+            'color':str,
+            'linestyle':str,
+            'linewidth':float,
+            'alpha':float,
+            'marker':str,
+            'markersize':float,
+            'fillstyle':str,
+            'impactfmt_str':str,
+            }        
+        }
     #==========================================================================
     # parameters from control file
     #==========================================================================
@@ -179,7 +224,18 @@ class Model(ComWrkr,
     eventypes=''
     
     #[plotting]
-    """see Plotr"""
+    """moved back here so we can check all attributes consistently"""
+
+    color = 'black'
+    linestyle = 'dashdot'
+    linewidth = 2.0
+    alpha =     0.75        #0=transparent 1=opaque
+    marker =    'o'
+    markersize = 4.0
+    fillstyle = 'none'    #marker fill style
+    impactfmt_str = '.2e'
+        #',.0f' #Thousands separator
+    
     
     
     #===========================================================================
@@ -272,6 +328,11 @@ class Model(ComWrkr,
         self.extrap_vals_d = {} #extraploation used {aep:val}
         
         self.raw_d = dict() #container for raw data
+        
+        #=======================================================================
+        # attribute validty check
+        #=======================================================================
+        self._chk_attributes()
         #=======================================================================
         # wrap
         #=======================================================================
@@ -410,6 +471,154 @@ class Model(ComWrkr,
         self.logger.debug('finished init_modelon Model')
         
         
+
+        
+    def cf_attach_pars(self, #load parmaeteres from file
+                    cpars,
+                    setAttr=True, #whether to save each attribute 
+                    ):
+        
+        """
+        cf_chk_pars() should be run first to make sure parameter membership and type matches expectations
+        
+        here we just update every parameter value found:
+            on the class AND in the ControlFile
+        """
+        
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        log = self.logger.getChild('cf_attach_pars')
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert isinstance(cpars, configparser.ConfigParser)
+        
+        
+        #=======================================================================
+        # loop and retrieve
+        #=======================================================================
+        cpars_d = dict() #set values
+        no_d = dict() #not set values
+        noCnt = 0
+        for sectName in cpars.sections():
+            cpars_d[sectName], no_d[sectName] = dict(), dict() #add the page
+            log.debug('loading %i parameters from section \'%s\''%(len(cpars[sectName]), sectName))
+            
+            #loop through each variable name/value in this section
+            for varName, valRaw in cpars[sectName].items():
+                
+                #check we care about this
+                if not hasattr(self, varName):
+                    log.debug('passed variable \'%s\' not found on class... skipping'%varName)
+                    no_d[sectName][varName] = valRaw
+                    noCnt+=1
+                    continue
+                
+                
+                #retrieve typset value
+                pval = self._get_from_cpar(cpars, sectName, varName, logger=log) #get the typeset variable
+                
+                #store it
+                cpars_d[sectName][varName] = pval 
+                
+        #======================================================================
+        # attach all the paramers
+        #======================================================================
+        cnt = 0
+        if setAttr:
+            for sectName, spars_d in cpars_d.items():
+                for varnm, val in spars_d.items():
+                    setattr(self, varnm, val)
+                    log.debug('set %s=%s'%(varnm, val))
+                    cnt +=1
+                
+        #check types
+        self._chk_attributes()
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        log.info('attached %i parmaeters to self (skipped %i)'%(cnt, noCnt))
+                
+        
+        
+        return cpars_d
+    
+
+
+
+    
+    def  _cf_relative(self, #convert filepaths from relative to absolute
+                      cpars, #config parser
+                      base_dir=None, #base directory to add
+                      sections=['dmg_fps', 'risk_fps', 'results_fps'], #sections contaiing values to convert
+                      
+                      ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if base_dir is None: base_dir=self.base_dir
+        log = self.logger.getChild('_cf_relative')
+        
+        assert os.path.exists(base_dir)
+
+        #=======================================================================
+        # #loop through parser and retireve then convert
+        #=======================================================================
+        res_d = dict() #container for new values
+        for sectName in sections:
+            assert sectName in cpars
+            res_d[sectName]=dict()
+            #loop through each variable in this section
+            for varName, valRaw in cpars[sectName].items():
+                if valRaw == '': continue #skip blanks
+                
+                if os.path.exists(valRaw):
+                    """switchged to warning... some tools may not use this fp"""
+                    log.warning(('%s.%s passed aboslute_fp=False but fp exists \n    %s'%(
+                        sectName, varName, valRaw)))
+                    continue
+                else:
+                
+                    #get the absolute filepath
+                    fp = os.path.join(base_dir, valRaw)
+                    """dont bother... some models may not use all the fps
+                    better to let the check with handles catch things
+                    assert os.path.exists(fp), '%s.%s not found'%(sectName, varName)"""
+                    if not os.path.exists(fp):
+                        log.warning('%s.%s got bad fp: %s'%(sectName, varName, fp))
+                
+                #set it
+                res_d[sectName][varName]=fp
+                
+        #=======================================================================
+        # set the new values
+        #=======================================================================
+        cnt=0
+        for sectName, sect_d in res_d.items():
+            if len(sect_d)==0: continue #skip blanks
+            
+            for varName, newVal in sect_d.items():
+                cpars.set(sectName, varName, newVal)
+                cnt+=1
+            
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        log.info('converted %i filepaths to absolute'%cnt)
+            
+        """
+        cpars['dmg_fps']['finv']
+        """
+        
+        
+        return cpars
+    
+    #===========================================================================
+    # CHECKS------
+    #===========================================================================
+    
     def cf_chk_pars(self,
                    cpars,
                    chk_d,
@@ -497,149 +706,33 @@ class Model(ComWrkr,
         log.debug('finished checking %i sections w/ %i errors. optional=%s \n'%(len(cpars), len(errors), optional))
         
         return len(errors)==0, errors
+    
+    def _get_cf_miss(self, #collect mismatch between expectations and control file parameter presenece
+                      cpars):
         
-    def cf_attach_pars(self, #load parmaeteres from file
-                    cpars,
-                    setAttr=True, #whether to save each attribute 
-                    ):
-        
-        """
-        cf_chk_pars() should be run first to make sure parameter membership and type matches expectations
-        
-        here we just update every parameter value found:
-            on the class AND in the ControlFile
-        """
-        
-        
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        log = self.logger.getChild('cf_attach_pars')
-        #=======================================================================
-        # precheck
-        #=======================================================================
         assert isinstance(cpars, configparser.ConfigParser)
-        
-        
-        #=======================================================================
-        # loop and retrieve
-        #=======================================================================
-        cpars_d = dict() #set values
-        no_d = dict() #not set values
-        noCnt = 0
-        for sectName in cpars.sections():
-            cpars_d[sectName], no_d[sectName] = dict(), dict() #add the page
-            log.debug('loading %i parameters from section \'%s\''%(len(cpars[sectName]), sectName))
+        errors = []
+
+        for chk_d, opt_f in ((self.exp_pars_md,False), (self.exp_pars_op,True)):
+            _, l = self.cf_chk_pars(cpars, copy.copy(chk_d), optional=opt_f)
+            errors = errors + l
             
-            #loop through each variable name/value in this section
-            for varName, valRaw in cpars[sectName].items():
-                
-                #check we care about this
-                if not hasattr(self, varName):
-                    log.debug('passed variable \'%s\' not found on class... skipping'%varName)
-                    no_d[sectName][varName] = valRaw
-                    noCnt+=1
-                    continue
-                
-                
-                #retrieve typset value
-                pval = self._get_from_cpar(cpars, sectName, varName, logger=log) #get the typeset variable
-                
-                #store it
-                cpars_d[sectName][varName] = pval 
-                
-        #======================================================================
-        # attach all the paramers
-        #======================================================================
-        cnt = 0
-        if setAttr:
-            for sectName, spars_d in cpars_d.items():
-                for varnm, val in spars_d.items():
-                    setattr(self, varnm, val)
-                    log.debug('set %s=%s'%(varnm, val))
-                    cnt +=1
-                
-        #=======================================================================
-        # wrap
-        #=======================================================================
-        log.info('attached %i parmaeters to self (skipped %i)'%(cnt, noCnt))
-                
-        
-        
-        return cpars_d
+        return errors
     
-
-
-
     
-    def  _cf_relative(self, #convert filepaths from relative to absolute
-                      cpars, #config parser
-                      base_dir=None, #base directory to add
-                      sections=['dmg_fps', 'risk_fps', 'results_fps'], #sections contaiing values to convert
-                      
-                      ):
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        if base_dir is None: base_dir=self.base_dir
-        log = self.logger.getChild('_cf_relative')
+    def _chk_attributes(self, #check my attributes against the master
+                       master_pars=None,
+                       ):
+        """running during init, then after loading from control file"""
+        if master_pars is None: master_pars=copy.deepcopy(self.master_pars)
         
-        assert os.path.exists(base_dir)
-
-        #=======================================================================
-        # #loop through parser and retireve then convert
-        #=======================================================================
-        res_d = dict() #container for new values
-        for sectName in sections:
-            assert sectName in cpars
-            res_d[sectName]=dict()
-            #loop through each variable in this section
-            for varName, valRaw in cpars[sectName].items():
-                if valRaw == '': continue #skip blanks
-                
-                if os.path.exists(valRaw):
-                    """switchged to warning... some tools may not use this fp"""
-                    log.warning(('%s.%s passed aboslute_fp=False but fp exists \n    %s'%(
-                        sectName, varName, valRaw)))
-                    continue
-                else:
-                
-                    #get the absolute filepath
-                    fp = os.path.join(base_dir, valRaw)
-                    """dont bother... some models may not use all the fps
-                    better to let the check with handles catch things
-                    assert os.path.exists(fp), '%s.%s not found'%(sectName, varName)"""
-                    if not os.path.exists(fp):
-                        log.warning('%s.%s got bad fp: %s'%(sectName, varName, fp))
-                
-                #set it
-                res_d[sectName][varName]=fp
-                
-        #=======================================================================
-        # set the new values
-        #=======================================================================
-        cnt=0
-        for sectName, sect_d in res_d.items():
-            if len(sect_d)==0: continue #skip blanks
-            
-            for varName, newVal in sect_d.items():
-                cpars.set(sectName, varName, newVal)
-                cnt+=1
-            
-        #=======================================================================
-        # wrap
-        #=======================================================================
-        log.info('converted %i filepaths to absolute'%cnt)
-            
-        """
-        cpars['dmg_fps']['finv']
-        """
-        
-        
-        return cpars
-    
-
-    
+        for sectName, sect_d in master_pars.items():
+            for attn, aType in sect_d.items():
+                assert hasattr(self, attn), attn
+                if not aType is None:
+                    classVal = getattr(self,attn)
+                    assert isinstance(classVal, aType), 'bad type on \'%s\': %s'%(attn, type(classVal))
+                    
     #===========================================================================
     # LOADERS------
     #===========================================================================
@@ -1976,17 +2069,7 @@ class Model(ComWrkr,
         log.debug('    \'%s.%s\' passed %i checks'%(sect, varnm, len(achk_d)))
         return True
     
-    def _get_cf_miss(self, #collect mismatch between expectations and control file parameter presenece
-                      cpars):
-        
-        assert isinstance(cpars, configparser.ConfigParser)
-        errors = []
 
-        for chk_d, opt_f in ((self.exp_pars_md,False), (self.exp_pars_op,True)):
-            _, l = self.cf_chk_pars(cpars, copy.copy(chk_d), optional=opt_f)
-            errors = errors + l
-            
-        return errors
                 
     def validate(self, #validate this model object
                  cpars, #initilzied config parser

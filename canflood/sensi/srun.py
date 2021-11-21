@@ -57,6 +57,8 @@ from results.compare import Cmpr
 class Shared(hlpr.plot.Plotr): #shared methods
     """
     we want both model and session to have some exclusive init/methods AND some shared
+    
+    not using sensi.coms
     """
     def __init__(self,
                  write=True, #whether to write outputs

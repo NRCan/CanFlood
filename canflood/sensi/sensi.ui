@@ -561,9 +561,9 @@ p, li { white-space: pre-wrap; }
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="tab_pars">
+         <widget class="QWidget" name="tab_compile">
           <attribute name="title">
-           <string>Parameters</string>
+           <string>Compile</string>
           </attribute>
           <layout class="QVBoxLayout" name="verticalLayout_5">
            <item>
@@ -604,23 +604,6 @@ p, li { white-space: pre-wrap; }
                </widget>
               </item>
               <item>
-               <widget class="QPushButton" name="pushButton_6">
-                <property name="text">
-                 <string>Add Random Colours</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="checkBox">
-                <property name="text">
-                 <string>Copy all candidate datafiles</string>
-                </property>
-                <property name="checked">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item>
                <spacer name="horizontalSpacer_3">
                 <property name="orientation">
                  <enum>Qt::Horizontal</enum>
@@ -633,14 +616,34 @@ p, li { white-space: pre-wrap; }
                 </property>
                </spacer>
               </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_P_addColors">
+                <property name="text">
+                 <string>Randomize Colors</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="checkBox_P_copyData">
+                <property name="text">
+                 <string>Copy all candidate datafiles</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
              </layout>
             </widget>
            </item>
            <item>
             <widget class="QTableWidget" name="tableWidget_P">
+             <property name="layoutDirection">
+              <enum>Qt::LeftToRight</enum>
+             </property>
              <row>
               <property name="text">
-               <string>Load a control file...</string>
+               <string>Load a control file on the Setup tab....</string>
               </property>
              </row>
             </widget>
@@ -654,14 +657,14 @@ p, li { white-space: pre-wrap; }
               </sizepolicy>
              </property>
              <property name="title">
-              <string>Construct Candidate Model</string>
+              <string>Construct Candidate Model Suite</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_4">
               <item alignment="Qt::AlignHCenter">
-               <widget class="QPushButton" name="pushButton_7">
+               <widget class="QPushButton" name="pushButton_P_compile">
                 <property name="maximumSize">
                  <size>
-                  <width>120</width>
+                  <width>150</width>
                   <height>16777215</height>
                  </size>
                 </property>
@@ -672,7 +675,7 @@ p, li { white-space: pre-wrap; }
                  </font>
                 </property>
                 <property name="text">
-                 <string>Build Candidates</string>
+                 <string>Compile Candidates</string>
                 </property>
                </widget>
               </item>

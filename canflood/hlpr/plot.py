@@ -34,17 +34,7 @@ class Plotr(ComWrkr):
     #===========================================================================
     # parameters from control file
     #===========================================================================
-    #[plotting]
-
-    color = 'black'
-    linestyle = 'dashdot'
-    linewidth = 2.0
-    alpha =     0.75        #0=transparent 1=opaque
-    marker =    'o'
-    markersize = 4.0
-    fillstyle = 'none'    #marker fill style
-    impactfmt_str = '.2e'
-        #',.0f' #Thousands separator
+    """see modcom.Model for attributes"""
         
     impactFmtFunc = None
     
@@ -235,7 +225,11 @@ class Plotr(ComWrkr):
         
         usually called twice
             1) before loading the control file, to build a default
+                Plotr.__init__()
+                
             2) after, to update values
+                Model.init_model()
+            
             
         default class values are used, unless matching parameters are passed in teh control file
             there are no checks on these ploting parameters

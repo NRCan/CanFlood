@@ -11,6 +11,7 @@ common methods for sensitivity analylsis
 import os, datetime, pickle, copy, shutil, configparser
 
 from model.modcom import Model
+from hlpr.plot import Plotr
 
 from model.risk1 import Risk1
 from model.risk2 import Risk2
@@ -20,7 +21,7 @@ from model.dmg2 import Dmg2
 # classes-----
 #===============================================================================
 
-class Shared(Model):
+class SensiShared(Model):
     
     
     #sub model class objects to collect attributes from
@@ -65,7 +66,9 @@ class Shared(Model):
                             Sibling,
                             attn,
                             ):
-        
+        """
+        because we're merging Risk and Impact model classes, need to combine the expectation pars
+        """
         
         #get from the sibling
         sib_att_d = copy.deepcopy(getattr(Sibling, attn))
@@ -93,6 +96,7 @@ class Shared(Model):
         
     def get_sections(self, #retrieving sections for each attn from the check_d's
                      attn_l,
+                     master_pars=None, #{section: {attn:type}}
                      logger=None,
                      ):
         
@@ -101,17 +105,17 @@ class Shared(Model):
         #=======================================================================
         if logger is None: logger=self.logger
         log = logger.getChild('get_sections')
+        if master_pars is None: master_pars=self.master_pars
         
         #=======================================================================
-        # collect from handles
+        # pivot pars
         #=======================================================================
         all_attn_sect_d = dict()
+        for sectName, pars_d in master_pars.items():
+            all_attn_sect_d.update({k:sectName for k in pars_d.keys()})
+            
         
-        #loop through each handle
-        for hndl_attn in self.collect_attns:
-            #loop through each section and update
-            for sectName, vchk_d in getattr(self, hndl_attn).items():
-                all_attn_sect_d.update({k:sectName for k in vchk_d.keys()})
+ 
                 
         log.debug('got %i'%len(all_attn_sect_d))
         

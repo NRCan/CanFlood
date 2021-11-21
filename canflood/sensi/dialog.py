@@ -12,7 +12,7 @@ import os,  os.path, time
 
 
 from PyQt5 import uic, QtWidgets
-from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
+from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem, QWidget
 
 from qgis.core import QgsMapLayerProxyModel, QgsVectorLayer
 
@@ -22,7 +22,8 @@ from hlpr.exceptions import QError as Error
 #===============================================================================
 import hlpr.plug
 
-from sensi.coms import Shared as SensiWorker
+import numpy as np
+
 
 #===============================================================================
 # load qt ui
@@ -34,14 +35,21 @@ FORM_CLASS, _ = uic.loadUiType(ui_fp)
 #===============================================================================
 # Classes ---------
 #===============================================================================
+from sensi.coms import SensiShared
+from sensi.sbuild import SensiConstructor
+
+
+ 
  
 
 class SensiDialog(QtWidgets.QDialog, FORM_CLASS,  
                        hlpr.plug.QprojPlug):
     
+    colorMap = 'hsv' #cyclical
+    
     def __init__(self, iface, parent=None, **kwargs):
         """Constructor."""
-        super(SensiDialog, self).__init__(parent)
+        super(SensiDialog, self).__init__(parent) #init QtWidgets.QDialog
 
         self.setupUi(self)
         
@@ -67,7 +75,10 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         self.show()
         
         
-    def connect_slots(self): #connect ui slots to functions 
+    def connect_slots(self, #connect ui slots to functions 
+                      dev=True,
+                      ): 
+        log = self.logger.getChild('connect_slots')
         #======================================================================
         # general----------------
         #======================================================================
@@ -107,9 +118,27 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         
         
         #=======================================================================
-        # parameters----
+        # compile----
         #=======================================================================
+        #bind custom methods to the table widget
+        hlpr.plug.bind_TableWidget(self.tableWidget_P, log)
+ 
+        
         self.pushButton_P_addCand.clicked.connect(self.add_cand_col)
+        
+        self.pushButton_P_addColors.clicked.connect(self.add_random_colors)
+        
+        self.pushButton_P_compile.clicked.connect(self.compile_candidates)
+        
+        #=======================================================================
+        # dev
+        #=======================================================================
+        if dev:
+            self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\tut_builds\8\20211119\CanFlood_tut8.txt')
+            self.load_base()
+            for i in range(0,3):
+                self.add_cand_col()
+            self.add_random_colors()
         
         
         
@@ -144,7 +173,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         log = self.logger.getChild('load_base')
         
         self.set_setup(set_cf_fp=True)
-        
+        log.info('loading base from %s'%self.cf_fp)
         #=======================================================================
         # prechecks
         #======================================================================= 
@@ -156,16 +185,25 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         # load the base values----
         #=======================================================================
+        """here we are only retrieving the 
+        """
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
-        with SensiWorker(**kwargs) as wrkr:
+        with SensiShared(**kwargs) as wrkr:
             wrkr.setup() #init the model
+            """
+            calls Model.cf_attach_pars()
+            """
             cfPars_d = wrkr.cfPars_d #retrieve the loaded parameters
             
-        #get just the parameters
+        #get just the parameters with values
         pars_d = {k:v  for sect, d in cfPars_d.items() for k,v in d.items() if not v==''}
         
     
-        
+        """
+        for k,v in cfPars_d.items():
+            print('%s    %s'%(k,v))
+        self.modLevel
+        """
         #=======================================================================
         # populate the table
         #=======================================================================
@@ -181,14 +219,18 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         tbw.setVerticalHeaderLabels(list(pars_d.keys()))
         tbw.setHorizontalHeaderLabels(['base'])
         
-        #populate w/ parameter values
+        #populate w/ base parameter values
         self.feedback.upd_prog(50)
         for row, (attn, val_raw) in enumerate(pars_d.items()):
-            #drop to relative filename'
+            
             val = val_raw
-            if isinstance(val_raw, str):
-                if ':' in val_raw:
-                    val = os.path.basename(val_raw)
+            
+            #===================================================================
+            # #drop to relative filename'
+            # if isinstance(val_raw, str):
+            #     if ':' in val_raw:
+            #         val = os.path.basename(val_raw)
+            #===================================================================
  
                 
                 
@@ -198,6 +240,21 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         
         #add the first column
         self.add_cand_col()
+        
+
+        
+        #=======================================================================
+        # change to Compile tab
+        #=======================================================================
+        try:
+            tabw = self.tabWidget
+            index = tabw.indexOf(tabw.findChild(QWidget, 'tab_compile'))
+            assert index>0, 'failed to find index?'
+            tabw.setCurrentIndex(index)
+        except Exception as e:
+            log.error('failed to change to compile tab w/ \n    %s'%e)
+ 
+ 
         
         
         self.feedback.upd_prog(None) #set the progress bar back down to zero
@@ -233,18 +290,106 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #set a new header
         tbw.setHorizontalHeaderItem(i, QTableWidgetItem(mtag))
         
+        #set alignment
+        #tbw.call_all_items('setTextAlignment', 2)
+        
         log.info('added parameter column for \'%s\''%mtag)
         
     def add_random_colors(self, #add a row of random colors
                           ):
         
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        
         log = self.logger.getChild('add_random_colors')
         self.set_setup(set_cf_fp=False)
         tbw = self.tableWidget_P
+        colorMap=self.colorMap
         
-        #add a row
-        j = tbw.rowCount()
-        tbw.insertRow(j)
+        #=======================================================================
+        # get old colors
+        #=======================================================================
+        #identify the row w/ color in it
+        index_d = tbw.get_headers(axis=0)
+        
+        #no color...add your own
+        if not 'color' in index_d:
+            log.info('\'color\' not found... adding row')
+            j = tbw.rowCount()
+            
+            #add the row
+            tbw.insertRow(j)
+            tbw.setVerticalHeaderItem(j, QTableWidgetItem('color'))
+            
+            #set to black
+            tbw.setItem(j,0,QTableWidgetItem('black'))
+            
+        
+        #just retrieve
+        else:
+            j = index_d['color']
+            
+        log.debug('color row=%i'%j)
+        
+        #get these values
+        oldColorVals_d = tbw.get_values(j, axis=0)
+        
+        #=======================================================================
+        # get new colors
+        #=======================================================================
+        import matplotlib.pyplot as plt
+        import matplotlib.colors
+        #retrieve the color map
+        cmap = plt.cm.get_cmap(name=colorMap)
+        #get a dictionary of index:color values           
+        d = {i:cmap(ni) for i, ni in enumerate(np.linspace(0, 1, len(oldColorVals_d)))}
+        
+        #convert to hex
+        newColor_d = {i:matplotlib.colors.rgb2hex(tcolor) for i,tcolor in d.items()}
+        
+        #reset the base
+
+        newColor_d[0] = oldColorVals_d[0] #dont convert to hex
+        
+        #=======================================================================
+        # update the table
+        #=======================================================================
+        tbw.set_values(j, newColor_d, axis=0)
+        
+        log.debug('set %i colors'%len(newColor_d))
+        
+        return
+    
+    
+    def compile_candidates(self,
+                           ):
+        log = self.logger.getChild('compile_cand')
+        tbw = self.tableWidget_P
+        
+        self.set_setup(set_cf_fp=True)
+        #=======================================================================
+        # get data from ui
+        #=======================================================================
+        df_raw = tbw.get_df()
+        log.debug('retrieved %s'%str(df_raw.shape))
+        
+        """
+        TODO: format those that dont match
+        """
+        #=======================================================================
+        # construct candidate suite
+        #=======================================================================
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        with SensiConstructor(**kwargs) as wrkr:
+            wrkr.setup()
+            wrkr.build_candidates(df_raw, copyDataFiles=self.checkBox_P_copyData.isChecked())
+        
+ 
+ 
+            
+            
+        
         
             
             

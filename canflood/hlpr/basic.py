@@ -4,6 +4,8 @@ Created on Feb. 7, 2020
 @author: cefect
 
 helper functions w/o qgis api
+
+
 '''
 
 
@@ -17,7 +19,7 @@ helper functions w/o qgis api
 # imports------------
 #==============================================================================
 #python
-import os, configparser, logging, re, datetime
+import os, configparser, logging, re, datetime, warnings
 import pandas as pd
 pd.set_option('display.max_rows',5)
 import numpy as np
@@ -572,6 +574,7 @@ def linr( #fancy check if left elements are in right elements
     #===========================================================================
     # precheck
     #===========================================================================
+    warnings.warn("replace with set logic", DeprecationWarning)
     if isinstance(ldata_raw, str):
         raise Error('expected array type')
     if isinstance(rdata_raw, str):
