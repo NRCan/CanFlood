@@ -133,23 +133,23 @@ To help rasters conform to these expectations, CanFlood includes a ‘Raster Pre
 
 *Table 5-2: Raster Preparation tools*
 
-+--------------+---------------------+---------------------------------------------------------+-+
-| Tool Name    | Handle              | Description                                             | |
-+==============+=====================+=========================================================+=+
-| Downloader   | Allow dataProvider  | If the layer’s dataProvider is not ‘gdal’               | |
-|              | conversion          | (i.e., web-layers), a local copy of the layer is        | |
-|              |                     | made to the user’s ‘TEMP’ directory.                    | |
-+--------------+---------------------+---------------------------------------------------------+-+
-| Re-projector | Allow re-projection | If the layer’s CRS does not match that of the project,  | |
-|              |                     | the ‘gdalwarp’ utility is used to re-project the layer. | |
-+--------------+---------------------+---------------------------------------------------------+-+
-| AOI clipper  | Clip to AOI         | This uses the ‘gdalwarp’ utility to clip the            | |
-|              |                     | raster by the AOI mask layer.                           | |
-+--------------+---------------------+---------------------------------------------------------+-+
-| Value Scaler | ScaleFactor         | For ScaleFactors not equal to 1.0, this uses the Raster | |
-|              |                     | Calculator to scale the raster values by the passed     | |
-|              |                     | ScaleFactor (useful for simple unit conversions).       | |
-+--------------+---------------------+---------------------------------------------------------+-+
++------------------------+---------------------------+-----------------------+--------------------------------+
+| Tool Name              | Handle                    | Description                                            |
++========================+===========================+=======================+================================+
+| Downloader             | Allow dataProvider        | If the layer’s dataProvider is not ‘gdal’              | 
+|                        | conversion                | (i.e., web-layers), a local copy of the layer is       |
+|                        |                           | made to the user’s ‘TEMP’ directory.                   |
++------------------------+---------------------------+-----------------------+--------------------------------+
+| Re-projector           | Allow re-projection       | If the layer’s CRS does not match that of the project, | 
+|                        |                           | the ‘gdalwarp’ utility is used to re-project the layer.|
++------------------------+---------------------------+-----------------------+--------------------------------+
+| AOI clipper            | Clip to AOI               | This uses the ‘gdalwarp’ utility to clip the           |
+|                        |                           | raster by the AOI mask layer.                          |
++------------------------+---------------------------+-----------------------+--------------------------------+
+| Value Scaler           | ScaleFactor               | For ScaleFactors not equal to 1.0, this uses the Raster|
+|                        |                           | Calculator to scale the raster values by the passed    |
+|                        |                           | ScaleFactor (useful for simple unit conversions).      |
++------------------------+---------------------------+-----------------------+--------------------------------+
 
 After executing these tools, a new set of rasters are loaded to the project.
 
@@ -246,21 +246,21 @@ For complex conditionals, ‘Conditional P’ provides two algorithms to resolve
 
 *Table 5-5: Conditional exposure probability polygon resolution algorithms for complex conditional*
 
-+------------------------------------------------------------------------------+---------------------------------------------+-+
-| Relation                                                                     | Algorithm Summary                           | |
-+==============================================================================+=============================================+=+
-| Mutually Exclusive                                                           | .. image:: /_static/algorithm_summary_1.jpg | |
-|                                                                              |                                             | |
-+------------------------------------------------------------------------------+---------------------------------------------+-+
-| Independent                                                                  | .. image:: /_static/algorithm_summary_2.jpg | |
-| :sup:`1`                                                                     |                                             | |
-+------------------------------------------------------------------------------+---------------------------------------------+-+
-| Where P(X) is the resolved failure probability for a single asset on a given |                                             | |
-| event and P(i) isthe failure probably value sampled from a failure polygons  |                                             | |
-| feature.                                                                     |                                             | |
-|                                                                              |                                             | |
-| 1) Bedford and Cooke (2001)                                                  |                                             | |
-+------------------------------------------------------------------------------+---------------------------------------------+-+
++-------------------+-------------------------------------------------------------+
+| Relation          | Algorithm Summary                                           | 
++===================+=============================================================+
+| Mutually Exclusive| .. image:: /_static/algorithm_summary_1.jpg                 | 
+|                   |                                                             |                     
++-------------------+------------------+------------------------------------------+
+| Independent       | .. image:: /_static/algorithm_summary_2.jpg                 | 
+| :sup:`1`          |                                                             |  
++-------------------+------------------+------------------------------------------+
+| Where P(X) is the resolved failure probability for a single asset on a given    |
+| event and P(i) isthe failure probably value sampled from a failure polygons     |                       
+| feature.                                                                        |  
+|                                                                                 |                     
+| 1) Bedford and Cooke (2001)                                                     |                       
++-------------------+------------------+------------------------------------------+
 
 5.1.6. DTM Sampler
 ==================
@@ -343,17 +343,17 @@ Outputs provided by this tool are summarized in the following table:
 
 *Table 5-7: Risk model output file summary.*
 
-+-------------------+----------+----------------------------------------------------+-+
-| Output Name       | Code     | Description                                        | |
-+===================+==========+====================================================+=+
-| total results     | r_ttl    | table of sum of impacts (for all assets) per event | |
-|                   |          | and expected value of all events (EAD)             | |
-+-------------------+----------+----------------------------------------------------+-+
-| per-asset results | r_passet | table of impacts per asset per event and expected  | |
-|                   |          | value of all events per asset                      | |
-+-------------------+----------+----------------------------------------------------+-+
-| risk curve        |          | risk curve plot of total impacts                   | |
-+-------------------+----------+----------------------------------------------------+-+
++-------------------+-----------+----------------------------------------------------+
+| Output Name       | Code      | Description                                        |
++===================+===========+====================================================+
+| total results     | r_ttl     | table of sum of impacts (for all assets) per event |
+|                   |           | and expected value of all events (EAD)             |                  
++-------------------+-----------+----------------------------------------------------+
+| per-asset results | r_passet  | table of impacts per asset per event and expected  |
+|                   |           | value of all events per asset                      |
++-------------------+-----------+----------------------------------------------------+
+| risk curve        |           | risk curve plot of total impacts                   |
++-------------------+-----------+----------------------------------------------------+
 
 .. _Section5.2.2:
 
@@ -388,24 +388,25 @@ Impacts (L2) outputs are summarized in the following table, where only the ‘dm
 
 *Table 5-9: Impacts (L2) outputs.*
 
-+---------------------+------------+-----------------------------------------------+-+
-| Output Name         | Code       | Description                                   | |
-+=====================+============+===============================================+=+
-| total impacts       | dmgs       | total impacts calculated for each asset       | |
-+---------------------+------------+-----------------------------------------------+-+
-| expanded            | dmgs_expnd | complete impacts calculated on each nested    | |
-| component impacts   |            | function of each asset (see below)            | |
-+---------------------+------------+-----------------------------------------------+-+
-| impacts calculation | bdmg_smry  | workbook summarizing components of the        | |
-| summary             |            | impact calculation (see below)                | |
-+---------------------+------------+-----------------------------------------------+-+
-| depths              | depths_df  | depth values calculated for each asset        | |
-+---------------------+------------+-----------------------------------------------+-+
-| impact histogram    |            | summary plot of total impact values per-asset | |
-| summary             |            |                                               | |
-+---------------------+------------+-----------------------------------------------+-+
-| impact box plot     |            | summary plot of total impact values per-asset | |
-+---------------------+------------+-----------------------------------------------+-+
++---------------------+-----------+----------------------------------------------------+
+| Output Name         | Code      | Description                                        |
++=====================+===========+====================================================+
+| total impacts       | dmgs      | total impacts calculated for each asset            |
++---------------------+-----------+----------------------------------------------------+
+| expanded            | dmgs_expnd| complete impacts calculated on each nested         |
+| component impacts   |           | function of each asset (see below)                 |                  
++---------------------+-----------+----------------------------------------------------+
+| impacts calculation | bdmg_smry | workbook summarizing components of the             |
+| summary             |           | impact calculation (see below)                     |
++---------------------+-----------+----------------------------------------------------+
+| depths              | depths_df | depth values calculated for each asset             |
++---------------------+-----------+----------------------------------------------------+
+| impact histogram    |           | summary plot of total impact values per-asset      |
+| summary             |           |                                                    |
++---------------------+-----------+----------------------------------------------------+
+| impact box plot     |           | summary plot of total impact values per-asset      |
++---------------------+-----------+----------------------------------------------------+
+
 
 **Nested Functions**
 
@@ -565,30 +566,30 @@ Table5-12_ summarize the algorithms implemented in CanFlood to calculate expecte
 
 *Table5-12: Expected value algorithms for failure events.*
 
-+--------------------------+-------+------------------------------------------------------------------+-+
-| name                     | Count | summary                                                          | |
-+==========================+=======+==================================================================+=+
-| Modified Maximum         | max   | .. image:: /_static/toolsets_model_table_5_12_eq_1.jpg           | |
-|                          |       |                                                                  | |
-+--------------------------+-------+------------------------------------------------------------------+-+
-| Mutually Exclusive       | mutEx | .. image:: /_static/toolsets_model_table_5_12_eq_2.jpg           | |
-|                          |       |                                                                  | |
-+--------------------------+-------+------------------------------------------------------------------+-+
-| Independent              | indep | a) Construct a matrix of all possible failure event combinations | |
-|                          |       | (positives=1 and negatives=0)                                    | |
-|                          |       |                                                                  | |
-|                          |       | b) Substitute matrix values with P and (1-P)                     | |
-|                          |       |                                                                  | |
-|                          |       | c) Multiply the set to obtain the probability of the combination | |
-|                          |       | (P :sub:`comb`)                                                  | |
-|                          |       |                                                                  | |
-|                          |       | d) Multiply P :sub:`comb` by the maximum impact of events within | |
-|                          |       | the set to obtain the combination’s impact (C :sub:`comb`)       | |
-|                          |       |                                                                  | |
-|                          |       | e) .. image:: /_static/toolsets_model_table_5_12_eq_3.jpg        | |
-+--------------------------+-------+------------------------------------------------------------------+-+
-| P(o) = 1-sum(C :sub:`i`) |       |                                                                    |
-+--------------------------+-------+------------------------------------------------------------------+-+
++---------------------+----------+--------------------------------------------------------------------+
+| name                | Count    | summary                                                            |
++=====================+==========+====================================================================+
+| Modified Maximum    | max      | .. image:: /_static/toolsets_model_table_5_12_eq_1.jpg             |
+|                     |          |                                                                    |
++---------------------+----------+--------------------------------------------------------------------+
+| Mutually Exclusive  | mutEx    | .. image:: /_static/toolsets_model_table_5_12_eq_2.jpg             |
+|                     |          |                                                                    |
++---------------------+----------+--------------------------------------------------------------------+
+| Independent         | indep    | a) Construct a matrix of all possible failure event combinations   |  
+|                     |          |    (positives=1 and negatives=0)                                   |
+|                     |          |                                                                    |
+|                     |          | b) Substitute matrix values with P and (1-P)                       |
+|                     |          |                                                                    |
+|                     |          | c) Multiply the set to obtain the probability of the combination   |
+|                     |          |    (P :sub:`comb`)                                                 |
+|                     |          |                                                                    | 
+|                     |          | d) Multiply P :sub:`comb` by the maximum impact of events within   |
+|                     |          |    the set to obtain the combination’s impact (C :sub:`comb`)      |
+|                     |          |                                                                    |
+|                     |          | e) .. image:: /_static/toolsets_model_table_5_12_eq_3.jpg          |         
++---------------------+----------+--------------------------------------------------------------------+
+| P(o) = 1-sum(C :sub:`i`)                                                                            |
++-----------------------------------------------------------------------------------------------------+
 
 
 .. _Section5.2.4:
@@ -608,7 +609,7 @@ SOFDA has the following capabilities:
   • Provide some quantification of uncertainty (i.e., stochastic modeling);
   • Provide detailed outputs to facilitate the analysis of underlying mechanisms.
 
-For additional information and guidance, see `Appendix B <appendix_b_>`__.
+For additional information and guidance, see :ref:`Appendix B <appendix_b_>`__.
 
 .. _section5.3:
 
@@ -773,7 +774,7 @@ When applying the Dike Fragility Mapper to your project, the following should be
 5.4.2. Add Connections
 ======================
 
-CanFlood’s ‘Add Connections’ |addConnectionsImage| tool adds a pre-compiled set of web-resources to a user’s QGIS profile for easy access and configuration (i.e., adding credentials). The set of web-resources added by this tool are configured in the ‘canflood\_pars\WebConnections.ini’ file (in the user’s plugin directory). `Appendix A <appendix_a_>`__ summarizes the web-connections added by this tool.
+CanFlood’s ‘Add Connections’ |addConnectionsImage| tool adds a pre-compiled set of web-resources to a user’s QGIS profile for easy access and configuration (i.e., adding credentials). The set of web-resources added by this tool are configured in the ‘canflood\_pars\WebConnections.ini’ file (in the user’s plugin directory). :ref:`Appendix A <appendix_a_>`__ summarizes the web-connections added by this tool.
 
 The `QGIS User Guide <https://docs.qgis.org/3.10/en/docs/user_manual/working_with_ogc/ogc_client_support.html#wms-wmts-client>`__ explains how to manage and access these connections. Once the resources are added to a user’s profile, two basic methods can be used to add the data to the project:
 
