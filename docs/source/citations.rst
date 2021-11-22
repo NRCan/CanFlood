@@ -1,0 +1,80 @@
+=====================
+Citations
+=====================
+
+.. [Ref1] All SOFDA inputs must be built and configured manually.
+
+.. [2] The ‘capped’ values with null and rounding treatment.
+
+.. [3] Can be built from an .xls file by exporting to csv then creating a csv layer in QGIS from the lat/long values.
+
+.. [4] A corresponding simple $/m2 curve is created by the DamageCurves Converter.
+
+.. [5] Depending on your settings, this may have been set automatically when you loaded the datafiles. 
+   All tutorials   use CRS ‘EPSG:3005’ unless stated otherwise. See the following link for an explanation of projections in QGIS.
+
+   https://docs.qgis.org/3.10/en/docs/user_manual/working_with_projections/working_with_projections.html
+
+.. [6] Depending on your QGIS settings, you may be requested to select a transformation if the CRS was not 
+   set correctly beforehand.
+
+.. [7] Any field with unique integer values can be used as the FieldName Index (except built-in feature identifiers).
+
+.. [8] If the hazard layers are not shown in the dialog, hit ‘Refresh’.
+
+.. [9] does not have to match the directory from the previous step.
+
+.. [10] CanFlood will attempt to automatically identify the Inventory Vector Layer; however, this tutorial does 
+   not make use of this layer so the selection here can be ignored.
+
+.. [11] If the filepath fails to populate automatically, try changing re-setting the ‘finv’ and ‘parameter’ 
+   drop-downs. Alternatively, enter the filepath manually.
+
+.. [12] Some ‘Results’ tools work better when the model output data files are in the same file tree as the 
+   Control File.
+
+.. [13] Try running the tool again, but this time selecting ‘Max’. If you look closely at the boxplots, you should 
+   see a slight difference in the resolved probabilities. This suggests this model is not very sensitive to the relational assumption of these overlapping failure polygons.
+
+.. [14] Alternatively, the ‘Compare’ tool can be used to generate a comparison plot between the two tutorials.
+
+.. [15] Advanced users could avoid re-running the ‘Impacts (L2)’ model by manipulating the Control File to point 
+   to the ‘dmgs’ results from the previous run as these will not change between the two formulations.
+
+.. [16] The control file specified on the ‘Setup’ tab will be used for common plot styles (e.g.,
+
+.. [17] The influence of the mitigation functions on the depths are not reflected in this output.
+
+.. [18] Alternatively, the ‘tut2d_noMiti’ from Tutorial 2d can be used.
+
+.. [19] If you get a B/C ratio of 1.19, make sure the $1000 maintenance costs are entered for every year of the 
+   life-cycle.
+
+.. [20] Available in the CanFlood styles package described in Section 5.4.4 (Plugins > CanFlood > Add Styles).
+
+.. [21] Be sure to load the stylized ‘.qlr’ layers in place of the raw layers.
+
+.. [22] This is important for inundation percent analysis which deals with small fractions.
+
+.. [23] Risk (L1) inundation percentage runs can not use asset elevations; therefore, this input variable is 
+   redundant. When as_inun=True CanFlood model routines expect an ‘elv’ column with all zeros.
+
+.. [24] See Rudari and Silvestro (2015) for details on the GAR15 flood hazard model.
+
+.. [25] Depending on your profile settings, the project’s CRS may be automatically set by the first loaded layer.
+
+.. [26] New installations of Qgis should automatically path to the same profile directory (Settings > User Profiles > 
+   Open Active Profile Folder), therefore carrying forward your previous connection info.
+
+.. [27] Ctrl+Shift+F will zoom to the project extents.
+
+.. [28] Depending on your internet connection, this process can be slow. It’s recommended to set ‘Cache’=’Prefer
+   cache’ to limit additional data transfers, and to turn the layers off or disable rendering once loaded into the project.
+
+.. [29] You can safely select any transformation or close the dialog. These transformations are only for display, 
+   we’ll deal with transforming the data onto our CRS below.
+
+.. [30] In some cases, QGIS may fail to recognize the CRS assigned to these new rasters, indicated by a “?” shown to 
+   the right of the layer in the layers panel. In these cases, you will need to define the projection by going to the layer’s ‘Properties’ and under ‘Source’ set the coordinate system to match that of the project (EPSG: 3978).
+
+.. [31] Load these styles onto your profile using the Plugins>CanFlood>Add Styles tool described in Section 5.4.4.
