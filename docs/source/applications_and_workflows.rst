@@ -1,17 +1,17 @@
 .. _applications_and_workflows:
 
-==============================
+=============================
 3. Applications and Workflows
-==============================
+=============================
 
-The CanFlood plugin holds a collection of tools designed to support flood risk modellers with range of common tasks. To accomplish this, CanFlood is flexible: allowing users to link together whichever tools and sequences are needed to complete the task at hand. Performing a flood risk assessment using CanFlood requires expertise in flood risk modelling, some procedures like those referenced in Section1.1.2_ , and generally employs the following steps:
+The CanFlood plugin holds a collection of tools designed to support flood risk modellers with range of common tasks. To accomplish this, CanFlood is flexible: allowing users to link together whichever tools and sequences are needed to complete the task at hand. Performing a flood risk assessment using CanFlood requires expertise in flood risk modelling, some procedures like those referenced in :ref:`Section1.1.2 <Section1.1.2>` , and generally employs the following steps:
 
   1. Identifying the objectives, scope, and purpose of the assessment.
-  2. Selecting the appropriate CanFlood model level (Section1.3_) then identifying the necessary input data.
-  3. Collecting and preparing the necessary input data (Section0_).
+  2. Selecting the appropriate CanFlood model level (:ref:`Section1.3 <Section1.3>`) then identifying the necessary input data.
+  3. Collecting and preparing the necessary input data (:ref:`Section3 <applications_and_workflows>`).
   4. Building the CanFlood model package (see below).
-  5. Running the CanFlood model package using the appropriate model tool (Section5.2_).
-  6. Using CanFlood’s ‘Results’ tools to prepare diagrams and maps (Section5.3_).
+  5. Running the CanFlood model package using the appropriate model tool (:ref:`Section5.2 <Section5.2>`).
+  6. Using CanFlood’s ‘Results’ tools to prepare diagrams and maps (:ref:`Section5.3 <Section5.3>`).
   7. Evaluating, documenting, and communicating the results, context, and uncertainty.
 
 As noted in the section references, many of these steps must be performed outside the CanFlood platform.
@@ -37,9 +37,9 @@ The remainder of this section summarizes some typical analysis types or workflow
 
 .. _Section3.1:
 
-*****************************************
+****************************************
 3.1. Risk (L1) Exposure-Based Assessment
-*****************************************
+****************************************
 
 Exposure-based (L1) assessments quantify the probability of binary exposure of assets to flooding (wet vs. dry). This can be useful for initial assessments, where resources and data are limited, to identify areas for further study. In CanFlood, this is accomplished by collecting data, building a Risk (L1) model, running the model, and evaluating the results. Unlike vulnerability-based assessments (L2, Section3.2_), exposure-based (L1) assessments do not capture the influence of flood depth on risk. In other words, a house with some ponding in the yard would be counted the same as a house fully under-water. However, exposure-based (L1) assessments can be used to estimate additional risk-metrics through application of CanFlood’s scaling parameters (e.g., estimating crop-loss by multiplying the area inundated by some loss/area constant). Exposure-based (L1) assessments can incorporate an assessment of defense failure if exposure probability data is available (Section3.3_). Figure3-1_ and Figure3-2_ summarize a typical Risk (L1) workflow. For more information on the Risk (L1) model, see Section5.2.1_.
 
@@ -51,9 +51,9 @@ Exposure-based (L1) assessments quantify the probability of binary exposure of a
 
 .. _Section3.2:
 
-**********************************************
+*********************************************
 3.2. Risk (L2) Vulnerability-Based Assessment
-**********************************************
+*********************************************
 
 Vulnerability-based (L2) assessments quantify the risk of some flood impacts to assets where the impact can be related to depth. Risk models that consider vulnerability as a function of flood depth are commonly used to evaluate flood risk to buildings, building contents, and infrastructure. In CanFlood, such an assessment is conducted by collecting data, constructing or collecting vulnerability functions, building a Risk (L2) model, running said model, then evaluating the results. Often the most challenging element of this process is the collection or construction of vulnerability functions (Section4.3_) which future versions of CanFlood may provide support for. Vulnerability-based (L2) assessments generally incorporate an assessment of defense failure (Section3.3_). Figure3-1_ and Figure3-3_ summarize a typical Risk (L2) workflow. For more information on the Risk (L2) model, see Section5.2.3_.
 
@@ -65,16 +65,16 @@ Vulnerability-based (L2) assessments quantify the risk of some flood impacts to 
 
 .. _Section3.3:
 
-**********************
+********************
 3.3. Defense Failure
-**********************
+********************
 
 Many developed areas in Canada rely on some form of flood defense infrastructure (e.g., levees or drainage pumps) to reduce the exposure of assets. Any such infrastructure has the potential to fail during a flood event. Ignoring this failure potential (P :sub:`fail` =0) will underestimate the real flood risk in an area (negative model bias). Assuming such infrastructure will always fail (P :sub:`fail` =1) can drastically overestimate flood risk (positive model bias). Either assumption will reduce confidence in the model and the quality of any flood management decisions made from it. In many areas in Canada, flood protection plays such a significant role in exposure mechanics that a binary treatment of failure probability (P :sub:`fail` = 0 or 1) would render the model’s calculated risk metric useless. Recognizing the importance of flood protection infrastructure in Canadian flood risk management, CanFlood Risk (L1) and Risk (L2) workflows facilitate the incorporation of defense failure into risk calculations.
 
 A common application of this capability is the incorporation of levee fragility into a risk model. Often such study areas will have groups of levee-protected assets, where each asset is vulnerable to a breach point anywhere along a levee ring. This situation can be analyzed by discretizing the levee into segments, estimating the influence area of a breach along each segment (for event *j*), estimating the conditional probability of that breach occurring (during event *j*), and developing hazard rasters for the breach conditions. Qualified hydrotechnical and geotechnical professionals should be engaged to perform this analysis and generate the inputs required by CanFlood as summarized in Section4.2_.
 
 3.3.1. Workflow
-================
+===============
 
 Defense failure is incorporated into risk calculations during CanFlood’s Risk (L1) and Risk (L2) workflows with the following general steps:
 
@@ -95,7 +95,7 @@ Figure3-4_ summarizes CanFlood’s full expected value algorithm.
 *Figure 3-4: CanFlood's Risk (L1 and L2) tool expected value (E(X)) calculation algorithm*
 
 3.3.2. Event Relations
-=======================
+======================
 
 To calculate expected values (in more complex models), the application of both the ‘Conditional P’ tool and the risk models requires accounting for the relationship between the events supplied by the user. In other words, when multiple failures are specified, one must specify how those failures should/should-not be combined. Calculating and incorporating failure correlations between elements in a defense system requires a sophisticated and mechanistic understanding of the system that is beyond the scope of CanFlood. As an alternative approximation, CanFlood includes two basic assumptions, summarized in Figure3-5_, for the relationship between failure elements. These alternate assumptions are provided to allow the user to test the sensitivity of the model to failure element correlations; if the model is found to have a high sensitivity to this parameter, more sophisticated defense system analysis should be pursued.
 

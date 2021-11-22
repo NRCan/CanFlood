@@ -1,8 +1,8 @@
 .. _Section0:
 
-============================
+===============
 2. Installation
-============================
+===============
 
 
 All installation instructions can be found on GitHub:
