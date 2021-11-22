@@ -61,21 +61,21 @@ Considering the limitation of existing tools, and the growing need to minimize f
 
 **International Guidelines**
 
-+-------------------------+----------------------------------------------------------------------+-+-+++++
-| Jurisdiction/ Authority | Guideline (Reference)                                                | |     |
-+=========================+======================================================================+=+=+++++
-| United Kingdom          | Flood and coastal erosion risk management – Manual                   | |     |
-|                         | (Penning-Rowsell et al. 2013)                                        | |     |
-+-------------------------+----------------------------------------------------------------------+-+-+++++
-| United States           | Multi-Hazard Loss Estimation Methodology, Flood Model:               | |     |
-|                         |                                                                      | |     |
-|                         | Hazus-MH MR2 Technical Manual (FEMA 2012)                            | |     |
-|                         | Risk-Based Analysis For Flood Damage Reduction Studies (USACE 1996)  | |     |
-|                         |                                                                      | |     |
-|                         | Tying flood insurance to flood risk for low-lying structures in the  | |     |
-|                         | floodplain (National Research Council 2015)                          | |     |
-|                         | Principles of Risk Analysis for Water Resources (IWR and USACE 2017) | |     |
-+-------------------------+----------------------------------------------------------------------+-+-+++++
++------------------------+------------+----------+----------+----------+----------+----------+----------+
+|Jurisdiction/ Authority |     Guideline (Reference)                                                    |          
++========================+============+==========+==========+==========+==========+==========+==========+
+| United Kingdom         | Flood and coastal erosion risk management – Manual                           |
+|                        | (Penning-Rowsell et al. 2013)                                                |
++------------------------+------------+----------+----------+----------+----------+----------+----------+
+| United States          | Multi-Hazard Loss Estimation Methodology, Flood Model:                       |
+|                        |                                                                              |
+|                        | Hazus-MH MR2 Technical Manual (FEMA 2012)                                    |
+|                        | Risk-Based Analysis For Flood Damage Reduction Studies (USACE 1996)          |
+|                        |                                                                              |
+|                        | Tying flood insurance to flood risk for low-lying structures in the          |
+|                        | floodplain (National Research Council 2015)                                  |
+|                        | Principles of Risk Analysis for Water Resources (IWR and USACE 2017)         |
++------------------------+------------+---------------------+----------+----------+----------+----------+
 
 
 1.1.3 Risk- vs. Event-Based Models
