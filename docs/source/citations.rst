@@ -2,8 +2,6 @@
 Citations
 =====================
 
-.. [Ref1] All SOFDA inputs must be built and configured manually.
-
 .. [2] The ‘capped’ values with null and rounding treatment.
 
 .. [3] Can be built from an .xls file by exporting to csv then creating a csv layer in QGIS from the lat/long values.

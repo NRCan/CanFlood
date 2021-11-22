@@ -1,8 +1,8 @@
 .. _glossary:
 
-============================
+========
 Glossary
-============================
+========
 
 Annual Exceedance Probabilities (AEP)
                                      The inverse of ARI.
@@ -25,4 +25,4 @@ Stochastic Object-based Flood damage Dynamic Assessment model framework (SOFDA)
 Water Surface Level (WSL)
                          The height of some water above some datum. Not to be confused with ‘water depth’ which is a water height above ground.
 Web Coverage Service (WCS)
-                          Protocol for spatial data over the internet    
+                          Protocol for spatial data over the internet 

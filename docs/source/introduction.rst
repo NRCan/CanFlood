@@ -1,8 +1,8 @@
 .. _introduction:
 
-============================
+===============
 1. Introduction
-============================
+===============
 
 CanFlood is an object-based, transparent, open-source flood risk calculation toolbox built for Canada. CanFlood facilitates flood risk calculations with three ‘toolsets’:
 
@@ -20,15 +20,16 @@ The CanFlood plugin is NOT a flood risk model, instead it is a modelling platfor
 
 .. _Section1.1:
 
-*******************
+**************
 1.1 Background
-*******************
+**************
 
 The devastation of the 2013 Southern Alberta and Toronto Floods triggered a transition in Canada from the traditional standards-based approach, where flood protection is designed for a single level-of-safety, towards a risk-based approach. This new risk-based approach recognizes that robust planning must consider vulnerability and the full range of floods that may harm a community rather than focus on a single, arbitrary, design event. Further, a risk-based view allows decision makers to quantitatively optimize mitigations for their community, helping jurisdictions with shrinking budgets spread protections further. The foundation of decisions made under a risk-based flood management is a risk assessment, which is:
 
    *A methodology to determine the risk by analyzing potential hazards and evaluating existing conditions of vulnerability that together could potentially harm exposed people, property, services, livelihoods and the environment on which they depend (UNISDR 2009).*
 
 To quantify risk, modern risk assessments integrate data on the natural and built environment with predictive models. Applied in flood risk management, a risk analysis is highly sensitive to the spatial components of risk: vulnerability (what has been built where and how harmful are flood waters?) and hazard (where and how intense can flooding be?). Evaluating these components is typically accomplished with a chain of activities like data collection, processing, modelling, and post-processing to arrive at the desired risk metrics. The core components of a typical flood risk assessment are the hazard assessment to synthesize spatial exposure-likelihood data sets and a damage assessment to estimate damage to assets from the hazard assessment results, followed by the risk quantification that uses event probabilities to estimate average damages.
+
 
 1.1.1 Motivation
 ================
@@ -60,21 +61,21 @@ Considering the limitation of existing tools, and the growing need to minimize f
 
 **International Guidelines**
 
-+------------------------+------------+----------+----------+----------+----------+----------+----------+
-|Jurisdiction/ Authority |     Guideline (Reference)                                                    |          
-+========================+============+==========+==========+==========+==========+==========+==========+
-| United Kingdom         | Flood and coastal erosion risk management – Manual                           |
-|                        | (Penning-Rowsell et al. 2013)                                                |
-+------------------------+------------+----------+----------+----------+----------+----------+----------+
-| United States          | Multi-Hazard Loss Estimation Methodology, Flood Model:                       |
-|                        |                                                                              |
-|                        | Hazus-MH MR2 Technical Manual (FEMA 2012)                                    |
-|                        | Risk-Based Analysis For Flood Damage Reduction Studies (USACE 1996)          |
-|                        |                                                                              |
-|                        | Tying flood insurance to flood risk for low-lying structures in the          |
-|                        | floodplain (National Research Council 2015)                                  |
-|                        | Principles of Risk Analysis for Water Resources (IWR and USACE 2017)         |
-+------------------------+------------+---------------------+----------+----------+----------+----------+
++-------------------------+----------------------------------------------------------------------+-+-+++++
+| Jurisdiction/ Authority | Guideline (Reference)                                                | | |   |
++=========================+======================================================================+=+=+++++
+| United Kingdom          | Flood and coastal erosion risk management – Manual                   | |     |
+|                         | (Penning-Rowsell et al. 2013)                                        | |     |
++-------------------------+----------------------------------------------------------------------+-+-+++++
+| United States           | Multi-Hazard Loss Estimation Methodology, Flood Model:               | |     |
+|                         |                                                                      | |     |
+|                         | Hazus-MH MR2 Technical Manual (FEMA 2012)                            | |     |
+|                         | Risk-Based Analysis For Flood Damage Reduction Studies (USACE 1996)  | |     |
+|                         |                                                                      | |     |
+|                         | Tying flood insurance to flood risk for low-lying structures in the  | |     |
+|                         | floodplain (National Research Council 2015)                          | |     |
+|                         | Principles of Risk Analysis for Water Resources (IWR and USACE 2017) | |     |
++-------------------------+----------------------------------------------------------------------+-+-+++++
 
 
 1.1.3 Risk- vs. Event-Based Models
@@ -82,9 +83,9 @@ Considering the limitation of existing tools, and the growing need to minimize f
 
 Historically, flood management has involved decisions based on a single hypothetical, often arbitrary, ‘design event’ (e.g., 100-year discharge). This approach has left many communities under-defended and likely contributes to the rising flood losses recently seen in Canada (Frechette 2016). In response to this, modern flood management recognizes the necessity of comprehensive risk-based assessments that evaluate a range of events and their probability and consequences in management planning. CanFlood was designed to support modern risk-based management by integrating a range of flood events (e.g., 10-year, 50-year, 100-year, 200-year events) and their probabilities into risk-based models that calculate risk-metrics. However, because CanFlood calculates event-based impacts prior to any risk calculations, users can use CanFlood in event- or impact-based assessments by performing all but the final risk-calculation step.  
 
-*******************
+******************
 1.2 Intended Users
-*******************
+******************
 
 The CanFlood plugin is for users with spatial and vulnerability data desiring to perform an object-based flood risk assessment (FRA) in Canada. CanFlood is meant for flood risk practitioners with the following expertise:
 
@@ -95,9 +96,9 @@ See Section1.1.2_ for a summary of guidelines and procedures related to FRAs in 
 
 .. _Section1.3:
 
-***********************
+*********************
 1.3 Risk Model Levels
-***********************
+*********************
 
 Flood risk analysis objectives and applications are as diverse as the communities they serve. To accommodate this wide range, CanFlood contains three types of risk models with increasing complexity as summarized in Table1-1_ and discussed in Section5.2_. To support the construction and analysis of these risk models, CanFlood also includes the ‘Build’ and ‘Results’ toolsets respectively (Section5.1_ and Section5.3_). Connecting all these together to perform an analysis is discussed in Section4.5_ and similar tutorials are provided in Section6_.
 
@@ -170,20 +171,28 @@ Flood risk analysis objectives and applications are as diverse as the communitie
 
 .. _Section1.4:
 
-*******************
+*****************
 1.4 Control Files
-*******************
+*****************
 
 CanFlood models are designed to write and read from small ‘Control Files’. These make it easy to build and share a specific model or scenario, and to keep a record of how the results set were generated. These also facilitate making a small change to a common input file (e.g., the asset inventory), and having this change replicated across all scenario runs. Control Files don’t contain any (large) data, only parameter values and pointers to the datasets required by a CanFlood model. Diligent and consistent file storage and naming conventions are essential for a pleasant modelling experience. Most Control File parameters and Data Files can be configured in the ‘Build’ toolset; however, some advanced parameters must be configured manually (see Section5.2_ for a full description of the Control File Parameters) (All SOFDA inputs must be built and configured manually) . The collection of model inputs and configured control file is called a ‘model package’ as shown in Figure1-1_ . More information on input files is provided in Section0_ .
 
 .. _Figure1-1:
 
-Figure 1-1. More information on input files is provided in :ref:`Section0` .
+Figure 1-1. More information on input files is provided in Section0_ .
 
 .. image:: /_static/intro_1_4_conrol_files.jpg
 
 *Figure 1-1: CanFlood L2 model package and data-inputs relation diagram.*
 
 .. |buildimage| image:: /_static/build_image.jpg
+   :align: middle
+   :width: 22
+
+.. |runimage| image:: /_static/run_image.jpg
+   :align: middle
+   :width: 22
+
+.. |visualimage| image:: /_static/visual_image.jpg
    :align: middle
    :width: 22
