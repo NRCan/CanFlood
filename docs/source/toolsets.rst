@@ -161,32 +161,32 @@ To support a wide range of vulnerability analysis, the Hazard Sampler tool is ca
 
 *Table 5-3: Hazard Sampler configuration by geometry type and exposure type and [relevant tutorial.*]
 
-+--------------------------------------------------------------------------------------------------------------------+------------------+---------------+-----------------------+--------------+-+
-| Geometry                                                                                                           | WSL              | Inundation    |                       |                |
-| +------------------------+--------------------+------------------------+--------------------+                      |                  |                                                        |
-|                                                                                                                    | Parameters       | Exposure      | Parameters            | Exposure     | |
-+====================================================================================================================+==================+===============+=======================+==============+=+
-| Point                                                                                                              | Default          | WSL           | Default               | WSL :sup:`1` | |
-|                                                                                                                    | [Tutorial 2a]    |               | [Tutorial 1a]         |              | |
-+--------------------------------------------------------------------------------------------------------------------+------------------+---------------+-----------------------+--------------+-+
-| Line4 :sup:`4`                                                                                                     | Sample Statistic | WSL Statistic | % inundation,         | % inundation | |
-|                                                                                                                    | :sup:`3, 5`      |               | Depth Thresh :sup:`2` |              | |
-|                                                                                                                    |                  |               | [Tutorial 4b]         |              | |
-+--------------------------------------------------------------------------------------------------------------------+------------------+---------------+-----------------------+--------------+-+
-| Polygon :sup:`4`                                                                                                   | Sample Statistic | WSL Statistic | % inundation,         | % inundation | |
-|                                                                                                                    | :sup:`3`         |               | Depth Thresh :sup:`2` |              | |
-|                                                                                                                    |                  |               | [Tutorial 4a]         |              | |
-+--------------------------------------------------------------------------------------------------------------------+------------------+---------------+-----------------------+--------------+-+
-| 1. To apply a threshold depth, the f_elv values can be manually manipulated. WSL exposure values are converted to  |                  |                                                        |
-| binary-exposure (i.e., inundated or not inundated) by the Risk (L1) model.                                         |                  |                                                        |
-| 2. Requires a DTM raster be specified on the ‘DTM Sampler’ tab. Model tools expect the asset inventory (‘finv’) to |                  |                                                        |
-| contain a ‘f_elv’ column with all zero values and parameter.felv=’datum’. Respects NULL raster cell values as      |                  |                                                        |
-| not inundated.                                                                                                     |                  |                                                        |
-| 3. Ignores NoData values when calculating statistics.                                                              |                  |                                                        |
-| 4. M and Z values are not supported.                                                                               |                  |                                                        |
-| 5. Throws a ‘feature(s) from input layer could not be matched’ error when null values are encountered. This error  |                  |                                                        |
-| is safe to ignore.                                                                                                 |                  |                                                        |
-+--------------------------------------------------------------------------------------------------------------------+------------------+---------------+-----------------------+--------------+-+
++------------------------+---------------------------------------------+---------------------------------------------+
+| Geometry               |                       WSL                   |                 Inundation                  |
+|                        +------------------------+--------------------+------------------------+--------------------+
+|                        | Parameters             | Exposure           | Parameters             | Exposure           |
++========================+========================+====================+========================+====================+
+| Point                  | Default                | WSL                | Default                | WSL :sup:`1`       |
+|                        | [Tutorial 2a]          |                    | [Tutorial 1a]          |                    |
++------------------------+------------------------+--------------------+------------------------+--------------------+
+| Line4 :sup:`4`         | Sample Statistic       | WSL Statistic      | % inundation,          | % inundation       |  
+|                        | :sup:`3, 5`            |                    | Depth Thresh :sup:`2`  |                    |
+|                        |                        |                    | [Tutorial 4b]          |                    |
++------------------------+------------------------+--------------------+------------------------+--------------------+
+| Polygon :sup:`4`       | Sample Statistic       | WSL Statistic      | % inundation,          | % inundation       |
+|                        | :sup:`3`               |                    | Depth Thresh :sup:`2`  |                    |
+|                        |                        |                    | [Tutorial 4a]          |                    |
++------------------------+------------------------+--------------------+------------------------+--------------------+
+| 1. To apply a threshold depth, the f_elv values can be manually manipulated. WSL exposure values are converted to  |
+|    binary-exposure (i.e., inundated or not inundated) by the Risk (L1) model.                                      |
+| 2. Requires a DTM raster be specified on the ‘DTM Sampler’ tab. Model tools expect the asset inventory (‘finv’) to |
+|    contain a ‘f_elv’ column with all zero values and parameter.felv=’datum’. Respects NULL raster cell values as   |
+|    not inundated.                                                                                                  |
+| 3. Ignores NoData values when calculating statistics.                                                              |
+| 4. M and Z values are not supported.                                                                               |
+| 5. Throws a ‘feature(s) from input layer could not be matched’ error when null values are encountered. This error  |
+|    is safe to ignore.                                                                                              |
++------------------------+-------------------------+--------------------+------------------------+-------------------+
 
 .. _Section5.1.4:
 

@@ -1,8 +1,8 @@
 .. _references:
 
-============================
+==========
 References
-============================
+==========
 
 Bedford, T., and Roger M. Cooke. 2001. Probabilistic Risk Analysis: Foundations and Methods. Cambridge, UK ; New York, NY, USA: Cambridge University Press.
 
