@@ -89,10 +89,11 @@ class QprojPlug(Qcoms): #baseclass for plugins
         #=======================================================================
         # logger
         #=======================================================================
-        """not sure how this is working"""
+        """for debug runs... pass a plugLogger like class
+        see dial_coms"""
         if plogger is None: 
             """this needs iface to be set"""
-            plogger = logger(self) 
+            plogger = plugLogger(self) 
         
         self.logger = plogger
             
@@ -638,7 +639,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
         
         
 
-class logger(object): #workaround for qgis logging pythonic
+class plugLogger(object): #workaround for qgis logging pythonic
     """
     plugin logging
     
@@ -656,6 +657,7 @@ class logger(object): #workaround for qgis logging pythonic
                  statusQlab = None, #Qlabel widget to duplicate push messages
                  log_nm = None,
                  ):
+        """called by session, then again by each getChild"""
         #attach
         self.parent = parent
         
@@ -683,7 +685,7 @@ class logger(object): #workaround for qgis logging pythonic
             log_nm = new_childnm
         
         #build a new logger
-        child_log = logger(self.parent, 
+        child_log = plugLogger(self.parent, 
                            statusQlab=self.statusQlab,
                            log_nm=log_nm)
         

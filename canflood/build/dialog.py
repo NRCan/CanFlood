@@ -129,7 +129,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             but would be a lot of work to move it off the logger
             and not sure what the benefit would be
             
-            see hlpr.plug.logger._loghlp()
+ 
         """
         self.logger.statusQlab=self.progressText #connect to the progress text
         #self.logger.statusQlab.setText('BuildDialog initialized')
