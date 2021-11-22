@@ -1,13 +1,6 @@
 =====================
 Citations
 =====================
-
-.. [2] The ‘capped’ values with null and rounding treatment.
-
-.. [3] Can be built from an .xls file by exporting to csv then creating a csv layer in QGIS from the lat/long values.
-
-.. [4] A corresponding simple $/m2 curve is created by the DamageCurves Converter.
-
 .. [5] Depending on your settings, this may have been set automatically when you loaded the datafiles. 
    All tutorials   use CRS ‘EPSG:3005’ unless stated otherwise. See the following link for an explanation of projections in QGIS.
 
