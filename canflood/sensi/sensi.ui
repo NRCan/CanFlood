@@ -101,7 +101,7 @@
           </size>
          </property>
          <property name="currentIndex">
-          <number>5</number>
+          <number>0</number>
          </property>
          <property name="movable">
           <bool>false</bool>
@@ -1546,6 +1546,12 @@ p, li { white-space: pre-wrap; }
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="font">
+                 <font>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
                 <property name="text">
                  <string>count:</string>
                 </property>
@@ -1561,7 +1567,7 @@ p, li { white-space: pre-wrap; }
                 </property>
                 <property name="minimumSize">
                  <size>
-                  <width>50</width>
+                  <width>30</width>
                   <height>0</height>
                  </size>
                 </property>
@@ -1572,6 +1578,12 @@ p, li { white-space: pre-wrap; }
               </item>
               <item>
                <widget class="QLabel" name="label_9">
+                <property name="font">
+                 <font>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
                 <property name="text">
                  <string>ead_tot (min):</string>
                 </property>
@@ -1579,9 +1591,15 @@ p, li { white-space: pre-wrap; }
               </item>
               <item>
                <widget class="QLabel" name="label_A_S_eMin">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="minimumSize">
                  <size>
-                  <width>50</width>
+                  <width>75</width>
                   <height>0</height>
                  </size>
                 </property>
@@ -1592,6 +1610,12 @@ p, li { white-space: pre-wrap; }
               </item>
               <item>
                <widget class="QLabel" name="label_11">
+                <property name="font">
+                 <font>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
                 <property name="text">
                  <string>ead_tot (max):</string>
                 </property>
@@ -1599,9 +1623,15 @@ p, li { white-space: pre-wrap; }
               </item>
               <item>
                <widget class="QLabel" name="label_A_S_eMax">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="minimumSize">
                  <size>
-                  <width>50</width>
+                  <width>75</width>
                   <height>0</height>
                  </size>
                 </property>
@@ -1625,6 +1655,12 @@ p, li { white-space: pre-wrap; }
               </item>
               <item>
                <widget class="QLabel" name="label_12">
+                <property name="font">
+                 <font>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
                 <property name="text">
                  <string>runTag:</string>
                 </property>
@@ -1644,7 +1680,39 @@ p, li { white-space: pre-wrap; }
                </widget>
               </item>
               <item>
+               <widget class="QLabel" name="label_17">
+                <property name="font">
+                 <font>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>runTime:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_A_S_runTime">
+                <property name="minimumSize">
+                 <size>
+                  <width>50</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>?</string>
+                </property>
+               </widget>
+              </item>
+              <item>
                <widget class="QLabel" name="label_14">
+                <property name="font">
+                 <font>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
                 <property name="text">
                  <string>runDate:</string>
                 </property>
@@ -1658,26 +1726,6 @@ p, li { white-space: pre-wrap; }
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>50</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>?</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_17">
-                <property name="text">
-                 <string>runTime:</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_A_S_runTime">
                 <property name="minimumSize">
                  <size>
                   <width>50</width>
@@ -1720,7 +1768,7 @@ p, li { white-space: pre-wrap; }
               <item>
                <layout class="QHBoxLayout" name="horizontalLayout_11">
                 <item>
-                 <widget class="QCheckBox" name="checkBox_C_ari">
+                 <widget class="QCheckBox" name="checkBox_A_ari">
                   <property name="text">
                    <string>ARI vs. Impacts</string>
                   </property>
@@ -1730,7 +1778,7 @@ p, li { white-space: pre-wrap; }
                  </widget>
                 </item>
                 <item>
-                 <widget class="QCheckBox" name="checkBox_C_aep">
+                 <widget class="QCheckBox" name="checkBox_A_aep">
                   <property name="text">
                    <string>Impacts vs. AEP</string>
                   </property>

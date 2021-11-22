@@ -462,7 +462,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
         with SensiSessRunner(**kwargs) as ses:
-            res_lib, meta_d= ses.run_batch(cf_d, modLevel='L2')
+            res_lib, meta_d= ses.run_batch(cf_d)
             
             output = ses.write_pick()
             
@@ -536,7 +536,13 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
  
         pick_fp = self.lineEdit_A_pick_fp.text()
         
-        
+        #plut controls
+        y1labs = list()
+        for y1lab, checkBox in {
+            'impacts':self.checkBox_A_ari,
+            'AEP':self.checkBox_A_aep,
+            }.items():
+            if checkBox.isChecked():y1labs.append(y1lab)
         #=======================================================================
         # run analysis on complied results
         #=======================================================================
@@ -544,15 +550,38 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         with SensiSessResults(**kwargs) as ses:
             pick_d = ses.load_pick(pick_fp)
             
-            fp_d = ses.plot_riskCurves()
+ 
+            fp_d = ses.plot_riskCurves(y1labs=y1labs)
+            
+        log.push('plotted %i curves'%len(fp_d))
+        
+        return
             
             
     
     def analysis_plotBox(self):
-        pass
+        log = self.logger.getChild('analysis_plotBox')
+        self.set_setup(set_cf_fp=True)
+ 
+        pick_fp = self.lineEdit_A_pick_fp.text()
+        
+ 
+        #=======================================================================
+        # run analysis on complied results
+        #=======================================================================
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        with SensiSessResults(**kwargs) as ses:
+            pick_d = ses.load_pick(pick_fp)
+            
+ 
+            ofp = ses.plot_box()
+            
+        log.push('plotted box')
+        
+        return
     
     def analysis_print(self):
-        pass
+        self.logger.warning('not implemented')
     
     def _pretty_parameters(self, #get just the parameters that are different
                            df_raw=None):

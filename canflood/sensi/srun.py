@@ -527,6 +527,7 @@ class SensiSessResults( #analyzing results of a sensi session
             assert isinstance(d, dict)
             assert len(d)>0
             setattr(self, k, d)
+            log.debug('set \'%s\' as %s'%(k, type(d)))
         
         log.info('loaded w/ %i model candidates'%len(data['res_lib']))
         
@@ -555,10 +556,12 @@ class SensiSessResults( #analyzing results of a sensi session
         #=======================================================================
         if baseName is  None: baseName=self.baseName
         if logger is None: logger=self.logger
-        if mtags_l is None: mtags_l = list(res_lib.keys()) #just take all
+        
         if write is None: write=self.write 
         if base_cfp is None: base_cfp=self.cf_fp
         if res_lib is None: res_lib=self.res_lib
+        
+        if mtags_l is None: mtags_l = list(res_lib.keys()) #just take all
         
         log=logger.getChild('plot_riskCurves')
         log.info('on %i: %s'%(len(mtags_l), mtags_l))
@@ -657,6 +660,7 @@ class SensiSessResults( #analyzing results of a sensi session
         #=======================================================================
         if baseName is  None: baseName=self.baseName
         if logger is None: logger=self.logger
+        if res_lib is None: res_lib=self.res_lib
         if mtags_l is None: mtags_l = list(res_lib.keys()) #just take all
         if write is None: write=self.write 
         if base_cfp is None: base_cfp=self.cf_fp
