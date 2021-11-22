@@ -31,7 +31,11 @@ Download the data layers for Tutorial 1:
 
   • *finv_tut1a.gpkg* : flood asset inventory (’finv’) spatial layer.
 
-Ensure your project’s CRS is set to ‘EPSG:3005’ [5]_ and load the downloaded layers into a new QGIS project [6]_. Your map canvas should look something like this:
+Ensure your project’s CRS is set to ‘EPSG:3005’ (Depending on your settings, this may have been set automatically when you loaded the datafiles. 
+   All tutorials   use CRS ‘EPSG:3005’ unless stated otherwise. See the following link for an explanation of projections in QGIS.
+
+   https://docs.qgis.org/3.10/en/docs/user_manual/working_with_projections/working_with_projections.html) and load the downloaded layers into a new QGIS project (Depending on your QGIS settings, you may be requested to select a transformation if the CRS was not 
+   set correctly beforehand). Your map canvas should look something like this:
 
 .. image:: /_static/tutorials_6_1_1_tiff.jpg
 
@@ -42,7 +46,7 @@ Explore the flood asset inventory (‘finv’) layer’s attributes (F6). You sh
 The 4 fields are:
 
   • *fid*: built-in feature identifier (not used);
-  • *xid*: Index FieldName, unique identifier for the asset [7]_;
+  • *xid*: Index FieldName, unique identifier for the asset (Any field with unique integer values can be used as the FieldName Index (except built-in feature identifiers));
   • *f0_scale*: value to scale the results of the ‘f0’ calculation for this asset;
   • *f0_elv*: height (above the project datum) at which the asset is vulnerable to flooding.
 
@@ -536,7 +540,7 @@ Notice the ‘payback year’ has not changed, but the relative size of the posi
 6.7. Tutorial 3: Risk (L3) SOFDA research model
 ***********************************************
 
-Sample inputs for the SOFDA research model are provided in the tutorials\3\ folder. Refer to `Appendix B <appendix_b_>`__ for more information.
+Sample inputs for the SOFDA research model are provided in the tutorials\3\ folder. Refer to `Appendix B <appendix_b>` for more information.
 
 **************************************************************
 6.8. Tutorial 4a: Risk (L1) with Percent Inundation (Polygons)
@@ -655,7 +659,7 @@ This tutorial demonstrates how to construct a CanFlood ‘Risk (L1)’ model fro
   • The `National Pollutant Release Inventory (NPRI) <https://www.canada.ca/en/services/environment/pollution-waste-management/national-pollutant-release-inventory.html>`__; and
   • `The GAR15 Atlas global flood hazard assessment <https://preview.grid.unep.ch/index.php?preview=home&lang=eng>`__ [24]_
 
-For more information on these data sets, see `Appendix A <appendix_a_>`__.
+For more information on these data sets, see `Appendix A <appendix_a>`.
 
 Because this tutorial deals with data having disparate CRSs, users should be familiar with QGIS’s native handling of project and layer CRS discussed `here <https://docs.qgis.org/3.10/en/docs/user_manual/working_with_projections/working_with_projections.html>`__.
 

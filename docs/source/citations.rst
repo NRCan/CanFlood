@@ -1,16 +1,6 @@
 =====================
 Citations
 =====================
-.. [5] Depending on your settings, this may have been set automatically when you loaded the datafiles. 
-   All tutorials   use CRS ‘EPSG:3005’ unless stated otherwise. See the following link for an explanation of projections in QGIS.
-
-   https://docs.qgis.org/3.10/en/docs/user_manual/working_with_projections/working_with_projections.html
-
-.. [6] Depending on your QGIS settings, you may be requested to select a transformation if the CRS was not 
-   set correctly beforehand.
-
-.. [7] Any field with unique integer values can be used as the FieldName Index (except built-in feature identifiers).
-
 .. [8] If the hazard layers are not shown in the dialog, hit ‘Refresh’.
 
 .. [9] does not have to match the directory from the previous step.
