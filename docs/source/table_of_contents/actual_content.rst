@@ -184,22 +184,6 @@ https://github.com/IBIGroupCanWest/CanFlood/tree/master/manual/sofda/
    :align: middle
    :width: 22
 
-.. |diamondimage| image:: /_static/red_diamond_image.jpg
-   :align: middle
-   :width: 22
 
-.. |lineimage| image:: /_static/horizontal_line_image.jpg
-   :align: middle
-   :width: 22
 
-.. |dotimage| image:: /_static/green_dot_image.jpg
-   :align: middle
-   :width: 22
 
-.. |ss| raw:: html
-
-    <strike>
-
-.. |se| raw:: html
-
-    </strike>

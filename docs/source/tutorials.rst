@@ -918,3 +918,23 @@ To visualize the difference between these two model configurations, open the ‘
 To generate a comparison plot of these two scenarios, navigate to the ‘Compare/Combine’ tab, select the ‘Control File’ for both model configurations (Per-Asset & Global) generated in the previous step, ensure ‘Control Files’ is checked under ‘Comparison Controls’ then **click ‘Compare’**.  Your results should look similar to this:
 
 .. image:: /_static/tutorials_6_12_img_2.JPG
+
+.. |diamondimage| image:: /_static/red_diamond_image.jpg
+   :align: middle
+   :width: 22
+
+.. |lineimage| image:: /_static/horizontal_line_image.jpg
+   :align: middle
+   :width: 22
+
+.. |dotimage| image:: /_static/green_dot_image.jpg
+   :align: middle
+   :width: 22
+
+.. |ss| raw:: html
+
+    <strike>
+
+.. |se| raw:: html
+
+    </strike>
