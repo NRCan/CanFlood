@@ -641,6 +641,18 @@ p, li { white-space: pre-wrap; }
              <property name="layoutDirection">
               <enum>Qt::LeftToRight</enum>
              </property>
+             <attribute name="horizontalHeaderCascadingSectionResizes">
+              <bool>false</bool>
+             </attribute>
+             <attribute name="horizontalHeaderDefaultSectionSize">
+              <number>75</number>
+             </attribute>
+             <attribute name="horizontalHeaderMinimumSectionSize">
+              <number>35</number>
+             </attribute>
+             <attribute name="horizontalHeaderStretchLastSection">
+              <bool>true</bool>
+             </attribute>
              <row>
               <property name="text">
                <string>Load a control file on the Setup tab....</string>
@@ -1435,6 +1447,12 @@ p, li { white-space: pre-wrap; }
                 <property name="sizeAdjustPolicy">
                  <enum>QAbstractScrollArea::AdjustToContents</enum>
                 </property>
+                <attribute name="horizontalHeaderCascadingSectionResizes">
+                 <bool>true</bool>
+                </attribute>
+                <attribute name="horizontalHeaderStretchLastSection">
+                 <bool>true</bool>
+                </attribute>
                 <column>
                  <property name="text">
                   <string>mtag</string>
@@ -1459,7 +1477,7 @@ p, li { white-space: pre-wrap; }
               </sizepolicy>
              </property>
              <property name="title">
-              <string>Execute Model Candidate Suite:.</string>
+              <string>Execute Model Candidate Suite:</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_9">
               <item alignment="Qt::AlignHCenter">
@@ -1745,6 +1763,15 @@ p, li { white-space: pre-wrap; }
              <property name="alternatingRowColors">
               <bool>true</bool>
              </property>
+             <property name="sortingEnabled">
+              <bool>true</bool>
+             </property>
+             <attribute name="horizontalHeaderDefaultSectionSize">
+              <number>75</number>
+             </attribute>
+             <attribute name="horizontalHeaderShowSortIndicator" stdset="0">
+              <bool>true</bool>
+             </attribute>
              <row>
               <property name="text">
                <string>load pickle....</string>

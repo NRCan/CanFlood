@@ -1257,7 +1257,34 @@ def bind_TableWidget( #add some custom bindings to a TableWidget
                 f = getattr(self.item(i,j), methodName)
                 d[j][i] = f(*args, **kwargs)
                 
- 
+        return d
+                
+    def call_all_headers(#call a method on all header items
+                         self,
+                         methodName,
+                         
+                         *args, axis=1, **kwargs):
+        
+        
+        #=======================================================================
+        # retrieve        
+        #=======================================================================
+        if axis ==0: #rows
+            head_d= {self.verticalHeaderItem(i).text():self.verticalHeaderItem(i) for i in range(0,self.rowCount(),1)}
+        elif axis==1: #columns
+            head_d= {self.horizontalHeaderItem(i).text():self.horizontalHeaderItem(i) for i in range(0,self.columnCount(),1)}
+        else:
+            raise Error('dome')
+        
+        #=======================================================================
+        # apply
+        #=======================================================================
+        res_d = dict()
+        for headName, headerObject in head_d.items():
+            f = getattr(headerObject, methodName)
+            res_d[headName] = f(*args, **kwargs)
+            
+        
         
          
             
@@ -1273,7 +1300,9 @@ def bind_TableWidget( #add some custom bindings to a TableWidget
         'get_df':lambda self:get_df(self),
         'set_values':lambda self, i,d,axis=0:set_values(self,i,d,axis=axis),
         'call_all_items':lambda self, n, *args, **kwargs: call_all_items(self, n, *args, **kwargs),
+        'call_all_headers':lambda self, n,  *args, axis=1,**kwargs: call_all_headers(self, n,  *args,axis=axis, **kwargs),
         'populate':lambda self, df:populate(self, df),
+        
         }.items():
         
         setattr(widget, fName, types.MethodType(func, widget))

@@ -12,7 +12,10 @@ import os,  os.path, time, datetime
 
 
 from PyQt5 import uic, QtWidgets
-from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem, QWidget
+from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem, QWidget, QHeaderView
+ 
+from PyQt5.QtCore import Qt
+
 
 from qgis.core import QgsMapLayerProxyModel, QgsVectorLayer
 
@@ -244,46 +247,31 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         tbw.clear() #clear everything
         
         #set dimensions
-        tbw.setColumnCount(1) #always start w/ 1.. then call add column
-        tbw.setRowCount(len(pars_d))
+        tbw.setRowCount(1) #always start w/ 1.. then call add column
+        tbw.setColumnCount(len(pars_d))
         
         #set lables
-        tbw.setVerticalHeaderLabels(list(pars_d.keys()))
-        tbw.setHorizontalHeaderLabels(['base'])
+ 
+        tbw.setHorizontalHeaderLabels(list(pars_d.keys()))
+        tbw.setVerticalHeaderLabels(['base'])
         
         #populate w/ base parameter values
         self.feedback.upd_prog(50)
-        for row, (attn, val_raw) in enumerate(pars_d.items()):
+        for j, (attn, val_raw) in enumerate(pars_d.items()): #loop on columns
+                
+            tbw.setItem(0, j, QTableWidgetItem(str(val_raw)))
             
-            val = val_raw
-            
-            #===================================================================
-            # #drop to relative filename'
-            # if isinstance(val_raw, str):
-            #     if ':' in val_raw:
-            #         val = os.path.basename(val_raw)
-            #===================================================================
  
-                
-                
-            tbw.setItem(row, 0, QTableWidgetItem(str(val)))
-            
+ 
+        tbw.call_all_headers('setTextAlignment',Qt.AlignLeft, axis=1)           
         log.debug('filled table')
         
         #add the first column
+        self._change_tab('tab_compile')
         self.compile_add()
         
-
-        
-        #=======================================================================
-        # change to Compile tab
-        #=======================================================================
-        self._change_tab('tab_compile')
- 
  
         
-        
-        self.feedback.upd_prog(None) #set the progress bar back down to zero
         
         return
         
@@ -298,39 +286,45 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         self.set_setup(set_cf_fp=False)
         
         tbw = self.tableWidget_P
+        self.feedback.upd_prog(10, method='portion')
         
+        #add a row
+        i = tbw.rowCount()  #new index (base=0)
+        tbw.insertRow(i)
         
-        #add a column
-        i = tbw.columnCount()  #new index (base=0)
-        tbw.insertColumn(i)
+        #set a new header
         mtag = 'cand%02i'%i
+        tbw.setVerticalHeaderItem(i, QTableWidgetItem(mtag))
         
         #populate it w/ values from teh base column
-        for j in range(0,tbw.rowCount(),1):
-            tbw.setItem(j, i, QTableWidgetItem(tbw.item(j,0)))
+        for j in range(0,tbw.columnCount(),1):
+            tbw.setItem(i,j, QTableWidgetItem(tbw.item(0,j)))
+            
+        self.feedback.upd_prog(90, method='portion')
         
         #set a new name
         baseName = tbw.item(0,0).text()
-        tbw.setItem(0,i,QTableWidgetItem('%s_%02i'%(baseName, i)))
+        tbw.setItem(i,0,QTableWidgetItem('%s_%02i'%(baseName, i)))
         
-        #set a new header
-        tbw.setHorizontalHeaderItem(i, QTableWidgetItem(mtag))
+
         
         #set alignment
         #tbw.call_all_items('setTextAlignment', 2)
         
-        log.info('added parameter column for \'%s\''%mtag)
+        log.push('added \'%s\''%mtag)
+        
+        self.feedback.upd_prog(None) #set the progress bar back down to zero
         
     def compile_remove(self, #remove a candidate column
                        ):
         
-        
+        self.feedback.upd_prog(5)
         tbw = self.tableWidget_P
-        tbw.removeColumn(tbw.columnCount())
-        
-        self.logger.push('removed column')
-        
-        
+        tbw.removeRow(tbw.rowCount()-1)
+        self.feedback.upd_prog(90)
+        self.logger.push('removed row')
+        self.feedback.upd_prog(None)
+            
     def compile_randomColors(self, #add a row of random colors
                           ):
         
@@ -347,19 +341,22 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         # get old colors
         #=======================================================================
         #identify the row w/ color in it
-        index_d = tbw.get_headers(axis=0)
+        index_d = tbw.get_headers(axis=1)
+        log.info('randominzing color on %i candidates'%len(index_d))
+        self.feedback.upd_prog(10)
         
         #no color...add your own
         if not 'color' in index_d:
+            """would only happen for controFiles w/o color?"""
             log.info('\'color\' not found... adding row')
-            j = tbw.rowCount()
+            j = tbw.columnCount()
             
             #add the row
-            tbw.insertRow(j)
-            tbw.setVerticalHeaderItem(j, QTableWidgetItem('color'))
+            tbw.insertColumn(j)
+            tbw.setHorizontalHeaderItem(j, QTableWidgetItem('color'))
             
             #set to black
-            tbw.setItem(j,0,QTableWidgetItem('black'))
+            tbw.setItem(0,j,QTableWidgetItem('black'))
             
         
         #just retrieve
@@ -369,8 +366,8 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         log.debug('color row=%i'%j)
         
         #get these values
-        oldColorVals_d = tbw.get_values(j, axis=0)
-        
+        oldColorVals_d = tbw.get_values(j, axis=1)
+        self.feedback.upd_prog(50)
         #=======================================================================
         # get new colors
         #=======================================================================
@@ -383,10 +380,11 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         
         #convert to hex
         newColor_d = {i:matplotlib.colors.rgb2hex(tcolor) for i,tcolor in d.items()}
+        self.feedback.upd_prog(75)
         
         #replcae hashtag 
         """parser treats hashtags as comments"""
-        newColor_d = {k:v.replace('#','?') for k,v in newColor_d.items()}
+        #newColor_d = {k:v.replace('#','?') for k,v in newColor_d.items()}
         
         #reset the base
 
@@ -395,12 +393,11 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         # update the table
         #=======================================================================
-        tbw.set_values(j, newColor_d, axis=0)
-        
+        tbw.set_values(j, newColor_d, axis=1)
+        self.feedback.upd_prog(99)
         log.debug('set %i colors'%len(newColor_d))
-        
+        self.feedback.upd_prog(None)
         return
-    
     
     def compile_candidates(self,
                            ):
@@ -427,8 +424,16 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
             wrkr.setup()
             meta_lib = wrkr.build_candidates(df_raw, copyDataFiles=self.checkBox_P_copyData.isChecked())
             
-
+            
         log.info('compiled %i candidate models'%len(meta_lib))
+        self.feedback.upd_prog(50)
+        #=======================================================================
+        # mmake display pretty
+        #=======================================================================
+        pretty_df = self._pretty_parameters()
+        tbw.populate(pretty_df)
+        
+       
         self.feedback.upd_prog(90)
         #=======================================================================
         # update run tab
@@ -443,6 +448,8 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         
 
         self.feedback.upd_prog(None)
+ 
+        
         
         return
     
@@ -452,20 +459,23 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         tabw = self.tableWidget_R
         self.set_setup(set_cf_fp=True)
         
-        
+        self.feedback.upd_prog(5)
         #=======================================================================
         # retrieve control files from table
         #=======================================================================
         cf_d=tabw.get_values(0, axis=1)
+        self.feedback.upd_prog(10)
         #=======================================================================
         # execute sutie
         #=======================================================================
+        
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
         with SensiSessRunner(**kwargs) as ses:
             res_lib, meta_d= ses.run_batch(cf_d)
             
             output = ses.write_pick()
             
+        self.feedback.upd_prog(80)
         #=======================================================================
         # update ui
         #=======================================================================
@@ -475,13 +485,14 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         
         self._change_tab('tab_analysis')
         
+        
     def analysis_loadPick(self): #update the UI with results found in pickle
         log = self.logger.getChild('analysis_loadPick')
         self.set_setup(set_cf_fp=True)
         rcoln = 'ead_tot'
         pick_fp = self.lineEdit_A_pick_fp.text()
         
-        
+        self.feedback.upd_prog(5, method='portion')
         #=======================================================================
         # run analysis on complied results
         #=======================================================================
@@ -494,7 +505,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
             
             impactFmtFunc = ses.impactFmtFunc
  
-            
+        self.feedback.upd_prog(50, method='portion')
         #=======================================================================
         # update the summary labels
         #=======================================================================
@@ -506,34 +517,50 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         self.label_A_S_runDate.setText(str(meta_d['runDate']))
         self.label_A_S_runTime.setText("{:,.2f} sec".format(meta_d['runTime'].total_seconds()))
         #=======================================================================
-        # make the results pretty
+        # add the parameters to the display
         #=======================================================================
-        #retrieve the parameter/copmile df
-        par_df = self._pretty_parameters() 
-        
-        assert np.array_equal(rdf_raw.index, par_df.index)
-        
-        #format results columns
-        rdf1 = rdf_raw.copy()
-        for coln, col in rdf_raw.copy().items():
-            if 'float' in col.dtype.name:
-                rdf1.loc[:, coln] = col.apply(impactFmtFunc)
-        
-        df1 = rdf1.join(par_df)
+        """TODO: load parameters from pickle instead"""
+        try:
+            #retrieve the parameter/copmile df
+            par_df = self._pretty_parameters() 
+            
+            assert np.array_equal(rdf_raw.index, par_df.index), 'mismatch between pickle and parameters'
+            
+            #format results columns
+            rdf1 = rdf_raw.copy()
+            for coln, col in rdf_raw.copy().items():
+                
+                #apply the formatter
+                if coln in [rcoln, 'delta']:
+                    rdf1.loc[:, coln] = col.apply(impactFmtFunc)
+            
+            #join in parameters
+            df1 = rdf1.join(par_df)
+        except Exception as e:
+            log.warning('failed to join parameters w/ \n    %s'%e)
+            df1 = rdf1
+            
+        self.feedback.upd_prog(50, method='portion')
         #=======================================================================
         # update the table
         #=======================================================================
         tbw = self.tableWidget_A
         tbw.populate(df1)
         
+        #make not editable
+        tbw.call_all_items('setFlags',Qt.ItemIsEditable)
+        tbw.call_all_headers('setTextAlignment',Qt.AlignLeft, axis=1)    
+        
+        
         log.push('loaded pickel from %s'%os.path.basename(pick_fp))
+        self.feedback.upd_prog(None)
         
             
             
     def analysis_plotRiskCurves(self):
         log = self.logger.getChild('analysis_loadPick')
         self.set_setup(set_cf_fp=True)
- 
+        self.feedback.upd_prog(5)
         pick_fp = self.lineEdit_A_pick_fp.text()
         
         #plut controls
@@ -543,6 +570,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
             'AEP':self.checkBox_A_aep,
             }.items():
             if checkBox.isChecked():y1labs.append(y1lab)
+        self.feedback.upd_prog(10)
         #=======================================================================
         # run analysis on complied results
         #=======================================================================
@@ -551,9 +579,18 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
             pick_d = ses.load_pick(pick_fp)
             
  
-            fp_d = ses.plot_riskCurves(y1labs=y1labs)
+            fig_d = ses.plot_riskCurves(y1labs=y1labs)
+        self.feedback.upd_prog(80)
+        log.push('built %i curves'%len(fig_d))
+        
+        #output the figures
+        for y1lab, fig in fig_d.items():
+            self.feedback.upd_prog(50, method='portion')
+            self.output_fig(fig)
             
-        log.push('plotted %i curves'%len(fp_d))
+        self.feedback.upd_prog(None)
+            
+        
         
         return
             
@@ -565,7 +602,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
  
         pick_fp = self.lineEdit_A_pick_fp.text()
         
- 
+        self.feedback.upd_prog(10)
         #=======================================================================
         # run analysis on complied results
         #=======================================================================
@@ -574,10 +611,15 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
             pick_d = ses.load_pick(pick_fp)
             
  
-            ofp = ses.plot_box()
+            fig = ses.plot_box()
             
-        log.push('plotted box')
+        log.push('built box plot')
         
+        self.feedback.upd_prog(80)
+        self.output_fig(fig)
+            
+        
+        self.feedback.upd_prog(None)
         return
     
     def analysis_print(self):
@@ -590,7 +632,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
  
         if df_raw is None:
             """transposing for type preservation"""
-            df_raw = self.tableWidget_P.get_df().T
+            df_raw = self.tableWidget_P.get_df()
             
             
         assert 'name' in df_raw.columns
@@ -602,8 +644,10 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         df1 = df_raw.loc[:, boolcol].copy()
         
         #fix color values
-        if 'color' in df1.columns:
-            df1.loc[:, 'color'] = df1['color'].str.replace('?','#')
+        #=======================================================================
+        # if 'color' in df1.columns:
+        #     df1.loc[:, 'color'] = df1['color'].str.replace('?','#')
+        #=======================================================================
         
         return df1 
         

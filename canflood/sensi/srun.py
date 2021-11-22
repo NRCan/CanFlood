@@ -589,10 +589,12 @@ class SensiSessResults( #analyzing results of a sensi session
             wrkr.setup() #loads a scenario from each control file
             
             for y1lab in y1labs:
-                fig = wrkr.riskCurves(y1lab=y1lab)
+                res_d[y1lab] = wrkr.riskCurves(y1lab=y1lab)
                 
-                if write:
-                    res_d[y1lab] = self.output_fig(fig)
+                #===============================================================
+                # if write:
+                #     res_d[y1lab] = self.output_fig(fig)
+                #===============================================================
                     
         #=======================================================================
         # wrap
@@ -629,7 +631,7 @@ class SensiSessResults( #analyzing results of a sensi session
         # get comparisoni stats
         #=======================================================================
         res_df['delta'] = res_df[dname] - bval
-        res_df['delta_rel'] = res_df['delta']/bval
+        res_df['delta_rel'] = (res_df['delta']/bval).round(3)
         
         res_df['rank'] = res_df['delta_rel'].abs().rank(
             ascending=False, #want the largest variance to have the highest rank
@@ -654,6 +656,10 @@ class SensiSessResults( #analyzing results of a sensi session
                       baseName=None,
                       logger=None,
                       ):
+        
+        """
+        TODO: add some special mark for the base
+        """
                  
         #=======================================================================
         # defaults
@@ -691,14 +697,10 @@ class SensiSessResults( #analyzing results of a sensi session
         fig = self.plot_impact_boxes(rser.to_frame(), logger=log, ylab=ylab,
                                      title='%s \'%s\' boxplot for %i candidates'%(self.tag,  dname, len(rser)))
         
-        #=======================================================================
-        # output
-        #=======================================================================
-        if write:
-            ofp = self.output_fig(fig)
+ 
             
             
             
-        return ofp
+        return fig
         
             

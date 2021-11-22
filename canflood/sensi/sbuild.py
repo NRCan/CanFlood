@@ -137,8 +137,8 @@ class SensiConstructor(SensiShared):
         # precheck
         #=======================================================================
         assert isinstance(df_raw, pd.DataFrame)
-        assert 'name' in df_raw.index, 'must specify a name row'
-        assert df_raw.loc['name', :].iloc[0] == self.name, 'base name does not match'
+        assert 'name' in df_raw.columns, 'must specify a name row'
+        assert df_raw['name'].iloc[0] == self.name, 'base name does not match'
         
         log.info('on %s'%str(df_raw.shape))
 
@@ -147,7 +147,7 @@ class SensiConstructor(SensiShared):
         #=======================================================================
         #loop and collect as typeset series
         d = dict( )
-        for colName, col in df_raw.T.copy().items():
+        for colName, col in df_raw.copy().items():
             assert hasattr(self, colName), colName
             
             #retrieve default from class
@@ -269,7 +269,11 @@ class SensiConstructor(SensiShared):
                 else:
                     pars_d3 = pars_d2
                 
-
+                #special fix for colors
+                if 'color' in pars_d3['plotting']:
+                    pars_d3['plotting']['color'] = pars_d3['plotting']['color'].replace('#','?')
+                    
+                
                 #convert to strings again
                 pars_d3 = {sect:{k:str(v) for k,v in att_d.items()} for sect, att_d in pars_d3.items()}
                 
