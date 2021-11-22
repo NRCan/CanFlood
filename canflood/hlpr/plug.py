@@ -1237,7 +1237,7 @@ def bind_TableWidget( #add some custom bindings to a TableWidget
         #set values
         for j, (colName, col) in enumerate(df.items()):
             for i, val in enumerate(col):
-                self.setItem(i,j, QTableWidgetItem(val))
+                self.setItem(i,j, QTableWidgetItem(str(val)))
  
                 
     

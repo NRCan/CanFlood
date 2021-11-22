@@ -293,7 +293,8 @@ class SensiSessionComs(Shared):
     
         but opted not to share anything as that scrip tis way more complex"""
         
-        
+    res_keys = ['meta_d', 'res_lib']
+    
     def __init__(self,
                  logger=None,
                  baseName='base',
@@ -373,12 +374,17 @@ class SensiSessRunner(SensiSessionComs): #running a sensitivity session
         #=======================================================================
         d = {mtag:d['ead_tot'] for mtag, d in res_lib.items()}
         rser = pd.Series(d, name='ead_tot', dtype=np.float32)
+ 
         
-        meta_d = {'len':len(rser), 
+        meta_d = {      'len':len(rser), 
                          'max':round(rser.max(),2), 
                          'min':round(rser.min(), 2),
                          'mean':round(rser.mean(),2),
-                         'base':round(rser[baseName],2)}
+                         'base':round(rser[baseName],2),
+                         'runTag':self.tag,
+                         'runDate':self.today_str,
+                         'runTime':datetime.datetime.now() - start,
+                         }
         
         #=======================================================================
         # wrap
@@ -386,10 +392,13 @@ class SensiSessRunner(SensiSessionComs): #running a sensitivity session
         log.info("finished on %i in %s output to  %s \n    %s"%(
             len(res_lib), datetime.datetime.now() - start, out_dir, meta_d))
         
+        self.res_lib, self.meta_d = res_lib.copy(), meta_d.copy()
+        
         return res_lib, meta_d
     
     def write_pick(self, #write the results to a pickel for later
-                   res_lib,
+                   res_lib=None,
+                   meta_d=None,
                    out_fp=None,
                    logger=None,
                    ):
@@ -399,54 +408,31 @@ class SensiSessRunner(SensiSessionComs): #running a sensitivity session
         #======================================================================
         if out_fp is None: out_fp=os.path.join(self.out_dir, self.resname + '.pickle')
         if logger is None: logger=self.logger
+        if res_lib is None: res_lib=self.res_lib
+        if meta_d is None: meta_d = self.meta_d
         log = logger.getChild('write_pick')
         
+        #=======================================================================
+        # prep
+        #=======================================================================
+        out_d = {'res_lib':res_lib,'meta_d':meta_d}
         
+        #check
+        for k, sub_d in out_d.items():
+            assert isinstance(sub_d, dict), k
+            assert len(sub_d)>0, k
+        
+        #=======================================================================
+        # write
+        #=======================================================================
         with open(out_fp, 'wb') as f:
             # Pickle the 'data' dictionary using the highest protocol available.
-            pickle.dump(res_lib, f, pickle.HIGHEST_PROTOCOL)
+            pickle.dump(out_d, f, pickle.HIGHEST_PROTOCOL)
             
         log.info('wrote %i to %s'%(len(res_lib), out_fp))
         return out_fp
     
-    def analy_evalTot(self, #get analysis values for ead_tot on all the candidates
-                      res_lib,
-                      dname='ead_tot',
-                      baseName=None,
-                      logger=None,
-                      ):
-        
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        if baseName is  None: baseName=self.baseName
-        if logger is None: logger=self.logger
-        log=logger.getChild('analy_evalTot')
-        log.info('on %i: %s'%(len(res_lib), list(res_lib.keys())))
-        
-        assert baseName in res_lib
-        #=======================================================================
-        # extract the total data
-        #=======================================================================
-        d = {mtag:d[dname] for mtag, d in res_lib.items()}
-        res_df = pd.Series(d, name=dname, dtype=np.float32).to_frame()
-        
-        bval = d[baseName] #base value for comparison
-        
-        #=======================================================================
-        # get comparisoni stats
-        #=======================================================================
-        res_df['delta'] = res_df[dname] - bval
-        res_df['delta_rel'] = res_df['delta']/bval
-        
-        res_df['rank'] = res_df['delta_rel'].abs().rank(
-            ascending=False, #want the largest variance to have the highest rank
-            method='dense', # rank always increases by 1 between groups.
-            ).astype(np.int)
-            
-        log.info('finished w/ %s'%str(res_df.shape))
-        
-        return res_df
+
     
 
 
@@ -492,12 +478,16 @@ class SensiSessResults( #analyzing results of a sensi session
                          **kwargs) #Qcoms -> ComWrkr
         
         self.setup()
+        
+    def setup(self):
+        self.init_model() #attach control file
 
         
     def load_pick(self,
                   fp = '', #filepath to a pickle with res_lib from SensiSessRunner
                   logger=None,
                   baseName=None,
+                  res_keys = None,
                   ):
                   
         #=======================================================================
@@ -505,6 +495,7 @@ class SensiSessResults( #analyzing results of a sensi session
         #=======================================================================
         if baseName is None: baseName=self.baseName
         if logger is None: logger=self.logger
+        if res_keys is None: res_keys = self.res_keys
         log = logger.getChild('load_pick')
         
         
@@ -525,9 +516,19 @@ class SensiSessResults( #analyzing results of a sensi session
         #=======================================================================
         assert isinstance(data, dict)
         assert len(data)>0
-        assert baseName in data
         
-        log.info('loaded w/ %i model candidates'%len(data))
+        miss_l = set(res_keys).symmetric_difference(data.keys())
+        assert len(miss_l)==0, miss_l
+        
+        assert baseName in data['res_lib']
+        
+        for k in res_keys:
+            d = data[k]
+            assert isinstance(d, dict)
+            assert len(d)>0
+            setattr(self, k, d)
+        
+        log.info('loaded w/ %i model candidates'%len(data['res_lib']))
         
         return data
                   
@@ -557,6 +558,7 @@ class SensiSessResults( #analyzing results of a sensi session
         if mtags_l is None: mtags_l = list(res_lib.keys()) #just take all
         if write is None: write=self.write 
         if base_cfp is None: base_cfp=self.cf_fp
+        if res_lib is None: res_lib=self.res_lib
         
         log=logger.getChild('plot_riskCurves')
         log.info('on %i: %s'%(len(mtags_l), mtags_l))
@@ -595,6 +597,46 @@ class SensiSessResults( #analyzing results of a sensi session
         log.info('finished on %i'%len(res_d))
         return res_d
     
+    def analy_evalTot(self, #get analysis values for ead_tot on all the candidates
+                      res_lib=None,
+                      dname='ead_tot',
+                      baseName=None,
+                      logger=None,
+                      ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if baseName is  None: baseName=self.baseName
+        if logger is None: logger=self.logger
+        if res_lib is None: res_lib=self.res_lib.copy()
+        log=logger.getChild('analy_evalTot')
+        log.info('on %i: %s'%(len(res_lib), list(res_lib.keys())))
+        
+        assert baseName in res_lib
+        #=======================================================================
+        # extract the total data
+        #=======================================================================
+        d = {mtag:d[dname] for mtag, d in res_lib.items()}
+        res_df = pd.Series(d, name=dname, dtype=np.float32).to_frame()
+        
+        bval = d[baseName] #base value for comparison
+        
+        #=======================================================================
+        # get comparisoni stats
+        #=======================================================================
+        res_df['delta'] = res_df[dname] - bval
+        res_df['delta_rel'] = res_df['delta']/bval
+        
+        res_df['rank'] = res_df['delta_rel'].abs().rank(
+            ascending=False, #want the largest variance to have the highest rank
+            method='dense', # rank always increases by 1 between groups.
+            ).astype(np.int)
+            
+        log.info('finished w/ %s'%str(res_df.shape))
+        
+        return res_df
+    
     def plot_box(self,
                  #data and controls
                  mtags_l = None, #list of candidates to include in the plot
@@ -618,7 +660,7 @@ class SensiSessResults( #analyzing results of a sensi session
         if mtags_l is None: mtags_l = list(res_lib.keys()) #just take all
         if write is None: write=self.write 
         if base_cfp is None: base_cfp=self.cf_fp
-        if ylab is None: ylab=self.impact_name
+        if ylab is None: ylab=self.impact_units 
         
         log=logger.getChild('plot_box')
         log.info('on %i: %s'%(len(mtags_l), mtags_l))
@@ -643,7 +685,7 @@ class SensiSessResults( #analyzing results of a sensi session
         # get plot
         #=======================================================================
         fig = self.plot_impact_boxes(rser.to_frame(), logger=log, ylab=ylab,
-                                     title='%s %i candidate \'%s\' boxplot'%(self.tag, len(rser), dname))
+                                     title='%s \'%s\' boxplot for %i candidates'%(self.tag,  dname, len(rser)))
         
         #=======================================================================
         # output

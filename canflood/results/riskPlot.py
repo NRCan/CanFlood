@@ -85,6 +85,10 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
         
         self.logger.debug('%s.__init__ w/ feedback \'%s\''%(
             self.__class__.__name__, type(self.feedback).__name__))
+        
+        """this really needs to be cleaned up"""
+        if not hasattr(self, 'impact_name'):
+            self.impact_name = self.impact_units
 
         
     def prep_model(self):
@@ -92,7 +96,7 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
         called by Model.setup()
         
         """
-        self.set_ttl() #load and prep the total results
+        self.set_ttl() #load and prep the total results. riskcom.RiskModel. sets impact_name
         
         
         self._set_valstr() #set default plot text

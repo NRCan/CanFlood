@@ -2,9 +2,11 @@
 Created on Feb. 25, 2020
 
 @author: cefect
+
+see also hlpr.plug.logger
 '''
 
-import os, logging.config, logging
+import os, logging.config, logging, types
 
 
 class Error(Exception):
@@ -14,6 +16,28 @@ class Error(Exception):
         mod_logger = logging.getLogger('exceptions') #creates a child logger of the root
 
         mod_logger.error(msg)
+        
+#===============================================================================
+# def bind_logger_meths( #bind custom functions to loggers to make more Qlike
+#         logger):
+#     
+#     #===========================================================================
+#     # add push
+#     #===========================================================================
+#     def push(self,msg):
+#         self.info(msg)
+#     def getChild(self,name):
+#         
+#         
+#     for fname, func in {
+#         'push':lambda self, msg:push(self,msg),
+#         'getChild':lambda self, name
+#         }.items():
+#         
+#  
+#         setattr(logger, fname, types.MethodType(func, logger))
+#===============================================================================
+        
 
 def basic_logger(root_lvl = logging.DEBUG,
                  new_wdir = None,
@@ -34,7 +58,8 @@ def basic_logger(root_lvl = logging.DEBUG,
     #===========================================================================
     # #change path to users directory
     #===========================================================================
-    new_wdir = os.path.join(os.path.expanduser('~'), 'CanFlood')
+    if new_wdir is None:
+        new_wdir = os.path.join(os.path.expanduser('~'), 'CanFlood')
     
     if not os.path.exists(new_wdir):
         os.makedirs(new_wdir)
@@ -53,6 +78,8 @@ def basic_logger(root_lvl = logging.DEBUG,
     
     #override default level in the config file
     logger.setLevel(root_lvl)
+    
+
 
     
     return logger

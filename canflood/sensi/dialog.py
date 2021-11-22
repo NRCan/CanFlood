@@ -38,7 +38,7 @@ FORM_CLASS, _ = uic.loadUiType(ui_fp)
 #===============================================================================
 from sensi.coms import SensiShared
 from sensi.sbuild import SensiConstructor
-from sensi.srun import SensiSessRunner
+from sensi.srun import SensiSessRunner, SensiSessResults
 
 
  
@@ -78,7 +78,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         
         
     def connect_slots(self, #connect ui slots to functions 
-                      dev=True,
+ 
                       ): 
         log = self.logger.getChild('connect_slots')
         #======================================================================
@@ -110,7 +110,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         
         #loading
         self.comboBox_S_ModLvl.addItems(['L1', 'L2'])
-        self.pushButton_s_load.clicked.connect(self.load_base)
+        self.pushButton_s_load.clicked.connect(self.setup_load)
         #=======================================================================
         # #working directory
         #=======================================================================
@@ -126,9 +126,10 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #bind custom methods to the table widget
         hlpr.plug.bind_TableWidget(self.tableWidget_P, log)
          
-        self.pushButton_P_addCand.clicked.connect(self.add_cand_col)
+        self.pushButton_P_addCand.clicked.connect(self.compile_add)
+        self.pushButton_C_remove.clicked.connect(self.compile_remove)
         
-        self.pushButton_P_addColors.clicked.connect(self.add_random_colors)
+        self.pushButton_P_addColors.clicked.connect(self.compile_randomColors)
         
         self.pushButton_P_compile.clicked.connect(self.compile_candidates)
         
@@ -137,7 +138,9 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         hlpr.plug.bind_TableWidget(self.tableWidget_R, log)
         
-        self.pushButton_R_run.clicked.connect(self.run_suite)
+        self.pushButton_R_run.clicked.connect(self.run_RunSuite)
+        
+        
         #=======================================================================
         # Analyze----------
         #=======================================================================
@@ -149,18 +152,15 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
                                           filters="Pickles (*.pickle)")
                 )
         
-        self.pushButton_A_load.clicked.connect(self.load_pick)
-        #=======================================================================
-        # dev
-        #=======================================================================
-        if dev:
-            self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\tut_builds\8\20211119\CanFlood_tut8.txt')
-            self.load_base()
-            for i in range(0,2):
-                self.add_cand_col()
-            self.add_random_colors()
-            self.compile_candidates()
-            self.run_suite()
+        self.pushButton_A_load.clicked.connect(self.analysis_loadPick)
+
+        self.pushButton_A_plotRiskCurves.clicked.connect(self.analysis_plotRiskCurves)
+        
+        self.pushButton_A_plotBox.clicked.connect(self.analysis_plotBox)
+        
+        self.pushButton_A_print.clicked.connect(self.analysis_print)
+        
+        hlpr.plug.bind_TableWidget(self.tableWidget_A, log)
         
         
         
@@ -197,12 +197,12 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         except Exception as e:
             self.logger.error('failed to change to compile tab w/ \n    %s' % e)
 
-    def load_base(self, #load teh base control file
+    def setup_load(self, #load teh base control file
                   ):
         #=======================================================================
         # default
         #=======================================================================
-        log = self.logger.getChild('load_base')
+        log = self.logger.getChild('setup_load')
         
         self.set_setup(set_cf_fp=True)
         log.info('loading base from %s'%self.cf_fp)
@@ -271,7 +271,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         log.debug('filled table')
         
         #add the first column
-        self.add_cand_col()
+        self.compile_add()
         
 
         
@@ -287,13 +287,13 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         
         return
         
-    def add_cand_col(self, #add a new column to the parmaeters tab
+    def compile_add(self, #add a new column to the parmaeters tab
                      ):
         
         #=======================================================================
         # default
         #=======================================================================
-        log = self.logger.getChild('add_cand_col')
+        log = self.logger.getChild('compile_add')
         
         self.set_setup(set_cf_fp=False)
         
@@ -321,14 +321,24 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         
         log.info('added parameter column for \'%s\''%mtag)
         
-    def add_random_colors(self, #add a row of random colors
+    def compile_remove(self, #remove a candidate column
+                       ):
+        
+        
+        tbw = self.tableWidget_P
+        tbw.removeColumn(tbw.columnCount())
+        
+        self.logger.push('removed column')
+        
+        
+    def compile_randomColors(self, #add a row of random colors
                           ):
         
         #=======================================================================
         # defaults
         #=======================================================================
         
-        log = self.logger.getChild('add_random_colors')
+        log = self.logger.getChild('compile_randomColors')
         self.set_setup(set_cf_fp=False)
         tbw = self.tableWidget_P
         colorMap=self.colorMap
@@ -436,7 +446,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         
         return
     
-    def run_suite(self):
+    def run_RunSuite(self):
         
         log = self.logger.getChild('compile_cand')
         tabw = self.tableWidget_R
@@ -454,22 +464,119 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         with SensiSessRunner(**kwargs) as ses:
             res_lib, meta_d= ses.run_batch(cf_d, modLevel='L2')
             
-            res_df = ses.analy_evalTot(res_lib)
-            
-            output = ses.write_pick(res_lib)
+            output = ses.write_pick()
             
         #=======================================================================
         # update ui
         #=======================================================================
         self.lineEdit_A_pick_fp.setText(output)
         
-        self.load_pick()
+        self.analysis_loadPick()
         
-    def load_pick(self):
-        log = self.logger.getChild('load_pick')
-        self.set_setup(set_cf_fp=False)
+        self._change_tab('tab_analysis')
         
+    def analysis_loadPick(self): #update the UI with results found in pickle
+        log = self.logger.getChild('analysis_loadPick')
+        self.set_setup(set_cf_fp=True)
+        rcoln = 'ead_tot'
         pick_fp = self.lineEdit_A_pick_fp.text()
+        
+        
+        #=======================================================================
+        # run analysis on complied results
+        #=======================================================================
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        with SensiSessResults(**kwargs) as ses:
+            pick_d = ses.load_pick(pick_fp)
+            meta_d = pick_d['meta_d']
+        
+            rdf_raw = ses.analy_evalTot()
+            
+            impactFmtFunc = ses.impactFmtFunc
+ 
+            
+        #=======================================================================
+        # update the summary labels
+        #=======================================================================
+        self.label_A_S_count.setText(str(len(rdf_raw)))
+        self.label_A_S_eMin.setText(impactFmtFunc(rdf_raw[rcoln].min()))
+        self.label_A_S_eMax.setText(impactFmtFunc(rdf_raw[rcoln].max()))
+        
+        self.label_A_S_runTag.setText(meta_d['runTag'])
+        self.label_A_S_runDate.setText(str(meta_d['runDate']))
+        self.label_A_S_runTime.setText("{:,.2f} sec".format(meta_d['runTime'].total_seconds()))
+        #=======================================================================
+        # make the results pretty
+        #=======================================================================
+        #retrieve the parameter/copmile df
+        par_df = self._pretty_parameters() 
+        
+        assert np.array_equal(rdf_raw.index, par_df.index)
+        
+        #format results columns
+        rdf1 = rdf_raw.copy()
+        for coln, col in rdf_raw.copy().items():
+            if 'float' in col.dtype.name:
+                rdf1.loc[:, coln] = col.apply(impactFmtFunc)
+        
+        df1 = rdf1.join(par_df)
+        #=======================================================================
+        # update the table
+        #=======================================================================
+        tbw = self.tableWidget_A
+        tbw.populate(df1)
+        
+        log.push('loaded pickel from %s'%os.path.basename(pick_fp))
+        
+            
+            
+    def analysis_plotRiskCurves(self):
+        log = self.logger.getChild('analysis_loadPick')
+        self.set_setup(set_cf_fp=True)
+ 
+        pick_fp = self.lineEdit_A_pick_fp.text()
+        
+        
+        #=======================================================================
+        # run analysis on complied results
+        #=======================================================================
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        with SensiSessResults(**kwargs) as ses:
+            pick_d = ses.load_pick(pick_fp)
+            
+            fp_d = ses.plot_riskCurves()
+            
+            
+    
+    def analysis_plotBox(self):
+        pass
+    
+    def analysis_print(self):
+        pass
+    
+    def _pretty_parameters(self, #get just the parameters that are different
+                           df_raw=None):
+ 
+        
+ 
+        if df_raw is None:
+            """transposing for type preservation"""
+            df_raw = self.tableWidget_P.get_df().T
+            
+            
+        assert 'name' in df_raw.columns
+        
+        #find where a row has all the same values
+        boolcol = np.invert(df_raw.eq(df_raw.iloc[0,:], axis=1).all(axis=0))
+        
+ 
+        df1 = df_raw.loc[:, boolcol].copy()
+        
+        #fix color values
+        if 'color' in df1.columns:
+            df1.loc[:, 'color'] = df1['color'].str.replace('?','#')
+        
+        return df1 
         
         
  
