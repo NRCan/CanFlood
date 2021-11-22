@@ -62,7 +62,7 @@ Considering the limitation of existing tools, and the growing need to minimize f
 **International Guidelines**
 
 +-------------------------+----------------------------------------------------------------------+-+-+++++
-| Jurisdiction/ Authority | Guideline (Reference)                                                | | |   |
+| Jurisdiction/ Authority | Guideline (Reference)                                                | |     |
 +=========================+======================================================================+=+=+++++
 | United Kingdom          | Flood and coastal erosion risk management – Manual                   | |     |
 |                         | (Penning-Rowsell et al. 2013)                                        | |     |
@@ -119,8 +119,8 @@ Flood risk analysis objectives and applications are as diverse as the communitie
       - More detailed appraisals where further assessment of loss potential is warranted
       - Detailed study of potential losses and robust uncertainty quantification
     * - Workflow 
-      - :ref:`Section3.1`
-      - :ref:`Section3.2`
+      - :ref:`Section3.1 <Section3.1>`
+      - :ref:`Section3.2 <Section3.2>`
       - Appendix B
     * - CanFlood model tool names
       - Risk (L1)
@@ -175,7 +175,7 @@ Flood risk analysis objectives and applications are as diverse as the communitie
 1.4 Control Files
 *****************
 
-CanFlood models are designed to write and read from small ‘Control Files’. These make it easy to build and share a specific model or scenario, and to keep a record of how the results set were generated. These also facilitate making a small change to a common input file (e.g., the asset inventory), and having this change replicated across all scenario runs. Control Files don’t contain any (large) data, only parameter values and pointers to the datasets required by a CanFlood model. Diligent and consistent file storage and naming conventions are essential for a pleasant modelling experience. Most Control File parameters and Data Files can be configured in the ‘Build’ toolset; however, some advanced parameters must be configured manually (see :ref:`Section5.2` for a full description of the Control File Parameters) (All SOFDA inputs must be built and configured manually) . The collection of model inputs and configured control file is called a ‘model package’ as shown in Figure1-1_ . More information on input files is provided in :ref:`Section3 <applications_and_workflows>` .
+CanFlood models are designed to write and read from small ‘Control Files’. These make it easy to build and share a specific model or scenario, and to keep a record of how the results set were generated. These also facilitate making a small change to a common input file (e.g., the asset inventory), and having this change replicated across all scenario runs. Control Files don’t contain any (large) data, only parameter values and pointers to the datasets required by a CanFlood model. Diligent and consistent file storage and naming conventions are essential for a pleasant modelling experience. Most Control File parameters and Data Files can be configured in the ‘Build’ toolset; however, some advanced parameters must be configured manually (see :ref:`Section5.2 <Section5.2>` for a full description of the Control File Parameters) (All SOFDA inputs must be built and configured manually) . The collection of model inputs and configured control file is called a ‘model package’ as shown in Figure1-1_ . More information on input files is provided in :ref:`Section3 <applications_and_workflows>` .
 
 .. _Figure1-1:
 
