@@ -609,7 +609,7 @@ SOFDA has the following capabilities:
   • Provide some quantification of uncertainty (i.e., stochastic modeling);
   • Provide detailed outputs to facilitate the analysis of underlying mechanisms.
 
-For additional information and guidance, see :ref:`Appendix B <appendix_b_>`__.
+For additional information and guidance, see :ref:`Appendix B <appendix_b>`.
 
 .. _section5.3:
 
@@ -774,7 +774,7 @@ When applying the Dike Fragility Mapper to your project, the following should be
 5.4.2. Add Connections
 ======================
 
-CanFlood’s ‘Add Connections’ |addConnectionsImage| tool adds a pre-compiled set of web-resources to a user’s QGIS profile for easy access and configuration (i.e., adding credentials). The set of web-resources added by this tool are configured in the ‘canflood\_pars\WebConnections.ini’ file (in the user’s plugin directory). :ref:`Appendix A <appendix_a_>`__ summarizes the web-connections added by this tool.
+CanFlood’s ‘Add Connections’ |addConnectionsImage| tool adds a pre-compiled set of web-resources to a user’s QGIS profile for easy access and configuration (i.e., adding credentials). The set of web-resources added by this tool are configured in the ‘canflood\_pars\WebConnections.ini’ file (in the user’s plugin directory). :ref:`Appendix A <appendix_a>` summarizes the web-connections added by this tool.
 
 The `QGIS User Guide <https://docs.qgis.org/3.10/en/docs/user_manual/working_with_ogc/ogc_client_support.html#wms-wmts-client>`__ explains how to manage and access these connections. Once the resources are added to a user’s profile, two basic methods can be used to add the data to the project:
 
