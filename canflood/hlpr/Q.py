@@ -890,7 +890,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         
         #make sure none of hte field names execeed the driver limitations
-        max_len = self.fieldn_max_d[self.driverName]
+        max_len = fieldn_max_d[self.driverName]
         
         #check lengths
         boolcol = df_raw.columns.str.len() >= max_len
