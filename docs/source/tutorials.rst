@@ -239,8 +239,7 @@ This shows that the Risk (L2) model is missing the ‘dmgs’ data file and will
 6.2.3. Run the Model
 ====================
 
-Open the ‘Model’ |runimage| dialog. Configure the ‘Setup’ tab as shown below, selecting your own paths and control file, and ensuring the ‘Outputs Directory’ is a sub-directory of your previous ‘Working Directory’ (Some ‘Results’ tools work better when the model output data files are in the same file tree as the 
-   Control File):
+Open the ‘Model’ |runimage| dialog. Configure the ‘Setup’ tab as shown below, selecting your own paths and control file, and ensuring the ‘Outputs Directory’ is a sub-directory of your previous ‘Working Directory’ (Some ‘Results’ tools work better when the model output data files are in the same file tree as the Control File):
 
 .. image:: /_static/tutorials_6_2_3_img_1.jpg
 
@@ -339,8 +338,7 @@ Two non-spatial summary plots of this data should also have been generated in yo
 
 .. image:: /_static/tutorials_6_3_1_img_3.jpg
 
-These values are the conditional probabilities of each asset realizing the 1000-year companion failure event WSL. (Try running the tool again, but this time selecting ‘Max’. If you look closely at the boxplots, you should 
-   see a slight difference in the resolved probabilities. This suggests this model is not very sensitive to the relational assumption of these overlapping failure polygons) See :ref:`Section5.2.3 <Section5.2.3>` for a complete description of this tool. Complete the model construction by running the ‘DTM Sampler’ and ‘Validation’ tools.
+These values are the conditional probabilities of each asset realizing the 1000-year companion failure event WSL. (Try running the tool again, but this time selecting ‘Max’. If you look closely at the boxplots, you should see a slight difference in the resolved probabilities. This suggests this model is not very sensitive to the relational assumption of these overlapping failure polygons) See :ref:`Section5.2.3 <Section5.2.3>` for a complete description of this tool. Complete the model construction by running the ‘DTM Sampler’ and ‘Validation’ tools.
 
 6.3.2. Run the Model
 ====================
@@ -393,8 +391,7 @@ Open the ‘Model’ dialog |runimage| and follow the steps in Tutorial 2b to se
 
 Execute the ‘Impacts (L2)’ and ‘Risk (L2)’ models similar to Tutorial 2b but ensure ‘Generate attribution matrix’ is de-selected.
 
-To explore the influence of the ‘event_rels’ parameter, open the control file, change the ‘event_rels’ parameter to ‘max’, change the ‘name’ parameter to something unique (e.g., ‘tut2c_max’), then save the file with a different name. On the ‘Setup’ tab, point to this modified control file, a new outputs directory, and run both models again as described above (Advanced users could avoid re-running the ‘Impacts (L2)’ model by manipulating the Control File to point 
-   to the ‘dmgs’ results from the previous run as these will not change between the two formulations).
+To explore the influence of the ‘event_rels’ parameter, open the control file, change the ‘event_rels’ parameter to ‘max’, change the ‘name’ parameter to something unique (e.g., ‘tut2c_max’), then save the file with a different name. On the ‘Setup’ tab, point to this modified control file, a new outputs directory, and run both models again as described above (Advanced users could avoid re-running the ‘Impacts (L2)’ model by manipulating the Control File to point to the ‘dmgs’ results from the previous run as these will not change between the two formulations).
 
 6.4.3. View Results
 ===================
@@ -513,8 +510,7 @@ The two EAD rows on the ‘data’ tab should be automatically populated based o
 
 Notice the first year of the ‘baseline’ and ‘option’ EAD are blank, reflecting that no benefits are gained yet; however, the second year shows half the benefits will be realized. The $1000/year maintenance costs should extend through the full 100 years (i.e., copy/paste onto all rightward cells — not shown).
 
-Once the ‘data’ tab is complete, a ‘B/C ratio’ of 1.18 should be shown on the ‘smry’ tab (If you get a B/C ratio of 1.19, make sure the $1000 maintenance costs are entered for every year of the 
-   life-cycle). Save and close this spreadsheet.
+Once the ‘data’ tab is complete, a ‘B/C ratio’ of 1.18 should be shown on the ‘smry’ tab (If you get a B/C ratio of 1.19, make sure the $1000 maintenance costs are entered for every year of the life-cycle). Save and close this spreadsheet.
 
 **Plot Financials**
 
@@ -579,8 +575,7 @@ Launch the CanFlood ‘Build’ toolset and navigate to the ‘Setup’ tab. Set
 
 **Inventory**
 
-Navigate to the ‘Inventory’ tab, ensure ‘Elevation type’ is set to ‘datum’ (Risk (L1) inundation percentage runs can not use asset elevations; therefore, this input variable is 
-   redundant. When as_inun=True CanFlood model routines expect an ‘elv’ column with all zeros) then **click ‘Store’.**
+Navigate to the ‘Inventory’ tab, ensure ‘Elevation type’ is set to ‘datum’ (Risk (L1) inundation percentage runs can not use asset elevations; therefore, this input variable is redundant. When as_inun=True CanFlood model routines expect an ‘elv’ column with all zeros) then **click ‘Store’.**
 
 **Hazard Sampler**
 
@@ -690,8 +685,7 @@ This describes each of the connections that CanFlood added to your profile. To v
   • UNISDR_GAR15_GlobalRiskAssessment (WCS)
   • ECCC_NationalPollutantReleaseInventory_NPRI (ArcGIS Feature Service)
 
-Note that these connections will remain in your profile for future QGIS sessions, meaning the ‘Add Connections’ |addConnectionsImage| tool should only be required once per profile (New installations of Qgis should automatically path to the same profile directory (Settings > User Profiles > 
-   Open Active Profile Folder), therefore carrying forward your previous connection info).
+Note that these connections will remain in your profile for future QGIS sessions, meaning the ‘Add Connections’ |addConnectionsImage| tool should only be required once per profile (New installations of Qgis should automatically path to the same profile directory (Settings > User Profiles > Open Active Profile Folder), therefore carrying forward your previous connection info).
 
 **Download NPRI Data**
 
@@ -703,8 +697,7 @@ You should now see a vector points layer added to your project with information 
 
 **Download GAR15 Data**
 
-Follow a similar process to download (Depending on your internet connection, this process can be slow. It’s recommended to set ‘Cache’=’Prefer
-   cache’ to limit additional data transfers, and to turn the layers off or disable rendering once loaded into the project) the following layers from ‘UNISDR_GAR15_GlobalRiskAssessment’ under the ‘WCS’ tab as shown below:
+Follow a similar process to download (Depending on your internet connection, this process can be slow. It’s recommended to set ‘Cache’=’Prefer cache’ to limit additional data transfers, and to turn the layers off or disable rendering once loaded into the project) the following layers from ‘UNISDR_GAR15_GlobalRiskAssessment’ under the ‘WCS’ tab as shown below:
 
   • GAR2015:flood_hazard_200_yrp
   • GAR2015:flood_hazard_100_yrp
@@ -714,8 +707,7 @@ Follow a similar process to download (Depending on your internet connection, thi
 
 .. image:: /_static/tutorials_6_10_1_img_4.jpg
 
-You’ll have to load one layer at a time, and you may be prompted to ‘Select Transformation’ (You can safely select any transformation or close the dialog. These transformations are only for display, 
-   we’ll deal with transforming the data onto our CRS below). Once finished, your canvas should look like this:
+You’ll have to load one layer at a time, and you may be prompted to ‘Select Transformation’ (You can safely select any transformation or close the dialog. These transformations are only for display, we’ll deal with transforming the data onto our CRS below). Once finished, your canvas should look like this:
 
 .. image:: /_static/tutorials_6_10_1_img_5.jpg
 
@@ -744,8 +736,7 @@ Navigate to the ‘Hazard Sampler’ tab, ensure the five GAR2015 layers are lis
 
 .. image:: /_static/tutorials_6_10_2_img_3.jpg
 
-You should see five new rasters loaded to your canvas (with a ‘prepd’ suffix). These layers should have rotated pixels, be clipped to the AOI, have reasonable flood depth values (in meters), and have the same CRS as the project (In some cases, QGIS may fail to recognize the CRS assigned to these new rasters, indicated by a “?” shown to 
-   the right of the layer in the layers panel. In these cases, you will need to define the projection by going to the layer’s ‘Properties’ and under ‘Source’ set the coordinate system to match that of the project (EPSG: 3978)). Further, each of these rasters should be saved to your working directory. This new set of hazard layers should conform to the expectations of the Hazard Sampler, allowing you to proceed with construction of an L1 model as described in Section6.1_.
+You should see five new rasters loaded to your canvas (with a ‘prepd’ suffix). These layers should have rotated pixels, be clipped to the AOI, have reasonable flood depth values (in meters), and have the same CRS as the project (In some cases, QGIS may fail to recognize the CRS assigned to these new rasters, indicated by a “?” shown to the right of the layer in the layers panel. In these cases, you will need to define the projection by going to the layer’s ‘Properties’ and under ‘Source’ set the coordinate system to match that of the project (EPSG: 3978)). Further, each of these rasters should be saved to your working directory. This new set of hazard layers should conform to the expectations of the Hazard Sampler, allowing you to proceed with construction of an L1 model as described in Section6.1_.
 
 .. _Section6.11:
 
