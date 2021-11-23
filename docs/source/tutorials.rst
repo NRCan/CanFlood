@@ -4,7 +4,7 @@
 6. Tutorials
 ============
 
-This section provides a few tutorials to get a user started in CanFlood. It is suggested to work through the tutorials sequentially, referring to Section 5 when more detailed information is desired. For all tutorials, the project CRS can safely be set from any of the data layers, unless otherwise specified. Tutorials are written assuming users are familiar with QGIS and object-based flood risk modelling. All tutorial data can be found in the latest `‘tutorial_data’ zip <https://github.com/IBIGroupCanWest/CanFlood/blob/master/tutorial_data_20210315.zip>`__ on the project page.
+This section provides a few tutorials to get a user started in CanFlood. It is suggested to work through the tutorials sequentially, referring to :ref:`Section5 <toolsets>` when more detailed information is desired. For all tutorials, the project CRS can safely be set from any of the data layers, unless otherwise specified. Tutorials are written assuming users are familiar with QGIS and object-based flood risk modelling. All tutorial data can be found in the latest `‘tutorial_data’ zip <https://github.com/IBIGroupCanWest/CanFlood/blob/master/tutorial_data_20210315.zip>`__ on the project page.
 
 .. _Section6.1:
 
@@ -163,7 +163,7 @@ Notice the six impact fields (boxed in red above) have had their names converted
 6.2. Tutorial 2a: Risk (L2) with Simple Events
 **********************************************
 
-Tutorial 2 demonstrates the use of CanFlood’s ‘Risk (L2)’model (Section5.2.3_). This emulates a more detailed risk assessment where the vulnerability of each asset is known and described as a function of flood depth (rather than simple binary flood presence as in tutorial 1). This tutorial also demonstrates an inventory with ‘relative’ heights and CanFlood’s ‘composite vulnerability function’ feature where multiple functions are applied to the same asset.
+Tutorial 2 demonstrates the use of CanFlood’s ‘Risk (L2)’model (:ref:`Section5.2.3 <Section5.2.3>`). This emulates a more detailed risk assessment where the vulnerability of each asset is known and described as a function of flood depth (rather than simple binary flood presence as in tutorial 1). This tutorial also demonstrates an inventory with ‘relative’ heights and CanFlood’s ‘composite vulnerability function’ feature where multiple functions are applied to the same asset.
 
 6.2.1. Load data to project
 ===========================
@@ -254,7 +254,7 @@ This should create an impacts (‘dmgs’) datafile in your working directory an
 
 .. image:: /_static/tutorials_6_2_3_img_2.jpg
 
-These are the raw impacts per event per asset calculated with each vulnerability function, the sampled WSL and the sampled DTM elevation. The second output is the ‘expanded component impacts’, a large optional output background file used by CanFlood that contains the tabulation of each nested function and the applied scaling and cap values. See Section5.2.2_ for more information. Now you’re ready to calculate flood risk!
+These are the raw impacts per event per asset calculated with each vulnerability function, the sampled WSL and the sampled DTM elevation. The second output is the ‘expanded component impacts’, a large optional output background file used by CanFlood that contains the tabulation of each nested function and the applied scaling and cap values. See :ref:`Section5.2.2 <Section5.2.2>` for more information. Now you’re ready to calculate flood risk!
 
 **Risk (L2)**
 
@@ -262,7 +262,7 @@ Move to the ‘Risk (L2)’ tab. Check all the boxes shown below and **click ‘
 
 .. image:: /_static/tutorials_6_2_3_img_3.jpg
 
-A set of results files should have been generated (discussed below). For a complete description of the Risk (L2) module, see Section5.2.3_.
+A set of results files should have been generated (discussed below). For a complete description of the Risk (L2) module, see :ref:`Section5.2.3 <Section5.2.3>`.
 
 6.2.4. View Results
 ===================
@@ -316,7 +316,7 @@ Users should first complete Tutorials 1 and 2a. Tutorial 2b uses the same input 
   • *haz_1000_fail_A_tut2*: ‘failure raster’ indicating the WSL that would be realized were any of the levee segments to fail during the event; and
   • *haz_1000_fail_A_tut2*: conditional exposure probability polygon layer with features indicating the extent and probability of failure of each levee segment during the flood event (‘failure polygons’). Notice this layer contains two features that overlap in places, corresponding potential flooding from two breach sites in the levee system. This layer will be used to tell CanFlood when and how to sample the failure raster.
 
-This simplification by using these two layers facilitates the specification of multiple failure probabilities but where any failure (or combination of failures) would realize the same WSL (Section5.1.5_’s ‘complex conditionals’). Ensure these layers are loaded into the same QGIS project as was used for Tutorial 2a.
+This simplification by using these two layers facilitates the specification of multiple failure probabilities but where any failure (or combination of failures) would realize the same WSL (:ref:`Section5.1.5 <Section5.1.5>`’s ‘complex conditionals’). Ensure these layers are loaded into the same QGIS project as was used for Tutorial 2a.
 
 To better understand the ‘failure polygons’ layer, let’s apply CanFlood’s ‘red fill transparent’ style. Begin by loading this style template into your profile with the ‘Add Styles’ tool (Plugins > CanFlood > Add Styles), then apply it using the Layer Styling Panel (F7). Finally, add a single label for ‘p_fail’ and move the layer just beneath the asset inventory (‘finv’) points layer on the layers panel. Your canvas should look similar to the below:
 
@@ -342,7 +342,7 @@ Two non-spatial summary plots of this data should also have been generated in yo
 .. image:: /_static/tutorials_6_3_1_img_3.jpg
 
 These values are the conditional probabilities of each asset realizing the 1000-year companion failure event WSL. (Try running the tool again, but this time selecting ‘Max’. If you look closely at the boxplots, you should 
-   see a slight difference in the resolved probabilities. This suggests this model is not very sensitive to the relational assumption of these overlapping failure polygons) See Section5.2.3_ for a complete description of this tool. Complete the model construction by running the ‘DTM Sampler’ and ‘Validation’ tools.
+   see a slight difference in the resolved probabilities. This suggests this model is not very sensitive to the relational assumption of these overlapping failure polygons) See :ref:`Section5.2.3 <Section5.2.3>` for a complete description of this tool. Complete the model construction by running the ‘DTM Sampler’ and ‘Validation’ tools.
 
 6.3.2. Run the Model
 ====================
@@ -441,7 +441,7 @@ Follow the steps in Tutorials 2a ‘Build the Model’, with the exception of th
 
 .. image:: /_static/tutorials_6_5_1_img_1.jpg
 
-This should create a new layer with a ‘finv’ prefix in your map canvas. Exploring the attribute table of this layer (F6) should show the four new fields that were created and filled with the values specified. These are used by the ‘Impacts (L2)’ module to modify the exposure passed to each objects vulnerability function and are described in Section5.2.2_. Complete the inventory construction by ensuring ‘Apply Mitigations’ is checked, the newly created inventory vector layer is selected, and the remainder of the tab is configured as shown below (same as Tutorial 2a). **Click ‘Store’.**
+This should create a new layer with a ‘finv’ prefix in your map canvas. Exploring the attribute table of this layer (F6) should show the four new fields that were created and filled with the values specified. These are used by the ‘Impacts (L2)’ module to modify the exposure passed to each objects vulnerability function and are described in :ref:`Section5.2.2 <Section5.2.2>`. Complete the inventory construction by ensuring ‘Apply Mitigations’ is checked, the newly created inventory vector layer is selected, and the remainder of the tab is configured as shown below (same as Tutorial 2a). **Click ‘Store’.**
 
 .. image:: /_static/tutorials_6_5_1_img_2.jpg
 
@@ -568,7 +568,7 @@ Load the following data layers from the ‘tutorials\4\data\’ folder:
 
   • |ss| *finv_tut4b_lines.gpkg*: |se| (used in tutorial 4b)
 
-Move the polygon inventory (‘finv’) layer to the top, apply the CanFlood ‘fill transparent blue’ style (Available in the CanFlood styles package described in Section 5.4.4 (Plugins > CanFlood > Add Styles)), and your project should look similar to this (Be sure to load the stylized ‘.qlr’ layers in place of the raw layers):
+Move the polygon inventory (‘finv’) layer to the top, apply the CanFlood ‘fill transparent blue’ style (Available in the CanFlood styles package described in :ref:`Section5.4.4 <Section5.4.4>` (Plugins > CanFlood > Add Styles)), and your project should look similar to this (Be sure to load the stylized ‘.qlr’ layers in place of the raw layers):
 
 .. image:: /_static/tutorials_6_8_img_1.jpg
 
@@ -673,7 +673,7 @@ Begin by setting your QGIS project’s CRS to ‘EPSG:3978’ (Project > Propert
 
   • *tut5_aoi_3978.gpkg*: AOI polygon for tutorial.
 
-Set the AOI’s layer style to ‘fill red transparent’ to allow you to see through the polygon. Before inventory construction can begin, we must add the NPRI and GAR15 raw data to the QGIS project. While there are many options for accessing and importing such data, this tutorial will demonstrate how to use CanFlood’s built-in ‘Add Connections’ |addConnectionsImage| feature (Section5.4.1_) to first add a connection to the profile, then download the desired layers.
+Set the AOI’s layer style to ‘fill red transparent’ to allow you to see through the polygon. Before inventory construction can begin, we must add the NPRI and GAR15 raw data to the QGIS project. While there are many options for accessing and importing such data, this tutorial will demonstrate how to use CanFlood’s built-in ‘Add Connections’ |addConnectionsImage| feature (:ref:`Section5.4.1 <Section5.4.1>`) to first add a connection to the profile, then download the desired layers.
 
 **Connect to Web-Data**
 
@@ -740,7 +740,7 @@ Navigate to the ‘Inventory’ tab. To convert the downloaded NPRI data into an
 
 **Hazard Sampler**
 
-Now you’re ready to sample the GAR15 hazard layers with your new NPRI inventory. Unlike the hazard layers used in previous tutorials, the GAR15 hazard layers provide *depth* (rather than WSL) data in *centimeters* (rather than meters) in a coordinate system other than that of our project. Further, these hazard layers’ extents are much larger than what is needed by our project; and because they are web-layers, many of the QGIS processing tools will not work. Therefore, we’ll need to apply the four ‘Raster Preparation’ tools described in Table 5-2 before proceeding with the ‘Hazard Sampler’.
+Now you’re ready to sample the GAR15 hazard layers with your new NPRI inventory. Unlike the hazard layers used in previous tutorials, the GAR15 hazard layers provide *depth* (rather than WSL) data in *centimeters* (rather than meters) in a coordinate system other than that of our project. Further, these hazard layers’ extents are much larger than what is needed by our project; and because they are web-layers, many of the QGIS processing tools will not work. Therefore, we’ll need to apply the four ‘Raster Preparation’ tools described in :ref:`Table5-2 <Table5-2>` before proceeding with the ‘Hazard Sampler’.
 
 Navigate to the ‘Hazard Sampler’ tab, ensure the five GAR2015 layers are listed in the window, and click ‘Sample’. You should get an error telling you the layer CRS does not match that of the project. To resolve this, click the "Raster Prep' button and configure the Raster Preparation handles as shown and **click ‘Prep’** and then 'OK':
 
@@ -755,7 +755,7 @@ You should see five new rasters loaded to your canvas (with a ‘prepd’ suffix
 6.11. Tutorial 6a: Dike Failure Polygons
 ****************************************
 
-This tutorial demonstrates how to generate ‘failure polygons’ from typical dike information using CanFlood’s ‘Dike Fragility Mapper’ tool (Section5.4.1_). Before following this tutorial, users should be familiar with the hazard event data types described in Section4.2_ (esp. ‘failure polygons’) that are required of Risk (L1) and (L2) models with some failure. Begin by downloading the tutorial data from the `tutorials\6 <https://github.com/IBIGroupCanWest/CanFlood/tree/master/tutorials/6>`__ folder and loading it into a new QGIS project:
+This tutorial demonstrates how to generate ‘failure polygons’ from typical dike information using CanFlood’s ‘Dike Fragility Mapper’ tool (:ref:`Section5.4.1 <Section5.4.1>`). Before following this tutorial, users should be familiar with the hazard event data types described in :ref:`Section4.2 <Section4.2>` (esp. ‘failure polygons’) that are required of Risk (L1) and (L2) models with some failure. Begin by downloading the tutorial data from the `tutorials\6 <https://github.com/IBIGroupCanWest/CanFlood/tree/master/tutorials/6>`__ folder and loading it into a new QGIS project:
 
     • hazard WSL event rasters (without failure)
 
@@ -772,11 +772,11 @@ This tutorial demonstrates how to generate ‘failure polygons’ from typical d
     • *dtm.tif*: Digital Terrain Model (import ‘dtm.qlr’ to get the styled version);
     • *dike_fragility_20210201.xls*: Dike fragility function library.
 
-See Section4.5_ for a description of these datasets. Ensure your project CRS is set to ‘EPSG:3005’. Once the GIS layers are loaded, your map canvas should look similar to the below:
+See :ref:`Section4.5 <Section4.5>` for a description of these datasets. Ensure your project CRS is set to ‘EPSG:3005’. Once the GIS layers are loaded, your map canvas should look similar to the below:
 
 .. image:: /_static/tutorials_6_11_img_1.jpg
 
-To make this workspace more friendly, ensure the ‘dikes’ and ‘dike_influence_zones’ layers are at the top of the layers panel. Now apply the following CanFlood styles (Load these styles onto your profile using the Plugins>CanFlood>Add Styles tool described in Section 5.4.4) to each of these layers:
+To make this workspace more friendly, ensure the ‘dikes’ and ‘dike_influence_zones’ layers are at the top of the layers panel. Now apply the following CanFlood styles (Load these styles onto your profile using the Plugins>CanFlood>Add Styles tool described in :ref:`Section5.4.4 <Section5.4.4>`) to each of these layers:
 
   • *dikes*: ‘arrow black’
   • *dike_influence_zones*: ‘fill red transparent’
@@ -855,7 +855,7 @@ Click **‘Map pFail’**. You should see four polygon layers loaded to your can
 
 .. image:: /_static/tutorials_6_11_3_img_2.jpg
 
-These results layers are automatically stylized as failure polygons, showing the event raster name, source dike segment (‘sid’), and failure probability of each feature. Notice the 200-year contains 3-overlapping polygon features corresponding to the three segments with failure here, despite the original ‘dike_influznce_zones’ layer having two features. This mapping of polygons to dike segments is set on the dikes layer in the ‘Influence Area ID Field’ specified on the ‘Setup’ tab (‘ifzID’ in this case). In this way, 1:1 or many:many segment-polygon links can be specified, allowing the user to map each breach probability, or group segments to apply the calculated probabilities to a larger dike ring. See Section5.4.1_ for more information on this tool.
+These results layers are automatically stylized as failure polygons, showing the event raster name, source dike segment (‘sid’), and failure probability of each feature. Notice the 200-year contains 3-overlapping polygon features corresponding to the three segments with failure here, despite the original ‘dike_influznce_zones’ layer having two features. This mapping of polygons to dike segments is set on the dikes layer in the ‘Influence Area ID Field’ specified on the ‘Setup’ tab (‘ifzID’ in this case). In this way, 1:1 or many:many segment-polygon links can be specified, allowing the user to map each breach probability, or group segments to apply the calculated probabilities to a larger dike ring. See :ref:`Section5.4.1 <Section5.4.1>` for more information on this tool.
 
 *************************************************
 6.12. Tutorial 7a: Sampling on Complex Geometries
