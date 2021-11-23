@@ -536,7 +536,7 @@ Notice the ‘payback year’ has not changed, but the relative size of the posi
 6.7. Tutorial 3: Risk (L3) SOFDA research model
 ***********************************************
 
-Sample inputs for the SOFDA research model are provided in the tutorials\3\ folder. Refer to `Appendix B <appendix_b>` for more information.
+Sample inputs for the SOFDA research model are provided in the tutorials\3\ folder. Refer to :ref:`Appendix B <appendix_b>` for more information.
 
 **************************************************************
 6.8. Tutorial 4a: Risk (L1) with Percent Inundation (Polygons)
@@ -655,7 +655,7 @@ This tutorial demonstrates how to construct a CanFlood ‘Risk (L1)’ model fro
   • The `National Pollutant Release Inventory (NPRI) <https://www.canada.ca/en/services/environment/pollution-waste-management/national-pollutant-release-inventory.html>`__; and
   • `The GAR15 Atlas global flood hazard assessment <https://preview.grid.unep.ch/index.php?preview=home&lang=eng>`__ (See Rudari and Silvestro (2015) for details on the GAR15 flood hazard model)
 
-For more information on these data sets, see `Appendix A <appendix_a>`.
+For more information on these data sets, see :ref:`Appendix A <appendix_a>`.
 
 Because this tutorial deals with data having disparate CRSs, users should be familiar with QGIS’s native handling of project and layer CRS discussed `here <https://docs.qgis.org/3.10/en/docs/user_manual/working_with_projections/working_with_projections.html>`__.
 
