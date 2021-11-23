@@ -43,6 +43,8 @@ from sensi.coms import SensiShared
 from sensi.sbuild import SensiConstructor
 from sensi.srun import SensiSessRunner, SensiSessResults
 
+from model.modcom import Model #for data loading parameters
+
 
  
  
@@ -51,6 +53,8 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
                        hlpr.plug.QprojPlug):
     
     colorMap = 'hsv' #cyclical
+    
+    datafile_df = None #data loaded to the datafile tab
     
     def __init__(self, iface, parent=None, **kwargs):
         """Constructor."""
@@ -114,6 +118,8 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #loading
         self.comboBox_S_ModLvl.addItems(['L1', 'L2'])
         self.pushButton_s_load.clicked.connect(self.setup_load)
+        
+ 
         #=======================================================================
         # #working directory
         #=======================================================================
@@ -145,6 +151,61 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         
         
         #=======================================================================
+        # DataFiles------------
+        #=======================================================================
+        #=======================================================================
+        # selection 
+        #=======================================================================
+        #populate base data file parameter name dropdown
+        def set_DF_fp(): #set the datafile path when the combobox changes
+            #get value on combo box
+            parName = self.comboBox_DF_par.currentText()
+            #get base parameters
+            pars_d = self.tableWidget_P.get_values('base', axis=0)
+            data_fp = pars_d[parName]
+            
+            #empty check
+            if pd.isnull(data_fp):
+                self.logger.push('got null filepath for \'%s\''%data_fp)
+                return
+            
+            assert isinstance(data_fp, str), 'got bad filepath for %s'%parName
+            assert os.path.exists(data_fp), 'requested file path for \'%s\' does not exist'%parName
+            
+            #set on the lineEdit
+            self.lineEdit_DF_fp.setText(data_fp)
+ 
+        self.comboBox_DF_par.activated.connect(set_DF_fp)
+        
+        self.pushButton_DF_load.clicked.connect(self.datafiles_load)
+        
+        #browse button
+        self.pushButton_DF_browse.clicked.connect(
+                lambda: self.fileSelect_button(self.lineEdit_DF_fp, 
+                                          caption='Select Data File',
+                                          path = self.lineEdit_wdir.text(),
+                                          filters="Data Files (*.csv)")
+                            )
+        
+        self.pushButton_DF_browse.clicked.connect(
+            lambda: self.comboBox_DF_par.setCurrentIndex(-1)
+            )
+        
+        #=======================================================================
+        # field selection
+        #=======================================================================
+        hlpr.plug.bind_TableWidget(self.tableWidget_DF, log)
+        
+        self.pushButton_DF_plot.clicked.connect(self.datafiles_plot)
+        
+ 
+        def openFieldCalculator():
+            action = self.iface.actionOpenFieldCalculator()
+            action.trigger()
+            
+        self.pushButton_DF_apply.clicked.connect(openFieldCalculator)
+        
+        #=======================================================================
         # Analyze----------
         #=======================================================================
         #pickel file
@@ -164,6 +225,15 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         self.pushButton_A_print.clicked.connect(self.analysis_print)
         
         hlpr.plug.bind_TableWidget(self.tableWidget_A, log)
+        
+        
+        #=======================================================================
+        # dev
+        #=======================================================================
+        if self.dev:
+            self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\tut_builds\8\20211119\CanFlood_tut8.txt')
+            self.comboBox_S_ModLvl.setCurrentIndex(1) #modLevel=L2
+            self.setup_load()
         
         
         
@@ -269,6 +339,27 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #add the first column
         self._change_tab('tab_compile')
         self.compile_add()
+        
+        #=======================================================================
+        # #populate the DataFiles comboBox_DF_par
+        #=======================================================================
+        #get raw the data files
+        datafile_pars_d = dict()
+        for sectName, pars_d in cfPars_d.items():
+            if sectName in ['results_fps']: #skip these
+                continue
+            if sectName.endswith('_fps'):
+                datafile_pars_d.update(pars_d)
+                
+        #clear out any nulls
+        datafile_pars_d = {k:v for k,v in datafile_pars_d.items() if not v==''}
+        
+        #clear csvs only
+        datafile_pars_d = {k:v for k,v in datafile_pars_d.items() if v.endswith('.csv')}
+                
+        #add these to the combo box
+        self.comboBox_DF_par.addItems(list(datafile_pars_d.keys()))
+        self.comboBox_DF_par.setCurrentIndex(-1)
         
  
         
@@ -650,6 +741,90 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         
         return df1 
+    
+    def datafiles_load(self): #load a data file
+        log = self.logger.getChild('datafiles_load')
+        self.set_setup(set_cf_fp=False)
+        
+        #=======================================================================
+        # check parameter
+        #=======================================================================
+        parName = self.comboBox_DF_par.currentText()
+        if parName=='':
+            log.error('must provide a valid paramater')
+            return
+        
+        #get valid pars
+        validPars_d = dict()
+        for sectName, pars_d in Model.master_pars.items():
+            if sectName in ['dmg_fps', 'risk_fps']:
+                validPars_d.update(pars_d)
+                
+        if not parName in validPars_d:
+            log.error('\'%s\' not a valid parameter'%parName)
+            return
+        
+        #=======================================================================
+        # #retrieve from  ui and check
+        #=======================================================================
+        fp = self.lineEdit_DF_fp.text()
+        valid=None
+        if not isinstance(fp, str):
+            valid='no filepath provided'
+        
+        if not os.path.exists(fp):
+            valid='filepath does not exist'
+        
+        ext= os.path.splitext(os.path.basename(fp))[1]
+        if not ext in ['.csv']:
+            valid='unrecognized extension: %s'%ext
+            
+        if isinstance(valid, str):
+            log.error(valid)
+            return
+        
+    
+        #=======================================================================
+        # load
+        #=======================================================================
+        #retrieve loading parameters
+        
+        dtag_d = Model.dtag_d
+        if parName in dtag_d:
+            loadPars_d = dtag_d[parName]
+        else:
+            loadPars_d = {}
+        
+        df_raw = pd.read_csv(fp, **loadPars_d)
+        
+        #=======================================================================
+        # populate
+        #=======================================================================
+        tbw = self.tableWidget_DF
+ 
+        tbw.populate(df_raw)
+        
+
+        #=======================================================================
+        # store
+        #=======================================================================
+        self.datafile_df = df_raw.copy()
+        
+        #=======================================================================
+        # load to gui
+        #=======================================================================
+        #vlay_raw = self.load_vlay(fp, logger=log, providerLib='delimitedtext', addSpatialIndex=False)
+        vlay = self.vlay_new_df2(df_raw, logger=log)
+        self.qproj.addMapLayer(vlay, True)  
+ 
+        
+        log.info('popluated DataFiles table w/ %s and loaded vlay \'%s\''%(str(df_raw.shape), vlay.name()))
+        return
+ 
+ 
+    def datafiles_plot(self):
+        self.logger.error('not implemented')
+        
         
         
  

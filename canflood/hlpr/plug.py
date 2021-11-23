@@ -55,6 +55,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
     
     plt_window = False #control whether to launch the plot window
     
+    dev=True #handle for development code
     
     
     
@@ -1147,6 +1148,17 @@ def bind_TableWidget( #add some custom bindings to a TableWidget
             return {self.horizontalHeaderItem(i).text():i for i in range(0,self.columnCount(),1)}
         else:
             raise Error('dome')
+        
+    def get_value(self,#retrieve a value by lable
+            colName,
+            rowName,
+            ):
+        
+        #get the indexers
+        i = self.get_headers(axis=0)[rowName]
+        j = self.get_headers(axis=1)[colName]
+        
+        return self.item(i,j).text()
     
     def get_values( #retrieve values by label or index
                     self,
@@ -1165,11 +1177,24 @@ def bind_TableWidget( #add some custom bindings to a TableWidget
         #=======================================================================
         
         if axis == 0:
-            return {self.horizontalHeaderItem(i).text():self.item(index, i).text() for i in range(0, self.columnCount())}
+            raw_d= {self.horizontalHeaderItem(i).text():self.item(index, i).text() for i in range(0, self.columnCount())}
         elif axis ==1:
-            return {self.verticalHeaderItem(i).text():self.item(i, index).text() for i in range(0, self.rowCount())}
+            raw_d= {self.verticalHeaderItem(i).text():self.item(i, index).text() for i in range(0, self.rowCount())}
         else:
             raise Error('dome')
+        
+        #=======================================================================
+        # handle nulls
+        #=======================================================================
+        d1 = dict()
+        for k,v in raw_d.items():
+            if (v =='') or (v is None):
+                d1[k]=np.nan
+            else:
+                d1[k]=v
+                
+        return d1
+                
         
     def get_df(#retreive the full table df
                self,
@@ -1233,8 +1258,8 @@ def bind_TableWidget( #add some custom bindings to a TableWidget
         self.setRowCount(len(df.index))
         
         #set lables
-        self.setVerticalHeaderLabels(df.index.values.tolist())
-        self.setHorizontalHeaderLabels(df.columns.values.tolist())
+        self.setVerticalHeaderLabels(df.index.astype(str).values.tolist())
+        self.setHorizontalHeaderLabels(df.columns.astype(str).values.tolist())
         
         #set values
         for j, (colName, col) in enumerate(df.items()):
@@ -1296,6 +1321,7 @@ def bind_TableWidget( #add some custom bindings to a TableWidget
     for fName, func in {
         'get_indexer':lambda self,i, axis=0: get_indexer(self,i, axis=axis),
         'get_headers':lambda self, axis=0: get_headers(self, axis=axis),
+        'get_value':lambda self, i,j:get_value(self,i,j),
         'get_values':lambda self, indexName, axis=0: get_values(self, indexName, axis=axis),
         'get_df':lambda self:get_df(self),
         'set_values':lambda self, i,d,axis=0:set_values(self,i,d,axis=axis),

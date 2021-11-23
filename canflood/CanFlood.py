@@ -222,8 +222,8 @@ class CanFlood:
         #=======================================================================
         #setup the logger
         #=======================================================================
-        from hlpr.plug import logger
-        log = logger(self)
+        from hlpr.plug import plugLogger
+        log = plugLogger(self)
         
         #=======================================================================
         # filepath

@@ -30,7 +30,7 @@ from hlpr.exceptions import QError as Error
 #from hlpr.Q import *
 from hlpr.basic import ComWrkr
 
-from hlpr.plug import logger as plogger
+from hlpr.plug import plugLogger as plogger
 
 
 class WebConnect(ComWrkr):
