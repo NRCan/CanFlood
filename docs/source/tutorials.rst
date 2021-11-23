@@ -31,11 +31,7 @@ Download the data layers for Tutorial 1:
 
   • *finv_tut1a.gpkg* : flood asset inventory (’finv’) spatial layer.
 
-Ensure your project’s CRS is set to ‘EPSG:3005’ (Depending on your settings, this may have been set automatically when you loaded the datafiles. 
-   All tutorials   use CRS ‘EPSG:3005’ unless stated otherwise. See the following link for an explanation of projections in QGIS.
-
-   https://docs.qgis.org/3.10/en/docs/user_manual/working_with_projections/working_with_projections.html) and load the downloaded layers into a new QGIS project (Depending on your QGIS settings, you may be requested to select a transformation if the CRS was not 
-   set correctly beforehand). Your map canvas should look something like this:
+Ensure your project’s CRS is set to ‘EPSG:3005’ (Depending on your settings, this may have been set automatically when you loaded the datafiles. All tutorials   use CRS ‘EPSG:3005’ unless stated otherwise. See the following link for an explanation of projections in QGIS. https://docs.qgis.org/3.10/en/docs/user_manual/working_with_projections/working_with_projections.html) and load the downloaded layers into a new QGIS project (Depending on your QGIS settings, you may be requested to select a transformation if the CRS was not set correctly beforehand). Your map canvas should look something like this:
 
 .. image:: /_static/tutorials_6_1_1_tiff.jpg
 
