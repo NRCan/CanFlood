@@ -784,10 +784,6 @@ The `QGIS User Guide <https://docs.qgis.org/3.10/en/docs/user_manual/working_wit
 
 Many plugins and tools used by QGIS (and CanFlood) do not support such web-layers (esp. rasters), so conversion and download may be required.
 
-.. |addConnectionsImage| image:: /_static/add_connections_image.jpg
-   :align: middle
-   :width: 22
-
 5.4.3. RFDA Converter
 =====================
 
@@ -851,3 +847,7 @@ The QGIS ‘Styling Manager’ |stylingManager| provides an interface for organi
 .. |stylingManager| image:: /_static/styling_manager_image.jpg
    :align: middle
    :width: 30
+
+.. |addConnectionsImage| image:: /_static/add_connections_image.jpg
+   :align: middle
+   :width: 22

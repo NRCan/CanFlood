@@ -915,6 +915,10 @@ To generate a comparison plot of these two scenarios, navigate to the ‘Compare
 
 .. image:: /_static/tutorials_6_12_img_2.JPG
 
+.. |addConnectionsImage| image:: /_static/add_connections_image.jpg
+   :align: middle
+   :width: 22
+
 .. |buildimage| image:: /_static/build_image.jpg
    :align: middle
    :width: 22
