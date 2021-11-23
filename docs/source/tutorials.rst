@@ -112,8 +112,7 @@ Click the ‘Model’ button |runimage| to launch the Model toolset dialog.
 
 On the ‘Setup’ tab, select a working directory (does not have to match the directory from the previous step) where all your results will be stored. Also select your control file created in the previous section if necessary.
 
-Your dialog should look like this (CanFlood will attempt to automatically identify the Inventory Vector Layer; however, this tutorial does 
-   not make use of this layer so the selection here can be ignored):
+Your dialog should look like this (CanFlood will attempt to automatically identify the Inventory Vector Layer; however, this tutorial does not make use of this layer so the selection here can be ignored):
 
 .. image:: /_static/tutorials_6_1_3_img_1.jpg
 
