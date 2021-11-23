@@ -919,6 +919,18 @@ To generate a comparison plot of these two scenarios, navigate to the ‘Compare
 
 .. image:: /_static/tutorials_6_12_img_2.JPG
 
+.. |buildimage| image:: /_static/build_image.jpg
+   :align: middle
+   :width: 22
+
+.. |runimage| image:: /_static/run_image.jpg
+   :align: middle
+   :width: 22
+
+.. |visualimage| image:: /_static/visual_image.jpg
+   :align: middle
+   :width: 22
+
 .. |diamondimage| image:: /_static/red_diamond_image.jpg
    :align: middle
    :width: 22
