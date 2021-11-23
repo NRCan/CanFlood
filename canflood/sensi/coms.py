@@ -11,11 +11,15 @@ common methods for sensitivity analylsis
 import os, datetime, pickle, copy, shutil, configparser
 
 from model.modcom import Model
-from hlpr.plot import Plotr
+ 
 
 from model.risk1 import Risk1
 from model.risk2 import Risk2
 from model.dmg2 import Dmg2
+
+
+
+
 
 #===============================================================================
 # classes-----
@@ -127,3 +131,6 @@ class SensiShared(Model):
         
         
         return {k:all_attn_sect_d[k] for k in attn_l}
+    
+    
+ 

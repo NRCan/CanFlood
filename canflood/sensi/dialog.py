@@ -45,6 +45,7 @@ from sensi.srun import SensiSessRunner, SensiSessResults
 
 from model.modcom import Model #for data loading parameters
 
+from sensi.expressionFunctions import addToInterface #called as a launch action
 
  
  
@@ -153,6 +154,8 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         # DataFiles------------
         #=======================================================================
+        #expression functions
+        self.launch_actions['expressionFunctions'] = addToInterface
         #=======================================================================
         # selection 
         #=======================================================================
@@ -225,6 +228,9 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         self.pushButton_A_print.clicked.connect(self.analysis_print)
         
         hlpr.plug.bind_TableWidget(self.tableWidget_A, log)
+        
+        
+        
         
         
         #=======================================================================
