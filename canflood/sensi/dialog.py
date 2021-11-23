@@ -797,6 +797,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         
         df_raw = pd.read_csv(fp, **loadPars_d)
         
+        """use the field calculator
         #=======================================================================
         # populate
         #=======================================================================
@@ -809,12 +810,13 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         # store
         #=======================================================================
         self.datafile_df = df_raw.copy()
+        """
         
         #=======================================================================
         # load to gui
         #=======================================================================
         #vlay_raw = self.load_vlay(fp, logger=log, providerLib='delimitedtext', addSpatialIndex=False)
-        vlay = self.vlay_new_df2(df_raw, logger=log)
+        vlay = self.vlay_new_df2(df_raw, logger=log, layname=os.path.splitext(os.path.basename(fp))[0])
         self.qproj.addMapLayer(vlay, True)  
  
         
