@@ -358,7 +358,7 @@ To better understand the influence of incorporating levee failure, this section 
 
 .. image:: /_static/tutorials_6_3_3_img_1.jpg
 
-In this plot, the red line represents the contribution to risk without the companion failure events, which should be nearly identical to the results from Tutorial 2a, and a second line showing the total results. (Alternatively, the ‘Compare’ tool can be used to generate a comparison plot between the two tutorials) The area between these two lines illustrates the contribution to risk from incorporating levee failure into the model.
+In this plot, the red line represents the contribution to risk without the companion failure events, which should be nearly identical to the results from Tutorial 2a, and a second line showing the total results(Alternatively, the ‘Compare’ tool can be used to generate a comparison plot between the two tutorials). The area between these two lines illustrates the contribution to risk from incorporating levee failure into the model.
 
 ************************************************
 6.4. Tutorial 2c: Risk (L2) with Complex Failure
