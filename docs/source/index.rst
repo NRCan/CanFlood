@@ -1,7 +1,7 @@
-Documentation for CanFlood
---------------------------------
+Documentation for CanFlood User Manual
+--------------------------------------
 
-Please have a look into the documents below.
+Please have a look into the document below.
 
 .. toctree::
    :maxdepth: 1
