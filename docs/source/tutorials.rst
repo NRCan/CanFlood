@@ -338,7 +338,7 @@ Two non-spatial summary plots of this data should also have been generated in yo
 
 .. image:: /_static/tutorials_6_3_1_img_3.jpg
 
-These values are the conditional probabilities of each asset realizing the 1000-year companion failure event WSL. (Try running the tool again, but this time selecting ‘Max’. If you look closely at the boxplots, you should see a slight difference in the resolved probabilities. This suggests this model is not very sensitive to the relational assumption of these overlapping failure polygons) See :ref:`Section5.2.3 <Section5.2.3>` for a complete description of this tool. Complete the model construction by running the ‘DTM Sampler’ and ‘Validation’ tools.
+These values are the conditional probabilities of each asset realizing the 1000-year companion failure event WSL(Try running the tool again, but this time selecting ‘Max’. If you look closely at the boxplots, you should see a slight difference in the resolved probabilities. This suggests this model is not very sensitive to the relational assumption of these overlapping failure polygons). See :ref:`Section5.2.3 <Section5.2.3>` for a complete description of this tool. Complete the model construction by running the ‘DTM Sampler’ and ‘Validation’ tools.
 
 6.3.2. Run the Model
 ====================
