@@ -567,8 +567,14 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
                     
             #add these to the table
             df_raw1 = tbw.get_df() 
+            
+            
+            
+            jdf = pd.DataFrame.from_dict(newPars_d).T
+            
+            boolcol = df_raw1.columns.isin(jdf.columns)
  
-            df1 = df_raw1.join(pd.DataFrame.from_dict(newPars_d).T)
+            df1 = df_raw1.loc[:, ~boolcol].join(jdf)
  
             tbw.populate(df1)
 
