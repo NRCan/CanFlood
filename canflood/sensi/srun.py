@@ -344,6 +344,7 @@ class SensiSessRunner(SensiSessionComs): #running a sensitivity session
         log.info('on %i: %s'%(len(cf_d), list(cf_d.keys())))
         start =  datetime.datetime.now()
         
+        assert len(cf_d)>0, 'got empty control file suite'
         assert baseName in cf_d.keys(), 'expected baseName \'%s\' in the run cf'%baseName
         #=======================================================================
         # loop and execute
