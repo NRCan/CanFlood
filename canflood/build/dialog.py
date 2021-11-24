@@ -85,6 +85,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
         self.qproj_setup(iface=iface, **kwargs)
 
+        """TODO: make these init on first click"""
         self.vDialog = vDialog(iface) #init and attach vfunc library dialog(connected below)
         self.RPrepDialog=RPrepDialog(iface)
         
@@ -506,7 +507,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # #call the common
         #=======================================================================
-        self._set_setup(set_cf_fp=set_cf_fp)
+        self._set_setup(set_cf_fp=set_cf_fp) #resets inherit_fieldNames
         self.inherit_fieldNames.append('init_q_d')
         #=======================================================================
         # custom setups

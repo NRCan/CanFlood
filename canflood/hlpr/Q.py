@@ -150,7 +150,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             feedback = feedback, 
             **kwargs) #initilzie teh baseclass
         
-        log = self.logger
+ 
         #=======================================================================
         # attachments
         #=======================================================================

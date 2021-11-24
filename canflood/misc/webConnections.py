@@ -25,12 +25,45 @@ from PyQt5.QtCore import QSettings
 
 
 from hlpr.exceptions import QError as Error
-
+from hlpr.basic import force_open_dir, view, ComWrkr
 
 #from hlpr.Q import *
-from hlpr.basic import ComWrkr
+ 
 
-from hlpr.plug import plugLogger as plogger
+from hlpr.plug import QMenuAction
+
+
+class WebConnectAction(QMenuAction):
+    inherit_fieldNames = ['logger']
+    
+    
+    #action parameters
+    icon_fn = 'eye_23x23.png'
+    icon_name = 'WebConnection'
+    icon_location = 'menu'
+    
+    def launch(self):
+        #=======================================================================
+        # defai;ts
+        #=======================================================================
+        log = self.logger.getChild('l')
+ 
+        log.info(self.icon_name)
+        #=======================================================================
+        # call child
+        #=======================================================================
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        with WebConnect(**kwargs) as wrkr:
+            newCons_d = wrkr.addAll()
+            
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        self.iface.reloadConnections()
+        
+        log.push('added %i connections'%(len(newCons_d)))
+    
+    
 
 
 class WebConnect(ComWrkr):
@@ -41,18 +74,17 @@ class WebConnect(ComWrkr):
     allGroups = None
     
     def __init__(self,
-                 iface=None,
+ 
                  newSettings_fp = None,
                  qini_fp = None, #path to user's QGIS.ini file
                  
                  **kwargs):
         
-        self.iface=iface
+ 
         
         
         
-        
-        super().__init__(logger=plogger(self), **kwargs) #initilzie teh baseclass
+        super().__init__(**kwargs) #initilzie teh baseclass
         
         #setup
         

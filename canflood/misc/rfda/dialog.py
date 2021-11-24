@@ -55,7 +55,7 @@ class RfdaDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     
     #action parameters
     icon_fn = 'rfda.png'
-    icon_name = 'Results'
+    icon_name = 'RFDA'
     icon_location = 'menu'
     
     def __init__(self, iface, parent=None, **kwargs):
@@ -143,6 +143,9 @@ class RfdaDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # wrap
         #=======================================================================
         return
+    
+ 
+        
             
 
 

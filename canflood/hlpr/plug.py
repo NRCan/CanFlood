@@ -35,41 +35,54 @@ from PyQt5 import QtCore
 from hlpr.exceptions import QError as Error
 from hlpr.Q import MyFeedBackQ, Qcoms
 import hlpr.Q
-from hlpr.basic import force_open_dir, view
+from hlpr.basic import force_open_dir, view, ComWrkr
 from hlpr.plt_qt import PltWindow
+ 
 
 #==============================================================================
 # classes-----------
 #==============================================================================
-class QprojPlug(Qcoms): #baseclass for plugins
+class QMenuAction(Qcoms): #base class for actions assigned to Q menus
+ 
     
     groupName = 'CanFlood' #default group for loading layers to canvas
-    
-    tag='scenario1'
-    overwrite=True
-    wd = ''
-    progress = 0
-    
-    
-    loadRes = False #whether to load layers to canvas
-    
-    plt_window = False #control whether to launch the plot window
-    
-    dev=True #handle for development code
+    #action parameters
+    icon_fn = 'help-circle.svg'
+    icon_name = 'SomeAction'
+    icon_location = 'menu'
     
     
-    
-    """not a great way to init this one
-    Plugin classes are only initilaizing the first baseclass
-    def __init__(self):
-        self.logger = logger()"""
-    
+    def __init__(self,
+                     iface = None,
+                     session=None, #main CanFlood.CanFlood session worker 
+                 logger=None,
+                 ):
+        
+        """WARNING: make sure QprojPlug children dont call this"""
+        
+        
+        self.qproj_setup(plogger=logger, iface=iface, session=session)
+        
+        """dont execut super cascade
+        super().__init__(logger=self.logger,
+            **kwargs) #initilzie teh baseclass"""
+        
+ 
+        
+        
+        self.connect_slots()
+        
     def qproj_setup(self,
                     iface = None,
                     plogger=None, #alternate logger for standalone tests
                     session=None, #main CanFlood.CanFlood session worker 
  
                     ): #project inits for Dialog Classes
+        
+        """
+        called by QprojPlug during custom __init__
+        called by QMenuAction during default __init__
+        """
 
         #=======================================================================
         # attacyhments
@@ -130,6 +143,37 @@ class QprojPlug(Qcoms): #baseclass for plugins
 
         self.pars_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), '_pars')
         assert os.path.exists(self.pars_dir)
+        
+    def connect_slots(self): #placeholder for connection slots (for consistency)
+        pass
+    def launch(self):
+        raise Error('overwrite with your own method')
+    
+
+class QprojPlug(QMenuAction): #baseclass for plugin dialogs
+    
+    
+    
+    tag='scenario1'
+    overwrite=True
+    wd = ''
+    progress = 0
+    
+    
+    loadRes = False #whether to load layers to canvas
+    
+    plt_window = False #control whether to launch the plot window
+    
+    dev=True #handle for development code
+    
+    
+    
+    """not a great way to init this one
+    Plugin classes are only initilaizing the first baseclass
+    def __init__(self):
+        self.logger = logger()"""
+    
+
 
     def launch(self): #placeholder for launching the dialog
         """allows children to customize what happens when called"""
@@ -153,21 +197,30 @@ class QprojPlug(Qcoms): #baseclass for plugins
         #=======================================================================
         # inherit from other tools
         #=======================================================================
-        #try and set the control file path from the session if there
-        if os.path.exists(self.session.cf_fp):
-            #set the control file path
-            self.lineEdit_cf_fp.setText(self.session.cf_fp)
+        """for dialogs with control files"""
+        
+        #my control file path
+        if hasattr(self, 'lineEdit_cf_fp'):
+            #try and set the control file path from the session if there
+            if os.path.exists(self.session.cf_fp):
+                #set the control file path
+                self.lineEdit_cf_fp.setText(self.session.cf_fp)
+                
+        #woking directory
+        if hasattr(self, 'lineEdit_wdir'):
+                
+            #from session control file
+            if os.path.exists(self.session.cf_fp):
+                newdir = os.path.join(os.path.dirname(self.session.cf_fp))
+                assert os.path.exists(newdir), 'this should  exist...%s'%newdir
+                self.lineEdit_wdir.setText(newdir)
             
-            #set the working directory
-            newdir = os.path.join(os.path.dirname(self.session.cf_fp))
-            assert os.path.exists(newdir), 'this should  exist...%s'%newdir
-            self.lineEdit_wdir.setText(newdir)
             
-        #default catch for working directory
-        if self.lineEdit_wdir.text() == '':
-            newdir = os.path.join(os.getcwd(), 'CanFlood')
-            if not os.path.exists(newdir): os.makedirs(newdir)
-            self.lineEdit_wdir.setText(newdir)
+            #default catch for working directory
+            if self.lineEdit_wdir.text() == '':
+                newdir = os.path.join(os.getcwd(), 'CanFlood')
+                if not os.path.exists(newdir): os.makedirs(newdir)
+                self.lineEdit_wdir.setText(newdir)
             
             
         #inventory vector layer
@@ -648,7 +701,7 @@ class plugLogger(object): #workaround for qgis logging pythonic
     0.4.1
         log messages sent to 2 places based on level
             
-    
+    TODO: allow directly calling (e.g., logger('msg')
     """
     log_tabnm = 'CanFlood' # qgis logging panel tab name
     
