@@ -859,4 +859,6 @@ The QGIS ‘Styling Manager’ |stylingManager| provides an interface for organi
 5.4.5. Sensitivity Analysis
 ===========================
 
+CanFlood's *Sensitivity Analysis* dialog provides tools for performing  sensitivity analysis on a L1 or L2 CanFlood model. This can be helpful in understanding and communicating the uncertainty in your model, as well as help identify which parameters should be prioritized during data collection. To use this toolset, the user must first provide a 'base' model from which to perform the analysis on. From this base model, the Sensitivity Analysis toolset can be used to: 1) construct a suite of candidate models, where each candidate has a single parameter or dataFile perturbation; 2) run the new model suite; then 3) evaluate the effect of each parameter perturbation on the annualized impact metric ('ead_tot'). 
+
 
