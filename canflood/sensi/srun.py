@@ -344,14 +344,15 @@ class SensiSessRunner(SensiSessionComs): #running a sensitivity session
         log.info('on %i: %s'%(len(cf_d), list(cf_d.keys())))
         start =  datetime.datetime.now()
         
-        assert baseName in cf_d.keys()
+        assert baseName in cf_d.keys(), 'expected baseName \'%s\' in the run cf'%baseName
         #=======================================================================
         # loop and execute
         #=======================================================================
         initKwargs = self._get_inher_atts()
         res_lib = dict()
-        for mtag, cf_fp in cf_d.items():
-            log.info('on %s from %s'%(mtag, os.path.basename(cf_fp)))
+        self.feedback.upd_prog(10)
+        for i, (mtag, cf_fp) in enumerate(cf_d.items()):
+            log.info('%i/%i on %s from %s'%(i+1, len(cf_d), mtag, os.path.basename(cf_fp)))
             
             
             with CandidateModel(name=mtag, logger=log, cf_fp=cf_fp,
@@ -366,6 +367,7 @@ class SensiSessRunner(SensiSessionComs): #running a sensitivity session
                 
             #wrap
             log.debug('finished %s'%mtag)
+            self.feedback.upd_prog(10+80*(i/len(cf_d)))
             
 
         
@@ -380,6 +382,7 @@ class SensiSessRunner(SensiSessionComs): #running a sensitivity session
                          'max':round(rser.max(),2), 
                          'min':round(rser.min(), 2),
                          'mean':round(rser.mean(),2),
+                         'var':round(rser.var(),2),
                          'base':round(rser[baseName],2),
                          'runTag':self.tag,
                          'runDate':self.today_str,

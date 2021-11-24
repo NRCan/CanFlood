@@ -591,7 +591,7 @@ p, li { white-space: pre-wrap; }
                  <string>Add</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../resources.qrc">
+                 <iconset>
                   <normaloff>:/icons/icons/arrow-down-circle.svg</normaloff>:/icons/icons/arrow-down-circle.svg</iconset>
                 </property>
                </widget>
@@ -602,7 +602,7 @@ p, li { white-space: pre-wrap; }
                  <string>Remove</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../resources.qrc">
+                 <iconset>
                   <normaloff>:/icons/icons/arrow-up-circle.svg</normaloff>:/icons/icons/arrow-up-circle.svg</iconset>
                 </property>
                </widget>
@@ -780,7 +780,7 @@ p, li { white-space: pre-wrap; }
                 <item>
                  <widget class="QLineEdit" name="lineEdit_DF_fp">
                   <property name="placeholderText">
-                   <string>Select a candidate datafile or specify data filepath</string>
+                   <string>Compile the Candidates: then select a candidate datafile or specify data filepath</string>
                   </property>
                  </widget>
                 </item>
@@ -795,11 +795,17 @@ p, li { white-space: pre-wrap; }
               </item>
               <item alignment="Qt::AlignHCenter">
                <widget class="QPushButton" name="pushButton_DF_load">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
                 <property name="font">
                  <font>
                   <weight>75</weight>
                   <bold>true</bold>
                  </font>
+                </property>
+                <property name="toolTip">
+                 <string/>
                 </property>
                 <property name="text">
                  <string>Load</string>
@@ -825,19 +831,6 @@ p, li { white-space: pre-wrap; }
                 </property>
                 <property name="text">
                  <string>Open Attribute Table</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="pushButton_DF_apply">
-                <property name="maximumSize">
-                 <size>
-                  <width>150</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>Open Field Calculator</string>
                 </property>
                </widget>
               </item>
@@ -1374,12 +1367,7 @@ p, li { white-space: pre-wrap; }
                 </attribute>
                 <column>
                  <property name="text">
-                  <string>mtag</string>
-                 </property>
-                </column>
-                <column>
-                 <property name="text">
-                  <string>cf_fp</string>
+                  <string>First compile the candidates....</string>
                  </property>
                 </column>
                </widget>
@@ -1401,6 +1389,9 @@ p, li { white-space: pre-wrap; }
              <layout class="QVBoxLayout" name="verticalLayout_9">
               <item alignment="Qt::AlignHCenter">
                <widget class="QPushButton" name="pushButton_R_run">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
                 <property name="maximumSize">
                  <size>
                   <width>150</width>
@@ -1522,7 +1513,7 @@ p, li { white-space: pre-wrap; }
                  </font>
                 </property>
                 <property name="text">
-                 <string>ead_tot (min):</string>
+                 <string>min:</string>
                 </property>
                </widget>
               </item>
@@ -1554,7 +1545,7 @@ p, li { white-space: pre-wrap; }
                  </font>
                 </property>
                 <property name="text">
-                 <string>ead_tot (max):</string>
+                 <string>max:</string>
                 </property>
                </widget>
               </item>
@@ -1566,6 +1557,32 @@ p, li { white-space: pre-wrap; }
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>75</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>?</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_4">
+                <property name="font">
+                 <font>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>var:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_A_S_eVar">
                 <property name="minimumSize">
                  <size>
                   <width>75</width>
@@ -1874,8 +1891,7 @@ p, li { white-space: pre-wrap; }
   <tabstop>pushButton_wd</tabstop>
   <tabstop>lineEdit_wdir</tabstop>
  </tabstops>
- <resources>
- </resources>
+ <resources/>
  <connections/>
  <buttongroups>
   <buttongroup name="buttonGroup_S_filepaths"/>

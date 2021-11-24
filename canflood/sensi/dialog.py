@@ -8,7 +8,7 @@ ui class for the sensitivity analysis menu
 #===============================================================================
 # imports------------
 #===============================================================================
-import os,  os.path, time, datetime
+import os,  os.path, time, datetime, copy
 
 
 from PyQt5 import uic, QtWidgets
@@ -194,7 +194,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
  
  
             
-        self.pushButton_DF_apply.clicked.connect(lambda: triggerAction('actionOpenFieldCalculator'))
+        #self.pushButton_DF_apply.clicked.connect(lambda: triggerAction('actionOpenFieldCalculator'))
         self.pushButton_DF_attTable.clicked.connect(lambda: triggerAction('actionOpenTable'))
         
         #=======================================================================
@@ -375,6 +375,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         datafile_pars_d = {k:v for k,v in datafile_pars_d.items() if v.endswith('.csv')}
                 
         #add these to the combo box
+        self.comboBox_DF_par.clear()
         self.comboBox_DF_par.addItems(list(datafile_pars_d.keys()))
         self.comboBox_DF_par.setCurrentIndex(-1)
         self.comboBox_DF_par.setDisabled(False)
@@ -451,7 +452,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         #identify the row w/ color in it
         index_d = tbw.get_headers(axis=1)
-        log.info('randominzing color on %i candidates'%len(index_d))
+        log.info('randomizing colors')
         self.feedback.upd_prog(10)
         
         #no color...add your own
@@ -580,10 +581,12 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         
         
         self.tableWidget_R.populate(pd.DataFrame.from_dict(cf_fp_d).T)
+        self.pushButton_R_run.setDisabled(False)
         
         #=======================================================================
         # update datFiles
         #=======================================================================
+        self.pushButton_DF_load.setDisabled(False)
         
         #candidate name
  
@@ -627,7 +630,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
             
             output = ses.write_pick()
             
-        self.feedback.upd_prog(80)
+        self.feedback.upd_prog(90)
         #=======================================================================
         # update ui
         #=======================================================================
@@ -664,10 +667,12 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         self.label_A_S_count.setText(str(len(rdf_raw)))
         self.label_A_S_eMin.setText(impactFmtFunc(rdf_raw[rcoln].min()))
         self.label_A_S_eMax.setText(impactFmtFunc(rdf_raw[rcoln].max()))
+        self.label_A_S_eVar.setText(impactFmtFunc(rdf_raw[rcoln].var()))
         
         self.label_A_S_runTag.setText(meta_d['runTag'])
         self.label_A_S_runDate.setText(str(meta_d['runDate']))
         self.label_A_S_runTime.setText("{:,.2f} sec".format(meta_d['runTime'].total_seconds()))
+        
         #=======================================================================
         # add the parameters to the display
         #=======================================================================
@@ -697,7 +702,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         # update the table
         #=======================================================================
         tbw = self.tableWidget_A
-        tbw.populate(df1)
+        tbw.populate(df1.reset_index())
         
         #make not editable
         tbw.call_all_items('setFlags',Qt.ItemIsEditable)
@@ -817,7 +822,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         
         #get valid pars
         validPars_d = dict()
-        for sectName, pars_d in Model.master_pars.items():
+        for sectName, pars_d in Model.master_pars.copy().items():
             if sectName in ['dmg_fps', 'risk_fps']:
                 validPars_d.update(pars_d)
                 
@@ -850,13 +855,19 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         #retrieve loading parameters
         self.feedback.upd_prog(20)
-        dtag_d = Model.dtag_d
+        dtag_d = Model.dtag_d.copy()
         if parName in dtag_d:
             loadPars_d = dtag_d[parName]
         else:
             loadPars_d = {}
         
         df_raw = pd.read_csv(fp, **loadPars_d)
+        
+        #clean up index
+        if isinstance(df_raw.index.name, str):
+            df = df_raw.reset_index()
+        else:
+            df=df_raw.copy()
         
         """use the field calculator
  
@@ -866,7 +877,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         # load to gui
         #=======================================================================
         #vlay_raw = self.load_vlay(fp, logger=log, providerLib='delimitedtext', addSpatialIndex=False)
-        vlay = self.vlay_new_df2(df_raw, logger=log, layname=os.path.splitext(os.path.basename(fp))[0])
+        vlay = self.vlay_new_df2(df, logger=log, layname=os.path.splitext(os.path.basename(fp))[0])
         self.qproj.addMapLayer(vlay, True)  
         
         self.dataFile_vlay = vlay #attach to self for saving
@@ -936,40 +947,54 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         # write data
         #=======================================================================
+        #=======================================================================
         #retrieve loading parameters
         parName = self.comboBox_DF_par.currentText()
-        assert not parName=='', 'must select a valid parameter name'
-        dtag_d = Model.dtag_d
-        if parName in dtag_d:
-            loadPars_d = dtag_d[parName]
-            
-            #convert
-            """not sure why read/write pars are different"""
-            for k,v in loadPars_d.copy().items():
-                
-                coln = 'index_col'
-                if k==coln:
-                    
-                    del loadPars_d[coln]
-                    
-                    if v is None:
-                        loadPars_d['index']=False
-                    else:
-                        loadPars_d['index']=True
-        else:
-            loadPars_d = {}
+        # assert not parName=='', 'must select a valid parameter name'
+        # dtag_d = copy.deepcopy(Model.dtag_d)
+        # if parName in dtag_d:
+        #     """getting strange overwriting bhavior on class"""
+        #     loadPars_d = dict()
+        #     
+        #     #convert
+        #     """not sure why read/write pars are different"""
+        #     for k,v in copy.deepcopy(dtag_d[parName]).items():
+        #         
+        #         if k=='index_col':
+        #             k1 = 'index'
+        #             
+        #             if v is None:
+        #                 v1=False
+        #             else:
+        #                 v1=False #we reset the index
+        #         else:
+        #             k1,v1 = k,v
+        #             
+        #         loadPars_d[k1]=v1
+        #         
+        #                 
+        #                 
+        # else:
+        #     loadPars_d = {}
+        #=======================================================================
+        loadPars_d={'index':False}
         self.feedback.upd_prog(80)
         #=======================================================================
         # #save to file
         #=======================================================================
+        log.debug('writing %s w/ %s \n%s'%(str(df.shape), loadPars_d, df))
         df.to_csv(out_fp, **loadPars_d)
         log.debug('wrote to %s'%out_fp)
         self.feedback.upd_prog(90)
         #=======================================================================
-        # wrap
+        # clean up
         #=======================================================================
         self.pushButton_DF_save.setDisabled(True) #turn the button off
         self.linEdit_DF_new_fp.setText('') #clear the datafile name
+        self.lineEdit_DF_fp.setText('')
+        
+ 
+        self.qproj.removeMapLayer(vlay.id())
         
         log.push('saved modified \'%s\' to %s'%(parName, os.path.basename(out_fp)))
         self.feedback.upd_prog(None)

@@ -804,7 +804,7 @@ class Model(ComWrkr,
         assert dtag in self.raw_d
         df_raw = self.raw_d[dtag]
         assert isinstance(df_raw, pd.DataFrame)
-        assert df_raw.index.name == cid
+        assert df_raw.index.name == cid, 'index name \'%s\' does not match expectations: \'%s\''%(df_raw.index.name, cid)
         df = df_raw.sort_index(axis=0)
         
 
