@@ -59,7 +59,7 @@ class ModelDialog(QtWidgets.QDialog, FORM_CLASS,
 
         self.qproj_setup(iface=iface, **kwargs)
         
-        self.connect_slots()
+        #self.connect_slots()
         
     def connect_slots(self): #connect ui slots to functions 
         #======================================================================

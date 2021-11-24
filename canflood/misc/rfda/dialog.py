@@ -77,7 +77,7 @@ class RfdaDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         self.qproj_setup(iface=iface, **kwargs) #basic dialog worker setup
         
-        self.connect_slots()
+        #self.connect_slots()
         
         
         self.logger.debug('RfdaDialog initilized')

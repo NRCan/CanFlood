@@ -45,7 +45,7 @@ from misc.layerStyles import StylesAction
 
 
 
-class CanFlood:
+class CanFlood(object):
     """
     called by __init__.py 's classFactor method
     """
@@ -191,13 +191,15 @@ class CanFlood:
  
         
 
-    def run(self):
-
-        # show the dialog
-        self.dlg.show()
-        # Run the dialog event loop
-        result = self.dlg.exec_()
-        # See if OK was pressed
-        if result:
-            pass
+#===============================================================================
+#     def run(self):
+# 
+#         # show the dialog
+#         self.dlg.show()
+#         # Run the dialog event loop
+#         result = self.dlg.exec_()
+#         # See if OK was pressed
+#         if result:
+#             pass
+#===============================================================================
         

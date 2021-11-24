@@ -55,7 +55,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #custom setup
 
         self.qproj_setup(iface=iface, **kwargs)
-        self.connect_slots()
+        #self.connect_slots()
         
         self.logger.debug('ResultsDialog init')
         

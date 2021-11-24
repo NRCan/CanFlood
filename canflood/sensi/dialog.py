@@ -72,7 +72,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
 
         self.qproj_setup(iface=iface, **kwargs)
         
-        self.connect_slots()
+        #self.connect_slots()
         
         
     def launch(self): #launch the gui from a plugin (and do some setup)

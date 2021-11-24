@@ -85,18 +85,16 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
         self.qproj_setup(iface=iface, **kwargs)
 
-        """TODO: make these init on first click"""
-        self.vDialog = vDialog(iface) #init and attach vfunc library dialog(connected below)
-        self.RPrepDialog=RPrepDialog(iface)
         
 
-        self.connect_slots()
+        
+
+        #self.connect_slots()
         
         self.logger.debug('BuildDialog initilized')
         
 
-    def connect_slots(self,
-                      rlays=None):
+    def connect_slots(self):
         """
         using the cointaier (dict) self.launch_actions to store functions
             that should be called once the dialog is launched
@@ -104,6 +102,13 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         """
         
         log = self.logger.getChild('connect_slots')
+        
+        #=======================================================================
+        # init children
+        #=======================================================================
+        """TODO: make these init on first click"""
+        self.vDialog = vDialog(self.iface) #init and attach vfunc library dialog(connected below)
+        self.RPrepDialog=RPrepDialog(self.iface)
 
         #======================================================================
         # pull project data
@@ -264,8 +269,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.pushButton_expo_refr.clicked.connect(lambda x: self.listView_expo_rlays.populate_layers())
        
         #populate the widget
-        if not rlays is None: #for debug runs
-            self.listView_expo_rlays.populate_layers(layers=rlays) 
+ 
         self.launch_actions['hazlay selection'] = lambda: self.listView_expo_rlays.populate_layers()
         
         #=======================================================================
@@ -489,10 +493,11 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
         self.pushButton_Validate.clicked.connect(self.run_validate)
 
-            
+        
         #=======================================================================
         # wrap
         #=======================================================================
+        log.debug('complete')
         return
             
 

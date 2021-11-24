@@ -89,24 +89,26 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.setupUi(self)
         
         self.qproj_setup(iface=iface, **kwargs) #basic dialog worker setup
-        self.connect_slots()
+        #self.connect_slots()
 
 
     
-    def launch(self): #launch the gui from a plugin (and do some setup)
-        """called by CanFlood.py menu click
-        should improve load time by moving the connections to after the menu click"""
-        log = self.logger.getChild('launch')
-        for fName, f in self.launch_actions.items():
-            log.debug('%s: %s'%(fName, f))
-            try:
-                f()
-            except Exception as e:
-                log.warning('failed to execute \'%s\' w/ \n    %s'%(fName, e))
-        
- 
-
-        self.show()
+#===============================================================================
+#     def launch(self): #launch the gui from a plugin (and do some setup)
+#         """called by CanFlood.py menu click
+#         should improve load time by moving the connections to after the menu click"""
+#         log = self.logger.getChild('launch')
+#         for fName, f in self.launch_actions.items():
+#             log.debug('%s: %s'%(fName, f))
+#             try:
+#                 f()
+#             except Exception as e:
+#                 log.warning('failed to execute \'%s\' w/ \n    %s'%(fName, e))
+#         
+#  
+# 
+#         self.show()
+#===============================================================================
 
     def connect_slots(self,
                       rlays=None, #set of rasters to populate list w/ (for standalone)

@@ -164,6 +164,8 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
     
     plt_window = False #control whether to launch the plot window
     
+    first_launch=True
+    
     dev=True #handle for development code
     
     
@@ -178,6 +180,12 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
     def launch(self): #placeholder for launching the dialog
         """allows children to customize what happens when called"""
         log = self.logger.getChild('launch')
+        
+        #=======================================================================
+        # launch setup
+        #=======================================================================
+        if self.first_launch:
+            self.connect_slots()
         #=======================================================================
         # #customs
         #=======================================================================
@@ -230,7 +238,7 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
                 
                 
 
-        
+        self.first_launch=False
         self.show()
 
 
