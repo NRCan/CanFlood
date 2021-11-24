@@ -1,0 +1,52 @@
+[parameters]
+name = tut8
+cid = xid
+prec = 4
+ground_water = True     #whether to allow wsl < gel
+felv = ground
+event_probs = ari
+ltail = extrapolate     #EAD extrapolation: left tail treatment code (low prob high damage)
+rtail = 0.5             #EAD extrapolation: right trail treatment (high prob low damage)
+drop_tails = False      #EAD extrapolation: whether to remove the extrapolated values before writing the per-asset results
+integrate = trapz       #integration method to apply: trapz, simps
+as_inun = False
+event_rels = max
+impact_units = $CAD
+apply_miti = False		#whether to apply mitigation algorthihims
+curve_deviation = base
+
+[dmg_fps]
+curves = C:\LS\03_TOOLS\CanFlood\tut_builds\8\20211119\IBI2015_DamageCurves_1119.xls #damage curve library filepath
+finv = C:\LS\03_TOOLS\CanFlood\tut_builds\8\20211119\finv_tut8_32_tut8.csv
+expos = C:\LS\03_TOOLS\CanFlood\tut_builds\8\20211119\expos_tut8_4_32.csv
+gels = C:\LS\03_TOOLS\CanFlood\tut_builds\8\20211119\gels_tut8_1_32.csv
+
+[risk_fps]
+dmgs = C:\Users\cefect\CanFlood\sensi\1124\base\dmgs_tut8_sensi1.csv
+exlikes = #secondary exposure likelihood data filepath
+evals = C:\LS\03_TOOLS\CanFlood\tut_builds\8\20211119\evals_4_tut8.csv
+
+[validation]
+risk1 = False
+dmg2 = TRUE
+risk2 = True
+risk3 = False
+
+[results_fps]
+attrimat02 = 
+attrimat03 = #lvl3 attribution matrix fp (post risk model)
+r_passet = #per_asset results from the risk2 model
+r_ttl = C:\Users\cefect\CanFlood\sensi\1124\base\risk2_tut8_sensi1_ttl.csv
+eventypes = C:\Users\cefect\CanFlood\sensi\1124\base\eventypes_sensi1_tut8.csv
+#'eventypes' file path set from output_etype at 2021-11-24 22.03.33
+
+[plotting]
+color = black           #line color
+linestyle = solid
+linewidth = 2
+alpha = 0.75            #0=transparent 1=opaque
+marker = o
+markersize = 4
+fillstyle = none        #marker fill style
+impactfmt_str = ,.0f     #python formatter to use for formatting the impact results values
+

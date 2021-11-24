@@ -846,6 +846,8 @@ Click **‘Map pFail’**. You should see four polygon layers loaded to your can
 
 These results layers are automatically stylized as failure polygons, showing the event raster name, source dike segment (‘sid’), and failure probability of each feature. Notice the 200-year contains 3-overlapping polygon features corresponding to the three segments with failure here, despite the original ‘dike_influznce_zones’ layer having two features. This mapping of polygons to dike segments is set on the dikes layer in the ‘Influence Area ID Field’ specified on the ‘Setup’ tab (‘ifzID’ in this case). In this way, 1:1 or many:many segment-polygon links can be specified, allowing the user to map each breach probability, or group segments to apply the calculated probabilities to a larger dike ring. See :ref:`Section5.4.1 <Section5.4.1>` for more information on this tool.
 
+.. _Section6.12:
+
 *************************************************
 6.12. Tutorial 7a: Sampling on Complex Geometries
 *************************************************
@@ -939,3 +941,114 @@ To generate a comparison plot of these two scenarios, navigate to the ‘Compare
 .. |se| raw:: html
 
     </strike>
+    
+.. _Section6.13:
+
+*************************************************
+6.13. Tutorial 8a: Sensitivity Analysis
+*************************************************
+
+This tutorial demonstrates *Sensitivity Analysis* workflow (:ref:`Section5.4.5 <Section5.4.5>`). This can be useful for quantifying the sensitivity of your model to each parameter and datafile.
+
+ Begin by downloading the tutorial data from the `tutorials 8 <https://github.com/NRCan/CanFlood/tree/master/tutorials/8>`__ folder and loading it into a new QGIS project:
+ 
+.. fix these
+
+  • *haz_rast*: hazard event rasters with WSL value predictions for the study area for four probabilities.
+
+      o *haz_0050_tut4.tif*
+
+      o *haz_0100_tut4.tif*
+
+      o *haz_0200_tut4.tif*
+
+      o *haz_1000_tut4.tif*
+
+  • *dtm_cT2.tif*: DTM layer (and corresponding stylized layer definition .qlr file)
+
+  • *finv_tut7_polys.gpkg*: flood asset inventory (’finv’) spatial layer (and corresponding stylized layer definition .qlr file)
+  
+  • *CanFlood_tut8.txt*: main model control file
+  
+  
+6.13.1. Setup the Analysis
+==========================
+
+Launch the *Sensitivity Analysis* |targetImage| dialog from the Plugins>CanFlood menu. Navigate to the *Setup* menu, select your working directory, then specify your main model control file and 'Model Level' = 'L2' as shown below:
+
+.. add image
+
+**Click Load** to populate the *Compile* tab.
+
+.. |targetImage| image:: /_static/target.png
+   :align: middle
+   :width: 22
+   
+   
+6.13.2. Configure and Compile the Model Suite
+=============================================
+
+Navigate to the *Compile* tab. It should have been automatically populated with the 'base' values from the control file on the first row, and a duplicate of this on the second row:
+
+.. add first image of Compile tab
+
+Now add two more candidate models by **clicking the Add button**. Notice the model names have been automatically generated, but the remaining fields are identical to the base model. Now we'll modify one parameter or datafile on each candidate to compile the model suite.
+
+For the first perturbation, simply **change the rtail value on 'cand01' to 0.1**. We will configure the remaining two perturbations in the following step. 
+
+To allow us to differentiate the plots we generate in the final step, **click Randomize Colors**. 
+
+Finally, **click Compile Candidates**.
+
+
+6.13.3. Manipulate Datafiles
+============================
+
+On the *DataFiles* tab, select 'cand02' and 'finv' to populate the datafile path with the corresponding datafile. **click Load** to add this datafile as a memory layer to your project.
+
+.. image of DataFiles tab
+
+Now we'll subtract 0.5 m from f0_elvs. **click Open Attribute Table** (or the corresponding button on the QGIS toolbar, or hit 'F6') to pull up the attribute table. Make a mental note of the f0_elv values. Now open the *Field Calculator* (Ctrl + I). Check 'Update Existing Field' and select 'f0_elv' from the combobox. Select the custom 'finv_elv_add' expression function from the 'CanFlood' menu in the middle.  Complete the expression ass shown:
+
+.. image of Field Calculator with completed expression showing:  finv_elv_add(0,-0.5)
+
+**Click OK** to make the change to the field values. Examine the values in the attribute table, they should be 0.5 less than before. 
+
+Back on the 'DataFiles' tab, **click Save Datafile** to overwrite the old csv with the newly changed one. 
+
+For our final perturbation, we'll subtract 0.5 m from the ground elevations ('gels'). Select 'cand03' and 'gels' then **click Load** to load this datafile. Follow a similar procedure as above to setup the *Field Calculator* and enter the formula shown below:
+
+.. second image fo Field Calculator showing: "dtm_tut8" -0.5
+
+**click Save Datafile** to write these changes to the csv.
+
+6.13.4. Run the Suite
+=====================
+
+On the *Run* tab you should see the base model and the three new candidate model control files shown:
+
+.. run tab
+
+**click Run** to bulk run these four CanFlood models.
+
+
+
+6.13.5. Analyze the Results
+===========================
+
+On the *Analysis* tab, you should see the run suite results .pickle loaded, the summary values, and the summary table populated:
+
+.. Analysis tab
+
+**click Plot Risk Curves** to obtain the comparison risk curves for this suite:
+
+
+.. image:: /_static/6_13_5_riskcurve_20211124.svg
+
+From this plot, you can clearly see the influence of the 'rtail' parameter on the risk curve (and the annualized metric). The lowering of the ground elevations and the main floor elevations produced expectedly similar results. 
+
+
+
+
+  
+

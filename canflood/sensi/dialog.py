@@ -544,8 +544,10 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         # mmake display pretty
         #=======================================================================
-        pretty_df = self._pretty_parameters() #retrieve from tableWidget_P
-        tbw.populate(pretty_df)
+        #=======================================================================
+        # pretty_df = self._pretty_parameters() #retrieve from tableWidget_P
+        # tbw.populate(pretty_df)
+        #=======================================================================
         
         #=======================================================================
         # update if we made new datafiles
