@@ -40,7 +40,7 @@
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_16">
       <item>
-       <widget class="QLineEdit" name="lineEdit_wd">
+       <widget class="QLineEdit" name="lineEdit_wdir">
         <property name="placeholderText">
          <string>Specify your working directory</string>
         </property>

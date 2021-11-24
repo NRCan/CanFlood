@@ -10,7 +10,7 @@ helper functions w/ Qgis api
 # imports------------
 #==============================================================================
 #python
-import os, configparser, logging, inspect, copy, datetime, re
+import os, configparser, logging, inspect, copy, datetime, re, warnings
 import pandas as pd
 import numpy as np
 #qgis
@@ -150,7 +150,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             feedback = feedback, 
             **kwargs) #initilzie teh baseclass
         
-        log = self.logger
+ 
         #=======================================================================
         # attachments
         #=======================================================================
@@ -424,6 +424,13 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                   aoi_vlay = None,
                   allow_none=True, #control check in saveselectedfeastures
                   addSpatialIndex=True,
+                  uriParams_d = {'encoding':'System',
+                                    'type':'csv',
+                                    'maxFields':'10000',
+                                    'detectTypes':'yes',
+                                    'geomType':'none',
+                                    'subsetIndex':'no',
+                                    'watchFile':'no'},
                   ):
         
         assert os.path.exists(fp), 'requested file does not exist: %s'%fp
@@ -435,24 +442,41 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         log.debug('loading from %s'%fp)
         
-        vlay_raw = QgsVectorLayer(fp,basefn,providerLib)
+        if providerLib == 'delimitedtext':
+            #constructor
+            uriW = QgsDataSourceUri()
+            for k,v in uriParams_d.items(): 
+                uriW.setParam(k,v)
+    
+    
+            uri = r'file:///' + fp.replace('\\','/') +'?'+ str(uriW.encodedUri(), 'utf-8')
+ 
+       
+ 
+        else:
+            uri = fp
         
+        vlay_raw = QgsVectorLayer(uri,basefn,providerLib)
+        
+        if providerLib == 'delimitedtext':
+            return vlay_raw
         
         
 
         #=======================================================================
         # # checks
         #=======================================================================
-        if not isinstance(vlay_raw, QgsVectorLayer): 
-            raise IOError
+        assert isinstance(vlay_raw, QgsVectorLayer)
+ 
         
         #check if this is valid
         if not vlay_raw.isValid():
             raise Error('loaded vlay \'%s\' is not valid. \n \n did you initilize?'%vlay_raw.name())
         
         #check if it has geometry
-        if vlay_raw.wkbType() == 100:
-            raise Error('loaded vlay has NoGeometry')
+        if not providerLib == 'delimitedtext':
+            if vlay_raw.wkbType() == 100:
+                raise Error('loaded vlay has NoGeometry')
         
         assert isinstance(self.mstore, QgsMapLayerStore)
         
@@ -866,7 +890,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         
         #make sure none of hte field names execeed the driver limitations
-        max_len = self.fieldn_max_d[self.driverName]
+        max_len = fieldn_max_d[self.driverName]
         
         #check lengths
         boolcol = df_raw.columns.str.len() >= max_len
@@ -2893,6 +2917,9 @@ def load_vlay( #load a layer from a file
     
     see instanc emethod
     """
+    
+    warnings.warn("deprecated. migrate to Qcoms.load_vlay ", DeprecationWarning)
+    
     log = logger.getChild('load_vlay') 
     
     

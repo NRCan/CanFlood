@@ -2,6 +2,8 @@
 Created on Mar. 8, 2021
 
 @author: cefect
+
+Tutorial workflows
 '''
 
 from wFlow.scripts import WorkFlow, Session

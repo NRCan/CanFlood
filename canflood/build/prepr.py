@@ -260,15 +260,7 @@ class Preparor(Model, Qcoms):
     def upd_cf_finv(self, out_fp):
         
         assert os.path.exists(self.cf_fp), 'bad cf_fp: %s'%self.cf_fp
-        
-        #=======================================================================
-        # """
-        # writing the filepath to the vector layer wont work...
-        #     often we're working with memory layers
-        #     the transition from spatial to non-spatial and back to spatial losses these connections
-        # """
-        # 
-        #=======================================================================
+ 
         self.set_cf_pars(
             {
             'dmg_fps':(

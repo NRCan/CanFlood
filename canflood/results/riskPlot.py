@@ -41,6 +41,14 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
     inherited by 
         results.compare.Cmpr
         results.attribution.Attr
+        
+    called by
+        results.ResultsDialog.run_plotRisk()
+        
+    usually RiskPlotr.setup() is called to initilize the worker
+        this is a child (Model) method which also calls my prep_model() method
+    
+    
     """
 
     #===========================================================================
@@ -77,15 +85,21 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
         
         self.logger.debug('%s.__init__ w/ feedback \'%s\''%(
             self.__class__.__name__, type(self.feedback).__name__))
+        
+        """this really needs to be cleaned up"""
+        if not hasattr(self, 'impact_name'):
+            self.impact_name = self.impact_units
 
         
     def prep_model(self):
-
+        """
+        called by Model.setup()
         
-        self.set_ttl() #load and prep the total results
+        """
+        self.set_ttl() #load and prep the total results. riskcom.RiskModel. sets impact_name
         
-        #set default plot text
-        self._set_valstr()
+        
+        self._set_valstr() #set default plot text
         
         return 
 

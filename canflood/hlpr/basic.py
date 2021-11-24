@@ -4,6 +4,8 @@ Created on Feb. 7, 2020
 @author: cefect
 
 helper functions w/o qgis api
+
+
 '''
 
 
@@ -17,7 +19,7 @@ helper functions w/o qgis api
 # imports------------
 #==============================================================================
 #python
-import os, configparser, logging, re, datetime
+import os, configparser, logging, re, datetime, warnings
 import pandas as pd
 pd.set_option('display.max_rows',5)
 import numpy as np
@@ -47,8 +49,9 @@ class ComWrkr(object): #common methods for all classes
     
 
     def __init__(self, 
-                 tag='session', 
-                 name=None,
+                 tag='session', #label for the session
+                 name=None, #label for the object
+                 resname=None, 
                  cid='xid', #default used by inventory constructors
                  
                  cf_fp='',
@@ -101,6 +104,14 @@ class ComWrkr(object): #common methods for all classes
         self.today_str = datetime.datetime.now().strftime('%Y-%m-%d %H:%M') #nice for labelling plots
         self.absolute_fp=absolute_fp
         self.cf_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__))) #'C:\\LS\\03_TOOLS\\CanFlood\\_git'
+        
+        
+        # labels
+        if resname is None:
+            resname = '%s_%s_%s'%(self.name, self.tag,  datetime.datetime.now().strftime('%m%d'))
+            """TODO: consolidate this with Modcom.resname"""
+                 
+        self.resname = resname
         #=======================================================================
         # feedback
         #=======================================================================
@@ -207,7 +218,7 @@ class ComWrkr(object): #common methods for all classes
 
         
         
-    def set_cf_pars(self, #update one parameter  control file 
+    def set_cf_pars(self, #update the control file w/ the passed parameters
                   new_pars_d, #new paraemeters 
                     # {section : ({valnm : value } OR string (for notes)})
                   cf_fp = None):
@@ -227,6 +238,7 @@ class ComWrkr(object): #common methods for all classes
         _ = pars.read(cf_fp) #read it from the new location
         
         #loop and make updates
+        cnt = 0
         for section, val_t in new_pars_d.items():
             assert isinstance(val_t, tuple), '\"%s\' has bad subtype: %s'%(section, type(val_t))
             assert section in pars, 'requested section \'%s\' not in the pars!'%section
@@ -239,10 +251,12 @@ class ComWrkr(object): #common methods for all classes
                             'failed to get a str on %s.%s: \'%s\''%(section, valnm, type(value))
                         
                         pars.set(section, valnm, value)
+                        cnt+=1
                         
                 #single values(for notes mostly)
                 elif isinstance(subval, str):
                     pars.set(section, subval)
+                    cnt+=1
                     
                 else:
                     raise Error('unrecognized value type: %s'%type(subval))
@@ -253,7 +267,7 @@ class ComWrkr(object): #common methods for all classes
             pars.write(configfile)
             
         log.info('updated control file w/ %i pars at :\n    %s'%(
-            len(new_pars_d), cf_fp))
+            cnt, cf_fp))
         
         return
     
@@ -363,6 +377,9 @@ class ComWrkr(object): #common methods for all classes
         self.out_fp = out_fp #set for other methods
         
         return out_fp
+    
+    def __enter__(self):
+        return self
     
     def __exit__(self, #destructor
                  *args,**kwargs):
@@ -557,6 +574,7 @@ def linr( #fancy check if left elements are in right elements
     #===========================================================================
     # precheck
     #===========================================================================
+    warnings.warn("replace with set logic", DeprecationWarning)
     if isinstance(ldata_raw, str):
         raise Error('expected array type')
     if isinstance(rdata_raw, str):

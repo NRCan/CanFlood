@@ -8,26 +8,15 @@ from shutil import copyfile
 
 from PyQt5 import uic, QtWidgets
 
-
-#from PyQt5.QtCore import QSettings, QTranslator, QCoreApplication, QObject
-#from PyQt5.QtGui import QIcon
+ 
 from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget
 
-# Initialize Qt resources from file resources.py
-#from .resources import *
-# Import the code for the dialog
+ 
 
-
-
-# User defined imports
+ 
 from qgis.core import QgsMapLayerProxyModel, QgsVectorLayer
-#from qgis.analysis import *
-import qgis.utils
-import processing
-
-
-import numpy as np
-import pandas as pd
+ 
+ 
 
 
 #==============================================================================
@@ -46,7 +35,9 @@ from hlpr.basic import force_open_dir
 from hlpr.exceptions import QError as Error
 
 
-# This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
+#===============================================================================
+# load qt ui
+#===============================================================================
 ui_fp = os.path.join(os.path.dirname(__file__), 'model.ui')
 assert os.path.exists(ui_fp)
 FORM_CLASS, _ = uic.loadUiType(ui_fp)
@@ -54,6 +45,10 @@ FORM_CLASS, _ = uic.loadUiType(ui_fp)
 
 class ModelDialog(QtWidgets.QDialog, FORM_CLASS,  
                        hlpr.plug.QprojPlug):
+    
+    icon_fn = 'house_flood.png'
+    icon_name = 'Model'
+    icon_location = 'toolbar'
     
     def __init__(self, iface, parent=None, **kwargs):
         """Constructor."""
@@ -64,10 +59,9 @@ class ModelDialog(QtWidgets.QDialog, FORM_CLASS,
 
         self.qproj_setup(iface=iface, **kwargs)
         
-        self.connect_slots()
+        #self.connect_slots()
         
-    def connect_slots(self):
-        """connect ui slots to functions"""
+    def connect_slots(self): #connect ui slots to functions 
         #======================================================================
         # general----------------
         #======================================================================
@@ -76,13 +70,15 @@ class ModelDialog(QtWidgets.QDialog, FORM_CLASS,
         
         #connect to status label
         self.logger.statusQlab=self.progressText
-        self.logger.statusQlab.setText('BuildDialog initialized')
+        self.logger.statusQlab.setText('ModelDialog initialized')
         
         #======================================================================
         # setup-----------
         #======================================================================
-        #control file
-        #CanFlood Control 
+        #=======================================================================
+        # #control file
+        #=======================================================================
+ 
         self.pushButton_cf.clicked.connect(
                 lambda: self.fileSelect_button(self.lineEdit_cf_fp, 
                                           caption='Select Control File',
@@ -309,6 +305,7 @@ class ModelDialog(QtWidgets.QDialog, FORM_CLASS,
         #======================================================================
         # plots
         #======================================================================
+        #for each y1lab, run plot_riskCurve
         self._risk_plots(model, res_ttl,
             {'AEP':self.checkBox_r2_aep,'impacts':self.checkBox_r2_ari},
             )
@@ -321,7 +318,7 @@ class ModelDialog(QtWidgets.QDialog, FORM_CLASS,
         model.output_ttl() #risk results
         model.output_etype() #event metadata
         
-        out_fp2=''
+ 
         if not res_df is None:
             out_fp2= model.output_passet()
             

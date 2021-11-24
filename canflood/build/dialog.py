@@ -59,6 +59,10 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     
     event_name_set = [] #event names
     
+    icon_fn = 'Andy_Tools_Hammer_Spanner_23x23.png'
+    icon_name = 'Build'
+    icon_location = 'toolbar'
+    
 
     def __init__(self, iface, parent=None, **kwargs):
         #=======================================================================
@@ -81,17 +85,16 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
         self.qproj_setup(iface=iface, **kwargs)
 
-        self.vDialog = vDialog(iface) #init and attach vfunc library dialog(connected below)
-        self.RPrepDialog=RPrepDialog(iface)
         
 
-        self.connect_slots()
+        
+
+        #self.connect_slots()
         
         self.logger.debug('BuildDialog initilized')
         
 
-    def connect_slots(self,
-                      rlays=None):
+    def connect_slots(self):
         """
         using the cointaier (dict) self.launch_actions to store functions
             that should be called once the dialog is launched
@@ -99,6 +102,13 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         """
         
         log = self.logger.getChild('connect_slots')
+        
+        #=======================================================================
+        # init children
+        #=======================================================================
+        """TODO: make these init on first click"""
+        self.vDialog = vDialog(self.iface) #init and attach vfunc library dialog(connected below)
+        self.RPrepDialog=RPrepDialog(self.iface)
 
         #======================================================================
         # pull project data
@@ -129,7 +139,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             but would be a lot of work to move it off the logger
             and not sure what the benefit would be
             
-            see hlpr.plug.logger._loghlp()
+ 
         """
         self.logger.statusQlab=self.progressText #connect to the progress text
         #self.logger.statusQlab.setText('BuildDialog initialized')
@@ -259,8 +269,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.pushButton_expo_refr.clicked.connect(lambda x: self.listView_expo_rlays.populate_layers())
        
         #populate the widget
-        if not rlays is None: #for debug runs
-            self.listView_expo_rlays.populate_layers(layers=rlays) 
+ 
         self.launch_actions['hazlay selection'] = lambda: self.listView_expo_rlays.populate_layers()
         
         #=======================================================================
@@ -484,10 +493,11 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
         self.pushButton_Validate.clicked.connect(self.run_validate)
 
-            
+        
         #=======================================================================
         # wrap
         #=======================================================================
+        log.debug('complete')
         return
             
 
@@ -502,7 +512,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # #call the common
         #=======================================================================
-        self._set_setup(set_cf_fp=set_cf_fp)
+        self._set_setup(set_cf_fp=set_cf_fp) #resets inherit_fieldNames
         self.inherit_fieldNames.append('init_q_d')
         #=======================================================================
         # custom setups
@@ -583,10 +593,8 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     # ACTIONS------
     #===========================================================================
 
-    def build_scenario(self): #'Generate' on the setup tab
+    def build_scenario(self): # Generate a CanFlood project from scratch
         """
-        Generate a CanFlood project from scratch
-        
         This tab facilitates the creation of a Control File from user specified parameters and inventory, 
             as well as providing general file control variables for the other tools in the toolset.
             
@@ -1254,18 +1262,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.logger.push('lisamp finished')    
         
         return
-        
-    def _pop_el_table(self): #developing the table widget
-        
-
-        l = ['e1', 'e2', 'e3']
-        tbl = self.fieldsTable_EL
-        tbl.setRowCount(len(l)) #add this many rows
-        
-        for rindx, ename in enumerate(l):
-            tbl.setItem(rindx, 0, QTableWidgetItem(ename))
-            
-        self.logger.push('populated likelihoods table with event names')
+ 
             
             
     

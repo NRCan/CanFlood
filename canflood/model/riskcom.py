@@ -255,9 +255,10 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             which is not great for data manipulation
         here we clean it up and only take those for plotting
         
-        see also Artr.get_ttl()
+        see also 
+            RiskModel.get_ttl()
             Model._fmt_resTtl()
-            riskPlot.load_ttl()
+ 
         """
         
  
@@ -286,6 +287,9 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         
         """
         TODO: harmonize this with 'impact_units' loaded from control file
+            generally set (in cf) by model.dmg2.Dmg2.run(set_impactUnits=True)
+            or read from control file
+            then written to r_ttl 
         """
         self.impact_name = list(df1.columns)[1] #get the label for the impacts
         
@@ -1246,10 +1250,8 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         
         """
         summary risk results plotter
-        
-        This is similar to what's  on modcom.risk_plot()
-        
-        self.impactfmt_str
+            see self._lineToAx() for formatting
+ 
         """
         
         #======================================================================
@@ -1267,6 +1269,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             
         if res_ttl is None: res_ttl = self.data_d['r_ttl']
         if plotTag is None: plotTag=self.tag
+        log.debug('on %s'%res_ttl)
         #=======================================================================
         # prechecks
         #=======================================================================
@@ -1369,8 +1372,16 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         if lineLabel is  None: lineLabel=self.tag
 
         """
+        self.impStyle_d
         plt.show()
         """
+        #check values
+        if hatch_f:
+            d = {**{'h_color':h_color, 'h_alpha':h_alpha}, **impStyle_d}
+        else:
+            d= impStyle_d
+        for attn, att in d.items():
+            assert not att is None, 'got none on %s'%attn
         #======================================================================
         # fill the plot
         #======================================================================

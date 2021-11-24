@@ -34,8 +34,8 @@ class Plotr(ComWrkr):
     #===========================================================================
     # parameters from control file
     #===========================================================================
-    #[plotting]
-
+    """some parents are not models... so these need to live here
+    also living on Model"""
     color = 'black'
     linestyle = 'dashdot'
     linewidth = 2.0
@@ -144,7 +144,7 @@ class Plotr(ComWrkr):
 
         
         
-        self.logger.debug('init finished')
+        self.logger.debug('Plotr.__init__ finished')
         
         """call explicitly... sometimes we want lots of children who shouldnt call this
         self._init_plt()"""
@@ -160,7 +160,7 @@ class Plotr(ComWrkr):
         
         """
 
-        
+        self.logger.debug('_init_plt')
         #=======================================================================
         # imports
         #=======================================================================
@@ -235,21 +235,36 @@ class Plotr(ComWrkr):
         
         usually called twice
             1) before loading the control file, to build a default
+                Plotr.__init__()
+                
             2) after, to update values
+                Model.init_model()
+            
+            
+        default class values are used, unless matching parameters are passed in teh control file
+            there are no checks on these ploting parameters
+            
+        TODO: find a better way to not have to run this so many times
         """
         #assert not self.cfPars_d is None, 'load the control file first!'
-        impStyle_d = dict()
+        d = dict()
         
         
         #loop through the default values
-        
         for k, v in self.impStyle_d.items():
             if hasattr(self, k):
-                impStyle_d[k] = getattr(self, k)
+                d[k] = getattr(self, k)
             else: #just use default
-                impStyle_d[k] = v
+                d[k] = v
                 
-        self.impStyle_d = impStyle_d
+        #re-insert hashtags
+        if 'color' in d:
+            d['color'] = d['color'].replace('?','#') 
+        
+                
+        self.impStyle_d = d
+        
+ 
         
         
 

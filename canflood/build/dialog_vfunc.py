@@ -101,7 +101,7 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
         """setup to run outside qgis
         self.qproj_setup() #basic dialog worker setup"""
         
-        if plogger is None: plogger = hlpr.plug.logger(self) 
+        if plogger is None: plogger = hlpr.plug.plugLogger(self) 
         self.logger=plogger
         
 
