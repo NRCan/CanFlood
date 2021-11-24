@@ -7,7 +7,7 @@
     <file>icons/eye_23x23.png</file>
   </qresource>
   <qresource prefix="icons">
-    <file>icons/arrow-left-circle.png</file>
-    <file>icons/arrow-right-circle.png</file>
+    <file>icons/arrow-down-circle.svg</file>
+    <file>icons/arrow-up-circle.svg</file>
   </qresource>
 </RCC>

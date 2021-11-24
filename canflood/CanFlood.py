@@ -15,7 +15,7 @@ from .resources import *
 
 import weakref
 import os.path
-from qgis.core import Qgis, QgsMessageLog
+from qgis.core import Qgis, QgsMessageLog, QgsExpression
 
 
 
@@ -185,21 +185,16 @@ class CanFlood(object):
             self.iface.removePluginMenu(self.menu_name, action)
  
         log.debug('unloaded %i from the menu: %s'%(len(d), list(d.keys())))
-            
- 
-            
- 
         
-
-#===============================================================================
-#     def run(self):
-# 
-#         # show the dialog
-#         self.dlg.show()
-#         # Run the dialog event loop
-#         result = self.dlg.exec_()
-#         # See if OK was pressed
-#         if result:
-#             pass
-#===============================================================================
+        #=======================================================================
+        # unload expression functions
+        #=======================================================================
+        from misc.expressionFunctions import all_funcs_l
+        for func in all_funcs_l:
+            QgsExpression.unregisterFunction(func.name())
+            
+        log.debug('unloaded %i expression functions'%len(all_funcs_l))
+            
+ 
+ 
         

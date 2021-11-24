@@ -12,22 +12,24 @@ import os,  os.path, time, datetime
 
 
 from PyQt5 import uic, QtWidgets
-from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem, QWidget, QHeaderView
+from PyQt5.QtWidgets import   QTableWidgetItem, QWidget, QHeaderView
  
 from PyQt5.QtCore import Qt
 
 
-from qgis.core import QgsMapLayerProxyModel, QgsVectorLayer
+from qgis.core import QgsExpression, QgsVectorLayer
 
 from hlpr.exceptions import QError as Error
 #===============================================================================
 # customs
 #===============================================================================
 import hlpr.plug
+import misc.expressionFunctions as expF
 
 import numpy as np
 import pandas as pd
-
+from hlpr.basic import view
+from hlpr.Q import vlay_get_fdf
 
 #===============================================================================
 # load qt ui
@@ -45,8 +47,6 @@ from sensi.srun import SensiSessRunner, SensiSessResults
 
 from model.modcom import Model #for data loading parameters
 
-from sensi.expressionFunctions import addToInterface #called as a launch action
-
  
  
 
@@ -55,13 +55,14 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
     
     colorMap = 'hsv' #cyclical
     
-    datafile_df = None #data loaded to the datafile tab
+ 
+    dataFile_vlay = None #loaded datafile vlay
     
     
     #action parameters
     icon_fn = 'target.png'
     icon_name = 'Sensitivity'
-    icon_location = 'menu'
+    icon_location = 'toolbar'
     
     def __init__(self, iface, parent=None, **kwargs):
         """Constructor."""
@@ -75,20 +76,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #self.connect_slots()
         
         
-    def launch(self): #launch the gui from a plugin (and do some setup)
-        """called by CanFlood.py menu click
-        should improve load time by moving the connections to after the menu click"""
-        log = self.logger.getChild('launch')
-        for fName, f in self.launch_actions.items():
-            log.debug('%s: %s'%(fName, f))
-            try:
-                f()
-            except Exception as e:
-                log.warning('failed to execute \'%s\' w/ \n    %s'%(fName, e))
-        
  
-
-        self.show()
         
         
     def connect_slots(self, #connect ui slots to functions 
@@ -160,33 +148,25 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         # DataFiles------------
         #=======================================================================
-        #expression functions
-        self.launch_actions['expressionFunctions'] = addToInterface
+ 
         #=======================================================================
         # selection 
         #=======================================================================
-        #populate base data file parameter name dropdown
-        def set_DF_fp(): #set the datafile path when the combobox changes
-            #get value on combo box
-            parName = self.comboBox_DF_par.currentText()
-            #get base parameters
-            pars_d = self.tableWidget_P.get_values('base', axis=0)
-            data_fp = pars_d[parName]
-            
-            #empty check
-            if pd.isnull(data_fp):
-                self.logger.push('got null filepath for \'%s\''%data_fp)
-                return
-            
-            assert isinstance(data_fp, str), 'got bad filepath for %s'%parName
-            assert os.path.exists(data_fp), 'requested file path for \'%s\' does not exist'%parName
-            
-            #set on the lineEdit
-            self.lineEdit_DF_fp.setText(data_fp)
- 
-        self.comboBox_DF_par.activated.connect(set_DF_fp)
+        #candidate and parameter dropdowns
+        """each time either of these change make a new guess at the source
+        candidateName:
+            enabled when we compile_candidates
+        parameter:
+            enabled when we load the master
+        """
+        self.comboBox_DF_candName.setDisabled(True) #activated when a enw datafile is loaded
+        self.comboBox_DF_candName.activated.connect(self._dataFiles_sourceFile)
+
         
-        self.pushButton_DF_load.clicked.connect(self.datafiles_load)
+        self.comboBox_DF_par.setDisabled(True) #activated when a enw datafile is loaded
+        self.comboBox_DF_par.activated.connect(self._dataFiles_sourceFile)
+        
+
         
         #browse button
         self.pushButton_DF_browse.clicked.connect(
@@ -196,23 +176,46 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
                                           filters="Data Files (*.csv)")
                             )
         
-        self.pushButton_DF_browse.clicked.connect(
-            lambda: self.comboBox_DF_par.setCurrentIndex(-1)
-            )
-        
-        #=======================================================================
-        # field selection
-        #=======================================================================
-        hlpr.plug.bind_TableWidget(self.tableWidget_DF, log)
-        
-        self.pushButton_DF_plot.clicked.connect(self.datafiles_plot)
-        
  
-        def openFieldCalculator():
-            action = self.iface.actionOpenFieldCalculator()
+        
+        #loader button
+        self.pushButton_DF_load.clicked.connect(self.datafiles_load)
+        
+        #=======================================================================
+        # Data Manipulations
+        #=======================================================================
+        #hlpr.plug.bind_TableWidget(self.tableWidget_DF, log)
+        
+        #self.pushButton_DF_plot.clicked.connect(self.datafiles_plot)
+        
+        def triggerAction(attn):
+            action = getattr(self.iface, attn)()
             action.trigger()
+ 
+ 
             
-        self.pushButton_DF_apply.clicked.connect(openFieldCalculator)
+        self.pushButton_DF_apply.clicked.connect(lambda: triggerAction('actionOpenFieldCalculator'))
+        self.pushButton_DF_attTable.clicked.connect(lambda: triggerAction('actionOpenTable'))
+        
+        #=======================================================================
+        # Generating New Files
+        #=======================================================================
+        self.pushButton_DF_browse2.clicked.connect(
+                lambda: self.newFileSelect_button(self.linEdit_DF_new_fp, 
+                                          caption='Select New Data Filename',
+                                          path = self.lineEdit_wdir.text(),
+                                          filters="Data Files (*.csv)")
+                            )
+        
+        self.pushButton_DF_save.clicked.connect(self.datafiles_save)
+        #=======================================================================
+        # expression functions
+        #=======================================================================
+        
+        for func in [expF.finv_elv_add, expF.finv_scale_add]:
+ 
+            QgsExpression.registerFunction(func) 
+ 
         
         #=======================================================================
         # Analyze----------
@@ -235,12 +238,14 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         
         hlpr.plug.bind_TableWidget(self.tableWidget_A, log)
         
+
+            
         
         
         
         
         #=======================================================================
-        # dev
+        # dev-----------
         #=======================================================================
         if self.dev:
             self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\tut_builds\8\20211119\CanFlood_tut8.txt')
@@ -372,6 +377,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #add these to the combo box
         self.comboBox_DF_par.addItems(list(datafile_pars_d.keys()))
         self.comboBox_DF_par.setCurrentIndex(-1)
+        self.comboBox_DF_par.setDisabled(False)
         
  
         
@@ -530,11 +536,37 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
             
         log.info('compiled %i candidate models'%len(meta_lib))
         self.feedback.upd_prog(50)
+        
+        
         #=======================================================================
         # mmake display pretty
         #=======================================================================
-        pretty_df = self._pretty_parameters()
+        pretty_df = self._pretty_parameters() #retrieve from tableWidget_P
         tbw.populate(pretty_df)
+        
+        #=======================================================================
+        # update if we made new datafiles
+        #=======================================================================
+        if self.checkBox_P_copyData.isChecked():
+            
+            #collect the new parameters
+            newPars_d = {k:dict() for k in meta_lib.keys()} #empty container
+            for mtag, meta_d in meta_lib.items():
+                for sectName, val_d in meta_d['pars_d'].items():
+                    if not sectName.endswith('_fps'): continue #skip these
+                    
+                    #clear the blanks
+                    d = {k:v for k,v in val_d.items() if not v==''}
+                    
+                    newPars_d[mtag].update(d)
+                    
+            #add these to the table
+            df_raw1 = tbw.get_df() 
+ 
+            df1 = df_raw1.join(pd.DataFrame.from_dict(newPars_d).T)
+ 
+            tbw.populate(df1)
+
         
        
         self.feedback.upd_prog(90)
@@ -546,10 +578,27 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         cf_fp_d ={**{'base':self.cf_fp}, **cf_fp_d} #add the base
         cf_fp_d = {k:{'cf_fp':v} for k,v in cf_fp_d.items()}
         
-        self._change_tab('tab_run')
+        
         self.tableWidget_R.populate(pd.DataFrame.from_dict(cf_fp_d).T)
         
-
+        #=======================================================================
+        # update datFiles
+        #=======================================================================
+        
+        #candidate name
+ 
+        self.comboBox_DF_candName.setDisabled(False)
+        self.comboBox_DF_candName.clear()
+        head_d = self.tableWidget_P.get_headers(axis=0)
+        del head_d['base'] #never want this
+        self.comboBox_DF_candName.addItems(list(head_d.keys()))
+        self.comboBox_DF_candName.setCurrentIndex(-1)
+        
+        """parameters are handled when the master datafile is loaded"""
+        
+        
+        
+        self._change_tab('tab_dataFiles')
         self.feedback.upd_prog(None)
  
         
@@ -757,7 +806,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
     def datafiles_load(self): #load a data file
         log = self.logger.getChild('datafiles_load')
         self.set_setup(set_cf_fp=False)
-        
+ 
         #=======================================================================
         # check parameter
         #=======================================================================
@@ -775,7 +824,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         if not parName in validPars_d:
             log.error('\'%s\' not a valid parameter'%parName)
             return
-        
+ 
         #=======================================================================
         # #retrieve from  ui and check
         #=======================================================================
@@ -800,7 +849,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         # load
         #=======================================================================
         #retrieve loading parameters
-        
+        self.feedback.upd_prog(20)
         dtag_d = Model.dtag_d
         if parName in dtag_d:
             loadPars_d = dtag_d[parName]
@@ -810,35 +859,127 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         df_raw = pd.read_csv(fp, **loadPars_d)
         
         """use the field calculator
-        #=======================================================================
-        # populate
-        #=======================================================================
-        tbw = self.tableWidget_DF
  
-        tbw.populate(df_raw)
-        
-
-        #=======================================================================
-        # store
-        #=======================================================================
-        self.datafile_df = df_raw.copy()
         """
-        
+        self.feedback.upd_prog(40)
         #=======================================================================
         # load to gui
         #=======================================================================
         #vlay_raw = self.load_vlay(fp, logger=log, providerLib='delimitedtext', addSpatialIndex=False)
         vlay = self.vlay_new_df2(df_raw, logger=log, layname=os.path.splitext(os.path.basename(fp))[0])
         self.qproj.addMapLayer(vlay, True)  
- 
         
-        log.info('popluated DataFiles table w/ %s and loaded vlay \'%s\''%(str(df_raw.shape), vlay.name()))
+        self.dataFile_vlay = vlay #attach to self for saving
+        
+        log.info('loaded %s'%vlay.name())
+        
+        self.feedback.upd_prog(90)
+        #=======================================================================
+        # handle siblings
+        #=======================================================================
+        #set filepath on the sink
+        self.linEdit_DF_new_fp.setText(fp)
+        
+        #activate the save button
+        self.pushButton_DF_save.setDisabled(False)
+        self.feedback.upd_prog(None)
+        
         return
+    
+    def _dataFiles_sourceFile(self): #set the datafile path when the combobox changes
  
- 
-    def datafiles_plot(self):
-        self.logger.error('not implemented')
+        #get value on combo box
+        parName = self.comboBox_DF_par.currentText()
+        candName = self.comboBox_DF_candName.currentText()
         
+        for v in [parName, candName]:
+            if v=='':
+                return
+        
+        #retrieve filepath
+        pars_d = self.tableWidget_P.get_values(candName, axis=0)
+        assert parName in pars_d, 'failed to get \'%s\' for \'%s\''%(parName, candName)
+        data_fp = pars_d[parName]
+        
+        #empty check
+        if pd.isnull(data_fp):
+            self.logger.push('got null filepath for \'%s\''%data_fp)
+            return
+        
+        assert isinstance(data_fp, str), 'got bad filepath for %s'%parName
+        assert os.path.exists(data_fp), 'requested file path for \'%s\' does not exist'%parName
+        
+        #set on the source lineedit
+        self.lineEdit_DF_fp.setText(data_fp)
+        
+        """setting the sink filepath once the user clicks Load"""
+        
+    def datafiles_save(self): #save the datafile
+        log = self.logger.getChild('datafiles_save')
+        self.set_setup(set_cf_fp=False)
+        self.feedback.upd_prog(10)
+        
+        #retrieve datavlay
+        vlay = self.dataFile_vlay
+        assert isinstance(vlay, QgsVectorLayer), 'must load a datafile'
+        
+        #get the output 
+        out_fp = self.linEdit_DF_new_fp.text()
+        assert isinstance(out_fp, str), 'must provide a valid outpath'
+        assert out_fp.endswith('.csv'), 'must specify a csv file'
+        #=======================================================================
+        # #retrieve data
+        #=======================================================================
+        df = vlay_get_fdf(vlay, logger=log)
+        
+        self.feedback.upd_prog(50)
+        #=======================================================================
+        # write data
+        #=======================================================================
+        #retrieve loading parameters
+        parName = self.comboBox_DF_par.currentText()
+        assert not parName=='', 'must select a valid parameter name'
+        dtag_d = Model.dtag_d
+        if parName in dtag_d:
+            loadPars_d = dtag_d[parName]
+            
+            #convert
+            """not sure why read/write pars are different"""
+            for k,v in loadPars_d.copy().items():
+                
+                coln = 'index_col'
+                if k==coln:
+                    
+                    del loadPars_d[coln]
+                    
+                    if v is None:
+                        loadPars_d['index']=False
+                    else:
+                        loadPars_d['index']=True
+        else:
+            loadPars_d = {}
+        self.feedback.upd_prog(80)
+        #=======================================================================
+        # #save to file
+        #=======================================================================
+        df.to_csv(out_fp, **loadPars_d)
+        log.debug('wrote to %s'%out_fp)
+        self.feedback.upd_prog(90)
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        self.pushButton_DF_save.setDisabled(True) #turn the button off
+        self.linEdit_DF_new_fp.setText('') #clear the datafile name
+        
+        log.push('saved modified \'%s\' to %s'%(parName, os.path.basename(out_fp)))
+        self.feedback.upd_prog(None)
+        return
+        
+        
+
+ 
+ 
+ 
         
         
  

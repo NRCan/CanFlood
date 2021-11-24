@@ -396,6 +396,45 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
         
         self.logger.info('user selected: \n    %s'%fp)
         
+    def newFileSelect_button(self,
+                      lineEdit, #text bar where selected file should be displayed
+                      caption = 'Specify new file name', #title of box
+                      path = None,
+                      filters = "All Files (*)",
+                      qfd = QFileDialog.getSaveFileName, #dialog to launch
+                             ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if path is None:
+            path = os.getcwd()
+        
+        if not os.path.exists(path):
+            path = os.getcwd()
+            
+        #ask the user for the path
+        """
+        using the Dialog instance as the QWidge parent
+        """
+         
+        fp = qfd(self, caption, path, filters)
+        
+        #just take the first
+        if len(fp) == 2:
+            fp = fp[0]
+        
+        #see if they picked something
+        if fp == '':
+            self.logger.warning('user failed to make a selection. skipping')
+            return 
+        
+        #update the bar
+        lineEdit.setText(fp)
+        
+        self.logger.info('user selected: \n    %s'%fp)
+        
+        
     def mfcb_connect(self, #helper to update a field combo box
                            mfcb, #mFieldComboBox
                            layer, #layer to set in the combo box

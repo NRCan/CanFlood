@@ -285,7 +285,7 @@ class SensiConstructor(SensiShared):
             
  
  
-            meta_lib[mtag] = {'cf_fp':cf_fp, 'name':pars_d['name'], 'new_pars':len(pars_d)-1}
+            meta_lib[mtag] = {'cf_fp':cf_fp, 'name':pars_d['name'], 'new_pars':len(pars_d)-1, 'pars_d':pars_d3}
             
         #=======================================================================
         # wrap
