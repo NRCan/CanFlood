@@ -46,6 +46,10 @@ FORM_CLASS, _ = uic.loadUiType(ui_fp)
 class ModelDialog(QtWidgets.QDialog, FORM_CLASS,  
                        hlpr.plug.QprojPlug):
     
+    icon_fn = 'house_flood.png'
+    icon_name = 'Model'
+    icon_location = 'toolbar'
+    
     def __init__(self, iface, parent=None, **kwargs):
         """Constructor."""
         super(ModelDialog, self).__init__(parent)

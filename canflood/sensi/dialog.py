@@ -57,6 +57,12 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
     
     datafile_df = None #data loaded to the datafile tab
     
+    
+    #action parameters
+    icon_fn = 'target.png'
+    icon_name = 'Sensitivity'
+    icon_location = 'menu'
+    
     def __init__(self, iface, parent=None, **kwargs):
         """Constructor."""
         super(SensiDialog, self).__init__(parent) #init QtWidgets.QDialog

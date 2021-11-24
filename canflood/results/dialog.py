@@ -41,6 +41,11 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     
     r_passet = '' #needed for typesetting from parameter file
     
+    #action parameters
+    icon_fn = 'eye_23x23.png'
+    icon_name = 'Results'
+    icon_location = 'toolbar'
+    
     def __init__(self, iface, parent=None, **kwargs):
 
         super(ResultsDialog, self).__init__(parent)

@@ -60,11 +60,16 @@ FORM_CLASS, _ = uic.loadUiType(ui_fp)
 class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
 
     groupName = 'CanFlood.Dikes'
+    
+    #action parameters
+    icon_fn = 'dike.png'
+    icon_name = 'Dikes'
+    icon_location = 'menu'
 
     def __init__(self, 
                  iface, 
                  parent=None,
-                 plogger=None,
+ 
                  **kwargs):
         """
         called during startup by CanFlood.__init__
@@ -83,8 +88,8 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         self.setupUi(self)
         
-        self.qproj_setup(iface=iface, plogger=plogger) #basic dialog worker setup
-        self.connect_slots(**kwargs)
+        self.qproj_setup(iface=iface, **kwargs) #basic dialog worker setup
+        self.connect_slots()
 
 
     

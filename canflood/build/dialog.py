@@ -59,6 +59,10 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     
     event_name_set = [] #event names
     
+    icon_fn = 'Andy_Tools_Hammer_Spanner_23x23.png'
+    icon_name = 'Build'
+    icon_location = 'toolbar'
+    
 
     def __init__(self, iface, parent=None, **kwargs):
         #=======================================================================

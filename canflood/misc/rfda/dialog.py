@@ -25,7 +25,7 @@ from qgis.core import *
 
 #==============================================================================
 # custom imports
-#==============================================================================
+#==============================================================================w
 
 
 
@@ -51,13 +51,18 @@ FORM_CLASS, _ = uic.loadUiType(ui_fp)
 # class objects-------
 #===============================================================================
 
-class rDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
+class RfdaDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     
-    def __init__(self, iface, parent=None):
+    #action parameters
+    icon_fn = 'rfda.png'
+    icon_name = 'Results'
+    icon_location = 'menu'
+    
+    def __init__(self, iface, parent=None, **kwargs):
         """these will only ini tthe first baseclass (QtWidgets.QDialog)
         
         required"""
-        super(rDialog, self).__init__(parent) #only calls QtWidgets.QDialog
+        super(RfdaDialog, self).__init__(parent) #only calls QtWidgets.QDialog
 
         self.setupUi(self)
         
@@ -70,12 +75,12 @@ class rDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
         self.iface = iface
         
-        self.qproj_setup() #basic dialog worker setup
+        self.qproj_setup(iface=iface, **kwargs) #basic dialog worker setup
         
         self.connect_slots()
         
         
-        self.logger.debug('rDialog initilized')
+        self.logger.debug('RfdaDialog initilized')
         
 
     def connect_slots(self):
