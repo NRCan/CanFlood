@@ -859,6 +859,46 @@ The QGIS ‘Styling Manager’ |stylingManager| provides an interface for organi
 5.4.5. Sensitivity Analysis
 ===========================
 
-CanFlood's *Sensitivity Analysis* dialog provides tools for performing  sensitivity analysis on a L1 or L2 CanFlood model. This can be helpful in understanding and communicating the uncertainty in your model, as well as help identify which parameters should be prioritized during data collection. To use this toolset, the user must first provide a 'base' model from which to perform the analysis on. From this base model, the Sensitivity Analysis toolset can be used to: 1) construct a suite of candidate models, where each candidate has a single parameter or dataFile perturbation; 2) run the new model suite; then 3) evaluate the effect of each parameter perturbation on the annualized impact metric ('ead_tot'). 
+CanFlood's *Sensitivity Analysis* |targetImage| dialog provides a workflow and tools for performing  sensitivity analysis on a L1 or L2 CanFlood model. This can be helpful in understanding and communicating the uncertainty in your model, as well as help identify which parameters should be prioritized during data collection. To use this toolset, the user must first provide a 'base' model from which to perform the analysis on. From this base model, the Sensitivity Analysis toolset can be used to: 1) construct a suite of candidate models, where each candidate has a single parameter or dataFile perturbation; 2) run the new model suite; then 3) evaluate the effect of each parameter perturbation on the annualized impact metric ('ead_tot'). 
+
+.. |targetImage| image:: /_static/target.png
+   :align: middle
+   :width: 22
+
+To facilitate this analysis, the following tabs are provided:
+   
+   1) Setup the analysis and load the control file
+
+   2) Assemble, configure, and compile the candidate model suite
+
+   3) Manipulate data files (optional)
+
+   4) Run the candidate suite
+
+   5) Analyze the results
+
+**Compile**
+
+This tab provides a tabular readout of the control file parameters for each of your candidate models. To populate the table, first *Load* a main control file from the *Setup* tab. Additional candidates can be added and removed using the corresponding buttons. Parameter values can be edited directly in the table; while a convenience method to randomize all the colors is provided (this creates hex color strings readable by matplotlib). It's a good idea to provide separate colors for each candidate for your later work on the *Analysis* tab (see below).
+
+To construct each of these candidate models (in their own sub-directory), use the *Compile Candidates* button. This also activates the *DataFiles* tab and populates the *Run* tab with each of the compiled control files. Generally, users will want to create separate copies of each datafile (rather than have each candidate point back to the datafiles of the main model). This allows the sensitivity of the annualized metric to the data files to be examined by manipulating each duplicated datafile (e.g., adding 1m to all heights). 
+
+**DataFiles**
+
+The *DatFiles* tab makes it easier to manipulate candidate data files. Once all of the candidates have been compiled (i.e., copied into their own directories), each data file can be accessed through the *Candidate Name* and *Parameter* combo boxes. These will populate the data filepath automatically. The datafile can then be loaded into the project (as a memory layer without geometry) from where the fields can be manipulated using the QGIS's built-in Attribute Table and Field Calculator. Custom expression functions are also pre-loaded under the 'CanFlood' menu in the Field Calculator. Once the desired manipulation to the attribute values is applied, the *Save Datafile* button can be used to write the memory layer back to a csv.
+
+**Run**
+
+The *Run* tab displays the control file paths of each candidate model loaded by the *Compile Candidates* command. This model suite can be run in bulk using the *Run* button. The results of this bulk-run are stored to a python .pickle file which can be saved for later and loaded in the *Analysis* tab.
+
+
+**Analysis**
+
+The *Analysis* tab summarizes the outputs from the bulk-run loaded from the python .pickle (see previous section). The table shows some simple statistics, the parameters that were perturbed, and the rank of the candidate model. The rank corresponds to the sensitivity of the annualized metric (ead_tot) to the perturbed parameter, where the rank=1 candidate yielded the largest difference from the base model.
+
+To visualize these values, the *PLot Risk Curves* button can be used to create a combined risk-curve (similar to the *Compare* function on the Results toolset). The *Plot Box* button can be used to create a simple box plot of all the 'ead_tot' values.  
+
+
+
 
 

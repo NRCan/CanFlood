@@ -62,7 +62,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
     #action parameters
     icon_fn = 'target.png'
     icon_name = 'Sensitivity'
-    icon_location = 'toolbar'
+    icon_location = 'menu'
     
     def __init__(self, iface, parent=None, **kwargs):
         """Constructor."""
@@ -247,10 +247,12 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         # dev-----------
         #=======================================================================
-        if self.dev:
-            self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\tut_builds\8\20211119\CanFlood_tut8.txt')
-            self.comboBox_S_ModLvl.setCurrentIndex(1) #modLevel=L2
-            self.setup_load()
+        #=======================================================================
+        # if self.dev:
+        #     self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\tut_builds\8\20211119\CanFlood_tut8.txt')
+        #     self.comboBox_S_ModLvl.setCurrentIndex(1) #modLevel=L2
+        #     self.setup_load()
+        #=======================================================================
         
         
         
