@@ -101,7 +101,7 @@
           </size>
          </property>
          <property name="currentIndex">
-          <number>3</number>
+          <number>0</number>
          </property>
          <property name="movable">
           <bool>false</bool>
@@ -591,9 +591,8 @@ p, li { white-space: pre-wrap; }
                  <string>Add</string>
                 </property>
                 <property name="icon">
-                 <iconset>
-                  <normaloff>:/icons/icons/arrow-right-circle.png</normaloff>
-                  <normalon>:/icons/icons/arrow-right-circle.png</normalon>:/icons/icons/arrow-right-circle.png</iconset>
+                 <iconset resource="../resources.qrc">
+                  <normaloff>:/icons/icons/arrow-down-circle.svg</normaloff>:/icons/icons/arrow-down-circle.svg</iconset>
                 </property>
                </widget>
               </item>
@@ -603,9 +602,8 @@ p, li { white-space: pre-wrap; }
                  <string>Remove</string>
                 </property>
                 <property name="icon">
-                 <iconset>
-                  <normaloff>:/icons/icons/arrow-left-circle.png</normaloff>
-                  <normalon>:/icons/icons/arrow-left-circle.png</normalon>:/icons/icons/arrow-left-circle.png</iconset>
+                 <iconset resource="../resources.qrc">
+                  <normaloff>:/icons/icons/arrow-up-circle.svg</normaloff>:/icons/icons/arrow-up-circle.svg</iconset>
                 </property>
                </widget>
               </item>
@@ -1876,7 +1874,8 @@ p, li { white-space: pre-wrap; }
   <tabstop>pushButton_wd</tabstop>
   <tabstop>lineEdit_wdir</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+ </resources>
  <connections/>
  <buttongroups>
   <buttongroup name="buttonGroup_S_filepaths"/>
