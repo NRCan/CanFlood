@@ -221,12 +221,19 @@ class ComWrkr(object): #common methods for all classes
     def set_cf_pars(self, #update the control file w/ the passed parameters
                   new_pars_d, #new paraemeters 
                     # {section : ({valnm : value } OR string (for notes)})
-                  cf_fp = None):
+                  cf_fp = None,
+                  logger=None,
+                  ):
+        
+        
         """
         should this be on the MOdel only?
         """
-        
-        log = self.logger.getChild('set_cf_pars')
+        #=======================================================================
+        # defautls
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('set_cf_pars')
         
         #get defaults
         if cf_fp is None: cf_fp = self.cf_fp

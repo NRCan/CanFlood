@@ -237,22 +237,20 @@ class CandidateModel(Shared):
         # run damage worker
         #=======================================================================
         initkwargs = self._get_inher_atts()
+        log.info('Dmg2')
         with Dmg2(cf_fp=cf_fp, logger=log,  **initkwargs) as wrkr:
             wrkr.setup()
             
             cres_df = wrkr.run(**rkwarks_d['Dmg2'])
             
-            
-            
-        
             if write:
-                
                 out_fp = wrkr.output_cdmg()
                 wrkr.update_cf(out_fp=out_fp, cf_fp=cf_fp)
                 
         #=======================================================================
         # run risk worker
         #=======================================================================
+        log.info('Risk2')
         with Risk2(cf_fp=cf_fp, logger=log, **initkwargs) as wrkr:
             wrkr.setup()
             res_ttl, res_df = wrkr.run(**rkwarks_d['Risk2'])
@@ -356,13 +354,13 @@ class SensiSessRunner(SensiSessionComs): #running a sensitivity session
             log.info('%i/%i on %s from %s'%(i+1, len(cf_d), mtag, os.path.basename(cf_fp)))
             
             
-            with CandidateModel(name=mtag, logger=log, cf_fp=cf_fp,
+            with CandidateModel(name=mtag, logger=log.getChild(str(i)), cf_fp=cf_fp,
                                 write=self.write, #sometimes we pass this to children.. sometimes no
                                 out_dir = os.path.join(out_dir, mtag), 
                                 **initKwargs) as cmod:
                 
                 f = getattr(cmod, modLevel)
-                
+                log.info('running \'%s.%s\' \n\n'%(mtag, modLevel))
                 res_lib[mtag] = f(**rkwargs)
                 res_lib[mtag]['cf_fp']=cf_fp
                 

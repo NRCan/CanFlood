@@ -118,10 +118,10 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         # #working directory
         #=======================================================================
+        default_wdir = os.path.join(os.path.expanduser('~'), 'CanFlood', 'sensi', datetime.datetime.now().strftime('%m%d'))
         #Working Directory 
         self._connect_wdir(self.pushButton_wd, self.pushButton_wd_open, self.lineEdit_wdir,
-                           default_wdir = os.path.join(os.path.expanduser('~'), 
-                                       'CanFlood', 'sensi', datetime.datetime.now().strftime('%m%d')))
+                           default_wdir = default_wdir)
         
         
         #=======================================================================
@@ -247,17 +247,19 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         # dev-----------
         #=======================================================================
-        #=======================================================================
-        # if self.dev:
-        #     self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\tut_builds\8\20211119\CanFlood_tut8.txt')
-        #     self.comboBox_S_ModLvl.setCurrentIndex(1) #modLevel=L2
-        #     self.setup_load()
-        #=======================================================================
+        if self.dev:
+            self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\8\mainModel\CanFlood_tut8.txt')
+            self.comboBox_S_ModLvl.setCurrentIndex(1) #modLevel=L2
+            
+            """seems to be buggy during tests"""
+            self.lineEdit_wdir.setText(default_wdir) 
+
         
         
         
     def set_setup(self, #attach parameters from setup tab
-                  set_cf_fp=True,  
+                  set_cf_fp=True,
+                  set_absolute_fp=False, #whether to include the absolute_fp in the setu  
                   logger=None,): 
         
         if logger is None: logger=self.logger
@@ -279,6 +281,16 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         assert self.modLevel in ['L1', 'L2'], 'must specify a model level'
         self.inherit_fieldNames.append('modLevel')
         
+        #absolutes
+        """because were moving files around... need special handling of filepaths
+        
+        generally only using this for the first control file load
+        then we convert the maincontrol file to absolute"""
+        
+        if not set_absolute_fp:
+            self.inherit_fieldNames.remove('absolute_fp') #dont inherit
+            self.absolute_fp = True #refert to default
+        
 
     def _change_tab(self, tabObjectName): #try to switch the tab on the gui
         try:
@@ -296,38 +308,63 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         log = self.logger.getChild('setup_load')
         
-        self.set_setup(set_cf_fp=True)
+        self.set_setup(set_cf_fp=True, set_absolute_fp=True)
         log.info('loading base from %s'%self.cf_fp)
         #=======================================================================
         # prechecks
         #======================================================================= 
-        if self.radioButton_SS_fpRel.isChecked():
-            raise Error('Relative filepaths not implemented')
-
         self.feedback.upd_prog(10)
+        
+        #=======================================================================
+        # prep control file
+        #=======================================================================
+ 
+        # clear results from main control file
+        log.info('clearing results from main control file')
+        rkeys = list(SensiShared.master_pars['results_fps'].keys())
+        self.set_cf_pars({'risk_fps':({'dmgs':''},'#cleared dmg2 results'),
+                          'results_fps':({k:'' for k in rkeys},'#cleared results'),
+                          }, logger=log)
+        
+
+        
         
         #=======================================================================
         # load the base values----
         #=======================================================================
-        """here we are only retrieving the 
-        """
+ 
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
         with SensiShared(**kwargs) as wrkr:
+            
+            #change to absolute fps
+            """
+            Model.setup()
+                Model.init_model()
+                    if not absolute_fp:
+                        Model._cf_relative()
+                            reverts cfPars_d to absolute
+            """
+            #===================================================================
+            # if not self.absolute_fp:
+            #     """child candidates by default point back to the main models data files
+            #     all these filepaths will be broken if we just move the control file
+            #     converting children to absolute (pointing back to main)
+            #     
+            #     generally, the candidates will live in a separate tree from the main
+            #     """
+            #     wrkr._cfFile_relative()
+            #===================================================================
+            
+            
+            
             wrkr.setup() #init the model
-            """
-            calls Model.cf_attach_pars()
-            """
+ 
             cfPars_d = wrkr.cfPars_d #retrieve the loaded parameters
             
         #get just the parameters with values
         pars_d = {k:v  for sect, d in cfPars_d.items() for k,v in d.items() if not v==''}
         
-    
-        """
-        for k,v in cfPars_d.items():
-            print('%s    %s'%(k,v))
-        self.modLevel
-        """
+ 
         #=======================================================================
         # populate the table
         #=======================================================================
@@ -516,7 +553,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         log = self.logger.getChild('compile_cand')
         tbw = self.tableWidget_P
         
-        self.set_setup(set_cf_fp=True)
+        self.set_setup(set_cf_fp=True, set_absolute_fp=True)
         #=======================================================================
         # get data from ui
         #=======================================================================
@@ -686,6 +723,9 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         # add the parameters to the display
         #=======================================================================
+        #format results columns
+        rdf1 = rdf_raw.copy()
+            
         """TODO: load parameters from pickle instead"""
         try:
             #retrieve the parameter/copmile df
@@ -693,8 +733,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
             
             assert np.array_equal(rdf_raw.index, par_df.index), 'mismatch between pickle and parameters'
             
-            #format results columns
-            rdf1 = rdf_raw.copy()
+
             for coln, col in rdf_raw.copy().items():
                 
                 #apply the formatter

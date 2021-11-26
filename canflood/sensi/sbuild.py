@@ -172,16 +172,19 @@ class SensiConstructor(SensiShared):
             
 
     def build_candidates(self, #build all the candidate models
-                         df_raw, #frame with parameters {par:candidate}
+                         df_raw, #frame with parameters {par:candidate} (always absolute filepaths)
                          base_cf_fp = None, #base control file
                          base_cf_fn = None, #ase control file name
                          logger=None,
-                         basedir = None,
+                         out_basedir = None, #directory where all the candidate models will be saved
+ 
                          copyDataFiles=True, #whether to copy over all datafiles
+                         absolute_fp=None, #status of the base control file (df_raw is always absolute)
                          ):
         
         """
-        view(df_raw)
+        WARNING: this reads candidates from a datarame, not the control file
+ 
         """
         
         #=======================================================================
@@ -191,12 +194,16 @@ class SensiConstructor(SensiShared):
         log=logger.getChild('bcan')
         
         if base_cf_fp is None: base_cf_fp=self.cf_fp
-        if basedir is None: basedir = self.out_dir
+        if out_basedir is None: out_basedir = self.out_dir
+ 
+        if absolute_fp is None: absolute_fp=self.absolute_fp
         
         if base_cf_fn is None:
             base_cf_fn = os.path.splitext(os.path.basename(base_cf_fp))[0]
         
         
+        log.info('on %s'%base_cf_fp)
+ 
         #=======================================================================
         # prep the data
         #=======================================================================
@@ -213,37 +220,82 @@ class SensiConstructor(SensiShared):
             classVal = getattr(self, k)
             assert v == classVal, 'mismatch on \'%s\': %s != %s'%(k, classVal, v)
 
+        """TODO: add check against control file"""
         
-        df = df1.iloc[1:,:] #drop the base
+        #df = df1.iloc[1:,:] #drop the base
+        
  
+        df = df1.copy()
+        #=======================================================================
+        # remove results from main
+        #=======================================================================
+        """never using results from the main
+        moved to Load"""
+
         #=======================================================================
         # get sections
         #=======================================================================
-        attn_sect_d = self.get_sections(df.columns.tolist(), logger=log)
+        attn_sect_d = self.get_sections(df1.columns.tolist(), logger=log)
+        
+ 
+
         #=======================================================================
         # loop and create each candidate
         #=======================================================================
         log.info('creating %i candidate models'%len(df.T))
         meta_lib = dict()
         
+        #collect init kwargs for candidates
+        kwargs = {attn:getattr(self,attn) for attn in [
+            #'absolute_fp', #need to convert everything to absolute 
+            'feedback']}
+        
         #loop on rows bur presever types
-        for mtag, pars_d in df.to_dict(orient='index').items():
+        first=True
+        for i, (mtag, pars_d) in enumerate(df.to_dict(orient='index').items()):
+            log = logger.getChild('bcan.%i'%i)
             log.debug('on %s'%mtag)
  
             
-            #setup the new directory
-            out_dir = os.path.join(basedir, mtag)
+            #===================================================================
+            # #setup the new directory
+            #===================================================================
+            out_dir = os.path.join(out_basedir, mtag)
             if os.path.exists(out_dir):
                 assert self.overwrite
             else:
                 os.makedirs(out_dir)
+                
+
             
+            #===================================================================
+            # prep the control file
+            #===================================================================
             #copy over the base cf_fp
             cf_fp = os.path.join(out_dir,'%s_%s.txt'%(base_cf_fn, mtag)) 
             _ = shutil.copyfile(base_cf_fp, cf_fp)
             log.info('copied cf to %s'%cf_fp)
             
-            #append sections and restructure
+            
+            #===================================================================
+            # prep the base control file
+            #===================================================================
+            if first:
+                #handle relatives
+                if not self.absolute_fp:
+                    #change everything to absolute
+                    self._cfFile_relative(cf_fp=cf_fp, logger=log)
+                    
+                #tell subsequent siblings to use this one
+                base_cf_fp = cf_fp
+                
+                first=False
+            
+ 
+            
+            #===================================================================
+            # prep the parameters
+            #===================================================================
             pars_d1 = dict()
             for attn, attv in pars_d.items():
                 sectName = attn_sect_d[attn]
@@ -253,11 +305,17 @@ class SensiConstructor(SensiShared):
                 pars_d1[sectName][attn] = attv
                 
             
-            #update the control file w/ the new paramters
-            with CandidateModel(out_dir=out_dir, cf_fp=cf_fp, logger=log, 
-                                mtag=mtag, name=pars_d['name']) as wrkr:
+            #===================================================================
+            # #update the control file w/ the new paramters
+            #===================================================================
+            log.debug('building %s'%pars_d['name'])
+            with CandidateModel(out_dir=out_dir, cf_fp=cf_fp, logger=log, mtag=mtag, name=pars_d['name'], **kwargs) as wrkr:
                 
                 #load the base control file
+                """
+                wrkr.absolute_fp
+                wrkr.base_dir
+                """
                 wrkr.init_model()
                 
                 #update base control file with new values
@@ -282,6 +340,8 @@ class SensiConstructor(SensiShared):
 
                 #save to file (this should overwrite everthing)
                 wrkr.set_cf_pars({k:tuple([att_d,txt]) for k,att_d in pars_d3.items()})
+                
+                log.debug('finished on %s'%wrkr.name)
             
  
  
@@ -291,19 +351,51 @@ class SensiConstructor(SensiShared):
         # wrap
         #=======================================================================
         
-        kstr = 'finished building  %i to \n    %s'%(len(meta_lib), basedir) + '\n'
+        kstr = 'finished building  %i to \n    %s'%(len(meta_lib), out_basedir) + '\n'
         for mtag, d in meta_lib.items():
             kstr = kstr + '    \'%s\':r\'%s\',\n'%(mtag, d['cf_fp'])
         
         log.info(kstr)
         
         return meta_lib
-            
-            
+    
+    
+    def cf_append_subdir(self, #adding a subdir to relative filepaths
+
+                         subdir,
+                              cf_fp=None,
+                          sections=['dmg_fps', 'risk_fps'], #parameter sections to manipulate
+                         logger=None):
         
-        """
-        add random color to each cf
-        """
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        if cf_fp is None: cf_fp=self.cf_fp
+        log=logger.getChild('cf_append_subdir')
+        
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        assert not self.absolute_fp
+        
+        #=======================================================================
+        # load the control file
+        #=======================================================================
+        pars = configparser.ConfigParser(inline_comment_prefixes='#')
+        log.debug('reading parameters from \n     %s'%pars.read(cf_fp))
+            
+        pars = self._cf_relative(pars, base_dir=subdir, sections=sections, warn=False)
+        
+                #write the config file 
+        with open(cf_fp, 'w') as configfile:
+            pars.write(configfile)
+            
+        log.info('updated control file at :    %s'%(cf_fp))
+        
+        return cf_fp
+        
+ 
         
                          
  

@@ -46,6 +46,21 @@ class Cmpr(RiskPlotr):
     exp_pSubKeys = (
         'cf_fp', 
         )
+    
+    
+    #===========================================================================
+    # expectations from parameter file
+    #===========================================================================
+    exp_pars_md = {
+
+        }
+    
+    exp_pars_op={
+        'results_fps':{
+             'r_passet':{'ext':('.csv',)},
+             'r_ttl':{'ext':('.csv',)},
+             }
+        }
 
     def __init__(self,
                  cf_fp = '',
@@ -70,7 +85,7 @@ class Cmpr(RiskPlotr):
     
     def setup(self):
         """even though we only have one setup function... keeping this hear to match other workers"""
-        self.init_model() #attach control file
+        self.init_model(check_pars=False) #attach control file
         
         self.prep_model() 
         
