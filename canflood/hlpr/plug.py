@@ -166,7 +166,7 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
     
     first_launch=True
     
-    dev=True #handle for development code
+    dev=False #handle for development code
     
     
     
@@ -754,7 +754,8 @@ class plugLogger(object): #workaround for qgis logging pythonic
     
     log_nm = 'cf' #logger name
     
-    def __init__(self, parent,
+    def __init__(self, 
+                 parent,
                  statusQlab = None, #Qlabel widget to duplicate push messages
                  log_nm = None,
                  ):
