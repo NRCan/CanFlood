@@ -972,7 +972,7 @@ This tutorial demonstrates *Sensitivity Analysis* workflow (:ref:`Section5.4.5 <
 6.13.1. Setup the Analysis
 ==========================
 
-Launch the *Sensitivity Analysis* |targetImage| dialog from the Plugins>CanFlood menu. Navigate to the *Setup* menu, select your working directory, then specify your main model control file and 'Model Level' = 'L2' as shown below:
+Launch the *Sensitivity Analysis* |targetImage| dialog from the Plugins>CanFlood menu. Navigate to the *Setup* menu, select your working directory, set the filepaths to 'relative' then specify your main model control file and 'Model Level' = 'L2' as shown below:
 
 .. image:: /_static/tutorials_6_13_img_1.JPG
 
@@ -996,7 +996,7 @@ For the first perturbation, simply **change the rtail value on 'cand01' to 0.1**
 
 To allow us to differentiate the plots we generate in the final step, **click Randomize Colors**. 
 
-Finally, **click Compile Candidates**.
+Finally, **click Compile Candidates**.  You will now see four new folders, one for each candidate model, in your working directory.
 
 
 6.13.3. Manipulate Datafiles
