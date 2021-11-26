@@ -952,21 +952,19 @@ This tutorial demonstrates *Sensitivity Analysis* workflow (:ref:`Section5.4.5 <
 
  Begin by downloading the tutorial data from the `tutorials 8 <https://github.com/NRCan/CanFlood/tree/master/tutorials/8>`__ folder and loading it into a new QGIS project:
  
-.. fix these
-
   • *haz_rast*: hazard event rasters with WSL value predictions for the study area for four probabilities.
 
-      o *haz_0050_tut4.tif*
+      o *haz_0050_tut8.tif*
 
-      o *haz_0100_tut4.tif*
+      o *haz_0100_tut8.tif*
 
-      o *haz_0200_tut4.tif*
+      o *haz_0200_tut8.tif*
 
-      o *haz_1000_tut4.tif*
+      o *haz_1000_tut8.tif*
 
-  • *dtm_cT2.tif*: DTM layer (and corresponding stylized layer definition .qlr file)
+  • *dtm_tut8.tif*: DTM layer (and corresponding stylized layer definition .qlr file)
 
-  • *finv_tut7_polys.gpkg*: flood asset inventory (’finv’) spatial layer (and corresponding stylized layer definition .qlr file)
+  • *finv_tut8.gpkg*: flood asset inventory (’finv’) spatial layer (and corresponding stylized layer definition .qlr file)
   
   • *CanFlood_tut8.txt*: main model control file
   
@@ -976,7 +974,7 @@ This tutorial demonstrates *Sensitivity Analysis* workflow (:ref:`Section5.4.5 <
 
 Launch the *Sensitivity Analysis* |targetImage| dialog from the Plugins>CanFlood menu. Navigate to the *Setup* menu, select your working directory, then specify your main model control file and 'Model Level' = 'L2' as shown below:
 
-.. add image
+.. image:: /_static/tutorials_6_13_img_1.JPG
 
 **Click Load** to populate the *Compile* tab.
 
@@ -990,7 +988,7 @@ Launch the *Sensitivity Analysis* |targetImage| dialog from the Plugins>CanFlood
 
 Navigate to the *Compile* tab. It should have been automatically populated with the 'base' values from the control file on the first row, and a duplicate of this on the second row:
 
-.. add first image of Compile tab
+.. image:: /_static/tutorials_6_13_img_2.JPG
 
 Now add two more candidate models by **clicking the Add button**. Notice the model names have been automatically generated, but the remaining fields are identical to the base model. Now we'll modify one parameter or datafile on each candidate to compile the model suite.
 
@@ -1006,11 +1004,11 @@ Finally, **click Compile Candidates**.
 
 On the *DataFiles* tab, select 'cand02' and 'finv' to populate the datafile path with the corresponding datafile. **click Load** to add this datafile as a memory layer to your project.
 
-.. image of DataFiles tab
+.. image:: /_static/tutorials_6_13_img_3.JPG
 
 Now we'll subtract 0.5 m from f0_elvs. **click Open Attribute Table** (or the corresponding button on the QGIS toolbar, or hit 'F6') to pull up the attribute table. Make a mental note of the f0_elv values. Now open the *Field Calculator* (Ctrl + I). Check 'Update Existing Field' and select 'f0_elv' from the combobox. Select the custom 'finv_elv_add' expression function from the 'CanFlood' menu in the middle.  Complete the expression ass shown:
 
-.. image of Field Calculator with completed expression showing:  finv_elv_add(0,-0.5)
+.. image:: /_static/tutorials_6_13_img_4.JPG
 
 **Click OK** to make the change to the field values. Examine the values in the attribute table, they should be 0.5 less than before. 
 
@@ -1018,7 +1016,7 @@ Back on the 'DataFiles' tab, **click Save Datafile** to overwrite the old csv wi
 
 For our final perturbation, we'll subtract 0.5 m from the ground elevations ('gels'). Select 'cand03' and 'gels' then **click Load** to load this datafile. Follow a similar procedure as above to setup the *Field Calculator* and enter the formula shown below:
 
-.. second image fo Field Calculator showing: "dtm_tut8" -0.5
+.. image:: /_static/tutorials_6_13_img_5.JPG
 
 **click Save Datafile** to write these changes to the csv.
 
@@ -1027,7 +1025,7 @@ For our final perturbation, we'll subtract 0.5 m from the ground elevations ('ge
 
 On the *Run* tab you should see the base model and the three new candidate model control files shown:
 
-.. run tab
+.. image:: /_static/tutorials_6_13_img_6.JPG
 
 **click Run** to bulk run these four CanFlood models.
 
@@ -1038,7 +1036,7 @@ On the *Run* tab you should see the base model and the three new candidate model
 
 On the *Analysis* tab, you should see the run suite results .pickle loaded, the summary values, and the summary table populated:
 
-.. Analysis tab
+.. image:: /_static/tutorials_6_13_img_7.JPG
 
 **click Plot Risk Curves** to obtain the comparison risk curves for this suite:
 
@@ -1046,9 +1044,3 @@ On the *Analysis* tab, you should see the run suite results .pickle loaded, the 
 .. image:: /_static/6_13_5_riskcurve_20211124.svg
 
 From this plot, you can clearly see the influence of the 'rtail' parameter on the risk curve (and the annualized metric). The lowering of the ground elevations and the main floor elevations produced expectedly similar results. 
-
-
-
-
-  
-
