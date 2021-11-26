@@ -972,7 +972,7 @@ This tutorial demonstrates *Sensitivity Analysis* workflow (:ref:`Section5.4.5 <
 6.13.1. Setup the Analysis
 ==========================
 
-Launch the *Sensitivity Analysis* |targetImage| dialog from the Plugins>CanFlood menu. Navigate to the *Setup* menu, select your working directory, set the filepaths to 'relative' then specify your main model control file and 'Model Level' = 'L2' as shown below:
+Launch the *Sensitivity Analysis* |targetImage| dialog from the Plugins>CanFlood menu. Navigate to the *Setup* menu, select your working directory, set the filepaths to 'relative', then specify your main model control file and 'Model Level' = 'L2' as shown below:
 
 .. image:: /_static/tutorials_6_13_img_1.JPG
 
