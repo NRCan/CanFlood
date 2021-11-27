@@ -950,7 +950,7 @@ To generate a comparison plot of these two scenarios, navigate to the ‘Compare
 
 This tutorial demonstrates *Sensitivity Analysis* workflow (:ref:`Section5.4.5 <Section5.4.5>`). This can be useful for quantifying the sensitivity of your model to each parameter and datafile.
 
- Begin by downloading the tutorial data from the `tutorials 8 <https://github.com/NRCan/CanFlood/tree/master/tutorials/8>`__ folder and loading it into a new QGIS project:
+Begin by downloading the tutorial data from the `tutorials 8 <https://github.com/NRCan/CanFlood/tree/master/tutorials/8>`__ folder and loading it into a new QGIS project:
  
   • *haz_rast*: hazard event rasters with WSL value predictions for the study area for four probabilities.
 
@@ -972,9 +972,12 @@ This tutorial demonstrates *Sensitivity Analysis* workflow (:ref:`Section5.4.5 <
 6.13.1. Setup the Analysis
 ==========================
 
+.. JAMIE: I think we need to be more consistent with our formatting. Let's use *italics* to refer to tools, dialog windows, or tabs. Let's use 'quotes' anytime we're referring to a label on the UI (e.g., buttons) or some parameter or value.
+.. JAMIE: also, be careful each line/sentence is capitalized. 
+
 Launch the *Sensitivity Analysis* |targetImage| dialog from the Plugins>CanFlood menu. Navigate to the *Setup* menu, select your working directory, set the filepaths to 'relative', then specify your main model control file and 'Model Level' = 'L2' as shown below:
 
-.. JAMIE: dont work in a directory called 'MainModel' this is confusing. the tool creates a suite of equivalent candidate models in the working directory one of which is the 'base' model (identical to the mainmodel). 
+.. JAMIE: dont work in a directory called 'MainModel' this is confusing. the tool creates a suite of equivalent candidate models in the working directory one of which is the 'base' model (identical to the mainmodel), so this would result in a folder mainmodel/basemodel. 
 
 .. image:: /_static/tutorials_6_13_img_1.JPG
 
@@ -992,57 +995,57 @@ Navigate to the *Compile* tab. It should have been automatically populated with 
 
 .. image:: /_static/tutorials_6_13_img_2.JPG
 
-Now add three more candidate models by **clicking the 'Add' button**. Notice the model names have been automatically generated, but the remaining fields are identical to the base model. Now we'll modify one parameter or datafile on each candidate to compile the model suite.
+Now add three more candidate models by **clicking the 'Add' button three times**. Notice the model names have been automatically generated, but the remaining fields are identical to the base model. Now we'll modify or 'perturb' one parameter or datafile on each candidate to compile the sesitivity analysis suite.
 
-For the first perturbation, simply **change the rtail value on 'cand01' to 0.1**. For the second perturbation, **change the 'curve_deviation' on 'cand02' to lo** to match the lower bound depth-damage values stored in the curves.xls. We will configure the remaining two perturbations in the following step. 
+For the first perturbation, simply **change the rtail value on 'cand01' to 0.1**. For the second perturbation, **change the 'curve_deviation' on 'cand02' to 'lo'** to match the lower bound depth-damage values stored in the curves.xls. We will configure the remaining two perturbations in the following step. 
 
-To allow us to differentiate the plots we generate in the final step, **click 'Randomize Colors'**. 
+To allow us to differentiate the plots we generate (see below), **click 'Randomize Colors'**. 
 
-.. JAMIE: insert another secreenshot showing the compile tab w/ all 5 candidates
+.. JAMIE: insert another secreenshot showing the compile tab w/ all 5 candidates configured to this point
 
-Finally, **click Compile Candidates**.  You will now see four new folders, one for each candidate model, in your working directory.
+Ensure 'Copy all candidate data files' is selected so the compiler will give each candidate its own data files, rather than have each point back to the main model's datafiles. Finally, **click 'Compile Candidates'**.  You will now see four new folders, one for each candidate model, in your working directory.
 
 
 6.13.3. Manipulate Datafiles
 ============================
 
-On the *DataFiles* tab, select 'cand02' and 'finv' to populate the datafile path with the corresponding datafile. **click Load** to add this datafile as a memory layer to your project.
+On the *DataFiles* tab, select 'cand03' and 'finv' to populate the datafile path with the corresponding datafile. **Click 'Load'** to add this datafile as a memory layer to your project.
 
 .. image:: /_static/tutorials_6_13_img_3.JPG
 
-Now we'll subtract 0.5 m from f0_elvs. **click Open Attribute Table** (or the corresponding button on the QGIS toolbar, or hit 'F6') to pull up the attribute table. Make a mental note of the f0_elv values. Now open the *Field Calculator* (Ctrl + I). Check 'Update Existing Field' and select 'f0_elv' from the combobox. Select the custom 'finv_elv_add' expression function from the 'CanFlood' menu in the middle.  Complete the expression ass shown:
+Now we'll subtract 0.5 m from f0_elvs. **click 'Open Attribute Table'** (or the corresponding button on the QGIS toolbar, or hit 'F6') to open the attribute table window. Make a mental note of the 'f0_elv' values. Now open the *Field Calculator* (Ctrl + I). Check 'Update Existing Field' and select 'f0_elv' from the combobox. Select the custom 'finv_elv_add' expression function from the 'CanFlood' menu in the middle and complete the expression ass shown:
 
 .. image:: /_static/tutorials_6_13_img_4.JPG
 
-**Click OK** to make the change to the field values. Examine the values in the attribute table, they should be 0.5 less than before. 
+**Click 'OK'** to make the change to the field values. Examine the 'f0_elv' values in the attribute table, they should now be 0.5 less than before (i.e., 0.5 less than the base model). 
 
-Back on the 'DataFiles' tab, **click Save Datafile** to overwrite the old csv with the newly changed one. 
+Back on the 'DataFiles' tab, **click 'Save Datafile'** to overwrite the old csv with your modifications. 
 
-For our final perturbation, we'll subtract 0.5 m from the ground elevations ('gels'). Select 'cand03' and 'gels' then **click Load** to load this datafile. Follow a similar procedure as above to setup the *Field Calculator* and enter the formula shown below:
+For our final perturbation, we'll subtract 0.5 m from the ground elevations ('gels'). Select 'cand04' and 'gels' then **click 'Load'** to load this datafile. Follow a similar procedure as above to setup the *Field Calculator* and enter the formula shown below:
 
 .. image:: /_static/tutorials_6_13_img_5.JPG
 
-**click Save Datafile** to write these changes to the csv.
+**Click OK** on the *Field Calculator* to update the values. **click Save Datafile** to write these changes to the csv.
 
 6.13.4. Run the Suite
 =====================
 
-On the *Run* tab you should see the base model and the three new candidate model control files shown:
+On the *Run* tab you should see the base model and the four new candidate model control files shown:
 
 .. image:: /_static/tutorials_6_13_img_6.JPG
 
-**click Run** to bulk run these four CanFlood models.
+**Click Run** to bulk run these L2 CanFlood models.
 
 
 
 6.13.5. Analyze the Results
 ===========================
 
-On the *Analysis* tab, you should see the run suite results .pickle loaded, the summary values, and the summary table populated:
+On the *Analysis* tab, you should see the run suite results .pickle file loaded, the summary values, and the summary table populated:
 
 .. image:: /_static/tutorials_6_13_img_7.JPG
 
-**click Plot Risk Curves** to obtain the comparison risk curves for this suite:
+**Click Plot Risk Curves** to obtain the comparison risk curves for this suite:
 
 
 .. image:: /_static/6_13_5_riskcurve_20211124.svg
