@@ -1,0 +1,16 @@
+﻿Field,Example Value,Description,Required
+tag,02Office.inEq.comp,Linking variable used to assign this function to an asset in the inventory,TRUE
+desc,some description,Long form description of the impact function.,FALSE
+source,BCStats NRP Survey (2020),Primary data source for the impact function.,FALSE
+location,BCs LowerMainland,Geographic location of applicable assets,FALSE
+date,2020,Applicable period,FALSE
+impact_units,$CAD,Units of impact output(after scaling),FALSE
+exposure _units,m,Units of expected impact input,FALSE
+scale_units,m2,Units of expected scale input,FALSE
+exposure_var,water height from main floor,Variable of expected exposure input,FALSE
+impact_var,building repair and restoration cost estimation,Variable of impact output (after scaling),FALSE
+scale_var,main floor area,Description of expected scale variable,FALSE
+exposure,impact (or curve_deviation),"Header for exposure- impact function. Alternatively, this row can be used to specify 'curve_deviation' referneced by the control file",TRUE
+0,0,First exposure-impact entry,TRUE
+0.305,394.56,…,TRUE
+0.914,543.05,Last exposure-impact entry,TRUE

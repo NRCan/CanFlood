@@ -59,59 +59,11 @@ An example is provided below with a description. During the Impacts (L2) model, 
 
 *Table 4-1: CanFlood impact function format requirements and description.*
 
-+-----------------+---------------------------+-----------------------+----------+-+
-| Field           | Example Value             | Description           | Required | |
-+=================+===========================+=======================+==========+=+
-| tag             | 02Office.inEq.comp        | Linking variable used | TRUE     | |
-|                 |                           | to assign this        |          | |
-|                 |                           | function to an asset  |          | |
-|                 |                           | in the inventory      |          | |
-+-----------------+---------------------------+-----------------------+----------+-+
-| desc            | some description          | Long form description | FALSE    | |
-|                 |                           | of the impact         |          | |
-|                 |                           | function.             |          | |
-+-----------------+---------------------------+-----------------------+----------+-+
-| source          | BCStats NRP Survey (2020) | Primary data source   | FALSE    | |
-|                 |                           | for the impact        |          | |
-|                 |                           | function.             |          | |
-+-----------------+---------------------------+-----------------------+----------+-+
-| location        | BCs LowerMainland         | Geographic location   | FALSE    | |
-|                 |                           | of applicable         |          | |
-|                 |                           | assets                |          | |
-+-----------------+---------------------------+-----------------------+----------+-+
-| date            | 2020                      | Applicable period     | FALSE    | |
-+-----------------+---------------------------+-----------------------+----------+-+
-| impact_units    | $CAD                      | Units of impact       | FALSE    | |
-|                 |                           | output(after scaling) |          | |
-+-----------------+---------------------------+-----------------------+----------+-+
-| exposure _units | m                         | Units of expected     | FALSE    | |
-|                 |                           | impact input          |          | |
-+-----------------+---------------------------+-----------------------+----------+-+
-| scale_units     | m2                        | Units of expected     | FALSE    | |
-|                 |                           | scale input           |          | |
-+-----------------+---------------------------+-----------------------+----------+-+
-| exposure_var    | water height from         | Variable of expected  | FALSE    | |
-|                 | main floor                | exposure input        |          | |
-+-----------------+---------------------------+-----------------------+----------+-+
-| impact_var      | building repair and       | Variable of impact    | FALSE    | |
-|                 | restoration cost          | output (after         |          | |
-|                 | estimation                | scaling)              |          | |
-+-----------------+---------------------------+-----------------------+----------+-+
-| scale_var       | main floor area           | Description of        | FALSE    | |
-|                 |                           | expected scale        |          | |
-|                 |                           | variable              |          | |
-+-----------------+---------------------------+-----------------------+----------+-+
-| exposure        | impact                    | Header for exposure-  | TRUE     | |
-|                 |                           | impact function       |          | |
-+-----------------+---------------------------+-----------------------+----------+-+
-| 0               | 0                         | First exposure-impact | TRUE     | |
-|                 |                           | entry                 |          | |
-+-----------------+---------------------------+-----------------------+----------+-+
-| 0.305           | 394.56                    | ...                   | TRUE     | |
-+-----------------+---------------------------+-----------------------+----------+-+
-| 0.914           | 543.05                    | Last exposure-impact  | TRUE     | |
-|                 |                           | entry                 |          | |
-+-----------------+---------------------------+-----------------------+----------+-+
+   
+.. csv-table:: 
+   :file: /tables/41_impactFunctionFormat.csv
+   :widths: auto
+   :header-rows: 1
 
 .. _Section4.4:
 

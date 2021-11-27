@@ -100,10 +100,17 @@ class CandidateModel(SensiShared):
                         assert os.path.exists(fp), 'got bad filepath for \"%s\': %s'%(valnm, fp)
                         new_fp = os.path.join(out_dir, os.path.basename(fp))
                         
+
+                        
                         if os.path.exists(new_fp): assert self.overwrite
                         
                         #copy it over
-                        pars_lib[section][valnm] = shutil.copyfile(fp, new_fp)
+                        if os.path.normpath(new_fp)==os.path.normpath(fp):
+                        
+                        #if os.path.sameopenfile(new_fp, fp):
+                            pars_lib[section][valnm] = fp #this can happen on repeat clicks of compile
+                        else:
+                            pars_lib[section][valnm] = shutil.copyfile(fp, new_fp)
                         
                         meta_d[valnm] = pars_lib[section][valnm] 
                     
@@ -214,13 +221,15 @@ class SensiConstructor(SensiShared):
         #=======================================================================
         # #check base pars
         #=======================================================================
+        """checking whats on the compile tab (first row) 
+        against what weve loaded from the cf on the setup tab"""
         pars_d = df1.iloc[0,:].to_dict()
         for k,v in pars_d.items():
             assert hasattr(self, k), 'worker missing requested attribute \'%s\''%k
-            classVal = getattr(self, k)
-            assert v == classVal, 'mismatch on \'%s\': %s != %s'%(k, classVal, v)
+            #classVal = getattr(self, k)
+            #assert v == classVal, 'mismatch on \'%s\': %s != %s'%(k, classVal, v)
 
-        """TODO: add check against control file"""
+ 
         
         #df = df1.iloc[1:,:] #drop the base
         

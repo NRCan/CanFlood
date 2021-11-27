@@ -248,7 +248,9 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         # dev-----------
         #=======================================================================
         if self.dev:
-            self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\8\mainModel\CanFlood_tut8.txt')
+            #add control file
+            self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\8\baseModel\CanFlood_tut8.txt')
+            self.radioButton_SS_fpRel.setChecked(True)
             self.comboBox_S_ModLvl.setCurrentIndex(1) #modLevel=L2
             
             """seems to be buggy during tests"""
@@ -318,6 +320,8 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         # prep control file
         #=======================================================================
+        
+
  
         # clear results from main control file
         log.info('clearing results from main control file')
@@ -344,18 +348,6 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
                         Model._cf_relative()
                             reverts cfPars_d to absolute
             """
-            #===================================================================
-            # if not self.absolute_fp:
-            #     """child candidates by default point back to the main models data files
-            #     all these filepaths will be broken if we just move the control file
-            #     converting children to absolute (pointing back to main)
-            #     
-            #     generally, the candidates will live in a separate tree from the main
-            #     """
-            #     wrkr._cfFile_relative()
-            #===================================================================
-            
-            
             
             wrkr.setup() #init the model
  
@@ -570,7 +562,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         log.debug('on %s'%str(df_raw.shape))
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
         with SensiConstructor(**kwargs) as wrkr:
-            wrkr.setup()
+            wrkr.setup() #load the cf from the setup tab
             meta_lib = wrkr.build_candidates(df_raw, copyDataFiles=self.checkBox_P_copyData.isChecked())
             
             

@@ -18,8 +18,8 @@
 # -- Project information -----------------------------------------------------
 
 project = 'CanFlood'
-copyright = '2021, Seth Bryant'
-author = 'Seth Bryant'
+copyright = '2021, NRCan'
+author = 'Seth Bryant, James Gibson, Dhanyatha Harish'
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.

@@ -41,77 +41,8 @@ class Model(ComWrkr,
     
     
     Control File Parameters:
-    [parameters]
-        
+        see C:\LS\03_TOOLS\CanFlood\_git\docs\source\tables\
 
-        TODO: migrate these down below
-        
-        ltail -- zero probability event  handle  (default 'extrapolate')
-            'flat'            zero probability event equal to the most 
-                            extreme impacts in the passed series
-            'extrapolate'    set the zero probability event by extrapolating from 
-                            the most extreme impact (interp1d)
-            'none'           do not extrapolate (not recommended)
-            float            use the passed value as the zero probability impact value
-             
-        
-        rtail -- zero impacts event  handle    (default float(0.5))
-            'extrapolate'    set the zero impact event by extrapolating from the 
-                            least extreme impact
-            'none'            no enforcing of a zero impact event (not recommended)
-            'flat'           duplicates the minimum AEP as the zero damage event (NOT IMPLEMENTED)
-            float           use the passed value as the zero impacts aep value
-        
-        drop_tails -- EAD extrapolation: whether to remove the extrapolated values
-                         before writing the per-asset results (default: False)
-        
-        integrate -- numpy integration method to apply (default 'trapz')
-
-        as_inun    -- flag whether to treat exposures as %inundation
-        
-        event_rels -- assumption for calculated expected value on complex events
-            #max:  maximum expected value of impacts per asset from the duplicated events
-                #resolved damage = max(damage w/o fail, damage w/ fail * fail prob)
-                #default til 2020-12-30
-            #mutEx: assume each event is mutually exclusive (only one can happen)
-                #lower bound
-            #indep: assume each event is independent (failure of one does not influence the other)
-                #upper bound
-                
-        impact_units -- value to label impacts axis with (generally set by Dmg2)
-        
-        apply_miti -- whether to apply mitigation algorthihims
-        
-        curve_deviation -- for L2 damage function libraries w/ deviations
-
-            
-            
-        
-    [dmg_fps]
-        curves -- for L2, filepath to damage function library .xls
-        
-
-        
-    [risk_fps]
-        dmgs -- damage data results file path (default N/A)
-            
-        exlikes -- secondary exposure likelihood data file path (default N/A)
-        
-        evals -- event probability data file path (default N/A)
-        
-    [validation]
-        risk2 -- Risk2 validation flag (default False)
-        
-    [results_fps]
-        attrimat02 -- lvl2 attribution matrix fp (post dmg model)
-        attrimat03 -- lvl3 attribution matrix fp (post risk model)
-        r_passet -- per_asset results from the risk2 model
-        r_ttl  -- total results from risk2
-        eventypes -- df of aep, noFail, and rEventName
-    
-    
-    [plotting]
-        impactfmt_str -- python formatter to use for formatting the impact results values
     
     """
     master_pars = {

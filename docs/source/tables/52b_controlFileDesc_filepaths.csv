@@ -1,0 +1,25 @@
+﻿section,name,type expectation,description
+dmg_fps,curves,str, for L2 filepath to damage function library .xls
+,finv,str,
+,expos,str,
+,gels,str,
+risk_fps,dmgs,str, damage data results file path (default N/A)
+,exlikes,str, secondary exposure likelihood data file path (default N/A)
+,evals,str, event probability data file path (default N/A)
+validation,risk1,bool,
+,dmg2,bool,
+,risk2,bool, Risk2 validation flag (default False)
+,risk3,bool,
+results_fps ,attrimat02,str, lvl2 attribution matrix fp (post dmg model)
+,attrimat03,str, lvl3 attribution matrix fp (post risk model)
+,r_passet,str, per_asset results from the risk2 model
+,r_ttl,str, total results from riskModels
+,eventypes,str, df of aep noFail and rEventName
+plotting,color,str,
+,linestyle,str,
+,linewidth,float,
+,alpha,float,
+,marker,str,
+,markersize,float,
+,fillstyle,str,
+,impactfmt_str,str, python formatter to use for formatting the impact results values
