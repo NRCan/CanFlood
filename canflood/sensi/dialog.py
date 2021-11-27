@@ -12,7 +12,7 @@ import os,  os.path, time, datetime, copy
 
 
 from PyQt5 import uic, QtWidgets
-from PyQt5.QtWidgets import   QTableWidgetItem, QWidget, QHeaderView
+from PyQt5.QtWidgets import QTableWidgetItem, QWidget, QHeaderView
  
 from PyQt5.QtCore import Qt
 
@@ -935,7 +935,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #activate the save button
         self.pushButton_DF_save.setDisabled(False)
         self.feedback.upd_prog(None)
-        
+        self.datafile_df = df.copy() #for testing
         return
     
     def _dataFiles_sourceFile(self): #set the datafile path when the combobox changes

@@ -331,6 +331,8 @@ class Session_t(Session): #handle one test session
                 suite.addTest(runr.Test(tMethodName, runr=runr))
             
             runr.mstore.removeAllMapLayers()
+            
+        #wrap
         log.info('constructed test suite from %i flows w/ %i tests in %s\n \n'%(
             len(wFlow_l), suite.countTestCases(), datetime.datetime.now()-start))
         return suite
