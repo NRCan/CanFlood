@@ -3,162 +3,148 @@ Created on Nov. 27, 2021
 
 @author: cefect
 
-dialog testing
+unit tests for dialog workflows
 '''
-import os
 
-
-from dialogs.testDialComs import DialWF, test_set
-from hlpr.plug import QTableWidgetItem
-
-from PyQt5.QtTest import QTest 
-from PyQt5.QtCore import Qt
 #===============================================================================
-# sensitivity analysis
+# imports
 #===============================================================================
-from sensi.dialog import SensiDialog
+import unittest, tempfile, inspect, logging, os, pickle, datetime
+from unittest import TestLoader
 
-class SensiDialogTester(SensiDialog):
-    
-    def connect_slots(self, #
-                      ):
-        
-        super(SensiDialogTester, self).connect_slots()  
+start = datetime.datetime.now()
 
+#===============================================================================
+# custom imports
+#===============================================================================
 
-class Tut8(DialWF):
-    name='tut8'
-    DialogClass=SensiDialogTester
-    base_dir = r'C:\LS\03_TOOLS\CanFlood\_git'
-    
-    
- 
-    
-    
-    def run(self, #pre-launch
-            ):
-        print('SensiDialogWF.run')
-        
-        """
-        
-        """
-        
-    def post(self,
-             ):
-        print('post')
-        
-        self._1setup()
-        self._2compile()
-        self._3DataFiles()
-        self._4Run()
-        self._5Analy()
-        
-    def _1setup(self):
-        #=======================================================================
-        # load
-        #=======================================================================
-        
-        self.D.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\8\baseModel\CanFlood_tut8.txt')
-        self.D.radioButton_SS_fpRel.setChecked(True)
-        self.D.comboBox_S_ModLvl.setCurrentIndex(1) #modLevel=L2
-        
-        QTest.mouseClick(self.D.pushButton_s_load, Qt.LeftButton)
- 
-        
-    def _2compile(self):
-        
-        
-        #add 4 candidates
-        for i in range(0,3): 
-            QTest.mouseClick(self.D.pushButton_P_addCand, Qt.LeftButton)
- 
- 
-        #=======================================================================
-        # change table values
-        #=======================================================================
-        tbw = self.D.tableWidget_P
-        
-        for candName, parName, pval in [
-            ('cand01', 'rtail', '0.1'),
-            ('cand02', 'curve_deviation', 'lo'),
-            ]:
- 
-            j = tbw.get_indexer(parName, axis=1)
-            i = tbw.get_indexer(candName, axis=0)
-            tbw.setItem(i,j, QTableWidgetItem(pval))
-        
-        #=======================================================================
-        # randomize colors
-        #=======================================================================
-        QTest.mouseClick(self.D.pushButton_P_addColors, Qt.LeftButton)
- 
-        
-        #=======================================================================
-        # compile
-        #=======================================================================
-        self.D.checkBox_P_copyData.setChecked(True)
-        
-        QTest.mouseClick(self.D.pushButton_P_compile, Qt.LeftButton)
-        
-    def _3DataFiles(self): #Manipulate Datafiles
-        
+from testAll import TestParent, WorkFlow_t
+from testAll import Session_t as SessTestBasic
 
+from dialogs.wfDialComs import DSession
+
+import matplotlib.pyplot as plt
+
+#===============================================================================
+# test hanlder------
+#===============================================================================
+class Session_t(DSession, SessTestBasic):
+    pass
+
+#===============================================================================
+# UNIT TESTS--------
+#===============================================================================
+
+class Test_dwf_basic(TestParent): #test for all dialog workflows
+    def test_figD(self):
+        chk_d = self._get_data('fig_d') 
+        
+        for k, (valC, valT) in chk_d.items():
+            nm = '%s.%s'%(self.name, k)
+            #check keys
+            miss_l = set(valC.keys()).symmetric_difference(valT.keys())
+            self.assertEqual(len(miss_l),0, msg=nm+' key mismatch')
+            
+            for figName, fig in valC.items():
+                assert isinstance(fig, plt.Figure), type(fig)
+                
+                #check they have the same number of plotting lines
+                self.assertEqual(len(fig.gca().lines), len(valT[figName].gca().lines))
+                
+                
+
+class Test_tut8(Test_dwf_basic):
+    def test_dataFiles(self):
         for candName, parName in [
             ('cand03', 'finv'),
             ('cand04', 'gels'),
             ]:
-            
-            #=======================================================================
-            # select datafile
-            #=======================================================================
         
-            self.D.comboBox_DF_candName.setCurrentText(candName)
-            self.D.comboBox_DF_par.setCurrentText(parName)
-    
-            self.D._dataFiles_sourceFile() #populate filepath
-            
-            #click the button
-            QTest.mouseClick(self.D.pushButton_DF_load, Qt.LeftButton)
-            
-            #===================================================================
-            # file manipulations
-            #===================================================================
-            """these wont be possible"""
-            #open attribute table
-            #open field calculator
-            
-            df = self.D.datafile_df.copy() #just pull off the dialog
-            fp = self.D.lineEdit_DF_fp.text()
-            
-            if candName == 'cand03':
-                df.loc[:, 'f0_elv'] = df['f0_elv'] -0.5
+            chk_d = self._get_data('%s.%s'%(candName, parName)) #get the zipped checking data
+        
+            #loop and compare each
+            for k, (valC, valT) in chk_d.items():
+                nm = '%s.%s'%(self.name, k)
+                self._df_chks(valC, valT, nm)
                 
-            elif candName=='cand04':
-                df
-                
-            self.D.dataFile_vlay = self.D.vlay_new_df2(df, layname=os.path.splitext(os.path.basename(fp))[0])
-            #===================================================================
-            # write
-            #===================================================================
+    def test_runPick(self): #check the results pickele
+        
+        chk_d = self._get_data('run_pick_d') #get the zipped checking data
+
+        #loop and compare each
+        for k, (valC, valT) in chk_d.items():
+            nm = '%s.%s'%(self.name, k)
+            
+            #check keys
+            miss_l = set(valC.keys()).symmetric_difference(valT.keys())
+            self.assertEqual(len(miss_l),0, msg=nm+' key mismatch')
+            
+            #check metadta
+            for k1, v1 in valC['meta_d'].items():
+                if 'run' in k1: continue #skip these
+                self.assertEqual(v1, valT['meta_d'][k1], msg = nm+k1+' meta mismatch: %s'%v1)
+                    
  
-            QTest.mouseClick(self.D.pushButton_DF_save, Qt.LeftButton)
+
+
+#===============================================================================
+# workflows ------
+#===============================================================================
+from dialogs.wfDialogs import Tut8a
+class Tut8_t(WorkFlow_t, Tut8a):
+    Test = Test_tut8
     
-    def _4Run(self): #run the suite
-        QTest.mouseClick(self.D.pushButton_R_run, Qt.LeftButton)
-        
-    def _5Analy(self): #analyze results
-        QTest.mouseClick(self.D.pushButton_A_plotRiskCurves, Qt.LeftButton)
-        QTest.mouseClick(self.D.pushButton_A_plotBox, Qt.LeftButton)
-        
-
-        
-        
-        
-#===============================================================================
-# executeors------------
-#===============================================================================
+    tdata_keys = ['cand03.finv', 'cand04.gels', 'run_pick_d', 'fig_d']
  
-wFlow_l = [Tut8] #used below and by test scripts to bundle workflows
 
+#===============================================================================
+# execute--------
+#===============================================================================
+wFlow_l = [Tut8_t]
+    
 if __name__ == '__main__':
-    test_set(wFlow_l)
+    
+    """
+    #===========================================================================
+    # INSTRUCTIONS: BUILDING NEW TESTS
+    #===========================================================================
+    build a WorkFlow subclass of the workflow you want to test
+    
+    wrap it with a WorkFlow_t to add teh test methods
+    
+    run the session to build_pickels()
+    
+    #===========================================================================
+    # INSTRUCTIONS: UPDATING TEST COMPARISON DATAT
+    #===========================================================================
+    comment out all the other tests in wFlow_l
+    fix comments below to also execute build_picles()
+    revert comments
+    NOTE: ensure 'tdata_keys' on the worker are approriate
+    
+    #===========================================================================
+    # INSTRUCTIONS: RUNNING TESTS
+    #===========================================================================
+    
+    run the session to get_tests()
+    execute the test suite using TextTestRunner
+    ensure 'build_pickels' is commented out
+    """
+    
+    wrkr = Session_t(write=True)
+ 
+    #===========================================================================
+    # run tests
+    #===========================================================================
+    wrkr.run_suite(wFlow_l,
+                   build_pickels=True, #results to pickels (only for adding tests)
+                   get_tests=True, #assemble the test stuie
+                   ) 
+ 
+    unittest.TextTestRunner(verbosity=3).run(wrkr.suite)
+    
+    
+    #===========================================================================
+    # wrap
+    #===========================================================================
+    print('finished in %s'%(datetime.datetime.now() - start))

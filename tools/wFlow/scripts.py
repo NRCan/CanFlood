@@ -131,7 +131,7 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
         
         if base_dir is None:
             """C:\\LS\\03_TOOLS\\CanFlood\\_git"""
-            base_dir = self.cf_dir
+            base_dir = self.cf_dir #set by comWrkr from script location
         self.base_dir=base_dir
         assert os.path.exists(self.base_dir), self.base_dir
         

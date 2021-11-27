@@ -445,7 +445,7 @@ p, li { white-space: pre-wrap; }
                  </widget>
                 </item>
                 <item>
-                 <widget class="QRadioButton" name="radioButton">
+                 <widget class="QRadioButton" name="radioButton_s_pltFile">
                   <property name="toolTip">
                    <string>When plots are generated, just save a default version straight to file</string>
                   </property>
