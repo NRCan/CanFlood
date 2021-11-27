@@ -995,13 +995,13 @@ Navigate to the *Compile* tab. It should have been automatically populated with 
 
 .. image:: /_static/tutorials_6_13_img_2.JPG
 
-Now add three more candidate models by **clicking the 'Add' button three times**. Notice the model names have been automatically generated, but the remaining fields are identical to the base model. Now we'll modify or 'perturb' one parameter or datafile on each candidate to compile the sesitivity analysis suite.
+Now add four more candidate models by **clicking the 'Add' button four times**. Notice the model names have been automatically generated, but the remaining fields are identical to the base model. Now we'll modify or 'perturb' one parameter or datafile on each candidate to compile the sesitivity analysis suite.
 
 For the first perturbation, simply **change the rtail value on 'cand01' to 0.1**. For the second perturbation, **change the 'curve_deviation' on 'cand02' to 'lo'** to match the lower bound depth-damage values stored in the curves.xls. We will configure the remaining two perturbations in the following step. 
 
 To allow us to differentiate the plots we generate (see below), **click 'Randomize Colors'**. 
 
-.. JAMIE: insert another secreenshot showing the compile tab w/ all 5 candidates configured to this point
+.. JAMIE: insert another secreenshot showing the compile tab w/ all 4 candidates + 1 base configured to this point
 
 Ensure 'Copy all candidate data files' is selected so the compiler will give each candidate its own data files, rather than have each point back to the main model's datafiles. Finally, **click 'Compile Candidates'**.  You will now see four new folders, one for each candidate model, in your working directory.
 
