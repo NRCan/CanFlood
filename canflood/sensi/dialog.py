@@ -12,7 +12,7 @@ import os,  os.path, time, datetime, copy
 
 
 from PyQt5 import uic, QtWidgets
-from PyQt5.QtWidgets import   QTableWidgetItem, QWidget, QHeaderView
+from PyQt5.QtWidgets import QTableWidgetItem, QWidget, QHeaderView
  
 from PyQt5.QtCore import Qt
 
@@ -753,6 +753,12 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         log.push('loaded pickel from %s'%os.path.basename(pick_fp))
         self.feedback.upd_prog(None)
         
+        #=======================================================================
+        # save for tests
+        #=======================================================================
+        self.run_pick_d = pick_d
+        
+        
             
             
     def analysis_plotRiskCurves(self):
@@ -775,20 +781,23 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
         with SensiSessResults(**kwargs) as ses:
             pick_d = ses.load_pick(pick_fp)
-            
- 
             fig_d = ses.plot_riskCurves(y1labs=y1labs)
+            
         self.feedback.upd_prog(80)
         log.push('built %i curves'%len(fig_d))
         
         #output the figures
+ 
         for y1lab, fig in fig_d.items():
             self.feedback.upd_prog(50, method='portion')
             self.output_fig(fig)
             
         self.feedback.upd_prog(None)
             
-        
+        #=======================================================================
+        # save for tests
+        #=======================================================================
+        self.fig_d=fig_d
         
         return
             
@@ -935,7 +944,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #activate the save button
         self.pushButton_DF_save.setDisabled(False)
         self.feedback.upd_prog(None)
-        
+        self.datafile_df = df.copy() #for testing
         return
     
     def _dataFiles_sourceFile(self): #set the datafile path when the combobox changes

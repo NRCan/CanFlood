@@ -1349,6 +1349,8 @@ def bind_TableWidget( #add some custom bindings to a TableWidget
             else:
                 self.setItem(j,index,QTableWidgetItem(val))
                 
+    
+                
     def populate(self, #populate with a dataframe
                  df):
         
