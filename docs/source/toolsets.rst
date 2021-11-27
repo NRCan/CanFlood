@@ -360,7 +360,7 @@ Outputs provided by this tool are summarized in the following table:
 5.2.2. Impacts (L2)
 ===================
 
-CanFlood’s ‘Impacts (L2)’ tool is designed to perform a ‘classic’ object-based deterministic flood damage assessment using vulnerability curves, asset heights, and WSL values to estimate flood impacts from multiple events. This tool calculates the impacts on each asset from each hazard event (if the provided raster WSL was realized). ‘Impacts (L2)’ does not consider or account for event probabilities (conditional or otherwise) as these are handled in the Risk (L2) module (see Section5.2.3_). Model package requirements are summarized in the following table:
+CanFlood’s *Impacts (L2)* tool is designed to perform a ‘classic’ object-based deterministic flood damage assessment using vulnerability curves, asset heights, and WSL values to estimate flood impacts from multiple events. This tool calculates the impacts on each asset from each hazard event (if the provided raster WSL was realized). ‘Impacts (L2)’ does not consider or account for event probabilities (conditional or otherwise) as these are handled in the Risk (L2) module (see Section5.2.3_). Model package requirements are summarized in the following table:
 
 *Table 5-8: Impacts (L2) model package requirements.*
 
@@ -421,20 +421,25 @@ To facilitate complex assets (e.g. a house vulnerable to structural and contents
 
 Where BA_S corresponds to a vulnerability function for estimating structural cleanup/repair, and BA_C estimates household contents damages (both scaled by the floor area). Additional fX columns could be added as component vulnerability functions for basements, garages, and so on. Each of group of four key attributes is referred to as a ‘nested function’, where the collection of nested functions comprises the complete vulnerability function of an asset.
 
-Impacts (L2) calculates the impact of an event ei to a single asset j from its collection of nested vulnerability functions k as:
+Impacts (L2) calculates the impact of an event *ei* to a single asset *j* from its collection of nested vulnerability functions *k* as:
 
 .. image:: /_static/toolsets_model_5_2_2_impacts.jpg
 
-Where each nested vulnerability function is parameterized by the following provided in the control file (:ref:`Section4.1 <Section4.1>`):
+Where each nested vulnerability function is parameterized by the following from the 'asset inventory (finv)' (:ref:`Section4.1 <Section4.1>`):
 
   • *tag*: variable linking the asset to the corresponding vulnerability curve in the vulnerability curve set (‘curves’);
   • *cap*: maximum value cap placed on the vulnerability curve result;
   • *scale*: scale value applied to the vulnerability curve result;
-  • *elv*: vertical distance from the exposure value.
+  • *elv*: vertical distance from the exposure value;
 
-And the following provided in the exposure dataset (‘expos’):
+the following from the 'exposure dataset (expos)':
 
   • *expo*: magnitude of flood exposure sampled at the asset.
+  
+and the following optional parameter from the 'control file':
+
+  • *curve_deviation*:which curve deviation to use. 
+
 
 The ‘Impacts (L2)’ routine first calculates the impacts of each nested function, then scales the values, then caps the values, before combining all the nested values to obtain the total impact for a given asset.
 
@@ -881,7 +886,7 @@ To facilitate this analysis, the following tabs are provided:
 
 This tab provides a tabular readout of the control file parameters for each of your candidate models. To populate the table, first *Load* a main control file from the *Setup* tab. Additional candidates can be added and removed using the corresponding buttons. Parameter values can be edited directly in the table; while a convenience method to randomize all the colors is provided (this creates hex color strings readable by matplotlib). It's a good idea to provide separate colors for each candidate for your later work on the *Analysis* tab (see below).
 
-To construct each of these candidate models (in their own sub-directory), use the *Compile Candidates* button. This also activates the *DataFiles* tab and populates the *Run* tab with each of the compiled control files. Generally, users will want to create separate copies of each datafile (rather than have each candidate point back to the datafiles of the main model). This allows the sensitivity of the annualized metric to the data files to be examined by manipulating each duplicated datafile (e.g., adding 1m to all heights). 
+To construct each of these candidate models and a working copy of the base model (in their own sub-directory within your working directory), use the *Compile Candidates* button. This also activates the *DataFiles* tab and populates the *Run* tab with each of the compiled control files. Generally, users will want to create separate copies of each datafile (rather than have each candidate point back to the datafiles of the base model) using the 'Copy all candidate datafiles' option. This allows the sensitivity of the annualized metric to the data files to be examined by manipulating each duplicated datafile (e.g., adding 1m to all heights). Note using this option will populate the compile table with the new datafile paths, including the paths for the base model. All candidate models use absolute filepaths, regardless of the configuration on the *Setup* tab. 
 
 **DataFiles**
 
