@@ -46,12 +46,10 @@ class SensiShared(Model):
         #=======================================================================
         # collect attributes from submodels
         #=======================================================================
-        assert modLevel in self.modelTypes_d
         
-        for ModObj in self.modelTypes_d[modLevel]:
-            #print('collecting from %s'%ModObj.__name__)
-            for attn in self.collect_attns:
-                self.merge_attv_containers(ModObj, attn)
+        
+
+        self.merge_expectations(modLevel)
 
                    
          
@@ -66,38 +64,57 @@ class SensiShared(Model):
         #overwrite
         self.resname = '%s_%s_%s'%(self.name, self.tag,  datetime.datetime.now().strftime('%m%d'))
         
-    def merge_attv_containers(self, #merge your attribute with that of a sibling
-                            Sibling,
-                            attn,
+    def merge_expectations(self, #merge expectation containers
+                            modLevel
                             ):
         """
         because we're merging Risk and Impact model classes, need to combine the expectation pars
         """
+        assert modLevel in self.modelTypes_d
         
-        #get from the sibling
-        sib_att_d = copy.deepcopy(getattr(Sibling, attn))
+        #loop through each of your sibilings
+        for ModObj in self.modelTypes_d[modLevel]:
+            #print('collecting from %s'%ModObj.__name__)
+            
+            #===================================================================
+            # loop each expectation container
+            #===================================================================
+            for attn in self.collect_attns:
                 
-        if not hasattr(self, attn):
-            new_att_d = sib_att_d
-        
-        #=======================================================================
-        # merge
-        #=======================================================================
-        else:
-            #start with a copy of th eold
-            new_att_d = copy.deepcopy(getattr(self, attn))
- 
-            
-            for k, sub_d in sib_att_d.items():
-                if k in new_att_d:
-                    new_att_d[k] = {**new_att_d[k], **sub_d}
+                #get from the sibling
+                sib_att_d = copy.deepcopy(getattr(ModObj, attn))
+                        
+                if not hasattr(self, attn):
+                    new_att_d = sib_att_d
+                
+                #=======================================================================
+                # merge
+                #=======================================================================
                 else:
-                    new_att_d[k] = sub_d
-            
-
+                    #start with a copy of th eold
+                    new_att_d = copy.deepcopy(getattr(self, attn))
+         
+                    
+                    for k, sub_d in sib_att_d.items():
+                        if k in new_att_d:
+                            new_att_d[k] = {**new_att_d[k], **sub_d}
+                        else:
+                            new_att_d[k] = sub_d
+                    
         
-        setattr(self, attn, new_att_d)
-        
+                #set it
+                setattr(self, attn, new_att_d)
+                
+        #===================================================================
+        # special fixes
+        #===================================================================
+        """need to remove the dmgs from the mandatory expectations"""
+        if 'dmgs' in self.exp_pars_md['risk_fps']:
+ 
+            del self.exp_pars_md['risk_fps']['dmgs']
+        else:
+            assert modLevel=='L1'
+                
     def get_sections(self, #retrieving sections for each attn from the check_d's
                      attn_l,
                      master_pars=None, #{section: {attn:type}}
@@ -131,6 +148,27 @@ class SensiShared(Model):
         
         
         return {k:all_attn_sect_d[k] for k in attn_l}
+    
+    def get_attns_from_sections(self,
+                                sections_l,
+                             master_pars=None, #{section: {attn:type}}
+                     logger=None,
+                     ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('get_sections')
+        if master_pars is None: master_pars=self.master_pars
+        
+        
+        attn_d = dict()
+        for sectName in sections_l:
+            attn_d.update({k:sectName for k in master_pars[sectName].keys()})
+            
+        return attn_d
+                                
     
     
  

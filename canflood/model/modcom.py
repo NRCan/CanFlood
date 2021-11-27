@@ -545,24 +545,63 @@ class Model(ComWrkr,
         
         return cpars_d
     
-
-
-
     
+    def _cfFile_relative(self, #adding basedir to the control file
+                              cf_fp=None, #control file
+
+                          sections=['dmg_fps', 'risk_fps'], #parameter sections to manipulate
+                          logger=None,
+                          **kwargs):
+        """wraper to work with the control file (rather than the configparser"""
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log=logger.getChild('_cfFile_relative')
+        if cf_fp is None: cf_fp=self.cf_fp
+ 
+ 
+        assert not self.absolute_fp
+        
+        #=======================================================================
+        # load the control file
+        #=======================================================================
+        pars = configparser.ConfigParser(inline_comment_prefixes='#')
+        _ = pars.read(cf_fp)
+            
+        pars = self._cf_relative(pars,  sections=sections, warn=False, logger=log, **kwargs)
+        
+        #=======================================================================
+        # write the config file 
+        #=======================================================================
+        with open(cf_fp, 'w') as configfile:
+            pars.write(configfile)
+            
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        log.info('set ControlFile to absolute:    %s'%(cf_fp))
+        
+        return cf_fp
+    
+
     def  _cf_relative(self, #convert filepaths from relative to absolute
                       cpars, #config parser
                       base_dir=None, #base directory to add
                       sections=['dmg_fps', 'risk_fps', 'results_fps'], #sections contaiing values to convert
-                      
+                      warn=True,
+                      logger=None,
                       ):
         #=======================================================================
         # defaults
         #=======================================================================
         if base_dir is None: base_dir=self.base_dir
-        log = self.logger.getChild('_cf_relative')
+        if logger is None: logger=self.logger
+        log = logger.getChild('_cf_relative')
         
-        assert os.path.exists(base_dir)
-
+        #assert os.path.exists(base_dir)
+        log.debug('w/ base_dir=%s'%base_dir)
         #=======================================================================
         # #loop through parser and retireve then convert
         #=======================================================================
@@ -572,6 +611,7 @@ class Model(ComWrkr,
             res_d[sectName]=dict()
             #loop through each variable in this section
             for varName, valRaw in cpars[sectName].items():
+                log.debug('%s.%s:    %s'%(sectName, varName, valRaw))
                 if valRaw == '': continue #skip blanks
                 
                 if os.path.exists(valRaw):
@@ -586,7 +626,7 @@ class Model(ComWrkr,
                     """dont bother... some models may not use all the fps
                     better to let the check with handles catch things
                     assert os.path.exists(fp), '%s.%s not found'%(sectName, varName)"""
-                    if not os.path.exists(fp):
+                    if not os.path.exists(fp) and warn:
                         log.warning('%s.%s got bad fp: %s'%(sectName, varName, fp))
                 
                 #set it
@@ -606,13 +646,9 @@ class Model(ComWrkr,
         #=======================================================================
         # wrap
         #=======================================================================
+        log.debug(res_d)
         log.info('converted %i filepaths to absolute'%cnt)
-            
-        """
-        cpars['dmg_fps']['finv']
-        """
-        
-        
+
         return cpars
     
     #===========================================================================
