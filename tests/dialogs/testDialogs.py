@@ -3,7 +3,9 @@ Created on Nov. 27, 2021
 
 @author: cefect
 
-unit tests for dialog workflows
+testing plugin with dialogs
+    running workflows (e.g. tutorials) through the dialogs (using QTest.mouseClick)
+    comparing results to a previous run (stored in a pickel)
 '''
 
 #===============================================================================
@@ -112,23 +114,23 @@ if __name__ == '__main__':
     
     wrap it with a WorkFlow_t to add teh test methods
     
-    run the session to build_pickels()
+    reconfigure wFlow_l so this is the only object being run
+    
+    execute run_suite with build_pickels=True
     
     #===========================================================================
     # INSTRUCTIONS: UPDATING TEST COMPARISON DATAT
     #===========================================================================
     comment out all the other tests in wFlow_l
-    fix comments below to also execute build_picles()
-    revert comments
+    execute run_suite with build_pickels=True
+ 
     NOTE: ensure 'tdata_keys' on the worker are approriate
     
     #===========================================================================
     # INSTRUCTIONS: RUNNING TESTS
     #===========================================================================
     
-    run the session to get_tests()
-    execute the test suite using TextTestRunner
-    ensure 'build_pickels' is commented out
+    execute run_suite with build_pickels=False and get_tests=True
     """
     
     wrkr = Session_t(write=True)
@@ -137,8 +139,8 @@ if __name__ == '__main__':
     # run tests
     #===========================================================================
     wrkr.run_suite(wFlow_l,
-                   build_pickels=True, #results to pickels (only for adding tests)
-                   get_tests=True, #assemble the test stuie
+                   build_pickels=False, #results to pickels (only for adding tests)
+                   get_tests=True, #assemble the test stuie (should always be true)
                    ) 
  
     unittest.TextTestRunner(verbosity=3).run(wrkr.suite)
