@@ -295,11 +295,23 @@ To facilitate batch simulations for advanced users, all CanFlood modelling modul
 
 **Parameter Summary**
 
-The following table summarizes the relevant parameters for CanFlood’s model toolset that can be specified in the Control File:
+The following table summarizes the relevant parameters for CanFlood’s model toolset that can be specified in the Control File
 
-.. image:: /_static/toolsets_5_2_parameter_summary.jpg
+*CanFlood control file parameter summary*
 
-Some of these can be configured with CanFlood’s ‘Build’ toolset UI, while others must be specified manually in the Control File.
+.. csv-table:: 
+   :file: /tables/52_controlFileDesc.csv
+   :widths: auto
+   :header-rows: 1
+
+*CanFlood control file datafile and plotting summary*
+
+.. csv-table:: 
+   :file: /tables/52b_controlFileDesc_filepaths.csv
+   :widths: auto
+   :header-rows: 1
+   
+Some of these can be configured with CanFlood’s *Build* toolset UI, while others must be specified manually in the Control File.
 
 .. _Section5.2.1:
 

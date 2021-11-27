@@ -10,7 +10,7 @@ scale_units,m2,Units of expected scale input,FALSE
 exposure_var,water height from main floor,Variable of expected exposure input,FALSE
 impact_var,building repair and restoration cost estimation,Variable of impact output (after scaling),FALSE
 scale_var,main floor area,Description of expected scale variable,FALSE
-exposure,impact,Header for exposure- impact function,TRUE
+exposure,impact (or curve_deviation),"Header for exposure- impact function. Alternatively, this row can be used to specify 'curve_deviation' referneced by the control file",TRUE
 0,0,First exposure-impact entry,TRUE
 0.305,394.56,…,TRUE
 0.914,543.05,Last exposure-impact entry,TRUE
