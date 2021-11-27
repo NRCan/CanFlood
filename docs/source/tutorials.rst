@@ -974,6 +974,8 @@ This tutorial demonstrates *Sensitivity Analysis* workflow (:ref:`Section5.4.5 <
 
 Launch the *Sensitivity Analysis* |targetImage| dialog from the Plugins>CanFlood menu. Navigate to the *Setup* menu, select your working directory, set the filepaths to 'relative', then specify your main model control file and 'Model Level' = 'L2' as shown below:
 
+.. JAMIE: dont work in a directory called 'MainModel' this is confusing. the tool creates a suite of equivalent candidate models in the working directory one of which is the 'base' model (identical to the mainmodel). 
+
 .. image:: /_static/tutorials_6_13_img_1.JPG
 
 **Click Load** to populate the *Compile* tab.
@@ -990,11 +992,13 @@ Navigate to the *Compile* tab. It should have been automatically populated with 
 
 .. image:: /_static/tutorials_6_13_img_2.JPG
 
-Now add two more candidate models by **clicking the Add button**. Notice the model names have been automatically generated, but the remaining fields are identical to the base model. Now we'll modify one parameter or datafile on each candidate to compile the model suite.
+Now add three more candidate models by **clicking the 'Add' button**. Notice the model names have been automatically generated, but the remaining fields are identical to the base model. Now we'll modify one parameter or datafile on each candidate to compile the model suite.
 
-For the first perturbation, simply **change the rtail value on 'cand01' to 0.1**. We will configure the remaining two perturbations in the following step. 
+For the first perturbation, simply **change the rtail value on 'cand01' to 0.1**. For the second perturbation, **change the 'curve_deviation' on 'cand02' to lo** to match the lower bound depth-damage values stored in the curves.xls. We will configure the remaining two perturbations in the following step. 
 
-To allow us to differentiate the plots we generate in the final step, **click Randomize Colors**. 
+To allow us to differentiate the plots we generate in the final step, **click 'Randomize Colors'**. 
+
+.. JAMIE: insert another secreenshot showing the compile tab w/ all 5 candidates
 
 Finally, **click Compile Candidates**.  You will now see four new folders, one for each candidate model, in your working directory.
 
