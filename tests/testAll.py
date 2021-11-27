@@ -22,9 +22,9 @@ see below for instructions on use
 #===============================================================================
 # imports----------
 #===============================================================================
-import unittest, tempfile, inspect, logging, os, fnmatch, pickle, datetime
+import unittest, tempfile, inspect, logging, os, pickle, datetime
 from unittest import TestLoader
-from qgis.core import QgsCoordinateReferenceSystem, QgsMapLayerStore
+
 import pandas as pd
 import numpy as np
 
