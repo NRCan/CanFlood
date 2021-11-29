@@ -72,13 +72,13 @@ class CurvePlotr(DFunc, Plotr):
  
  
         
-        super().__init__(**kwargs) #initilzie teh baseclass
+        super().__init__(name=name, **kwargs) #initilzie teh baseclass
         
         #=======================================================================
         # attachments
         #=======================================================================
         
-        self.name = name
+
         
         #self.figsize, self.subplot, self.fmt, self.dpi, self.transparent = figsize, subplot, fmt, dpi, transparent
         self._init_plt()

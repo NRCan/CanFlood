@@ -171,6 +171,9 @@ class Plotr(ComWrkr):
         #=======================================================================
         import matplotlib
         matplotlib.use('Qt5Agg') #sets the backend (case sensitive)
+        matplotlib.set_loglevel("info") #reduce logging level
+
+        
         import matplotlib.pyplot as plt
         
         #set teh styles

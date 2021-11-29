@@ -372,7 +372,8 @@ class WorkFlow_t(WorkFlow): #wrapper for test workflows
 
                  **kwargs):
 
-        super().__init__( **kwargs) #initilzie the baseclass cascade
+        super().__init__(name=self.name,
+                          **kwargs) #initilzie the baseclass cascade
         self.tag = 't%s'%datetime.datetime.now().strftime('%Y%m%d')
         
         #load the pickels

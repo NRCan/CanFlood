@@ -50,7 +50,7 @@ class ComWrkr(object): #common methods for all classes
 
     def __init__(self, 
                  tag='session', #label for the session
-                 name=None, #label for the object
+                 name='', #label for the object
                  resname=None, 
                  cid='xid', #default used by inventory constructors
                  
@@ -94,7 +94,7 @@ class ComWrkr(object): #common methods for all classes
         #======================================================================
         # attach
         #======================================================================
-        if not name is None: self.name=name
+        self.name=name
         self.tag = tag
         self.cid = cid
         self.overwrite=overwrite

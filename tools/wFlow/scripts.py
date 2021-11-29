@@ -250,20 +250,21 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
     
     def __init__(self,
                  session=None,
-
+                 name=None,
                  #init_q_d = {},
                  **kwargs):
         
         #=======================================================================
         # precheck
         #=======================================================================
-        assert isinstance(self.name, str), 'must overwrite the \'name\' attribute with a subclass'
+        assert isinstance(name, str), 'must overwrite the \'name\' attribute with a subclass'
 
         #=======================================================================
         # init cascade
         #=======================================================================
 
-        super().__init__(out_dir=os.path.join(session.out_dir, self.name),
+        super().__init__(name=name,
+                        out_dir=os.path.join(session.out_dir, name),
                          tag = '%s'%datetime.datetime.now().strftime('%Y%m%d'),
                          crsid=self.crsid, #overrwrite the default with your default
                          **kwargs) #Session -> Qcoms -> ComWrkr
