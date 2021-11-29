@@ -79,11 +79,14 @@ class Plotr(ComWrkr):
                  init_plt_d = {}, #container of initilzied objects
  
                   #format controls
-                  grid = True, logx = False, 
+                  grid = True, 
+                  #logx = False, 
                   
                   
                   #figure parametrs
                 figsize     = (6.5, 4), 
+                tight_layout=True,
+                constrained_layout=False,
                     
                 #hatch pars
                     hatch =  None,
@@ -113,9 +116,11 @@ class Plotr(ComWrkr):
         self.plotTag = self.tag #easier to store in methods this way
  
         self.grid    =grid
-        self.logx    =logx
+        #self.logx    =logx
  
         self.figsize    =figsize
+        self.tight_layout=tight_layout
+        self.constrained_layout=constrained_layout
         self.hatch    =hatch
         self.h_color    =h_color
         self.h_alpha    =h_alpha

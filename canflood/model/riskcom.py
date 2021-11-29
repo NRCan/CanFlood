@@ -1350,7 +1350,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         
         return fig
     
-    def _lineToAx(self, #add a line to the axis
+    def _lineToAx(self, #add a risk curve to the axis
               res_ttl,
               y1lab,
               ax,
@@ -1359,6 +1359,11 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
               hatch_f=True,
               h_color=None, h_alpha=None, hatch=None,
               ): #add a line to an axis
+        
+        """
+        for plotting vfuncs, see:
+            CurvePlotr.line
+        """
         
         #=======================================================================
         # defaults
