@@ -1,6 +1,6 @@
-﻿name,option,type expectation,default,description
+name,option,type expectation,default,description
 name,,str,,name of the scenario/model run
-cid,,,,ndex column for the 3 inventoried data sets (finv expos gels)
+cid,,,,index column for the 3 inventoried data sets (finv expos gels)
 prec,,int,,float precision for calculations
 ground_water,,bool,,flag to include negative depths in the analysis
 felv,,str,,datum or ground
