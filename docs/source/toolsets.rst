@@ -155,7 +155,7 @@ After executing these tools, a new set of rasters are loaded to the project.
 
 **Sampling Geometry and Exposure Type**
 
-To support a wide range of vulnerability analysis, the Hazard Sampler tool is capable of developing WSL and inundation exposure variables from the three basic geometry types as shown in Table5-3_. For *line* and *polygon* type geometries, the tool requires the user specify the sample statistic for WSL calculations, and a depth threshold for percent inundation calculations.
+To support a wide range of vulnerability analysis, the Hazard Sampler tool is capable of developing WSL and inundation exposure variables from the three basic geometry types as shown in Table5-3_. For *line* and *polygon* type geometries, the tool requires the user to specify the sample statistic for WSL calculations, and a depth threshold for percent inundation calculations.
 
 .. _Table5-3:
 
@@ -169,7 +169,7 @@ To support a wide range of vulnerability analysis, the Hazard Sampler tool is ca
 | Point                  | Default                | WSL                | Default                | WSL :sup:`1`       |
 |                        | [Tutorial 2a]          |                    | [Tutorial 1a]          |                    |
 +------------------------+------------------------+--------------------+------------------------+--------------------+
-| Line4 :sup:`4`         | Sample Statistic       | WSL Statistic      | % inundation,          | % inundation       |  
+| Line :sup:`4`          | Sample Statistic       | WSL Statistic      | % inundation,          | % inundation       |  
 |                        | :sup:`3, 5`            |                    | Depth Thresh :sup:`2`  |                    |
 |                        |                        |                    | [Tutorial 4b]          |                    |
 +------------------------+------------------------+--------------------+------------------------+--------------------+
@@ -622,7 +622,7 @@ SOFDA has the following capabilities:
   • Estimate the vulnerability reduction of Property Level Protection Measures;
   • Estimate the influence of elevating damage-features (e.g., raising water heaters);
   • Simulate changes in relevant building typology brought about by re-development (e.g., larger homes with deeper basements);
-  • Dynamic and flexible modeling of many model components (e.g., more expensive water heaters)
+  • Dynamic and flexible modeling of many model components (e.g., more expensive water heaters);
   • Provide some quantification of uncertainty (i.e., stochastic modeling);
   • Provide detailed outputs to facilitate the analysis of underlying mechanisms.
 
@@ -744,7 +744,7 @@ The ‘Dike Fragility Mapper’ tool is similar in many ways to the Impacts (L2)
 
 The dike exposure sub-tool determines the location of highest vulnerability on each dike segment, then returns the corresponding freeboard value of each event raster yielding the dike segment exposure (‘dexpo’) dataset. This is accomplished with the following sequence:
 
-  1) Generate transects at specified intervals on specified side of each dike segment (red lines on Figure5-8_).
+  1) Generate transects at specified intervals on specified side of each dike segment (red lines on Figure5-8_);
   2) Sample the dike crest elevation from the DTM raster at the head of each transect;
   3) Sample each event WSL raster on each transect;
   4) Calculate the freeboard values on each transect as the difference between the sampled WSL and crest elevation values;
@@ -759,7 +759,7 @@ The dike exposure sub-tool determines the location of highest vulnerability on e
 This sub-tool provides the following outputs:
 
   • *dike segment exposure (‘dexpo’) dataset*: freeboard .csv output and main input to the Dike Vulnerability sub-tool;
-  • *processed dikes layer* (optional): this is a modified version of the original input file, showing the ‘dexpo’ data on the original dikes geometry.
+  • *processed dikes layer* (optional): this is a modified version of the original input file, showing the ‘dexpo’ data on the original dikes geometry;
   • *transects layer* (optional): these are the perpendicular segments of length and spacing specified by the user where the crest elevation and WSL sampling are performed at the head and tail respectively;
   • *transect exposure points* (optional): each transect head with all calculated values;
   • *breach points layer* (optional): transect heads with negative freeboard values;
@@ -902,7 +902,7 @@ To construct each of these candidate models and a working copy of the base model
 
 **DataFiles**
 
-The *DatFiles* tab makes it easier to manipulate candidate data files. Once all of the candidates have been compiled (i.e., copied into their own directories), each data file can be accessed through the *Candidate Name* and *Parameter* combo boxes. These will populate the data filepath automatically. The datafile can then be loaded into the project (as a memory layer without geometry) from where the fields can be manipulated using the QGIS's built-in Attribute Table and Field Calculator. Custom expression functions are also pre-loaded under the 'CanFlood' menu in the Field Calculator. Once the desired manipulation to the attribute values is applied, the *Save Datafile* button can be used to write the memory layer back to a csv.
+The *DataFiles* tab makes it easier to manipulate candidate data files. Once all of the candidates have been compiled (i.e., copied into their own directories), each data file can be accessed through the *Candidate Name* and *Parameter* combo boxes. These will populate the data filepath automatically. The datafile can then be loaded into the project (as a memory layer without geometry) from where the fields can be manipulated using the QGIS's built-in Attribute Table and Field Calculator. Custom expression functions are also pre-loaded under the 'CanFlood' menu in the Field Calculator. Once the desired manipulation to the attribute values is applied, the *Save Datafile* button can be used to write the memory layer back to a csv.
 
 **Run**
 
@@ -914,6 +914,7 @@ The *Run* tab displays the control file paths of each candidate model loaded by 
 The *Analysis* tab summarizes the outputs from the bulk-run loaded from the python .pickle (see previous section). The table shows some simple statistics, the parameters that were perturbed, and the rank of the candidate model. The rank corresponds to the sensitivity of the annualized metric (ead_tot) to the perturbed parameter, where the rank=1 candidate yielded the largest difference from the base model.
 
 To visualize these values, the *PLot Risk Curves* button can be used to create a combined risk-curve (similar to the *Compare* function on the Results toolset). The *Plot Box* button can be used to create a simple box plot of all the 'ead_tot' values.  
+
 
 
 
