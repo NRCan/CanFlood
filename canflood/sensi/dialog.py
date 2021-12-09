@@ -9,15 +9,15 @@ ui class for the sensitivity analysis menu
 # imports------------
 #===============================================================================
 import os,  os.path, time, datetime, copy
-
+from qgis.core import QgsExpression, QgsVectorLayer
 
 from PyQt5 import uic, QtWidgets, QtGui
-from PyQt5.QtWidgets import QTableWidgetItem, QWidget, QHeaderView
+from PyQt5.QtWidgets import QTableWidgetItem, QWidget, QHeaderView, QFileDialog
  
 from PyQt5.QtCore import Qt
 
 
-from qgis.core import QgsExpression, QgsVectorLayer
+
 
 from hlpr.exceptions import QError as Error
 #===============================================================================
@@ -220,6 +220,8 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         # Analyze----------
         #=======================================================================
+        hlpr.plug.bind_TableWidget(self.tableWidget_A, log)
+        
         #pickel file
         self.pushButton_A_browse.clicked.connect(
                 lambda: self.fileSelect_button(self.lineEdit_A_pick_fp, 
@@ -236,7 +238,9 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         
         self.pushButton_A_print.clicked.connect(self.analysis_print)
         
-        hlpr.plug.bind_TableWidget(self.tableWidget_A, log)
+        self.pushButton_A_saveAs.clicked.connect(lambda :self.tableWidget_A.save_df(path=self.out_dir))
+        
+        
         
 
             
@@ -848,6 +852,12 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
     
     def analysis_print(self):
         self.logger.warning('not implemented')
+        
+        
+        
+        
+        
+        
     
     def _pretty_parameters(self, #get just the parameters that are different
                            df_raw=None):

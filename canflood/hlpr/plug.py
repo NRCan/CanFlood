@@ -1341,6 +1341,41 @@ def bind_TableWidget( #add some custom bindings to a TableWidget
                 
         return df.infer_objects()
         
+    def save_df(self,
+                      caption = 'Specify new file name', #title of box
+                      path = None,
+                      filters = "All Files (*)",
+                ):
+                
+        #path default
+        if path is None:
+            path = os.getcwd()
+        if not os.path.exists(path):
+            path = os.getcwd()
+        #=======================================================================
+        # get the filepath from the user
+        #=======================================================================
+        out_fp = QFileDialog.getSaveFileName(self, caption, path, filters)[0]
+        if out_fp == '':
+            log.warning('user failed to make a selection. skipping')
+            return 
+        
+        assert out_fp.endswith('csv')
+        
+ 
+        #=======================================================================
+        # collect the results
+        #=======================================================================
+        df = self.get_df()
+            
+ 
+        #=======================================================================
+        # write
+        #=======================================================================
+        df.to_csv(out_fp, index=None)
+        log.push('saved %s to %s'%(str(df.shape), out_fp))
+        return out_fp
+                
     
  
         
@@ -1466,6 +1501,7 @@ def bind_TableWidget( #add some custom bindings to a TableWidget
         'get_values':lambda self, indexName, axis=0: get_values(self, indexName, axis=axis),
         'get_items':lambda self, indexName, axis=0: get_items(self, indexName, axis=axis),
         'get_df':lambda self:get_df(self),
+        'save_df':lambda self, **kwargs:save_df(self, **kwargs),
         'set_values':lambda self, i,d,axis=0:set_values(self,i,d,axis=axis),
         'call_all_items':lambda self, n, *args, **kwargs: call_all_items(self, n, *args, **kwargs),
         'call_row_items':lambda self,n,i, *args, axis=1, **kwargs: call_row_items(self, n, i, *args,axis=axis, **kwargs),
