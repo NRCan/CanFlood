@@ -321,7 +321,11 @@ class Session_t(Session): #handle one test session
             #===================================================================
             """tests handle flows AFTER they've run
             lets us run many tests on a completed flow without having to re-run teh flow each time"""
-            runr = self._run_wflow(fWrkr, **kwargs)
+            try:
+                runr = self._run_wflow(fWrkr, **kwargs)
+            except Exception as e:
+                raise Error('failed to execute %s w/ \n    %s'%(fWrkr.__name__, e))
+            
             runr.load_pick()
 
             #build a test for each mathing method in the class
@@ -584,7 +588,7 @@ wFlow_l = [
            Tut1a_t, 
            #Tut2a_t,Tut2b_t, #these are mostly redundant w/ 2c
             
-           Tut2c_mutex_t, 
+           Tut2c_mutex_t, #needs to be run for Tut2c_max_t to work
            Tut2c_max_t,  #compares with Tut2c_mutex_t. write=True
            Tut4a_t, Tut4b_t, 
            Tut5a_t, 

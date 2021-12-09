@@ -611,7 +611,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
                 # apply multiplication
                 #===============================================================
                 #get EV from this
-                evdf1 = mbdxcol.multiply(evdf, axis='column', level=1).droplevel(level=0, axis=1)
+                evdf1 = mbdxcol.multiply(evdf, axis=1, level=1).droplevel(level=0, axis=1)
                 
 
                     

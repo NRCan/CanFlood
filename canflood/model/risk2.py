@@ -258,8 +258,9 @@ class Risk2(RiskModel, #This inherits 'Model'
         #get the new mindex we want to join in
         mindex2 = pd.MultiIndex.from_frame(
             aep_ser.to_frame().reset_index().rename(columns={'index':'rEventName'}))
+        
         #join this in and move it up some levels
-        atr_dxcol.columns = atr_dxcol.columns.join(mindex2)[0].swaplevel(i=2, j=1).swaplevel(i=1, j=0)
+        atr_dxcol.columns = atr_dxcol.columns.join(mindex2).swaplevel(i=2, j=1).swaplevel(i=1, j=0)
         #check the values all match
         """nulls are not matching for somereaseon"""
         booldf = atr_dxcol.droplevel(level=0, axis=1).fillna(999) == self.data_d[dtag].fillna(999)
