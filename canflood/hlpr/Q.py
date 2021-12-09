@@ -2709,6 +2709,7 @@ class MyFeedBackQ(QgsProcessingFeedback):
             
     def setProgress(self, prog):
         """throwing a warning despite passing an integer.. seem sto be a bugg
+        using this as a workaround to surpress the warning (which would be very frequent)
         https://github.com/vispy/vispy/issues/2212
         """
         with warnings.catch_warnings():
