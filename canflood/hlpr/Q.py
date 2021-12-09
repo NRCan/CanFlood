@@ -2706,6 +2706,15 @@ class MyFeedBackQ(QgsProcessingFeedback):
         # emit signalling
         #===================================================================
         self.setProgress(prog)
+            
+    def setProgress(self, prog):
+        """throwing a warning despite passing an integer.. seem sto be a bugg
+        https://github.com/vispy/vispy/issues/2212
+        """
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            super().setProgress(int(prog))
+        
         
 
 

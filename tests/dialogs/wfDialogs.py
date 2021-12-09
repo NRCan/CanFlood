@@ -5,6 +5,14 @@ Created on Nov. 27, 2021
 
 dialog workflows
 '''
+#===============================================================================
+# globals
+#===============================================================================
+base_dir = r'C:\LS\09_REPOS\03_TOOLS\CanFlood\_git'
+
+#===============================================================================
+# imports
+#===============================================================================
 import os
 
 
@@ -14,7 +22,12 @@ from hlpr.plug import QTableWidgetItem
 from PyQt5.QtTest import QTest 
 from PyQt5.QtCore import Qt
 #===============================================================================
-# sensitivity analysis
+# custom imports
+#===============================================================================
+
+
+#===============================================================================
+# Sensitivity Dialog
 #===============================================================================
 from sensi.dialog import SensiDialog
 
@@ -29,7 +42,7 @@ class SensiDialogTester(SensiDialog):
 class Tut8a(DialWF):
     name='tut8a'
     DialogClass=SensiDialogTester
-    base_dir = r'C:\LS\03_TOOLS\CanFlood\_git'
+    base_dir = base_dir
     
     
  
@@ -58,7 +71,7 @@ class Tut8a(DialWF):
         # load
         #=======================================================================
         
-        self.D.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\8\baseModel\CanFlood_tut8.txt')
+        self.D.lineEdit_cf_fp.setText(os.path.join(self.base_dir, r'tutorials\8\baseModel\CanFlood_tut8.txt'))
         self.D.radioButton_SS_fpRel.setChecked(True)
         self.D.comboBox_S_ModLvl.setCurrentIndex(1) #modLevel=L2
         
