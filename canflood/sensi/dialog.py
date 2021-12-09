@@ -9,15 +9,15 @@ ui class for the sensitivity analysis menu
 # imports------------
 #===============================================================================
 import os,  os.path, time, datetime, copy
+from qgis.core import QgsExpression, QgsVectorLayer
 
-
-from PyQt5 import uic, QtWidgets
-from PyQt5.QtWidgets import QTableWidgetItem, QWidget, QHeaderView
+from PyQt5 import uic, QtWidgets, QtGui
+from PyQt5.QtWidgets import QTableWidgetItem, QWidget, QHeaderView, QFileDialog
  
 from PyQt5.QtCore import Qt
 
 
-from qgis.core import QgsExpression, QgsVectorLayer
+
 
 from hlpr.exceptions import QError as Error
 #===============================================================================
@@ -220,6 +220,8 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         # Analyze----------
         #=======================================================================
+        hlpr.plug.bind_TableWidget(self.tableWidget_A, log)
+        
         #pickel file
         self.pushButton_A_browse.clicked.connect(
                 lambda: self.fileSelect_button(self.lineEdit_A_pick_fp, 
@@ -236,7 +238,9 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         
         self.pushButton_A_print.clicked.connect(self.analysis_print)
         
-        hlpr.plug.bind_TableWidget(self.tableWidget_A, log)
+        self.pushButton_A_saveAs.clicked.connect(lambda :self.tableWidget_A.save_df(path=self.out_dir))
+        
+        
         
 
             
@@ -249,7 +253,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         if self.dev:
             #add control file
-            self.lineEdit_cf_fp.setText(r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\8\baseModel\CanFlood_tut8.txt')
+            self.lineEdit_cf_fp.setText(r'C:\LS\09_REPOS\03_TOOLS\CanFlood\tut_builds\8\20211119\CanFlood_tut8.txt')
             self.radioButton_SS_fpRel.setChecked(True)
             self.comboBox_S_ModLvl.setCurrentIndex(1) #modLevel=L2
             
@@ -734,6 +738,13 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
             
             #join in parameters
             df1 = rdf1.join(par_df)
+            
+            #promote name column
+            l = df1.columns.tolist()
+            l.remove('name')
+            
+            df1 = df1.loc[:, ['name'] + l]
+            
         except Exception as e:
             log.warning('failed to join parameters w/ \n    %s'%e)
             df1 = rdf1
@@ -747,11 +758,21 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         
         #make not editable
         tbw.call_all_items('setFlags',Qt.ItemIsEditable)
-        tbw.call_all_headers('setTextAlignment',Qt.AlignLeft, axis=1)    
+        tbw.call_all_headers('setTextAlignment',Qt.AlignLeft, axis=1)
+        
+        #change color
+        for coln in rdf1.columns.tolist() + ['name']:
+            tbw.call_row_items('setBackground', coln, QtGui.QColor(255, 0, 0, 50)) #transparent red
+            
         
         
+        #=======================================================================
+        # wrap
+        #=======================================================================
         log.push('loaded pickel from %s'%os.path.basename(pick_fp))
         self.feedback.upd_prog(None)
+        
+
         
         #=======================================================================
         # save for tests
@@ -831,6 +852,12 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
     
     def analysis_print(self):
         self.logger.warning('not implemented')
+        
+        
+        
+        
+        
+        
     
     def _pretty_parameters(self, #get just the parameters that are different
                            df_raw=None):

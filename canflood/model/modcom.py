@@ -36,15 +36,17 @@ class Model(ComWrkr,
             #Plotr #making each child inherit this speifically
                 #keeps damage modeuls without plotting a bit simpler
             ):
-    """
-    common methods for model classes
-    
-    
-    Control File Parameters:
-        see C:\LS\03_TOOLS\CanFlood\_git\docs\source\tables\
-
-    
-    """
+#===============================================================================
+#     """
+#     common methods for model classes
+#     
+#     
+#     Control File Parameters:
+#         see rC:\LS\03_TOOLS\CanFlood\_git\docs\source\tables\
+# 
+#     
+#     """
+#===============================================================================
     master_pars = {
         'parameters':{
             'name':str,         #name of the scenario/model run

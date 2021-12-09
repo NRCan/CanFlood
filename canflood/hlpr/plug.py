@@ -1267,22 +1267,11 @@ def bind_TableWidget( #add some custom bindings to a TableWidget
             axis=0, #axis to retrieve on
             ):
         
- 
-        #=======================================================================
-        # retrieve indexer
-        #=======================================================================
-        index = self.get_indexer(indexer, axis=axis)
+        #get the items
+        items_d = self.get_items(indexer, axis=axis)
         
-        #=======================================================================
-        # get rows
-        #=======================================================================
-        
-        if axis == 0:
-            raw_d= {self.horizontalHeaderItem(i).text():self.item(index, i).text() for i in range(0, self.columnCount())}
-        elif axis ==1:
-            raw_d= {self.verticalHeaderItem(i).text():self.item(i, index).text() for i in range(0, self.rowCount())}
-        else:
-            raise Error('dome')
+        #read
+        raw_d = {k:item.text() for k, item in items_d.items()}
         
         #=======================================================================
         # handle nulls
@@ -1295,6 +1284,32 @@ def bind_TableWidget( #add some custom bindings to a TableWidget
                 d1[k]=v
                 
         return d1
+    
+    def get_items( #retrieve values by label or index
+                    self,
+            indexer, #label (str) or index (int)
+            axis=0, #axis to retrieve on
+            ):
+        
+ 
+        #=======================================================================
+        # retrieve indexer
+        #=======================================================================
+        index = self.get_indexer(indexer, axis=axis)
+        
+        #=======================================================================
+        # get rows
+        #=======================================================================
+        
+        if axis == 0:
+            raw_d= {self.horizontalHeaderItem(i).text():self.item(index, i) for i in range(0, self.columnCount())}
+        elif axis ==1:
+            raw_d= {self.verticalHeaderItem(i).text():self.item(i, index) for i in range(0, self.rowCount())}
+        else:
+            raise Error('dome')
+        
+
+        return raw_d
                 
         
     def get_df(#retreive the full table df
@@ -1326,6 +1341,41 @@ def bind_TableWidget( #add some custom bindings to a TableWidget
                 
         return df.infer_objects()
         
+    def save_df(self,
+                      caption = 'Specify new file name', #title of box
+                      path = None,
+                      filters = "Data Files (*.csv)",
+                ):
+                
+        #path default
+        if path is None:
+            path = os.getcwd()
+        if not os.path.exists(path):
+            path = os.getcwd()
+        #=======================================================================
+        # get the filepath from the user
+        #=======================================================================
+        out_fp = QFileDialog.getSaveFileName(self, caption, path, filters)[0]
+        if out_fp == '':
+            log.warning('user failed to make a selection. skipping')
+            return 
+        
+        assert out_fp.endswith('csv')
+        
+ 
+        #=======================================================================
+        # collect the results
+        #=======================================================================
+        df = self.get_df()
+            
+ 
+        #=======================================================================
+        # write
+        #=======================================================================
+        df.to_csv(out_fp, index=None)
+        log.push('saved %s to %s'%(str(df.shape), out_fp))
+        return out_fp
+                
     
  
         
@@ -1371,7 +1421,7 @@ def bind_TableWidget( #add some custom bindings to a TableWidget
  
                 
     
-    def call_all_items( #call a method on all items
+    def call_all_items( #call a method on all items in the table
             self,
             methodName,
             *args,**kwargs):
@@ -1386,6 +1436,29 @@ def bind_TableWidget( #add some custom bindings to a TableWidget
                 d[j][i] = f(*args, **kwargs)
                 
         return d
+    
+    def call_row_items(self,
+                        methodName,
+            indexer,*args,
+            axis=1,
+             **kwargs):
+        
+        #=======================================================================
+        # retrieve        
+        #=======================================================================
+        item_d = self.get_items(indexer, axis=axis)
+        
+        #=======================================================================
+        # call
+        #=======================================================================
+        res_d = dict()
+        for k, item in item_d.items():
+            f = getattr(item, methodName)
+            res_d[k] = f(*args, **kwargs)
+            
+        return res_d
+ 
+        
                 
     def call_all_headers(#call a method on all header items
                          self,
@@ -1426,9 +1499,12 @@ def bind_TableWidget( #add some custom bindings to a TableWidget
         'get_headers':lambda self, axis=0: get_headers(self, axis=axis),
         'get_value':lambda self, i,j:get_value(self,i,j),
         'get_values':lambda self, indexName, axis=0: get_values(self, indexName, axis=axis),
+        'get_items':lambda self, indexName, axis=0: get_items(self, indexName, axis=axis),
         'get_df':lambda self:get_df(self),
+        'save_df':lambda self, **kwargs:save_df(self, **kwargs),
         'set_values':lambda self, i,d,axis=0:set_values(self,i,d,axis=axis),
         'call_all_items':lambda self, n, *args, **kwargs: call_all_items(self, n, *args, **kwargs),
+        'call_row_items':lambda self,n,i, *args, axis=1, **kwargs: call_row_items(self, n, i, *args,axis=axis, **kwargs),
         'call_all_headers':lambda self, n,  *args, axis=1,**kwargs: call_all_headers(self, n,  *args,axis=axis, **kwargs),
         'populate':lambda self, df:populate(self, df),
         
