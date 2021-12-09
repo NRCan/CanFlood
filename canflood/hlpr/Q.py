@@ -3189,7 +3189,7 @@ def vlay_get_fdf( #pull all the feature data and place into a df
         
         #handle column slicing and Qnulls
         """if the requester worked... we probably  wouldnt have to do this"""
-        df = df_raw.loc[:, tuple(fieldn_l)].replace(NULL, np.nan)
+        df = df_raw.loc[:, tuple(fieldn_l)].replace([NULL], np.nan)
         
         feedback.setProgress(95)
         
