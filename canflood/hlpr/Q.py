@@ -2751,6 +2751,7 @@ def vlay_check( #helper to check various expectations on the layer
     #=======================================================================
     # prechecks
     #=======================================================================
+    warnings.warn("replace with assertions", DeprecationWarning)
     if vlay is None:
         raise Error('got passed an empty vlay')
     
@@ -3253,6 +3254,8 @@ def vlay_get_fdata( #get data for a single field from all the features
     if geo_obj:
         if fmt == 'df': raise IOError
         if not geopropn is None: raise IOError
+    else:
+        assert fieldn in [f.name() for f in vlay.fields()], 'requested field not found: %s'%fieldn
         
     if dropna:
         if expect_all_real:
@@ -3262,7 +3265,7 @@ def vlay_get_fdata( #get data for a single field from all the features
         if expect_all_real:
             raise Error('cant allow none and expect all reals')
         
-    vlay_check(vlay, exp_fieldns=[fieldn], logger=log, db_f=db_f)
+ 
     
     #===========================================================================
     # build the request
