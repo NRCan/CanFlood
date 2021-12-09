@@ -258,7 +258,7 @@ class Outputr(hp_sel.Sel_usr_wrap,
                     outf = self.time0_space0
     
                 elif self.space_d == 1:   #a list of  attributes constant for the simulation (or at th eend)              
-                    data = pd.Series(name = self.codename, index = list(pick_d.keys()), dtype = np.object).sort_index()
+                    data = pd.Series(name = self.codename, index = list(pick_d.keys()), dtype = object).sort_index()
                     outf = self.time0_space1
                     
 
@@ -275,13 +275,13 @@ class Outputr(hp_sel.Sel_usr_wrap,
                 dt_l = self.session.pars_df_d['timeline'].loc[:,'name'].tolist()
                 
                 if self.space_d == 0:    #one object attribute with a time series
-                    data = pd.Series(name = self.codename, index = dt_l, dtype = np.object).sort_index()
+                    data = pd.Series(name = self.codename, index = dt_l, dtype = object).sort_index()
                     outf = self.time1_space0
     
                 elif self.space_d == 1:   #an array of attributes recorded at each time           
                     """just add new entries?
-                    data = pd.DataFrame(columns = dt_l, index = pick_d.keys(), dtype = np.object)"""
-                    data = pd.DataFrame(columns = dt_l, dtype = np.object).sort_index()
+                    data = pd.DataFrame(columns = dt_l, index = pick_d.keys(), dtype = object)"""
+                    data = pd.DataFrame(columns = dt_l, dtype = object).sort_index()
                     outf = self.time1_space1
                     
                     
@@ -323,10 +323,10 @@ class Outputr(hp_sel.Sel_usr_wrap,
             if not self.time_d == 1: raise IOError
             dt_l = self.session.pars_df_d['timeline'].loc[:,'name'].tolist()
             if self.space_d == 0:    #one object attribute with a time series
-                data = pd.Series(name = self.codename, index = dt_l, dtype = np.object).sort_index()
+                data = pd.Series(name = self.codename, index = dt_l, dtype = object).sort_index()
 
             elif self.space_d == 1:   #an array of attributes recorded at each time           
-                data = pd.DataFrame(columns = dt_l, dtype = np.object).sort_index()
+                data = pd.DataFrame(columns = dt_l, dtype = object).sort_index()
             else: raise IOError
 
             

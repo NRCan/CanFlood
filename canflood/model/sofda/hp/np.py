@@ -8,7 +8,7 @@ library of custom hp functions for numpy
 '''
 
 # Import Python LIbraries 
-import os, logging, shutil, random
+import os, logging, shutil, random, warnings
 
 from datetime import datetime
 
@@ -47,19 +47,20 @@ def np_isin_workaround(a_mat, b_mat): #elementwise test
     return np.array([item in b_mat for item in a_mat])
 
 def String2dtype(text_str): #convert a text string to its obvious numpy type
+    warnings.warn("deprecated", DeprecationWarning)
     """TESTING:
     text_str = 'str'
     type = String2dtype(text_str)
     """
     if text_str == 'str':
-        return np.object
+        return object
     elif text_str == 'int':
         return np.int64
         
     elif text_str == 'float':
         return np.float64
     else:
-        logger.warning('No dtype match for: %s'%text_str)
+ 
         raise IOError
     
 def Str2dtype_list(str_list): #convert strings to a list of np.dtypes
