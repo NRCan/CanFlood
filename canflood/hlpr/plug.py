@@ -1344,7 +1344,7 @@ def bind_TableWidget( #add some custom bindings to a TableWidget
     def save_df(self,
                       caption = 'Specify new file name', #title of box
                       path = None,
-                      filters = "All Files (*)",
+                      filters = "Data Files (*.csv)",
                 ):
                 
         #path default
