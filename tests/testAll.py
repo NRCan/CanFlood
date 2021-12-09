@@ -585,17 +585,17 @@ class LineL1_t(L1_t):
                         })
 
 wFlow_l = [
-           Tut1a_t, 
+           #Tut1a_t, 
            #Tut2a_t,Tut2b_t, #these are mostly redundant w/ 2c
             
-           Tut2c_mutex_t, #needs to be run for Tut2c_max_t to work
-           Tut2c_max_t,  #compares with Tut2c_mutex_t. write=True
-           Tut4a_t, Tut4b_t, 
-           Tut5a_t, 
-           Tut6a_t, 
-           Tut7a_t,
-           PolyL1_t, LineL1_t,
-           ]
+        Tut2c_mutex_t, #needs to be run for Tut2c_max_t to work
+         Tut2c_max_t,  #compares with Tut2c_mutex_t. write=True
+         Tut4a_t, Tut4b_t, 
+         Tut5a_t, 
+         Tut6a_t, 
+         Tut7a_t,
+         PolyL1_t, LineL1_t,
+        ]
 
 #wFlow_l = [Tut7a_t]
 
