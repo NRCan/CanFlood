@@ -258,7 +258,7 @@ class Djoiner(Qcoms, Model):
                            sorted(ar)[1]/10, #dummy value for zero (take the second smallest value and divide by 10)
                            ar)
                                                    
-                d = dict(zip(df_raw.columns[boolcol], ar_ari.astype(np.int)))
+                d = dict(zip(df_raw.columns[boolcol], ar_ari.astype(int)))
                 
                 #add padd
                 d = {k:'%05d'%v for k,v in d.items()}

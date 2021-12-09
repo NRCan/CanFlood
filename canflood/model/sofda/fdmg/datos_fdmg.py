@@ -434,7 +434,7 @@ class Flood_tbl(     #flood table worker
                 
             #cleaning for area protection
             elif k == 'aprot': 
-                self.aprot_df = df1.astype(np.int)
+                self.aprot_df = df1.astype(int)
                 
             else: 
                 raise Error('got unexpected tab name \'%s\''%k)
@@ -769,7 +769,7 @@ class Flood_tbl(     #flood table worker
             frac = float(re.sub('\)',"",str1)) #fraction of damp that should come from wet
             
             #generate random selection
-            rand100 = np.random.randint(0,high=101, size=dfdry.shape, dtype=np.int) #randomly 0 - 100
+            rand100 = np.random.randint(0,high=101, size=dfdry.shape, dtype=int) #randomly 0 - 100
             randbool = rand100 <= frac*100 #select those less then the passed fraction
             
             #set based on this selection

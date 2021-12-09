@@ -706,7 +706,7 @@ class Fdmg( #flood damage model
         df_raw = self.session.pars_df_d['floods']
         
         df1 = df_raw.sort_values('ari').reset_index(drop=True)
-        df1['ari'] = df1['ari'].astype(np.int)
+        df1['ari'] = df1['ari'].astype(int)
         
         
         
@@ -3380,7 +3380,7 @@ class Binv(     #class object for a building inventory
         if not 'anchor_el' in df.columns:
             try:
                 df['anchor_el'] = df['dem_el'] + df['ff_height']
-                df.loc[:, 'anchor_el'] = df['anchor_el'].astype(np.float)
+                df.loc[:, 'anchor_el'] = df['anchor_el'].astype(float)
             except Exception as e:
                 raise Error('failed to set anchor_el w/ \n    %s'%e)
 

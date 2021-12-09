@@ -2538,7 +2538,7 @@ class Trunk_o(Parent_cmplx): #advanced hierarchy functions
         #=======================================================================
         # load all the frames
         #=======================================================================
-        'the dtype kwarg with np.object blocks the data converter'
+        'the dtype kwarg with object blocks the data converter'
         df_d_raw = hp_pd.load_xls_d(parspath, header = header, index_col = index_col, skiprows = skiprows,                                    
                                     logger = logger, 
                                     **kwargs)

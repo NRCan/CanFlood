@@ -51,7 +51,7 @@ class Dmg2(Model, DFunc, Plotr):
     
     #minimum inventory expectations
     finv_exp_d = {
-        'tag':{'type':np.object},
+        'tag':{'type':object},
         'scale':{'type':np.number},
         'elv':{'type':np.number},
         }
@@ -122,7 +122,7 @@ class Dmg2(Model, DFunc, Plotr):
         if not self.evals == '':
             self.set_evals(check=False) #never pre-loaded
         else:
-            self.expcols = pd.Series(dtype=np.object).index
+            self.expcols = pd.Series(dtype=str).index
             
         self.set_expos()
     
@@ -1054,7 +1054,7 @@ class Dmg2(Model, DFunc, Plotr):
         # cap counts
         #=======================================================================
         df = cmeta_df.drop(['fcap', 'fscale', self.cid, self.bid], axis=1, errors='ignore').fillna(False)
-        cm_df1  = df.groupby(gCn).sum().astype(np.int) #count all the trues
+        cm_df1  = df.groupby(gCn).sum().astype(int) #count all the trues
         
 
         #=======================================================================

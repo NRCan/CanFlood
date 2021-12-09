@@ -543,6 +543,11 @@ class Plotr(ComWrkr):
                  yfmtFunc=None,
                  ylrot=0):
         
+        """
+        plt=self.plt
+        self.plt.show()
+        """
+        
 
         #=======================================================================
         # xaxis
@@ -550,6 +555,9 @@ class Plotr(ComWrkr):
         if not xfmtFunc is None:
             # build the new ticks
             l = [xfmtFunc(value) for value in ax.get_xticks()]
+            
+            #set the locators
+            ax.xaxis.set_major_locator(self.matplotlib.ticker.FixedLocator(ax.get_xticks()))
                   
             #apply the new labels
             ax.set_xticklabels(l, rotation=xlrot)
@@ -561,6 +569,9 @@ class Plotr(ComWrkr):
         if not yfmtFunc is None:
             # build the new ticks
             l = [yfmtFunc(value) for value in ax.get_yticks()]
+            
+            #set the locators
+            ax.yaxis.set_major_locator(self.matplotlib.ticker.FixedLocator(ax.get_yticks()))
                   
             #apply the new labels
             ax.set_yticklabels(l, rotation=ylrot)
@@ -572,6 +583,8 @@ class Plotr(ComWrkr):
         """
         generally just returns the val_str
             but also provides some special handles
+            
+            self.matplotlib.__version__    
         """
         #=======================================================================
         # defaults

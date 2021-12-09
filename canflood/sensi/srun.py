@@ -374,7 +374,7 @@ class SensiSessRunner(SensiSessionComs): #running a sensitivity session
         # get basic stats
         #=======================================================================
         d = {mtag:d['ead_tot'] for mtag, d in res_lib.items()}
-        rser = pd.Series(d, name='ead_tot', dtype=np.float32)
+        rser = pd.Series(d, name='ead_tot', dtype=float)
  
         
         meta_d = {      'len':len(rser), 
@@ -625,7 +625,7 @@ class SensiSessResults( #analyzing results of a sensi session
         # extract the total data
         #=======================================================================
         d = {mtag:d[dname] for mtag, d in res_lib.items()}
-        res_df = pd.Series(d, name=dname, dtype=np.float32).to_frame()
+        res_df = pd.Series(d, name=dname, dtype=float).to_frame()
         
         bval = d[baseName] #base value for comparison
         
@@ -638,7 +638,7 @@ class SensiSessResults( #analyzing results of a sensi session
         res_df['rank'] = res_df['delta_rel'].abs().rank(
             ascending=False, #want the largest variance to have the highest rank
             method='dense', # rank always increases by 1 between groups.
-            ).astype(np.int)
+            ).astype(int)
             
         log.info('finished w/ %s'%str(res_df.shape))
         
@@ -691,7 +691,7 @@ class SensiSessResults( #analyzing results of a sensi session
         
         
         d = {mtag:d[dname] for mtag, d in res_lib.items()}
-        rser = pd.Series(d, name=dname, dtype=np.float32)
+        rser = pd.Series(d, name=dname, dtype=float)
         
         #=======================================================================
         # get plot

@@ -900,7 +900,7 @@ class Dfunc(
         #=======================================================================
         logger.debug('compiling dd_ar from dd_df %s'%str(dd_df.shape))
         #get list of depths
-        depth_list = dd_df['depth'].astype(np.float).sort_values().unique().tolist()
+        depth_list = dd_df['depth'].astype(float).sort_values().unique().tolist()
          
         #=======================================================================
         # calc dmg_list for these depths

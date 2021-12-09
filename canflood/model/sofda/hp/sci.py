@@ -378,8 +378,8 @@ class Boolean_1D(Data_func): #set of 1d discrete data
         #=======================================================================
         
         
-        self.dep_ar = df2.loc[:,'int'].astype(np.int).values
-        self.ind_ar = df2.loc[:,'data2'].astype(np.int).values
+        self.dep_ar = df2.loc[:,'int'].astype(int).values
+        self.ind_ar = df2.loc[:,'data2'].astype(int).values
         
         return 
             
@@ -389,7 +389,7 @@ class Boolean_1D(Data_func): #set of 1d discrete data
         
         self.data = self.data.astype(np.bool) #convert the original data to boolean
         
-        self.data_int = self.data.astype(np.int)
+        self.data_int = self.data.astype(int)
         
     def fit_LogisticRegression(self, data2_o=None, target = 'int',
                    solver = 'newton-cg', verbose=2): #fit the data to a logit model
