@@ -315,11 +315,11 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         df2 = df1.loc[df1['plot'], :].copy() #drop those not flagged for plotting
         
         #typeset aeps
-        df2.loc[:, 'aep'] = df2['aep'].astype(np.float64)
+        df2.loc[:, 'aep'] = df2['aep'].astype(float)
         
         """
         view(df2)
-        df2['aep'].astype(np.float64).values
+        df2['aep'].astype(float).values
         """
 
         #=======================================================================
@@ -931,7 +931,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         #swap in negatives
         sFailP_df = sFailP_df.where(
             np.invert(sFailP_df=='no'), 
-            1-prob_ar, inplace=False).astype(np.float64)
+            1-prob_ar, inplace=False).astype(float)
         
         #combine
         sFailP_df['pTotal'] = sFailP_df.prod(axis=1)
@@ -941,7 +941,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         # consequences
         #=======================================================================
         sFailC_df = pd.DataFrame(scenFail_ar, columns=inde_df[bxf].index).replace(
-            {'yes':1.0, 'no':0.0}).astype(np.float64)
+            {'yes':1.0, 'no':0.0}).astype(float)
         
         #add in consequences
         sFailC_df = sFailC_df.multiply(inde_df.loc[bxf, 'consq'])
@@ -1411,7 +1411,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
                             )
                     
             if hatch_f:
-                polys = ax.fill_betweenx(yar.astype(np.float), x1=xar, x2=0, 
+                polys = ax.fill_betweenx(yar.astype(float), x1=xar, x2=0, 
                                     color       = h_color, 
                                     alpha       = h_alpha,
                                     hatch       = hatch)

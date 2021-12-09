@@ -58,7 +58,7 @@ def String2dtype(text_str): #convert a text string to its obvious numpy type
         return np.int64
         
     elif text_str == 'float':
-        return np.float64
+        return float
     else:
  
         raise IOError

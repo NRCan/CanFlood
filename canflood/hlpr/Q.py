@@ -1192,7 +1192,8 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #=======================================================================
         #make sure none of the joiner fields are already on the layer
         if len(mfnl)>0: #see if there are any fields on the main
-            l = basic.linr(jlay_fieldn_l, mfnl, result_type='matching')
+            #l = basic.linr(jlay_fieldn_l, mfnl, result_type='matching')
+            l = set(jlay_fieldn_l).intersection(mfnl)
             
             if len(l) > 0:
                 #w/a prefix

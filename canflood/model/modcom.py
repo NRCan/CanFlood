@@ -2634,7 +2634,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
  
         #typeset it
         try:
-            ddf2 = ddf2.astype(np.float)
+            ddf2 = ddf2.astype(float)
         except Exception as e:
             raise Error('failed to typsset the ddf for \'%s\' w/ \n    %s'%(self.tabn, e))
         
@@ -2796,8 +2796,8 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         
         #check it
         try:
-            ddf.columns = ddf.columns.astype(np.float)
-            ddf = ddf.astype(np.float)
+            ddf.columns = ddf.columns.astype(float)
+            ddf = ddf.astype(float)
         except Exception as e:
             """
             wont work if you have a very messy library

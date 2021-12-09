@@ -415,7 +415,7 @@ class CbaWrkr(RiskPlotr):
  
                 if not np.any(pwhere): continue  #nothing here.. skip
                 
-                polys = ax.fill_between(xar.astype(np.float), fill_d['benefit'], 
+                polys = ax.fill_between(xar.astype(float), fill_d['benefit'], 
                                         y2=fill_d['cost'],
                                         where=pwhere, color=color, label=regionName,
                                          **styles)

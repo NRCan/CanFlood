@@ -105,7 +105,7 @@ class Attr(RiskPlotr):
         mdex = atr_dxcol.columns
         
         atr_dxcol.columns = mdex.set_levels(
-            np.around(mdex.levels[0].astype(np.float), decimals=self.prec), 
+            np.around(mdex.levels[0].astype(float), decimals=self.prec), 
             level=0)
         
         #sort them
@@ -179,7 +179,7 @@ class Attr(RiskPlotr):
         #=======================================================================
         #drop ead and format column
         df = df_raw.drop('ead', axis=1)
-        df.columns = np.around(df.columns.astype(np.float), decimals=self.prec)
+        df.columns = np.around(df.columns.astype(float), decimals=self.prec)
         
         #drop extraploators and ead
         boolcol = df.columns.isin(self.aep_df.loc[~self.aep_df['extrap'], 'aep'])
@@ -240,7 +240,7 @@ class Attr(RiskPlotr):
         # clean
         #=======================================================================
         df = df_raw.copy()
-        df['aep'] = df_raw['aep'].astype(np.float).round(self.prec)
+        df['aep'] = df_raw['aep'].astype(float).round(self.prec)
         
         #=======================================================================
         # post-check

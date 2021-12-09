@@ -117,7 +117,7 @@ def Get_interp_header_dx2ser(df_raw, header_search, value_ask_raw, logger=mod_lo
     
     #check if thsi value is outside of the passed column
     
-    df = df_raw.astype(np.float) #convert the index to floats
+    df = df_raw.astype(float) #convert the index to floats
     'there seems to be some problem with importing commas from excel'
 
     df_sort = df_raw.sort_values(by=header_search).reset_index(drop='true')
@@ -191,7 +191,7 @@ def Get_interp_ser(ser_raw, index_ask_raw, logger=mod_logger): #get the correspo
     
     index_ask = float(round(index_ask_raw, 2)) #round/convert ask
     ser = ser_raw.copy(deep=True)
-    ser.index = ser_raw.index.astype(np.float) #convert the index to floats
+    ser.index = ser_raw.index.astype(float) #convert the index to floats
 
     #===========================================================================
     #check if interpolation is even needed 
@@ -843,7 +843,7 @@ def force_dtype_from_tplate(df_raw, templatefile_path, logger=mod_logger): #forc
             
         elif dtype_str == 'float':
             try:
-                df.loc[:,header] = col.astype(np.float64, copy=False)
+                df.loc[:,header] = col.astype(float, copy=False)
             except:
                 logger.error('failed to convert header %s to float'%header)
                 raise IOError
