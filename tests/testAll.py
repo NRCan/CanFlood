@@ -585,7 +585,7 @@ class LineL1_t(L1_t):
                         })
 
 wFlow_l = [
-           #Tut1a_t, 
+           Tut1a_t, 
            #Tut2a_t,Tut2b_t, #these are mostly redundant w/ 2c
             
         Tut2c_mutex_t, #needs to be run for Tut2c_max_t to work
