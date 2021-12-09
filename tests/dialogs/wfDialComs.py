@@ -11,9 +11,10 @@ commons for dialog workflow
 #==============================================================================
 #python standards
 import os, logging, datetime, time, sys, traceback, unittest
+from qgis.core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsProject
 from PyQt5.QtWidgets import QApplication, QMainWindow 
 
-from qgis.core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsProject
+
 from wFlow.scripts import WorkFlow, Session
 
 from hlpr.exceptions import Error
@@ -32,7 +33,7 @@ def excepthook(exc_type, exc_value, exc_tb):
     print("error message:\n", tb)
     QApplication.quit()
 
-sys.excepthook = excepthook
+
 
 
 #===============================================================================
@@ -101,6 +102,11 @@ class DSession(Session):
                  tag='devDial',
                  **kwargs
                  ):
+        
+        #add the exception hook
+        sys.excepthook = excepthook
+        
+        
         if logger is None:
             """unlike the wflow session, plugin loggers use special methods for interfacing with QGIS"""
 
@@ -202,6 +208,52 @@ class DSession(Session):
             self.suite=suite
             
         return self.out_dir
+    
+    def run_wflow(self,
+                  WorkFlow,
+                  **kwargs):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        log = self.logger.getChild('run_wflow')
+        
+        #===================================================================
+        # crs
+        #===================================================================
+        if not WorkFlow.crsid == self.crsid:
+            log.debug('crsid mismatch... switching to crs of workflow')
+            self.set_crs(WorkFlow.crsid, logger=log)
+            
+            
+        #=======================================================================
+        # #collect pars
+        #=======================================================================
+        """similar to _get_wrkr().. but less flexible"""
+        for k in list(self.com_hndls) + self.flow_hndls:
+            kwargs[k] = getattr(self, k)
+        
+        #init
+        kstr = ''.join(['\n    %s: %s'%(k,v) for k,v in kwargs.items()]) #plot string
+        log.debug('building w/ %s'%kstr)
+        
+        
+        #===================================================================
+        # launch the flow
+        #===================================================================
+        with WorkFlow(logger=self.logger, session=self, **kwargs) as wflow:
+            log.info('\n    PRE\n')
+            wflow.pre()
+            log.info('\n    LAUNCH\n')
+            wflow.D.launch()
+            
+            wflow.post()
+            
+            sys.exit(self.qap.exec_()) #wrap
+            
+            
+        log.info('finished')
+        
             
     
     
@@ -242,5 +294,19 @@ def run_set(workflow_l,
         out_dir = ses.out_dir
         
     return out_dir
+
+def open_dial(Workflow, #just open a dialog
+              **kwargs):
+    
+    with DSession(**kwargs) as ses:
+        
+        ses.run_wflow(Workflow)
+        
+        out_dir = ses.out_dir
+        
+    return out_dir
+    
+    
+    
         
         

@@ -257,6 +257,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         # precheck
         #=======================================================================
+        if name is None: name=self.name
         assert isinstance(name, str), 'must overwrite the \'name\' attribute with a subclass'
 
         #=======================================================================
