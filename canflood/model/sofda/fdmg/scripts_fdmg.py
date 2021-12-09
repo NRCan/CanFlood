@@ -706,7 +706,7 @@ class Fdmg( #flood damage model
         df_raw = self.session.pars_df_d['floods']
         
         df1 = df_raw.sort_values('ari').reset_index(drop=True)
-        df1['ari'] = df1['ari'].astype(np.int)
+        df1['ari'] = df1['ari'].astype(int)
         
         
         

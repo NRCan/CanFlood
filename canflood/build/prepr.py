@@ -198,7 +198,7 @@ class Preparor(Model, Qcoms):
             
         #force type on index
         try:
-            df.loc[:, cid] = df[cid].astype(np.int32)
+            df.loc[:, cid] = df[cid].astype(int)
         except Exception as e:
             raise Error('failed to typeset cid index  \'%s\' w/ int32 \n%s'%(cid, e))
         df = df.set_index(cid, drop=True)

@@ -1816,7 +1816,7 @@ class Model(ComWrkr,
                            sorted(ar)[1]/10, #dummy value for zero (take the second smallest value and divide by 10)
                            ar) 
         
-        df['ari'] = ar_ari.astype(np.int32)
+        df['ari'] = ar_ari.astype(int)
         
         return 
     

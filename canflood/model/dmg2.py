@@ -1054,7 +1054,7 @@ class Dmg2(Model, DFunc, Plotr):
         # cap counts
         #=======================================================================
         df = cmeta_df.drop(['fcap', 'fscale', self.cid, self.bid], axis=1, errors='ignore').fillna(False)
-        cm_df1  = df.groupby(gCn).sum().astype(np.int) #count all the trues
+        cm_df1  = df.groupby(gCn).sum().astype(int) #count all the trues
         
 
         #=======================================================================

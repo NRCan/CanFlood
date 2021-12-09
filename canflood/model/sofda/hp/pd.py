@@ -639,7 +639,7 @@ def load_csv_df(filepath,
     #===========================================================================
     df1 = df.copy(deep=True)
     try:
-        df1.index = df.index.astype(np.int)
+        df1.index = df.index.astype(int)
     except:
         logger.warning('failed to convert index to numeric')
     

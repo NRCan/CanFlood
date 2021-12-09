@@ -638,7 +638,7 @@ class SensiSessResults( #analyzing results of a sensi session
         res_df['rank'] = res_df['delta_rel'].abs().rank(
             ascending=False, #want the largest variance to have the highest rank
             method='dense', # rank always increases by 1 between groups.
-            ).astype(np.int)
+            ).astype(int)
             
         log.info('finished w/ %s'%str(res_df.shape))
         
