@@ -87,12 +87,26 @@ class CurvePlotr(DFunc, Plotr):
     def load_data(self, fp, 
                     index=None, header=None
                     ): #load a curve set
+        
         log = self.logger.getChild('load_data')
         #precheck
         assert os.path.exists(fp)
-        data_d = pd.read_excel(fp, sheet_name=None,index=index, header=header )
+        data_d = pd.read_excel(fp, sheet_name=None,index_col=index, header=header )
         
-        log.info('loaded %i tabs'%len(data_d))
+        #=======================================================================
+        # summary tab
+        #=======================================================================
+        if '_smry' in data_d:
+            log.info('found smry tab... co nfiguring')
+            hndl_df =pd.read_excel(fp, 
+                                   sheet_name='_smry',index_col=0, header=0 
+                                   ).dropna(axis=1, how='all')
+            
+            data_d['_smry'] = hndl_df
+ 
+        
+        log.info('loaded %i tabs from \n    %s\n    %s'%(
+            len(data_d), fp, list(data_d.keys())))
         
         return data_d
     
@@ -159,7 +173,7 @@ class CurvePlotr(DFunc, Plotr):
                   pfCn='plot_f', #plot flag
                   
                   title=None,
-                  
+                  grid=None,
                 
                   lib_as_df = False, #indicator for format of passed lib
                   logger=None,
@@ -175,7 +189,7 @@ class CurvePlotr(DFunc, Plotr):
         log = logger.getChild('plotGroup')
         
         if title is None: title='%s vFunc plot'%(self.tag)
-        
+        if grid is None: grid=self.grid
 
         
         #results container
@@ -185,30 +199,7 @@ class CurvePlotr(DFunc, Plotr):
         #=======================================================================
         if '_smry' in cLib_d:
             hndl_df =cLib_d.pop('_smry')
-            """
-            view(hndl_df)
-            """
-            
-            #re-tag the columns
-            """this must have been for cleaning some raw data...
-                any raw data should be cleaned on import"""
-
-#===============================================================================
-#             colns = hndl_df.iloc[0,:].values
-#             if pd.isnull(colns[0]):
-# 
-#                 colns[0] = 'cName'
-#                 hndl_df.columns = colns
-#                 
-#                     #drop the old columns
-#                 hndl_df = hndl_df.set_index('cName', drop=False).iloc[1:,:]
-#             else:
-#                 pass
-#                 raise Error('working?')
-#===============================================================================
-
-            
-   
+ 
             
             #see if the expected columns are there
             boolcol = hndl_df.columns.isin([pgCn, pfCn])
@@ -233,7 +224,12 @@ class CurvePlotr(DFunc, Plotr):
                 if isinstance(data, pd.DataFrame):
                     cLib_d[cName] = data.set_index(0, drop=True).iloc[:,0].to_dict()
 
-
+        
+        #=======================================================================
+        # check
+        #=======================================================================
+        for cName, crv_d in cLib_d.items():
+            assert self.check_crvd(crv_d), '%s failed'%cName
  
         #=======================================================================
         # PLOT no handles-----------
@@ -243,6 +239,7 @@ class CurvePlotr(DFunc, Plotr):
             
             indxr=0
             for cName, crv_d in cLib_d.items():
+                assert 'tag' in crv_d, 'failed to get \'tag\' field on \'%s\''%cName
                 ax = self.plotCurve(crv_d, title=crv_d['tag'], **lineKwargs)
                 
                 res_d[cName] =ax.figure
@@ -306,7 +303,7 @@ class CurvePlotr(DFunc, Plotr):
                 fig = ax.figure
                 fig.suptitle(pgroup + ' ' + title)
                 ax.legend()
-                if self.grid:
+                if grid:
                     ax.grid()
                 #===============================================================
                 # group loop
