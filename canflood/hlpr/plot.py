@@ -182,9 +182,13 @@ class Plotr(ComWrkr):
         #default QGIS windows font
         matplotlib.rc('font', **{
                                     'family' : 'sans-serif',
-                                    'sans-serif':'Tahoma',
+                                    #'sans-serif':'Tahoma',
                                     'weight' : 'normal',
                                     'size'   : 8})
+        
+        
+        matplotlib.rcParams['font.family'] = 'sans-serif'
+        matplotlib.rcParams['font.sans-serif'] = ['Tahoma']
         
         matplotlib.rcParams['axes.titlesize'] = 10 #set the figure title size
         
