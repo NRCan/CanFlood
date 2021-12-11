@@ -18,7 +18,7 @@ import logging, configparser, datetime
 import os
 import numpy as np
 import pandas as pd
-
+import qgis.core
 #==============================================================================
 # # custom
 #==============================================================================
@@ -179,13 +179,13 @@ class Plotr(ComWrkr):
         #set teh styles
         plt.style.use('default')
         
-        #font
-        matplotlib_font = {
-                'family' : 'serif',
-                'weight' : 'normal',
-                'size'   : 8}
+        #default QGIS windows font
+        matplotlib.rc('font', **{
+                                    'family' : 'sans-serif',
+                                    'sans-serif':'Tahoma',
+                                    'weight' : 'normal',
+                                    'size'   : 8})
         
-        matplotlib.rc('font', **matplotlib_font)
         matplotlib.rcParams['axes.titlesize'] = 10 #set the figure title size
         
         #spacing parameters
@@ -666,4 +666,11 @@ class Plotr(ComWrkr):
             raise Error('failed to write figure to file w/ \n    %s'%e)
         
         return out_fp
+    
+    
+if __name__ =="__main__": 
+    print('testing')
+    
+    import matplotlib.pyplot as plt
+ 
     
