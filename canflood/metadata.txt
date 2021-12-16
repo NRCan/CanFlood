@@ -7,7 +7,7 @@ name=CanFlood
 qgisMinimumVersion=3.16
 qgisMaximumVersion=3.99
 description=Flood risk modelling toolbox
-version=1.0.2
+version=1.1.0
 author=Seth Bryant
 email=nicky.hastings@canada.ca
 about=Provides a suite of tools for building, running, and analyzing simple flood risk models from typical asset and exposure data. Includes a tool for performing fragility calculations on dikes, downloading common flood vulnerability function libraries for buildings, and connecting to useful Canadian web-data. While the focus of the plugin is using depth-damage curves to estimate annualized flood risk from tangible building damages, the flexibility of the framework facilitates calculation of a wide-range of vulnerabilities from user-provided functions.
@@ -20,7 +20,8 @@ repository=https://github.com/NRCan/CanFlood
 
 hasProcessingProvider=no
 
-changelog= 1.0.2 [2021-05] increase qgisMaximumVersion limit
+changelog= 1.1.0 [2021-12] Upgrade to 3.16.14. Sensitivity Analysis module. Complex Geometry
+ - 1.0.2 [2021-05] increase qgisMaximumVersion limit
  - 1.0.1 [2021-05] tweak dikes.vuln, update graphics, update links, test 3.16.6
  - 1.0.0 [2021-03] migrate to QGIS 3.16. public release.
 
