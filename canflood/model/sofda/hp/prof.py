@@ -5,7 +5,7 @@ Created on Sep 7, 2018
 '''
 
 import os, copy, sys, time, logging, weakref, gc
-import cProfile, pstats, objgraph
+import cProfile, pstats
 
 from collections import OrderedDict, Mapping, Container
 
