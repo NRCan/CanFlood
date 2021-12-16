@@ -532,11 +532,7 @@ To better understand the role of the discount rate, return to the worksheet, cha
 
 Notice the ‘payback year’ has not changed, but the relative size of the positive (green) and negative (red) areas has shifted and the ‘B/C ratio’ has dropped below 1. This reflects the more severe discounting of the future benefits brought by the larger 8% discount rate. In other words, by the time the future residents of the study area accrue significant benefits from the PLPMs, the current stakeholders wish they had spent the money on something else.
 
-***********************************************
-6.7. Tutorial 3: Risk (L3) SOFDA research model
-***********************************************
 
-Sample inputs for the SOFDA research model are provided in the tutorials\3\ folder. Refer to :ref:`Appendix B <appendix_b>` for more information.
 
 **************************************************************
 6.8. Tutorial 4a: Risk (L1) with Percent Inundation (Polygons)
@@ -895,7 +891,7 @@ Open the ‘Model’ dialog and follow the steps in Tutorial 1a to setup this mo
 In order to understand and visualize the effect of setting the hazard sampling statistic to ‘Per-Asset’, you can try re-building and running the same model with the hazard statistic type set to ‘Global’ and the statistic set to 'Mean', then compare the results.
 
 6.12.3. View Results
-=====================
+====================
 To visualize the difference between these two model configurations, open the ‘Results’ toolset and select a working directory and the original ‘Per-Asset’ control file as the ‘main control file’ on the ‘Setup’ tab. Before generating the comparison files, configure the plot style by opening the same main control file, and changing the following ‘[plotting]’ parameters: 
 
     • ‘color = red’ 
@@ -944,9 +940,9 @@ To generate a comparison plot of these two scenarios, navigate to the ‘Compare
     
 .. _Section6.13:
 
-*************************************************
+***************************************
 6.13. Tutorial 8a: Sensitivity Analysis
-*************************************************
+***************************************
 
 This tutorial demonstrates *Sensitivity Analysis* workflow (:ref:`Section5.4.5 <Section5.4.5>`). This can be useful for quantifying the sensitivity of your model to each parameter and datafile.
 
