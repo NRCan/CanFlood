@@ -729,7 +729,7 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
         # launch window
         #=======================================================================
         else:
-            
+            """not working"""
             app = PltWindow(fig, out_dir=out_dir)
             app.show()
             log.info('launched matplotlib window on %s'%fig._suptitle.get_text())
