@@ -158,12 +158,26 @@ class Dcoms(ComWrkr):
         assert len(tag_l)>0, 'failed to find any tag columns'
         
         #=======================================================================
+        # scratch columns
+        #=======================================================================
+        l1 = set(prop_colns).union(tag_l)
+        
+        scratch_l = df.columns[df.columns.str.contains('~')].values.tolist()
+        assert len(set(scratch_l).intersection(l1))==0, 'got some scratch columns in required set'
+        #=======================================================================
         # events
         #=======================================================================
-        l1 = set(prop_colns).union(tag_l) #those we dont want
-        etag_l = list(set(df.columns).difference(l1))
+        #those we dont want
+        etag_l = list(set(df.columns).difference(l1.union(set(scratch_l))))
         assert len(etag_l)>0, 'failed to get any eTags'
         etag_l.sort()
+        
+        #=======================================================================
+        # post check
+        #=======================================================================
+        bads_l = 'name'
+        ovr_l = set(etag_l).intersection(bads_l)
+        assert len(ovr_l)==0, 'got some bad values in the etag_l: \n    %s'%ovr_l
         
         return etag_l
         

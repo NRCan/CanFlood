@@ -18,7 +18,7 @@ import logging, configparser, datetime
 import os
 import numpy as np
 import pandas as pd
-
+import qgis.core
 #==============================================================================
 # # custom
 #==============================================================================
@@ -34,8 +34,8 @@ class Plotr(ComWrkr):
     #===========================================================================
     # parameters from control file
     #===========================================================================
-    #[plotting]
-
+    """some parents are not models... so these need to live here
+    also living on Model"""
     color = 'black'
     linestyle = 'dashdot'
     linewidth = 2.0
@@ -51,7 +51,7 @@ class Plotr(ComWrkr):
     #===========================================================================
     # controls
     #===========================================================================
-
+    set_cnt_max = 10 #maximum number of datasets to allow on a plot
     
     #===========================================================================
     # defaults
@@ -79,11 +79,14 @@ class Plotr(ComWrkr):
                  init_plt_d = {}, #container of initilzied objects
  
                   #format controls
-                  grid = True, logx = False, 
+                  grid = True, 
+                  #logx = False, 
                   
                   
                   #figure parametrs
                 figsize     = (6.5, 4), 
+                tight_layout=True,
+                constrained_layout=False,
                     
                 #hatch pars
                     hatch =  None,
@@ -113,9 +116,11 @@ class Plotr(ComWrkr):
         self.plotTag = self.tag #easier to store in methods this way
  
         self.grid    =grid
-        self.logx    =logx
+        #self.logx    =logx
  
         self.figsize    =figsize
+        self.tight_layout=tight_layout
+        self.constrained_layout=constrained_layout
         self.hatch    =hatch
         self.h_color    =h_color
         self.h_alpha    =h_alpha
@@ -144,7 +149,7 @@ class Plotr(ComWrkr):
 
         
         
-        self.logger.debug('init finished')
+        self.logger.debug('Plotr.__init__ finished')
         
         """call explicitly... sometimes we want lots of children who shouldnt call this
         self._init_plt()"""
@@ -160,24 +165,31 @@ class Plotr(ComWrkr):
         
         """
 
-        
+        self.logger.debug('_init_plt')
         #=======================================================================
         # imports
         #=======================================================================
         import matplotlib
         matplotlib.use('Qt5Agg') #sets the backend (case sensitive)
+        matplotlib.set_loglevel("info") #reduce logging level
+
+        
         import matplotlib.pyplot as plt
         
         #set teh styles
         plt.style.use('default')
         
-        #font
-        matplotlib_font = {
-                'family' : 'serif',
-                'weight' : 'normal',
-                'size'   : 8}
+        #default QGIS windows font
+        matplotlib.rc('font', **{
+                                    'family' : 'sans-serif',
+                                    #'sans-serif':'Tahoma',
+                                    'weight' : 'normal',
+                                    'size'   : 8})
         
-        matplotlib.rc('font', **matplotlib_font)
+        
+        matplotlib.rcParams['font.family'] = 'sans-serif'
+        matplotlib.rcParams['font.sans-serif'] = ['Tahoma']
+        
         matplotlib.rcParams['axes.titlesize'] = 10 #set the figure title size
         
         #spacing parameters
@@ -235,21 +247,36 @@ class Plotr(ComWrkr):
         
         usually called twice
             1) before loading the control file, to build a default
+                Plotr.__init__()
+                
             2) after, to update values
+                Model.init_model()
+            
+            
+        default class values are used, unless matching parameters are passed in teh control file
+            there are no checks on these ploting parameters
+            
+        TODO: find a better way to not have to run this so many times
         """
         #assert not self.cfPars_d is None, 'load the control file first!'
-        impStyle_d = dict()
+        d = dict()
         
         
         #loop through the default values
-        
         for k, v in self.impStyle_d.items():
             if hasattr(self, k):
-                impStyle_d[k] = getattr(self, k)
+                d[k] = getattr(self, k)
             else: #just use default
-                impStyle_d[k] = v
+                d[k] = v
                 
-        self.impStyle_d = impStyle_d
+        #re-insert hashtags
+        if 'color' in d:
+            d['color'] = d['color'].replace('?','#') 
+        
+                
+        self.impStyle_d = d
+        
+ 
         
         
 
@@ -301,13 +328,19 @@ class Plotr(ComWrkr):
         #=======================================================================
         #get a collectio nof arrays from a dataframe's columns
         data = [ser.dropna().values for _, ser in df.items()]
-
+        log.debug('on %i'%len(data))
         
         #======================================================================
         # figure setup
         #======================================================================
         plt.close()
         fig = plt.figure(figsize=figsize, constrained_layout = True)
+        
+        #check for max
+        if len(data) > self.set_cnt_max:
+            log.warning('data set count exceeds max: %i... skipping'%len(data))
+            return fig
+        
         #axis setup
         ax1 = fig.add_subplot(111)
         
@@ -320,11 +353,7 @@ class Plotr(ComWrkr):
         fig.suptitle(title)
         ax1.set_xlabel(xlab)
         ax1.set_ylabel(ylab)
-        """
-        plt.show()
-        matplotlib.__version__ 
-        pd.__version__
-        """
+ 
 
         
         #=======================================================================
@@ -412,6 +441,12 @@ class Plotr(ComWrkr):
         #======================================================================
         plt.close()
         fig = plt.figure(figsize=figsize, constrained_layout = True)
+        
+        #check for max
+        if len(data) > self.set_cnt_max:
+            log.warning('data set count exceeds max: %i... skipping'%len(data))
+            return fig
+        
         #axis setup
         ax1 = fig.add_subplot(111)
         
@@ -424,13 +459,8 @@ class Plotr(ComWrkr):
         fig.suptitle(title)
         ax1.set_xlabel(xlab)
         ax1.set_ylabel(ylab)
-        """
-        plt.show()
-        matplotlib.__version__ 
-        pd.__version__
-        """
 
-        
+
         #=======================================================================
         # plot thie histogram
         #=======================================================================
@@ -438,8 +468,7 @@ class Plotr(ComWrkr):
             data, bins='auto', stacked=False, label=df.columns.to_list(),
             alpha=0.9,
             **pkwargs)
-        
-        
+
         #=======================================================================
         # post
         #=======================================================================
@@ -518,6 +547,11 @@ class Plotr(ComWrkr):
                  yfmtFunc=None,
                  ylrot=0):
         
+        """
+        plt=self.plt
+        self.plt.show()
+        """
+        
 
         #=======================================================================
         # xaxis
@@ -525,6 +559,9 @@ class Plotr(ComWrkr):
         if not xfmtFunc is None:
             # build the new ticks
             l = [xfmtFunc(value) for value in ax.get_xticks()]
+            
+            #set the locators
+            ax.xaxis.set_major_locator(self.matplotlib.ticker.FixedLocator(ax.get_xticks()))
                   
             #apply the new labels
             ax.set_xticklabels(l, rotation=xlrot)
@@ -536,6 +573,9 @@ class Plotr(ComWrkr):
         if not yfmtFunc is None:
             # build the new ticks
             l = [yfmtFunc(value) for value in ax.get_yticks()]
+            
+            #set the locators
+            ax.yaxis.set_major_locator(self.matplotlib.ticker.FixedLocator(ax.get_yticks()))
                   
             #apply the new labels
             ax.set_yticklabels(l, rotation=ylrot)
@@ -547,6 +587,8 @@ class Plotr(ComWrkr):
         """
         generally just returns the val_str
             but also provides some special handles
+            
+            self.matplotlib.__version__    
         """
         #=======================================================================
         # defaults
@@ -579,7 +621,7 @@ class Plotr(ComWrkr):
                    fname = None, #filename
                    
                    #figure write controls
-                 fmt='svg', 
+                  fmt='svg', 
                   transparent=True, 
                   dpi = 150,
                   logger=None,
@@ -595,8 +637,15 @@ class Plotr(ComWrkr):
         #=======================================================================
         # precheck
         #=======================================================================
+        """
+        self.plt.show()
+        """
         
         assert isinstance(fig, self.matplotlib.figure.Figure)
+        if not len(fig.axes) >0:
+            log.warning('passed empty figure... skipping')
+            return 'no'
+        
         log.debug('on %s'%fig)
         #======================================================================
         # output
@@ -621,4 +670,11 @@ class Plotr(ComWrkr):
             raise Error('failed to write figure to file w/ \n    %s'%e)
         
         return out_fp
+    
+    
+if __name__ =="__main__": 
+    print('testing')
+    
+    import matplotlib.pyplot as plt
+ 
     

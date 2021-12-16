@@ -105,7 +105,7 @@ class LikeSampler(Plotr, Qcoms):
         if logger is None: logger=self.logger
         log=logger.getChild('load_lpols')
         if not basedir is None:
-            assert os.path.exists(basedir)
+            assert os.path.exists(basedir), 'bad fpoly basedir: %s'%basedir
         
         
         log.info('on %i layers'%len(lpol_files_d))
@@ -126,7 +126,7 @@ class LikeSampler(Plotr, Qcoms):
             lpol_d[ename] = self.load_vlay(fp, logger=log, providerLib=providerLib,
                                            **kwargs)
             
-        log.debug('finished w/ %i'%len(lpol_d))
+        log.info('finished w/ %i'%len(lpol_d))
         return lpol_d
     
     def load_lpols2(self, #loading fail polys where the names match

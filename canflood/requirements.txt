@@ -1,0 +1,14 @@
+easygui==0.98.2
+matplotlib==3.3.2
+numpy==1.20.2
+objgraph==3.5.0
+openpyxl==3.0.9
+pandas==1.1.3
+pip==21.2.4
+processing==0.52
+psutil==5.8.0
+PyQt5==5.15.6
+scikit_learn==1.0.1
+scipy==1.6.2
+xlrd==1.2.0
+xlsxwriter==3.0.2

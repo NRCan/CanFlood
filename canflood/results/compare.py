@@ -3,7 +3,7 @@ Created on Feb. 9, 2020
 
 @author: cefect
 
-Template for worker scripts
+comparison plots
 '''
 
 #==========================================================================
@@ -46,6 +46,21 @@ class Cmpr(RiskPlotr):
     exp_pSubKeys = (
         'cf_fp', 
         )
+    
+    
+    #===========================================================================
+    # expectations from parameter file
+    #===========================================================================
+    exp_pars_md = {
+
+        }
+    
+    exp_pars_op={
+        'results_fps':{
+             'r_passet':{'ext':('.csv',)},
+             'r_ttl':{'ext':('.csv',)},
+             }
+        }
 
     def __init__(self,
                  cf_fp = '',
@@ -70,7 +85,7 @@ class Cmpr(RiskPlotr):
     
     def setup(self):
         """even though we only have one setup function... keeping this hear to match other workers"""
-        self.init_model() #attach control file
+        self.init_model(check_pars=False) #attach control file
         
         self.prep_model() 
         
@@ -79,7 +94,7 @@ class Cmpr(RiskPlotr):
     def prep_model(self, **kwargs):
         _ = self.load_scenarios(**kwargs)
         
-    def load_scenarios(self,
+    def load_scenarios(self, #load a collection of Scenario works (from control files)
                  fps_d=None, #container of filepaths 
                  base_dir=None, #base directory to add
                  ):
@@ -131,6 +146,9 @@ class Cmpr(RiskPlotr):
             d[sWrkr.name] = sWrkr
             
             log.debug('loaded \'%s\''%sWrkr.name)
+            
+
+            
         
         self.sWrkr_d = d
         log.info('compiled %i scenarios: %s'%(len(self.sWrkr_d), list(self.sWrkr_d.keys())))
@@ -248,23 +266,27 @@ class Cmpr(RiskPlotr):
     # aggregators
     #===========================================================================
     def build_composite(self, #merge data from a collection of asset models
+                        dkey='r_ttl', #worker data key to extract/merge
                     sWrkr_d=None, #container of scenario works to plot curve comparison
                     new_wrkr=True, #whether to build a new worker
                     ):
         
-        log = self.logger.getChild('collect_ttls')
+        log = self.logger.getChild('build_composite')
         if sWrkr_d is None: sWrkr_d = wdict(self.sWrkr_d)
        
         #more logicla for single plots
         self.name=self.tag
-        
+        log.debug('on %i'%len(sWrkr_d))
         #=======================================================================
         # collect data
         #=======================================================================
         mdf = None
         ead_d = dict()
         for childName, sWrkr in sWrkr_d.items():
-            dfi_raw = sWrkr.data_d['r_ttl'].copy()  #set by prep_ttl() 
+            dfi_raw = sWrkr.data_d[dkey].copy()  #set by prep_ttl() 
+            """
+            view(dfi_raw)
+            """
             dfi = dfi_raw.loc[:, 'impacts'].rename(childName).astype(float).to_frame()
             
             ead_d[childName] = sWrkr.ead_tot
@@ -282,6 +304,11 @@ class Cmpr(RiskPlotr):
                 
             else:
                 mdf = mdf.join(dfi)
+                """
+                sWrkr.data_d.keys()
+                view(dfi_raw)
+                view(mdf)
+                """
         
         
         #=======================================================================
@@ -306,7 +333,7 @@ class Cmpr(RiskPlotr):
             cttl_df = cttl_df.loc[:, l]
             
             #add the ead row at the bottom
-            cWrkr.data_d['r_ttl'] = cttl_df.append(pd.Series({
+            cWrkr.data_d[dkey] = cttl_df.append(pd.Series({
                 'aep':'ead', 'note':'integration', 'plot':False, self.impact_name:sum(ead_d.values())
                 }), ignore_index=True)
             
@@ -425,19 +452,7 @@ class Scenario(RiskPlotr): #simple class for a scenario
         self.parent=parent
         log.info('finished _init_')
         
-#===============================================================================
-#     def prep_model(self):
-# 
-#         
-#         """note these also store on the instance"""
-#         assert os.path.exists(self.r_ttl), '%s got bad \'r_ttl\': %s'%(self.name, self.r_ttl)
-#         tlRaw_df = self.load_ttl()
-#         ttl_df = self.prep_ttl(tlRaw_df)
-#  
-#         #=======================================================================
-#         # wrap
-#         #=======================================================================
-#===============================================================================
+ 
         
         
     def copy(self,

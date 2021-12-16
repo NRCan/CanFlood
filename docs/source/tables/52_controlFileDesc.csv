@@ -1,0 +1,29 @@
+name,option,type expectation,default,description
+name,,str,,name of the scenario/model run
+cid,,,,index column for the 3 inventoried data sets (finv expos gels)
+prec,,int,,float precision for calculations
+ground_water,,bool,,flag to include negative depths in the analysis
+felv,,str,,datum or ground
+event_probs,,str  ,ari,format of event probabilities (in evals data file) .  
+,aep,,,event probabilities in aeps file expressed as  annual exceedance probabilities
+,ari,,, expressed as annual recurrance intervals
+ltail,,None ,extrapolate,zero probability event  handle  
+,flat,,, zero probability event equal to the most extreme impacts in the passed series
+,extrapolate,,, set the zero probability event by extrapolating from  the most extreme impact (interp1d)
+,none  ,,,do not extrapolate (not recommended)
+,float,,,use the passed value as the zero probability impact value  
+rtail,,None,0.5, zero impacts event  handle     
+,extrapolate ,,,set the zero impact event by extrapolating from the  least extreme impact
+,none,,,no enforcing of a zero impact event (not recommended)
+,flat ,,, duplicates the minimum AEP as the zero damage event (NOT IMPLEMENTED)
+,float ,,, use the passed value as the zero impacts aep value
+drop_tails,,bool,FALSE, EAD extrapolation: whether to remove the extrapolated values  before writing the per asset results 
+integrate,,str,, numpy integration method to apply (default trapz)
+as_inun,,bool,, flag whether to treat exposures as %inundation
+event_rels,,str,, assumption for calculated expected value on complex events
+,max,,,  maximum expected value of impacts per asset from the duplicated events resolved damage = max(damage w/o fail damage w/ fail * fail prob) default til 2020-12-30
+,mutEx,,, assume each event is mutually exclusive (only one can happen) (lower bound)
+,indep,,, assume each event is independent (failure of one does not influence the other) (upper bound)
+impact_units,,str,, value to label impacts axis with (generally set by Dmg2)
+apply_miti,,bool,, whether to apply mitigation algorthihims
+curve_deviation,,str,," for L2 damage function libraries, specify the deviation (optional)"

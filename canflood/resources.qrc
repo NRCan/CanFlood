@@ -6,4 +6,8 @@
     <file>icons/house_flood.png</file>
     <file>icons/eye_23x23.png</file>
   </qresource>
+  <qresource prefix="icons">
+    <file>icons/arrow-down-circle.svg</file>
+    <file>icons/arrow-up-circle.svg</file>
+  </qresource>
 </RCC>

@@ -120,7 +120,7 @@ class Risk2(RiskModel, #This inherits 'Model'
         
         
     def prep_model(self,
-                   event_slice=False,
+                   event_slice=False,  #allow the expolike data to pass MORE events than required 
                    ):
 
         if self.as_inun:
@@ -258,8 +258,9 @@ class Risk2(RiskModel, #This inherits 'Model'
         #get the new mindex we want to join in
         mindex2 = pd.MultiIndex.from_frame(
             aep_ser.to_frame().reset_index().rename(columns={'index':'rEventName'}))
+        
         #join this in and move it up some levels
-        atr_dxcol.columns = atr_dxcol.columns.join(mindex2)[0].swaplevel(i=2, j=1).swaplevel(i=1, j=0)
+        atr_dxcol.columns = atr_dxcol.columns.join(mindex2).swaplevel(i=2, j=1).swaplevel(i=1, j=0)
         #check the values all match
         """nulls are not matching for somereaseon"""
         booldf = atr_dxcol.droplevel(level=0, axis=1).fillna(999) == self.data_d[dtag].fillna(999)
@@ -273,7 +274,8 @@ class Risk2(RiskModel, #This inherits 'Model'
         return 
 
     def run(self, #main runner fucntion
-            res_per_asset=False,
+            res_per_asset=False, 
+            #event_rels=None, NO! needs to be consistent with loading
             ):
         #======================================================================
         # defaults
@@ -290,7 +292,7 @@ class Risk2(RiskModel, #This inherits 'Model'
         #======================================================================
 
         #=======================================================================
-        # #take maximum expected value at each asset
+        # conditional exposure
         #=======================================================================
         if 'exlikes' in self.data_d:
             ddf1 = self.ev_multis(ddf, self.data_d['exlikes'], aep_ser, logger=log)

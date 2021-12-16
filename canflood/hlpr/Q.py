@@ -10,7 +10,7 @@ helper functions w/ Qgis api
 # imports------------
 #==============================================================================
 #python
-import os, configparser, logging, inspect, copy, datetime, re
+import os, configparser, logging, inspect, copy, datetime, re, warnings
 import pandas as pd
 import numpy as np
 #qgis
@@ -150,7 +150,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             feedback = feedback, 
             **kwargs) #initilzie teh baseclass
         
-        log = self.logger
+ 
         #=======================================================================
         # attachments
         #=======================================================================
@@ -423,6 +423,14 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                   providerLib='ogr',
                   aoi_vlay = None,
                   allow_none=True, #control check in saveselectedfeastures
+                  addSpatialIndex=True,
+                  uriParams_d = {'encoding':'System',
+                                    'type':'csv',
+                                    'maxFields':'10000',
+                                    'detectTypes':'yes',
+                                    'geomType':'none',
+                                    'subsetIndex':'no',
+                                    'watchFile':'no'},
                   ):
         
         assert os.path.exists(fp), 'requested file does not exist: %s'%fp
@@ -434,24 +442,41 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         log.debug('loading from %s'%fp)
         
-        vlay_raw = QgsVectorLayer(fp,basefn,providerLib)
+        if providerLib == 'delimitedtext':
+            #constructor
+            uriW = QgsDataSourceUri()
+            for k,v in uriParams_d.items(): 
+                uriW.setParam(k,v)
+    
+    
+            uri = r'file:///' + fp.replace('\\','/') +'?'+ str(uriW.encodedUri(), 'utf-8')
+ 
+       
+ 
+        else:
+            uri = fp
         
+        vlay_raw = QgsVectorLayer(uri,basefn,providerLib)
+        
+        if providerLib == 'delimitedtext':
+            return vlay_raw
         
         
 
         #=======================================================================
         # # checks
         #=======================================================================
-        if not isinstance(vlay_raw, QgsVectorLayer): 
-            raise IOError
+        assert isinstance(vlay_raw, QgsVectorLayer)
+ 
         
         #check if this is valid
         if not vlay_raw.isValid():
             raise Error('loaded vlay \'%s\' is not valid. \n \n did you initilize?'%vlay_raw.name())
         
         #check if it has geometry
-        if vlay_raw.wkbType() == 100:
-            raise Error('loaded vlay has NoGeometry')
+        if not providerLib == 'delimitedtext':
+            if vlay_raw.wkbType() == 100:
+                raise Error('loaded vlay has NoGeometry')
         
         assert isinstance(self.mstore, QgsMapLayerStore)
         
@@ -483,8 +508,15 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             
         else: 
             vlay = vlay_raw
+            
+        #=======================================================================
+        # clean------
+        #=======================================================================
+        #spatial index
+        if addSpatialIndex and (not vlay_raw.hasSpatialIndex()==QgsFeatureSource.SpatialIndexPresent):
+            self.createspatialindex(vlay_raw, logger=log)
         
-        self.createspatialindex(vlay, logger=log)
+ 
         #=======================================================================
         # wrap
         #=======================================================================
@@ -514,6 +546,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         log.debug('QgsRasterLayer(%s, %s)'%(fp, basefn))
         rlayer = QgsRasterLayer(fp, basefn)
         """
+        hanging for some reason...
         QgsRasterLayer(C:\LS\03_TOOLS\CanFlood\_git\tutorials\1\haz_rast\haz_1000.tif, haz_1000)
         """
         #=======================================================================
@@ -857,7 +890,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         
         #make sure none of hte field names execeed the driver limitations
-        max_len = self.fieldn_max_d[self.driverName]
+        max_len = fieldn_max_d[self.driverName]
         
         #check lengths
         boolcol = df_raw.columns.str.len() >= max_len
@@ -871,7 +904,11 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
 
         
         #make sure the columns are unique
-        assert df.columns.is_unique
+        assert df.columns.is_unique, 'got duplicated column names: \n    %s'%(df.columns.tolist())
+        
+        #check datatypes
+        assert np.array_equal(df.columns, df.columns.astype(str)), 'got non-string column names'
+
         
         #check the geometry
         if not geo_d is None:
@@ -956,8 +993,6 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         else:
             gtype='None'
 
-            
-            
         #===========================================================================
         # buidl the new layer
         #===========================================================================
@@ -1157,7 +1192,8 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #=======================================================================
         #make sure none of the joiner fields are already on the layer
         if len(mfnl)>0: #see if there are any fields on the main
-            l = basic.linr(jlay_fieldn_l, mfnl, result_type='matching')
+            #l = basic.linr(jlay_fieldn_l, mfnl, result_type='matching')
+            l = set(jlay_fieldn_l).intersection(mfnl)
             
             if len(l) > 0:
                 #w/a prefix
@@ -2502,22 +2538,26 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         log = self.logger.getChild('_get_sel_obj')
         
+        assert isinstance(vlay, QgsVectorLayer)
         if vlay.selectedFeatureCount() == 0:
-            raise Error('Nothing selected. exepects some pre selection')
+            raise Error('Nothing selected on \'%s\'. exepects some pre selection'%(vlay.name()))
+ 
         
-        """consider moving this elsewhere"""
         #handle project layer store
-        if QgsProject.instance().mapLayer(vlay.id()) is None:
+        if self.qproj.mapLayer(vlay.id()) is None:
             #layer not on project yet. add it
-            if QgsProject.instance().addMapLayer(vlay, False) is None:
+            if self.qproj.addMapLayer(vlay, False) is None:
                 raise Error('failed to add map layer \'%s\''%vlay.name())
-
-        
-       
-        log.debug('based on %i selected features from \'%s\': %s'
-                  %(len(vlay.selectedFeatureIds()), vlay.name(), vlay.selectedFeatureIds()))
             
-        return QgsProcessingFeatureSourceDefinition(vlay.id(), True)
+
+        log.debug('based on %i selected features from \'%s\''%(len(vlay.selectedFeatureIds()), vlay.name()))
+        
+        return QgsProcessingFeatureSourceDefinition(source=vlay.id(), 
+                                                    selectedFeaturesOnly=True, 
+                                                    featureLimit=-1, 
+                                                    geometryCheck=QgsFeatureRequest.GeometryAbortOnInvalid)
+        
+ 
     
     
     def _get_sel_res(self, #handler for returning selection like results
@@ -2666,6 +2706,16 @@ class MyFeedBackQ(QgsProcessingFeedback):
         # emit signalling
         #===================================================================
         self.setProgress(prog)
+            
+    def setProgress(self, prog):
+        """throwing a warning despite passing an integer.. seem sto be a bugg
+        using this as a workaround to surpress the warning (which would be very frequent)
+        https://github.com/vispy/vispy/issues/2212
+        """
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            super().setProgress(int(prog))
+        
         
 
 
@@ -2711,6 +2761,7 @@ def vlay_check( #helper to check various expectations on the layer
     #=======================================================================
     # prechecks
     #=======================================================================
+    warnings.warn("replace with assertions", DeprecationWarning)
     if vlay is None:
         raise Error('got passed an empty vlay')
     
@@ -2878,6 +2929,9 @@ def load_vlay( #load a layer from a file
     
     see instanc emethod
     """
+    
+    warnings.warn("deprecated. migrate to Qcoms.load_vlay ", DeprecationWarning)
+    
     log = logger.getChild('load_vlay') 
     
     
@@ -3147,7 +3201,7 @@ def vlay_get_fdf( #pull all the feature data and place into a df
         
         #handle column slicing and Qnulls
         """if the requester worked... we probably  wouldnt have to do this"""
-        df = df_raw.loc[:, tuple(fieldn_l)].replace(NULL, np.nan)
+        df = df_raw.loc[:, tuple(fieldn_l)].replace([NULL], np.nan)
         
         feedback.setProgress(95)
         
@@ -3210,6 +3264,8 @@ def vlay_get_fdata( #get data for a single field from all the features
     if geo_obj:
         if fmt == 'df': raise IOError
         if not geopropn is None: raise IOError
+    else:
+        assert fieldn in [f.name() for f in vlay.fields()], 'requested field not found: %s'%fieldn
         
     if dropna:
         if expect_all_real:
@@ -3219,7 +3275,7 @@ def vlay_get_fdata( #get data for a single field from all the features
         if expect_all_real:
             raise Error('cant allow none and expect all reals')
         
-    vlay_check(vlay, exp_fieldns=[fieldn], logger=log, db_f=db_f)
+ 
     
     #===========================================================================
     # build the request
@@ -3973,7 +4029,8 @@ def vlay_rename_fields(
 
         ):
     """
-    todo: add this as a session method and clean up unused layers
+    todo: replace with coms.hp.Qproj.vlay_rename_fields
+    
     """
     
     if logger is None: logger=mod_logger

@@ -41,6 +41,14 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
     inherited by 
         results.compare.Cmpr
         results.attribution.Attr
+        
+    called by
+        results.ResultsDialog.run_plotRisk()
+        
+    usually RiskPlotr.setup() is called to initilize the worker
+        this is a child (Model) method which also calls my prep_model() method
+    
+    
     """
 
     #===========================================================================
@@ -77,15 +85,21 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
         
         self.logger.debug('%s.__init__ w/ feedback \'%s\''%(
             self.__class__.__name__, type(self.feedback).__name__))
+        
+        """this really needs to be cleaned up"""
+        if not hasattr(self, 'impact_name'):
+            self.impact_name = self.impact_units
 
         
     def prep_model(self):
-
+        """
+        called by Model.setup()
         
-        self.set_ttl() #load and prep the total results
+        """
+        self.set_ttl() #load and prep the total results. riskcom.RiskModel. sets impact_name
         
-        #set default plot text
-        self._set_valstr()
+        
+        self._set_valstr() #set default plot text
         
         return 
 
@@ -289,8 +303,11 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
                    #hatch format
                    h_alpha = 0.9,
                    
+                   #figure config
+                   title=None, #None: generate from data
                    figsize=None, impactFmtFunc=None, plotTag=None,
                    val_str=None,
+                   legendTitle=None,
                    logger=None,):
         #=======================================================================
         # defaults
@@ -315,6 +332,8 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
         if val_str is None:
             val_str =  'ltail=\'%s\',  rtail=\'%s\''%(self.ltail, self.rtail) + \
                         '\naevent_rels = \'%s\', prec = %i'%(self.event_rels, self.prec)
+                        
+ 
         #=======================================================================
         # prechecks
         #=======================================================================
@@ -337,10 +356,12 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
          
          
         if y1lab == 'AEP':
-            title = '%s %s AEP-Impacts plot for %i stacks'%(self.tag, plotTag, len(dxind.columns))
+            if title is None:
+                title = '%s %s AEP-Impacts plot for %i stacks'%(self.tag, plotTag, len(dxind.columns))
             xlab=self.impact_name
         elif y1lab == self.impact_name:
-            title = '%s %s Impacts-ARI plot for %i stacks'%(self.tag, plotTag, len(dxind.columns))
+            if title is None:
+                title = '%s %s Impacts-ARI plot for %i stacks'%(self.tag, plotTag, len(dxind.columns))
             xlab='ARI'
         else:
             raise Error('bad y1lab: %s'%y1lab)
@@ -353,9 +374,6 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
         #=======================================================================
         # figure setup
         #=======================================================================
-        """
-        plt.show()
-        """
         plt.close()
         fig = plt.figure(figsize=figsize, constrained_layout = True)
         
@@ -378,11 +396,15 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
             """I dont see any native support for x axis stacks"""
             
             yar = mindex.levels[nameRank_d['aep']].values
+            assert len(yar)==len(mindex), 'check the mindex doesnt have phantom labels'
             xCum_ar = 0
             for colName, cser in dxind.items():
                 ax1.fill_betweenx(yar, xCum_ar, xCum_ar+cser.values, label=colName, 
                                   lw=0, alpha=h_alpha)
                 xCum_ar +=cser.values
+                
+            if pd.isnull(max(xCum_ar)):
+                raise Error('got null max')
 
         elif y1lab == self.impact_name:
             
@@ -410,7 +432,8 @@ class RiskPlotr(RiskModel): #expanded plotting for risk models
         #legend
         h1, l1 = ax1.get_legend_handles_labels()
         legLab_d = {e:'\'%s\' annualized = '%e + impactFmtFunc(sEAD_ser[e]) for e in l1}
-        legendTitle = self._get_val_str('*default')
+        if legendTitle is None:
+            legendTitle = self._get_val_str('*default')
         
         self._postFmt(ax1, 
                       val_str=val_str, #putting in legend ittle 

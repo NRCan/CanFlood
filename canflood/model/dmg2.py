@@ -43,7 +43,7 @@ class Dmg2(Model, DFunc, Plotr):
     #==========================================================================
     valid_par = 'dmg2'
     attrdtag_out = 'attrimat02'
-    #datafp_section = 'dmg_fps'
+ 
     
     group_cnt = 4
     
@@ -51,7 +51,7 @@ class Dmg2(Model, DFunc, Plotr):
     
     #minimum inventory expectations
     finv_exp_d = {
-        'tag':{'type':np.object},
+        'tag':{'type':object},
         'scale':{'type':np.number},
         'elv':{'type':np.number},
         }
@@ -69,6 +69,7 @@ class Dmg2(Model, DFunc, Plotr):
              'prec':{'type':int}, 
              'ground_water':{'type':bool},
              },
+            
         'dmg_fps':{
              'finv':{'ext':('.csv',)},
              'curves':{'ext':('.xls',)},
@@ -83,7 +84,8 @@ class Dmg2(Model, DFunc, Plotr):
     
     exp_pars_op = {#optional expectations
         'parameters':{
-            'apply_miti':{'type':bool}
+            'apply_miti':{'type':bool},
+            'curve_deviation':{'type':str},
             },
         'dmg_fps':{
             'gels':{'ext':('.csv',)},
@@ -108,7 +110,7 @@ class Dmg2(Model, DFunc, Plotr):
         
         
         
-        self.logger.debug('finished __init__ on Dmg2')
+        self.logger.debug('Dmg2.__init__ finished')
         
     def prep_model(self):
         #======================================================================
@@ -120,11 +122,11 @@ class Dmg2(Model, DFunc, Plotr):
         if not self.evals == '':
             self.set_evals(check=False) #never pre-loaded
         else:
-            self.expcols = pd.Series(dtype=np.object).index
+            self.expcols = pd.Series(dtype=str).index
             
         self.set_expos()
     
-        #self.data_d['curves'] = pd.read_excel(self.curves, sheet_name=None, header=None, index_col=None)
+ 
         
         if self.felv == 'ground':
             self.set_gels()
@@ -153,12 +155,14 @@ class Dmg2(Model, DFunc, Plotr):
          
     def setup_dfuncs(self, # build curve workers from loaded xlsx data
                  df_d, #{tab name: raw curve data
+                 curve_deviation = None, #specify which curve deviation to build
                  ):
  
         #=======================================================================
         # defaults
         #=======================================================================
         log = self.logger.getChild('setup_dfuncs')
+        if curve_deviation is None: curve_deviation=self.curve_deviation
         minDep_d = dict() #minimum depth container
         
         #=======================================================================
@@ -171,10 +175,14 @@ class Dmg2(Model, DFunc, Plotr):
             raise Error('got some nulls')
 
         log.debug('loading for %i valid ftags in the finv'%len(ftags_valid))
+        
         #=======================================================================
         # #loop through each frame and build the func
         #=======================================================================
         for tabn, df in df_d.items():
+            #===================================================================
+            # evaluate tab name
+            #===================================================================
             if tabn.startswith('_'):
                 log.debug('skipping dummy tab \'%s\''%tabn)
                 continue
@@ -189,8 +197,12 @@ class Dmg2(Model, DFunc, Plotr):
             if not isinstance(df, pd.DataFrame):
                 raise Error('unexpected type on tab \'%s\': %s'%(tabn, type(df)))
             
-            #build it
-            dfunc = DFunc(tabn, curves_fp=self.curves).build(df, log)
+            #===================================================================
+            # #build it
+            #===================================================================
+            dfunc = DFunc(tabn, curves_fp=self.curves, curve_deviation=curve_deviation,
+                          logger=self.logger
+                          ).build(df, log)
             
             #store it
             self.dfuncs_d[dfunc.tag] = dfunc
@@ -1042,7 +1054,7 @@ class Dmg2(Model, DFunc, Plotr):
         # cap counts
         #=======================================================================
         df = cmeta_df.drop(['fcap', 'fscale', self.cid, self.bid], axis=1, errors='ignore').fillna(False)
-        cm_df1  = df.groupby(gCn).sum().astype(np.int) #count all the trues
+        cm_df1  = df.groupby(gCn).sum().astype(int) #count all the trues
         
 
         #=======================================================================

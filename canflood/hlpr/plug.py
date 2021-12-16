@@ -15,13 +15,14 @@ helper functions for use in plugins
 #python
 import logging, configparser, datetime, sys, os, types
 import pandas as pd
+import numpy as np
 
 #Qgis imports
 from qgis.core import QgsVectorLayer, Qgis, QgsProject, QgsLogger, QgsMessageLog, QgsMapLayer
 from qgis.gui import QgisInterface
 
 #pyQt
-from PyQt5.QtWidgets import QFileDialog, QGroupBox, QComboBox
+from PyQt5.QtWidgets import QFileDialog, QGroupBox, QComboBox, QTableWidgetItem
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
 from PyQt5.QtCore import Qt, QAbstractTableModel, QObject 
 from PyQt5 import QtCore
@@ -34,39 +35,54 @@ from PyQt5 import QtCore
 from hlpr.exceptions import QError as Error
 from hlpr.Q import MyFeedBackQ, Qcoms
 import hlpr.Q
-from hlpr.basic import force_open_dir
+from hlpr.basic import force_open_dir, view, ComWrkr
 from hlpr.plt_qt import PltWindow
+ 
 
 #==============================================================================
 # classes-----------
 #==============================================================================
-class QprojPlug(Qcoms): #baseclass for plugins
+class QMenuAction(Qcoms): #base class for actions assigned to Q menus
+ 
     
     groupName = 'CanFlood' #default group for loading layers to canvas
-    
-    tag='scenario1'
-    overwrite=True
-    wd = ''
-    progress = 0
-    
-    
-    loadRes = False #whether to load layers to canvas
-    
-    plt_window = False #control whether to launch the plot window
+    #action parameters
+    icon_fn = 'help-circle.svg'
+    icon_name = 'SomeAction'
+    icon_location = 'menu'
     
     
-    
-    
-    """not a great way to init this one
-    Plugin classes are only initilaizing the first baseclass
-    def __init__(self):
-        self.logger = logger()"""
-    
+    def __init__(self,
+                     iface = None,
+                     session=None, #main CanFlood.CanFlood session worker 
+                 logger=None,
+                 ):
+        
+        """WARNING: make sure QprojPlug children dont call this"""
+        
+        
+        self.qproj_setup(plogger=logger, iface=iface, session=session)
+        
+        """dont execut super cascade
+        super().__init__(logger=self.logger,
+            **kwargs) #initilzie teh baseclass"""
+        
+ 
+        
+        
+        self.connect_slots()
+        
     def qproj_setup(self,
                     iface = None,
-                    plogger=None,
+                    plogger=None, #alternate logger for standalone tests
                     session=None, #main CanFlood.CanFlood session worker 
+ 
                     ): #project inits for Dialog Classes
+        
+        """
+        called by QprojPlug during custom __init__
+        called by QMenuAction during default __init__
+        """
 
         #=======================================================================
         # attacyhments
@@ -87,9 +103,11 @@ class QprojPlug(Qcoms): #baseclass for plugins
         #=======================================================================
         # logger
         #=======================================================================
+        """for debug runs... pass a plugLogger like class
+        see dial_coms"""
         if plogger is None: 
             """this needs iface to be set"""
-            plogger = logger(self) 
+            plogger = plugLogger(self) 
         
         self.logger = plogger
             
@@ -98,6 +116,8 @@ class QprojPlug(Qcoms): #baseclass for plugins
         # Qsetupts
         #=======================================================================
         self.qproj = QgsProject.instance()
+
+            
         
         self.crs = self.qproj.crs()
         
@@ -123,10 +143,49 @@ class QprojPlug(Qcoms): #baseclass for plugins
 
         self.pars_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), '_pars')
         assert os.path.exists(self.pars_dir)
+        
+    def connect_slots(self): #placeholder for connection slots (for consistency)
+        pass
+    def launch(self):
+        raise Error('overwrite with your own method')
+    
+
+class QprojPlug(QMenuAction): #baseclass for plugin dialogs
+    
+    
+    
+    tag='scenario1'
+    overwrite=True
+    wd = ''
+    progress = 0
+    
+    
+    loadRes = False #whether to load layers to canvas
+    
+    plt_window = False #control whether to launch the plot window
+    
+    first_launch=True
+    
+    dev=False #handle for development code
+    
+    
+    
+    """not a great way to init this one
+    Plugin classes are only initilaizing the first baseclass
+    def __init__(self):
+        self.logger = logger()"""
+    
+
 
     def launch(self): #placeholder for launching the dialog
         """allows children to customize what happens when called"""
         log = self.logger.getChild('launch')
+        
+        #=======================================================================
+        # launch setup
+        #=======================================================================
+        if self.first_launch:
+            self.connect_slots()
         #=======================================================================
         # #customs
         #=======================================================================
@@ -134,8 +193,6 @@ class QprojPlug(Qcoms): #baseclass for plugins
         lets each dialog attach custom functions when they are launched
             useful for automatically setting some dialog boxes
             
-        could consider adding all of the above to this....
-        
         prioritizinmg inheritanve over customs
         """
         for fName, f in self.launch_actions.items():
@@ -148,21 +205,30 @@ class QprojPlug(Qcoms): #baseclass for plugins
         #=======================================================================
         # inherit from other tools
         #=======================================================================
-        #try and set the control file path from the session if there
-        if os.path.exists(self.session.cf_fp):
-            #set the control file path
-            self.lineEdit_cf_fp.setText(self.session.cf_fp)
+        """for dialogs with control files"""
+        
+        #my control file path
+        if hasattr(self, 'lineEdit_cf_fp'):
+            #try and set the control file path from the session if there
+            if os.path.exists(self.session.cf_fp):
+                #set the control file path
+                self.lineEdit_cf_fp.setText(self.session.cf_fp)
+                
+        #woking directory
+        if hasattr(self, 'lineEdit_wdir'):
+                
+            #from session control file
+            if os.path.exists(self.session.cf_fp):
+                newdir = os.path.join(os.path.dirname(self.session.cf_fp))
+                assert os.path.exists(newdir), 'this should  exist...%s'%newdir
+                self.lineEdit_wdir.setText(newdir)
             
-            #set the working directory
-            newdir = os.path.join(os.path.dirname(self.session.cf_fp))
-            assert os.path.exists(newdir), 'this should  exist...%s'%newdir
-            self.lineEdit_wdir.setText(newdir)
             
-        #default catch for working directory
-        if self.lineEdit_wdir.text() == '':
-            newdir = os.path.join(os.getcwd(), 'CanFlood')
-            if not os.path.exists(newdir): os.makedirs(newdir)
-            self.lineEdit_wdir.setText(newdir)
+            #default catch for working directory
+            if self.lineEdit_wdir.text() == '':
+                newdir = os.path.join(os.getcwd(), 'CanFlood')
+                if not os.path.exists(newdir): os.makedirs(newdir)
+                self.lineEdit_wdir.setText(newdir)
             
             
         #inventory vector layer
@@ -172,7 +238,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
                 
                 
 
-        
+        self.first_launch=False
         self.show()
 
 
@@ -194,6 +260,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
         log=logger.getChild('load_toCanvas')
         if groupName is None: groupName = self.groupName
         if style_fn == '': style_fn=None
+        log.debug('loading \'%s\': %s'%(type(layers), layers))
         #=======================================================================
         # precheck
         #=======================================================================
@@ -211,7 +278,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
             group = None
             
         def add_layer(lay):
-            
+            assert isinstance(lay, QgsMapLayer), 'passed bad layer\'%s\''%lay
             if not group is None:
                 group.addLayer(lay)
                 self.qproj.addMapLayer(lay, False) #add tot he project, but hide
@@ -328,6 +395,45 @@ class QprojPlug(Qcoms): #baseclass for plugins
         lineEdit.setText(fp)
         
         self.logger.info('user selected: \n    %s'%fp)
+        
+    def newFileSelect_button(self,
+                      lineEdit, #text bar where selected file should be displayed
+                      caption = 'Specify new file name', #title of box
+                      path = None,
+                      filters = "All Files (*)",
+                      qfd = QFileDialog.getSaveFileName, #dialog to launch
+                             ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if path is None:
+            path = os.getcwd()
+        
+        if not os.path.exists(path):
+            path = os.getcwd()
+            
+        #ask the user for the path
+        """
+        using the Dialog instance as the QWidge parent
+        """
+         
+        fp = qfd(self, caption, path, filters)
+        
+        #just take the first
+        if len(fp) == 2:
+            fp = fp[0]
+        
+        #see if they picked something
+        if fp == '':
+            self.logger.warning('user failed to make a selection. skipping')
+            return 
+        
+        #update the bar
+        lineEdit.setText(fp)
+        
+        self.logger.info('user selected: \n    %s'%fp)
+        
         
     def mfcb_connect(self, #helper to update a field combo box
                            mfcb, #mFieldComboBox
@@ -623,7 +729,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
         # launch window
         #=======================================================================
         else:
-            
+            """not working"""
             app = PltWindow(fig, out_dir=out_dir)
             app.show()
             log.info('launched matplotlib window on %s'%fig._suptitle.get_text())
@@ -634,7 +740,7 @@ class QprojPlug(Qcoms): #baseclass for plugins
         
         
 
-class logger(object): #workaround for qgis logging pythonic
+class plugLogger(object): #workaround for qgis logging pythonic
     """
     plugin logging
     
@@ -642,16 +748,18 @@ class logger(object): #workaround for qgis logging pythonic
     0.4.1
         log messages sent to 2 places based on level
             
-    
+    TODO: allow directly calling (e.g., logger('msg')
     """
     log_tabnm = 'CanFlood' # qgis logging panel tab name
     
     log_nm = 'cf' #logger name
     
-    def __init__(self, parent,
+    def __init__(self, 
+                 parent,
                  statusQlab = None, #Qlabel widget to duplicate push messages
                  log_nm = None,
                  ):
+        """called by session, then again by each getChild"""
         #attach
         self.parent = parent
         
@@ -679,7 +787,7 @@ class logger(object): #workaround for qgis logging pythonic
             log_nm = new_childnm
         
         #build a new logger
-        child_log = logger(self.parent, 
+        child_log = plugLogger(self.parent, 
                            statusQlab=self.statusQlab,
                            log_nm=log_nm)
         
@@ -740,12 +848,17 @@ class logger(object): #workaround for qgis logging pythonic
         
         #Qgis bar
         if push:
-            self.iface.messageBar().pushMessage(self.log_tabnm, msg_raw, level=qlevel)
+            try:
+                self.iface.messageBar().pushMessage(self.log_tabnm, msg_raw, level=qlevel)
+            except:
+                QgsLogger.debug('failed to push to interface') #used for standalone tests
         
         #Optional widget
         if status or push:
             if not self.statusQlab is None:
                 self.statusQlab.setText(msg_raw)
+
+
                 
 class pandasModel(QAbstractTableModel):
     """from here:
@@ -812,7 +925,9 @@ class ListModel(QStandardItemModel): #wrapper for list functions with check boxe
 
 
 
-
+#===============================================================================
+# WIDGET CUSTOM BINDINGS------------
+#===============================================================================
 def bind_layersListWidget(widget, #instanced widget
                           log,
                           layerType=None, #optional layertype to enforce
@@ -1100,9 +1215,307 @@ def bind_fieldSelector( #setup a groupbox collection for field selection
     #set the default
     groupBox.set_selection(default_selection)
     
+
+def bind_TableWidget( #add some custom bindings to a TableWidget
+        widget, #instanced widget
+        log,
+ 
+        ):
+    
+    
+    def get_indexer(self, #flexible index retrieval
+                    indexer,
+                    axis=0):
+        
+        if isinstance(indexer, str):
+            #get headers
+            headers_d = self.get_headers(axis=axis)
+            return headers_d[indexer]
+        elif isinstance(indexer, int):
+            return indexer
+        else:
+            raise Error('bad type')
+        
+    
+    def get_headers( #retrieve the header labeels
+                     self,
+            axis=0,
+            ):
+        
+        
+        if axis ==0: #rows
+            return {self.verticalHeaderItem(i).text():i for i in range(0,self.rowCount(),1)}
+        elif axis==1: #columns
+            return {self.horizontalHeaderItem(i).text():i for i in range(0,self.columnCount(),1)}
+        else:
+            raise Error('dome')
+        
+    def get_value(self,#retrieve a value by lable
+            colName,
+            rowName,
+            ):
+        
+        #get the indexers
+        i = self.get_headers(axis=0)[rowName]
+        j = self.get_headers(axis=1)[colName]
+        
+        return self.item(i,j).text()
+    
+    def get_values( #retrieve values by label or index
+                    self,
+            indexer, #label (str) or index (int)
+            axis=0, #axis to retrieve on
+            ):
+        
+        #get the items
+        items_d = self.get_items(indexer, axis=axis)
+        
+        #read
+        raw_d = {k:item.text() for k, item in items_d.items()}
+        
+        #=======================================================================
+        # handle nulls
+        #=======================================================================
+        d1 = dict()
+        for k,v in raw_d.items():
+            if (v =='') or (v is None):
+                d1[k]=np.nan
+            else:
+                d1[k]=v
+                
+        return d1
+    
+    def get_items( #retrieve values by label or index
+                    self,
+            indexer, #label (str) or index (int)
+            axis=0, #axis to retrieve on
+            ):
+        
+ 
+        #=======================================================================
+        # retrieve indexer
+        #=======================================================================
+        index = self.get_indexer(indexer, axis=axis)
+        
+        #=======================================================================
+        # get rows
+        #=======================================================================
+        
+        if axis == 0:
+            raw_d= {self.horizontalHeaderItem(i).text():self.item(index, i) for i in range(0, self.columnCount())}
+        elif axis ==1:
+            raw_d= {self.verticalHeaderItem(i).text():self.item(i, index) for i in range(0, self.rowCount())}
+        else:
+            raise Error('dome')
+        
+
+        return raw_d
+                
+        
+    def get_df(#retreive the full table df
+               self,
+               ):
+        
+ 
+        #populate dict
+        d = dict()
+        for j in range(0, self.columnCount()):
+            d[j] = dict()
+            for i in range(0, self.rowCount()):
+                d[j][i] = self.item(i,j).text()
+                
+        #build the dataframe
+        df = pd.DataFrame.from_dict(d)
+        df.columns = self.get_headers(axis=1)
+        df.index = self.get_headers(axis=0)
+        
+        #handle types
+        bx = df==''
+        if bx.any().any():
+            df = df.where(~bx, other=np.nan)
+        
+        """
+        view(df)
+        """
+        
+                
+        return df.infer_objects()
+        
+    def save_df(self,
+                      caption = 'Specify new file name', #title of box
+                      path = None,
+                      filters = "Data Files (*.csv)",
+                ):
+                
+        #path default
+        if path is None:
+            path = os.getcwd()
+        if not os.path.exists(path):
+            path = os.getcwd()
+        #=======================================================================
+        # get the filepath from the user
+        #=======================================================================
+        out_fp = QFileDialog.getSaveFileName(self, caption, path, filters)[0]
+        if out_fp == '':
+            log.warning('user failed to make a selection. skipping')
+            return 
+        
+        assert out_fp.endswith('csv')
+        
+ 
+        #=======================================================================
+        # collect the results
+        #=======================================================================
+        df = self.get_df()
+            
+ 
+        #=======================================================================
+        # write
+        #=======================================================================
+        df.to_csv(out_fp, index=None)
+        log.push('saved %s to %s'%(str(df.shape), out_fp))
+        return out_fp
+                
+    
+ 
+        
+    def set_values(#set values from a dict on a single row/column
+            self,
+            indexer,
+            vals_d, #values on indexer to set {indx2:newVal}
+            axis=0
+            ):
+        
+        #get index
+        index = self.get_indexer(indexer, axis=axis)
+        
+        #=======================================================================
+        # set value
+        #=======================================================================
+        for j, val in vals_d.items():
+            assert isinstance(j, int)
+            if axis==0:
+                self.setItem(index, j, QTableWidgetItem(val))
+            else:
+                self.setItem(j,index,QTableWidgetItem(val))
+                
+    
+                
+    def populate(self, #populate with a dataframe
+                 df):
+        
+        self.clear() #clear everything
+        
+        #setup dimensions
+        self.setColumnCount(len(df.columns))
+        self.setRowCount(len(df.index))
+        
+        #set lables
+        self.setVerticalHeaderLabels(df.index.astype(str).values.tolist())
+        self.setHorizontalHeaderLabels(df.columns.astype(str).values.tolist())
+        
+        #set values
+        for j, (colName, col) in enumerate(df.items()):
+            for i, val in enumerate(col):
+                self.setItem(i,j, QTableWidgetItem(str(val)))
+ 
+                
+    
+    def call_all_items( #call a method on all items in the table
+            self,
+            methodName,
+            *args,**kwargs):
+        
+        #loop through each item
+        d = dict()
+        for j in range(0, self.columnCount()):
+            d[j] = dict()
+            for i in range(0, self.rowCount()):
+                
+                f = getattr(self.item(i,j), methodName)
+                d[j][i] = f(*args, **kwargs)
+                
+        return d
+    
+    def call_row_items(self,
+                        methodName,
+            indexer,*args,
+            axis=1,
+             **kwargs):
+        
+        #=======================================================================
+        # retrieve        
+        #=======================================================================
+        item_d = self.get_items(indexer, axis=axis)
+        
+        #=======================================================================
+        # call
+        #=======================================================================
+        res_d = dict()
+        for k, item in item_d.items():
+            f = getattr(item, methodName)
+            res_d[k] = f(*args, **kwargs)
+            
+        return res_d
+ 
+        
+                
+    def call_all_headers(#call a method on all header items
+                         self,
+                         methodName,
+                         
+                         *args, axis=1, **kwargs):
+        
+        
+        #=======================================================================
+        # retrieve        
+        #=======================================================================
+        if axis ==0: #rows
+            head_d= {self.verticalHeaderItem(i).text():self.verticalHeaderItem(i) for i in range(0,self.rowCount(),1)}
+        elif axis==1: #columns
+            head_d= {self.horizontalHeaderItem(i).text():self.horizontalHeaderItem(i) for i in range(0,self.columnCount(),1)}
+        else:
+            raise Error('dome')
+        
+        #=======================================================================
+        # apply
+        #=======================================================================
+        res_d = dict()
+        for headName, headerObject in head_d.items():
+            f = getattr(headerObject, methodName)
+            res_d[headName] = f(*args, **kwargs)
+            
+        
+        
+         
+            
+                
+    #===========================================================================
+    # #bind
+    #===========================================================================
+    #loop through each new method, and bind as a lambda
+    for fName, func in {
+        'get_indexer':lambda self,i, axis=0: get_indexer(self,i, axis=axis),
+        'get_headers':lambda self, axis=0: get_headers(self, axis=axis),
+        'get_value':lambda self, i,j:get_value(self,i,j),
+        'get_values':lambda self, indexName, axis=0: get_values(self, indexName, axis=axis),
+        'get_items':lambda self, indexName, axis=0: get_items(self, indexName, axis=axis),
+        'get_df':lambda self:get_df(self),
+        'save_df':lambda self, **kwargs:save_df(self, **kwargs),
+        'set_values':lambda self, i,d,axis=0:set_values(self,i,d,axis=axis),
+        'call_all_items':lambda self, n, *args, **kwargs: call_all_items(self, n, *args, **kwargs),
+        'call_row_items':lambda self,n,i, *args, axis=1, **kwargs: call_row_items(self, n, i, *args,axis=axis, **kwargs),
+        'call_all_headers':lambda self, n,  *args, axis=1,**kwargs: call_all_headers(self, n,  *args,axis=axis, **kwargs),
+        'populate':lambda self, df:populate(self, df),
+        
+        }.items():
+        
+        setattr(widget, fName, types.MethodType(func, widget))
+                
+    
  
 #==============================================================================
-# functions-----------
+# HELPER FUNCTIONS-----------
 #==============================================================================
 def get_layerbyName(layName, #flexible search for layers by name
                     qproj = None,

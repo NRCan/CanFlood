@@ -18,8 +18,8 @@
 # -- Project information -----------------------------------------------------
 
 project = 'CanFlood'
-copyright = '2021, Seth Bryant'
-author = 'Seth Bryant'
+copyright = '2021, NRCan'
+author = 'Seth Bryant, James Gibson, Dhanyatha Harish'
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
@@ -65,3 +65,7 @@ html_static_path = ['_static']
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
 language = "en"
+
+locale_dirs = ['locale/']   # path is example but recommended.
+gettext_uuid = True
+gettext_compact = False 

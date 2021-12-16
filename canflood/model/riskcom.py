@@ -4,14 +4,14 @@ Created on Mar. 9, 2021
 @author: cefect
 '''
 
-import configparser, os, inspect, logging, copy, itertools, datetime
+import os, inspect, logging, copy, itertools, datetime
 import pandas as pd
 idx = pd.IndexSlice
 import numpy as np
 from scipy import interpolate, integrate
 
 from hlpr.exceptions import QError as Error
-from hlpr.plot import Plotr
+from hlpr.plot import Plotr, view
 from model.modcom import Model
 
 
@@ -75,6 +75,10 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             log.warning('got %i (of %i) nulls!... filling with zeros'%(booldf.sum().sum(), booldf.size))
         edf = edf.fillna(0.0)
         
+        #=======================================================================
+        # if self.event_rels=='indep':
+        #     raise Error('2021-06-23: I dont think the sum to 1 assumption is valid for independent events')
+        #=======================================================================
         #==================================================================
         # check/add event probability totals----
         #==================================================================
@@ -105,21 +109,28 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
                 valid = False
                 rpt_df = cplx_df[boolidx].join(
                     cplx_df[boolidx].sum(axis=1).rename('sum'))
-                log.debug('aep%.4f: \n\n%s'%(aep, rpt_df))
+                
+                with pd.option_context('display.max_rows', 500,'display.max_columns', None,'display.width',1000):
+                    log.debug('aep%.4f: \n\n%s'%(aep, rpt_df))
+                    
                 log.error('aep%.4f w/ %i exEvents failed %i (of %i) Psum<1 checks (Pmax=%.2f).. see logger \n    %s'%(
                     aep, len(exp_l), boolidx.sum(), len(boolidx),cplx_df.sum(axis=1).max(), exp_l))
-                
-        assert valid, 'some complex event probabilities exceed 1'
+         
+        """seems like event_rels=indep should allow for the simple summation to exceed 1"""       
+        assert valid, 'some complex event probabilities exceed 1 w/ \'%s\'... see logger'%self.event_rels
             
         #=======================================================================
         # #identify those events that need filling
         #=======================================================================
         fill_exn_d = dict()
         for aep, exn_l in cplx_evn_d.items(): 
-            
+
             miss_l = set(exn_l).difference(edf.columns)
             if not len(miss_l)<2:
-                raise Error('can only fill one exposure column per complex event: %s'%miss_l)
+                """
+                check if you forgot to specify a hazard layer during exlikes sampling
+                """
+                raise Error('can only fill one exposure column per complex event\n     %s'%miss_l)
             
             if len(miss_l)==1:
                 fill_exn_d[aep] = list(miss_l)[0]
@@ -199,7 +210,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             boolidx = cplx_df.sum(axis=1)!=1.0 #find those exceeding 1.0
 
             if boolidx.any():
-                """allowing this to mass when event_rels=max"""
+                """allowing this to pass when event_rels=max"""
                 valid = False
                 log.warning('aep%.4f failed %i (of %i) Psum<=1 checks (Pmax=%.2f)'%(
                     aep, boolidx.sum(), len(boolidx), cplx_df.sum(axis=1).max()))
@@ -244,14 +255,15 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             which is not great for data manipulation
         here we clean it up and only take those for plotting
         
-        see also Artr.get_ttl()
+        see also 
+            RiskModel.get_ttl()
             Model._fmt_resTtl()
-            riskPlot.load_ttl()
+ 
         """
         
  
         if logger is None: logger=self.logger
-        log = logger.getChild('prep_ttl')
+        log = logger.getChild('set_ttl')
         if tlRaw_df is None: tlRaw_df = self.raw_d[dtag]
         #=======================================================================
         # precheck
@@ -275,6 +287,9 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         
         """
         TODO: harmonize this with 'impact_units' loaded from control file
+            generally set (in cf) by model.dmg2.Dmg2.run(set_impactUnits=True)
+            or read from control file
+            then written to r_ttl 
         """
         self.impact_name = list(df1.columns)[1] #get the label for the impacts
         
@@ -300,7 +315,12 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         df2 = df1.loc[df1['plot'], :].copy() #drop those not flagged for plotting
         
         #typeset aeps
-        df2.loc[:, 'aep'] = df2['aep'].astype(np.float64).round(self.prec)
+        df2.loc[:, 'aep'] = df2['aep'].astype(float)
+        
+        """
+        view(df2)
+        df2['aep'].astype(float).values
+        """
 
         #=======================================================================
         # #invert aep (w/ zero handling)
@@ -330,8 +350,8 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
     # CALCULATORS-------
     #===========================================================================
     def ev_multis(self, #calculate (discrete) expected value from events w/ multiple exposure sets
-           ddf, #damages per exposure set (
-           edf, #secondary liklihoods per exposure set ('exlikes'). see load_exlikes()
+           ddf, #damages per exposure set 
+           edf, #secondary liklihoods per exposure set ('exlikes'). see set_exlikes()
                 # nulls were replaced by 0.0 (e.g., asset not provided a secondary probability)
                 # missing colums were replaced by 1.0 (e.g., non-failure events)
             
@@ -368,6 +388,8 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         if logger is None: logger=self.logger
         log = logger.getChild('ev_multis')
         cplx_evn_d = self.cplx_evn_d #{aep: [eventName1, eventName2,...]}
+        
+        """needs to be consistent with what was done during set_exlikes()"""
         if event_rels is None: event_rels = self.event_rels
 
         #======================================================================
@@ -589,7 +611,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
                 # apply multiplication
                 #===============================================================
                 #get EV from this
-                evdf1 = mbdxcol.multiply(evdf, axis='column', level=1).droplevel(level=0, axis=1)
+                evdf1 = mbdxcol.multiply(evdf, axis=1, level=1).droplevel(level=0, axis=1)
                 
 
                     
@@ -671,6 +693,9 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             except Exception as e:
                 raise Error('failed to convert \'ltail\'=\'%s\' to numeric \n    %s'%(ltail, e))
             
+        if rtail == 'flat':
+            raise Error('rtail=flat. not implemented')
+        
         if not rtail in ['extrapolate', 'none']:
             rtail = float(rtail)
             
@@ -726,7 +751,10 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             
             #flat projection
             if ltail == 'flat':
-                df.loc[:,0] = df.iloc[:,0] 
+                """
+                view(df)
+                """
+                df.loc[:,0] = df.iloc[:,-1] 
                 
                 if len(df)==1: 
                     self.extrap_vals_d[0] = df.loc[:,0].mean().round(self.prec) #store for later
@@ -903,7 +931,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         #swap in negatives
         sFailP_df = sFailP_df.where(
             np.invert(sFailP_df=='no'), 
-            1-prob_ar, inplace=False).astype(np.float64)
+            1-prob_ar, inplace=False).astype(float)
         
         #combine
         sFailP_df['pTotal'] = sFailP_df.prod(axis=1)
@@ -913,7 +941,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         # consequences
         #=======================================================================
         sFailC_df = pd.DataFrame(scenFail_ar, columns=inde_df[bxf].index).replace(
-            {'yes':1.0, 'no':0.0}).astype(np.float64)
+            {'yes':1.0, 'no':0.0}).astype(float)
         
         #add in consequences
         sFailC_df = sFailC_df.multiply(inde_df.loc[bxf, 'consq'])
@@ -988,7 +1016,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         result = float(f(0)) #y value at x=0
         
         if not result >=0:
-            raise Error('got negative extrapolation: %.2f'%result)
+            raise Error('got negative extrapolation on \'%s\': %.2f'%(ser.name, result))
         
         return result 
     
@@ -1222,10 +1250,8 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         
         """
         summary risk results plotter
-        
-        This is similar to what's  on modcom.risk_plot()
-        
-        self.impactfmt_str
+            see self._lineToAx() for formatting
+ 
         """
         
         #======================================================================
@@ -1243,6 +1269,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             
         if res_ttl is None: res_ttl = self.data_d['r_ttl']
         if plotTag is None: plotTag=self.tag
+        log.debug('on %s'%res_ttl)
         #=======================================================================
         # prechecks
         #=======================================================================
@@ -1323,7 +1350,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         
         return fig
     
-    def _lineToAx(self, #add a line to the axis
+    def _lineToAx(self, #add a risk curve to the axis
               res_ttl,
               y1lab,
               ax,
@@ -1332,6 +1359,11 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
               hatch_f=True,
               h_color=None, h_alpha=None, hatch=None,
               ): #add a line to an axis
+        
+        """
+        for plotting vfuncs, see:
+            CurvePlotr.line
+        """
         
         #=======================================================================
         # defaults
@@ -1345,8 +1377,16 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         if lineLabel is  None: lineLabel=self.tag
 
         """
+        self.impStyle_d
         plt.show()
         """
+        #check values
+        if hatch_f:
+            d = {**{'h_color':h_color, 'h_alpha':h_alpha}, **impStyle_d}
+        else:
+            d= impStyle_d
+        for attn, att in d.items():
+            assert not att is None, 'got none on %s'%attn
         #======================================================================
         # fill the plot
         #======================================================================
@@ -1371,7 +1411,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
                             )
                     
             if hatch_f:
-                polys = ax.fill_betweenx(yar.astype(np.float), x1=xar, x2=0, 
+                polys = ax.fill_betweenx(yar.astype(float), x1=xar, x2=0, 
                                     color       = h_color, 
                                     alpha       = h_alpha,
                                     hatch       = hatch)

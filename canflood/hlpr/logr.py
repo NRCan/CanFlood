@@ -2,9 +2,13 @@
 Created on Feb. 25, 2020
 
 @author: cefect
+
+non plugin logging
+for plugin logging
+    see hlpr.plug
 '''
 
-import os, logging.config, logging
+import os, logging.config, logging, types
 
 
 class Error(Exception):
@@ -14,6 +18,9 @@ class Error(Exception):
         mod_logger = logging.getLogger('exceptions') #creates a child logger of the root
 
         mod_logger.error(msg)
+        
+ 
+        
 
 def basic_logger(root_lvl = logging.DEBUG,
                  new_wdir = None,
@@ -34,7 +41,8 @@ def basic_logger(root_lvl = logging.DEBUG,
     #===========================================================================
     # #change path to users directory
     #===========================================================================
-    new_wdir = os.path.join(os.path.expanduser('~'), 'CanFlood')
+    if new_wdir is None:
+        new_wdir = os.path.join(os.path.expanduser('~'), 'CanFlood')
     
     if not os.path.exists(new_wdir):
         os.makedirs(new_wdir)
@@ -53,6 +61,8 @@ def basic_logger(root_lvl = logging.DEBUG,
     
     #override default level in the config file
     logger.setLevel(root_lvl)
+    
+
 
     
     return logger

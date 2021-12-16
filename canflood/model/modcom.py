@@ -11,7 +11,7 @@ Created on Feb. 9, 2020
 # imports------------
 #==============================================================================
 
-import configparser, os, inspect, logging, copy, itertools, datetime
+import configparser, os, inspect, logging, copy, datetime
 import pandas as pd
 idx = pd.IndexSlice
 import numpy as np
@@ -36,98 +36,79 @@ class Model(ComWrkr,
             #Plotr #making each child inherit this speifically
                 #keeps damage modeuls without plotting a bit simpler
             ):
-    """
-    common methods for model classes
-    
-    
-    Control File Parameters:
-    [parameters]
-        
-        name -- name of the scenario/model run
-        
-        cid -- index column for the 3 inventoried data sets (finv, expos, gels)
-        
-        prec -- float precision for calculations
-        
-        ground_water -- flag to include negative depths in the analysis
-        
-        felv -- 'datum' or 'ground': whether felv values provided in the
-                     inventory are heights or elevations
-
-        event_probs -- format of event probabilities (in 'evals' data file) 
-                        (default 'ari')
-                        
-            'aep'           event probabilities in aeps file expressed as 
-                            annual exceedance probabilities
-            'ari'           expressed as annual recurrance intervals
+#===============================================================================
+#     """
+#     common methods for model classes
+#     
+#     
+#     Control File Parameters:
+#         see rC:\LS\03_TOOLS\CanFlood\_git\docs\source\tables\
+# 
+#     
+#     """
+#===============================================================================
+    master_pars = {
+        'parameters':{
+            'name':str,         #name of the scenario/model run
+            'cid':str,          #index column for the 3 inventoried data sets (finv, expos, gels)
+            'prec':int,         #float precision for calculations
+            'ground_water':bool,#flag to include negative depths in the analysis
+            'felv':str,         #'datum' or 'ground': whether felv values provided in the inventory are heights or elevations
+            'event_probs':str,  #format of event probabilities (in 'evals' data file) . (default 'ari')
+                                    #'aep':event probabilities in aeps file expressed as  annual exceedance probabilities
+                                    #'ari': expressed as annual recurrance intervals
+            'ltail':None,       #zero probability event  handle  (default 'extrapolate')   
             
-        
-        ltail -- zero probability event  handle  (default 'extrapolate')
-            'flat'           set the zero probability event equal to the most 
-                            extreme impacts in the passed series
-            'extrapolate'    set the zero probability event by extrapolating from 
-                            the most extreme impact (interp1d)
-            'none'           do not extrapolate (not recommended)
-            float            use the passed value as the zero probability impact value
-             
-        
-        rtail -- zreo impacts event  handle    (default float(0.5))
-            'extrapolate'    set the zero impact event by extrapolating from the 
-                            least extreme impact
-            'none'            no enforcing of a zero impact event (not recommended)
-            'flat'           duplicates the minimum AEP as the zero damage event 
-            float           use the passed value as the zero impacts aep value
-        
-        drop_tails -- EAD extrapolation: whether to remove the extrapolated values
-                         before writing the per-asset results (default: False)
-        
-        integrate -- numpy integration method to apply (default 'trapz')
-
-        as_inun    -- flag whether to treat exposures as %inundation
-        
-        event_rels -- assumption for calculated expected value on complex events
-            #max:  maximum expected value of impacts per asset from the duplicated events
-                #resolved damage = max(damage w/o fail, damage w/ fail * fail prob)
-                #default til 2020-12-30
-            #mutEx: assume each event is mutually exclusive (only one can happen)
-                #lower bound
-            #indep: assume each event is independent (failure of one does not influence the other)
-                #upper bound
-                
-        impact_units -- value to label impacts axis with (generally set by Dmg2)
-        
-        apply_miti -- whether to apply mitigation algorthihims
-
-            
-            
-        
-    [dmg_fps]
-        
-
-        
-    [risk_fps]
-        dmgs -- damage data results file path (default N/A)
-            
-        exlikes -- secondary exposure likelihood data file path (default N/A)
-        
-        evals -- event probability data file path (default N/A)
-        
-    [validation]
-        risk2 -- Risk2 validation flag (default False)
-        
-    [results_fps]
-        attrimat02 -- lvl2 attribution matrix fp (post dmg model)
-        attrimat03 -- lvl3 attribution matrix fp (post risk model)
-        r_passet -- per_asset results from the risk2 model
-        r_ttl  -- total results from risk2
-        eventypes -- df of aep, noFail, and rEventName
-    
-    
-    [plotting]
-        impactfmt_str -- python formatter to use for formatting the impact results values
-    
-    """
-    
+                                    #'flat'            zero probability event equal to the most extreme impacts in the passed series
+                            
+                                    #'extrapolate'    set the zero probability event by extrapolating from  the most extreme impact (interp1d)
+                            
+                                    #'none'           do not extrapolate (not recommended)
+                                    #float            use the passed value as the zero probability impact value        
+            'rtail':None,
+            'drop_tails':bool,
+            'integrate':str,
+            'as_inun':bool,
+            'event_rels':str,
+            'impact_units':str,
+            'apply_miti':bool,
+            'curve_deviation':str,
+            },
+        'dmg_fps':{
+            'curves':str,
+            'finv':str,
+            'expos':str,
+            'gels':str,
+            },
+        'risk_fps':{
+            'dmgs':str,
+            'exlikes':str,
+            'evals':str
+            },
+        'validation':{
+            'risk1':bool,
+            'dmg2':bool,
+            'risk2':bool,
+            'risk3':bool
+            },
+        'results_fps' :{
+            'attrimat02':str,
+            'attrimat03':str,
+            'r_passet':str,
+            'r_ttl':str,
+            'eventypes':str
+            },
+        'plotting':{
+            'color':str,
+            'linestyle':str,
+            'linewidth':float,
+            'alpha':float,
+            'marker':str,
+            'markersize':float,
+            'fillstyle':str,
+            'impactfmt_str':str,
+            }        
+        }
     #==========================================================================
     # parameters from control file
     #==========================================================================
@@ -147,6 +128,7 @@ class Model(ComWrkr,
 
     impact_units = 'impacts'
     apply_miti = False 
+    curve_deviation = 'base'
 
 
     #[dmg_fps]
@@ -175,7 +157,18 @@ class Model(ComWrkr,
     eventypes=''
     
     #[plotting]
-    """see Plotr"""
+    """these are living in both places now"""
+    color = 'black'
+    linestyle = 'dashdot'
+    linewidth = 2.0
+    alpha =     0.75        #0=transparent 1=opaque
+    marker =    'o'
+    markersize = 4.0
+    fillstyle = 'none'    #marker fill style
+    impactfmt_str = '.2e'
+        #',.0f' #Thousands separator
+
+    
     
     
     #===========================================================================
@@ -268,11 +261,16 @@ class Model(ComWrkr,
         self.extrap_vals_d = {} #extraploation used {aep:val}
         
         self.raw_d = dict() #container for raw data
+        
+        #=======================================================================
+        # attribute validty check
+        #=======================================================================
+        #self._chk_attributes()
         #=======================================================================
         # wrap
         #=======================================================================
         
-        self.logger.debug('finished Model.__init__')
+        self.logger.debug('Model.__init__ finished')
         
         
     def setup(self): #standard setup sequence
@@ -281,7 +279,7 @@ class Model(ComWrkr,
         
         self.load_df_ctrl()  #load data from control file
         
-        self.prep_model() 
+        self.prep_model() #caller specific prep
         
         return self
     
@@ -399,12 +397,197 @@ class Model(ComWrkr,
             self._init_fmtFunc()
             
         self.resname = '%s_%s_%s'%(self.valid_par, self.name, self.tag)
+        """TODO: consolidate this with ComWrkr.resname"""
         #=======================================================================
         # #wrap
         #=======================================================================
         self.logger.debug('finished init_modelon Model')
         
         
+
+        
+    def cf_attach_pars(self, #load parmaeteres from file
+                    cpars,
+                    setAttr=True, #whether to save each attribute 
+                    ):
+        
+        """
+        cf_chk_pars() should be run first to make sure parameter membership and type matches expectations
+        
+        here we just update every parameter value found:
+            on the class AND in the ControlFile
+        """
+        
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        log = self.logger.getChild('cf_attach_pars')
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        assert isinstance(cpars, configparser.ConfigParser)
+        
+        
+        #=======================================================================
+        # loop and retrieve
+        #=======================================================================
+        cpars_d = dict() #set values
+        no_d = dict() #not set values
+        noCnt = 0
+        for sectName in cpars.sections():
+            cpars_d[sectName], no_d[sectName] = dict(), dict() #add the page
+            log.debug('loading %i parameters from section \'%s\''%(len(cpars[sectName]), sectName))
+            
+            #loop through each variable name/value in this section
+            for varName, valRaw in cpars[sectName].items():
+                
+                #check we care about this
+                if not hasattr(self, varName):
+                    log.debug('passed variable \'%s\' not found on class... skipping'%varName)
+                    no_d[sectName][varName] = valRaw
+                    noCnt+=1
+                    continue
+                
+                
+                #retrieve typset value
+                pval = self._get_from_cpar(cpars, sectName, varName, logger=log) #get the typeset variable
+                
+                #store it
+                cpars_d[sectName][varName] = pval 
+                
+        #======================================================================
+        # attach all the paramers
+        #======================================================================
+        cnt = 0
+        if setAttr:
+            for sectName, spars_d in cpars_d.items():
+                for varnm, val in spars_d.items():
+                    setattr(self, varnm, val)
+                    log.debug('set %s=%s'%(varnm, val))
+                    cnt +=1
+                
+        #check types
+        self._chk_attributes()
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        log.info('attached %i parmaeters to self (skipped %i)'%(cnt, noCnt))
+                
+        
+        
+        return cpars_d
+    
+    
+    def _cfFile_relative(self, #adding basedir to the control file
+                              cf_fp=None, #control file
+
+                          sections=['dmg_fps', 'risk_fps'], #parameter sections to manipulate
+                          logger=None,
+                          **kwargs):
+        """wraper to work with the control file (rather than the configparser"""
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log=logger.getChild('_cfFile_relative')
+        if cf_fp is None: cf_fp=self.cf_fp
+ 
+ 
+        assert not self.absolute_fp
+        
+        #=======================================================================
+        # load the control file
+        #=======================================================================
+        pars = configparser.ConfigParser(inline_comment_prefixes='#')
+        _ = pars.read(cf_fp)
+            
+        pars = self._cf_relative(pars,  sections=sections, warn=False, logger=log, **kwargs)
+        
+        #=======================================================================
+        # write the config file 
+        #=======================================================================
+        with open(cf_fp, 'w') as configfile:
+            pars.write(configfile)
+            
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        log.info('set ControlFile to absolute:    %s'%(cf_fp))
+        
+        return cf_fp
+    
+
+    def  _cf_relative(self, #convert filepaths from relative to absolute
+                      cpars, #config parser
+                      base_dir=None, #base directory to add
+                      sections=['dmg_fps', 'risk_fps', 'results_fps'], #sections contaiing values to convert
+                      warn=True,
+                      logger=None,
+                      ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if base_dir is None: base_dir=self.base_dir
+        if logger is None: logger=self.logger
+        log = logger.getChild('_cf_relative')
+        
+        #assert os.path.exists(base_dir)
+        log.debug('w/ base_dir=%s'%base_dir)
+        #=======================================================================
+        # #loop through parser and retireve then convert
+        #=======================================================================
+        res_d = dict() #container for new values
+        for sectName in sections:
+            assert sectName in cpars
+            res_d[sectName]=dict()
+            #loop through each variable in this section
+            for varName, valRaw in cpars[sectName].items():
+                log.debug('%s.%s:    %s'%(sectName, varName, valRaw))
+                if valRaw == '': continue #skip blanks
+                
+                if os.path.exists(valRaw):
+                    """switchged to warning... some tools may not use this fp"""
+                    log.warning(('%s.%s passed aboslute_fp=False but fp exists \n    %s'%(
+                        sectName, varName, valRaw)))
+                    continue
+                else:
+                
+                    #get the absolute filepath
+                    fp = os.path.join(base_dir, valRaw)
+                    """dont bother... some models may not use all the fps
+                    better to let the check with handles catch things
+                    assert os.path.exists(fp), '%s.%s not found'%(sectName, varName)"""
+                    if not os.path.exists(fp) and warn:
+                        log.warning('%s.%s got bad fp: %s'%(sectName, varName, fp))
+                
+                #set it
+                res_d[sectName][varName]=fp
+                
+        #=======================================================================
+        # set the new values
+        #=======================================================================
+        cnt=0
+        for sectName, sect_d in res_d.items():
+            if len(sect_d)==0: continue #skip blanks
+            
+            for varName, newVal in sect_d.items():
+                cpars.set(sectName, varName, newVal)
+                cnt+=1
+            
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        log.debug(res_d)
+        log.info('converted %i filepaths to absolute'%cnt)
+
+        return cpars
+    
+    #===========================================================================
+    # CHECKS------
+    #===========================================================================
+    
     def cf_chk_pars(self,
                    cpars,
                    chk_d,
@@ -492,149 +675,33 @@ class Model(ComWrkr,
         log.debug('finished checking %i sections w/ %i errors. optional=%s \n'%(len(cpars), len(errors), optional))
         
         return len(errors)==0, errors
+    
+    def _get_cf_miss(self, #collect mismatch between expectations and control file parameter presenece
+                      cpars):
         
-    def cf_attach_pars(self, #load parmaeteres from file
-                    cpars,
-                    setAttr=True, #whether to save each attribute 
-                    ):
-        
-        """
-        cf_chk_pars() should be run first to make sure parameter membership and type matches expectations
-        
-        here we just update every parameter value found:
-            on the class
-            in the ControlFile
-        """
-        
-        
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        log = self.logger.getChild('cf_attach_pars')
-        #=======================================================================
-        # precheck
-        #=======================================================================
         assert isinstance(cpars, configparser.ConfigParser)
-        
-        
-        #=======================================================================
-        # loop and retrieve
-        #=======================================================================
-        cpars_d = dict() #set values
-        no_d = dict() #not set values
-        noCnt = 0
-        for sectName in cpars.sections():
-            cpars_d[sectName], no_d[sectName] = dict(), dict() #add the page
-            log.debug('loading %i parameters from section \'%s\''%(len(cpars[sectName]), sectName))
+        errors = []
+
+        for chk_d, opt_f in ((self.exp_pars_md,False), (self.exp_pars_op,True)):
+            _, l = self.cf_chk_pars(cpars, copy.copy(chk_d), optional=opt_f)
+            errors = errors + l
             
-            #loop through each variable name/value in this section
-            for varName, valRaw in cpars[sectName].items():
-                
-                #check we care about this
-                if not hasattr(self, varName):
-                    log.debug('passed variable \'%s\' not found on class... skipping'%varName)
-                    no_d[sectName][varName] = valRaw
-                    noCnt+=1
-                    continue
-                
-                
-                #retrieve typset value
-                pval = self._get_from_cpar(cpars, sectName, varName, logger=log) #get the typeset variable
-                
-                #store it
-                cpars_d[sectName][varName] = pval 
-                
-        #======================================================================
-        # attach all the paramers
-        #======================================================================
-        cnt = 0
-        if setAttr:
-            
-            for sectName, spars_d in cpars_d.items():
-                for varnm, val in spars_d.items():
-                    setattr(self, varnm, val)
-                    log.debug('set %s=%s'%(varnm, val))
-                    cnt +=1
-                
-        #=======================================================================
-        # wrap
-        #=======================================================================
-        log.info('attached %i parmaeters to self (skipped %i)'%(cnt, noCnt))
-                
-        
-        
-        return cpars_d
+        return errors
     
-
-
-
     
-    def  _cf_relative(self, #convert filepaths from relative to absolute
-                      cpars, #config parser
-                      base_dir=None, #base directory to add
-                      sections=['dmg_fps', 'risk_fps', 'results_fps'], #sections contaiing values to convert
-                      
-                      ):
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        if base_dir is None: base_dir=self.base_dir
-        log = self.logger.getChild('_cf_relative')
+    def _chk_attributes(self, #check my attributes against the master
+                       master_pars=None,
+                       ):
+        """running during init, then after loading from control file"""
+        if master_pars is None: master_pars=copy.deepcopy(self.master_pars)
         
-        assert os.path.exists(base_dir)
-
-        #=======================================================================
-        # #loop through parser and retireve then convert
-        #=======================================================================
-        res_d = dict() #container for new values
-        for sectName in sections:
-            assert sectName in cpars
-            res_d[sectName]=dict()
-            #loop through each variable in this section
-            for varName, valRaw in cpars[sectName].items():
-                if valRaw == '': continue #skip blanks
-                
-                if os.path.exists(valRaw):
-                    """switchged to warning... some tools may not use this fp"""
-                    log.warning(('%s.%s passed aboslute_fp=False but fp exists \n    %s'%(
-                        sectName, varName, valRaw)))
-                    continue
-                else:
-                
-                    #get the absolute filepath
-                    fp = os.path.join(base_dir, valRaw)
-                    """dont bother... some models may not use all the fps
-                    better to let the check with handles catch things
-                    assert os.path.exists(fp), '%s.%s not found'%(sectName, varName)"""
-                    if not os.path.exists(fp):
-                        log.warning('%s.%s got bad fp: %s'%(sectName, varName, fp))
-                
-                #set it
-                res_d[sectName][varName]=fp
-                
-        #=======================================================================
-        # set the new values
-        #=======================================================================
-        cnt=0
-        for sectName, sect_d in res_d.items():
-            if len(sect_d)==0: continue #skip blanks
-            
-            for varName, newVal in sect_d.items():
-                cpars.set(sectName, varName, newVal)
-                cnt+=1
-            
-        #=======================================================================
-        # wrap
-        #=======================================================================
-        log.info('converted %i filepaths to absolute'%cnt)
-            
-        """
-        cpars['dmg_fps']['finv']
-        """
-        
-        
-        return cpars
-    
+        for sectName, sect_d in master_pars.items():
+            for attn, aType in sect_d.items():
+                assert hasattr(self, attn), attn
+                if not aType is None:
+                    classVal = getattr(self,attn)
+                    assert isinstance(classVal, aType), 'bad type on \'%s\': %s'%(attn, type(classVal))
+                    
     #===========================================================================
     # LOADERS------
     #===========================================================================
@@ -706,7 +773,7 @@ class Model(ComWrkr,
         assert dtag in self.raw_d
         df_raw = self.raw_d[dtag]
         assert isinstance(df_raw, pd.DataFrame)
-        assert df_raw.index.name == cid
+        assert df_raw.index.name == cid, 'index name \'%s\' does not match expectations: \'%s\''%(df_raw.index.name, cid)
         df = df_raw.sort_index(axis=0)
         
 
@@ -869,7 +936,7 @@ class Model(ComWrkr,
         #======================================================================
         adf = self.raw_d[dtag]
         
-        assert len(adf) ==1, 'expected only 1 row on aeps'
+        assert len(adf) ==1, 'expected only 1 row on aeps, got %s'%str(adf.shape)
         
 
         #convert to a series
@@ -940,6 +1007,7 @@ class Model(ComWrkr,
         if self.exlikes == '': #no failure
             assert len(aep_ser.unique())==len(aep_ser), \
             'got duplicated \'evals\' but no \'exlikes\' data was provided.. see logger'
+            """TODO: let this pass for L1's doing impacts only"""
         else:
             assert len(aep_ser.unique())!=len(aep_ser), \
             'got unique \'evals\' but \'exlikes\' data is provided... see logger'
@@ -1740,7 +1808,9 @@ class Model(ComWrkr,
         
         return df1, aep_ser.to_dict()
     
-    def _get_ttl_ari(self, df): #add an ari column to a frame (from the aep vals)
+    def _get_ttl_ari(self, #add an ari column to a frame (from the aep vals)
+                     df,# {index:['aep']}
+                     ): 
         
         ar = df.loc[:,'aep'].T.values
         
@@ -1748,7 +1818,7 @@ class Model(ComWrkr,
                            sorted(ar)[1]/10, #dummy value for zero (take the second smallest value and divide by 10)
                            ar) 
         
-        df['ari'] = ar_ari.astype(np.int32)
+        df['ari'] = ar_ari.astype(int)
         
         return 
     
@@ -1757,15 +1827,9 @@ class Model(ComWrkr,
         
         df = df_raw.copy()
         df.index.name = 'aep'
-        df.columns = [self.impact_units]
+        df.columns = [self.impact_units] #set from the control file
         
-        
-        """
-        self.rtail
-        """
-        #check extrapolation value matching
-
-
+ 
         #=======================================================================
         # #add labels
         #=======================================================================
@@ -1974,17 +2038,7 @@ class Model(ComWrkr,
         log.debug('    \'%s.%s\' passed %i checks'%(sect, varnm, len(achk_d)))
         return True
     
-    def _get_cf_miss(self, #collect mismatch between expectations and control file parameter presenece
-                      cpars):
-        
-        assert isinstance(cpars, configparser.ConfigParser)
-        errors = []
 
-        for chk_d, opt_f in ((self.exp_pars_md,False), (self.exp_pars_op,True)):
-            _, l = self.cf_chk_pars(cpars, copy.copy(chk_d), optional=opt_f)
-            errors = errors + l
-            
-        return errors
                 
     def validate(self, #validate this model object
                  cpars, #initilzied config parser
@@ -2195,7 +2249,7 @@ class Model(ComWrkr,
         #=======================================================================
         booldf = df>=0
         if not booldf.all().all():
-            log.debug(df[booldf])
+            log.debug('\n%s'%df[booldf])
             log.warning('got %i (of %i) negative values... see logger'%(
                 np.invert(booldf).sum().sum(), booldf.size))
             return False
@@ -2212,7 +2266,7 @@ class Model(ComWrkr,
         if cboolidx.any():
             if logger is None: logger = self.logger
             
-            log.debug('%s/n'%df.loc[cboolidx, :])
+            log.debug('\n%s'%df.loc[cboolidx, :])
             log.warning(' %i (of %i)  assets have non-monotonic-increasing damages. see logger'%(
                 cboolidx.sum(), len(cboolidx)))
             
@@ -2257,7 +2311,7 @@ class Model(ComWrkr,
         # index checks
         #=======================================================================
         assert 'int' in df.index.dtype.name, 'expected int type index'
-        assert df.index.is_unique, '%s got non-unique index'%self.name
+        assert df.index.is_unique, '%s got non-unique index \'%s\''%(self.name, cid)
         #=======================================================================
         # #cid checks
         #=======================================================================
@@ -2397,9 +2451,6 @@ class Model(ComWrkr,
         return out_fp
     
 
-            
-
-
 
 class DFunc(ComWrkr, #damage function or DFunc handler
             ): 
@@ -2445,7 +2496,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
             'impact_var':'damage',
             'exposure':'impact'}
     
-    cdf_chk_d = {'tag':str, #parameters for checking the raw df
+    cdf_chk_d = {'tag':str, #parameters expected in crv_d (read from xls tab)
                  'exposure':str,
                  'impact_units':str}
     
@@ -2455,10 +2506,13 @@ class DFunc(ComWrkr, #damage function or DFunc handler
     tag = 'dfunc'
     min_dep = None
     pars_d = {}
+    curves_fp=''
+    curve_deviation= 'base' #0: take first curve. otherwise, label lookup of curve deviation 
     
     def __init__(self,
                  tabn='damage_func', #optional tab name for logging
                  curves_fp = '', #filepath loaded from (for reporting)
+                 curve_deviation = 'base', #which curve deviation to build
                  monot=True,
                  **kwargs):
         
@@ -2472,6 +2526,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         """
         self.curves_fp = curves_fp
         self.monot=monot
+        self.curve_deviation=curve_deviation
         
         #init the baseclass
         super().__init__(**kwargs) #initilzie Model
@@ -2479,58 +2534,76 @@ class DFunc(ComWrkr, #damage function or DFunc handler
     
     def build(self,
               df_raw, #raw parameters to build the DFunc w/ 
-              logger):
+              logger,
+              curve_deviation=None,
+              ):
         
         
         #=======================================================================
         # defaults
         #=======================================================================
         log = logger.getChild('%s'%self.tabn)
+        if curve_deviation is None: curve_deviation=self.curve_deviation
         log.debug('on %s from %s'%(str(df_raw.shape), self.curves_fp))
         #=======================================================================
         # precheck
         #=======================================================================
-        self.check_cdf(df_raw)
+        try:
+            assert self.check_cdf(df_raw)
+        except Exception as e:
+            """letting this pass for backwards compatability"""
+            log.error('curve failed check w/ \n    %s'%e)
+        
+
+        #slice and clean
+ 
+        
+        df = df_raw.set_index(0, drop=True).dropna(how='all', axis=1)
+            
         
         #======================================================================
         # identify depth-damage data
         #======================================================================
-        #slice and clean
-        df = df_raw.iloc[:, 0:2].dropna(axis=0, how='all')
+ 
         
-        #validate the curve
-        #=======================================================================
-        # self.check_crvd(df.set_index(df.columns[0]).iloc[:,0].to_dict(),
-        #                  logger=log)
-        #=======================================================================
-        """"
-        todo: try 'get_loc'
+        #get the value specifying the start of the dd
+ 
+        depthLoc_key='exposure'
+        
+        depth_loc = df.index.get_loc(depthLoc_key)
+        
+        boolidx = pd.Series(df.index.isin(df.iloc[depth_loc:len(df), :].index), index=df.index,
+                            name='dd_vals')
+        
         """
-        #locate depth-damage data
-        boolidx = df.iloc[:,0]=='exposure' #locate
-        
-        assert boolidx.sum()==1, \
-            'got unepxected number of \'exposure\' values on %s'%(self.tabn)
-            
-        depth_loc = df.index[boolidx].tolist()[0]
-        
-        boolidx = df.index.isin(df.iloc[depth_loc:len(df), :].index)
-        
-        
+        this includes the 'exposure' row in the dd_df
+        view(df.join(boolidx))
+        """
+ 
         #======================================================================
         # attach other pars
         #======================================================================
         #get remainder of data
-        mser = df.loc[~boolidx, :].set_index(df.columns[0], drop=True ).iloc[:,0]
+        mser = df.loc[~boolidx, :].iloc[:,0]
         mser.index =  mser.index.str.strip() #strip the whitespace
         pars_d = mser.to_dict()
         
-        #check it
+        #=======================================================================
+        # parameter value check
+        #=======================================================================
         assert 'tag' in pars_d, '%s missing tag'%self.tabn
         assert isinstance(pars_d['tag'], str), 'bad tag parameter type: %s'%type(pars_d['tag'])
         
         assert pars_d['tag']==self.tabn, 'tag/tab mismatch (\'%s\', \'%s\')'%(
             pars_d['tag'], self.tabn)
+        
+        #handle curve deviation
+        if not curve_deviation=='base':
+            assert curve_deviation in df.loc['exposure', :].values, \
+                'requested curve_deviation \'%s\' not found on \'%s\''%(
+                    curve_deviation, self.tabn)
+                
+         
         
         for varnm, val in pars_d.items():  #loop and store on instance
             setattr(self, varnm, val)
@@ -2541,19 +2614,37 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         #======================================================================
         # extract depth-dmaage data
         #======================================================================
-        #extract depth-damage data
-        dd_df = df.loc[boolidx, :].reset_index(drop=True)
-        dd_df.columns = dd_df.iloc[0,:].to_list()
-        dd_df = dd_df.drop(dd_df.index[0], axis=0).reset_index(drop=True) #drop the depth-damage row
+ 
+        #get just the dd rows
+        ddf1 = df.loc[boolidx, :]
+        ddf1.index.name=None
         
+        #set headers from a row
+        ddf1.columns = ddf1.loc[depthLoc_key]
+        ddf1 = ddf1.drop(depthLoc_key)
+        
+        
+        #select deviation
+        if curve_deviation=='base':
+            ddcol = ddf1.columns[0] #taking first
+        else:
+            ddcol = curve_deviation
+            
+        #reindex for this deviation
+        ddf2 = ddf1.loc[:, ddcol].to_frame().reset_index().rename(columns={'index':depthLoc_key})
+        
+ 
         #typeset it
-        dd_df.iloc[:,0:2] = dd_df.iloc[:,0:2].astype(float)
+        try:
+            ddf2 = ddf2.astype(float)
+        except Exception as e:
+            raise Error('failed to typsset the ddf for \'%s\' w/ \n    %s'%(self.tabn, e))
         
         """
         view(dd_df)
         """
         
-        ar = dd_df.sort_values('exposure').T.values
+        ar = ddf2.sort_values(depthLoc_key).T.values
         """NO! leave unsorted
         ar = np.sort(np.array([dd_df.iloc[:,0].tolist(), dd_df.iloc[:,1].tolist()]), axis=1)"""
         self.dd_ar = ar
@@ -2591,6 +2682,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
     def get_dmg(self, #get damage from depth using depth damage curve
                 depth):
         """
+        self.impact_units
         self.tabn
         pd.DataFrame(self.dd_ar).plot()
         view(pd.DataFrame(self.dd_ar))
@@ -2635,7 +2727,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
                   
                   #library format
                   clib_fmt_df = False, #whether the curve data is a dataframe or not
-                  
+                  set_index = False, #for clib_fmt_df=True, whether to set the index (from column 0)
                   
                   
                   #handle column names
@@ -2654,6 +2746,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         
         """
         clib_d.keys()
+        clib_d[list(clib_d.keys())[0]]
         """
         #=======================================================================
         # precheck
@@ -2663,7 +2756,17 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         # conversion
         #=======================================================================
         if clib_fmt_df:
-            clib_d = {k:df.iloc[:,0].to_dict() for k,df in clib_d.items()}
+            if not set_index: #pull everything into dictionaries
+                clib_d = {k:df.iloc[:,0].to_dict() for k,df in clib_d.items()}
+            else:
+                
+                clib_d = {k:df.set_index(0, drop=True).iloc[:,0].to_dict() for k,df in clib_d.items()}
+            
+        #check it
+        for k,v in clib_d.items():
+            self.tabn = k #set for reporting
+            assert isinstance(v, dict), 'expected a dict for \'%s\''%k
+            assert self.check_crvd(v), '%s failed the check'%k
         
         #=======================================================================
         # build data
@@ -2671,7 +2774,13 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         try:
             df_raw = pd.DataFrame(clib_d).T
             
+
+            
             """
+            for k,v in clib_d.items():
+                print(k)
+                for k1,v1 in v.items():
+                    print('    %s:%s'%(k1,v1))
             clib_d.keys()
             
             """
@@ -2689,9 +2798,12 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         
         #check it
         try:
-            ddf.columns = ddf.columns.astype(np.float)
-            ddf = ddf.astype(np.float)
+            ddf.columns = ddf.columns.astype(float)
+            ddf = ddf.astype(float)
         except Exception as e:
+            """
+            wont work if you have a very messy library
+            """
             raise Error('got bad type on depth values w/ \n    %s'%e)
 
         
@@ -2738,37 +2850,62 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         view(sdf)
         """
         return sdf
+    
+    def _get_split(self,#split the raw df into depth-damage and metadata
+                   df_raw, #dummy index
+                   fmt='dict', #result format
+                   ): 
+        
+        df = df_raw.set_index(0, drop=True)
+        
+        #get dd
+        assert 'exposure' in df.index
+        
+        dd_indx = df.index[df.index.get_loc('exposure')+1:] #get those after exposure
+        ddf = df.loc[dd_indx, :]
+        
+        #get meta
+        mdf = df.loc[~df.index.isin(dd_indx), :]
+        
+        if fmt=='df':
+            return ddf, mdf
+        elif fmt=='dict':
+            return ddf.iloc[:,0].to_dict(), mdf.iloc[:,0].to_dict()
+        
+        
+        
 
         
     def check_cdf(self, #convenience for checking the df as loaded
-                  df, **kwargs): 
+                  df, 
+ 
+                  **kwargs): 
+        
         """
-        because we deal with multiple forms of the curve data
+        converting to dict for most checks
+        
+        not constructing, just simple field and type checks
+        
+        view(df)
         """
+ 
         
         assert isinstance(df, pd.DataFrame)
-        assert len(df.columns)==2
-        
-        assert df.iloc[:, 0].is_unique
-        
-        crv_d = df.set_index(0, drop=True).dropna().iloc[:, 0].to_dict()
+ 
+ 
+        crv_d = df.set_index(0, drop=True).iloc[:, 0].dropna().to_dict()
         
         
-        try:
-            self.check_crvd(crv_d)
-        except Exception as e:
-            """letting this pass for backwards compatability"""
-            self.logger.warning('curve failed check w/ \n    %s'%e)
+        return self.check_crvd(crv_d, **kwargs)
+
 
 
     def check_crvd(self, #validate the passed curve_d  
                     crv_d,
                     logger=None):
         
-        #=======================================================================
-        # if logger is None: logger=self.logger
-        # log = logger.getChild('check_crvd')
-        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('check_crvd')
         
         assert isinstance(crv_d, dict)
         
@@ -2779,14 +2916,16 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         #=======================================================================
         miss_l = set(self.cdf_chk_d.keys()).difference(crv_d.keys())
         if not len(miss_l)==0:
-            raise Error('dfunc \'%s\' missing keys: %s \n    %s'%(self.tabn, miss_l, self.curves_fp))
+            log.error('dfunc \'%s\' missing keys: %s \n    %s'%(self.tabn, miss_l, self.curves_fp))
+            return False
         
         #=======================================================================
         # value type
         #=======================================================================
         for k, v in self.cdf_chk_d.items():
-            assert k in crv_d, 'passed df for \'%s\' missing key \'%s\''%(self.tabn, k)
-            assert isinstance(crv_d[k], v), '%s got bad type on %s'%(self.tabn, k)
+            if not isinstance(crv_d[k], v):
+                log.error( '%s got bad type on %s'%(self.tabn, k))
+                return False
             
         #=======================================================================
         # order

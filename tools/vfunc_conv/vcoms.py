@@ -10,8 +10,8 @@ import pandas as pd
 import numpy as np
 
 
-from hlpr.logr import basic_logger
-mod_logger = basic_logger() 
+#from hlpr.logr import basic_logger
+#mod_logger = basic_logger() 
 from hlpr.basic import force_open_dir, view, get_valid_filename
 from hlpr.exceptions import Error
 
@@ -43,12 +43,13 @@ class VfConv(CurvePlotr):
     exposure_units = 'meters'
     
     def __init__(self,
-
+ 
                  **kwargs
                  ):
-
         
-        super().__init__(**kwargs) #initilzie teh baseclass
+        
+        
+        super().__init__(  **kwargs) #initilzie teh baseclass
         
     def output(self,
                d,

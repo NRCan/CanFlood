@@ -10,6 +10,8 @@ Created on Feb. 9, 2020
 import logging, configparser, datetime
 start = datetime.datetime.now()
 
+from warnings import warn
+
 
 #==============================================================================
 # imports------------
@@ -21,7 +23,7 @@ import pandas as pd
 
 #Qgis imports
 from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject, \
-    QgsWkbTypes, QgsProcessingFeedback, QgsCoordinateTransform
+    QgsWkbTypes, QgsProcessingFeedback, QgsCoordinateTransform, QgsCoordinateTransformContext
     
 from qgis.analysis import QgsRasterCalculatorEntry, QgsRasterCalculator
 import processing
@@ -33,7 +35,7 @@ from hlpr.exceptions import QError as Error
     
 
 
-from hlpr.Q import Qcoms,vlay_get_fdf, vlay_get_fdata, view, vlay_rename_fields
+from hlpr.Q import Qcoms,vlay_get_fdf, vlay_get_fdata, view
 from hlpr.plot import Plotr
 
 #==============================================================================
@@ -97,10 +99,11 @@ class Rsamp(Plotr, Qcoms):
                     providerLib='ogr'
                     ):
         
+        
         """
         special input loader for StandAlone runs"""
         log = self.logger.getChild('load_layers')
-        
+        warn('to be removed', DeprecationWarning)
         
         #======================================================================
         # load rasters
@@ -189,15 +192,15 @@ class Rsamp(Plotr, Qcoms):
         #=======================================================================
         # loop and assemble
         #=======================================================================
-        log.info('loading %i rlays'%len(rfp_d))
+        log.debug('loading %i rlays'%len(rfp_d))
         rlay_d = dict()
         for fn, fp in rfp_d.items():
             rlay_d[fn] = self.load_rlay(fp, logger=log,aoi_vlay=aoi_vlay, **kwargs)
             
 
+        assert len(rlay_d)>0, 'failed to load any rasters!'
             
-            
-        log.info('loaded %i'%len(rlay_d))
+        log.info('loaded %i rlays: %s'%(len(rlay_d), list(rlay_d.keys())))
         
         return rlay_d
     
@@ -210,7 +213,8 @@ class Rsamp(Plotr, Qcoms):
             cid = None, #index field name on finv
                         
             #exposure value controls
-            psmp_stat='Max', #for polygon finvs, statistic to sample
+            psmp_stat=None, #for complex geo finvs, statistic to sample
+            psmp_fieldName = None, #for complex geo finvs, field name with sampling statistic
             
             #inundation sampling controls
             as_inun=False, #whether to sample for inundation (rather than wsl values)
@@ -233,25 +237,24 @@ class Rsamp(Plotr, Qcoms):
         if fname is None: fname=self.fname
         self.as_inun = as_inun
         self.finv_name = finv_raw.name() #for plotters
+        self.gtype = QgsWkbTypes().displayString(finv_raw.wkbType())
         log.info('executing on %i rasters'%(len(rlayRaw_l)))
 
+        
         #======================================================================
         # precheck
         #======================================================================
-        #assert self.crs == self.qproj.crs(), 'crs mismatch!'
-        
+        assert len(rlayRaw_l)>0, 'no rasters passed!'
         
         #check the finv_raw
         assert isinstance(finv_raw, QgsVectorLayer), 'bad type on finv_raw'
-        """rasteres are checked below"""
+
         assert finv_raw.crs() == self.qproj.crs(), 'finv_raw crs %s doesnt match projects \'%s\'' \
             %(finv_raw.crs().authid(), self.qproj.crs().authid())
         assert cid in [field.name() for field in finv_raw.fields()], \
             'requested cid field \'%s\' not found on the finv_raw'%cid
             
-
-
-        
+ 
         #check the rasters
         rname_l = []
         for rlay in rlayRaw_l:
@@ -262,14 +265,21 @@ class Rsamp(Plotr, Qcoms):
         
         self.rname_l = rname_l
         
+        #check sampling parameter logic
+        """see samp_vals()"""
+        
         #======================================================================
         # prep the finv for sampling
         #======================================================================
         self.finv_name = finv_raw.name()
         
-        #drop all the fields except the cid
-        finv = self.deletecolumn(finv_raw, [cid], invert=True)
-        
+        #drop all data fields
+        if not psmp_fieldName is None:
+            keep_fnl = [cid, psmp_fieldName]
+        else:
+            keep_fnl = [cid]
+            
+        finv = self.deletecolumn(finv_raw, keep_fnl, invert=True)
         
         #fix the geometry
         finv = self.fixgeometries(finv, logger=log)
@@ -277,86 +287,113 @@ class Rsamp(Plotr, Qcoms):
 
         #check field lengths
         self.finv_fcnt = len(finv.fields())
-        assert self.finv_fcnt== 1, 'failed to drop all the fields'
-        
-        self.gtype = QgsWkbTypes().displayString(finv.wkbType())
+        assert self.finv_fcnt==len(keep_fnl), 'failed to drop all the fields'
         
         if self.gtype.endswith('Z'):
             log.warning('passed finv has Z values... these are not supported')
             
-        self.feedback.setProgress(20)
-        #=======================================================================
-        # prep the raster layers------
-        #=======================================================================
-
-        self.feedback.setProgress(40)
-        #=======================================================================
-        #inundation runs--------
-        #=======================================================================
-        if as_inun:
-            #===================================================================
-            # #prep DTM
-            #===================================================================
-            if clip_dtm:
-                
-                """makes the raster clipping a bitcleaner
-                
-                2020-05-06
-                ran 2 tests, and this INCREASED run times by ~20%
-                set default to clip_dtm=False
-                """
-                log.info('trimming dtm \'%s\' by finv extents'%(dtm_rlay.name()))
-                finv_buf = self.polygonfromlayerextent(finv,
-                                        round_to=dtm_rlay.rasterUnitsPerPixelX()*3,#buffer by 3x the pixel size
-                                         logger=log )
-        
-                
-                #clip to just the polygons
-                dtm_rlay1 = self.cliprasterwithpolygon(dtm_rlay,finv_buf, logger=log)
-            else:
-                dtm_rlay1 = dtm_rlay
-                
-            self.feedback.setProgress(60)
-            #===================================================================
-            # sample by goetype
-            #===================================================================
-            if 'Polygon' in self.gtype:
-                res_vlay = self.samp_inun(finv,rlayRaw_l, dtm_rlay1, dthresh)
-            elif 'Line' in self.gtype:
-                res_vlay = self.samp_inun_line(finv, rlayRaw_l, dtm_rlay1, dthresh)
-            else:
-                raise Error('\'%s\' got unexpected gtype: %s'%(finv.name(), self.gtype))
+        self.names_d = dict() #setting an empty as some paths dont fill this anymore
             
-            res_name = '%s_%s_%i_%i_d%.2f'%(
-                fname, self.tag, len(rlayRaw_l), res_vlay.dataProvider().featureCount(), dthresh)
-        
+        self.feedback.setProgress(20)
+  
+        #get the results name
+        res_name = '%s_%s_%i_%i'%(fname, self.tag, len(rlayRaw_l),finv.dataProvider().featureCount())
         #=======================================================================
-        #WSL value sampler------
+        # simple geometries (Points)-----
+        #=======================================================================
+        if 'Point' in self.gtype:
+            res_vlay = self.samp_vals_pts(finv, rlayRaw_l)
+            assert not as_inun
+            
+        #=======================================================================
+        # complex geos--------
         #=======================================================================
         else:
-            res_vlay = self.samp_vals(finv,rlayRaw_l, psmp_stat)
-            res_name = '%s_%s_%i_%i'%(fname, self.tag, len(rlayRaw_l), res_vlay.dataProvider().featureCount())
+            #=======================================================================
+            #threshold area (inundation)--------
+            #=======================================================================
+            if as_inun:
+                #===================================================================
+                # #prep DTM
+                #===================================================================
+                if clip_dtm:
+                    
+                    """makes the raster clipping a bitcleaner
+                    
+                    2020-05-06
+                    ran 2 tests, and this INCREASED run times by ~20%
+                    set default to clip_dtm=False
+                    """
+                    log.info('trimming dtm \'%s\' by finv extents'%(dtm_rlay.name()))
+                    finv_buf = self.polygonfromlayerextent(finv,
+                                            round_to=dtm_rlay.rasterUnitsPerPixelX()*3,#buffer by 3x the pixel size
+                                             logger=log )
             
-            if not 'Point' in self.gtype: res_name = res_name + '_%s'%psmp_stat.lower()
+                    
+                    #clip to just the polygons
+                    dtm_rlay1 = self.cliprasterwithpolygon(dtm_rlay,finv_buf, logger=log)
+                else:
+                    dtm_rlay1 = dtm_rlay
+                
+                #===================================================================
+                # sample by goetype
+                #===================================================================
+                if 'Polygon' in self.gtype:
+                    res_vlay = self.samp_inun(finv,rlayRaw_l, dtm_rlay1, dthresh)
+                elif 'Line' in self.gtype:
+                    res_vlay = self.samp_inun_line(finv, rlayRaw_l, dtm_rlay1, dthresh)
+                else:
+                    raise Error('\'%s\' got unexpected gtype: %s'%(finv.name(), self.gtype))
+                
+                res_name = res_name + 'd%.2f'%(dthresh)
+        
+            #=======================================================================
+            # value sampler------
+            #=======================================================================
+            else:
+                #===============================================================
+                # Global staitsitc
+                #===============================================================
+                if not psmp_stat is None:
+                    assert psmp_fieldName is None
+
+                    res_vlay = self.samp_vals_cplx(finv,rlayRaw_l, psmp_stat=psmp_stat)
+                    
+                    res_name = res_name + '_%s'%psmp_stat.lower()
+                    
+                #===============================================================
+                # per-asset stat
+                #===============================================================
+                else:
+                    res_vlay = self.samp_passet(finv,rlayRaw_l, psmp_fieldName=psmp_fieldName)
+                    res_name = res_name + '_passet'
             
         res_vlay.setName(res_name)
+        
+        #=======================================================================
+        # check field names
+        #=======================================================================
+        if not as_inun:
+            """still handling renaming at the end for inundation runs"""
+            miss_l = set(self.rname_l).difference([f.name() for f in res_vlay.fields()])
+            assert len(miss_l)==0, 'field name mismatch: %s'%miss_l
+        
+        
         #=======================================================================
         # wrap
         #=======================================================================
         """TODO: harmonize output types for build modules"""
         #get dataframe like results
         try:
-            df = vlay_get_fdf(res_vlay, logger=log).set_index(cid, drop=True
-                                          ).rename(columns=self.names_d)
-            """
-            view(df)
-            d.keys()
-            """
+            """renaming with the algo on each loop now"""
+            df = vlay_get_fdf(res_vlay, logger=log).set_index(cid, drop=True)
+                                         
             #get sorted index by values
             sum_ser = pd.Series({k:cser.dropna().sum() for k, cser in df.items()}).sort_values()
             
             #set this new index
-            self.res_df = df.loc[:, sum_ser.index]
+            self.res_df = df.loc[:, sum_ser.index].sort_index()
+
         
         except Exception as e:
             log.warning('failed to convert vlay to dataframe w/ \n    %s'%e)
@@ -386,9 +423,12 @@ class Rsamp(Plotr, Qcoms):
             res_l.append(rlay)
             
             self.feedback.upd_prog(70/len(rlayRaw_l), method='append')
-            assert isinstance(rlay, QgsRasterLayer)
+            self.logger.debug('finished on %s'%rlay.name())
+
             
         self.feedback.setProgress(90)
+        
+        self.logger.debug('finished all %i'%len(res_l))
             
         return res_l
             
@@ -561,69 +601,37 @@ class Rsamp(Plotr, Qcoms):
         #=======================================================================
         # wrap
         #=======================================================================
-        
-        
-        
         log.info('finished w/ %i prep operations on \'%s\' \n    %s'%(
             len(res_d), resLay.name(), res_d))
         
-        #clean up the store
-        #=======================================================================
-        # _ = mstore.takeMapLayer(rlayRaw) #take out the raw (without deleteing) 
-        # try:
-        #     _ = mstore.takeMapLayer(resLay) #try and pull out the result layer
-        # except:
-        #     log.warning('failed to remove \'%s\' from store'%resLay.name())
-        #=======================================================================
-        
-        """
-        for k,v in mstore.mapLayers().items():
-            print(k,v)
-        
-        """
-        #self.mstore.removeAllMapLayers() #clear all layers
+ 
         assert isinstance(resLay, QgsRasterLayer)
-        
         
         return resLay
     
 
-
-        
-        
-    def samp_vals(self, #sample a set of rasters with a vectorlayer
-                  finv, raster_l,psmp_stat):
+    def samp_vals_pts(self, #sample a set of rasters with a points vectorlayer
+                  finv, raster_l,
+                  ):
+        """"
+        2021-10-18:split out function from polygons/line sammpler
         """
-        this is NOT for inundation percent
-        can handle all 3 geometries"""
-        
-        log = self.logger.getChild('samp_vals')
-        #=======================================================================
-        # build the loop
-        #=======================================================================
-        gtype=self.gtype
-        if 'Polygon' in gtype: 
-            assert psmp_stat in self.psmp_codes, 'unrecognized psmp_stat' 
-            psmp_code = self.psmp_codes[psmp_stat] #sample each raster
-            algo_nm = 'qgis:zonalstatistics'
 
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        
+        log = self.logger.getChild('samp_vals_pts')
+        algo_nm = 'qgis:rastersampling'
             
-            
-        elif 'Point' in gtype:
-            algo_nm = 'qgis:rastersampling'
-            
-        elif 'Line' in gtype:
-            algo_nm = 'native:pointsalonglines'
-        else:
-            raise Error('unsupported gtype: %s'%gtype)
 
         #=======================================================================
         # sample loop
         #=======================================================================
-        names_d = dict()
+        self.names_d = dict()
         
         log.info('sampling %i raster layers w/ algo \'%s\' and gtype: %s'%(
-            len(raster_l), algo_nm, gtype))
+            len(raster_l), algo_nm, self.gtype))
         
         for indxr, rlay in enumerate(raster_l):
             
@@ -631,94 +639,239 @@ class Rsamp(Plotr, Qcoms):
                 indxr+1, len(raster_l), finv.name(), rlay.name()))
             
             ofnl =  [field.name() for field in finv.fields()]
-            self.mstore.addMapLayer(finv)
-            #===================================================================
-            # sample.poly----------
-            #===================================================================
-            if 'Polygon' in gtype: 
-                
-                algo_nm = 'native:zonalstatisticsfb'
-            
-                ins_d = {       'COLUMN_PREFIX':indxr, 
-                                'INPUT_RASTER':rlay, 
-                                'INPUT':finv, 
-                                'RASTER_BAND':1, 
-                                'STATISTICS':[psmp_code],#0: pixel counts, 1: sum
-                                'OUTPUT' : 'TEMPORARY_OUTPUT',
-                                }
-                    
-                #execute the algo
-                res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
-                
-                
-                finv = res_d['OUTPUT']
-        
-            #=======================================================================
-            # sample.Line--------------
-            #=======================================================================
-            elif 'Line' in gtype: 
-                finv = self.line_sample_stats(finv, rlay,[psmp_stat], logger=log)
-            #======================================================================
-            # sample.Points----------------
-            #======================================================================
-            elif 'Point' in gtype: 
-                #build the algo params
-                params_d = { 'COLUMN_PREFIX' : rlay.name(),
-                             'INPUT' : finv,
-                              'OUTPUT' : 'TEMPORARY_OUTPUT',
-                               'RASTERCOPY' : rlay}
-                
-                #execute the algo
-                res_d = processing.run(algo_nm, params_d, feedback=self.feedback)
-        
-                #extract and clean results
-                finv = res_d['OUTPUT']
+            self.mstore.addMapLayer(finv) #not sure when/where we clear this
 
-            else:
-                raise Error('unexpected geo type: %s'%gtype)
+            finv = processing.run(algo_nm, 
+              { 'COLUMN_PREFIX' : rlay.name(),'INPUT' : finv,
+               'OUTPUT' : 'TEMPORARY_OUTPUT','RASTERCOPY' : rlay},
+                           feedback=self.feedback)['OUTPUT']
+                           
+            #report and handle names
+            finv = self._smp_loop_wrap(finv, ofnl, rlay, indxr, log)
             
-            #===================================================================
-            # sample.wrap
-            #===================================================================
-            assert isinstance(finv, QgsVectorLayer)
-            assert len(finv.fields()) == self.finv_fcnt + indxr +1, \
-                'bad field length on %i'%indxr
-                
-            finv.setName('%s_%i'%(self.finv_name, indxr))
-            
-            #===================================================================
-            # correct field names
-            #===================================================================
-            """
-            algos don't assign good field names.
-            collecting a conversion dictionary then adjusting below
-            
-            TODO: propagate these field renames to the loaded result layers
-            """
-            #get/updarte the field names
-            nfnl =  [field.name() for field in finv.fields()]
-            new_fn = set(nfnl).difference(ofnl) #new field names not in the old
-            
-            if len(new_fn) > 1:
-                raise Error('bad mismatch: %i \n    %s'%(len(new_fn), new_fn))
-            elif len(new_fn) == 1:
-                names_d[list(new_fn)[0]] = rlay.name()
-            else:
-                raise Error('bad fn match')
-                 
-                
-            log.debug('sampled %i values on raster \'%s\''%(
-                finv.dataProvider().featureCount(), rlay.name()))
-            
-        self.names_d = names_d #needed by write()
+            log.info('finished %i w/ %s'%(indxr, [f.name() for f in finv.fields()]))
+ 
+        #=======================================================================
+        # check
+        #=======================================================================
+        
         
         log.debug('finished w/ \n%s'%self.names_d)
         
         return finv
     """
+    [f.name() for f in finv.fields()]
     view(finv)
     """
     
+    def samp_vals_cplx(self, #sample a set of rasters with a complex vectorlayer (global stat)
+                  finv, 
+                  raster_l,
+                  psmp_stat='Max', #global statistic to use for samplingn algo
+                  selected=False, #perform sample on selected features only
+                  logger=None,
+                  ):
+        """
+        sampling raster values (not inundation)_
+        
+        COLUMN NAMES: the script has some approximat prefixing.
+            but all the fields are re-named in the end
+        
+        2021-10-18: split out points
+        """
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('samp_vals_cplx')
+        gtype=self.gtype
+        #=======================================================================
+        # check parameter logic
+        #=======================================================================
+        assert psmp_stat in self.psmp_codes, 'unrecognized psmp_stat'
+ 
+        #=======================================================================
+        # sample loop
+        #=======================================================================
+        #self.names_d = dict()
+        
+        log.info('sampling %i raster layers w/ gtype: %s'%(len(raster_l), gtype))
+        first= True
+        for indxr, rlay in enumerate(raster_l):
+            #setup
+            log.info('%i/%i sampling \'%s\' on \'%s\''%(
+                indxr+1, len(raster_l), finv.name(), rlay.name()))
+            
+            ofnl =  [field.name() for field in finv.fields()]
+            self.mstore.addMapLayer(finv)
+
+            #add the sample values as a new field
+            finv = self.get_raster_sample(finv, rlay, psmp_stat, indxr=indxr, 
+                                          selected=(first and selected), #only need to clip the first time
+                                          log=log)
+            
+            #report and handle names
+            finv = self._smp_loop_wrap(finv, ofnl, rlay, indxr, log)
+            #wrap
+            first=False
+            
+ 
+        log.debug('finished w/ \n%s'%self.names_d)
+        
+        return finv
+    
+
+    def samp_passet(self, #sample complex asset values using per-asset stats
+                    finv_raw,
+                    raster_l,
+                    psmp_fieldName='sample_stat', #field name containing sampling statistic
+                    ): 
+        """
+        basically a wrapper around samp_vals_cplx()
+            iterating with selections by sample_stat
+        """
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        log = self.logger.getChild('samp_passet')
+        gtype=self.gtype
+         
+        #=======================================================================
+        # checks----
+        #=======================================================================
+        assert ('Polygon' in gtype) or ('Line' in gtype)
+ 
+        #=======================================================================
+        # #data checks on sampling field name
+        #=======================================================================
+        assert psmp_fieldName in [f.name() for f in finv_raw.fields()], \
+            'missing psmp_fieldName \'%s\' on finv_raw'%psmp_fieldName
+            
+            
+        pser = vlay_get_fdata(finv_raw, fieldn=psmp_fieldName, logger=log, fmt='ser')
+        assert not pser.isna().any(), 'got %i nulls in sampling field \'%s\''%(
+            pser.isna().sum(), psmp_fieldName)
+        
+        smp_stats_l = list(pser.unique()) #set of statistics we'll sample on
+        
+        miss_l = set(smp_stats_l).difference(self.psmp_codes.keys())
+        assert len(miss_l)==0, 'got %i unrecognized sampling statistc keys on \'%s\': \n    %s'%(
+            len(miss_l), psmp_fieldName, miss_l)
+        
+        #=======================================================================
+        # helpers
+        #=======================================================================
+        def get_meta(vlay, #build meta entry
+                ):
+            return {'sfcnt':vlay.selectedFeatureCount(),
+                    'fcnt':vlay.dataProvider().featureCount(),
+                    'name':vlay.name(),
+                    'fn_l':[f.name() for f in vlay.fields()]}
+        
+        #=======================================================================
+        # sample loop-----
+        #=======================================================================
+        self.names_d = dict()
+        
+        log.info('sampling %i raster layers w/ \'%s\' and %i stats: %s'%(
+            len(raster_l), gtype, len(smp_stats_l), smp_stats_l))
+        
+        meta_d = {'raw':get_meta(finv_raw)}
+        
+        #===================================================================
+        # #loop through each statistic
+        #===================================================================
+        """
+        looping through each stat first (rather than rlay) 
+        so we can collect features rather than attributes
+        and re-use the other function
+        """
+            
+        lays_d = dict() #container for results per psmp
+        for psmp_stat in smp_stats_l:
+
+            log = self.logger.getChild('samp_passet.%s'%psmp_stat)
+            finv_raw.removeSelection()
+            
+            
+            #===================================================================
+            # #select those matching this stat
+            #===================================================================
+            processing.run('qgis:selectbyattribute',
+                {'FIELD' : psmp_fieldName, 'INPUT' : finv_raw, 
+                 'METHOD' : 0, #select new
+                  'OPERATOR' : 0, #equals
+                  'VALUE' : psmp_stat},feedback=self.feedback)
+            
+            assert finv_raw.selectedFeatureCount() >0, 'failed to get any \'%s\''%psmp_stat
+            
+            log.debug('with \'%s\' got %i/%i'%(
+                psmp_stat, finv_raw.selectedFeatureCount(), finv_raw.dataProvider().featureCount()))
+            #===================================================================
+            # #sample these
+            #===================================================================
+            finv_stat = self.samp_vals_cplx(finv_raw, raster_l, psmp_stat=psmp_stat,
+                                selected=True, logger=log)
+            
+            assert finv_raw.selectedFeatureCount() == finv_stat.dataProvider().featureCount()
+            finv_stat.setName('finv_%s_%i'%(psmp_stat, finv_stat.dataProvider().featureCount()))
+            
+            
+ 
+            #===================================================================
+            # wrap
+            #===================================================================
+            lays_d[psmp_stat] = finv_stat
+            meta_d[psmp_stat] = get_meta(finv_stat)
+            log.debug(meta_d[psmp_stat])
+            
+ 
+            
+        #=======================================================================
+        # merge each section
+        #=======================================================================
+        log = self.logger.getChild('samp_passet')
+        log.debug('merging %i:    %s'%(len(lays_d), list(lays_d.keys())))
+        finv_res = processing.run('native:mergevectorlayers',
+                    { 'CRS' : self.qproj.crs(), 
+                     'LAYERS' :list(lays_d.values()),
+                     'OUTPUT' : 'TEMPORARY_OUTPUT'},feedback=self.feedback)['OUTPUT']
+                     
+        #drop the meta fields
+        finv_res = processing.run('qgis:deletecolumn',
+                    { 'COLUMN' : ['layer', 'path', psmp_fieldName],
+                     'INPUT' : finv_res,'OUTPUT' : 'TEMPORARY_OUTPUT' },
+                    feedback=self.feedback)['OUTPUT']
+        
+                     
+        assert finv_res.dataProvider().featureCount()==finv_raw.dataProvider().featureCount()
+        
+        #check field alignment
+        miss_l = set([f.name() for f in finv_res.fields()]).symmetric_difference(
+            [f.name() for f in finv_stat.fields()])
+        
+        """only the psmp_fieldName should be missing"""
+        assert len(miss_l)==1,'fieldName mismatch on merge \n    %s'%miss_l
+        
+        
+
+        #=======================================================================
+        # warp
+        #=======================================================================
+        
+        meta_d['result'] = get_meta(finv_res)
+        log.info('finished on %i'%len(meta_d))
+        self.names_d
+        
+        return finv_res
+    
+        """
+        view(pd.DataFrame.from_dict(meta_d, orient='index'))
+        view(finv_res)
+        """
+        
+     
+ 
     def samp_inun(self, #inundation percent for polygons
                   finv, raster_l, dtm_rlay, dthresh,
                    ):
@@ -798,11 +951,7 @@ class Rsamp(Plotr, Qcoms):
             res_d = processing.run(algo_nm, ins_d, feedback=self.feedback)
             
             finvw = res_d['OUTPUT']
-            """
-            view(finvw)
-            view(finv)
-            """
-
+ 
             #===================================================================
             # check/correct field names
             #===================================================================
@@ -1091,6 +1240,56 @@ class Rsamp(Plotr, Qcoms):
 
         return finv
     
+    def get_raster_sample(self, #vlay sampler helper for complex geometries
+                          vlay_raw,
+                          rlay,
+                          psmp_stat,
+                          indxr=0,
+                          selected=False,
+                          log=None
+                          ):
+        
+        #=======================================================================
+        # setup
+        #=======================================================================
+        gtype = QgsWkbTypes().displayString(vlay_raw.wkbType())
+        
+        #selection handling
+        if selected:
+            input_obj = self._get_sel_obj(vlay_raw)
+        else:
+            input_obj = vlay_raw
+        
+        
+        #===================================================================
+        # sample.poly----------
+        #===================================================================
+        if 'Polygon' in gtype: 
+
+            finv = processing.run('native:zonalstatisticsfb',
+                {       'COLUMN_PREFIX':indxr, 
+                            'INPUT_RASTER':rlay, 
+                            'INPUT':input_obj, 
+                            'RASTER_BAND':1, 
+                            'STATISTICS':[self.psmp_codes[psmp_stat]],#0: pixel counts, 1: sum
+                            'OUTPUT' : 'TEMPORARY_OUTPUT',
+                            },
+                 feedback=self.feedback)['OUTPUT']
+
+    
+        #=======================================================================
+        # sample.Line--------------
+        #=======================================================================
+        elif 'Line' in gtype: 
+            finv = self.line_sample_stats(input_obj, rlay,[psmp_stat], indxr=indxr,logger=log)
+            
+        else:
+            raise Error('unexpected geo type: %s'%gtype)
+        
+        return finv
+
+    
+    
     def _get_depr(self, #get a depth raster, but first check if its already been made
                   dtm_rlay, log, temp_dir, rlay):
         
@@ -1114,12 +1313,60 @@ class Rsamp(Plotr, Qcoms):
             
         return dep_rlay
     
+    def _smp_loop_wrap(self, #common wraps for sampling loops
+                       finv_raw, 
+                       ofnl,
+                       rlay,
+                       indxr,
+                       log,
+                       ):
+        
+        #===================================================================
+        # sample.wrap
+        #===================================================================
+        assert isinstance(finv_raw, QgsVectorLayer)
+        assert len(finv_raw.fields()) == self.finv_fcnt + indxr +1, \
+            'bad field length on %i'%indxr
+            
+        finv_raw.setName('%s_%i'%(self.finv_name, indxr))
+        self.mstore.addMapLayer(finv_raw)
+        #===================================================================
+        # rename the field added by the algos to the rasterlayer's name
+        #===================================================================
+        assert not rlay.name() in [f.name() for f in finv_raw.fields()]
+        
+ 
+        #get/updarte the field names
+        nfnl =  [field.name() for field in finv_raw.fields()]
+        new_fn_l = set(nfnl).difference(ofnl) #new field names not in the old
+        
+        assert len(new_fn_l)==1
+        new_fn = list(new_fn_l)[0]
+        
+        #set the new name
+        finv = processing.run('native:renametablefield', 
+                       { 'FIELD' : new_fn, 'NEW_NAME' : rlay.name(),
+                  'INPUT' : finv_raw, 'OUTPUT' : 'TEMPORARY_OUTPUT'},
+                       )['OUTPUT']
+ 
+        
+        assert rlay.name() in [f.name() for f in finv.fields()]
+        
+        #report
+        log.debug('sampled %i values on raster \'%s\''%(
+            finv.dataProvider().featureCount(), rlay.name()))
+        
+        return finv
+    
     def raster_subtract(self, #performs raster calculator rlayBig - rlaySmall
                         rlayBig, rlaySmall,
                         out_dir = None,
                         layname = None,
                         logger = None,
                         ):
+        """
+        TODO: migrate to some common function
+        """
         
         #=======================================================================
         # defaults
@@ -1178,9 +1425,13 @@ class Rsamp(Plotr, Qcoms):
         #=======================================================================
         # execute
         #=======================================================================
-        """throwing depreciation warning"""
-        rcalc = QgsRasterCalculator(formula, outputFile, outputFormat, outputExtent,
-                            nOutputColumns, nOutputRows, rasterEntries)
+
+        rcalc = QgsRasterCalculator(formula, outputFile, 
+                                    outputFormat, 
+                                    outputExtent,
+                                    self.qproj.crs(),
+                            nOutputColumns, nOutputRows, rasterEntries,
+                            QgsCoordinateTransformContext())
         
         result = rcalc.processCalculation(feedback=self.feedback)
         
@@ -1275,7 +1526,9 @@ class Rsamp(Plotr, Qcoms):
         #=======================================================================
         """throwing depreciation warning"""
         rcalc = QgsRasterCalculator(formula, outputFile, outputFormat, outputExtent,
-                            nOutputColumns, nOutputRows, rasterEntries)
+                                    self.qproj.crs(),
+                            nOutputColumns, nOutputRows, rasterEntries,
+                             QgsCoordinateTransformContext())
         
         result = rcalc.processCalculation(feedback=self.feedback)
         
@@ -1301,9 +1554,11 @@ class Rsamp(Plotr, Qcoms):
 
         
     def line_sample_stats(self, #get raster stats using a line
-                    line_vlay, #line vectorylayer with geometry to sample from
+                    input_obj, #line vectorylayer with geometry to sample from
                     rlay, #raster to sample
                     sample_stats, #list of stats to sample
+                    indxr=0, #used as a prefix for new string
+ 
                     logger=None,
                     ):
         """
@@ -1316,16 +1571,19 @@ class Rsamp(Plotr, Qcoms):
         """
         if logger is None: logger=self.logger
         log=logger.getChild('line_sample_stats')
-        log.debug('on %s'%(line_vlay.name()))
+        log.debug('on %s'%(input_obj))
         
         #drop everythin gto lower case
         sample_stats = [e.lower() for e in sample_stats]
         #===============================================================
         # #convert to points
         #===============================================================
+
+            
+            
         params_d = { 'DISTANCE' : rlay.rasterUnitsPerPixelX(), 
                     'END_OFFSET' : 0, 
-                    'INPUT' : line_vlay, 
+                    'INPUT' : input_obj, 
                     'OUTPUT' : 'TEMPORARY_OUTPUT', 
                     'START_OFFSET' : 0 }
         
@@ -1349,7 +1607,8 @@ class Rsamp(Plotr, Qcoms):
         view(fpts_vlay)
         """
         #get new field name
-        new_fn = set([field.name() for field in fpts_vlay.fields()]).difference(ofnl2) #new field names not in the old
+        new_fn = set([field.name() for field in fpts_vlay.fields()]
+                     ).difference(ofnl2) #new field names not in the old
         
         assert len(new_fn)==1
         new_fn = list(new_fn)[0]
@@ -1378,14 +1637,18 @@ class Rsamp(Plotr, Qcoms):
                      'FIELD' : self.cid, 
                      'FIELDS_TO_COPY' : sample_stats,
                      'FIELD_2' : self.cid,
-                      'INPUT' : line_vlay,
+                      'INPUT' : input_obj,
                       'INPUT_2' : stat_tbl,
                      'METHOD' : 1, #Take attributes of the first matching feature only (one-to-one)
                       'OUTPUT' : 'TEMPORARY_OUTPUT',
-                       'PREFIX' : line_vlay }
+                       'PREFIX' : '%i_'%indxr, #prefix string for new field
+                        }
         
         res_d = processing.run('native:joinattributestable', params_d, feedback=self.feedback)
         line_vlay = res_d['OUTPUT']
+        """
+        view(line_vlay)
+        """
         
         log.debug('finished on %s w/ %i'%(line_vlay.name(), len(line_vlay)))
         

@@ -198,7 +198,7 @@ class Preparor(Model, Qcoms):
             
         #force type on index
         try:
-            df.loc[:, cid] = df[cid].astype(np.int32)
+            df.loc[:, cid] = df[cid].astype(int)
         except Exception as e:
             raise Error('failed to typeset cid index  \'%s\' w/ int32 \n%s'%(cid, e))
         df = df.set_index(cid, drop=True)
@@ -260,15 +260,7 @@ class Preparor(Model, Qcoms):
     def upd_cf_finv(self, out_fp):
         
         assert os.path.exists(self.cf_fp), 'bad cf_fp: %s'%self.cf_fp
-        
-        #=======================================================================
-        # """
-        # writing the filepath to the vector layer wont work...
-        #     often we're working with memory layers
-        #     the transition from spatial to non-spatial and back to spatial losses these connections
-        # """
-        # 
-        #=======================================================================
+ 
         self.set_cf_pars(
             {
             'dmg_fps':(

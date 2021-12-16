@@ -41,7 +41,7 @@ from hlpr.exceptions import QError as Error
 
 #from hlpr.basic import ComWrkr
 #import hlpr.basic
-from model.modcom import DFunc
+from model.modcom import DFunc, view
 from hlpr.plot import Plotr
 
 
@@ -72,25 +72,41 @@ class CurvePlotr(DFunc, Plotr):
  
  
         
-        super().__init__(**kwargs) #initilzie teh baseclass
+        super().__init__(name=name, **kwargs) #initilzie teh baseclass
         
         #=======================================================================
         # attachments
         #=======================================================================
         
-        self.name = name
+
         
         #self.figsize, self.subplot, self.fmt, self.dpi, self.transparent = figsize, subplot, fmt, dpi, transparent
         self._init_plt()
         self.logger.info('init finished')
         
-    def load_data(self, fp):
+    def load_data(self, fp, 
+                    index=None, header=None
+                    ): #load a curve set
+        
         log = self.logger.getChild('load_data')
         #precheck
         assert os.path.exists(fp)
-        data_d = pd.read_excel(fp, sheet_name=None, index=None, header=None)
+        data_d = pd.read_excel(fp, sheet_name=None,index_col=index, header=header )
         
-        log.info('loaded %i tabs'%len(data_d))
+        #=======================================================================
+        # summary tab
+        #=======================================================================
+        if '_smry' in data_d:
+            log.info('found smry tab... co nfiguring')
+            hndl_df =pd.read_excel(fp, 
+                                   sheet_name='_smry',index_col=0, header=0 
+                                   ).dropna(axis=1, how='all')
+            
+            data_d['_smry'] = hndl_df
+ 
+        
+        log.info('loaded %i tabs from \n    %s\n    %s'%(
+            len(data_d), fp, list(data_d.keys())))
         
         return data_d
     
@@ -152,17 +168,17 @@ class CurvePlotr(DFunc, Plotr):
     
     
     def plotGroup(self, #plot a group of figures w/ handles
-                  cLib_d,
-                  pgCn='plot_group',
-                  pfCn='plot_f',
+                  cLib_d, #container of data to plot {cName: crv_d}
+                  pgCn='plot_group', #group plots
+                  pfCn='plot_f', #plot flag
                   
                   title=None,
-                  
+                  grid=None,
                 
                   lib_as_df = False, #indicator for format of passed lib
                   logger=None,
                   
-                  **lineKwargs
+                  **lineKwargs #kwargs for self.line
                   ):
         
         
@@ -173,7 +189,7 @@ class CurvePlotr(DFunc, Plotr):
         log = logger.getChild('plotGroup')
         
         if title is None: title='%s vFunc plot'%(self.tag)
-        
+        if grid is None: grid=self.grid
 
         
         #results container
@@ -183,20 +199,7 @@ class CurvePlotr(DFunc, Plotr):
         #=======================================================================
         if '_smry' in cLib_d:
             hndl_df =cLib_d.pop('_smry')
-            
-            #re-tag the columns
-
-            colns = hndl_df.iloc[0,:].values
-            if pd.isnull(colns[0]):
-
-                colns[0] = 'cName'
-                hndl_df.columns = colns
-                
-                #drop the old columns
-                hndl_df = hndl_df.set_index('cName', drop=False).iloc[1:,:]
-
-            
-   
+ 
             
             #see if the expected columns are there
             boolcol = hndl_df.columns.isin([pgCn, pfCn])
@@ -221,11 +224,13 @@ class CurvePlotr(DFunc, Plotr):
                 if isinstance(data, pd.DataFrame):
                     cLib_d[cName] = data.set_index(0, drop=True).iloc[:,0].to_dict()
 
-
+        
         #=======================================================================
-        # precheck
+        # check
         #=======================================================================
-
+        for cName, crv_d in cLib_d.items():
+            assert self.check_crvd(crv_d), '%s failed'%cName
+ 
         #=======================================================================
         # PLOT no handles-----------
         #=======================================================================
@@ -234,6 +239,7 @@ class CurvePlotr(DFunc, Plotr):
             
             indxr=0
             for cName, crv_d in cLib_d.items():
+                assert 'tag' in crv_d, 'failed to get \'tag\' field on \'%s\''%cName
                 ax = self.plotCurve(crv_d, title=crv_d['tag'], **lineKwargs)
                 
                 res_d[cName] =ax.figure
@@ -290,14 +296,15 @@ class CurvePlotr(DFunc, Plotr):
                 for cName, row in pdf.iterrows():
                     #get this curve
                     crv_d = cLib_d[cName]
-                    
+                    log.debug('plotting %s'%cName)
                     ax = self.plotCurve(crv_d, ax=ax,marker=next(marker),**lineKwargs)
                     
                 #post format
                 fig = ax.figure
-                fig.suptitle(pgroup + title)
+                fig.suptitle(pgroup + ' ' + title)
                 ax.legend()
-                ax.grid()
+                if grid:
+                    ax.grid()
                 #===============================================================
                 # group loop
                 #===============================================================
@@ -305,16 +312,14 @@ class CurvePlotr(DFunc, Plotr):
                     log.warning('to omany curves.. breaking')
                     break
                 
-                indxr +=1
+                
                 
                 #add results
-
-
-
                 res_d[pgroup] = fig
-                """
-                plt.show()
-                """
+                
+                #wrap
+                indxr +=1
+
 
                 
         #=======================================================================
@@ -332,17 +337,20 @@ class CurvePlotr(DFunc, Plotr):
 
                   logger=None,
                   **lineKwargs):
+        """
+        TODO: allow plotting with curve_deviation
+        """
         #=======================================================================
         # defaults
         #=======================================================================
         if logger is None: logger=self.logger
-        assert 'tag' in crv_d
+        assert 'tag' in crv_d, 'missing tag in \n    %s'%crv_d
         log = logger.getChild('plot%s'%crv_d['tag'])
         
         #=======================================================================
         # precheck
         #=======================================================================
-        self.check_crvd(crv_d, logger=log)
+        assert self.check_crvd(crv_d, logger=log)
         
         #=======================================================================
         # extract data
@@ -350,7 +358,7 @@ class CurvePlotr(DFunc, Plotr):
         dd_f = False
         dd_d = dict()
         for k, v in crv_d.items():
-            #set the flag
+            #set the flag that we've reached the depth-damage values
             if k == 'exposure':
                 dd_f = True
                 continue
@@ -373,11 +381,12 @@ class CurvePlotr(DFunc, Plotr):
             if not k in cd1:
                 cd1[k] = None
         
+        #labels
         pars_d['ylab'] = '%s (%s)'%(cd1['exposure_var'], cd1['exposure_units'])
-        pars_d['xlab'] = '%s (%s)'%(cd1['impact_var'], cd1['impact_units'])
+        pars_d['xlab'] = '%s (%s/%s)'%(cd1['impact_var'], cd1['impact_units'], cd1['scale_units'])
         #pars_d['color'] = cd1['color']
                           
-        
+        #return the axis
         return self.line(dser.values, dser.index.values,
                          
                          ylab=pars_d['ylab'],
@@ -386,9 +395,13 @@ class CurvePlotr(DFunc, Plotr):
                          label=crv_d['tag'],
                           **lineKwargs)
         
-    def line(self,
+    def line(self, #add a vfunc to the axis
                 #values to plot
                 xvals, yvals,
+                
+                #figure controls
+                constrained_layout=None,
+                tight_layout=None,
                 
                 #plot controls
                 ax = None,
@@ -400,6 +413,10 @@ class CurvePlotr(DFunc, Plotr):
 
                 **kwargs, #splill over kwargs
                 ):
+        """
+        for plotting risk curves
+            see: RiskModel._lineToAx
+        """
         
         #=======================================================================
         # defaults
@@ -407,6 +424,10 @@ class CurvePlotr(DFunc, Plotr):
         plt= self.plt
         figsize=self.figsize
         subplot=self.subplot
+        
+        if constrained_layout is None:
+            constrained_layout=self.constrained_layout
+        if tight_layout is None: tight_layout=self.tight_layout
         
         """
         plt.show()
@@ -416,10 +437,8 @@ class CurvePlotr(DFunc, Plotr):
         #=======================================================================
         if ax is None:
 
-            fig = plt.figure(figsize=figsize,
-                     tight_layout=False,
-                     constrained_layout = False,
-                     )
+            fig = plt.figure(figsize=figsize,tight_layout=tight_layout,
+                     constrained_layout = constrained_layout)
 
             ax = fig.add_subplot(subplot)  
             
@@ -430,7 +449,7 @@ class CurvePlotr(DFunc, Plotr):
             if isinstance(title, str):
                 ftitle=title
             else:
-                ftitle='figure'
+                ftitle='figure' #needed for filepath?
                 
             fig.suptitle(ftitle)
             
@@ -448,10 +467,7 @@ class CurvePlotr(DFunc, Plotr):
         if isinstance(title, str):
             _ = ax.set_title(title)
         
-        """
-        plt.show()
-        """
-                
+    
         #==========================================================================
         # plot it
         #==========================================================================
@@ -463,11 +479,7 @@ class CurvePlotr(DFunc, Plotr):
                 #fillstyle='full',
 
                 **kwargs)
-        
-        """
-        plt.show()
-        """
-        
+ 
     
         return ax
                 
