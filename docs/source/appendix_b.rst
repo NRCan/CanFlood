@@ -1,7 +1,6 @@
 .. _appendix_b:
 
-===============================
-Appendix B: SOFDA User Manual
-===============================
+===========
+Appendix B:
+===========
 
-https://github.com/IBIGroupCanWest/CanFlood/tree/master/manual/sofda/
