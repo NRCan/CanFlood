@@ -149,7 +149,7 @@ Open the attributes table for the ‘djoin’ layer (F6). You should something s
 
 .. image:: /_static/tutorials_6_1_4_img_4.jpg
 
-Notice the six impact fields (boxed in red above) have had their names converted to ‘ari_probability’ and the field values provide the binary exposure (0=not exposed; 1=exposed) results. You’ll need to save this layer for it to be available in another QGIS session (Layers Pane > Right Click the layer > Save As…). Congratulations on your first CanFlood run!
+Notice the six impact fields (boxed in red above) have had their names converted to ‘ari_probability’ and the field values provide the binary exposure (0=not exposed; 1=exposed) results. You’ll need to save this layer if you want it to be available in another QGIS session (Layers Pane > Right Click the layer > Save As…). Congratulations on your first CanFlood run!
 
 .. |visualimage2| image:: /_static/visual_image.jpg
    :align: middle
