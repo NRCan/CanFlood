@@ -16,7 +16,7 @@ Happy flood risk modelling!
 Check out the new [documentation](https://canflood.readthedocs.io/en/latest/#)!
 
 ## Phase 3 Development
-v1.1.0 is released with three major new features:
+[v1.1.0](https://github.com/NRCan/CanFlood/releases/tag/v1.1.0) is released with three major new features:
 1) Very nice sphinx/readTheDocs [documentation](https://canflood.readthedocs.io/en/latest/#) thanks in large part to Dhanyatha. This is much easier to browse than the previous pdfs and facilitates preservation of previous, current, and development (and eventually French) versions of the manual.
 2) [new module](https://canflood.readthedocs.io/en/latest/toolsets.html#sensitivity-analysis) providing workflow and tools for performing sensitivity analysis on a L1 or L2 CanFlood models. This can be helpful in understanding and communicating the uncertainty in your model, as well as help identify which parameters should be prioritized during data collection.
 3) [per-asset Sampling for Complex Geometries](https://canflood.readthedocs.io/en/latest/toolsets.html#hazard-sampler) providing more flexibility in how hazard variables are sampled from complex geometires. 
