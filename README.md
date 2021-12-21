@@ -4,7 +4,7 @@ Open source flood risk modelling toolbox for Canada!
 ![alt text](https://github.com/NRCan/CanFlood/blob/master/img/logo_20210419_500.png)
 
 
-Updated and tested against QGIS 3.16.14
+Updated and tested against QGIS 3.16.14 (Qt 5.15.2)
 
 We welcome/encourage any comments, bugs, or issues you have or find. Please create a GitHub 'issue' ticket (on the issue tab) to let us know about these things.
 
