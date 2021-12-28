@@ -154,8 +154,9 @@ class Dmg2(Model, DFunc, Plotr):
         return 
          
     def setup_dfuncs(self, # build curve workers from loaded xlsx data
-                 df_d, #{tab name: raw curve data
+                 df_d, #{tab name: raw curve df}
                  curve_deviation = None, #specify which curve deviation to build
+                 ftags_valid=None,
                  ):
  
         #=======================================================================
@@ -168,8 +169,11 @@ class Dmg2(Model, DFunc, Plotr):
         #=======================================================================
         # get list of dfuncs in the finv
         #=======================================================================
-        assert self.bdf['ftag'].dtype.char == 'O'
-        ftags_valid = self.bdf['ftag'].unique().tolist()
+        if ftags_valid is None:
+            assert self.bdf['ftag'].dtype.char == 'O'
+            ftags_valid = self.bdf['ftag'].unique().tolist()
+            
+        assert isinstance(ftags_valid, list)
         
         if np.nan in ftags_valid:
             raise Error('got some nulls')

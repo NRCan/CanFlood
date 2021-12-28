@@ -2474,7 +2474,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
     #==========================================================================
 
     
-    dd_df = pd.DataFrame() #depth-damage data
+    #dd_df = pd.DataFrame() #depth-damage data
     
     """lets just do columns by location
     exp_coln = []"""
@@ -2657,7 +2657,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         
         #impact (y) vals
         if not np.all(np.diff(ar[1])>=0):
-            msg = 'impact values are decreasing'
+            msg = '\'%s\' impact values are decreasing'%self.tabn
             if self.monot:
                 raise Error(msg)
             else:
@@ -2871,6 +2871,10 @@ class DFunc(ComWrkr, #damage function or DFunc handler
             return ddf, mdf
         elif fmt=='dict':
             return ddf.iloc[:,0].to_dict(), mdf.iloc[:,0].to_dict()
+        
+        
+    def _get_ddf(self): #return a formatted dataframe fo the dd_ar
+        return pd.DataFrame(self.dd_ar.T, columns=['exposure', 'impact'])
         
         
         
