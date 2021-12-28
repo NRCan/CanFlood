@@ -62,15 +62,14 @@ class VfConv(CurvePlotr):
         if out_dir is None: out_dir=self.out_dir
         if not os.path.exists(out_dir):os.makedirs(out_dir)
         if ofn is None:
-            ofn = '%s_%s.xls'%(self.libName, today_str)
+            ofn = 'cLib_%s_%s.xls'%(self.tag, today_str)
         
         ofn = get_valid_filename(ofn)
         assert os.path.splitext(ofn)[1]=='.xls', ofn
         #=======================================================================
         # precheck
         #=======================================================================
-        for k, v in d.items():
-            assert isinstance(v, pd.DataFrame), 'bad type on %s: %s'%(k, type(v))
+
         
         #=======================================================================
         # patsh
@@ -80,8 +79,8 @@ class VfConv(CurvePlotr):
         if os.path.exists(ofp): assert self.overwrite
         
         #write to multiple tabs
-        with pd.ExcelWriter(ofp, engine='xlsxwriter') as writer:
-            for tabnm, df in d.items():
+        with pd.ExcelWriter(ofp) as writer:
+            for tabnm, data in d.items():
                 #write handles
                 if tabnm=='_smry':
                     index, header = True, True
@@ -91,6 +90,14 @@ class VfConv(CurvePlotr):
                 #tab check
                 if len(tabnm)>30:
                     tabnm = tabnm.replace(' ','')
+                    
+                #data format
+                if isinstance(data, dict):
+                    df = pd.Series(data).to_frame()
+                elif isinstance(data,  pd.DataFrame):
+                    df = data
+                else:
+                    raise Error('bad')
                     
                 df.to_excel(writer, sheet_name=tabnm, index=index, header=header)
             

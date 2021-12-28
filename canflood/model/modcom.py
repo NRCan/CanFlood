@@ -2533,7 +2533,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         
     
     def build(self,
-              df_raw, #raw parameters to build the DFunc w/ 
+              df_raw, #raw parameters to build the DFunc w/ . dummy index
               logger,
               curve_deviation=None,
               ):
@@ -2545,6 +2545,8 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         log = logger.getChild('%s'%self.tabn)
         if curve_deviation is None: curve_deviation=self.curve_deviation
         log.debug('on %s from %s'%(str(df_raw.shape), self.curves_fp))
+        
+        self.df_raw = df_raw.copy() #useful for retrieving later
         #=======================================================================
         # precheck
         #=======================================================================
@@ -2715,8 +2717,16 @@ class DFunc(ComWrkr, #damage function or DFunc handler
     def get_stats(self): #get basic stats from the dfunc
         deps = self.dd_ar[0]
         dmgs = self.dd_ar[1]
+        
+        
+        np.all(np.diff(deps)>=0)
+        
+ 
         return {**{'min_dep':min(deps), 'max_dep':max(deps), 
-                'min_dmg':min(dmgs), 'max_dmg':max(dmgs), 'dcnt':len(deps)},
+                'min_dmg':min(dmgs), 'max_dmg':max(dmgs), 'dcnt':len(deps),
+                'dep_mono':np.all(np.diff(deps)>=0), 'dmg_mono':np.all(np.diff(dmgs)>=0)
+                },
+                   
                 **self.pars_d}
         
         
@@ -2773,17 +2783,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         #=======================================================================
         try:
             df_raw = pd.DataFrame(clib_d).T
-            
-
-            
-            """
-            for k,v in clib_d.items():
-                print(k)
-                for k1,v1 in v.items():
-                    print('    %s:%s'%(k1,v1))
-            clib_d.keys()
-            
-            """
+ 
         except Exception as e:
             raise Error('faild to convert to frame w/ \n    %s'%e)
         
@@ -2851,7 +2851,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         """
         return sdf
     
-    def _get_split(self,#split the raw df into depth-damage and metadata
+    def _get_split(self,#split the raw df into function and metadata
                    df_raw, #dummy index
                    fmt='dict', #result format
                    ): 
