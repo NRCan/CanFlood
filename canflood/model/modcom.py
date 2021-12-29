@@ -2558,10 +2558,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         
 
         #slice and clean
- 
-        
-        df = df_raw.set_index(0, drop=True).dropna(how='all', axis=1)
-            
+        df = df_raw.set_index(0, drop=True).dropna(how='all', axis=1)            
         
         #======================================================================
         # identify depth-damage data
@@ -2731,6 +2728,9 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         
         
         
+        
+        
+        
     def _get_smry(self, #get a summary tab on a library
                   clib_d, #{curveName: {k:v}}
                   
@@ -2852,10 +2852,10 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         return sdf
     
     def _get_split(self,#split the raw df into function and metadata
-                   df_raw, #dummy index
+                   df_raw=None, #dummy index
                    fmt='dict', #result format
                    ): 
-        
+        if df_raw is None: df_raw=self.df_raw.copy()
         df = df_raw.set_index(0, drop=True)
         
         #get dd
@@ -2875,6 +2875,55 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         
     def _get_ddf(self): #return a formatted dataframe fo the dd_ar
         return pd.DataFrame(self.dd_ar.T, columns=['exposure', 'impact'])
+        
+        
+    def set_scale(self,
+                  scale,
+                  logger=None,
+                  **kwargs
+                  ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log=logger.getChild('set_scale')
+        
+        #get df_raw
+        #df_raw = self.df_raw.copy()
+        self.pars_d['scale'] = scale
+        #=======================================================================
+        # retrieve
+        #=======================================================================
+        ddf_raw, mdf_raw= self._get_split(fmt = 'df')
+        
+        #=======================================================================
+        # scale the function
+        #=======================================================================
+        ddf = ddf_raw*scale
+        
+        #=======================================================================
+        # add the meta
+        #=======================================================================
+        expo_ser = mdf_raw.loc['exposure', :]
+        
+        mdf = mdf_raw.drop('exposure')
+        mdf.loc['scale', 1] = scale
+        
+        #=======================================================================
+        # recombine
+        #=======================================================================
+        
+        df = mdf.append(expo_ser).append(ddf).reset_index()
+        
+        #=======================================================================
+        # rebuild
+        #=======================================================================
+        self.build(df, log, **kwargs)
+        
+        log.info('set scale = %.2f'%scale)
+        
+        
         
         
         
