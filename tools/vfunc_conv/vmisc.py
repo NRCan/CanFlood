@@ -38,7 +38,7 @@ class Session(VfConv, Dmg2, wFlow.scripts.Session):
  
 
 def add_smry( #add a summary page to a vfunc library
-        fp=r'C:\LS\02_WORK\IBI\202107_OBWB\04_CALC\curves\IBI2015\rfda_2017_dmg_20210205\RFDA2017_dmg_210205.xls',
+        fp=r'C:\LS\04_LIB\02_spatial\AEP\AlbertaCurves\CanFlood_curves_rfda_20200218.xls',
         ftags_valid=None, #optional tab names to include
         ):
     
