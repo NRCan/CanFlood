@@ -161,6 +161,7 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
         #=======================================================================
         # update crs
         #=======================================================================
+ 
         if not WorkFlow.crsid == self.crsid:
             log.debug('crsid mismatch... switching to crs of workflow')
             self.set_crs(WorkFlow.crsid, logger=log)
@@ -178,6 +179,10 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
         kstr = ''.join(['\n    %s: %s'%(k,v) for k,v in kwargs.items()]) #plot string
         log.debug('building w/ %s'%kstr)
         runr = WorkFlow(logger=self.logger, session=self,**kwargs)
+        
+        """
+        kwargs.keys()
+        """
 
         #===================================================================
         # execute the flow
@@ -216,182 +221,7 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
             
         log.info('finished on %i: \n    %s'%(len(rlib), list(rlib.keys())))
         return rlib
-            
-
-class WorkFlow(Session): #worker with methods to build a CF workflow from
-    """
-    #===========================================================================
-    # INSTRUCTIONS
-    #===========================================================================
-    sub-class this method for each CanFLood 'workflow' you wish to execute
-        set a 'pars_d' attribute with all the parameters and filepaths
-        and a 'name' attribute for the name of the flow
-        
-    add a 'run' method calling all the functions desired by the workflow
-        this can use the 'tools' and 'toolbox' methods found in this baseclass
-        
     
-    """
-    
-    #===========================================================================
-    # required attributes
-    #===========================================================================
-    name = None
-    pars_d = None #parameters for control file
-    tpars_d = dict() #parameters for passing to tools
-    
-    #===========================================================================
-    # flow control attributes
-    #===========================================================================
-    """should be passed onto children
-    overwrite with custom class to change"""
-    attriMode = False
-    
-    
-    def __init__(self,
-                 session=None,
-                 name=None,
-                 #init_q_d = {},
-                 **kwargs):
-        
-        #=======================================================================
-        # precheck
-        #=======================================================================
-        if name is None: name=self.name
-        assert isinstance(name, str), 'must overwrite the \'name\' attribute with a subclass'
-
-        #=======================================================================
-        # init cascade
-        #=======================================================================
-
-        super().__init__(name=name,
-                        out_dir=os.path.join(session.out_dir, name),
-                         tag = '%s'%datetime.datetime.now().strftime('%Y%m%d'),
-                         crsid=self.crsid, #overrwrite the default with your default
-                         **kwargs) #Session -> Qcoms -> ComWrkr
-
-        #=======================================================================
-        # attachments
-        #=======================================================================
-        self.session = session
-
-        self.cf_tmpl_fp = os.path.join(self.session.cf_dir, r'canflood\_pars\CanFlood_control_01.txt')
-        assert os.path.exists(self.cf_tmpl_fp), self.cf_tmpl_fp
-        
-        
-        self.com_hndls = list(session.com_hndls) +[
-            'out_dir', 'name', 'tag', 'cid']
-        
-        self.data_d = dict() #empty container for data
-        
-        self.wrkr_d = dict() #container for loaded workers
-        
-        #=======================================================================
-        # checks
-        #=======================================================================
-        assert isinstance(self.pars_d, dict)
-
-    #===========================================================================
-    # HANDLERS-----------
-    #===========================================================================
-    def _get_wrkr(self, Worker,#check if the worker is loaded and return a setup worker
-                  logger=None,
-
-                  **kwargs
-                  ): 
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        if logger is None: logger=self.logger
-        log = logger.getChild('get_wrkr')
-        cn =  Worker.__name__
-        
-        #=======================================================================
-        # pull previously loaded
-        #=======================================================================
-        if cn in self.wrkr_d:
-            log.debug('pulled \'%s\' from container'%cn)
-        #=======================================================================
-        # start your own
-        #=======================================================================
-        else:
-            
-            
-            #collect ComWrkr pars
-            """
-            prep_cf() appends 'cf_fp'
-            """
-            for k in self.com_hndls:
-                #'out_dir', 'name', 'tag', 'cid' ['absolute_fp', 'overwrite']
-                kwargs[k] = getattr(self, k)
-            
-            #colect init pars
-            if hasattr(Worker, '_init_plt'): #plotters
-                kwargs['init_plt_d'] = self.init_plt_d
-            
-            if hasattr(Worker, '_init_standalone'): #Qgis
-                kwargs['init_q_d'] = self.init_q_d 
-                
-            if hasattr(Worker, 'init_model'): #models
-                kwargs.update({k:getattr(self, k) for k in ['base_dir', 'attriMode', 'upd_cf']})
-                
-            if hasattr(Worker, 'sid'): #Dike workers
-                kwargs.update({k:getattr(self, k) for k in ['dikeID', 'segID', 'cbfn', 'ifidN']})
-                
-            kstr = ''.join(['\n    %s: %s'%(k,v) for k,v in kwargs.items()])
-
-                
-            log.debug('building %s w/%s'%(Worker.__name__, kstr))
-            self.wrkr_d[cn] = Worker(logger=logger, **kwargs)
-            
-            """
-            for k, v in kwargs.items():
-                print('%s: %s'%(k, v))
-            """
-
-        weakWrkr = weakref.proxy(self.wrkr_d[cn])
-        
-        assert weakWrkr.__class__.__name__ == cn
-        
-        return weakWrkr
-    
-    def _retrieve(self,  #intelligently pull (or load) a data set
-                       dtag, 
-                       f=None, #method to use to retrieve data if not found,
-                       logger=None):
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        if logger is None: logger=self.logger
-        log = logger.getChild('retr.%s'%dtag)
-        assert callable(f), 'bad retrieval function'
-        
-        if dtag in self.data_d:
-            data = self.data_d[dtag]
-            log.info('pulled \'%s\' %s from data_d'%(dtag, type(data)))
-        else:
-            data = f(logger=log) #execute the method
-            self.data_d[dtag] = data
-            
-            #add map layers
-            if isinstance(data, QgsMapLayer):
-                self.mstore.addMapLayer(data)
-            
-            if isinstance(data, dict):
-                for k,v in data.items():
-                    if isinstance(v, QgsMapLayer):
-                        self.mstore.addMapLayer(v)
-        
-        log.debug("got %s"%type(data))
-        return data
-    
-    def _get_kwargs(self, wName, d=None): #get run kwargs for specific tool
-        if d is None: d=self.tpars_d
-        if isinstance(d, dict):
-            if wName in d:
-                return d[wName]
-            
-        return dict()
     
     #===========================================================================
     # HELPERS-----
@@ -507,6 +337,190 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         
         return d
+            
+
+class WorkFlow(Session): #worker with methods to build a CF workflow from
+    """
+    #===========================================================================
+    # INSTRUCTIONS
+    #===========================================================================
+    sub-class this method for each CanFLood 'workflow' you wish to execute
+        set a 'pars_d' attribute with all the parameters and filepaths
+        and a 'name' attribute for the name of the flow
+        
+    add a 'run' method calling all the functions desired by the workflow
+        this can use the 'tools' and 'toolbox' methods found in this baseclass
+        
+    
+    """
+    
+    #===========================================================================
+    # required attributes
+    #===========================================================================
+    name = None
+    pars_d = None #parameters for control file
+    tpars_d = dict() #parameters for passing to tools
+    
+    #===========================================================================
+    # flow control attributes
+    #===========================================================================
+    """should be passed onto children
+    overwrite with custom class to change"""
+    attriMode = False
+    
+    
+    def __init__(self,
+                 session=None,
+                 name=None,
+                 out_dir=None,
+                 #init_q_d = {},
+                 **kwargs):
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        if name is None: name=self.name
+        assert isinstance(name, str), 'must overwrite the \'name\' attribute with a subclass'
+
+        #=======================================================================
+        # init cascade
+        #=======================================================================
+        if out_dir is None:
+            out_dir = os.path.join(session.out_dir, name)
+
+        super().__init__(name=name,
+                        out_dir=out_dir,
+                         tag = '%s'%datetime.datetime.now().strftime('%Y%m%d'),
+                         crsid=self.crsid, #overrwrite the default with your default
+                         **kwargs) #Session -> Qcoms -> ComWrkr
+
+        #=======================================================================
+        # attachments
+        #=======================================================================
+        self.session = session
+
+        self.cf_tmpl_fp = os.path.join(self.session.cf_dir, r'canflood\_pars\CanFlood_control_01.txt')
+        assert os.path.exists(self.cf_tmpl_fp), self.cf_tmpl_fp
+        
+        
+        self.com_hndls = list(session.com_hndls) +[
+            'out_dir', 'name', 'tag', 'cid']
+        
+        self.data_d = dict() #empty container for data
+        
+        self.wrkr_d = dict() #container for loaded workers
+        
+        #=======================================================================
+        # checks
+        #=======================================================================
+        assert isinstance(self.pars_d, dict)
+
+    #===========================================================================
+    # HANDLERS-----------
+    #===========================================================================
+    def _get_wrkr(self, Worker,#check if the worker is loaded and return a setup worker
+                  logger=None,
+
+                  **kwargs
+                  ): 
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('get_wrkr')
+        cn =  Worker.__name__
+        
+        """
+        self.base_dir
+        """
+        #=======================================================================
+        # pull previously loaded
+        #=======================================================================
+        if cn in self.wrkr_d:
+            log.debug('pulled \'%s\' from container'%cn)
+        #=======================================================================
+        # start your own
+        #=======================================================================
+        else:
+            
+            
+            #collect ComWrkr pars
+            """
+            prep_cf() appends 'cf_fp'
+            """
+            for k in self.com_hndls:
+                #'out_dir', 'name', 'tag', 'cid' ['absolute_fp', 'overwrite']
+                kwargs[k] = getattr(self, k)
+            
+            #colect init pars
+            if hasattr(Worker, '_init_plt'): #plotters
+                kwargs['init_plt_d'] = self.init_plt_d
+            
+            if hasattr(Worker, '_init_standalone'): #Qgis
+                kwargs['init_q_d'] = self.init_q_d 
+                
+            if hasattr(Worker, 'init_model'): #models
+                kwargs.update({k:getattr(self, k) for k in ['base_dir', 'attriMode', 'upd_cf']})
+                
+            if hasattr(Worker, 'sid'): #Dike workers
+                kwargs.update({k:getattr(self, k) for k in ['dikeID', 'segID', 'cbfn', 'ifidN']})
+                
+            kstr = ''.join(['\n    %s: %s'%(k,v) for k,v in kwargs.items()])
+
+                
+            log.debug('building %s w/%s'%(Worker.__name__, kstr))
+            self.wrkr_d[cn] = Worker(logger=logger, **kwargs)
+            
+            """
+            for k, v in kwargs.items():
+                print('%s: %s'%(k, v))
+            """
+
+        weakWrkr = weakref.proxy(self.wrkr_d[cn])
+        
+        assert weakWrkr.__class__.__name__ == cn
+        
+        return weakWrkr
+    
+    def _retrieve(self,  #intelligently pull (or load) a data set
+                       dtag, 
+                       f=None, #method to use to retrieve data if not found,
+                       logger=None):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('retr.%s'%dtag)
+        assert callable(f), 'bad retrieval function'
+        
+        if dtag in self.data_d:
+            data = self.data_d[dtag]
+            log.info('pulled \'%s\' %s from data_d'%(dtag, type(data)))
+        else:
+            data = f(logger=log) #execute the method
+            self.data_d[dtag] = data
+            
+            #add map layers
+            if isinstance(data, QgsMapLayer):
+                self.mstore.addMapLayer(data)
+            
+            if isinstance(data, dict):
+                for k,v in data.items():
+                    if isinstance(v, QgsMapLayer):
+                        self.mstore.addMapLayer(v)
+        
+        log.debug("got %s"%type(data))
+        return data
+    
+    def _get_kwargs(self, wName, d=None): #get run kwargs for specific tool
+        if d is None: d=self.tpars_d
+        if isinstance(d, dict):
+            if wName in d:
+                return d[wName]
+            
+        return dict()
+    
+
 
         
             
@@ -517,6 +531,8 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
                 logger=None):
         """
         this ones a bit weird because the main mechanism is a file write...
+        
+        
         """
         if logger is None: logger=self.logger
         log = logger.getChild('prep_cf')
@@ -537,7 +553,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #loop and pull
         new_pars_d =dict()
         for sect, keys in {
-            'parameters':['impact_units', 'rtail', 'event_rels', 'felv', 'prec', 'ltail'],
+            'parameters':['impact_units', 'rtail', 'event_rels', 'felv', 'prec', 'ltail', 'cid'],
             'dmg_fps':['curves'],
             'plotting':['impactfmt_str', 'color'],
             #'risk_fps':['evals'],
@@ -546,9 +562,13 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
             
             if sect == 'parameters':
                 d['name']=self.name
+                
+                """not sure how this is supposed to work"""
+                if 'cid' in d:
+                    assert d['cid']==self.cid
             
             if len(d)>0:
-                new_pars_d[sect] = tuple([d, '#set by testAll.py on %s'%wrkr.today_str])
+                new_pars_d[sect] = tuple([d, '#set by workflow on %s'%wrkr.today_str])
 
         wrkr.set_cf_pars(new_pars_d)
 
@@ -611,21 +631,30 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
     
     def prep_finv(self, pars_d,
                     logger=None,
-                    dkey='finv_vlay'):
+                    dkey='finv_vlay',
+                    aoi_vlay=None,
+                    ):
         
         if logger is None: logger=self.logger
         log = logger.getChild('prep_cf')
         
         wrkr = self._get_wrkr(Preparor)
         
+        """
+        self.qproj.crs()
+        """
+        
         #=======================================================================
         # load the data
         #=======================================================================
         finv_vlay = self._retrieve(dkey,
                f = lambda logger=None: wrkr.load_vlay(
-                   os.path.join(self.base_dir, pars_d['finv_fp']), logger=logger)
-                                   )
+                        os.path.join(self.base_dir, pars_d['finv_fp']), aoi_vlay=aoi_vlay, logger=logger),
+                        )
+        
         assert isinstance(finv_vlay, QgsVectorLayer), self.name
+        
+        assert self.cid in [f.name() for f in finv_vlay.fields()], self.name
         #=======================================================================
         # execute
         #=======================================================================
@@ -647,6 +676,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         # load the data
         #=======================================================================
+        assert not pars_d['curves_fp'].startswith('\\')
         fp = os.path.join(self.base_dir, pars_d['curves_fp'])
         assert os.path.exists(fp), 'bad curve_fp: %s'%fp
         df_d = pd.read_excel(fp, sheet_name=None, header=None, index_col=None)
@@ -654,7 +684,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         # write to control file
         #=======================================================================
-        if not self.write:
+        if self.write:
             wrkr.set_cf_pars(
                 {
                 'dmg_fps':(
@@ -668,6 +698,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
     
     def prep_evals(self,
                    pars_d,
+                   fp_raw = None,
                    duplicate=True, #whether to make a new copy of the evals
                    logger=None,):
         #=======================================================================
@@ -681,7 +712,8 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         # #get raw filepath
         #=======================================================================
-        fp_raw = os.path.join(self.base_dir, pars_d.pop('evals_fp'))
+        if fp_raw is None:
+            fp_raw = os.path.join(self.base_dir, pars_d.pop('evals_fp'))
         assert os.path.exists(fp_raw), 'bad raw evals: %s'%fp_raw
         
         #=======================================================================
@@ -759,7 +791,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         
         if logger is None: logger=self.logger
         log = logger.getChild('rsamp_haz')
-        assert 'raster_dir' in pars_d, '%s missing raster_dir'%self.name
+        #assert 'raster_dir' in pars_d, '%s missing raster_dir'%self.name
         
         wrkr = self._get_wrkr(Rsamp)
         
@@ -773,6 +805,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
                    f = lambda logger=None: wrkr.load_rlays(fp, logger=logger))
 
         assert len(rlay_d)>0
+        
         #dtm layer
         if 'dtm_fp' in pars_d:
             fp = os.path.join(self.base_dir, pars_d['dtm_fp'])
@@ -792,7 +825,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #user provided run kwargs
         if rkwargs is None: rkwargs = self._get_kwargs(wrkr.__class__.__name__)
         #kwargs from control file
-        kwargs = {k:pars_d[k] for k in ['dthresh', 'as_inun'] if k in pars_d}
+        kwargs = {k:pars_d[k] for k in ['dthresh', 'as_inun', 'psmp_stat'] if k in pars_d}
         
         res_vlay = wrkr.run(list(rlay_d.values()), finv_vlay, dtm_rlay=dtm_rlay,
                               **{**rkwargs, **kwargs})
@@ -849,8 +882,10 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         # execute
         #=======================================================================
         if rkwargs is None: rkwargs = self._get_kwargs(wrkr.__class__.__name__)
+        kwargs = {k:pars_d[k] for k in ['psmp_stat'] if k in pars_d}
+        
         res_vlay = wrkr.run([dtm_rlay], finv_vlay,  fname='gels',
-                              **rkwargs)
+                              **{**rkwargs, **kwargs})
         #=======================================================================
         # #post
         #=======================================================================

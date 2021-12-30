@@ -332,6 +332,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         if crsid is None: 
             crsid = self.crsid
         
+        assert not crsid==''
         #=======================================================================
         # if not isinstance(crsid, int):
         #     raise IOError('expected integer for crs')
@@ -480,8 +481,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         assert isinstance(self.mstore, QgsMapLayerStore)
         
-        """only add intermediate layers to store
-        self.mstore.addMapLayer(vlay_raw)"""
+ 
         
         if not vlay_raw.crs()==self.qproj.crs():
             log.warning('crs mismatch: \n    %s\n    %s'%(
@@ -502,9 +502,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             
             vlay.setName(vlay_raw.name()) #reset the name
             
-            #clear original from memory
-            self.mstore.addMapLayer(vlay_raw)
-            self.mstore.removeMapLayers([vlay_raw])
+ 
             
         else: 
             vlay = vlay_raw
@@ -2920,50 +2918,52 @@ def vlay_check( #helper to check various expectations on the layer
         vlay.name(), len(checks_l), checks_l))
     return
     
-def load_vlay( #load a layer from a file
-        fp,
-        providerLib='ogr',
-        logger=mod_logger):
-    """
-    what are we using this for?
-    
-    see instanc emethod
-    """
-    
-    warnings.warn("deprecated. migrate to Qcoms.load_vlay ", DeprecationWarning)
-    
-    log = logger.getChild('load_vlay') 
-    
-    
-    assert os.path.exists(fp), 'requested file does not exist: %s'%fp
-
-    
-    basefn = os.path.splitext(os.path.split(fp)[1])[0]
-    
-
-    #Import a Raster Layer
-    vlay_raw = QgsVectorLayer(fp,basefn,providerLib)
-    
-    #check if this is valid
-    if not vlay_raw.isValid():
-        log.error('loaded vlay \'%s\' is not valid. \n \n did you initilize?'%vlay_raw.name())
-        raise Error('vlay loading produced an invalid layer')
-    
-    #check if it has geometry
-    if vlay_raw.wkbType() == 100:
-        log.error('loaded vlay has NoGeometry')
-        raise Error('no geo')
-    
-    #==========================================================================
-    # report
-    #==========================================================================
-    vlay = vlay_raw
-    dp = vlay.dataProvider()
-
-    log.info('loaded vlay \'%s\' as \'%s\' %s geo  with %i feats from file: \n     %s'
-                %(vlay.name(), dp.storageType(), QgsWkbTypes().displayString(vlay.wkbType()), dp.featureCount(), fp))
-    
-    return vlay
+#===============================================================================
+# def load_vlay( #load a layer from a file
+#         fp,
+#         providerLib='ogr',
+#         logger=mod_logger):
+#     """
+#     what are we using this for?
+#     
+#     see instanc emethod
+#     """
+#     
+#     warnings.warn("deprecated. migrate to Qcoms.load_vlay ", DeprecationWarning)
+#     
+#     log = logger.getChild('load_vlay') 
+#     
+#     
+#     assert os.path.exists(fp), 'requested file does not exist: %s'%fp
+# 
+#     
+#     basefn = os.path.splitext(os.path.split(fp)[1])[0]
+#     
+# 
+#     #Import a Raster Layer
+#     vlay_raw = QgsVectorLayer(fp,basefn,providerLib)
+#     
+#     #check if this is valid
+#     if not vlay_raw.isValid():
+#         log.error('loaded vlay \'%s\' is not valid. \n \n did you initilize?'%vlay_raw.name())
+#         raise Error('vlay loading produced an invalid layer')
+#     
+#     #check if it has geometry
+#     if vlay_raw.wkbType() == 100:
+#         log.error('loaded vlay has NoGeometry')
+#         raise Error('no geo')
+#     
+#     #==========================================================================
+#     # report
+#     #==========================================================================
+#     vlay = vlay_raw
+#     dp = vlay.dataProvider()
+# 
+#     log.info('loaded vlay \'%s\' as \'%s\' %s geo  with %i feats from file: \n     %s'
+#                 %(vlay.name(), dp.storageType(), QgsWkbTypes().displayString(vlay.wkbType()), dp.featureCount(), fp))
+#     
+#     return vlay
+#===============================================================================
 
 
 def vlay_write( #write  a VectorLayer

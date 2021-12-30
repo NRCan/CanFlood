@@ -113,6 +113,7 @@ class Dmg2(Model, DFunc, Plotr):
         self.logger.debug('Dmg2.__init__ finished')
         
     def prep_model(self):
+        assert not self.cid == self.bid, 'bid and cid must be different (%s)'%self.bid
         #======================================================================
         # setup funcs
         #======================================================================
@@ -221,7 +222,7 @@ class Dmg2(Model, DFunc, Plotr):
         #=======================================================================
         #check we loaded everything
         l = set(ftags_valid).difference(self.dfuncs_d.keys())
-        assert len(l)==0,'failed to load: %s'%l
+        assert len(l)==0,'failed to load %i/%i requested dfuncs: %s'%(len(l),len(ftags_valid), l)
         
         #check ground_water condition vs minimum value passed in dfuncs.
         if not self.ground_water:

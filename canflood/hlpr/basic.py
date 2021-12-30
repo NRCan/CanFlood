@@ -275,6 +275,7 @@ class ComWrkr(object): #common methods for all classes
             
         log.info('updated control file w/ %i pars at :\n    %s'%(
             cnt, cf_fp))
+        log.debug(new_pars_d)
         
         return
     

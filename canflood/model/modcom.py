@@ -203,7 +203,7 @@ class Model(ComWrkr,
     #===========================================================================
     # field names
     #===========================================================================
-    bid = 'bid' #indexer for expanded finv
+    bid = 'bidx' #indexer for expanded finv
     miLtcn = 'mi_Lthresh'
     miUtcn = 'mi_Uthresh'
     miVcn = 'mi_iVal'
