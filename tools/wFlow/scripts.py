@@ -532,6 +532,12 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         """
         this ones a bit weird because the main mechanism is a file write...
         
+        not sure how the following relate or were intended
+            variables passed in 'pars_d'
+            variables found in the control file (default or after writing)
+            variables set on the worker
+            
+        TODO: clean all this up and make things consistent
         
         """
         if logger is None: logger=self.logger
@@ -553,7 +559,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #loop and pull
         new_pars_d =dict()
         for sect, keys in {
-            'parameters':['impact_units', 'rtail', 'event_rels', 'felv', 'prec', 'ltail', 'cid'],
+            'parameters':['impact_units', 'rtail', 'event_rels', 'felv', 'prec', 'ltail', 'cid', 'ground_water'],
             'dmg_fps':['curves'],
             'plotting':['impactfmt_str', 'color'],
             #'risk_fps':['evals'],
@@ -1069,7 +1075,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
               #extra outputs
               bdmg_smry=False,
               dmgs_expnd =False,
-              ): #run risk1
+              ):  
         #=======================================================================
         # defaults
         #=======================================================================
@@ -1144,6 +1150,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
               logger=None,
               rkwargs = None, #flow control keys for this run
               plot = None, #some workers may want to delay plotting
+              res_per_asset=None,
 
               ): #run risk1
         #=======================================================================
@@ -1159,8 +1166,11 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #=======================================================================
         wrkr = self._get_wrkr(Risk2)
         
+        """TODO: clean this up... very confusing where everything is coming from
+        the runner only takes 1 kwarg"""
         #get control keys for this tool
         if rkwargs is None: rkwargs = self._get_kwargs(wrkr.__class__.__name__)
+        
         """
         self.tpars_d
         """
@@ -1169,6 +1179,10 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         skwargs = {k:rkwargs.pop(k) for k in rkwargs.copy().keys() if k in ['prep_kwargs']}
         
         wrkr.setup_fromData(self.data_d, **skwargs) #setup w/ the pre-loaded data
+        
+        
+        if not res_per_asset is None:
+            rkwargs['res_per_asset'] = res_per_asset
         
         #=======================================================================
         # execute
@@ -1192,7 +1206,10 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         if self.write:
             wrkr.output_ttl()
             wrkr.output_etype()
-            if not res_df is None: wrkr.output_passet()
+            
+            if not res_df is None:
+                """need to pass res_per_asset=True to the run""" 
+                wrkr.output_passet()
             if wrkr.attriMode: wrkr.output_attr()
             
         #=======================================================================
@@ -1227,6 +1244,8 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
             pass the following tot his caller:
                     dkey_tab = 'dmgs'
                     rkwargs={'relabel':None}
+                    
+        for risk2 results, need to pass res_per_asset = True to the risk2 model
                 """
         
         #=======================================================================

@@ -1635,7 +1635,7 @@ class Model(ComWrkr,
                 
             #user wants to keep negative depths.. leave as is
             else:
-                log.info('gorund_water=True. preserving %i (of %i) negative depths'%(
+                log.info('ground_water=True. preserving %i (of %i) negative depths'%(
                     booldf.sum().sum(), booldf.size))
             
         #======================================================================

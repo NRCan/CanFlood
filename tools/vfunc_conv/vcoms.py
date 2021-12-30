@@ -59,6 +59,7 @@ class VfConv(CurvePlotr):
         #=======================================================================
         # defaults
         #=======================================================================
+        log = self.logger.getChild('output')
         if out_dir is None: out_dir=self.out_dir
         if not os.path.exists(out_dir):os.makedirs(out_dir)
         if ofn is None:
@@ -90,6 +91,7 @@ class VfConv(CurvePlotr):
                 #tab check
                 
                 if len(tabnm)>30:
+                    log.warning('changing tab name! this can break tagging')
                     tabnm = tabnm.replace(' ','')
                     
                 if len(tabnm)>30:
