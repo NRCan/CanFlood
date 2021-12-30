@@ -80,7 +80,7 @@ class VfConv(CurvePlotr):
         
         #write to multiple tabs
         with pd.ExcelWriter(ofp) as writer:
-            for tabnm, data in d.items():
+            for i, (tabnm, data) in enumerate(d.items()):
                 #write handles
                 if tabnm=='_smry':
                     index, header = True, True
@@ -88,8 +88,12 @@ class VfConv(CurvePlotr):
                     index, header = False, False
                     
                 #tab check
+                
                 if len(tabnm)>30:
                     tabnm = tabnm.replace(' ','')
+                    
+                if len(tabnm)>30:
+                    tabnm = tabnm[:29]+'%s'%i
                     
                 #data format
                 if isinstance(data, dict):
