@@ -1011,6 +1011,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
               logger=None,
               plot=None, #for impact only runs we usually pass False here
               calc_risk=True,
+              res_per_asset=None,
               rkwargs = None, #flow control keys for this run
               ): #run risk1
         #=======================================================================
@@ -1029,6 +1030,8 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         
         #get control keys for this tool
         if rkwargs is None: rkwargs = self._get_kwargs(wrkr.__class__.__name__)
+        if not res_per_asset is None:
+            rkwargs['res_per_asset']=res_per_asset
         
 
         wrkr.setup_fromData(self.data_d, logger=log) #setup w/ the pre-loaded data
