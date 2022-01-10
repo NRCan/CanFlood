@@ -27,6 +27,8 @@ import hlpr.Q
 import hlpr.plot
 
 from hlpr.Q import view
+
+import wFlow.scripts_retrieve
 #===============================================================================
 # CF workers
 #===============================================================================
@@ -152,6 +154,31 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
     # CHILD HANDLING--------
     #===========================================================================
 
+
+    def _setup_wrkr(self, WorkFlow, kwargs, log):
+        
+        #=======================================================================
+        # check crs
+        #=======================================================================
+        if not WorkFlow.crsid == self.crsid:
+            log.debug('crsid mismatch... switching to crs of workflow')
+            self.set_crs(WorkFlow.crsid, logger=log)
+ 
+        #=======================================================================
+        # #collect pars
+        #=======================================================================
+        """similar to _get_wrkr().. but less flexible"""
+        for k in list(self.com_hndls) + self.flow_hndls:
+            kwargs[k] = getattr(self, k)
+        
+        
+        #=======================================================================
+        # report        
+        #=======================================================================
+        kstr = ''.join(['\n    %s: %s' % (k, v) for (k, v) in kwargs.items()]) #plot string
+        log.debug('building w/ %s' % kstr)
+        return 
+
     def _run_wflow(self, #execute a single workflow 
                    WorkFlow, #workflow object to run
                    **kwargs):
@@ -162,22 +189,7 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
         # update crs
         #=======================================================================
  
-        if not WorkFlow.crsid == self.crsid:
-            log.debug('crsid mismatch... switching to crs of workflow')
-            self.set_crs(WorkFlow.crsid, logger=log)
-
-        #===================================================================
-        # # init the flow 
-        #===================================================================
-        
-        #collect pars
-        """similar to _get_wrkr().. but less flexible"""
-        for k in list(self.com_hndls) + self.flow_hndls:
-            kwargs[k] = getattr(self, k)
-
-        #init
-        kstr = ''.join(['\n    %s: %s'%(k,v) for k,v in kwargs.items()]) #plot string
-        log.debug('building w/ %s'%kstr)
+        self._setup_wrkr(WorkFlow, kwargs, log)
         runr = WorkFlow(logger=self.logger, session=self,**kwargs)
         
         """
@@ -212,12 +224,18 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
  
  
         rlib = dict()
-        for fWrkr in wFlow_l:
-            runr = self._run_wflow(fWrkr, **kwargs)
+        for WorkFlow in wFlow_l:
+            #runr = self._run_wflow(fWrkr, **kwargs)
             
-            rlib[runr.name] = runr.res_d.copy()
+            self._setup_wrkr(WorkFlow, kwargs, log)
             
-            runr.__exit__()
+            with WorkFlow(logger=self.logger, session=self,**kwargs) as runr:
+                
+                runr.run()
+                
+                rlib[runr.name] = runr.res_d.copy()
+            
+ 
             
         log.info('finished on %i: \n    %s'%(len(rlib), list(rlib.keys())))
         return rlib
@@ -299,8 +317,6 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
         return d
     
  
-            
-    
     def load_layers_tree(self, #load all layers in a tree
                          data_dir,
                          ext='.tif',
@@ -339,7 +355,7 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
         return d
             
 
-class WorkFlow(Session): #worker with methods to build a CF workflow from
+class WorkFlow(wFlow.scripts_retrieve.WF_retriev, Session): #worker with methods to build a CF workflow from
     """
     #===========================================================================
     # INSTRUCTIONS
@@ -360,6 +376,9 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
     name = None
     pars_d = None #parameters for control file
     tpars_d = dict() #parameters for passing to tools
+
+
+
     
     #===========================================================================
     # flow control attributes
@@ -374,6 +393,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
                  name=None,
                  out_dir=None,
                  #init_q_d = {},
+
                  **kwargs):
         
         #=======================================================================
@@ -398,6 +418,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         # attachments
         #=======================================================================
         self.session = session
+        
 
         self.cf_tmpl_fp = os.path.join(self.session.cf_dir, r'canflood\_pars\CanFlood_control_01.txt')
         assert os.path.exists(self.cf_tmpl_fp), self.cf_tmpl_fp
@@ -410,6 +431,10 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         
         self.wrkr_d = dict() #container for loaded workers
         
+
+            
+        
+
         #=======================================================================
         # checks
         #=======================================================================
@@ -486,6 +511,9 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
                        dtag, 
                        f=None, #method to use to retrieve data if not found,
                        logger=None):
+        """
+        TODO: migrate off this onto _retrieve2
+        """
         #=======================================================================
         # defaults
         #=======================================================================
@@ -512,6 +540,8 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         log.debug("got %s"%type(data))
         return data
     
+
+    
     def _get_kwargs(self, wName, d=None): #get run kwargs for specific tool
         if d is None: d=self.tpars_d
         if isinstance(d, dict):
@@ -520,6 +550,7 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
             
         return dict()
     
+
 
 
         
@@ -788,11 +819,11 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         
         
     
-    def rsamp_haz(self, pars_d,  #hazar draster sampler
+    def rsamp_haz(self, 
+                  pars_d,  #hazar draster sampler
                   logger=None,
-                  dkey = 'rlay_d',
-                  rlay_d = None, #optional container of raster layers
-                  rkwargs=None,
+ 
+                  **kwargs
                   ):
         
         if logger is None: logger=self.logger
@@ -803,43 +834,23 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         
         
         #=======================================================================
-        # load the data
+        # retrieve
         #=======================================================================
-        if rlay_d is None:
-            fp = os.path.join(self.base_dir, pars_d['raster_dir'])
-            rlay_d = self._retrieve(dkey,
-                   f = lambda logger=None: wrkr.load_rlays(fp, logger=logger))
-
-        assert len(rlay_d)>0
+        """module is not written very well.. and a few values are set during run"""
+        if 'rsamp_vlay' in self.compiled_fp_d:
+            if 'as_inun' in pars_d:
+                wrkr.as_inun=pars_d['as_inun']
+            
         
-        #dtm layer
-        if 'dtm_fp' in pars_d:
-            fp = os.path.join(self.base_dir, pars_d['dtm_fp'])
-            dtm_rlay = self._retrieve('dtm_rlay',
-                   f = lambda logger=None: wrkr.load_rlay(fp, logger=logger))
-        else:
-            dtm_rlay=None
+        res_vlay = self._retrieve2('rsamp_vlay', pars_d=pars_d, wrkr=wrkr, logger=log, **kwargs) #self.get_rsamp_vlay
         
-                
-        #pull previously loaded
-        finv_vlay = self.data_d['finv_vlay']
-        
-        
-        #=======================================================================
-        # execute
-        #=======================================================================
-        #user provided run kwargs
-        if rkwargs is None: rkwargs = self._get_kwargs(wrkr.__class__.__name__)
-        #kwargs from control file
-        kwargs = {k:pars_d[k] for k in ['dthresh', 'as_inun', 'psmp_stat'] if k in pars_d}
-        
-        res_vlay = wrkr.run(list(rlay_d.values()), finv_vlay, dtm_rlay=dtm_rlay,
-                              **{**rkwargs, **kwargs})
+        """intermediate retrival may cause issues with column names"""
+                            
         
         #=======================================================================
         # #post
         #=======================================================================
-        wrkr.check()
+        
         
         df = wrkr.write_res(res_vlay, write=self.write)
         if not self.write: wrkr.out_fp = 'none' #placeholder
@@ -854,12 +865,18 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
             self.output_fig(fig)
             fig = wrkr.plot_hist()
             self.output_fig(fig)
+            
+ 
         
         return df
     """
     for k in df.columns:
         print(k)
     """
+    
+
+        
+        
 
     def rsamp_dtm(self, pars_d,  #hazar draster sampler
                   logger=None,
@@ -1764,9 +1781,11 @@ class WorkFlow(Session): #worker with methods to build a CF workflow from
         #del self.wrkr_d
         
         #remove data objects
-        del self.data_d
+        
         
         super().__exit__(*args,**kwargs) #initilzie teh baseclass
+        
+        del self.data_d
         gc.collect()
 
 

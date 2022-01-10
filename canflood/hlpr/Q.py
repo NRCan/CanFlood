@@ -768,6 +768,11 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         if out_fp is None: out_fp = os.path.join(self.out_dir, '%s.gpkg'%vlay.name())
         
+        out_dir = os.path.dirname(out_fp)
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+        
+        
         #===========================================================================
         # assemble options
         #===========================================================================
@@ -817,7 +822,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #=======================================================================
           
         if error[0] == QgsVectorFileWriter.NoError:
-            log.info('layer \' %s \' written to: \n     %s'%(vlay.name(),out_fp))
+            log.info('layer \'%s\' written to: \n     %s'%(vlay.name(),out_fp))
             return out_fp
          
         raise Error('FAILURE on writing layer \' %s \'  with code:\n    %s \n    %s'%(vlay.name(),error, out_fp))

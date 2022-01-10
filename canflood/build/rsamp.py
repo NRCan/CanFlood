@@ -50,7 +50,7 @@ class Rsamp(Plotr, Qcoms):
     
     """
     out_fp = None
-    names_d = None
+    names_d = dict() #raster layer names
     rname_l =None
     
     
@@ -75,6 +75,9 @@ class Rsamp(Plotr, Qcoms):
     dep_rlay_d = dict() #container for depth rasters (for looped runs)
     
     impactfmt_str = '.2f' #formatting impact values on plots
+    
+    #needed for some scripted runs that don't execute the runner
+    as_inun = False
     
     def __init__(self,
                  fname='expos', #prefix for file name
@@ -693,7 +696,7 @@ class Rsamp(Plotr, Qcoms):
         #=======================================================================
         # sample loop
         #=======================================================================
-        #self.names_d = dict()
+ 
         
         log.info('sampling %i raster layers w/ gtype: %s'%(len(raster_l), gtype))
         first= True
@@ -861,7 +864,7 @@ class Rsamp(Plotr, Qcoms):
         
         meta_d['result'] = get_meta(finv_res)
         log.info('finished on %i'%len(meta_d))
-        self.names_d
+
         
         return finv_res
     
@@ -1114,7 +1117,7 @@ class Rsamp(Plotr, Qcoms):
         names_d = dict()
 
         for indxr, rlay in enumerate(raster_l):
-            log = self.logger.getChild('samp_inunL.%s'%rlay.name())
+            log = self.logger.getChild('samp_inun_line.%s'%rlay.name())
             ofnl = [field.name() for field in finv.fields()]
 
 
@@ -1690,7 +1693,7 @@ class Rsamp(Plotr, Qcoms):
         # defaults
         #======================================================================
         if names_d is None: names_d = self.names_d
-        if rname_l is None: rname_l = self.rname_l
+        #if rname_l is None: rname_l = self.rname_l
         if out_dir is None: out_dir = self.out_dir
         if res_name is None: res_name = vlay.name()
         log.debug("on \'%s\'"%res_name)
@@ -1712,9 +1715,11 @@ class Rsamp(Plotr, Qcoms):
             
 
         #check the raster names
-        miss_l = set(rname_l).difference(df.columns.to_list())
-        if len(miss_l)>0:
-            log.warning('failed to map %i raster layer names onto results: \n    %s'%(len(miss_l), miss_l))
+        #=======================================================================
+        # miss_l = set(rname_l).difference(df.columns.to_list())
+        # if len(miss_l)>0:
+        #     log.warning('failed to map %i raster layer names onto results: \n    %s'%(len(miss_l), miss_l))
+        #=======================================================================
         
         df =  df.set_index(self.cid, drop=True)
         #=======================================================================
