@@ -547,7 +547,7 @@ class Tut7a(Tut7):
 #===============================================================================
 # executeors------------
 #===============================================================================
-wFlow_l = [Tut7a] #used below and by test scripts to bundle workflows
+wFlow_l = [Tut2a] #used below and by test scripts to bundle workflows
 
 if __name__ == '__main__':
     
