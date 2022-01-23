@@ -1016,7 +1016,7 @@ class Rsamp(Plotr, Qcoms):
             """
             ser = pd.Series(vlay_get_fdata(finvw, fieldn=new_fn), name=new_fn)
             assert ser.notna().all(), 'got %i/%i null cell counts on \'%s\'  from %s'%(
-                ser.notna().sum(), len(ser), rlay.name() algo_nm)
+                ser.notna().sum(), len(ser), rlay.name(), algo_nm)
             #===================================================================
             # #clean up the layers
             #===================================================================
