@@ -117,7 +117,9 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
         # defaults
         #=======================================================================
         if out_dir is None: out_dir = os.path.join(os.path.expanduser('~'), 'CanFlood', projName)
-        if logger is None: logger = basic_logger()
+
+            
+        if logger is None: logger = basic_logger(new_wdir=base_dir)
         
         #init the cascade 
         """will need to pass some of these to children"""
@@ -130,10 +132,10 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
         self.projName = projName
         self.write=write
         self.plot = plot
-        
         if base_dir is None:
             """C:\\LS\\03_TOOLS\\CanFlood\\_git"""
             base_dir = self.cf_dir #set by comWrkr from script location
+
         self.base_dir=base_dir
         assert os.path.exists(self.base_dir), self.base_dir
         
@@ -822,10 +824,13 @@ class WorkFlow(wFlow.scripts_retrieve.WF_retriev, Session): #worker with methods
     def rsamp_haz(self, 
                   pars_d,  #hazar draster sampler
                   logger=None,
- 
+                  plot=None,
                   **kwargs
                   ):
-        
+        #=======================================================================
+        # defautls
+        #=======================================================================
+        if plot is None: plot=self.plot
         if logger is None: logger=self.logger
         log = logger.getChild('rsamp_haz')
         #assert 'raster_dir' in pars_d, '%s missing raster_dir'%self.name
@@ -841,7 +846,12 @@ class WorkFlow(wFlow.scripts_retrieve.WF_retriev, Session): #worker with methods
             if 'as_inun' in pars_d:
                 wrkr.as_inun=pars_d['as_inun']
             
+        """
+        using new intelligement retrival
+            see scripts_retrieve.WF_retriev
+                get_rsamp_vlay
         
+        """
         res_vlay = self._retrieve2('rsamp_vlay', pars_d=pars_d, wrkr=wrkr, logger=log, **kwargs) #self.get_rsamp_vlay
         
         """intermediate retrival may cause issues with column names"""
@@ -860,7 +870,7 @@ class WorkFlow(wFlow.scripts_retrieve.WF_retriev, Session): #worker with methods
         #=======================================================================
         # plots
         #=======================================================================
-        if self.plot:
+        if plot:
             fig = wrkr.plot_boxes()
             self.output_fig(fig)
             fig = wrkr.plot_hist()

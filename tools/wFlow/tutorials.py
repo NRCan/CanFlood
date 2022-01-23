@@ -547,11 +547,11 @@ class Tut7a(Tut7):
 #===============================================================================
 # executeors------------
 #===============================================================================
-wFlow_l = [Tut2a] #used below and by test scripts to bundle workflows
+wFlow_l = [Tut4a] #used below and by test scripts to bundle workflows
 
 if __name__ == '__main__':
     
-    wrkr = Session(projName='tuts', write=True, plot=False)
+    wrkr = Session(projName='tuts', write=True, plot=True)
     rlib = wrkr.run(wFlow_l)
     
 

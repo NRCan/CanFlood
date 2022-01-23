@@ -42,7 +42,7 @@ from hlpr.exceptions import Error
 #===============================================================================
 # CF workers
 #===============================================================================
-from wFlow.scripts import Session, WorkFlow
+from wFlow.scripts import Session, WorkFlow, view
 
 from model.riskcom import RiskModel
 
@@ -117,9 +117,12 @@ class TestParent(unittest.TestCase): #unit test (one per test call)
         miss_l = set(calc_d.keys()).difference(test_d.keys())
         assert len(miss_l)==0, 'missing keys: %s'%miss_l
         
-        return {k:(v, test_d[k]) for k,v in calc_d.items()}
+        return {k:(v, test_d[k]) for k,v in calc_d.items()} #k:{newCalcObj:oldTestPickelObj}
     
-    def _df_chks(self, valC, valT, nm):
+    def _df_chks(self, 
+                 valC, #newCalcObj
+                 valT, #oldTestPickelObj
+                 nm):
 
         assert isinstance(valC, pd.DataFrame), nm
         
@@ -131,17 +134,20 @@ class TestParent(unittest.TestCase): #unit test (one per test call)
         
         #colum names
         miss_l = set(valC.columns).symmetric_difference(valT.columns)
-        self.assertEqual(len(miss_l), 0, msg=nm + 'column mismatch: %s'%miss_l)
+        self.assertEqual(len(miss_l), 0, msg=nm + ': column mismatch: %s'%miss_l)
         
         #null counts
         self.assertEqual(valC.isna().sum().sum(), valT.isna().sum().sum(),
-                         msg = nm + 'null count mismatch')
+                         msg = nm + ': null count mismatch')
+        """
+        view(valT)
+        """
         
         #float checks
         boolcol = valC.dtypes.apply(lambda x:np.issubdtype(x, np.number))
         sumC = round(valC.loc[:, boolcol].sum().sum(), self.prec)
         sumT = round(valT.loc[:, boolcol].sum().sum(), self.prec)        
-        self.assertEqual(sumC, sumT, msg= nm + 'sum fail')
+        self.assertEqual(sumC, sumT, msg= nm + ': sum fail')
     
 
 
@@ -185,7 +191,7 @@ class Test_wf_L1(Test_wf_basic): #tests for level 1 models
             valT = riskmodel.set_ttl(tlRaw_df=valT)
             eadT = riskmodel.ead_tot
             
-            self.assertEqual(eadC, eadT, msg= nm + 'ead mismatch')
+            self.assertEqual(eadC, eadT, msg= nm + ': ead mismatch')
             self._df_chks(valC, valT, nm)
             
     def test_etypes(self):
@@ -585,16 +591,21 @@ class LineL1_t(L1_t):
                         })
 
 wFlow_l = [
-           Tut1a_t, 
-           #Tut2a_t,Tut2b_t, #these are mostly redundant w/ 2c
-            
-        Tut2c_mutex_t, #needs to be run for Tut2c_max_t to work
-         Tut2c_max_t,  #compares with Tut2c_mutex_t. write=True
-         Tut4a_t, Tut4b_t, 
-         Tut5a_t, 
-         Tut6a_t, 
-         Tut7a_t,
-         PolyL1_t, LineL1_t,
+        #=======================================================================
+        #    Tut1a_t, 
+        #    #Tut2a_t,Tut2b_t, #these are mostly redundant w/ 2c
+        #     
+        # Tut2c_mutex_t, #needs to be run for Tut2c_max_t to work
+        #  Tut2c_max_t,  #compares with Tut2c_mutex_t. write=True
+        #=======================================================================
+         Tut4a_t, 
+         #Tut4b_t, 
+         #======================================================================
+         # Tut5a_t, 
+         # Tut6a_t, 
+         # Tut7a_t,
+         # PolyL1_t, LineL1_t,
+         #======================================================================
         ]
 
 #wFlow_l = [Tut7a_t]

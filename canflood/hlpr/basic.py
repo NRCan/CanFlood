@@ -399,6 +399,9 @@ class ComWrkr(object): #common methods for all classes
 
     
 class MyFeedBack(object): #simple custom feedback object
+    """TODO: 
+    make this a subclass of QgsProcessingFeedback
+    """
     
     def __init__(self, 
                  logger=mod_logger, 
