@@ -583,15 +583,8 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #Import a Raster Layer
         log.debug('QgsRasterLayer(%s, %s)'%(fp, basefn))
         rlayer = QgsRasterLayer(fp, basefn)
-        """
-        hanging for some reason...
-        QgsRasterLayer(C:\LS\03_TOOLS\CanFlood\_git\tutorials\1\haz_rast\haz_1000.tif, haz_1000)
-        """
-        #=======================================================================
-        # rlayer = QgsRasterLayer(r'C:\LS\03_TOOLS\CanFlood\_git\tutorials\1\haz_rast\haz_1000.tif',
-        #                 'haz_1000')
-        #=======================================================================
-        
+ 
+ 
         
         #===========================================================================
         # check
@@ -2811,8 +2804,9 @@ class MyFeedBackQ(QgsProcessingFeedback):
         
         
 class RasterCalc(object):
-    rasterEntries = list() #list of QgsRasterCalculatorEntry
+    
     result= None
+    layers_d = dict()
     def __init__(self,
                  ref_lay,
                  logger=None,
@@ -2843,10 +2837,11 @@ class RasterCalc(object):
         self.session=session
         self.qproj=session.qproj
         self.feedback=session.feedback
+        self.overwrite=self.session.overwrite
         #=======================================================================
         # defaults
         #=======================================================================
-        
+        self.rasterEntries = list() #list of QgsRasterCalculatorEntry
         #out_dir
         if out_dir is None:
             out_dir = os.environ['TEMP']
@@ -2862,13 +2857,13 @@ class RasterCalc(object):
         
         #reference layer
         if isinstance(ref_lay, str):
-            rlay = self.load(ref_lay)
+            ref_lay = self.load(ref_lay)
             
-        else:
-            rlay = ref_lay
-            
+        
         assert isinstance(ref_lay, QgsRasterLayer)
         self.ref_lay=ref_lay
+        
+        self.logger.debug('on ref_lay: %s'%self.ref_lay.name())
     
     def rcalc1(self, #simple raster calculations with a single raster
                
@@ -2882,14 +2877,13 @@ class RasterCalc(object):
                compress='none', #optional compression. #usually we are deleting calc results
                
                #general control
-               allow_empty=False,
+               allow_empty=True,
                logger=None,
                ):
         """
         see __rCalcEntry
         
-        memory handling:
-            would be easier to make a standalone worker
+        phantom crashing
         """
         
         #=======================================================================
@@ -2912,7 +2906,8 @@ class RasterCalc(object):
 
             ofp = os.path.join(out_dir,layname+'.tif' )
             
-        if os.path.exists(ofp): 
+        if os.path.exists(ofp):
+            log.debug('file expsts: %s'%ofp) 
             assert self.overwrite
             
             try:
@@ -2932,22 +2927,33 @@ class RasterCalc(object):
         # assemble parameters
         #=======================================================================
 
-        
-        outputExtent  = ref_lay.extent()
-        outputFormat = 'GTiff'
-        nOutputColumns = ref_lay.width()
-        nOutputRows = ref_lay.height()
- 
-        crsTrnsf = QgsCoordinateTransformContext()
+        d = dict(
+            formula=formula,
+            ofp=ofp1,
+            outputExtent  = ref_lay.extent(),
+            outputFormat = 'GTiff',
+            crs = self.qproj.crs(),
+            nOutputColumns = ref_lay.width(),
+            nOutputRows = ref_lay.height(),
+            crsTrnsf = QgsCoordinateTransformContext(),
+            rasterEntries = rasterEntries,
+            )
         #=======================================================================
         # execute
         #=======================================================================
-        log.debug('on %s'%formula)
- 
-        rcalc = QgsRasterCalculator(formula, ofp1,outputFormat,outputExtent,self.qproj.crs(),
-                            nOutputColumns, nOutputRows, rasterEntries,crsTrnsf)
+        msg = '\n'.join(['%s:    %s'%(k,v) for k,v in d.items()])
+        log.debug('QgsRasterCalculator w/ \n%s'%msg)
         
-        result = rcalc.processCalculation(feedback=self.feedback)
+        rcalc = QgsRasterCalculator(d['formula'], d['ofp'],
+                                     d['outputFormat'], d['outputExtent'], d['crs'],
+                                     d['nOutputColumns'], d['nOutputRows'], d['rasterEntries'], d['crsTrnsf'])
+ 
+ 
+        
+        try:
+            result = rcalc.processCalculation(feedback=self.feedback)
+        except Exception as e:
+            raise Error('failed to processCalculation w/ \n    %s'%e)
         
         #=======================================================================
         # check    
@@ -2996,9 +3002,7 @@ class RasterCalc(object):
         #=======================================================================
         
         if isinstance(rlay_obj, str):
-            assert os.path.exists(rlay_obj), rlay_obj
-            rlay = QgsRasterLayer(rlay_obj, os.path.basename(rlay_obj).replace('.tif', ''))
-            self.mstore.addMapLayer(rlay)
+            rlay = self.load(rlay_obj)
  
         else:
             rlay = rlay_obj
@@ -3028,8 +3032,7 @@ class RasterCalc(object):
         log = logger.getChild('load')
         
         assert os.path.exists(fp), 'requested file does not exist: %s'%fp
-        assert QgsRasterLayer.isValidRasterFileName(fp),  \
-            'requested file is not a valid raster file type: %s'%fp
+        assert QgsRasterLayer.isValidRasterFileName(fp), 'requested file is not a valid raster file type: %s'%fp
         
         basefn = os.path.splitext(os.path.split(fp)[1])[0]
         
@@ -3050,9 +3053,10 @@ class RasterCalc(object):
         if not rlayer.crs() == self.qproj.crs():
             log.warning('loaded layer \'%s\' crs mismatch!'%rlayer.name())
 
-        log.debug('loaded \'%s\' from \n    %s'%(rlayer.name(), fp))
+        #log.debug('loaded \'%s\' from \n    %s'%(rlayer.name(), fp))
         
         self.mstore.addMapLayer(rlayer)
+        self.layers_d[rlayer.name() ] =rlayer #holding the layer?
         
         return rlayer
     
@@ -3063,7 +3067,7 @@ class RasterCalc(object):
                  *args,**kwargs):
         
         #clear your map store
-        self.mstore.removeAllMapLayers()
+        #self.mstore.removeAllMapLayers()
         #print('clearing mstore')
         self.logger.info('finished in %.2f secs w/ %s'%((datetime.datetime.now() - self.start).total_seconds(), self.result))
         #super().__exit__(*args,**kwargs) #initilzie teh baseclass

@@ -7,7 +7,7 @@ Created on Feb. 9, 2020
 #==========================================================================
 # logger setup-----------------------
 #==========================================================================
-import logging, configparser, datetime
+import logging, configparser, datetime, copy
 start = datetime.datetime.now()
 
 from warnings import warn
@@ -81,7 +81,8 @@ class Rsamp(Plotr, Qcoms):
     
     def __init__(self,
                  fname='expos', #prefix for file name
-                 dep_rlay_d = dict(), #container for depth rasters (for looped runs)
+                 rlay_inun_lib = dict(), #optional container of raster file paths for threshold runs 
+                   #{hazlayName:{'dep_fp':fp, 'thresh_d':{threshVal:fp}
                   *args, **kwargs):
         """
         Plugin: called by each button push
@@ -90,7 +91,7 @@ class Rsamp(Plotr, Qcoms):
         super().__init__(*args, **kwargs)
         
         self.fname=fname
-        self.dep_rlay_d=dep_rlay_d
+        self.rlay_inun_lib=rlay_inun_lib
         #flip the codes
         self.psmp_codes = dict(zip(self.psmp_codes.values(), self.psmp_codes.keys()))
         
@@ -264,6 +265,8 @@ class Rsamp(Plotr, Qcoms):
         rname_l = []
         for rlay in rlayRaw_l:
             assert isinstance(rlay, QgsRasterLayer)
+            
+ 
 
             assert rlay.crs() == self.qproj.crs(), 'rlay %s crs doesnt match project'%(rlay.name())
             rname_l.append(rlay.name())
@@ -882,16 +885,20 @@ class Rsamp(Plotr, Qcoms):
         
      
  
+
+
+    
+    
+
     def samp_inun(self, #inundation percent for polygons
                   finv, raster_l, dtm_rlay, dthresh,
-                  logger=None,
-                   ):
+                  
+                  out_dir=None,
+                   logger=None,):
         """TODO:
         implement intelligent retrival of depth rasters
              so we don't have to re-calculate for each model
-             
-        2022-01-22: this seems even slower than I remember... really need to fix this
-            maybe there's some weird compression?
+
         
         """
         #=======================================================================
@@ -902,8 +909,8 @@ class Rsamp(Plotr, Qcoms):
         gtype=self.gtype
         
         #setup temp dir
-        import tempfile #todo: move this up top
-        temp_dir = tempfile.mkdtemp()        
+        if out_dir is None: out_dir=self.temp_dir
+              
         #=======================================================================
         # precheck
         #=======================================================================
@@ -926,7 +933,9 @@ class Rsamp(Plotr, Qcoms):
         log.info('on \'%s\' w/ %i feats and %i rasters against \'%s\''%(
             finv.name(), finv.dataProvider().featureCount(), len(raster_l), dtm_rlay.name()))
         
-        for indxr, rlay in enumerate(raster_l):
+        for indxr, rlay_raw in enumerate(raster_l):
+            rlay = rlay_raw.clone()
+            #self.mstore.addMapLayer(rlay)
  
             log = logger.getChild('samp_inun.%s'%rlay.name())
             ofnl = [field.name() for field in finv.fields()]
@@ -937,41 +946,27 @@ class Rsamp(Plotr, Qcoms):
             # #get depth raster
             #===================================================================
             log.info('generating depth raster from %s'%dtm_rlay.name()) 
-            dep_rlay = self._get_depr(dtm_rlay, log, temp_dir, rlay)
+            dep_rlay_fp = self._get_depr(dtm_rlay,rlay, log,
+                                         out_dir=os.path.join(out_dir, 'dep'))
+            
             
             #report
             tdelta = datetime.datetime.now() - start
-            log.debug('    got \'%s\' in %.1f secs'%(dep_rlay.name(), tdelta.total_seconds()))
-            #self.mstore.addMapLayer(dep_rlay) #keepin these alive
+
             meta_d[indxr] = {'raw':{'name':rlay.name()}, 
-                             'depth_rlay':{'name':dep_rlay.name(), 'time (secs)':tdelta.total_seconds()}} 
+                             'depth_rlay':{'fp':dep_rlay_fp, 'time (secs)':tdelta.total_seconds()}} 
             #===================================================================
             # get threshold raster
             #===================================================================
+            
             #reduce to all values above depththreshold
             log.info('calculating %.2f threshold raster'%dthresh) 
-            
-            """
-            TODO: speed this up somehow... super slow
-                native calculator?
-                
-                
-                
-            """
-            with RasterCalc(dep_rlay, logger=log,  out_dir = temp_dir, name='thresh', session=self) as wrkr:
-                rcentry = wrkr._rCalcEntry(dep_rlay)
-                thr_rlay_fp = wrkr.rcalc1(
-                                        '{rlay}*(({rlay}>{thresh})/({rlay}>{thresh}))'.format(rlay=rcentry.ref, thresh=dthresh),
-                                       )
-                
-            #thr_rlay = QgsRasterLayer(outputFile, os.path.basename(outputFile)[:-4])
+            thr_rlay_fp = self._get_thresh(dthresh, rlay,log, out_dir=os.path.join(out_dir, 'thresh'))
  
-            #report
- 
-            #self.mstore.addMapLayer(thr_rlay)
-             
             tdelta = (datetime.datetime.now() - start) - tdelta
             meta_d[indxr]['thr_rlay'] = { 'fp':thr_rlay_fp, 'time (secs)':tdelta.total_seconds(), 'name':os.path.basename(thr_rlay_fp)[:-4]}
+            
+            
             #===================================================================
             # #get cell counts per polygon
             #===================================================================
@@ -1020,19 +1015,19 @@ class Rsamp(Plotr, Qcoms):
                 even if not overlapping the hazard layer
             """
             ser = pd.Series(vlay_get_fdata(finvw, fieldn=new_fn), name=new_fn)
-            assert ser.notna().all(), 'got %i/%i null cell counts on \'%s\'  from algo_nm'%(
-                ser.notna().sum(), len(ser), rlay.name())
+            assert ser.notna().all(), 'got %i/%i null cell counts on \'%s\'  from %s'%(
+                ser.notna().sum(), len(ser), rlay.name() algo_nm)
             #===================================================================
             # #clean up the layers
             #===================================================================
-            self.mstore.addMapLayer(finv)
+            #self.mstore.addMapLayer(finv)
              
             finv = finvw
             
             meta_d[indxr] = pd.DataFrame.from_dict(meta_d[indxr])
  
             
-            
+        assert len(parea_d) == len(raster_l)
         log.debug(pd.concat(meta_d, axis=1).T)
         #view(pd.concat(meat_d)
         #=======================================================================
@@ -1081,7 +1076,7 @@ class Rsamp(Plotr, Qcoms):
         #=======================================================================
         # write working reuslts
         #=======================================================================
-        ofp = os.path.join(temp_dir, 'RAW_rsamp_SampInun_%s_%.2f.csv'%(self.tag, dthresh))
+        ofp = os.path.join(out_dir, 'RAW_rsamp_SampInun_%s_%.2f.csv'%(self.tag, dthresh))
         res_df.to_csv(ofp, index=None)
         log.info('wrote working data to \n    %s'%ofp)
         
@@ -1097,6 +1092,10 @@ class Rsamp(Plotr, Qcoms):
         res_vlay = self.vlay_new_df2(res_df, crs=finv.crs(), geo_d=geo_d, logger=log,
                                layname='%s_%s_inun'%(self.tag, finv.name()))
         
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        log.debug('__rlay_inun_lib:\n\n%s\n\n'%self.rlay_inun_lib)
         log.info('finisished w/ %s'%res_vlay.name())
 
         
@@ -1170,12 +1169,12 @@ class Rsamp(Plotr, Qcoms):
             #===================================================================
             # #get depth raster
             #===================================================================
-            dep_rlay = self._get_depr(dtm_rlay, log, temp_dir, rlay)
+            dep_rlay_fp = self._get_depr(dtm_rlay,rlay,  log, out_dir=temp_dir)
             
             #===============================================================
             # #convert to points
             #===============================================================
-            params_d = { 'DISTANCE' : dep_rlay.rasterUnitsPerPixelX(), 
+            params_d = { 'DISTANCE' : dtm_rlay.rasterUnitsPerPixelX(), 
                         'END_OFFSET' : 0, 
                         'INPUT' : finv, 
                         'OUTPUT' : 'TEMPORARY_OUTPUT', 
@@ -1192,7 +1191,7 @@ class Rsamp(Plotr, Qcoms):
             params_d = { 'COLUMN_PREFIX' : rlay.name(),
                          'INPUT' : fpts_vlay,
                           'OUTPUT' : 'TEMPORARY_OUTPUT',
-                           'RASTERCOPY' : dep_rlay}
+                           'RASTERCOPY' : dep_rlay_fp}
             
             res_d = processing.run('qgis:rastersampling', params_d, feedback=self.feedback)
             fpts_vlay = res_d['OUTPUT']
@@ -1340,39 +1339,74 @@ class Rsamp(Plotr, Qcoms):
     
     
     def _get_depr(self, #get a depth raster, but first check if its already been made
-                  dtm_rlay, log, temp_dir, rlay):
+                  dtm_rlay, rlay,
+                  log, out_dir=None,
+                  ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        
+        assert isinstance(dtm_rlay, QgsRasterLayer)
+        
+        assert isinstance(rlay, QgsRasterLayer)
         
         dep_rlay_nm = '%s_dep'%rlay.name()
-        
-        #pull previously created
-        if dep_rlay_nm in self.dep_rlay_d:
-            dep_rlay = self.dep_rlay_d[dep_rlay_nm]
-            
-        #build fresh
-        else:
-            #log.info('calculating depth raster \'%s\''%dep_rlay_nm)
-            
-            #using Qgis raster calculator constructor
+        #=======================================================================
+        # #build a new one
+        #=======================================================================
+        if not rlay.name() in self.rlay_inun_lib:#{hazlayName:{'dep_fp':fp, 'thresh_d':{threshVal:fp}
+ 
             
             with RasterCalc(dtm_rlay, name='dep', session=self, logger=log,
-                            out_dir=os.path.join(temp_dir, 'dep'),
+                            out_dir=out_dir,
                             ) as wrkr:
                 
                 entries_d = {k:wrkr._rCalcEntry(v) for k,v in {'top':rlay, 'bottom':dtm_rlay}.items()}
                 formula = '%s - %s'%(entries_d['top'].ref, entries_d['bottom'].ref)
-                
-                outputFile = wrkr.rcalc1(formula, layname=dep_rlay_nm)
+                fp = wrkr.rcalc1(formula, layname=dep_rlay_nm)
+                self.rlay_inun_lib[rlay.name()] = {'dep_fp': fp, 'thresh_d':dict()}
                 
  
+        #=======================================================================
+        # load
+        #=======================================================================
+        fp = self.rlay_inun_lib[rlay.name()]['dep_fp']
+        assert os.path.exists(fp), 'bad dep_fp for \'%s\': \n    %s'%(rlay.name(), fp)
+        
             
+        return fp
+    
+    def _get_thresh(self, dthresh, rlay,
+                    log, 
+                    out_dir=None,
+                    ):
+        
  
-            dep_rlay = QgsRasterLayer(outputFile, dep_rlay_nm)
+        
+        dtkey = int(dthresh*100) #best to use ints for lookups
+        #=======================================================================
+        # build new one
+        #=======================================================================
+        if not dtkey in self.rlay_inun_lib[rlay.name()]['thresh_d']: #{hazlayName:{'dep_fp':fp, 'thresh_d':{threshVal:fp}
             
+            dep_fp = self.rlay_inun_lib[rlay.name()]['dep_fp']
             
-            #store for next time
-            self.dep_rlay_d[dep_rlay_nm] = dep_rlay
+            with RasterCalc(dep_fp, logger=log, out_dir=out_dir, name='thresh', session=self) as wrkr:
+                rcentry = wrkr._rCalcEntry(dep_fp)
+                fp = wrkr.rcalc1(
+                    '{rlay}*(({rlay}>{thresh})/({rlay}>{thresh}))'.format(rlay=rcentry.ref, thresh=dthresh))
+                
+                del rcentry
+                
+            assert os.path.exists(dep_fp)
+            self.rlay_inun_lib[rlay.name()]['thresh_d'][dtkey] = fp
             
-        return dep_rlay
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        fp = self.rlay_inun_lib[rlay.name()]['thresh_d'][dtkey]
+        assert os.path.exists(fp)
+        return fp 
     
     def _smp_loop_wrap(self, #common wraps for sampling loops
                        finv_raw, 

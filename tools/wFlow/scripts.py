@@ -10,7 +10,7 @@ executing a CanFlood workflow froma python console
 #===============================================================================
 # imports----------
 #===============================================================================
-import inspect, logging, os,  datetime, shutil, gc, weakref
+import inspect, logging, os,  datetime, shutil, gc, weakref, copy
 
 from qgis.core import QgsMapLayer, QgsVectorLayer
 import pandas as pd
@@ -825,6 +825,8 @@ class WorkFlow(wFlow.scripts_retrieve.WF_retriev, Session): #worker with methods
                   pars_d,  #hazar draster sampler
                   logger=None,
                   plot=None,
+                  temp_dir=None,
+                  rlay_inun_lib=dict(),
                   **kwargs
                   ):
         #=======================================================================
@@ -835,7 +837,7 @@ class WorkFlow(wFlow.scripts_retrieve.WF_retriev, Session): #worker with methods
         log = logger.getChild('rsamp_haz')
         #assert 'raster_dir' in pars_d, '%s missing raster_dir'%self.name
         
-        wrkr = self._get_wrkr(Rsamp)
+        wrkr = self._get_wrkr(Rsamp, temp_dir=temp_dir, rlay_inun_lib=rlay_inun_lib)
         
         
         #=======================================================================
@@ -855,7 +857,9 @@ class WorkFlow(wFlow.scripts_retrieve.WF_retriev, Session): #worker with methods
         res_vlay = self._retrieve2('rsamp_vlay', pars_d=pars_d, wrkr=wrkr, logger=log, **kwargs) #self.get_rsamp_vlay
         
         """intermediate retrival may cause issues with column names"""
-                            
+        
+ 
+            
         
         #=======================================================================
         # #post
@@ -876,9 +880,14 @@ class WorkFlow(wFlow.scripts_retrieve.WF_retriev, Session): #worker with methods
             fig = wrkr.plot_hist()
             self.output_fig(fig)
             
- 
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        ri_lib_out = copy.deepcopy(wrkr.rlay_inun_lib)
         
-        return df
+        wrkr.__exit__()
+        
+        return df, ri_lib_out
     """
     for k in df.columns:
         print(k)
