@@ -591,21 +591,17 @@ class LineL1_t(L1_t):
                         })
 
 wFlow_l = [
-        #=======================================================================
-        #    Tut1a_t, 
-        #    #Tut2a_t,Tut2b_t, #these are mostly redundant w/ 2c
-        #     
-        # Tut2c_mutex_t, #needs to be run for Tut2c_max_t to work
-        #  Tut2c_max_t,  #compares with Tut2c_mutex_t. write=True
-        #=======================================================================
+           Tut1a_t, 
+           #Tut2a_t,Tut2b_t, #these are mostly redundant w/ 2c
+             
+        Tut2c_mutex_t, #needs to be run for Tut2c_max_t to work
+         Tut2c_max_t,  #compares with Tut2c_mutex_t. write=True
          Tut4a_t, 
-         #Tut4b_t, 
-         #======================================================================
-         # Tut5a_t, 
-         # Tut6a_t, 
-         # Tut7a_t,
-         # PolyL1_t, LineL1_t,
-         #======================================================================
+         Tut4b_t, 
+        Tut5a_t, 
+        Tut6a_t, 
+        Tut7a_t,
+        PolyL1_t, LineL1_t,
         ]
 
 #wFlow_l = [Tut7a_t]
@@ -629,10 +625,15 @@ if __name__ == '__main__':
     #===========================================================================
     # INSTRUCTIONS: UPDATING TEST COMPARISON DATAT
     #===========================================================================
+    WARNING: 
+        only update a test suite if you're confident in the new outputs
+        only update 1 at a time
+    
     comment out all the other tests in wFlow_l
-    fix comments below to also execute build_picles()
+    uncomment below to also execute build_picles()
     revert comments
     NOTE: ensure 'tdata_keys' on the worker are approriate
+    
     
     #===========================================================================
     # INSTRUCTIONS: RUNNING TESTS

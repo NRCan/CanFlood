@@ -942,7 +942,7 @@ class Rsamp(Plotr, Qcoms):
             #report
             tdelta = datetime.datetime.now() - start
             log.debug('    got \'%s\' in %.1f secs'%(dep_rlay.name(), tdelta.total_seconds()))
-            self.mstore.addMapLayer(dep_rlay)
+            #self.mstore.addMapLayer(dep_rlay) #keepin these alive
             meta_d[indxr] = {'raw':{'name':rlay.name()}, 
                              'depth_rlay':{'name':dep_rlay.name(), 'time (secs)':tdelta.total_seconds()}} 
             #===================================================================
@@ -961,7 +961,7 @@ class Rsamp(Plotr, Qcoms):
             with RasterCalc(dep_rlay, logger=log,  out_dir = temp_dir, name='thresh', session=self) as wrkr:
                 rcentry = wrkr._rCalcEntry(dep_rlay)
                 thr_rlay_fp = wrkr.rcalc1(
-                                        '{rlay}*({rlay}>{thresh})'.format(rlay=rcentry.ref, thresh=dthresh),
+                                        '{rlay}*(({rlay}>{thresh})/({rlay}>{thresh}))'.format(rlay=rcentry.ref, thresh=dthresh),
                                        )
                 
             #thr_rlay = QgsRasterLayer(outputFile, os.path.basename(outputFile)[:-4])
@@ -969,6 +969,7 @@ class Rsamp(Plotr, Qcoms):
             #report
  
             #self.mstore.addMapLayer(thr_rlay)
+             
             tdelta = (datetime.datetime.now() - start) - tdelta
             meta_d[indxr]['thr_rlay'] = { 'fp':thr_rlay_fp, 'time (secs)':tdelta.total_seconds(), 'name':os.path.basename(thr_rlay_fp)[:-4]}
             #===================================================================
