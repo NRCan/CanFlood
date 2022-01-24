@@ -119,7 +119,8 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
         if out_dir is None: out_dir = os.path.join(os.path.expanduser('~'), 'CanFlood', projName)
 
             
-        if logger is None: logger = basic_logger(new_wdir=base_dir)
+        if logger is None: 
+            logger = basic_logger(new_wdir=base_dir)
         
         #init the cascade 
         """will need to pass some of these to children"""
@@ -849,6 +850,8 @@ class WorkFlow(wFlow.scripts_retrieve.WF_retriev, Session): #worker with methods
                 wrkr.as_inun=pars_d['as_inun']
             
         """
+        self.temp_dir
+        wrkr.temp_dir
         using new intelligement retrival
             see scripts_retrieve.WF_retriev
                 get_rsamp_vlay
@@ -883,11 +886,11 @@ class WorkFlow(wFlow.scripts_retrieve.WF_retriev, Session): #worker with methods
         #=======================================================================
         # wrap
         #=======================================================================
-        ri_lib_out = copy.deepcopy(wrkr.rlay_inun_lib)
+        #ri_lib_out = copy.deepcopy(wrkr.rlay_inun_lib)
         
         wrkr.__exit__()
         
-        return df, ri_lib_out
+        return df #, ri_lib_out
     """
     for k in df.columns:
         print(k)

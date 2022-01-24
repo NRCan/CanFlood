@@ -11,6 +11,7 @@ helper functions w/ Qgis api
 #==============================================================================
 #python
 import os, configparser, logging, inspect, copy, datetime, re, warnings
+from pprint import PrettyPrinter
 import pandas as pd
 import numpy as np
 #qgis
@@ -32,7 +33,7 @@ import processing
 
 mod_logger = logging.getLogger('Q') #get the root logger
     
-    
+ 
 
 from hlpr.exceptions import QError as Error
     
@@ -197,7 +198,8 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         # attach inputs
         #=======================================================================
 
-        self.logger.debug('Qcoms.__init__ finished w/ out_dir: \n    %s'%self.out_dir)
+        self.logger.debug('Qcoms.__init__ finished w/ \n    out_dir:    %s\n    temp_dir:    %s'%(
+            self.out_dir, self.temp_dir))
         
         return
     
@@ -2941,7 +2943,8 @@ class RasterCalc(object):
         #=======================================================================
         # execute
         #=======================================================================
-        msg = '\n'.join(['%s:    %s'%(k,v) for k,v in d.items()])
+        msg = PrettyPrinter(indent=4).pformat(d)
+        #msg = '\n'.join(['%s:    %s'%(k,v) for k,v in d.items()])
         log.debug('QgsRasterCalculator w/ \n%s'%msg)
         
         rcalc = QgsRasterCalculator(d['formula'], d['ofp'],

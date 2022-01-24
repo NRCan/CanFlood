@@ -331,6 +331,11 @@ class Rsamp(Plotr, Qcoms):
                     2020-05-06
                     ran 2 tests, and this INCREASED run times by ~20%
                     set default to clip_dtm=False
+                    
+                    2021-01-24
+                    am using this more... definitely decreases run times for small AOIs
+                    
+                    TODO: save this dtm_rlay to cache
                     """
                     log.info('trimming dtm \'%s\' by finv extents'%(dtm_rlay.name()))
                     
@@ -1107,6 +1112,7 @@ class Rsamp(Plotr, Qcoms):
     def samp_inun_line(self, #inundation percent for Line
 
                   finv, raster_l, dtm_rlay, dthresh,
+                  out_dir=None,
                    ):
         
         """"
@@ -1140,8 +1146,8 @@ class Rsamp(Plotr, Qcoms):
         gtype=self.gtype
         
         #setup temp dir
-        import tempfile #todo: move this up top
-        temp_dir = tempfile.mkdtemp()        
+        if out_dir is None: out_dir=self.temp_dir
+       
         #=======================================================================
         # precheck
         #=======================================================================
@@ -1169,7 +1175,8 @@ class Rsamp(Plotr, Qcoms):
             #===================================================================
             # #get depth raster
             #===================================================================
-            dep_rlay_fp = self._get_depr(dtm_rlay,rlay,  log, out_dir=temp_dir)
+            #retrive pre-loaded or build new depth ratser
+            dep_rlay_fp = self._get_depr(dtm_rlay,rlay,  log, out_dir=out_dir)
             
             #===============================================================
             # #convert to points
@@ -1394,7 +1401,9 @@ class Rsamp(Plotr, Qcoms):
             with RasterCalc(dep_fp, logger=log, out_dir=out_dir, name='thresh', session=self) as wrkr:
                 rcentry = wrkr._rCalcEntry(dep_fp)
                 fp = wrkr.rcalc1(
-                    '{rlay}*(({rlay}>{thresh})/({rlay}>{thresh}))'.format(rlay=rcentry.ref, thresh=dthresh))
+                    '{rlay}*(({rlay}>{thresh})/({rlay}>{thresh}))'.format(rlay=rcentry.ref, thresh=dthresh),
+                    ofp = os.path.join(out_dir, '%s_thresh%s.tif'%(rcentry.raster.name().replace('_', ''), dtkey)),
+                    )
                 
                 del rcentry
                 
