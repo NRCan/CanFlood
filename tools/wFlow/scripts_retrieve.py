@@ -42,8 +42,12 @@ class WF_retriev(object):
 
                 'rsamp_vlay':{
                     'compiled':lambda fp=None:self.load_vlay(fp, allow_none=False),
-                    'build':lambda **kwargs:self.get_rsamp_vlay(**kwargs)
-                    }
+                    'build':lambda **kwargs:self.get_WSLsamp_vlay(**kwargs)
+                    },
+                'dtmsamp_vlay':{
+                    'compiled':lambda fp=None:self.load_vlay(fp, allow_none=False),
+                    'build':lambda **kwargs:self.get_DTMsamp_vlay(**kwargs)
+                    },
                 }
             
             
@@ -127,25 +131,25 @@ class WF_retriev(object):
         return data
     
     
-    def get_rsamp_vlay(self,
-                wrkr=None, #Rsamp
+    def get_WSLsamp_vlay(self,
+                     wrkr=None, #Rsamp
                   pars_d=dict(),  #hazar draster sampler
                   logger=None,
-                  dkey = '',
+                  
                   rlay_d = None, #optional container of raster layers
-                  rkwargs=None,
-                  write=None,
+                  
+                  #
                   **kwargs
                   ):
         #=======================================================================
         # defaults
         #=======================================================================
         if logger is None: logger=self.logger
-        log = logger.getChild('get_rsamp_vlay')
+        log = logger.getChild('get_WSLsamp_vlay')
         
-        if write is  None: write=self.write
         
-        assert dkey=='rsamp_vlay'
+        
+        
         
         
         #=======================================================================
@@ -154,7 +158,7 @@ class WF_retriev(object):
         if rlay_d is None:
             fp = os.path.join(self.base_dir, pars_d['raster_dir'])
             rlay_d = self._retrieve('rlay_d',
-                   f = lambda logger=None: wrkr.load_rlays(fp, logger=logger))
+                   f = lambda logger=None: wrkr.load_rlays(fp, logger=log))
 
         assert len(rlay_d)>0
         
@@ -162,11 +166,78 @@ class WF_retriev(object):
         if 'dtm_fp' in pars_d:
             fp = os.path.join(self.base_dir, pars_d['dtm_fp'])
             dtm_rlay = self._retrieve('dtm_rlay',
-                   f = lambda logger=None: wrkr.load_rlay(fp, logger=logger))
+                   f = lambda logger=None: wrkr.load_rlay(fp, logger=log))
         else:
             dtm_rlay=None
+            
+        #=======================================================================
+        # execute
+        #=======================================================================
+        return self.get_rsamp_vlay(list(rlay_d.values()),
+                                   wrkr=wrkr, log=log, pars_d=pars_d, dtm_rlay=dtm_rlay,
+                                    **kwargs)
+
+    def get_DTMsamp_vlay(self,
+                     wrkr=None, #Rsamp
+                  pars_d=dict(),  #hazar draster sampler
+                  logger=None,
+ 
+ 
+                  **kwargs
+                  ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log = logger.getChild('get_DTMsamp_vlay')
         
+        
+ 
+        
+        #=======================================================================
+        # load the data
+        #=======================================================================
+        fp = os.path.join(self.base_dir, pars_d['dtm_fp'])
+        dtm_rlay = self._retrieve('dtm_rlay',
+               f = lambda logger=None: wrkr.load_rlay(fp, logger=log))
+        
+ 
+            
+        #=======================================================================
+        # execute
+        #=======================================================================
+        return self.get_rsamp_vlay([dtm_rlay],
+                                   wrkr=wrkr, log=log, pars_d=pars_d,  
+                                    **kwargs)
+        
+    def get_rsamp_vlay(self, #commons for running rsamp
+                       rlay_l,
+                       
+                       #passtthrough
+                       dkey = '',
+                       wrkr=None, #Rsamp
+                       #dtm_rlay=None,
+                       log=None,
+                       
+                       #model control
+                       pars_d=None, 
+
+                       
+
+                       #function control
+                                              
+                       write=None,                       
+                       **kwargs):
                 
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if write is  None: write=self.write
+        assert dkey in ['rsamp_vlay', 'dtmsamp_vlay']
+        
+        
+        
+        
         #pull previously loaded
         finv_vlay = self.data_d['finv_vlay']
         
@@ -177,28 +248,23 @@ class WF_retriev(object):
         """
         TODO: harmonize this to at most 2 types
         """
-        #user provided run kwargs
-        if rkwargs is None: 
-            rkwargs = self._get_kwargs(wrkr.__class__.__name__)
+
             
         #kwargs from control file
         pkwargs = {k:pars_d[k] for k in ['dthresh', 'as_inun', 'psmp_stat'] if k in pars_d}
         
         
-        #check overlap
-        l = set(rkwargs.keys()).intersection(kwargs.keys())
-        assert len(l)==0
-        
+        #check overlap      
         l = set(pkwargs.keys()).intersection(kwargs.keys())
         assert len(l)==0
         
         #combine
-        kwargs = {**kwargs, **pkwargs, **rkwargs}
+        kwargs = {**kwargs, **pkwargs}
         #=======================================================================
         # execute
         #=======================================================================
         
-        res_vlay = wrkr.run(list(rlay_d.values()), finv_vlay, dtm_rlay=dtm_rlay,
+        res_vlay = wrkr.run(rlay_l, finv_vlay,  
                               **kwargs)
         
         wrkr.check()
@@ -216,6 +282,7 @@ class WF_retriev(object):
             
         
         return res_vlay
+ 
     
     
     def __exit__(self, #destructor

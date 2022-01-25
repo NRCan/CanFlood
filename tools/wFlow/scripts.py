@@ -851,20 +851,11 @@ class WorkFlow(wFlow.scripts_retrieve.WF_retriev, Session): #worker with methods
             if 'as_inun' in pars_d:
                 wrkr.as_inun=pars_d['as_inun']
             
-        """
-        self.temp_dir
-        wrkr.temp_dir
-        using new intelligement retrival
-            see scripts_retrieve.WF_retriev
-                get_rsamp_vlay
-        
-        """
+ 
         res_vlay = self._retrieve2('rsamp_vlay', pars_d=pars_d, wrkr=wrkr, logger=log, **kwargs) #self.get_rsamp_vlay
         
         """intermediate retrival may cause issues with column names"""
-        
  
-            
         
         #=======================================================================
         # #post
@@ -904,12 +895,10 @@ class WorkFlow(wFlow.scripts_retrieve.WF_retriev, Session): #worker with methods
 
     def rsamp_dtm(self, pars_d,  #hazar draster sampler
                   logger=None,
-                  psmp_stat=None,
-                  rkwargs=None,
+
+ 
                   **kwargs):
-        """
-        kwargs not setup to be different from the rsamp
-        """
+
         #=======================================================================
         # defaults
         #=======================================================================
@@ -917,39 +906,27 @@ class WorkFlow(wFlow.scripts_retrieve.WF_retriev, Session): #worker with methods
         if logger is None: logger=self.logger
         log = logger.getChild('rsamp_dtm')
         
-        """need flexibility to use separate stat for wsl sampling than for dtm sampling"""
-        if psmp_stat is None:
-            if 'psmp_stat' in pars_d:
-                psmp_stat = pars_d['psmp_stat']
-        
 
-        
-        
-        
         #=======================================================================
         # load the data
         #=======================================================================
         wrkr = self._get_wrkr(Rsamp)
-        
-        if rkwargs is None: 
-            rkwargs = self._get_kwargs(wrkr.__class__.__name__)
-        
-        
-        fp = os.path.join(self.base_dir, pars_d['dtm_fp'])
-        dtm_rlay = self._retrieve('dtm_rlay',
-               f = lambda logger=None: wrkr.load_rlay(fp, logger=logger))
+ 
 
-        #pull previously loaded
-        finv_vlay = self.data_d['finv_vlay']
-        
         #=======================================================================
-        # execute
+        # retrieve
         #=======================================================================
+        """module is not written very well.. and a few values are set during run"""
+        if 'dtmsamp_vlay' in self.compiled_fp_d:
+            if 'as_inun' in pars_d:
+                wrkr.as_inun=pars_d['as_inun']
+            
+ 
+        res_vlay = self._retrieve2('dtmsamp_vlay', pars_d=pars_d, wrkr=wrkr, logger=log, **kwargs) #self.get_rsamp_vlay
         
-        #kwargs = {k:pars_d[k] for k in ['psmp_stat'] if k in pars_d}
+        """intermediate retrival may cause issues with column names"""
         
-        res_vlay = wrkr.run([dtm_rlay], finv_vlay,  fname='gels',
-                              **{**rkwargs, **kwargs})
+        
         #=======================================================================
         # #post
         #=======================================================================

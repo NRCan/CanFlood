@@ -767,6 +767,19 @@ def get_valid_filename(s):
     s = re.sub(r'(?u)[^-\w.]', '', s)
     s = re.sub(':','-', s)
     return s
+
+def dict_update2(#helper to update a 2level dictionary with a similar new one 
+                         old_d, new_d,
+                 ):
+        
+        if len(new_d)>0:
+            for k,sub_d in old_d.items():
+                assert isinstance(sub_d, dict), 'bad type on \'%s\''%k
+                if k in new_d:
+                    sub_d.update(new_d[k])
+        
+        return old_d
+ 
     
     
 if __name__ =="__main__": 
