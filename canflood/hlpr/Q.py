@@ -73,6 +73,8 @@ stat_pars_d = {'First': 0, 'Last': 1, 'Count': 2, 'Sum': 3, 'Mean': 4, 'Median':
                 'St dev (pop)': 6, 'Minimum': 7, 'Maximum': 8, 'Range': 9, 'Minority': 10,
                  'Majority': 11, 'Variety': 12, 'Q1': 13, 'Q3': 14, 'IQR': 15}
 
+field_dtype_d = {'Float':0,'Integer':1,'String':2,'Date':3}
+
 #==============================================================================
 # classes -------------
 #==============================================================================
@@ -88,6 +90,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
 
     
     q_hndls = ['crs', 'crsid', 'algo_init', 'qap', 'vlay_drivers']
+    
     
     algo_init = False #flag indicating whether the algos have been initialized
     qap = None
@@ -1074,6 +1077,37 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
     #==========================================================================
     # ALGOS--------------
     #==========================================================================
+    
+    def fieldcalculator(self,
+            vlay,
+            formula_str,
+            fieldName = 'new_field',
+            fieldType = 'String',
+            output='TEMPORARY_OUTPUT',
+            logger=None,
+            ):
+        
+        #=======================================================================
+        # setups and defaults
+        #=======================================================================
+        if logger is None: logger=self.logger    
+        algo_nm = 'native:fieldcalculator'
+        log = logger.getChild('fieldcalculator')
+
+        ins_d = { 'FIELD_LENGTH' : 0,  'FIELD_PRECISION' : 0, 
+                 'FIELD_NAME' : fieldName,
+                 'FIELD_TYPE' : field_dtype_d[fieldType], 
+                 'FORMULA' : formula_str, 
+                 'INPUT' : vlay,
+                 'OUTPUT' : output }
+        
+        log.debug('executing \'%s\' with: \n     %s'%(algo_nm,  ins_d))
+ 
+        res_d = processing.run(algo_nm, ins_d,  feedback=self.feedback, context=self.context)
+        
+        return res_d['OUTPUT']
+    
+    
     def deletecolumn(self,
                      in_vlay,
                      fieldn_l, #list of field names
