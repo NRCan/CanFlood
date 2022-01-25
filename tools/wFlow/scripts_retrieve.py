@@ -76,6 +76,10 @@ class WF_retriev(object):
                  logger=None,
                  **kwargs
                  ):
+        """
+        WARNING: be careful with parameters that are meant to live in the control file
+            in general, 'bk_lib' should be for keys used by build tools
+        """
         
         if logger is None: logger=self.logger
         log = logger.getChild('_retrieve2')
