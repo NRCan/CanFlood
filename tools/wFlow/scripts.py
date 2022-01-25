@@ -73,7 +73,7 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
     #===========================================================================
     #set passed to all
     """this is picked up and modified by the workflow"""
-    com_hndls = ['absolute_fp', 'overwrite']
+    com_hndls = ['absolute_fp', 'overwrite', 'tag']
     
     #set passed to workflows (in addition to com_hndls)
     flow_hndls = ['init_plt_d', 'init_q_d', 'write', 'base_dir', 'plot', 'upd_cf']
@@ -220,7 +220,7 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
             ):
         """
         lets the user define their own methods for batching together workflows
-        
+        self.tag
         """
         log=self.logger.getChild('r')
         log.info('running %i flows: \n    %s'%(len(wFlow_l), wFlow_l))
@@ -413,7 +413,7 @@ class WorkFlow(wFlow.scripts_retrieve.WF_retriev, Session): #worker with methods
 
         super().__init__(name=name,
                         out_dir=out_dir,
-                         tag = '%s'%datetime.datetime.now().strftime('%Y%m%d'),
+                         #tag = '%s'%datetime.datetime.now().strftime('%Y%m%d'),
                          crsid=self.crsid, #overrwrite the default with your default
                          **kwargs) #Session -> Qcoms -> ComWrkr
 
@@ -428,7 +428,7 @@ class WorkFlow(wFlow.scripts_retrieve.WF_retriev, Session): #worker with methods
         
         
         self.com_hndls = list(session.com_hndls) +[
-            'out_dir', 'name', 'tag', 'cid']
+            'out_dir', 'name', 'cid']
         
         self.data_d = dict() #empty container for data
         
@@ -442,6 +442,8 @@ class WorkFlow(wFlow.scripts_retrieve.WF_retriev, Session): #worker with methods
         # checks
         #=======================================================================
         assert isinstance(self.pars_d, dict)
+        
+        self.logger.debug('WorkFlow.__init__ w/ resname: %s'%self.resname)
 
     #===========================================================================
     # HANDLERS-----------
@@ -902,20 +904,37 @@ class WorkFlow(wFlow.scripts_retrieve.WF_retriev, Session): #worker with methods
 
     def rsamp_dtm(self, pars_d,  #hazar draster sampler
                   logger=None,
+                  psmp_stat=None,
                   rkwargs=None,
-                  ):
+                  **kwargs):
         """
         kwargs not setup to be different from the rsamp
         """
+        #=======================================================================
+        # defaults
+        #=======================================================================
         
         if logger is None: logger=self.logger
         log = logger.getChild('rsamp_dtm')
         
-        wrkr = self._get_wrkr(Rsamp)
+        """need flexibility to use separate stat for wsl sampling than for dtm sampling"""
+        if psmp_stat is None:
+            if 'psmp_stat' in pars_d:
+                psmp_stat = pars_d['psmp_stat']
+        
+
+        
+        
         
         #=======================================================================
         # load the data
         #=======================================================================
+        wrkr = self._get_wrkr(Rsamp)
+        
+        if rkwargs is None: 
+            rkwargs = self._get_kwargs(wrkr.__class__.__name__)
+        
+        
         fp = os.path.join(self.base_dir, pars_d['dtm_fp'])
         dtm_rlay = self._retrieve('dtm_rlay',
                f = lambda logger=None: wrkr.load_rlay(fp, logger=logger))
@@ -926,8 +945,8 @@ class WorkFlow(wFlow.scripts_retrieve.WF_retriev, Session): #worker with methods
         #=======================================================================
         # execute
         #=======================================================================
-        if rkwargs is None: rkwargs = self._get_kwargs(wrkr.__class__.__name__)
-        kwargs = {k:pars_d[k] for k in ['psmp_stat'] if k in pars_d}
+        
+        #kwargs = {k:pars_d[k] for k in ['psmp_stat'] if k in pars_d}
         
         res_vlay = wrkr.run([dtm_rlay], finv_vlay,  fname='gels',
                               **{**rkwargs, **kwargs})
@@ -1051,6 +1070,7 @@ class WorkFlow(wFlow.scripts_retrieve.WF_retriev, Session): #worker with methods
               plot=None, #for impact only runs we usually pass False here
               calc_risk=True,
               res_per_asset=None,
+              write_ddf=False,
               rkwargs = None, #flow control keys for this run
               ): #run risk1
         #=======================================================================
@@ -1096,6 +1116,12 @@ class WorkFlow(wFlow.scripts_retrieve.WF_retriev, Session): #worker with methods
             if len(res_ttl)>0: wrkr.output_ttl()
             wrkr.output_etype()
             if not res_df is None: wrkr.output_passet()
+            
+            if write_ddf:
+                dxind = wrkr.get_expanded_finv()
+                ofp = os.path.join(self.out_dir, 'bdxind_%s.csv'%self.resname)
+                dxind.to_csv(ofp)
+                log.info('wrote ddf (%s) to %s'%(str(dxind.shape), ofp))
             
         #=======================================================================
         # wrap
@@ -1281,6 +1307,7 @@ class WorkFlow(wFlow.scripts_retrieve.WF_retriev, Session): #worker with methods
                     dkey='finv_vlay',
                     dkey_tab='r_passet',
                     rkwargs=None,
+                    as_points=False,
                     ):
         """to run djoin on L2 dmg impacts only:
             pass the following tot his caller:
@@ -1317,11 +1344,18 @@ class WorkFlow(wFlow.scripts_retrieve.WF_retriev, Session): #worker with methods
         if rkwargs is None: rkwargs = self._get_kwargs(wrkr.__class__.__name__)
         jvlay = wrkr.run(finv_vlay, **rkwargs)
         
+ 
         #=======================================================================
         # write result
         #=======================================================================
         if self.write:
             out_fp = wrkr.vlay_write(jvlay, logger=log)
+            
+            if as_points:
+                log.debug('writing points layer from %s'%jvlay.name())
+                jvlay_pts = self.centroids(jvlay, logger=log)
+                jvlay_pts.setName('%s_pts'%jvlay.name())
+                wrkr.vlay_write(jvlay_pts, logger=log)
             
 
         

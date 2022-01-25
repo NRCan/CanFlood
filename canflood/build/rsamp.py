@@ -706,7 +706,7 @@ class Rsamp(Plotr, Qcoms):
         #=======================================================================
         # check parameter logic
         #=======================================================================
-        assert psmp_stat in self.psmp_codes, 'unrecognized psmp_stat'
+        assert psmp_stat in self.psmp_codes, 'unrecognized psmp_stat \'%s\''%psmp_stat
  
         #=======================================================================
         # sample loop
@@ -850,6 +850,7 @@ class Rsamp(Plotr, Qcoms):
         #=======================================================================
         log = self.logger.getChild('samp_passet')
         log.debug('merging %i:    %s'%(len(lays_d), list(lays_d.keys())))
+        
         finv_res = processing.run('native:mergevectorlayers',
                     { 'CRS' : self.qproj.crs(), 
                      'LAYERS' :list(lays_d.values()),
@@ -871,8 +872,7 @@ class Rsamp(Plotr, Qcoms):
         """only the psmp_fieldName should be missing"""
         assert len(miss_l)==1,'fieldName mismatch on merge \n    %s'%miss_l
         
-        
-
+ 
         #=======================================================================
         # warp
         #=======================================================================

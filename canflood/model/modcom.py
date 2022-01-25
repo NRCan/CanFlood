@@ -1665,7 +1665,43 @@ class Model(ComWrkr,
         
         self.ddf = ddf
         
-
+    def get_expanded_finv(self,
+                          ):
+        """
+        this worker has some poor data storage strategies
+            here we use multindexing to get some nicer data for outputing
+            eventually.. would be nice to switch the whole module over
+        """
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        cid, bid = self.cid, self.bid
+        nestcn = 'nestID'
+        ddf = self.ddf.copy()
+        
+        bdf = self.bdf.copy()
+        
+        
+        #=======================================================================
+        # convert
+        #=======================================================================
+        #get mulindex from expanded finv
+        dxind1 = bdf.set_index([nestcn, cid, bid], drop=True).sort_index(level=cid)
+        
+        #join depths
+        dxind2 = dxind1.join(ddf.set_index([cid, bid]).rename(columns={
+            c:'%s_dep'%c for c in ddf.columns})
+            )
+        
+        dxind2.index = dxind2.index.swaplevel(i=0, j=2)
+        """
+        view(ddf)
+        view(dxind2)
+        """
+        
+        return dxind2
+        
+        
     #===========================================================================
     # CALCULATORS-------
     #===========================================================================
