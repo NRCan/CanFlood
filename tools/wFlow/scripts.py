@@ -263,7 +263,8 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
         # defautls
         #=======================================================================
         log = self.logger.getChild('build_meta')
-        if out_fp is None: out_fp = os.path.join(self.out_dir, 'smry_%s.xls'%self.resname)
+        if out_fp is None: 
+            out_fp = os.path.join(self.out_dir, 'smry_%s.xls'%self.resname)
         
         meta_d = dict()
         #=======================================================================
@@ -312,14 +313,8 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
         #=======================================================================
         # wrap
         #=======================================================================
-        meta_d = {**{'_smry':smry_df}, **meta_d}
-        with pd.ExcelWriter(out_fp) as writer:
-            for tabnm, df in meta_d.items():
-                df.to_excel(writer, sheet_name=tabnm, index=True, header=True)
-                
-        log.info('wrote %i tabs to \n    %s'%(len(meta_d), out_fp))
-        
-        return out_fp
+        log.info('finished on %i \n    %s'%(len(smry_df), list(smry_df.index)))
+        return {**{'_smry':smry_df}, **meta_d}
                  
                  
         
