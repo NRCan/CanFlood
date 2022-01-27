@@ -207,7 +207,7 @@ class WF_retriev(object):
         # execute
         #=======================================================================
         return self.get_rsamp_vlay([dtm_rlay],
-                                   wrkr=wrkr, log=log, pars_d=pars_d,  
+                                   wrkr=wrkr, log=log, pars_d=pars_d,  fname='gels',
                                     **kwargs)
         
     def get_rsamp_vlay(self, #commons for running rsamp
