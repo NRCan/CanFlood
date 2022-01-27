@@ -151,11 +151,7 @@ class WF_retriev(object):
         if logger is None: logger=self.logger
         log = logger.getChild('get_WSLsamp_vlay')
         
-        
-        
-        
-        
-        
+ 
         #=======================================================================
         # load the data
         #=======================================================================

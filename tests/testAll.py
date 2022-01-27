@@ -536,20 +536,20 @@ class L1_t(WorkFlow_t):
     Test = Test_wf_basic
     tdata_keys = ['finv', 'expos']
     
-    def __init__(self, **kwargs):
+    def __init__(self,bk_lib={}, **kwargs):
         self.pars_d = {
                 'raster_dir':r'tutorials\4\haz_rast',
                 'as_inun':False,'felv':'datum'
                         }
-        
-        self.tpars_d = { #kwargs for individual tools
-            'Rsamp':{
-                'psmp_stat':'Max'
-                }
-            }
+ 
         
 
-        super().__init__(**kwargs)
+        super().__init__(
+            bk_lib = {**bk_lib, **{
+                'rsamp_vlay':{'psmp_stat':'Max'},
+                'dtmsamp_vlay':{'psmp_stat':'Max'},
+                }},
+            **kwargs)
         
     def run(self):
         log = self.logger.getChild('r')
