@@ -31,7 +31,7 @@ Check out the new [documentation](https://canflood.readthedocs.io/en/latest/#)!
 
 4) If you're re-installing or upgrading, it is safest to first uninstall CanFlood and restart QGIS before continuing with a new install.  
 
-5) We recommend implementing the QGIS DEBUG logger for more detailed readouts and CanFlood model debugging. See [this post](https://stackoverflow.com/a/61669864/9871683) for insturctions.
+5) We recommend implementing the QGIS DEBUG logger for more detailed readouts and CanFlood model debugging. See [this post](https://stackoverflow.com/a/61669864/9871683) for instructions.
 
 ### tl;dr
 Install from the QGIS plugin repository.  
