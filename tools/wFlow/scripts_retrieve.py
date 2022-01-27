@@ -260,7 +260,7 @@ class WF_retriev(object):
         
         #check overlap      
         l = set(pkwargs.keys()).intersection(kwargs.keys())
-        assert len(l)==0
+        assert len(l)==0, 'got some overlapping keys: %s'%l
         
         #combine
         kwargs = {**kwargs, **pkwargs}

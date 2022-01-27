@@ -228,6 +228,7 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
  
         rlib = dict()
         for WorkFlow in wFlow_l:
+            start = datetime.datetime.now()
             #runr = self._run_wflow(fWrkr, **kwargs)
             
             self._setup_wrkr(WorkFlow, kwargs, log)
@@ -236,14 +237,107 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
                 
                 runr.run()
                 
-                rlib[runr.name] = runr.res_d.copy()
-            
+                d = runr.res_d.copy()
+                rlib[runr.name] = {**{
+                    'name':runr.name,
+                    'time (sec)':(datetime.datetime.now()-start).total_seconds(),
+                    'className':runr.__class__.__name__,
+                    'out_dir':runr.out_dir,
+                    'res_d':d}, 
+                    **copy.deepcopy(runr.pars_d), 
+                    **copy.deepcopy(runr.bk_lib),
+                    }
+                                   
  
             
         log.info('finished on %i: \n    %s'%(len(rlib), list(rlib.keys())))
         return rlib
     
-    
+    def build_meta(self, #build nice dataframe from rlib
+                   rlib,
+                   rkeys = ['r_passet'], #keys for sub-containers to concat
+                   out_fp = None,
+                   ):
+        
+        #=======================================================================
+        # defautls
+        #=======================================================================
+        log = self.logger.getChild('build_meta')
+        if out_fp is None: out_fp = os.path.join(self.out_dir, 'smry_%s.xls'%self.resname)
+        
+        meta_d = dict()
+        #=======================================================================
+        # #collect sub entries of interest
+        #=======================================================================
+        smry_lib, rlib2 = dict(), dict()
+        res_lib = {k:dict() for k in rkeys}
+        for k1, d1 in rlib.items():
+            smry_lib[k1] = {k2:v for k2,v in d1.items() if not isinstance(v, dict)}
+            rlib2[k1] = d1['res_d']
+            
+            #collect sub-containers
+ 
+            for key in rkeys:
+                res_lib[key][k1] = rlib2[k1][key]
+        
+        #=======================================================================
+        # #build summary frame
+        #=======================================================================
+
+            
+        smry_df = pd.DataFrame.from_dict(smry_lib, orient='index')
+        
+        #=======================================================================
+        # results containers
+        #=======================================================================
+        key = 'r_passet'
+        if key in res_lib:
+            #convert to multindex
+            dxcol = pd.concat(res_lib[key], axis=1)
+            dxind1 = dxcol.stack(level=0)
+            dxind1.index.set_names(['cid', 'name'], inplace=True)
+            dxind2 = dxind1.swaplevel(axis=0).sort_index(level=0, sort_remaining=True)
+            
+            #===================================================================
+            # #get summary info
+            #===================================================================
+            for stat in ['sum', 'count']:
+                gb = dxind2['ead'].groupby(level=0, axis=0)
+                ser = getattr(gb, stat)()
+                smry_df = smry_df.join(ser.rename(stat))
+                
+            #wrap
+            meta_d[key] = dxind2
+            
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        meta_d = {**{'_smry':smry_df}, **meta_d}
+        with pd.ExcelWriter(out_fp) as writer:
+            for tabnm, df in meta_d.items():
+                df.to_excel(writer, sheet_name=tabnm, index=True, header=True)
+                
+        log.info('wrote %i tabs to \n    %s'%(len(meta_d), out_fp))
+        
+        return out_fp
+                 
+                 
+        
+            
+ 
+            
+            
+ 
+        
+        """
+        view(dx1)
+        rlib2[k1].keys()
+        d1.keys()
+        res_lib.keys()
+        view(smry_df)
+        """
+        
+        log.debug('%s'%smry_lib.keys())
     #===========================================================================
     # HELPERS-----
     #===========================================================================
@@ -694,7 +788,7 @@ class WorkFlow(wFlow.scripts_retrieve.WF_retriev, Session): #worker with methods
                         os.path.join(self.base_dir, pars_d['finv_fp']), aoi_vlay=aoi_vlay, logger=logger),
                         )
         
-        assert isinstance(finv_vlay, QgsVectorLayer), self.name
+        assert isinstance(finv_vlay, QgsVectorLayer), 'no feats selected for \'%s\'?'%self.name
         
         assert self.cid in [f.name() for f in finv_vlay.fields()], self.name
         #=======================================================================

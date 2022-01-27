@@ -479,7 +479,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                                     'watchFile':'no'},
                   ):
         
-        assert os.path.exists(fp), 'requested file does not exist: %s'%fp
+        assert os.path.exists(fp), 'requested file does not exist: \n    %s'%fp
         
         if logger is None: logger = self.logger
         log = logger.getChild('load_vlay')
