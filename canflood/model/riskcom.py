@@ -727,7 +727,11 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             if not ltail is None:
                 df.loc[:,0] = df.iloc[:,0] 
             if not rtail is None:
-                aep_val = max(df.columns.tolist())*(1+10**-(self.prec+2))
+                if isinstance(rtail, float):
+                    aep_val = rtail
+                else:
+                    aep_val = max(df.columns.tolist())*(1+10**-(self.prec+2))
+                    
                 df[aep_val] = 0
                 
             #re-arrange columns so x is ascending
