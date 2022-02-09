@@ -882,19 +882,7 @@ class Rsamp(Plotr, Qcoms):
 
         
         return finv_res
-    
-        """
-        view(pd.DataFrame.from_dict(meta_d, orient='index'))
-        view(finv_res)
-        """
-        
-     
  
-
-
-    
-    
-
     def samp_inun(self, #inundation percent for polygons
                   finv, raster_l, dtm_rlay, dthresh,
                   
