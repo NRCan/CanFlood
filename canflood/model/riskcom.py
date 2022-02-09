@@ -727,7 +727,11 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             if not ltail is None:
                 df.loc[:,0] = df.iloc[:,0] 
             if not rtail is None:
-                aep_val = max(df.columns.tolist())*(1+10**-(self.prec+2))
+                if isinstance(rtail, float):
+                    aep_val = rtail
+                else:
+                    aep_val = max(df.columns.tolist())*(1+10**-(self.prec+2))
+                    
                 df[aep_val] = 0
                 
             #re-arrange columns so x is ascending
@@ -760,7 +764,9 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
                     self.extrap_vals_d[0] = df.loc[:,0].mean().round(self.prec) #store for later
                 
             elif ltail == 'extrapolate': #DEFAULT
-                df.loc[bx,0] = df.loc[bx, :].apply(self._extrap_rCurve, axis=1, left=True)
+                df.loc[bx,0] = self.get_extrap(df.loc[bx, :], axis=1, left=True, log=log)
+                
+ 
                 
                 #extrap vqalue will be different for each entry
                 if len(df)==1: 
@@ -784,8 +790,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             if rtail == 'extrapolate':
                 """just using the average for now...
                 could extraploate for each asset but need an alternate method"""
-                aep_ser = df.loc[bx, :].apply(
-                    self._extrap_rCurve, axis=1, left=False)
+                aep_ser = self.get_extrap(df.loc[bx, :], axis=1, left=True, log=log)
                 
                 aep_val = round(aep_ser.mean(), 5)
                 
@@ -962,11 +967,51 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         return evFail_ser.sum() + noFail_ar[0]*noFail_ar[1]
 
 
+    def get_extrap(self,
+                   df_raw,
+                   log=None,
+                   **kwargs
+                   ):
+        """
+ 
+        
+        view(df_raw)
+        ser = df_raw.iloc[1, :]
+        """
+        
+        if log is None: log=self.logger.getChild('get_extrap')
+        
+        #get raw extraploation
+        res_ser = df_raw.apply(self._extrap_rCurve, **kwargs)
+        
+        #report on errors
+        bx = res_ser == -9999
+        if bx.any():
+            log.error('%i/%i values failed to extrapolate.. see log.. setting thes to null'%(
+                bx.sum(), len(bx)))
+            
+            #log the full data set
+            with pd.option_context('display.max_rows', None, 
+                                   'display.max_columns', None,
+                                   'display.width',1000):
+                
+                
+                log.debug('\n %s'%df_raw.join(bx.rename('error'))[bx])
+                
+        res_ser.loc[bx] =np.nan
+        
+        return res_ser
+            
+            
+            
+            
+        
 
 
     def _extrap_rCurve(self,  #extraploating EAD curve data
                ser, #row of dmages (y values) from big df
                left=True, #whether to extraploate left or right
+               errors='ignore',
                ):
         
         """
@@ -976,15 +1021,10 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         #=======================================================================
         from matplotlib import pyplot as plt
 
-        plt.close()
-        
-        fig = plt.figure()
-        ax = fig.add_subplot()
-        
-        ax.plot(ser.index.values,  ser.values, 
-            linestyle='None', marker="o")
+     
+        plt.plot(ser.index.values,  ser.values,linestyle='None', marker="o")
             
-        ax.plot(0, f(0), marker='x', color='red')
+        plt.plot(0, f(0), marker='x', color='red')
 
         ax.grid()
         plt.show()
@@ -1016,7 +1056,12 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         result = float(f(0)) #y value at x=0
         
         if not result >=0:
-            raise Error('got negative extrapolation on \'%s\': %.2f'%(ser.name, result))
+            if errors == 'raise':
+                raise Error('got negative extrapolation on \'%s\': %.2f'%(ser.name, result))
+            elif errors=='ignore':
+                return -9999
+            else:
+                raise Error('unrecognized error key \'%s\''%errors)
         
         return result 
     

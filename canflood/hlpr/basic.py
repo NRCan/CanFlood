@@ -23,7 +23,7 @@ import os, configparser, logging, re, datetime, warnings
 import pandas as pd
 pd.set_option('display.max_rows',5)
 import numpy as np
-
+import tempfile #todo: move this up top
 
 
 #==============================================================================
@@ -59,6 +59,7 @@ class ComWrkr(object): #common methods for all classes
 
                  overwrite=True, 
                  out_dir=None, 
+                 temp_dir=None,
                  logger=mod_logger,
 
                  prec = 4,
@@ -84,11 +85,20 @@ class ComWrkr(object): #common methods for all classes
         """consider using self.name instead?"""
         self.logger = logger.getChild(self.__class__.__name__)
         #setup output directory
-        if out_dir is None: out_dir = os.getcwd()
+        if out_dir is None: 
+            out_dir = os.getcwd()
         
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
             self.logger.info('created requested output directory: \n    %s'%out_dir)
+            
+        if temp_dir is None:
+            temp_dir = tempfile.mkdtemp()
+        
+        if not os.path.exists(temp_dir):
+            os.makedirs(temp_dir)
+        
+        self.temp_dir=temp_dir  
 
         self.data_d = dict() #dictionary for loaded data sets
         #======================================================================
@@ -275,6 +285,7 @@ class ComWrkr(object): #common methods for all classes
             
         log.info('updated control file w/ %i pars at :\n    %s'%(
             cnt, cf_fp))
+        log.debug(new_pars_d)
         
         return
     
@@ -398,6 +409,9 @@ class ComWrkr(object): #common methods for all classes
 
     
 class MyFeedBack(object): #simple custom feedback object
+    """TODO: 
+    make this a subclass of QgsProcessingFeedback
+    """
     
     def __init__(self, 
                  logger=mod_logger, 
@@ -753,6 +767,19 @@ def get_valid_filename(s):
     s = re.sub(r'(?u)[^-\w.]', '', s)
     s = re.sub(':','-', s)
     return s
+
+def dict_update2(#helper to update a 2level dictionary with a similar new one 
+                         old_d, new_d,
+                 ):
+        
+        if len(new_d)>0:
+            for k,sub_d in old_d.items():
+                assert isinstance(sub_d, dict), 'bad type on \'%s\''%k
+                if k in new_d:
+                    sub_d.update(new_d[k])
+        
+        return old_d
+ 
     
     
 if __name__ =="__main__": 

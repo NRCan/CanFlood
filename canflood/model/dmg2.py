@@ -113,6 +113,7 @@ class Dmg2(Model, DFunc, Plotr):
         self.logger.debug('Dmg2.__init__ finished')
         
     def prep_model(self):
+        assert not self.cid == self.bid, 'bid and cid must be different (%s)'%self.bid
         #======================================================================
         # setup funcs
         #======================================================================
@@ -154,8 +155,9 @@ class Dmg2(Model, DFunc, Plotr):
         return 
          
     def setup_dfuncs(self, # build curve workers from loaded xlsx data
-                 df_d, #{tab name: raw curve data
+                 df_d, #{tab name: raw curve df}
                  curve_deviation = None, #specify which curve deviation to build
+                 ftags_valid=None,
                  ):
  
         #=======================================================================
@@ -168,8 +170,11 @@ class Dmg2(Model, DFunc, Plotr):
         #=======================================================================
         # get list of dfuncs in the finv
         #=======================================================================
-        assert self.bdf['ftag'].dtype.char == 'O'
-        ftags_valid = self.bdf['ftag'].unique().tolist()
+        if ftags_valid is None:
+            assert self.bdf['ftag'].dtype.char == 'O'
+            ftags_valid = self.bdf['ftag'].unique().tolist()
+            
+        assert isinstance(ftags_valid, list)
         
         if np.nan in ftags_valid:
             raise Error('got some nulls')
@@ -217,7 +222,7 @@ class Dmg2(Model, DFunc, Plotr):
         #=======================================================================
         #check we loaded everything
         l = set(ftags_valid).difference(self.dfuncs_d.keys())
-        assert len(l)==0,'failed to load: %s'%l
+        assert len(l)==0,'failed to load %i/%i requested dfuncs: %s'%(len(l),len(ftags_valid), l)
         
         #check ground_water condition vs minimum value passed in dfuncs.
         if not self.ground_water:

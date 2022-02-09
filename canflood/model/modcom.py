@@ -203,7 +203,7 @@ class Model(ComWrkr,
     #===========================================================================
     # field names
     #===========================================================================
-    bid = 'bid' #indexer for expanded finv
+    bid = 'bidx' #indexer for expanded finv
     miLtcn = 'mi_Lthresh'
     miUtcn = 'mi_Uthresh'
     miVcn = 'mi_iVal'
@@ -1635,7 +1635,7 @@ class Model(ComWrkr,
                 
             #user wants to keep negative depths.. leave as is
             else:
-                log.info('gorund_water=True. preserving %i (of %i) negative depths'%(
+                log.info('ground_water=True. preserving %i (of %i) negative depths'%(
                     booldf.sum().sum(), booldf.size))
             
         #======================================================================
@@ -1665,7 +1665,43 @@ class Model(ComWrkr,
         
         self.ddf = ddf
         
-
+    def get_expanded_finv(self,
+                          ):
+        """
+        this worker has some poor data storage strategies
+            here we use multindexing to get some nicer data for outputing
+            eventually.. would be nice to switch the whole module over
+        """
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        cid, bid = self.cid, self.bid
+        nestcn = 'nestID'
+        ddf = self.ddf.copy()
+        
+        bdf = self.bdf.copy()
+        
+        
+        #=======================================================================
+        # convert
+        #=======================================================================
+        #get mulindex from expanded finv
+        dxind1 = bdf.set_index([nestcn, cid, bid], drop=True).sort_index(level=cid)
+        
+        #join depths
+        dxind2 = dxind1.join(ddf.set_index([cid, bid]).rename(columns={
+            c:'%s_dep'%c for c in ddf.columns})
+            )
+        
+        dxind2.index = dxind2.index.swaplevel(i=0, j=2)
+        """
+        view(ddf)
+        view(dxind2)
+        """
+        
+        return dxind2
+        
+        
     #===========================================================================
     # CALCULATORS-------
     #===========================================================================
@@ -2474,7 +2510,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
     #==========================================================================
 
     
-    dd_df = pd.DataFrame() #depth-damage data
+    #dd_df = pd.DataFrame() #depth-damage data
     
     """lets just do columns by location
     exp_coln = []"""
@@ -2533,7 +2569,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         
     
     def build(self,
-              df_raw, #raw parameters to build the DFunc w/ 
+              df_raw, #raw parameters to build the DFunc w/ . dummy index
               logger,
               curve_deviation=None,
               ):
@@ -2545,6 +2581,8 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         log = logger.getChild('%s'%self.tabn)
         if curve_deviation is None: curve_deviation=self.curve_deviation
         log.debug('on %s from %s'%(str(df_raw.shape), self.curves_fp))
+        
+        self.df_raw = df_raw.copy() #useful for retrieving later
         #=======================================================================
         # precheck
         #=======================================================================
@@ -2556,10 +2594,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         
 
         #slice and clean
- 
-        
-        df = df_raw.set_index(0, drop=True).dropna(how='all', axis=1)
-            
+        df = df_raw.set_index(0, drop=True).dropna(how='all', axis=1)            
         
         #======================================================================
         # identify depth-damage data
@@ -2657,7 +2692,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         
         #impact (y) vals
         if not np.all(np.diff(ar[1])>=0):
-            msg = 'impact values are decreasing'
+            msg = '\'%s\' impact values are decreasing'%self.tabn
             if self.monot:
                 raise Error(msg)
             else:
@@ -2715,9 +2750,20 @@ class DFunc(ComWrkr, #damage function or DFunc handler
     def get_stats(self): #get basic stats from the dfunc
         deps = self.dd_ar[0]
         dmgs = self.dd_ar[1]
+        
+        
+        np.all(np.diff(deps)>=0)
+        
+ 
         return {**{'min_dep':min(deps), 'max_dep':max(deps), 
-                'min_dmg':min(dmgs), 'max_dmg':max(dmgs), 'dcnt':len(deps)},
+                'min_dmg':min(dmgs), 'max_dmg':max(dmgs), 'dcnt':len(deps),
+                'dep_mono':np.all(np.diff(deps)>=0), 'dmg_mono':np.all(np.diff(dmgs)>=0)
+                },
+                   
                 **self.pars_d}
+        
+        
+        
         
         
         
@@ -2773,17 +2819,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         #=======================================================================
         try:
             df_raw = pd.DataFrame(clib_d).T
-            
-
-            
-            """
-            for k,v in clib_d.items():
-                print(k)
-                for k1,v1 in v.items():
-                    print('    %s:%s'%(k1,v1))
-            clib_d.keys()
-            
-            """
+ 
         except Exception as e:
             raise Error('faild to convert to frame w/ \n    %s'%e)
         
@@ -2851,11 +2887,11 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         """
         return sdf
     
-    def _get_split(self,#split the raw df into depth-damage and metadata
-                   df_raw, #dummy index
+    def _get_split(self,#split the raw df into function and metadata
+                   df_raw=None, #dummy index
                    fmt='dict', #result format
                    ): 
-        
+        if df_raw is None: df_raw=self.df_raw.copy()
         df = df_raw.set_index(0, drop=True)
         
         #get dd
@@ -2871,6 +2907,59 @@ class DFunc(ComWrkr, #damage function or DFunc handler
             return ddf, mdf
         elif fmt=='dict':
             return ddf.iloc[:,0].to_dict(), mdf.iloc[:,0].to_dict()
+        
+        
+    def _get_ddf(self): #return a formatted dataframe fo the dd_ar
+        return pd.DataFrame(self.dd_ar.T, columns=['exposure', 'impact'])
+        
+        
+    def set_scale(self,
+                  scale,
+                  logger=None,
+                  **kwargs
+                  ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log=logger.getChild('set_scale')
+        
+        #get df_raw
+        #df_raw = self.df_raw.copy()
+        self.pars_d['scale'] = scale
+        #=======================================================================
+        # retrieve
+        #=======================================================================
+        ddf_raw, mdf_raw= self._get_split(fmt = 'df')
+        
+        #=======================================================================
+        # scale the function
+        #=======================================================================
+        ddf = ddf_raw*scale
+        
+        #=======================================================================
+        # add the meta
+        #=======================================================================
+        expo_ser = mdf_raw.loc['exposure', :]
+        
+        mdf = mdf_raw.drop('exposure')
+        mdf.loc['scale', 1] = scale
+        
+        #=======================================================================
+        # recombine
+        #=======================================================================
+        
+        df = mdf.append(expo_ser).append(ddf).reset_index()
+        
+        #=======================================================================
+        # rebuild
+        #=======================================================================
+        self.build(df, log, **kwargs)
+        
+        log.info('set scale = %.2f'%scale)
+        
+        
         
         
         
