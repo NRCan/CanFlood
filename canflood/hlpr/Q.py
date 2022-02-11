@@ -477,6 +477,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                                     'geomType':'none',
                                     'subsetIndex':'no',
                                     'watchFile':'no'},
+                  mstore=None,
                   ):
         
         assert os.path.exists(fp), 'requested file does not exist: \n    %s'%fp
@@ -488,6 +489,9 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         log.debug('loading from %s'%fp)
         
+        #=======================================================================
+        # build uri
+        #=======================================================================
         if providerLib == 'delimitedtext':
             #constructor
             uriW = QgsDataSourceUri()
@@ -501,6 +505,10 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
  
         else:
             uri = fp
+        
+        #=======================================================================
+        # load
+        #=======================================================================
         
         vlay_raw = QgsVectorLayer(uri,basefn,providerLib)
         
@@ -547,7 +555,10 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             
             vlay.setName(vlay_raw.name()) #reset the name
             
- 
+            if mstore is None:
+                mstore = QgsMapLayerStore()
+            mstore.addMapLayer(vlay_raw)
+            mstore.removeMapLayersById([vlay_raw.id()])
             
         else: 
             vlay = vlay_raw
@@ -563,6 +574,8 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #=======================================================================
         # wrap
         #=======================================================================
+        if not mstore is None:
+            mstore.addMapLayer(vlay)
         dp = vlay.dataProvider()
 
         log.info('loaded vlay \'%s\' as \'%s\' %s geo  with %i feats from file: \n     %s'
@@ -573,7 +586,9 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
     
     def load_rlay(self, fp, 
                   aoi_vlay = None,
-                  logger=None):
+                  logger=None,
+                  mstore=None,
+                  ):
         
         if logger is None: logger = self.logger
         log = logger.getChild('load_rlay')
@@ -612,14 +627,68 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             rlay2 = self.cliprasterwithpolygon(rlayer,aoi_vlay, logger=log, layname=rlayer.name())
             
             #clean up
-            mstore = QgsMapLayerStore() #build a new store
+            if mstore is None:
+                mstore = QgsMapLayerStore() #build a new store
             mstore.addMapLayers([rlayer]) #add the layers to the store
-            mstore.removeAllMapLayers() #remove all the layers
+            mstore.removeMapLayersById([rlayer.id()]) # 
         else:
             rlay2 = rlayer
+            
+        if not mstore is None:
+            mstore.addMapLayer(rlay2)
         
         return rlay2
     
+    def load_rlays(self, #shortcut for loading a set of rasters in a directory
+                   
+                   data_dir,
+                   rfn_l=None,  #optional load passed filepaths
+                   
+
+                   logger=None,
+                   **kwargs
+                   ):
+        
+ 
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log=logger.getChild('load_rlays')
+        
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        assert os.path.exists(data_dir)
+        
+        #=======================================================================
+        # get filenames
+        #=======================================================================
+        #load all in the passed directory
+        if rfn_l is None:
+            rfn_l = [e for e in os.listdir(data_dir) if e.endswith('.tif')]
+            log.info('scanned directory and found %i rasters: %s'%(len(rfn_l), data_dir))
+
+
+        rfp_d = {fn:os.path.join(data_dir, fn) for fn in rfn_l} #get filepaths
+        
+        #check
+        for fn, fp in rfp_d.items():
+            assert os.path.exists(fp), 'bad filepath for \"%s\''%fn
+        #=======================================================================
+        # loop and assemble
+        #=======================================================================
+        log.debug('loading %i rlays'%len(rfp_d))
+        rlay_d = dict()
+        for fn, fp in rfp_d.items():
+            rlay_d[fn] = self.load_rlay(fp, logger=log, **kwargs)
+            
+
+        assert len(rlay_d)>0, 'failed to load any rasters!'
+            
+        log.info('loaded %i rlays: %s'%(len(rlay_d), list(rlay_d.keys())))
+        
+        return rlay_d
     
     def write_rlay(self, #make a local copy of the passed raster layer
                    rlayer, #raster layer to make a local copy of

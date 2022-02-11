@@ -232,9 +232,10 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
             
             
         #inventory vector layer
-        if isinstance(self.session.finv_vlay, QgsVectorLayer):
-            if hasattr(self, 'comboBox_JGfinv'): #should just skip the Build
-                self.comboBox_JGfinv.setLayer(self.session.finv_vlay)
+        if hasattr(self.session, 'finv_vlay'):
+            if isinstance(self.session.finv_vlay, QgsVectorLayer):
+                if hasattr(self, 'comboBox_JGfinv'): #should just skip the Build
+                    self.comboBox_JGfinv.setLayer(self.session.finv_vlay)
                 
                 
 

@@ -10,7 +10,7 @@ commons for dialog workflow
 # imports---------------------------
 #==============================================================================
 #python standards
-import os, logging, datetime, time, sys, traceback, unittest
+import os, logging, datetime, time, sys, traceback, unittest, copy
 from qgis.core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsProject
 from PyQt5.QtWidgets import QApplication, QMainWindow 
 
@@ -146,7 +146,10 @@ class WF_handler(object): #common functions for handling workflows
                 
                 #run the children
                 if hasattr(wflow, 'run_suite'):
-                    wflow(build_pickles=False, get_tests=False)
+                    """our parameter handling isn't very good
+                     telling the parent to include its own pars_d during children inits"""
+
+                    wflow.run_suite(build_pickels=False, get_tests=False, pars_d = copy.deepcopy(wflow.pars_d))
                     
                 #no children. run the object
                 else:
@@ -295,15 +298,17 @@ class DialWF(WorkFlow): #workflow to run on your dialog
     def post(self):
         pass #subclass to create your own
     
-class DialWF_sequence(WF_handler): #execute a sequence of dialog workflows
-    """this is like a small session
-        where we want to execute a workflow on multiple dialogs (as part of a single workflow)
-        this is the normal use case for testing CanFlood
-        """
-    name='DialWF_sequence'
-    crs = QgsCoordinateReferenceSystem('EPSG:4326')
-    
-    workflow_l=None #replace with the workflow sequence
+#===============================================================================
+# class DialWF_sequence(WF_handler): #execute a sequence of dialog workflows
+#     """this is like a small session
+#         where we want to execute a workflow on multiple dialogs (as part of a single workflow)
+#         this is the normal use case for testing CanFlood
+#         """
+#     name='DialWF_sequence'
+#     crs = QgsCoordinateReferenceSystem('EPSG:4326')
+#     
+#     workflow_l=None #replace with the workflow sequence
+#===============================================================================
     
     
 

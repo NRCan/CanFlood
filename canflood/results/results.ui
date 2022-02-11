@@ -4815,7 +4815,7 @@ p, li { white-space: pre-wrap; }
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="tab">
+         <widget class="QWidget" name="tab_repoter">
           <attribute name="title">
            <string>Report</string>
           </attribute>
@@ -4896,7 +4896,7 @@ p, li { white-space: pre-wrap; }
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_9">
               <item alignment="Qt::AlignHCenter">
-               <widget class="QPushButton" name="pushButton_cba_plot_2">
+               <widget class="QPushButton" name="pushButton_rpt_create">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                   <horstretch>0</horstretch>

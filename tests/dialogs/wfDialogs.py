@@ -16,7 +16,8 @@ base_dir = r'C:\LS\09_REPOS\03_TOOLS\CanFlood\_git'
 import os
 
 
-from dialogs.wfDialComs import DialWF, run_set
+from dialogs.wfDialComs import DialWF, run_set, WF_handler
+from wFlow.scripts import WorkFlow
 from hlpr.plug import QTableWidgetItem
 
 from PyQt5.QtTest import QTest 
@@ -38,8 +39,20 @@ class SensiDialogTester(SensiDialog):
     def connect_slots(self, ):        
         super(SensiDialogTester, self).connect_slots() 
         
-        
- 
+#===============================================================================
+# build
+#===============================================================================
+from build.dialog import BuildDialog
+class BuildDialogTester(BuildDialog):
+    def connect_slots(self, ):        
+        super(BuildDialog, self).connect_slots() 
+#===============================================================================
+# results        
+#===============================================================================
+from results.dialog import ResultsDialog
+class ResultsDialogTester(ResultsDialog):
+    def connect_slots(self, ):        
+        super(ResultsDialogTester, self).connect_slots() 
 
 
 #===============================================================================
@@ -181,40 +194,116 @@ class Tut8a(DialWF):
         
         self.res_d['fig_d'] =self.D.fig_d
 
+
+#===============================================================================
+# Tut1a----------
+#===============================================================================
+class Tut1a_1build(DialWF):
+    DialogClass=BuildDialogTester
+    pars_d=dict()
+
+    def pre(self, #pre-launch
+            ):
+        log = self.logger.getChild('pre')
         
-class Tut1a(DialWF):
-    name='tut1a'
-    crsid ='EPSG:3005'
-    
-    #DialogClass=ResultsDialogTester
-    base_dir = base_dir
-    
-    
- 
-    
-    
+        #=======================================================================
+        # #load hazard rasters
+        #=======================================================================
+        rlay_d = self.load_rlays(os.path.join(self.base_dir, self.pars_d['raster_dir']), logger=log, mstore=self.mstore)
+        self.data_d['rlay_d']= rlay_d
+        
+        #=======================================================================
+        # #load inveneotyr.
+        #=======================================================================
+        finv_vlay = self.load_vlay(os.path.join(self.base_dir, self.pars_d['finv_fp']), logger=log, mstore=self.mstore)
+        self.data_d['finv_vlay'] = finv_vlay
+        
+        log.info('finished loading layers')
+
+    def post(self, #post launch
+             ):
+        print('post')
+        self._1setup()
+        
+    def _1setup(self):
+        
+        #=======================================================================
+        # set session controls
+        #=======================================================================
+        # working directory
+        assert os.path.exists(self.out_dir)
+        self.D.lineEdit_wdir.setText(self.out_dir)
+        
+        #precision
+        """
+        prec=2
+        """
+        prec = self.pars_d['prec']
+        assert isinstance(prec, int)
+        self.D.spinBox_s_prec.setValue(prec)
+        #prec = str(int(self.D.spinBox_s_prec.value())) #need a string for setting
+        
+        #tag
+        tag = self.name
+        assert isinstance(tag, str)
+        self.D.linEdit_ScenTag.setText(tag)
+        
+        #=======================================================================
+        # start control file
+        #=======================================================================
+        self.D.build_scenario()
+        
+        
+        
+class Tut1a_3res(DialWF):
+    DialogClass=ResultsDialogTester
+    pars_d=dict()
+
     def pre(self, #pre-launch
             ):
         print('pre')
-        
-        """
-        
-        """
-        
-    def post(self,
+
+    def post(self, #post launch
              ):
         print('post')
+ 
+
+
+class Tut1a(WF_handler, WorkFlow):
+    name='tut1a'
+    crsid ='EPSG:3005'
+    workflow_l=[Tut1a_1build, Tut1a_3res]
+ 
+    base_dir=base_dir
+ 
+    
+    def __init__(self, **kwargs):
+        self.pars_d = {
+                
+                #data files
+                'finv_fp':r'tutorials\1\finv_tut1a.gpkg',
+                'raster_dir':r'tutorials\1\haz_rast',
+                'evals_fp':r'tests\_data\tuts\evals_4_tut1a.csv',
+                #'fpol_dir':r'tutorials\1\haz_fpoly',
+                
+                #run controls
+                'felv':'datum', 'validate':'risk1', 'prec':4,
+                        }
         
-        self._1build()
+        self.tpars_d = { #kwargs for individual tools
+            'Risk1':{
+                'res_per_asset':True,
+                }
+            }
         
-    def _1build(self,):
-        print('1build')
+        super().__init__(**kwargs)
         
+ 
 #===============================================================================
 # executeors------------
 #===============================================================================
  
-wFlow_l = [Tut8a] #used below and by test scripts to bundle workflows
+wFlow_l = [Tut1a] #used below and by test scripts to bundle workflows
 
 if __name__ == '__main__':
     run_set(wFlow_l)
