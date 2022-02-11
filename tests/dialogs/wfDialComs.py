@@ -87,38 +87,12 @@ class devPlugLogger(plugLogger):
 
         
         
- 
+class WF_handler(object): #common functions for handling workflows
+    """because sometimes the session handles workflows
+    and sometimes other workflows need to handle workflows"""
     
-class DSession(Session):
-    
-    
-    
-    #placeholders expected on teh session by some dialogs
-    finv_vlay=None
-    iface = None
- 
-    def __init__(self,
-                 logger=None, 
-                 tag='devDial',
-                 **kwargs
-                 ):
-        
-        #add the exception hook
-        sys.excepthook = excepthook
-        
-        
-        if logger is None:
-            """unlike the wflow session, plugin loggers use special methods for interfacing with QGIS"""
-
-            logger= devPlugLogger(self, log_nm='L')
-        
-        
-        super().__init__(logger=logger,tag=tag, **kwargs) 
-        
-        self.logger.info('finished DSession.init')
-        
     def run_suite(self,
-                  workflow_l,
+                  workflow_l=None,
                   build_pickels = False,
                   get_tests=False,
                   **kwargs):
@@ -127,6 +101,7 @@ class DSession(Session):
         # defaults
         #=======================================================================
         log = self.logger.getChild('run_suite')
+        if workflow_l is None: workflow_l=self.workflow_l
         
         #=======================================================================
         # user check
@@ -169,12 +144,20 @@ class DSession(Session):
  
             with WorkFlow(logger=self.logger, session=self, **kwargs) as wflow:
                 
-                wflow.pre()
+                #run the children
+                if hasattr(wflow, 'run_suite'):
+                    wflow(build_pickles=False, get_tests=False)
+                    
+                #no children. run the object
+                else:
                 
-                wflow.D.launch()
+                    wflow.pre()
+                    
+                    wflow.D.launch()
+                    
+                    wflow.post()
                 
-                wflow.post()
-                
+                #test extraction
                 if build_pickels:
                     if first:
                         pick_d = dict()
@@ -208,8 +191,39 @@ class DSession(Session):
             self.suite=suite
             
         return self.out_dir
+
     
-    def run_wflow(self,
+class DSession(WF_handler, Session):
+    
+    
+    
+    #placeholders expected on teh session by some dialogs
+    finv_vlay=None
+    iface = None
+ 
+    def __init__(self,
+                 logger=None, 
+                 tag='devDial',
+                 **kwargs
+                 ):
+        
+        #add the exception hook
+        sys.excepthook = excepthook
+        
+        
+        if logger is None:
+            """unlike the wflow session, plugin loggers use special methods for interfacing with QGIS"""
+
+            logger= devPlugLogger(self, log_nm='L')
+        
+        
+        super().__init__(logger=logger,tag=tag, **kwargs) 
+        
+        self.logger.info('finished DSession.init')
+        
+
+    
+    def xxxrun_wflow(self, #usin the sutie only?
                   WorkFlow,
                   **kwargs):
         
@@ -253,13 +267,12 @@ class DSession(Session):
             
             
         log.info('finished')
-        
             
     
     
 class DialWF(WorkFlow): #workflow to run on your dialog
     name='DialWF'
-    pars_d = {}
+    #pars_d = {} #best to define this on the child to avoid passing container to siblings
     DialogClass=None #replace with the dialog class you want to test on
     
     crs = QgsCoordinateReferenceSystem('EPSG:4326')
@@ -282,7 +295,18 @@ class DialWF(WorkFlow): #workflow to run on your dialog
     def post(self):
         pass #subclass to create your own
     
+class DialWF_sequence(WF_handler): #execute a sequence of dialog workflows
+    """this is like a small session
+        where we want to execute a workflow on multiple dialogs (as part of a single workflow)
+        this is the normal use case for testing CanFlood
+        """
+    name='DialWF_sequence'
+    crs = QgsCoordinateReferenceSystem('EPSG:4326')
     
+    workflow_l=None #replace with the workflow sequence
+    
+    
+
 
 def run_set(workflow_l,
            **kwargs):

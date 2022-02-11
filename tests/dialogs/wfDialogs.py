@@ -25,6 +25,9 @@ from PyQt5.QtCore import Qt
 # custom imports
 #===============================================================================
 
+#===============================================================================
+# dialog testers---------
+#===============================================================================
 
 #===============================================================================
 # Sensitivity Dialog
@@ -32,18 +35,21 @@ from PyQt5.QtCore import Qt
 from sensi.dialog import SensiDialog
 
 class SensiDialogTester(SensiDialog):
-    
-    def connect_slots(self, #
-                      ):
+    def connect_slots(self, ):        
+        super(SensiDialogTester, self).connect_slots() 
         
-        super(SensiDialogTester, self).connect_slots()  
+        
+ 
 
 
+#===============================================================================
+# workflows------
+#===============================================================================
 class Tut8a(DialWF):
     name='tut8a'
     DialogClass=SensiDialogTester
     base_dir = base_dir
-    
+    pars_d = {}
     
  
     
@@ -176,7 +182,33 @@ class Tut8a(DialWF):
         self.res_d['fig_d'] =self.D.fig_d
 
         
+class Tut1a(DialWF):
+    name='tut1a'
+    crsid ='EPSG:3005'
+    
+    #DialogClass=ResultsDialogTester
+    base_dir = base_dir
+    
+    
+ 
+    
+    
+    def pre(self, #pre-launch
+            ):
+        print('pre')
         
+        """
+        
+        """
+        
+    def post(self,
+             ):
+        print('post')
+        
+        self._1build()
+        
+    def _1build(self,):
+        print('1build')
         
 #===============================================================================
 # executeors------------
