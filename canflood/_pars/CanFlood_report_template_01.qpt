@@ -1,0 +1,97 @@
+<Layout printResolution="300" name="CanFlood_report_template" worldFileMap="" units="mm">
+ <Snapper tolerance="5" snapToGrid="0" snapToGuides="1" snapToItems="1"/>
+ <Grid offsetY="0" offsetX="0" resolution="10" resUnits="mm" offsetUnits="mm"/>
+ <PageCollection>
+  <symbol type="fill" name="" clip_to_extent="1" force_rhr="0" alpha="1">
+   <layer class="SimpleFill" enabled="1" pass="0" locked="0">
+    <prop k="border_width_map_unit_scale" v="3x:0,0,0,0,0,0"/>
+    <prop k="color" v="255,255,255,255"/>
+    <prop k="joinstyle" v="miter"/>
+    <prop k="offset" v="0,0"/>
+    <prop k="offset_map_unit_scale" v="3x:0,0,0,0,0,0"/>
+    <prop k="offset_unit" v="MM"/>
+    <prop k="outline_color" v="35,35,35,255"/>
+    <prop k="outline_style" v="no"/>
+    <prop k="outline_width" v="0.26"/>
+    <prop k="outline_width_unit" v="MM"/>
+    <prop k="style" v="solid"/>
+    <data_defined_properties>
+     <Option type="Map">
+      <Option value="" type="QString" name="name"/>
+      <Option name="properties"/>
+      <Option value="collection" type="QString" name="type"/>
+     </Option>
+    </data_defined_properties>
+   </layer>
+  </symbol>
+  <LayoutItem frameJoinStyle="miter" position="0,0,mm" positionLock="false" uuid="{79bf9772-a4fe-4cbd-b4dc-ec3c493eb4fa}" visibility="1" itemRotation="0" blendMode="0" type="65638" outlineWidthM="0.3,mm" frame="false" background="true" id="" opacity="1" groupUuid="" templateUuid="{79bf9772-a4fe-4cbd-b4dc-ec3c493eb4fa}" zValue="0" excludeFromExports="0" size="210,297,mm" positionOnPage="0,0,mm" referencePoint="0">
+   <FrameColor green="0" blue="0" alpha="255" red="0"/>
+   <BackgroundColor green="255" blue="255" alpha="255" red="255"/>
+   <LayoutObject>
+    <dataDefinedProperties>
+     <Option type="Map">
+      <Option value="" type="QString" name="name"/>
+      <Option name="properties"/>
+      <Option value="collection" type="QString" name="type"/>
+     </Option>
+    </dataDefinedProperties>
+    <customproperties/>
+   </LayoutObject>
+   <symbol type="fill" name="" clip_to_extent="1" force_rhr="0" alpha="1">
+    <layer class="SimpleFill" enabled="1" pass="0" locked="0">
+     <prop k="border_width_map_unit_scale" v="3x:0,0,0,0,0,0"/>
+     <prop k="color" v="255,255,255,255"/>
+     <prop k="joinstyle" v="miter"/>
+     <prop k="offset" v="0,0"/>
+     <prop k="offset_map_unit_scale" v="3x:0,0,0,0,0,0"/>
+     <prop k="offset_unit" v="MM"/>
+     <prop k="outline_color" v="35,35,35,255"/>
+     <prop k="outline_style" v="no"/>
+     <prop k="outline_width" v="0.26"/>
+     <prop k="outline_width_unit" v="MM"/>
+     <prop k="style" v="solid"/>
+     <data_defined_properties>
+      <Option type="Map">
+       <Option value="" type="QString" name="name"/>
+       <Option name="properties"/>
+       <Option value="collection" type="QString" name="type"/>
+      </Option>
+     </data_defined_properties>
+    </layer>
+   </symbol>
+  </LayoutItem>
+  <GuideCollection visible="1"/>
+ </PageCollection>
+ <LayoutItem frameJoinStyle="miter" position="0,0,mm" positionLock="false" uuid="{6b3a324d-13c3-418e-b495-0371f37ca031}" visibility="1" itemRotation="0" blendMode="0" sectionWidth="0" multiFrameTemplateUuid="{0e719afe-c673-47e1-8368-fc4ec9ab379c}" multiFrame="{0e719afe-c673-47e1-8368-fc4ec9ab379c}" sectionY="0" type="65647" outlineWidthM="0.3,mm" frame="false" background="false" id="HTML_frame01" opacity="1" groupUuid="" hideBackgroundIfEmpty="0" templateUuid="{6b3a324d-13c3-418e-b495-0371f37ca031}" zValue="1" excludeFromExports="0" size="210,297,mm" positionOnPage="0,0,mm" sectionX="0" referencePoint="0" sectionHeight="0" hidePageIfEmpty="0">
+  <FrameColor green="0" blue="0" alpha="255" red="0"/>
+  <BackgroundColor green="255" blue="255" alpha="255" red="255"/>
+  <LayoutObject>
+   <dataDefinedProperties>
+    <Option type="Map">
+     <Option value="" type="QString" name="name"/>
+     <Option name="properties"/>
+     <Option value="collection" type="QString" name="type"/>
+    </Option>
+   </dataDefinedProperties>
+   <customproperties/>
+  </LayoutObject>
+ </LayoutItem>
+ <LayoutMultiFrame stylesheet="" templateUuid="{0e719afe-c673-47e1-8368-fc4ec9ab379c}" url="" evaluateExpressions="true" stylesheetEnabled="false" type="65648" contentMode="0" maxBreakDistance="10" uuid="{0e719afe-c673-47e1-8368-fc4ec9ab379c}" resizeMode="0" html="" useSmartBreaks="true">
+  <childFrame templateUuid="{6b3a324d-13c3-418e-b495-0371f37ca031}" uuid="{6b3a324d-13c3-418e-b495-0371f37ca031}"/>
+  <LayoutObject>
+   <dataDefinedProperties>
+    <Option type="Map">
+     <Option value="" type="QString" name="name"/>
+     <Option name="properties"/>
+     <Option value="collection" type="QString" name="type"/>
+    </Option>
+   </dataDefinedProperties>
+   <customproperties/>
+  </LayoutObject>
+ </LayoutMultiFrame>
+ <customproperties>
+  <property value="png" key="atlasRasterFormat"/>
+  <property value="true" key="singleFile"/>
+ </customproperties>
+ <Atlas filterFeatures="0" enabled="0" coverageLayer="" hideCoverage="0" pageNameExpression="" filenamePattern="'output_'||@atlas_featurenumber" sortFeatures="0"/>
+</Layout>

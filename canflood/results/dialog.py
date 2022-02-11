@@ -29,6 +29,7 @@ import results.riskPlot
 import results.compare
 import results.attribution
 
+
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 ui_fp = os.path.join(os.path.dirname(__file__), 'results.ui')
 assert os.path.exists(ui_fp)
@@ -270,6 +271,14 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.pushButton_cba_open.clicked.connect(lambda: os.startfile(self.lineEdit_cba_cf.text()))
         
         self.pushButton_cba_plot.clicked.connect(self.run_cba_plot)
+        
+        #=======================================================================
+        # reporter-----------
+        #=======================================================================
+        
+        
+        #create the template
+        self.pushButton_rpt_create.clicked.connect(self.run_reporter)
         
         #=======================================================================
         # wrap--------
@@ -673,9 +682,9 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         log = self.logger.getChild('run_cba_plot')
         log.info('user pushed \'run_cba_copy\'')
         
-        """put this here to avoid the global openpyxl dependency"""
-        from results.cba import CbaWrkr 
-        self.feedback.setProgress(10)
+        
+        
+        self.feedback.setProgress(5)
         #=======================================================================
         # collect inputs
         #=======================================================================
@@ -685,6 +694,10 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # init
         #=======================================================================
+        """put this here to avoid the global openpyxl dependency
+        
+        TODO: cleanup this import using a with statement"""
+        from results.cba import CbaWrkr 
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
         wrkr = results.cba.CbaWrkr(**kwargs).setup()
         
@@ -703,6 +716,33 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         log.push('run_cba_copy finished')
         self.feedback.upd_prog(None)
+        
+    def run_reporter(self):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        log = self.logger.getChild('run_reporter')
+        log.info('user pushed \'run_reporter\'')
+         
+        self.feedback.setProgress(5)
+        #=======================================================================
+        # collect inputs
+        #=======================================================================
+
+        self._set_setup(set_cf_fp=True)
+        self.feedback.setProgress(20)
+        #=======================================================================
+        # init
+        #=======================================================================
+        from results.reporter import ReportGenerator
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        
+        with ReportGenerator(**kwargs) as wrkr:
+            wrkr.setup()
+            wrkr.create_report()
+ 
+        
+        self.feedback.setProgress(50)
         
         
         
