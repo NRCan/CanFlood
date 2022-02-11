@@ -737,12 +737,17 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         from results.reporter import ReportGenerator
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
         
-        with ReportGenerator(**kwargs) as wrkr:
-            wrkr.setup()
-            wrkr.create_report()
+        #with ReportGenerator(**kwargs) as wrkr:
+            #wrkr.setup()
+            
+        wrkr = ReportGenerator(**kwargs)
+        html_fp = wrkr.build_html()
+        wrkr.create_report(html_fp=html_fp)
  
         
         self.feedback.setProgress(50)
+        
+        log.push('run_reporter finished')
         
         
         

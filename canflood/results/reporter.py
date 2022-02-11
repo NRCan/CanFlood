@@ -11,18 +11,23 @@ generating report template
 import logging, configparser, datetime, copy, shutil
 
 
-
-
 import os
 import numpy as np
 import pandas as pd
 
+#Q imports
+from PyQt5.QtXml import QDomDocument
+from qgis.core import QgsPrintLayout, QgsReadWriteContext, QgsLayoutItemHtml, QgsLayoutFrame
+
+ 
+from PyQt5.QtCore import QRectF
 
 #===============================================================================
 # customs
 #===============================================================================
 from hlpr.exceptions import QError as Error
 from hlpr.basic import view
+from hlpr.Q import Qcoms
  
 from results.riskPlot import RiskPlotr
 
@@ -30,16 +35,18 @@ from results.riskPlot import RiskPlotr
 #==============================================================================
 # functions-------------------
 #==============================================================================
-class ReportGenerator(RiskPlotr):
+class ReportGenerator(RiskPlotr, Qcoms):
  
  
     #===========================================================================
     # expectations from parameter file
     #===========================================================================
     exp_pars_md = {
-        'results_fps':{
-             'r_ttl':{'ext':('.csv',)},
-             }
+        #=======================================================================
+        # 'results_fps':{
+        #      'r_ttl':{'ext':('.csv',)},
+        #      }
+        #=======================================================================
         }
     
     exp_pars_op={
@@ -58,14 +65,19 @@ class ReportGenerator(RiskPlotr):
         #=======================================================================
         # paramters directory
         #=======================================================================
-        self.pars_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), '_pars')
+        self.pars_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), '_pars', 'results', 'reporter')
         
         #=======================================================================
-        # get the temlpate file
+        # get the temlpate files
         #=======================================================================
-        self.template_fp = os.path.join(self.pars_dir, 'CanFlood_report_template_01.qpt')
+        
+        self.qrpt_template_fp = os.path.join(self.pars_dir,  'CanFlood_report_template_01.qpt')
 
-        assert os.path.exists(self.template_fp), 'passed template_fp is bad: \'%s\''%self.template_fp
+        assert os.path.exists(self.qrpt_template_fp), 'passed template_fp is bad: \'%s\''%self.qrpt_template_fp
+        
+        
+        self.html_template_fp = os.path.join(self.pars_dir,  'template_01.html')
+        assert os.path.exists(self.html_template_fp)
         
         self.logger.debug('%s.__init__ w/ feedback \'%s\''%(
             self.__class__.__name__, type(self.feedback).__name__))
@@ -77,7 +89,120 @@ class ReportGenerator(RiskPlotr):
 
         
         return 
+   
+    def build_html(self): #buildt he HTML report
+        
+        #add some info to the html template
+        
+        #write the html file
+        
+        
+        return self.html_template_fp 
     
     
-    def create_report(self):
+    def load_qtemplate(self, #load the layout template onto the project
+                       template_fp=None,
+ 
+                       logger=None,
+                       ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log=logger.getChild('load_qtemplate')
+        if template_fp is None: template_fp = self.qrpt_template_fp
+        
+        
+        assert os.path.exists(template_fp)
+        #=======================================================================
+        # load the layout template
+        #=======================================================================
+        #load the template
+        with open(template_fp) as f:
+            template_content = f.read()
+            doc = QDomDocument()
+            doc.setContent(template_content)
+        
+         
+        #build a normal layout
+        qlayout = QgsPrintLayout(self.qproj)
+        
+        #load the template 
+        qlayout.loadFromTemplate(doc, QgsReadWriteContext(), True)
+        
+
+        
+
+        
+        log.debug('loaded layout from template file: %s'%template_fp)
+        
+        
+        return qlayout
+    
+    def create_report(self,
+                      html_fp = None,
+                      name=None,
+                      ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if name is None: name='CanFlood_report_%s'%self.resname
+        
+        log = self.logger.getChild('create_report')
+        
+        log.info('from %s'%html_fp)
+        assert os.path.exists(html_fp)
+        
+        #=======================================================================
+        # #load the layout template
+        #=======================================================================
+        layout = self.load_qtemplate()
+        
+        
+        #rename
+        layout.setName(name)
+        
+ 
+ 
+        
+        #=======================================================================
+        # #populate the template
+        #=======================================================================
+ 
+
+        
+        layout_html = QgsLayoutItemHtml(layout)
+        html_frame = QgsLayoutFrame(layout, layout_html)
+        html_frame.attemptSetSceneRect(QRectF(10, 10, 30, 20))
+        html_frame.setFrameEnabled(True)
+        layout_html.addFrame(html_frame)
+        layout_html.setContentMode(QgsLayoutItemHtml.ManualHtml)
+        layout_html.setHtml('test<br><b>test</b>')
+        layout_html.loadHtml()
+
+        #=======================================================================
+        # #add to the project
+        #=======================================================================
+        layoutManager = self.qproj.layoutManager()
+        layoutManager.addLayout(layout)
+        
+        
+        log.info('finished')
+        
+    def __exit__(self, #destructor
+                 *args,**kwargs):
         pass
+    
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        

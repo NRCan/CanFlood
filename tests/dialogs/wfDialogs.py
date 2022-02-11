@@ -289,7 +289,10 @@ class Tut1a_3res(DialWF):
         self.D
         """
         self.D._change_tab('tab_report')
-        print('reporting')
+
+        
+        QTest.mouseClick(self.D.pushButton_rpt_create, Qt.LeftButton) #calls run_reporter() then ReportGenerator.create_report()
+ 
         
 
 
