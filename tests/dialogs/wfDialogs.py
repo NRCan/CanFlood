@@ -45,7 +45,7 @@ class SensiDialogTester(SensiDialog):
 from build.dialog import BuildDialog
 class BuildDialogTester(BuildDialog):
     def connect_slots(self, ):        
-        super(BuildDialog, self).connect_slots() 
+        super(BuildDialogTester, self).connect_slots() 
 #===============================================================================
 # results        
 #===============================================================================
@@ -210,13 +210,13 @@ class Tut1a_1build(DialWF):
         # #load hazard rasters
         #=======================================================================
         rlay_d = self.load_rlays(os.path.join(self.base_dir, self.pars_d['raster_dir']), logger=log, mstore=self.mstore)
-        self.data_d['rlay_d']= rlay_d
+        self.session.data_d['rlay_d']= rlay_d
         
         #=======================================================================
         # #load inveneotyr.
         #=======================================================================
         finv_vlay = self.load_vlay(os.path.join(self.base_dir, self.pars_d['finv_fp']), logger=log, mstore=self.mstore)
-        self.data_d['finv_vlay'] = finv_vlay
+        self.session.data_d['finv_vlay'] = finv_vlay
         
         log.info('finished loading layers')
 
@@ -230,9 +230,7 @@ class Tut1a_1build(DialWF):
         #=======================================================================
         # set session controls
         #=======================================================================
-        # working directory
-        assert os.path.exists(self.out_dir)
-        self.D.lineEdit_wdir.setText(self.out_dir)
+        self._setup_coms()
         
         #precision
         """
@@ -243,15 +241,21 @@ class Tut1a_1build(DialWF):
         self.D.spinBox_s_prec.setValue(prec)
         #prec = str(int(self.D.spinBox_s_prec.value())) #need a string for setting
         
-        #tag
-        tag = self.name
-        assert isinstance(tag, str)
-        self.D.linEdit_ScenTag.setText(tag)
+ 
         
         #=======================================================================
         # start control file
         #=======================================================================
-        self.D.build_scenario()
+        QTest.mouseClick(self.D.pushButton_generate, Qt.LeftButton) #calls build_scenario()
+        cf_fp = self.D.lineEdit_cf_fp.text()
+        assert os.path.exists(cf_fp)
+        self.session.res_d['cf_fp'] = self.D.lineEdit_cf_fp.text()
+ 
+        
+    def _2inventory(self):
+        #select the inventory layer (finv_tut1a) 
+        
+        pass
         
         
         
@@ -266,7 +270,27 @@ class Tut1a_3res(DialWF):
     def post(self, #post launch
              ):
         print('post')
+        self._1setup()
+        self._2joinGeo()
+        self._3report()
  
+    def _1setup(self):
+        
+        #=======================================================================
+        # set session controls
+        #=======================================================================
+        self._setup_coms()
+        
+    def _2joinGeo(self):
+        pass
+    
+    def _3report(self):
+        """
+        self.D
+        """
+        self.D._change_tab('tab_report')
+        print('reporting')
+        
 
 
 class Tut1a(WF_handler, WorkFlow):
@@ -275,6 +299,7 @@ class Tut1a(WF_handler, WorkFlow):
     workflow_l=[Tut1a_1build, Tut1a_3res]
  
     base_dir=base_dir
+    res_d = dict() #container for results
  
     
     def __init__(self, **kwargs):

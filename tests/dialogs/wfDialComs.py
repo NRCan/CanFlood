@@ -298,21 +298,33 @@ class DialWF(WorkFlow): #workflow to run on your dialog
     def post(self):
         pass #subclass to create your own
     
-#===============================================================================
-# class DialWF_sequence(WF_handler): #execute a sequence of dialog workflows
-#     """this is like a small session
-#         where we want to execute a workflow on multiple dialogs (as part of a single workflow)
-#         this is the normal use case for testing CanFlood
-#         """
-#     name='DialWF_sequence'
-#     crs = QgsCoordinateReferenceSystem('EPSG:4326')
-#     
-#     workflow_l=None #replace with the workflow sequence
-#===============================================================================
+    def _setup_coms(self): #common CanFlood dialog setups
+                # working directory
+        assert os.path.exists(self.out_dir)
+        self.D.lineEdit_wdir.setText(self.out_dir)
+        
+        
+        #control file
+        if 'cf_fp' in self.session.res_d:
+            cf_fp = self.session.res_d['cf_fp']
+            assert os.path.exists(cf_fp)
+            self.D.lineEdit_cf_fp.setText(cf_fp)
+            
+            
+        #tag
+        tag = self.name
+        assert isinstance(tag, str)
+        self.D.linEdit_ScenTag.setText(tag)
+        
+    def __exit__(self, #destructor
+                 *args,**kwargs):
+        
+        #clear the dialog
+        self.D.__exit__() #not sure this is doing anything
+        self.D.accept() #close it
+        super().__exit__(*args,**kwargs) #initilzie teh baseclass
     
-    
-
-
+ 
 def run_set(workflow_l,
            **kwargs):
     

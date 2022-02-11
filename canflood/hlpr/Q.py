@@ -2809,7 +2809,10 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
     def __exit__(self, #destructor
                  *args,**kwargs):
         
-        self.mstore.removeAllMapLayers()
+        """dialog classes wont have mstores"""
+        if hasattr(self, 'mstore'):
+            if isinstance(self.mstore, QgsMapLayerStore):
+                self.mstore.removeAllMapLayers()
         
         super().__exit__(*args,**kwargs) #initilzie teh baseclass
 
