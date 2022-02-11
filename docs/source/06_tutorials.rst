@@ -31,7 +31,9 @@ Download the data layers for Tutorial 1:
 
   • *finv_tut1a.gpkg* : flood asset inventory (’finv’) spatial layer.
 
-Ensure your project’s CRS is set to ‘EPSG:3005’ (Depending on your settings, this may have been set automatically when you loaded the datafiles. All tutorials   use CRS ‘EPSG:3005’ unless stated otherwise. See the following link for an explanation of projections in QGIS. `https://docs.qgis.org/3.10/en/docs/user_manual/working_with_projections/working_with_projections.html <https://docs.qgis.org/3.10/en/docs/user_manual/working_with_projections/working_with_projections.html>`_ ) and load the downloaded layers into a new QGIS project (Depending on your QGIS settings, you may be requested to select a transformation if the CRS was not set correctly beforehand). Your map canvas should look something like this:
+Ensure your project’s CRS is set to ‘EPSG:3005‘. Depending on your settings, the CRS may have been set automatically when you loaded the datafiles. All tutorials use CRS ‘EPSG:3005’ unless stated otherwise.  See `working with projections <https://docs.qgis.org/3.10/en/docs/user_manual/working_with_projections/working_with_projections.html>`_ ) for more info. 
+
+Load the downloaded layers into a new QGIS project (Depending on your QGIS settings, you may be requested to select a transformation if the CRS was not set correctly beforehand). Your map canvas should look something like this:
 
 .. image:: /_static/tutorials_6_1_1_tiff.jpg
 
@@ -69,7 +71,7 @@ If you view the ‘CanFlood’ Log Messages Tab (View > Panels > Log Messages), 
 
 .. image:: /_static/tutorials_6_1_2_img_2.jpg
 
-Back in CanFlood’s ‘Setup’ tab, next to the working directory file path, click ‘Open’ to open the specified working directory, you should see the Control File ‘CanFlood_Tut1.txt’ created in your working directory. Open the control file. This is a template with some blank, default, and specified parameters. As you work through the remainder of ‘Build’ section of this tutorial, blank parameters will be filled in by the CanFlood tools. Notice the ‘#’ comment letting you know how and when this control file was created. ‘#’ comment lines are ignored by the program when reading from the control file, and are written by some tools to help the user track actions taken by CanFlood on the control file.
+Back on the CanFlood ‘Setup’ tab, next to the working directory file path, click ‘Open’ to open the specified working directory, you should see the Control File ‘CanFlood_Tut1.txt’ created in your working directory. Open this control file. This is a template with some blank, default, and specified parameters. As you work through the remainder of the ‘Build’ section of this tutorial, blank parameters will be filled in by the CanFlood tools. Notice the ‘#’ comment letting you know how and when this control file was created. ‘#’ comment lines are ignored by the program when reading from the control file, and are written by some tools to help the user track actions taken by CanFlood on the control file.
 
 **Store Inventory**
 
