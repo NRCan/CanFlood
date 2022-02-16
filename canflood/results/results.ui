@@ -4819,7 +4819,7 @@ p, li { white-space: pre-wrap; }
           <attribute name="title">
            <string>Report</string>
           </attribute>
-          <layout class="QVBoxLayout" name="verticalLayout_7">
+          <layout class="QVBoxLayout" name="verticalLayout_14">
            <item>
             <widget class="QLabel" name="label_14">
              <property name="text">
@@ -4843,9 +4843,9 @@ p, li { white-space: pre-wrap; }
                  </widget>
                 </item>
                 <item row="0" column="1">
-                 <widget class="QLabel" name="label_16">
+                 <widget class="QLabel" name="label_rpt_cfPath">
                   <property name="text">
-                   <string>TextLabel</string>
+                   <string>...</string>
                   </property>
                  </widget>
                 </item>
@@ -4855,36 +4855,27 @@ p, li { white-space: pre-wrap; }
             </widget>
            </item>
            <item>
-            <widget class="QGroupBox" name="groupBox_17">
-             <property name="title">
-              <string>Configure your map:</string>
+            <widget class="QGroupBox" name="verticalGroupBox_9">
+             <property name="toolTip">
+              <string>Select the original finv data to join the tabular model results to</string>
              </property>
-             <layout class="QVBoxLayout" name="verticalLayout_23">
+             <property name="title">
+              <string>Results (Join Geo) layer:</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_7">
               <item>
-               <widget class="QGroupBox" name="verticalGroupBox_9">
-                <property name="toolTip">
-                 <string>Select the original finv data to join the tabular model results to</string>
-                </property>
-                <property name="title">
-                 <string>finv Vectory Geometry:</string>
-                </property>
-                <layout class="QVBoxLayout" name="verticalLayout_14">
-                 <item>
-                  <layout class="QHBoxLayout" name="horizontalLayout_18">
-                   <item>
-                    <widget class="QgsMapLayerComboBox" name="comboBox_JGfinv_2">
-                     <property name="toolTip">
-                      <string>Select </string>
-                     </property>
-                     <property name="showCrs">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                  </layout>
-                 </item>
-                </layout>
-               </widget>
+               <layout class="QHBoxLayout" name="horizontalLayout_18">
+                <item>
+                 <widget class="QgsMapLayerComboBox" name="comboBox_rpt_vlay">
+                  <property name="toolTip">
+                   <string>Select </string>
+                  </property>
+                  <property name="showCrs">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
               </item>
              </layout>
             </widget>
@@ -5477,7 +5468,7 @@ p, li { white-space: pre-wrap; }
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="buttonGroup"/>
   <buttongroup name="buttonGroup_2"/>
+  <buttongroup name="buttonGroup"/>
  </buttongroups>
 </ui>

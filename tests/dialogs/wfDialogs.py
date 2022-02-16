@@ -373,7 +373,7 @@ class Tut1a_3res(DialWF):
              ):
         print('post')
         self._1setup()
-        #self._2joinGeo()
+        self._2joinGeo()
         self._3report()
  
     def _1setup(self):
@@ -388,7 +388,7 @@ class Tut1a_3res(DialWF):
         self.D._change_tab('tab_JoinGeo')
         
         #select the asset inventory layer
-        self.comboBox_JGfinv.setLayer(self.session.data_d['finv_vlay'])
+        self.D.comboBox_JGfinv.setLayer(self.session.data_d['finv_vlay'])
  
         #select results to join
         comboBox = self.D.comboBox_jg_par

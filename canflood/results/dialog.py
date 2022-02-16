@@ -28,6 +28,7 @@ import results.djoin
 import results.riskPlot
 import results.compare
 import results.attribution
+#import results.reporter
 
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
@@ -100,6 +101,9 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         self.lineEdit_cf_fp.textChanged.connect(
             lambda:self.label_cba_cfPath.setText(self.lineEdit_cf_fp.text()))
+        
+        self.lineEdit_cf_fp.textChanged.connect(
+            lambda:self.label_rpt_cfPath.setText(self.lineEdit_cf_fp.text()))
         
 
         #=======================================================================
@@ -350,13 +354,21 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # wrap
         #=======================================================================
+        #set the layer for the reporter
+        try:
+            self.comboBox_rpt_vlay.setLayer(res_vlay)
+        except Exception as e:
+            log.error('failed to set report layer w/ %s'%e)
+            
         self.feedback.setProgress(95)
         
         
         log.push('run_joinGeo finished')
         self.feedback.upd_prog(None)
     
-    def run_plotRisk(self): #single risk plot of total results
+    def run_plotRisk(self,
+                     plt_window=None,
+                     ): #single risk plot of total results
         log = self.logger.getChild('run_plotRisk')
         log.info('user pushed \'plotRisk\'')
         
@@ -379,14 +391,15 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # #execute
         #=======================================================================
+        res_d = dict()
         if self.checkBox_RP_aep.isChecked():
             fig = wrkr.plot_riskCurve(y1lab='AEP')
-            self.output_fig(fig)
+            res_d['aep'] = self.output_fig(fig, plt_window=plt_window)
             self.feedback.upd_prog(30, method='append')
             
         if self.checkBox_RP_ari.isChecked():
             fig = wrkr.plot_riskCurve(y1lab='impacts')
-            self.output_fig(fig)
+            res_d['impacts'] = self.output_fig(fig, plt_window=plt_window)
             self.feedback.upd_prog(30, method='append')
         
         #=======================================================================
@@ -395,6 +408,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.feedback.upd_prog(None) #set the progress bar back down to zero
         log.push('plotRisk finished')
         
+        return res_d
         
     def run_pStack(self): #single risk plot of total results
         """
@@ -697,7 +711,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         """put this here to avoid the global openpyxl dependency
         
         TODO: cleanup this import using a with statement"""
-        from results.cba import CbaWrkr 
+        #from results.cba import CbaWrkr 
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
         wrkr = results.cba.CbaWrkr(**kwargs).setup()
         
@@ -731,26 +745,63 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
         self._set_setup(set_cf_fp=True)
         self.feedback.setProgress(20)
+        
+        #=======================================================================
+        # retrieve from other functions
+        #=======================================================================
+        geo_vlay = self.comboBox_rpt_vlay.currentLayer()
+        
+        plots_d = self.run_plotRisk(plt_window=False)
         #=======================================================================
         # init
         #=======================================================================
         from results.reporter import ReportGenerator
-        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        #kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        
+        kwargs = {attn:getattr(self, attn) for attn in ['logger', 'tag', 'cf_fp', 
+                                    'out_dir', 'feedback', 'init_q_d']}
+        #wrkr = results.reporter.ReportGenerator(**kwargs) 
         
         with ReportGenerator(**kwargs) as wrkr:
+        
             wrkr.setup()
-            html_fp = wrkr.build_html()
+            
+            #start the template
             qlayout = wrkr.load_qtemplate()
-            wrkr.add_html(html_fp=html_fp)
+            self.feedback.setProgress(30)
+            
+            #add the map
+            if isinstance(geo_vlay, QgsVectorLayer):
+                wrkr.add_map(qlayout=qlayout, vlay=geo_vlay)
+            self.feedback.setProgress(40)
+            
+            #add the total plots
+            wrkr.add_figures(fp_d = plots_d)
+            
+            #add the control file report
+            html_fp = wrkr.build_html()
+            self.feedback.setProgress(50)
+            
+            wrkr.add_html(qlayout=qlayout, html_fp=html_fp)
+            self.feedback.setProgress(60)
+            
+            
             
             #add then open the layout
-            #self.qproj.layoutManager().addLayout(qlayout) 
-            #self.iface.openLayoutDesigner(qlayout)
+            layoutManager = self.qproj.layoutManager()
+            layoutManager.addLayout(qlayout)
+            
+            """this will crash the test run""" 
+            self.iface.openLayoutDesigner(qlayout)
  
-        
-        self.feedback.setProgress(50)
+        #=======================================================================
+        # wrap
+        #=======================================================================
+        self.feedback.setProgress(95)
         
         log.push('run_reporter finished')
+        self.feedback.upd_prog(None)
+ 
         
         
         

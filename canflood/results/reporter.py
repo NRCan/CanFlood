@@ -17,7 +17,8 @@ import pandas as pd
 
 #Q imports
 from PyQt5.QtXml import QDomDocument
-from qgis.core import QgsPrintLayout, QgsReadWriteContext, QgsLayoutItemHtml, QgsLayoutFrame
+from qgis.core import QgsPrintLayout, QgsReadWriteContext, QgsLayoutItemHtml, QgsLayoutFrame, \
+    QgsLayoutItemMap, QgsVectorLayer, QgsLayoutMultiFrame
  
  
 from PyQt5.QtCore import QRectF, QUrl
@@ -27,9 +28,11 @@ from PyQt5.QtCore import QRectF, QUrl
 #===============================================================================
 from hlpr.exceptions import QError as Error
 from hlpr.basic import view
-from hlpr.Q import Qcoms
+ 
+from hlpr.Q import Qcoms 
  
 from results.riskPlot import RiskPlotr
+#from model.modcom import Model
 
 
 #==============================================================================
@@ -88,14 +91,47 @@ class ReportGenerator(RiskPlotr, Qcoms):
         
         return 
    
-    def build_html(self): #buildt he HTML report
+    def build_html(self,
+                   ofp = None,
+                   cf_fp = None, #control fle path
+                   svg_fp_d = dict(), #svg filepaths to add to end of html
+                   ): #buildt he HTML report
         
-        #add some info to the html template
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if ofp is None: ofp = os.path.join(self.out_dir, 'report_%s.html'%self.resname)
+        if cf_fp is None: cf_fp = self.cf_fp
+        log = self.logger.getChild('build_html')
+        
+        if os.path.exists(ofp):
+            os.remove(ofp)
+
+        with open(ofp, "w") as html:
+            #=======================================================================
+            # #add the control file to the html
+            #=======================================================================
+        
+            with open(cf_fp,"r") as file:
+                lines = file.readlines()
+                log.info('building report from controlFile w/  %i lines'%len(lines))
+ 
+                for line in lines:
+                    html.write(line + "<br>\n")
+                    #e.write("<pre>" + line + "</pre> <br>\n")
+                    
+            #===================================================================
+            # add the plots
+            #===================================================================
+            for name, svg_fp in svg_fp_d.items():
+                raise Error('these are not read by QGIS... could try a different format? or just use the layouts native image item')
+                assert os.path.exists(svg_fp)
+                html.write("<br>\n" + '<object data="{fp}" type="image/svg+xml">\n'.format(fp=svg_fp) + "</object>\n<br>\n<br>\n<br>\n")
         
         #write the html file
-        
-        
-        return r'C:\LS\09_REPOS\03_TOOLS\CanFlood\_git\canflood\_pars\results\reporter\template_01.html'
+        log.info('wrote to %s'%ofp)
+        return ofp
+        #return r'C:\LS\09_REPOS\03_TOOLS\CanFlood\_git\canflood\_pars\results\reporter\template_01.html'
     
     
     def load_qtemplate(self, #load the layout template onto the project
@@ -112,8 +148,16 @@ class ReportGenerator(RiskPlotr, Qcoms):
         log=logger.getChild('load_qtemplate')
         if template_fp is None: template_fp = self.qrpt_template_fp
         
+        #=======================================================================
+        # clear the old layout
+        #=======================================================================
+        layoutManager = self.qproj.layoutManager()
+        old_layout = layoutManager.layoutByName(name)
+        if not old_layout is None:
+            layoutManager.removeLayout(old_layout)
         
         assert os.path.exists(template_fp)
+        log.debug('loading from %s'%template_fp)
         #=======================================================================
         # load the layout template
         #=======================================================================
@@ -140,6 +184,32 @@ class ReportGenerator(RiskPlotr, Qcoms):
         
         return qlayout
     
+    def add_map(self, #add a map to the results report
+                qlayout=None,
+                vlay=None,
+                ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        
+        assert isinstance(vlay, QgsVectorLayer)
+        
+        #add map
+        layItem_map = QgsLayoutItemMap(qlayout)
+         
+        layItem_map.attemptSetSceneRect(QRectF(5, 40,200,200))
+        layItem_map.setFrameEnabled(True)
+        
+        #add extent
+ 
+        layItem_map.setExtent(vlay.extent())
+        
+        #setting twice seems to be required for the extens to work
+        layItem_map.attemptSetSceneRect(QRectF(5, 40,200,200))
+        
+        qlayout.addLayoutItem(layItem_map)
+    
     def add_html(self, #add content from an html file
                  qlayout=None,
                   html_fp = None,
@@ -165,7 +235,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
         # #add the frame
         #=======================================================================
         html_frame = QgsLayoutFrame(qlayout, layItem_html)
-        html_frame.attemptSetSceneRect(QRectF(0, 40, 209.500, 256.750))
+        html_frame.attemptSetSceneRect(QRectF(5, 250, 200, 256.750))
         html_frame.setFrameEnabled(True)
         layItem_html.addFrame(html_frame)
          
@@ -181,16 +251,16 @@ class ReportGenerator(RiskPlotr, Qcoms):
         layItem_html.setUrl(url)
         layItem_html.loadHtml()
         
-        layItem_html.loadHtml()
+        #change resize mode
+        layItem_html.setResizeMode(QgsLayoutMultiFrame.ResizeMode.ExtendToNextPage)
 
  
         
-        log.info('finished')
+        log.info('added to %s'%qlayout.name())
         
-    def __exit__(self, #destructor
-                 *args,**kwargs):
-        pass
-    
+    def add_figures(self, #add a Qgs picture layout item for each passed svg
+                    fp_d):
+        raise Error('dmoe)'
         
         
         
