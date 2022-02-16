@@ -606,7 +606,10 @@ class Model(ComWrkr,
         """checks are done on a configparser (rather than a dictionary)
         to better handle python's type reading from files"""
         assert isinstance(chk_d, dict)
-        if not optional: assert len(chk_d)>0
+        #if not optional: assert len(chk_d)>0
+        if len(chk_d)>0: #skip checks if no pars are passed
+            log.warning('no check parameters passed')
+            0, []
         assert len(cpars)>0
         
         log.debug('\'%s\' optional=%s chk_d:\n    %s'%(self.__class__.__name__, optional, chk_d))

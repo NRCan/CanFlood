@@ -18,9 +18,9 @@ import pandas as pd
 #Q imports
 from PyQt5.QtXml import QDomDocument
 from qgis.core import QgsPrintLayout, QgsReadWriteContext, QgsLayoutItemHtml, QgsLayoutFrame
-
  
-from PyQt5.QtCore import QRectF
+ 
+from PyQt5.QtCore import QRectF, QUrl
 
 #===============================================================================
 # customs
@@ -42,11 +42,9 @@ class ReportGenerator(RiskPlotr, Qcoms):
     # expectations from parameter file
     #===========================================================================
     exp_pars_md = {
-        #=======================================================================
-        # 'results_fps':{
-        #      'r_ttl':{'ext':('.csv',)},
-        #      }
-        #=======================================================================
+        'results_fps':{
+             'r_ttl':{'ext':('.csv',)},
+             }
         }
     
     exp_pars_op={
@@ -76,8 +74,8 @@ class ReportGenerator(RiskPlotr, Qcoms):
         assert os.path.exists(self.qrpt_template_fp), 'passed template_fp is bad: \'%s\''%self.qrpt_template_fp
         
         
-        self.html_template_fp = os.path.join(self.pars_dir,  'template_01.html')
-        assert os.path.exists(self.html_template_fp)
+        #self.html_template_fp = os.path.join(self.pars_dir,  'template_01.html')
+        #assert os.path.exists(self.html_template_fp)
         
         self.logger.debug('%s.__init__ w/ feedback \'%s\''%(
             self.__class__.__name__, type(self.feedback).__name__))
@@ -97,18 +95,19 @@ class ReportGenerator(RiskPlotr, Qcoms):
         #write the html file
         
         
-        return self.html_template_fp 
+        return r'C:\LS\09_REPOS\03_TOOLS\CanFlood\_git\canflood\_pars\results\reporter\template_01.html'
     
     
     def load_qtemplate(self, #load the layout template onto the project
                        template_fp=None,
- 
+                       name=None,
                        logger=None,
                        ):
         
         #=======================================================================
         # defaults
         #=======================================================================
+        if name is None: name='CanFlood_report_%s'%self.resname
         if logger is None: logger=self.logger
         log=logger.getChild('load_qtemplate')
         if template_fp is None: template_fp = self.qrpt_template_fp
@@ -132,7 +131,8 @@ class ReportGenerator(RiskPlotr, Qcoms):
         qlayout.loadFromTemplate(doc, QgsReadWriteContext(), True)
         
 
-        
+        #rename
+        qlayout.setName(name)
 
         
         log.debug('loaded layout from template file: %s'%template_fp)
@@ -140,53 +140,50 @@ class ReportGenerator(RiskPlotr, Qcoms):
         
         return qlayout
     
-    def create_report(self,
-                      html_fp = None,
-                      name=None,
+    def add_html(self, #add content from an html file
+                 qlayout=None,
+                  html_fp = None,
+                      
                       ):
         #=======================================================================
         # defaults
         #=======================================================================
-        if name is None: name='CanFlood_report_%s'%self.resname
         
-        log = self.logger.getChild('create_report')
+        
+        log = self.logger.getChild('add_html')
         
         log.info('from %s'%html_fp)
         assert os.path.exists(html_fp)
-        
-        #=======================================================================
-        # #load the layout template
-        #=======================================================================
-        layout = self.load_qtemplate()
-        
-        
-        #rename
-        layout.setName(name)
-        
  
- 
-        
         #=======================================================================
-        # #populate the template
+        # #build the layouts 
         #=======================================================================
  
-
+        layItem_html = QgsLayoutItemHtml(qlayout)
         
-        layout_html = QgsLayoutItemHtml(layout)
-        html_frame = QgsLayoutFrame(layout, layout_html)
-        html_frame.attemptSetSceneRect(QRectF(10, 10, 30, 20))
+        #=======================================================================
+        # #add the frame
+        #=======================================================================
+        html_frame = QgsLayoutFrame(qlayout, layItem_html)
+        html_frame.attemptSetSceneRect(QRectF(0, 40, 209.500, 256.750))
         html_frame.setFrameEnabled(True)
-        layout_html.addFrame(html_frame)
-        layout_html.setContentMode(QgsLayoutItemHtml.ManualHtml)
-        layout_html.setHtml('test<br><b>test</b>')
-        layout_html.loadHtml()
-
-        #=======================================================================
-        # #add to the project
-        #=======================================================================
-        layoutManager = self.qproj.layoutManager()
-        layoutManager.addLayout(layout)
+        layItem_html.addFrame(html_frame)
+         
         
+        #=======================================================================
+        # #populate layout
+        #=======================================================================
+        #layItem_html.setContentMode(QgsLayoutItemHtml.ManualHtml)
+        #layItem_html.setHtml('test<br><b>test</b>')
+        
+        
+        url = QUrl("file:///" + html_fp)
+        layItem_html.setUrl(url)
+        layItem_html.loadHtml()
+        
+        layItem_html.loadHtml()
+
+ 
         
         log.info('finished')
         

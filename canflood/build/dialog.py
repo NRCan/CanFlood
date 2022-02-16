@@ -1017,7 +1017,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
         # populate Event Likelihoods table
         #======================================================================
-        
+        """TODO: use table bindings"""
         l = self.event_name_set
         for tbl in [self.fieldsTable_EL]:
 

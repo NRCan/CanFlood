@@ -299,7 +299,8 @@ class DialWF(WorkFlow): #workflow to run on your dialog
         pass #subclass to create your own
     
     def _setup_coms(self): #common CanFlood dialog setups
-                # working directory
+        self.D._change_tab('tab_setup')
+        # working directory
         assert os.path.exists(self.out_dir)
         self.D.lineEdit_wdir.setText(self.out_dir)
         
