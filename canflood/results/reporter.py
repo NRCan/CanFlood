@@ -140,6 +140,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
                        logger=None,
                        ):
         
+        raise Error('better to use QgsReport')
         #=======================================================================
         # defaults
         #=======================================================================
