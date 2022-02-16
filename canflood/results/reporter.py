@@ -18,7 +18,7 @@ import pandas as pd
 #Q imports
 from PyQt5.QtXml import QDomDocument
 from qgis.core import QgsPrintLayout, QgsReadWriteContext, QgsLayoutItemHtml, QgsLayoutFrame, \
-    QgsLayoutItemMap, QgsVectorLayer, QgsLayoutMultiFrame
+    QgsLayoutItemMap, QgsVectorLayer, QgsLayoutMultiFrame, QgsLayoutItemPicture
  
  
 from PyQt5.QtCore import QRectF, QUrl
@@ -181,6 +181,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
         
         log.debug('loaded layout from template file: %s'%template_fp)
         
+        self.layout = qlayout
         
         return qlayout
     
@@ -192,7 +193,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
         #=======================================================================
         # defaults
         #=======================================================================
-        
+        if qlayout is None: qlayout = self.layout
         assert isinstance(vlay, QgsVectorLayer)
         
         #add map
@@ -218,7 +219,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
         #=======================================================================
         # defaults
         #=======================================================================
-        
+        if qlayout is None: qlayout = self.layout
         
         log = self.logger.getChild('add_html')
         
@@ -257,10 +258,26 @@ class ReportGenerator(RiskPlotr, Qcoms):
  
         
         log.info('added to %s'%qlayout.name())
+ 
+            
+    def add_picture(self, 
+                    fp, #path to svg file to load
+                    qlayout=None,
+                    ):
+        if qlayout is None: qlayout = self.layout
+        log = self.logger.getChild('add_picture')
         
-    def add_figures(self, #add a Qgs picture layout item for each passed svg
-                    fp_d):
-        raise Error('dmoe)'
+        assert os.path.exists(fp)
+        
+        layItem_pic = QgsLayoutItemPicture(qlayout)
+
+        layItem_pic.attemptSetSceneRect(QRectF(5, 40,200,200))
+        layItem_pic.setFrameEnabled(True)
+        layItem_pic.setPicturePath(fp)
+         
+        qlayout.addLayoutItem(layItem_pic)
+        
+        log.debug('added item from %s'%fp)
         
         
         

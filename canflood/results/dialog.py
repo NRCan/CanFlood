@@ -776,14 +776,17 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             self.feedback.setProgress(40)
             
             #add the total plots
-            wrkr.add_figures(fp_d = plots_d)
+            for name, fp in plots_d.items():
+                wrkr.add_picture(fp)
+            self.feedback.setProgress(45)
             
             #add the control file report
             html_fp = wrkr.build_html()
             self.feedback.setProgress(50)
             
-            wrkr.add_html(qlayout=qlayout, html_fp=html_fp)
+            wrkr.add_html(html_fp=html_fp)
             self.feedback.setProgress(60)
+            
             
             
             
@@ -792,7 +795,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             layoutManager.addLayout(qlayout)
             
             """this will crash the test run""" 
-            self.iface.openLayoutDesigner(qlayout)
+            #self.iface.openLayoutDesigner(qlayout)
  
         #=======================================================================
         # wrap
