@@ -793,6 +793,9 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             report = wrkr.add_report()
             self.feedback.setProgress(30)
             
+            wrkr.add_header()
+            self.feedback.setProgress(35)
+            
             #add the map section
             if isinstance(geo_vlay, QgsVectorLayer):
                 wrkr.add_map(vlay=geo_vlay)
@@ -811,12 +814,11 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             
             
             
-            #add then open the layout
-            layoutManager = self.qproj.layoutManager()
-            layoutManager.addLayout(report)
+
             
             """this will crash the test run""" 
-            #self.iface.openLayoutDesigner(report)
+            if not self.iface is None:
+                self.iface.openLayoutDesigner(report)
  
         #=======================================================================
         # wrap

@@ -96,6 +96,9 @@ class WF_handler(object): #common functions for handling workflows
                   build_pickels = False,
                   get_tests=False,
                   **kwargs):
+        """
+        self.name
+        """
         
         #=======================================================================
         # defaults
@@ -136,7 +139,9 @@ class WF_handler(object): #common functions for handling workflows
             kstr = ''.join(['\n    %s: %s'%(k,v) for k,v in kwargs.items()]) #plot string
             log.debug('building w/ %s'%kstr)
             
-            
+            """
+            kwargs['name']
+            """
             #===================================================================
             # launch the flow
             #===================================================================
@@ -207,6 +212,7 @@ class DSession(WF_handler, Session):
     def __init__(self,
                  logger=None, 
                  tag='devDial',
+                 name='devDial',
                  **kwargs
                  ):
         
@@ -220,7 +226,7 @@ class DSession(WF_handler, Session):
             logger= devPlugLogger(self, log_nm='L')
         
         
-        super().__init__(logger=logger,tag=tag, **kwargs) 
+        super().__init__(logger=logger,tag=tag,name=name, **kwargs) 
         
         self.logger.info('finished DSession.init')
         

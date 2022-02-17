@@ -396,7 +396,8 @@ class Model(ComWrkr,
             self.upd_impStyle()
             self._init_fmtFunc()
             
-        self.resname = '%s_%s_%s'%(self.valid_par, self.name, self.tag)
+        if self.resname is None:
+            self.resname = '%s_%s_%s'%(self.valid_par, self.name, self.tag)
         """TODO: consolidate this with ComWrkr.resname"""
         #=======================================================================
         # #wrap

@@ -101,6 +101,8 @@ class ComWrkr(object): #common methods for all classes
         self.temp_dir=temp_dir  
 
         self.data_d = dict() #dictionary for loaded data sets
+        
+        if name is None: name=''
         #======================================================================
         # attach
         #======================================================================
@@ -119,7 +121,7 @@ class ComWrkr(object): #common methods for all classes
         # labels
         if resname is None:
             resname = '%s_%s_%s'%(self.name, self.tag,  datetime.datetime.now().strftime('%m%d'))
-            """TODO: consolidate this with Modcom.resname"""
+            """TODO: consolidate this with modcom.Model.init_model()"""
                  
         self.resname = resname
         #=======================================================================

@@ -392,6 +392,7 @@ class Tut1a_3res(DialWF):
  
         #select results to join
         comboBox = self.D.comboBox_jg_par
+        comboBox.setCurrentIndex(-1) #move to none so we get a nice referesh
         index = comboBox.findText('r_passet', Qt.MatchFixedString)
         comboBox.setCurrentIndex(index)
         

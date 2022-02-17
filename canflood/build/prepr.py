@@ -44,10 +44,10 @@ from model.modcom import Model #for data checks
 class Preparor(Model, Qcoms):
 
 
-    def __init__(self,**kwargs):
+    def __init__(self,name='prep', **kwargs):
         
         
-        super().__init__(**kwargs)
+        super().__init__(name=name, **kwargs)
 
         self.logger.debug('Preparor.__init__ w/ feedback \'%s\''%type(self.feedback).__name__)
         
