@@ -3169,19 +3169,17 @@ class RasterCalc(object):
         
         return rlayer
     
-#===============================================================================
-#     def __enter__(self,*args,**kwargs):
-#         return self
-# 
-#     def __exit__(self, #destructor
-#                  *args,**kwargs):
-#         
-#         #clear your map store
-#         #self.mstore.removeAllMapLayers()
-#         #print('clearing mstore')
-#         self.logger.info('finished in %.2f secs w/ %s'%((datetime.datetime.now() - self.start).total_seconds(), self.result))
-#         #super().__exit__(*args,**kwargs) #initilzie teh baseclass
-#===============================================================================
+    def __enter__(self,*args,**kwargs):
+        return self
+ 
+    def __exit__(self, #destructor
+                 *args,**kwargs):
+         
+        #clear your map store
+        #self.mstore.removeAllMapLayers()
+        #print('clearing mstore')
+        self.logger.info('finished in %.2f secs w/ %s'%((datetime.datetime.now() - self.start).total_seconds(), self.result))
+        #super().__exit__(*args,**kwargs) #initilzie teh baseclass
         
 
 #==============================================================================
