@@ -1,19 +1,19 @@
 ﻿# CanFlood
-Open source flood risk modelling toolbox for Canada!
+Open source flood risk modelling toolbox for Canada
 
 ![alt text](https://github.com/NRCan/CanFlood/blob/master/img/logo_20210419_500.png)
 
 
 Updated and tested against QGIS 3.16.14 (Qt 5.15.2)
 
-We welcome/encourage any comments, bugs, or issues you have or find. Please create a GitHub 'issue' ticket (on the issue tab) to let us know about these things.
+We welcome/encourage any comments, bugs, or issues you have or find. Please create a GitHub 'issue' ticket [following these instructions](https://github.com/NRCan/CanFlood/issues/6) to let us know about these things.
 
 Happy flood risk modelling!
 
-[Launch Party!](https://www.ibiviz.com/CanFlood/)
+checkout the [Launch Party](https://www.ibiviz.com/CanFlood/)
 
 ## Documentation
-Check out the new [documentation](https://canflood.readthedocs.io/en/latest/#)!
+New documentation is [here](https://canflood.readthedocs.io/en/latest/#). Legacy docuemtnation is archived [here](https://github.com/NRCan/CanFlood/tree/master/docs/legacy_manuals).
 
 ## Phase 3 Development
 [v1.1.0](https://github.com/NRCan/CanFlood/releases/tag/v1.1.0) is released with three major new features:
@@ -23,7 +23,7 @@ Check out the new [documentation](https://canflood.readthedocs.io/en/latest/#)!
 
 ## Installation Instructions 
 
-1) Ensure the QGIS version 'tested' above is installed and working on your system ([Qgis all releases download page](https://qgis.org/downloads/)). Ensure the 'processing' plugin is installed and enabled in QGIS. WARNING! QGIS has retired their old installer and is no longer supporting 32-bit binaries. If you get a 'Couldn't load plugin 'canflood'' error after installing the plugin (or you have a Qt version <5.15.2), you need to install QGIS using the new standalone (msi) installers, see [this post](https://github.com/NRCan/CanFlood/issues/27). 
+1) Ensure the QGIS and Qt version 'tested' above is installed and working on your system ([Qgis all releases download page](https://qgis.org/downloads/)). Ensure the 'processing' plugin is installed and enabled in QGIS.  
 
 2) Ensure the required python packages or dependencies shown in the [requirements file](https://github.com/NRCan/CanFlood/blob/master/canflood/requirements.txt) are installed. Typically, this step is skipped and users just attempt to use the tool until an error is thrown. As of last test, a default install of QGIS 3.16 included all the CanFlood dependencies except 'openpyxl' (needed by the 'results - BCA' tools). Instructions for installing additional python packages in QGIS are provided [here](https://github.com/NRCan/CanFlood/issues/6).
 
@@ -38,7 +38,11 @@ Install from the QGIS plugin repository.
 
 ### Troubleshooting Installation
 
-As both QGIS and CanFlood are active open source projects, getting your installation configured can be challenging, especially if you lack admin privileges to your machine and have no pyqgis experience. Some installations of QGIS may not come pre-installed with all the required python packages and dependencies listed in the [requirements](https://github.com/NRCan/CanFlood/blob/master/canflood/requirements.txt) file.  If you get a ModuleNotFound error, your QGIS install does not have the required packages. This can easily be remedied by a user with admin privileges and working pyqgis knowledge.  The following [solution](https://github.com/NRCan/CanFlood/issues/6#issuecomment-592091488) provides some guidance on installing third party python modules, but you'll likely need admin privileges. 
+As both QGIS and CanFlood are active open source projects, getting your installation configured can be challenging, especially if you lack admin privileges to your machine and have no pyqgis experience. Check the [issues](https://github.com/NRCan/CanFlood/issues?q=is%3Aissue) for solutions.
+
+QGIS has retired their old installer and is no longer supporting 32-bit binaries. If you get a 'Couldn't load plugin 'canflood'' error after installing the plugin (or you have a Qt version <5.15.2), you need to install QGIS using the new standalone (msi) installers, see [this solution](https://github.com/NRCan/CanFlood/issues/27).
+
+Some installations of QGIS may not come pre-installed with all the required python packages and dependencies listed in the [requirements](https://github.com/NRCan/CanFlood/blob/master/canflood/requirements.txt) file.  If you get a ModuleNotFound error, your QGIS install does not have the required packages. This can easily be remedied by a user with admin privileges and working pyqgis knowledge.  The following [solution](https://github.com/NRCan/CanFlood/issues/6#issuecomment-592091488) provides some guidance on installing third party python modules, but you'll likely need admin privileges. 
 
 
 ## Getting Started
@@ -47,9 +51,9 @@ To get started with CanFlood, we recommend reading the [documentation](https://c
 
 
 ## I'm getting Errors!
-As CanFlood is an active open-sourced project, users will often encounter errors which can be frustrating.  To work through these errors, we recommend first checking to see if there is a similar issue on the above '[Issues](https://github.com/NRCan/CanFlood/issues)' tab.  If so, hopefully the thread will resolve the problem, if not, reply to the thread with more details on your problem and why the posted solution did not work.
+As CanFlood is an active open-sourced project, users will often encounter errors which can be frustrating.  To work through these errors, we recommend first checking to see if there is a similar issue on the above '[issues](https://github.com/NRCan/CanFlood/issues?q=is%3Aissue)' tab.  If so, hopefully the thread will resolve the problem, if not, reply to the thread with more details on your problem and why the posted solution did not work.
 
-If there is no issue ticket yet, follow the instructions [here](https://github.com/NRCan/CanFlood/issues/6).
+If there is no issue ticket yet, follow the instructions [here](https://github.com/NRCan/CanFlood/issues/6) to post a new issue.
 
 ## CanFlood needs improvement!
 We agree. Consider contacting a CanFlood developer to sponsor improvement that suites your needs, or joining the development community. Whether you'd like to integrate CanFlood modelling with some existing local databases, or integrate some other flood risk models into your analysis, or develop new output styles, the CanFlood project wants to hear from you. Please post a new issue [here](https://github.com/NRCan/CanFlood/issues/new) with an 'enhancement' label.
