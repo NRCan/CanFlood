@@ -23,7 +23,7 @@ Check out the new [documentation](https://canflood.readthedocs.io/en/latest/#)!
 
 ## Installation Instructions 
 
-1) Ensure the QGIS version 'tested' above is installed and working on your system ([Qgis all releases download page](https://qgis.org/downloads/)). Ensure the 'processing' plugin is installed and enabled in QGIS.
+1) Ensure the QGIS version 'tested' above is installed and working on your system ([Qgis all releases download page](https://qgis.org/downloads/)). Ensure the 'processing' plugin is installed and enabled in QGIS. WARNING! QGIS has retired their old installer and is no longer supporting 32-bit binaries. If you get a 'Couldn't load plugin 'canflood'' error after installing the plugin (or you have a Qt version <5.15.2), see [this post](https://github.com/NRCan/CanFlood/issues/27). 
 
 2) Ensure the required python packages or dependencies shown in the [requirements file](https://github.com/NRCan/CanFlood/blob/master/canflood/requirements.txt) are installed. Typically, this step is skipped and users just attempt to use the tool until an error is thrown. As of last test, a default install of QGIS 3.16 included all the CanFlood dependencies except 'openpyxl' (needed by the 'results - BCA' tools). Instructions for installing additional python packages in QGIS are provided [here](https://github.com/NRCan/CanFlood/issues/6).
 
