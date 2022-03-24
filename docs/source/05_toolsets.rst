@@ -481,7 +481,9 @@ Another optional output is supplied through the ‘bdmg_smry’ function and cor
 5.2.3. Risk (L2)
 ================
 
-CanFlood’s ‘Risk (L2)’ tool is designed to perform a ‘classic’ object-based deterministic flood risk assessment using impact estimates and probabilities to calculate an annualized risk metric. Beyond this classical risk model, ‘Risk (L2)’ also facilitates risk estimates that incorporate conditional hazard events, like levee failure during a 100-yr flood. This can be conceptualized with Sayers (2012)’s ‘source-pathway-receptor’ framework as shown in Figure5-3_, where:
+CanFlood’s ‘Risk (L2)’ tool is designed to perform a ‘classic’ object-based deterministic flood risk assessment using impact estimates and probabilities to calculate an annualized risk metric as part of an :ref:`L2 assessment <Section3.2>` . In summary, this tool uses the impacts per hazard-event from the  :ref:`Impacts (L2) <Section5.2.2>` tool to compute a single risk metric through integration. 
+
+Beyond this classical risk model, ‘Risk (L2)’ also facilitates risk estimates that incorporate conditional hazard events, like levee failure during a 100-yr flood. This can be conceptualized with Sayers (2012)’s ‘source-pathway-receptor’ framework as shown in Figure5-3_, where:
 
   • *Source*: WSL prediction (in raster format) for levels behind the defense (e.g. levee) of an event with a quantified likelihood.
   • *Pathway*: The infrastructure element separating receptors (i.e. assets) from the raw WSL prediction. Typically, this is a levee, but could be any element where ‘failure’ likelihood and WSL can be quantified (e.g. stormwater outfall gates, stormwater pumps).
