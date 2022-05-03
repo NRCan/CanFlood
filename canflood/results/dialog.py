@@ -756,38 +756,13 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # init
         #=======================================================================
         from results.reporter import ReportGenerator
-        #kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
         
         kwargs = {attn:getattr(self, attn) for attn in ['logger', 'tag', 'cf_fp', 
                                     'out_dir', 'feedback', 'init_q_d']}
-        #wrkr = results.reporter.ReportGenerator(**kwargs) 
         
         with ReportGenerator(**kwargs) as wrkr:
         
             wrkr.setup()
-            
-            #===================================================================
-            # #start the template
-            # qlayout = wrkr.load_qtemplate()
-            # self.feedback.setProgress(30)
-            # 
-            # #add the map
-            # if isinstance(geo_vlay, QgsVectorLayer):
-            #     wrkr.add_map(qlayout=qlayout, vlay=geo_vlay)
-            # self.feedback.setProgress(40)
-            # 
-            # #add the total plots
-            # for name, fp in plots_d.items():
-            #     wrkr.add_picture(fp)
-            # self.feedback.setProgress(45)
-            # 
-            # #add the control file report
-            # html_fp = wrkr.build_html()
-            # self.feedback.setProgress(50)
-            # 
-            # wrkr.add_html(html_fp=html_fp)
-            # self.feedback.setProgress(60)
-            #===================================================================
             
             #start the report
             report = wrkr.add_report()
@@ -801,20 +776,17 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                 wrkr.add_map(vlay=geo_vlay)
             self.feedback.setProgress(40)
             
-            # #add the total plots
+            # add the total plots
             for name, fp in plots_d.items():
                 wrkr.add_picture(fp)
             self.feedback.setProgress(45)
             
             
-            # #add the control file report
+            # add the control file report
             html_fp = wrkr.build_html()          
             wrkr.add_html(html_fp=html_fp)
             self.feedback.setProgress(60)
             
-            
-            
-
             
             """this will crash the test run""" 
             if not self.iface is None:
@@ -827,17 +799,3 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         log.push('run_reporter finished')
         self.feedback.upd_prog(None)
- 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-    
-    

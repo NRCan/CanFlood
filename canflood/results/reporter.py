@@ -8,9 +8,6 @@ generating report template
 #==============================================================================
 # imports------------
 #==============================================================================
-import logging, configparser, datetime, copy, shutil
-
-
 import os
 import numpy as np
 import pandas as pd
@@ -19,14 +16,13 @@ import pandas as pd
 from PyQt5.QtXml import QDomDocument
 from qgis.core import QgsPrintLayout, QgsReadWriteContext, QgsLayoutItemHtml, QgsLayoutFrame, \
     QgsLayoutItemMap, QgsVectorLayer, QgsLayoutMultiFrame, QgsLayoutItemPicture, \
-    QgsReport, QgsLayout, QgsReportSectionLayout, QgsLayoutItemPage, QgsLayoutItemLabel, \
-    QgsTextFormat
+    QgsReport, QgsLayout, QgsReportSectionLayout, QgsLayoutItemPage, QgsLayoutItemLabel \
  
 
 from PyQt5.QtCore import QRectF, QUrl
+from PyQt5.QtGui import QFont
 from PyQt5 import QtGui
 
-#.QtGui import QFont
 
 #===============================================================================
 # customs
@@ -37,7 +33,6 @@ from hlpr.basic import view
 from hlpr.Q import Qcoms 
  
 from results.riskPlot import RiskPlotr
-#from model.modcom import Model
 
 
 #==============================================================================
@@ -58,6 +53,8 @@ class ReportGenerator(RiskPlotr, Qcoms):
     exp_pars_op={
  
         }
+
+    section_count = 1
     
     def __init__(self,
                 figsize=(10,6),
@@ -69,38 +66,32 @@ class ReportGenerator(RiskPlotr, Qcoms):
             'r_ttl':{'index_col':None}}}
         
         #=======================================================================
-        # paramters directory
+        # parameters directory
         #=======================================================================
         self.pars_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), '_pars', 'results', 'reporter')
         
         #=======================================================================
-        # get the temlpate files
+        # get the template files
         #=======================================================================
         
-        self.qrpt_template_fp = os.path.join(self.pars_dir,  'CanFlood_report_template_01.qpt')
+        self.qrpt_template_fp = os.path.join(self.pars_dir,  'CanFlood_report_template_02.qpt')
 
         assert os.path.exists(self.qrpt_template_fp), 'passed template_fp is bad: \'%s\''%self.qrpt_template_fp
         
-        
-        #self.html_template_fp = os.path.join(self.pars_dir,  'template_01.html')
-        #assert os.path.exists(self.html_template_fp)
         
         self.logger.debug('%s.__init__ w/ feedback \'%s\''%(
             self.__class__.__name__, type(self.feedback).__name__))
         
     def prep_model(self):
-
-        
         self.set_ttl() #load and prep the total results
 
-        
         return 
    
     def build_html(self,
                    ofp = None,
                    cf_fp = None, #control fle path
                    svg_fp_d = dict(), #svg filepaths to add to end of html
-                   ): #buildt he HTML report
+                   ): #build the HTML report
         
         #=======================================================================
         # defaults
@@ -114,7 +105,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
 
         with open(ofp, "w") as html:
             #=======================================================================
-            # #add the control file to the html
+            # add the control file to the html
             #=======================================================================
         
             with open(cf_fp,"r") as file:
@@ -123,7 +114,6 @@ class ReportGenerator(RiskPlotr, Qcoms):
  
                 for line in lines:
                     html.write(line + "<br>\n")
-                    #e.write("<pre>" + line + "</pre> <br>\n")
                     
             #===================================================================
             # add the plots
@@ -136,60 +126,6 @@ class ReportGenerator(RiskPlotr, Qcoms):
         #write the html file
         log.info('wrote to %s'%ofp)
         return ofp
-        #return r'C:\LS\09_REPOS\03_TOOLS\CanFlood\_git\canflood\_pars\results\reporter\template_01.html'
-    
-    
-    def load_qtemplate(self, #load the layout template onto the project
-                       template_fp=None,
-                       name=None,
-                       logger=None,
-                       ):
-        
-        raise Error('better to use QgsReport')
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        if name is None: name='CanFlood_report_%s'%self.resname
-        if logger is None: logger=self.logger
-        log=logger.getChild('load_qtemplate')
-        if template_fp is None: template_fp = self.qrpt_template_fp
-        
-        #=======================================================================
-        # clear the old layout
-        #=======================================================================
-        layoutManager = self.qproj.layoutManager()
-        old_layout = layoutManager.layoutByName(name)
-        if not old_layout is None:
-            layoutManager.removeLayout(old_layout)
-        
-        assert os.path.exists(template_fp)
-        log.debug('loading from %s'%template_fp)
-        #=======================================================================
-        # load the layout template
-        #=======================================================================
-        #load the template
-        with open(template_fp) as f:
-            template_content = f.read()
-            doc = QDomDocument()
-            doc.setContent(template_content)
-        
-         
-        #build a normal layout
-        qlayout = QgsPrintLayout(self.qproj)
-        
-        #load the template 
-        qlayout.loadFromTemplate(doc, QgsReadWriteContext(), True)
-        
-
-        #rename
-        qlayout.setName(name)
-
-        
-        log.debug('loaded layout from template file: %s'%template_fp)
-        
-        self.layout = qlayout
-        
-        return qlayout
     
     def add_report(self,
                       
@@ -260,7 +196,6 @@ class ReportGenerator(RiskPlotr, Qcoms):
         #=======================================================================
         # load the layout template
         #=======================================================================
-        #load the template
         with open(template_fp) as f:
             template_content = f.read()
             doc = QDomDocument()
@@ -285,10 +220,8 @@ class ReportGenerator(RiskPlotr, Qcoms):
         
         if report is None:
             report = self.report
-        
+
         qproj = self.qproj
-        
-        
             
         sect=QgsReportSectionLayout(report)
         sect.setBodyEnabled(True) #turn the body on
@@ -297,8 +230,14 @@ class ReportGenerator(RiskPlotr, Qcoms):
         
         #add a body to the section
         body = QgsPrintLayout(qproj)
-        body.initializeDefaults() #add teh default page
-        
+        body.initializeDefaults() #add the default page
+
+        #add page number to section
+        self.add_page_number(qlayout=body)
+
+        #add page header to section
+        self.add_page_header(qlayout=body)
+                
         #change the page size
         page_collection = body.pageCollection()
         page1 = page_collection.pages()[0]
@@ -307,9 +246,51 @@ class ReportGenerator(RiskPlotr, Qcoms):
         sect.setBody(body)
         
         return body
+
+    def add_page_number(self, qlayout=None, qrect=QRectF(190, 290, 14, 4), **kwargs):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if qlayout is None: 
+            qlayout = self.add_section(**kwargs)
+
+        #=======================================================================
+        # add page number label
+        #=======================================================================
+        page_label = QgsLayoutItemLabel(qlayout)
+        text = "Page " + str(self.section_count)
+
+        #setting label styling options
+        page_label.setText(text)
+        page_label.setFont(QFont("Ms Shell Dlg 2", 10))
+        page_label.attemptSetSceneRect(qrect)
+
+        #add page number label to body
+        qlayout.addLayoutItem(page_label)
+
+        #increment the section count
+        self.section_count += 1
+
+    def add_page_header(self, qlayout=None, qrect=QRectF(5, 5, 100, 10), text='CanFlood Model Report', **kwargs):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if qlayout is None: 
+            qlayout = self.add_section(**kwargs)
+
+        #=======================================================================
+        # add page header
+        #=======================================================================
+        page_header = QgsLayoutItemLabel(qlayout)
+
+        #setting label styling options
+        page_header.setText(text)
+        page_header.setFont(QFont("Ms Shell Dlg 2", 22))
+        page_header.attemptSetSceneRect(qrect)
+
+        #add page header to body
+        qlayout.addLayoutItem(page_header)
         
-                   
-    
     def add_map(self, #add a map to the results report
                 report=None,
                 qlayout=None,
@@ -323,13 +304,13 @@ class ReportGenerator(RiskPlotr, Qcoms):
         if qlayout is None: 
             qlayout = self.add_section(report=report)
             
-        if qrect is None: qrect = QRectF(5, 5,200,280)
+        if qrect is None: qrect = QRectF(5, 20, 200, 265)
         log = self.logger.getChild('add_map')
             
         assert isinstance(vlay, QgsVectorLayer)
         
         #=======================================================================
-        # #add map
+        # add map
         #=======================================================================
         layItem_map = QgsLayoutItemMap(qlayout)
          
@@ -360,7 +341,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
     def add_label(self,
                   qlayout=None,
                   text='text',
-                  qrect=QRectF(5, 5, 200, 100),
+                  qrect=QRectF(5, 20, 200, 100),
                   text_size=8,
                   text_bold=True,
                   **kwargs):
@@ -379,19 +360,10 @@ class ReportGenerator(RiskPlotr, Qcoms):
         # format
         #=======================================================================
 
-        #=======================================================================
-        # t = QgsTextFormat()
-        # if not text_format is None:
-        #     t.setNamedStyle(text_format)
-        # if not text_size is None:
-        #     t.setSize(text_size)
-        # label.setTextFormat(t)
-        #=======================================================================
         font = QtGui.QFont()
         font.setPointSize(text_size)
         font.setBold(text_bold)
         label.setFont(font)
-        
         
         qlayout.addLayoutItem(label)
         
@@ -401,7 +373,6 @@ class ReportGenerator(RiskPlotr, Qcoms):
                  qlayout=None,
                   html_fp = None,
                   report=None,
-                      
                       ):
         #=======================================================================
         # defaults
@@ -415,29 +386,29 @@ class ReportGenerator(RiskPlotr, Qcoms):
         assert os.path.exists(html_fp)
  
         #=======================================================================
-        # #build the layouts 
+        # build the layouts 
         #=======================================================================
  
         layItem_html = QgsLayoutItemHtml(qlayout)
         
         #=======================================================================
-        # #add the frame
+        # add the frame
         #=======================================================================
         html_frame = QgsLayoutFrame(qlayout, layItem_html)
-        html_frame.attemptSetSceneRect(QRectF(5, 5, 200, 256.750))
+        html_frame.attemptSetSceneRect(QRectF(5, 20, 200, 256.750))
         html_frame.setFrameEnabled(True)
         layItem_html.addFrame(html_frame)
  
         #=======================================================================
-        # #populate layout
+        # populate layout
         #=======================================================================
  
         url = QUrl("file:///" + html_fp)
         log.debug('setUrl from %s'%url)
         layItem_html.setUrl(url) #phantom crashing test mode
         layItem_html.loadHtml()
-        # 
-        # #change resize mode
+
+        # change resize mode
         layItem_html.setResizeMode(QgsLayoutMultiFrame.ResizeMode.ExtendToNextPage)
         #=======================================================================
 
@@ -466,8 +437,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
         
         layItem_pic = QgsLayoutItemPicture(qlayout)
 
-        layItem_pic.attemptSetSceneRect(QRectF(5, 5,200,280))
-        #layItem_pic.setFrameEnabled(True)
+        layItem_pic.attemptSetSceneRect(QRectF(5, 20, 200, 265))
         layItem_pic.setPicturePath(fp)
          
         qlayout.addLayoutItem(layItem_pic)
@@ -475,15 +445,3 @@ class ReportGenerator(RiskPlotr, Qcoms):
         log.debug('added item from %s'%fp)
         
         return layItem_pic
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
