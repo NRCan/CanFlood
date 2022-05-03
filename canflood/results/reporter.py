@@ -74,7 +74,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
         # get the template files
         #=======================================================================
         
-        self.qrpt_template_fp = os.path.join(self.pars_dir,  'CanFlood_report_template_02.qpt')
+        self.qrpt_template_fp = os.path.join(self.pars_dir,  'CanFlood_report_template_01.qpt')
 
         assert os.path.exists(self.qrpt_template_fp), 'passed template_fp is bad: \'%s\''%self.qrpt_template_fp
         
