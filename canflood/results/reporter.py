@@ -210,6 +210,11 @@ class ReportGenerator(RiskPlotr, Qcoms):
         t = 'report generated on %s'%self.today_str
         self.add_label(qlayout=report_header, text=t,
                        qrect=QRectF(5, 55, 200, 50))
+
+        #=======================================================================
+        # add the page number
+        #=======================================================================
+        self.add_page_number(qlayout=report_header)     
         
         
         log.debug('set header from template file: %s'%template_fp)
