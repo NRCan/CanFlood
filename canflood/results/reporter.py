@@ -236,7 +236,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
         self.add_page_number(qlayout=body)
 
         #add page header to section
-        self.add_page_header(qlayout=body)
+        self.add_page_header(qlayout=body, text=self.name)
                 
         #change the page size
         page_collection = body.pageCollection()

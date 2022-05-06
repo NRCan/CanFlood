@@ -286,10 +286,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         df1 = tlRaw_df.copy()
         
         """
-        TODO: harmonize this with 'impact_units' loaded from control file
-            generally set (in cf) by model.dmg2.Dmg2.run(set_impactUnits=True)
-            or read from control file
-            then written to r_ttl 
+        taking the value from 'impact_units' loaded from control file
         """
         self.impact_name = self.impact_units #get the label for the impacts
         
