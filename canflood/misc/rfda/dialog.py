@@ -181,7 +181,7 @@ class RfdaDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         wrkr = RFDAconv(logger=self.logger, out_dir=out_dir, tag=tag, bsmt_ht = bsmt_ht)
         self.feedback.setProgress(20)
         #======================================================================
-        # invnentory convert
+        # inventory convert
         #======================================================================
         if isinstance(rinv_vlay, QgsVectorLayer):
             

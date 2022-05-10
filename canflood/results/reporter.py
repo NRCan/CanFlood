@@ -16,7 +16,8 @@ import pandas as pd
 from PyQt5.QtXml import QDomDocument
 from qgis.core import QgsPrintLayout, QgsReadWriteContext, QgsLayoutItemHtml, QgsLayoutFrame, \
     QgsLayoutItemMap, QgsVectorLayer, QgsLayoutMultiFrame, QgsLayoutItemPicture, \
-    QgsReport, QgsLayout, QgsReportSectionLayout, QgsLayoutItemPage, QgsLayoutItemLabel \
+    QgsReport, QgsLayout, QgsReportSectionLayout, QgsLayoutItemPage, QgsLayoutItemLabel, \
+    QgsLayoutTable, QgsLayoutTableColumn
  
 
 from PyQt5.QtCore import QRectF, QUrl
@@ -89,7 +90,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
    
     def build_html(self,
                    ofp = None,
-                   cf_fp = None, #control fle path
+                   cf_fp = None, #control file path
                    svg_fp_d = dict(), #svg filepaths to add to end of html
                    ): #build the HTML report
         
@@ -450,3 +451,30 @@ class ReportGenerator(RiskPlotr, Qcoms):
         log.debug('added item from %s'%fp)
         
         return layItem_pic
+
+    #===========================================================================
+    # Param 'finv': Inventory file object
+    #===========================================================================
+    def add_table(self, finv, qlayout=None, report=None):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if qlayout is None: 
+            qlayout = self.add_section(report=report)
+
+        log = self.logger.getChild('add_table')
+
+        log.info(f'finv {finv}')
+
+        layout_table = QgsLayoutTable(qlayout)
+        
+        # Define table columns
+        col1 = QgsLayoutTableColumn(finv)
+
+        col2 = QgsLayoutTableColumn(finv)
+
+        layout_table.attemptSetSceneRect(QRectF(5, 20, 200, 265))
+
+        log.debug('added table from %s'%finv)
+
+        return layout_table
