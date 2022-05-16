@@ -17,10 +17,10 @@ from PyQt5.QtXml import QDomDocument
 from qgis.core import QgsPrintLayout, QgsReadWriteContext, QgsLayoutItemHtml, QgsLayoutFrame, \
     QgsLayoutItemMap, QgsVectorLayer, QgsLayoutMultiFrame, QgsLayoutItemPicture, \
     QgsReport, QgsLayout, QgsReportSectionLayout, QgsLayoutItemPage, QgsLayoutItemLabel, \
-    QgsLayoutTable, QgsLayoutTableColumn
+    QgsLayoutItemAttributeTable, QgsVectorLayer
  
 
-from PyQt5.QtCore import QRectF, QUrl
+from PyQt5.QtCore import QRectF, QUrl, Qt
 from PyQt5.QtGui import QFont
 from PyQt5 import QtGui
 
@@ -453,9 +453,9 @@ class ReportGenerator(RiskPlotr, Qcoms):
         return layItem_pic
 
     #===========================================================================
-    # Param 'finv': Inventory file object
+    # Param 'finv_fp': Inventory file path
     #===========================================================================
-    def add_table(self, finv, qlayout=None, report=None):
+    def add_table(self, finv_fp, qlayout=None, report=None):
         #=======================================================================
         # defaults
         #=======================================================================
@@ -464,17 +464,31 @@ class ReportGenerator(RiskPlotr, Qcoms):
 
         log = self.logger.getChild('add_table')
 
-        log.info(f'finv {finv}')
+        # Create layout and vector layer with finv file path
+        finv_table = QgsLayoutItemAttributeTable.create(qlayout)
+        finv_layer = QgsVectorLayer(f'file:///{finv_fp}', 'finv', 'delimitedtext')
 
-        layout_table = QgsLayoutTable(qlayout)
+        # Set table layer
+        finv_table.setVectorLayer(finv_layer)
+
+        # resizing columns
+        columns = finv_table.columns()
+        for column in columns:
+            column.setHAlignment(Qt.AlignHCenter)
+            column.setWidth(50)
         
-        # Define table columns
-        col1 = QgsLayoutTableColumn(finv)
+        finv_table.setColumns(columns)
+        finv_table.setUseConditionalStyling(True)
+        finv_table.refresh()
 
-        col2 = QgsLayoutTableColumn(finv)
+        # add the frame
+        finv_frame = QgsLayoutFrame(qlayout, finv_table)
+        finv_frame.attemptSetSceneRect(QRectF(25, 20, 160, 265))
+        finv_frame.setFrameEnabled(True)
+        finv_table.addFrame(finv_frame)
 
-        layout_table.attemptSetSceneRect(QRectF(5, 20, 200, 265))
+        qlayout.addMultiFrame(finv_table)
 
-        log.debug('added table from %s'%finv)
+        log.debug('added table from %s'%finv_fp)
 
-        return layout_table
+        return finv_table

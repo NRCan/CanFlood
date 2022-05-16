@@ -21,6 +21,7 @@ import hlpr.plug
 
 from hlpr.basic import force_open_dir
 from hlpr.exceptions import QError as Error
+from model.modcom import Model
 
 import results.djoin
 import results.riskPlot
@@ -329,7 +330,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         wrkr = results.djoin.Djoiner(**kwargs).setup()
         
         """shortened setup... loading the data here"""
-        #wrkr.init_model() #load teh control file
+        #wrkr.init_model() #load the control file
         
         
         #=======================================================================
@@ -534,6 +535,22 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         log.debug('pars w/ %i keys'%(len(fps_d)))
         
         return fps_d
+
+    # Retrieve inventory table from results
+    def get_finv(self):
+        self._set_setup(set_cf_fp=True)
+
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        wrkr = results.riskPlot.RiskPlotr(**kwargs).setup()
+
+        finv_fp = wrkr.finv
+
+        assert os.path.exists(finv_fp), 'passed invalid finv file path: %s'%finv_fp
+        df_raw = pd.read_csv(finv_fp, index_col=0)
+
+        df = df_raw.head(10)
+
+        return finv_fp
         
         
 
@@ -748,15 +765,12 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         geo_vlay = self.comboBox_rpt_vlay.currentLayer()
 
         plots_d = self.run_plotRisk(plt_window=False)
+
+        finv = self.get_finv()
         #=======================================================================
         # init
-        #=======================================================================
+        #=======================================================================  
         from results.reporter import ReportGenerator
-        from model.modcom import Model
-
-        self.cf_fp
-
-        finv = Model.load_df_ctrl(self)
         
         kwargs = {attn:getattr(self, attn) for attn in ['logger', 'tag', 'cf_fp', 
                                     'out_dir', 'feedback', 'init_q_d']}
@@ -767,17 +781,18 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             
             #start the report
             report = wrkr.add_report()
-            self.feedback.setProgress(30)
+            self.feedback.setProgress(20)
             
             wrkr.add_header()
-            self.feedback.setProgress(35)
+            self.feedback.setProgress(30)
             
             #add the map section
             if isinstance(geo_vlay, QgsVectorLayer):
                 wrkr.add_map(vlay=geo_vlay)
-            self.feedback.setProgress(40)
+            self.feedback.setProgress(35)
 
-            wrkr.add_table(finv)
+            if finv is not None:
+                wrkr.add_table(finv)
             self.feedback.setProgress(45)
             
             # add the total plots

@@ -3894,15 +3894,15 @@ def vlay_new_mlay(#create a new mlay
         # prechecks
         #=======================================================================
         if not isinstance(layname, str):
-            raise Error('expected a string for layname, isntead got %s'%type(layname))
+            raise Error('expected a string for layname, instead got %s'%type(layname))
         
         if gtype=='None':
             log.warning('constructing mlay w/ \'None\' type')
         #=======================================================================
         # assemble into new layer
         #=======================================================================
-        #initilzie the layer
-        EPSG_code=int(crs.authid().split(":")[1]) #get teh coordinate reference system of input_layer
+        #initialize the layer
+        EPSG_code=int(crs.authid().split(":")[1]) #get the coordinate reference system of input_layer
         uri = gtype+'?crs=epsg:'+str(EPSG_code)+'&index=yes'
         
         vlaym = QgsVectorLayer(uri, layname, "memory")
