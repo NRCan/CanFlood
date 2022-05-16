@@ -471,22 +471,25 @@ class ReportGenerator(RiskPlotr, Qcoms):
         # Set table layer
         finv_table.setVectorLayer(finv_layer)
 
-        # resizing columns
+        # Resize columns and set alignment to centre
         columns = finv_table.columns()
         for column in columns:
             column.setHAlignment(Qt.AlignHCenter)
             column.setWidth(50)
         
+        # Set table columns, limit to 10 rows and refresh table to display with new widths
         finv_table.setColumns(columns)
+        finv_table.setMaximumNumberOfFeatures(10)
         finv_table.setUseConditionalStyling(True)
         finv_table.refresh()
 
-        # add the frame
+        # Add the frame
         finv_frame = QgsLayoutFrame(qlayout, finv_table)
-        finv_frame.attemptSetSceneRect(QRectF(25, 20, 160, 265))
+        finv_frame.attemptSetSceneRect(QRectF(25, 20, 160, 67.050))
         finv_frame.setFrameEnabled(True)
         finv_table.addFrame(finv_frame)
 
+        # Add the frame to the layout
         qlayout.addMultiFrame(finv_table)
 
         log.debug('added table from %s'%finv_fp)
