@@ -480,7 +480,6 @@ class ReportGenerator(RiskPlotr, Qcoms):
         # Set table columns, limit to 10 rows and refresh table to display with new widths
         finv_table.setColumns(columns)
         finv_table.setMaximumNumberOfFeatures(10)
-        finv_table.setUseConditionalStyling(True)
         finv_table.refresh()
 
         # Add the frame
@@ -488,7 +487,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
         finv_frame.attemptSetSceneRect(QRectF(25, 20, 160, 67.050))
         finv_frame.setFrameEnabled(True)
         finv_table.addFrame(finv_frame)
-
+        
         # Add the frame to the layout
         qlayout.addMultiFrame(finv_table)
 
