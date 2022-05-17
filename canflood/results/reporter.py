@@ -17,10 +17,10 @@ from PyQt5.QtXml import QDomDocument
 from qgis.core import QgsPrintLayout, QgsReadWriteContext, QgsLayoutItemHtml, QgsLayoutFrame, \
     QgsLayoutItemMap, QgsVectorLayer, QgsLayoutMultiFrame, QgsLayoutItemPicture, \
     QgsReport, QgsLayout, QgsReportSectionLayout, QgsLayoutItemPage, QgsLayoutItemLabel, \
-    QgsLayoutItemAttributeTable, QgsVectorLayer
+    QgsLayoutItemAttributeTable, QgsVectorLayer, QgsField, QgsFeature
  
 
-from PyQt5.QtCore import QRectF, QUrl, Qt
+from PyQt5.QtCore import QRectF, QUrl, Qt, QVariant
 from PyQt5.QtGui import QFont
 from PyQt5 import QtGui
 
@@ -453,9 +453,9 @@ class ReportGenerator(RiskPlotr, Qcoms):
         return layItem_pic
 
     #===========================================================================
-    # Param 'finv_fp': Inventory file path
+    # Param 'finv': Inventory file object
     #===========================================================================
-    def add_table(self, finv_fp, qlayout=None, report=None):
+    def add_table(self, finv, qlayout=None, report=None):
         #=======================================================================
         # defaults
         #=======================================================================
@@ -466,7 +466,27 @@ class ReportGenerator(RiskPlotr, Qcoms):
 
         # Create layout and vector layer with finv file path
         finv_table = QgsLayoutItemAttributeTable.create(qlayout)
-        finv_layer = QgsVectorLayer(f'file:///{finv_fp}', 'finv', 'delimitedtext')
+        finv_layer = QgsVectorLayer('none', 'finv', 'memory')
+
+        finv_layer.startEditing()
+
+        # Add fields
+        index_field = QgsField('xid', QVariant.Int)
+        finv_layer.addAttribute(index_field)
+
+        for head in finv:
+            field = QgsField(head, QVariant.String)
+            finv_layer.addAttribute(field)
+        
+        finv_layer.updateFields()
+
+        # Add features
+        for row in finv.itertuples():
+            feature = QgsFeature()
+            feature.setAttributes([row[0], row[1], row[2]])
+            finv_layer.addFeature(feature)
+
+        finv_layer.commitChanges()
 
         # Set table layer
         finv_table.setVectorLayer(finv_layer)
@@ -477,9 +497,8 @@ class ReportGenerator(RiskPlotr, Qcoms):
             column.setHAlignment(Qt.AlignHCenter)
             column.setWidth(50)
         
-        # Set table columns, limit to 10 rows and refresh table to display with new widths
+        # Set table column styling and refresh table to display with new styling
         finv_table.setColumns(columns)
-        finv_table.setMaximumNumberOfFeatures(10)
         finv_table.refresh()
 
         # Add the frame
@@ -491,6 +510,6 @@ class ReportGenerator(RiskPlotr, Qcoms):
         # Add the frame to the layout
         qlayout.addMultiFrame(finv_table)
 
-        log.debug('added table from %s'%finv_fp)
+        log.debug('added table from %s'%finv)
 
         return finv_table

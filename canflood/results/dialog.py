@@ -550,7 +550,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
         df = df_raw.head(10)
 
-        return finv_fp
+        return df
         
         
 
