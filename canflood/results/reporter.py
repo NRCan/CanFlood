@@ -17,7 +17,7 @@ from PyQt5.QtXml import QDomDocument
 from qgis.core import QgsPrintLayout, QgsReadWriteContext, QgsLayoutItemHtml, QgsLayoutFrame, \
     QgsLayoutItemMap, QgsVectorLayer, QgsLayoutMultiFrame, QgsLayoutItemPicture, \
     QgsReport, QgsLayout, QgsReportSectionLayout, QgsLayoutItemPage, QgsLayoutItemLabel, \
-    QgsLayoutItemAttributeTable, QgsVectorLayer, QgsField, QgsFeature
+    QgsLayoutItemAttributeTable, QgsVectorLayer, QgsField, QgsFeature, QgsProject
  
 
 from PyQt5.QtCore import QRectF, QUrl, Qt, QVariant
@@ -453,7 +453,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
         return layItem_pic
 
     #===========================================================================
-    # Param 'finv': Inventory file object
+    # Param 'finv': Inventory file DataFrame object
     #===========================================================================
     def add_table(self, finv, qlayout=None, report=None):
         #=======================================================================
@@ -464,9 +464,12 @@ class ReportGenerator(RiskPlotr, Qcoms):
 
         log = self.logger.getChild('add_table')
 
+        
+        project = QgsProject.instance()
+
         # Create layout and vector layer with finv file path
         finv_table = QgsLayoutItemAttributeTable.create(qlayout)
-        finv_layer = QgsVectorLayer('none', 'finv', 'memory')
+        finv_layer = QgsVectorLayer('none', 'report_table', 'memory')
 
         finv_layer.startEditing()
 
@@ -490,6 +493,9 @@ class ReportGenerator(RiskPlotr, Qcoms):
 
         # Set table layer
         finv_table.setVectorLayer(finv_layer)
+
+         # Needs to be added to project instance as a temporary file to prevent data loss
+        project.addMapLayer(finv_layer)
 
         # Resize columns and set alignment to centre
         columns = finv_table.columns()

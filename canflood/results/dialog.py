@@ -551,8 +551,6 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         df = df_raw.head(10)
 
         return df
-        
-        
 
     def run_compare(self):
         log = self.logger.getChild('run_compare')
