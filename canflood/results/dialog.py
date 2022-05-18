@@ -540,17 +540,32 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     def get_finv(self):
         self._set_setup(set_cf_fp=True)
 
+        #=======================================================================
+        # get finv from control file
+        #=======================================================================
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
-        wrkr = results.riskPlot.RiskPlotr(**kwargs).setup()
+        #wrkr = results.riskPlot.RiskPlotr(**kwargs).setup()
+        
+        with Model(**kwargs) as wrkr:
+            #load the control file
+            wrkr.init_model(check_pars=False)
+            
+            #load data from teh control file
+            dtag_d = {k:d for k,d in wrkr.dtag_d.items() if k=='finv'}
+            wrkr.load_df_ctrl(dtag_d=dtag_d)
+            df_raw = wrkr.raw_d.pop('finv')
+            
 
-        finv_fp = wrkr.finv
+#===============================================================================
+#         finv_fp = wrkr.finv
+# 
+#         assert os.path.exists(finv_fp), 'passed invalid finv file path: %s'%finv_fp
+#         df_raw = pd.read_csv(finv_fp, index_col=0)
+#===============================================================================
+        
+        #df = df_raw.head(10)
 
-        assert os.path.exists(finv_fp), 'passed invalid finv file path: %s'%finv_fp
-        df_raw = pd.read_csv(finv_fp, index_col=0)
-
-        df = df_raw.head(10)
-
-        return df
+        return df_raw
 
     def run_compare(self):
         log = self.logger.getChild('run_compare')
@@ -764,7 +779,8 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
         plots_d = self.run_plotRisk(plt_window=False)
 
-        finv = self.get_finv()
+        finv_df = self.get_finv() #retrieve the inventory frame
+        assert isinstance(finv_df, pd.DataFrame), 'failed to load finv'
         #=======================================================================
         # init
         #=======================================================================  
@@ -789,8 +805,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                 wrkr.add_map(vlay=geo_vlay)
             self.feedback.setProgress(35)
 
-            if finv is not None:
-                wrkr.add_table(finv)
+            wrkr.add_finv_smry(finv_df) #making this mandatory
             self.feedback.setProgress(45)
             
             # add the total plots
