@@ -347,7 +347,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
     def add_label(self,
                   qlayout=None,
                   text='text',
-                  qrect=QRectF(5, 20, 200, 100),
+                  qrect=QRectF(5, 20, 200, 10),
                   text_size=8,
                   text_bold=True,
                   **kwargs):
@@ -455,7 +455,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
     #===========================================================================
     # Param 'finv': Inventory file DataFrame object
     #===========================================================================
-    def add_table(self, finv, qlayout=None, report=None):
+    def add_finv_smry(self, finv_df_raw, qlayout=None, report=None):
         #=======================================================================
         # defaults
         #=======================================================================
@@ -463,28 +463,34 @@ class ReportGenerator(RiskPlotr, Qcoms):
             qlayout = self.add_section(report=report)
 
         log = self.logger.getChild('add_table')
-
+ 
+        project = self.qproj
         
-        project = QgsProject.instance()
+        #=======================================================================
+        # prep data
+        #=======================================================================
+        finv_df = finv_df_raw.head(10)
 
-        # Create layout and vector layer with finv file path
+        #=======================================================================
+        # # Create layout and vector layer with finv file path
+        #=======================================================================
         finv_table = QgsLayoutItemAttributeTable.create(qlayout)
-        finv_layer = QgsVectorLayer('none', 'report_table', 'memory')
+        finv_layer = QgsVectorLayer('none', 'finv_summary_table', 'memory')
 
         finv_layer.startEditing()
 
         # Add fields
-        index_field = QgsField('xid', QVariant.Int)
+        index_field = QgsField(finv_df.index.name, QVariant.Int)
         finv_layer.addAttribute(index_field)
 
-        for head in finv:
+        for head in finv_df:
             field = QgsField(head, QVariant.String)
             finv_layer.addAttribute(field)
         
         finv_layer.updateFields()
 
         # Add features
-        for row in finv.itertuples():
+        for row in finv_df.itertuples():
             feature = QgsFeature()
             feature.setAttributes([row[0], row[1], row[2]])
             finv_layer.addFeature(feature)
@@ -494,7 +500,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
         # Set table layer
         finv_table.setVectorLayer(finv_layer)
 
-         # Needs to be added to project instance as a temporary file to prevent data loss
+        # Needs to be added to project instance as a temporary file to prevent data loss
         project.addMapLayer(finv_layer)
 
         # Resize columns and set alignment to centre
@@ -507,15 +513,26 @@ class ReportGenerator(RiskPlotr, Qcoms):
         finv_table.setColumns(columns)
         finv_table.refresh()
 
-        # Add the frame
+        #=======================================================================
+        # # Add the frame
+        #=======================================================================
         finv_frame = QgsLayoutFrame(qlayout, finv_table)
-        finv_frame.attemptSetSceneRect(QRectF(25, 20, 160, 67.050))
+        finv_frame.attemptSetSceneRect(QRectF(25, 40, 160, 67.050))
         finv_frame.setFrameEnabled(True)
         finv_table.addFrame(finv_frame)
         
         # Add the frame to the layout
         qlayout.addMultiFrame(finv_table)
+        
+        #=======================================================================
+        # add title
+        #=======================================================================
+        label = self.add_label(qlayout=qlayout, text='Inventory Summary', text_size=20)
+        
+        #=======================================================================
+        # wrap
+        #=======================================================================
 
-        log.debug('added table from %s'%finv)
+        log.debug('added table from %s'%str(finv_df.shape))
 
         return finv_table
