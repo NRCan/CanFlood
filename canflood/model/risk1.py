@@ -154,7 +154,6 @@ class Risk1(RiskModel):
         # defaults
         #======================================================================
         log = self.logger.getChild('run')
-        #ddf_raw, finv,  = self.data_d['expos'],self.data_d['finv'] 
         aep_ser = self.data_d['evals']
         cid, bid = self.cid, self.bid        
         bdf ,ddf = self.bdf, self.ddf

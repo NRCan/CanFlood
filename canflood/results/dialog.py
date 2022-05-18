@@ -19,16 +19,14 @@ import pandas as pd
 
 import hlpr.plug
 
-
-#from hlpr.Q import *
 from hlpr.basic import force_open_dir
 from hlpr.exceptions import QError as Error
+from model.modcom import Model
 
 import results.djoin
 import results.riskPlot
 import results.compare
 import results.attribution
-#import results.reporter
 
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
@@ -57,7 +55,6 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #custom setup
 
         self.qproj_setup(iface=iface, **kwargs)
-        #self.connect_slots()
         
         self.logger.debug('ResultsDialog init')
         
@@ -107,7 +104,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
 
         #=======================================================================
-        # Risk PLot-------------
+        # Risk Plot-------------
         #=======================================================================
         self.pushButton_RP_plot.clicked.connect(self.run_plotRisk) 
         self.pushButton_RP_pStacks.clicked.connect(self.run_pStack)
@@ -143,7 +140,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                 self.get_cf_par(self.lineEdit_cf_fp.text(), varName=x)
                                                     ))
         
-        #also connect teh layer
+        #also connect the layer
         self.comboBox_JGfinv.layerChanged.connect(            
             lambda x: self.lineEdit_JG_resfp.setText(
                 self.get_cf_par(self.lineEdit_cf_fp.text(), 
@@ -160,7 +157,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.setup_comboBox(self.comboBox_jg_relabel,['', 'ari', 'aep'], default='ari')
         
         #styles
-        def set_style(): #set the style options based on the selecte dlayer
+        def set_style(): #set the style options based on the selected layer
             vlay = self.comboBox_JGfinv.currentLayer()
             
             if not isinstance(vlay, QgsVectorLayer):
@@ -333,7 +330,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         wrkr = results.djoin.Djoiner(**kwargs).setup()
         
         """shortened setup... loading the data here"""
-        #wrkr.init_model() #load teh control file
+        #wrkr.init_model() #load the control file
         
         
         #=======================================================================
@@ -347,7 +344,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         self.feedback.setProgress(75)
         #=======================================================================
-        # load and styleize
+        # load and stylize
         #=======================================================================
         self._load_toCanvas(res_vlay, logger=log, style_fn = self.comboBox_JG_style.currentText())
         
@@ -437,7 +434,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         self.feedback.setProgress(20)
         #=======================================================================
-        # #execute
+        # execute
         #=======================================================================
         if self.checkBox_RP_aep.isChecked():
             fig = wrkr.plot_stackdRCurves(stack_dxind, sEAD_ser, y1lab='AEP')
@@ -478,7 +475,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         si_ttl = wrkr.get_slice_noFail()
         self.feedback.setProgress(20)
         #=======================================================================
-        # #execute
+        # execute
         #=======================================================================
         if self.checkBox_RP_aep.isChecked():
             fig = wrkr.plot_slice(si_ttl, y1lab='AEP')
@@ -497,7 +494,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         log.push('pNoFail finished')
         
         
-    def _set_fps(self, logger=None): #retrieve control file paths on Cmopare/Combine tab from user
+    def _set_fps(self, logger=None): #retrieve control file paths on Compare/Combine tab from user
         if logger is None: logger=self.logger
         log=logger.getChild('_set_fps')
         
@@ -538,8 +535,37 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         log.debug('pars w/ %i keys'%(len(fps_d)))
         
         return fps_d
+
+    # Retrieve inventory table from results
+    def get_finv(self):
+        self._set_setup(set_cf_fp=True)
+
+        #=======================================================================
+        # get finv from control file
+        #=======================================================================
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        #wrkr = results.riskPlot.RiskPlotr(**kwargs).setup()
         
+        with Model(**kwargs) as wrkr:
+            #load the control file
+            wrkr.init_model(check_pars=False)
+            
+            #load data from teh control file
+            dtag_d = {k:d for k,d in wrkr.dtag_d.items() if k=='finv'}
+            wrkr.load_df_ctrl(dtag_d=dtag_d)
+            df_raw = wrkr.raw_d.pop('finv')
+            
+
+#===============================================================================
+#         finv_fp = wrkr.finv
+# 
+#         assert os.path.exists(finv_fp), 'passed invalid finv file path: %s'%finv_fp
+#         df_raw = pd.read_csv(finv_fp, index_col=0)
+#===============================================================================
         
+        #df = df_raw.head(10)
+
+        return df_raw
 
     def run_compare(self):
         log = self.logger.getChild('run_compare')
@@ -572,7 +598,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         self.feedback.setProgress(70)
         #=======================================================================
-        # #plot curves
+        # plot curves
         #=======================================================================
         if self.checkBox_C_ari.isChecked():
             fig = wrkr.riskCurves(y1lab='impacts')
@@ -615,7 +641,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #===========================================================================
         # get data
         #===========================================================================
-        cdxind, cWrkr = wrkr.build_composite()
+        cWrkr = wrkr.build_composite()
         
         
         self.feedback.setProgress(70)
@@ -679,7 +705,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # update gui
         #=======================================================================
-        """populate for conveience of the cba_plot tool"""
+        """populate for convenience of the cba_plot tool"""
         self.lineEdit_cba_cf.setText(ofp)
         
         #=======================================================================
@@ -750,11 +776,14 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # retrieve from other functions
         #=======================================================================
         geo_vlay = self.comboBox_rpt_vlay.currentLayer()
-        
+
         plots_d = self.run_plotRisk(plt_window=False)
+
+        finv_df = self.get_finv() #retrieve the inventory frame
+        assert isinstance(finv_df, pd.DataFrame), 'failed to load finv'
         #=======================================================================
         # init
-        #=======================================================================
+        #=======================================================================  
         from results.reporter import ReportGenerator
         
         kwargs = {attn:getattr(self, attn) for attn in ['logger', 'tag', 'cf_fp', 
@@ -766,20 +795,23 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             
             #start the report
             report = wrkr.add_report()
-            self.feedback.setProgress(30)
+            self.feedback.setProgress(20)
             
             wrkr.add_header()
-            self.feedback.setProgress(35)
+            self.feedback.setProgress(30)
             
             #add the map section
             if isinstance(geo_vlay, QgsVectorLayer):
                 wrkr.add_map(vlay=geo_vlay)
-            self.feedback.setProgress(40)
+            self.feedback.setProgress(35)
+
+            wrkr.add_finv_smry(finv_df) #making this mandatory
+            self.feedback.setProgress(45)
             
             # add the total plots
             for name, fp in plots_d.items():
                 wrkr.add_picture(fp)
-            self.feedback.setProgress(45)
+            self.feedback.setProgress(50)
             
             
             # add the control file report

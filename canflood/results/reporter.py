@@ -16,10 +16,11 @@ import pandas as pd
 from PyQt5.QtXml import QDomDocument
 from qgis.core import QgsPrintLayout, QgsReadWriteContext, QgsLayoutItemHtml, QgsLayoutFrame, \
     QgsLayoutItemMap, QgsVectorLayer, QgsLayoutMultiFrame, QgsLayoutItemPicture, \
-    QgsReport, QgsLayout, QgsReportSectionLayout, QgsLayoutItemPage, QgsLayoutItemLabel \
+    QgsReport, QgsLayout, QgsReportSectionLayout, QgsLayoutItemPage, QgsLayoutItemLabel, \
+    QgsLayoutItemAttributeTable, QgsVectorLayer, QgsField, QgsFeature, QgsProject
  
 
-from PyQt5.QtCore import QRectF, QUrl
+from PyQt5.QtCore import QRectF, QUrl, Qt, QVariant
 from PyQt5.QtGui import QFont
 from PyQt5 import QtGui
 
@@ -89,7 +90,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
    
     def build_html(self,
                    ofp = None,
-                   cf_fp = None, #control fle path
+                   cf_fp = None, #control file path
                    svg_fp_d = dict(), #svg filepaths to add to end of html
                    ): #build the HTML report
         
@@ -346,7 +347,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
     def add_label(self,
                   qlayout=None,
                   text='text',
-                  qrect=QRectF(5, 20, 200, 100),
+                  qrect=QRectF(5, 20, 200, 10),
                   text_size=8,
                   text_bold=True,
                   **kwargs):
@@ -450,3 +451,99 @@ class ReportGenerator(RiskPlotr, Qcoms):
         log.debug('added item from %s'%fp)
         
         return layItem_pic
+
+    #===========================================================================
+    # Param 'finv': Inventory file DataFrame object
+    #===========================================================================
+    def add_finv_smry(self, finv_df_raw, qlayout=None, report=None):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if qlayout is None: 
+            qlayout = self.add_section(report=report)
+
+        log = self.logger.getChild('add_table')
+ 
+        project = self.qproj
+        
+        #=======================================================================
+        # prep data
+        #=======================================================================
+        finv_df = finv_df_raw.head(10)
+
+        #=======================================================================
+        # # Create layout and vector layer with finv file path
+        #=======================================================================
+        
+        
+        finv_layer = self.vlay_new_df2(finv_df.reset_index(), layname='finv_summary_table',
+                                       logger=log)
+ 
+#===============================================================================
+#         finv_layer = QgsVectorLayer('none', 'finv_summary_table', 'memory')
+# 
+#         finv_layer.startEditing()
+# 
+#         # Add fields
+#         index_field = QgsField(finv_df.index.name, QVariant.Int)
+#         finv_layer.addAttribute(index_field)
+# 
+#         for head in finv_df:
+#             field = QgsField(head, QVariant.String)
+#             finv_layer.addAttribute(field)
+#         
+#         finv_layer.updateFields()
+# 
+#         # Add features
+#         for row in finv_df.itertuples():
+#             feature = QgsFeature()
+#             feature.setAttributes([row[0], row[1], row[2]])
+#             finv_layer.addFeature(feature)
+# 
+#         finv_layer.commitChanges()
+#===============================================================================
+
+        # Needs to be added to project instance as a temporary file to prevent data loss
+        project.addMapLayer(finv_layer)
+
+        #=======================================================================
+        # # Set table layer
+        #=======================================================================
+        finv_table = QgsLayoutItemAttributeTable.create(qlayout)
+        finv_table.setVectorLayer(finv_layer)
+
+
+
+        # Resize columns and set alignment to centre
+        columns = finv_table.columns()
+        for column in columns:
+            column.setHAlignment(Qt.AlignHCenter)
+            column.setWidth(50)
+        
+        # Set table column styling and refresh table to display with new styling
+        finv_table.setColumns(columns)
+        finv_table.refresh()
+
+        #=======================================================================
+        # # Add the frame
+        #=======================================================================
+        finv_frame = QgsLayoutFrame(qlayout, finv_table)
+        finv_frame.attemptSetSceneRect(QRectF(25, 40, 160, 67.050))
+        finv_frame.setFrameEnabled(True)
+        finv_table.addFrame(finv_frame)
+        
+        # Add the frame to the layout
+        qlayout.addMultiFrame(finv_table)
+        
+        #=======================================================================
+        # add title
+        #=======================================================================
+        label = self.add_label(qlayout=qlayout, text='Inventory Summary', text_size=20)
+        
+        #=======================================================================
+        # wrap
+        #=======================================================================
+
+        log.debug('added table from %s'%str(finv_df.shape))
+
+        return finv_table
