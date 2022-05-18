@@ -474,34 +474,45 @@ class ReportGenerator(RiskPlotr, Qcoms):
         #=======================================================================
         # # Create layout and vector layer with finv file path
         #=======================================================================
-        finv_table = QgsLayoutItemAttributeTable.create(qlayout)
-        finv_layer = QgsVectorLayer('none', 'finv_summary_table', 'memory')
-
-        finv_layer.startEditing()
-
-        # Add fields
-        index_field = QgsField(finv_df.index.name, QVariant.Int)
-        finv_layer.addAttribute(index_field)
-
-        for head in finv_df:
-            field = QgsField(head, QVariant.String)
-            finv_layer.addAttribute(field)
         
-        finv_layer.updateFields()
-
-        # Add features
-        for row in finv_df.itertuples():
-            feature = QgsFeature()
-            feature.setAttributes([row[0], row[1], row[2]])
-            finv_layer.addFeature(feature)
-
-        finv_layer.commitChanges()
-
-        # Set table layer
-        finv_table.setVectorLayer(finv_layer)
+        
+        finv_layer = self.vlay_new_df2(finv_df.reset_index(), layname='finv_summary_table',
+                                       logger=log)
+ 
+#===============================================================================
+#         finv_layer = QgsVectorLayer('none', 'finv_summary_table', 'memory')
+# 
+#         finv_layer.startEditing()
+# 
+#         # Add fields
+#         index_field = QgsField(finv_df.index.name, QVariant.Int)
+#         finv_layer.addAttribute(index_field)
+# 
+#         for head in finv_df:
+#             field = QgsField(head, QVariant.String)
+#             finv_layer.addAttribute(field)
+#         
+#         finv_layer.updateFields()
+# 
+#         # Add features
+#         for row in finv_df.itertuples():
+#             feature = QgsFeature()
+#             feature.setAttributes([row[0], row[1], row[2]])
+#             finv_layer.addFeature(feature)
+# 
+#         finv_layer.commitChanges()
+#===============================================================================
 
         # Needs to be added to project instance as a temporary file to prevent data loss
         project.addMapLayer(finv_layer)
+
+        #=======================================================================
+        # # Set table layer
+        #=======================================================================
+        finv_table = QgsLayoutItemAttributeTable.create(qlayout)
+        finv_table.setVectorLayer(finv_layer)
+
+
 
         # Resize columns and set alignment to centre
         columns = finv_table.columns()
