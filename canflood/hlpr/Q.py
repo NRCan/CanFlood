@@ -463,12 +463,12 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
     # LOAD/WRITE LAYERS-----------
     #===========================================================================
     
-    def load_vlay(self, 
+    def  load_vlay(self, 
                   fp, 
                   logger=None, 
                   providerLib='ogr',
                   aoi_vlay = None,
-                  allow_none=True, #control check in saveselectedfeastures
+                  allow_none=True, #control check in saveselectedfeatures
                   addSpatialIndex=True,
                   uriParams_d = {'encoding':'System',
                                     'type':'csv',
@@ -525,7 +525,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         #check if this is valid
         if not vlay_raw.isValid():
-            raise Error('loaded vlay \'%s\' is not valid. \n \n did you initilize?'%vlay_raw.name())
+            raise Error('loaded vlay \'%s\' is not valid. \n \n did you initialize?'%vlay_raw.name())
         
         #check if it has geometry
         if not providerLib == 'delimitedtext':
@@ -3894,15 +3894,15 @@ def vlay_new_mlay(#create a new mlay
         # prechecks
         #=======================================================================
         if not isinstance(layname, str):
-            raise Error('expected a string for layname, isntead got %s'%type(layname))
+            raise Error('expected a string for layname, instead got %s'%type(layname))
         
         if gtype=='None':
             log.warning('constructing mlay w/ \'None\' type')
         #=======================================================================
         # assemble into new layer
         #=======================================================================
-        #initilzie the layer
-        EPSG_code=int(crs.authid().split(":")[1]) #get teh coordinate reference system of input_layer
+        #initialize the layer
+        EPSG_code=int(crs.authid().split(":")[1]) #get the coordinate reference system of input_layer
         uri = gtype+'?crs=epsg:'+str(EPSG_code)+'&index=yes'
         
         vlaym = QgsVectorLayer(uri, layname, "memory")

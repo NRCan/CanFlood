@@ -530,7 +530,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         if set_finv:
             
             #===================================================================
-            # get using sleection logic
+            # get using selection logic
             #===================================================================
             vlay_raw = self.comboBox_ivlay.currentLayer()
             assert not vlay_raw is None, 'must select a finv vlay'
@@ -1132,7 +1132,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     def _get_rsamp_pars(self): #extract raster sampling paraeters from dialog
         
         #=======================================================================
-        # get defautls
+        # get defaults
         #=======================================================================
         log = self.logger.getChild('_get_rsamp_pars')
         finv = self.finv_vlay #set by set_setup()
