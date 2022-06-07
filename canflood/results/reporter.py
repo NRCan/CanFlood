@@ -350,6 +350,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
                   qrect=QRectF(5, 20, 200, 10),
                   text_size=8,
                   text_bold=True,
+                  text_underline=False,
                   **kwargs):
         
         #=======================================================================
@@ -369,6 +370,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
         font = QtGui.QFont()
         font.setPointSize(text_size)
         font.setBold(text_bold)
+        font.setUnderline(text_underline)
         label.setFont(font)
         
         qlayout.addLayoutItem(label)
@@ -451,14 +453,16 @@ class ReportGenerator(RiskPlotr, Qcoms):
 
         # Check that event summary table is present
         if df is not None:
-            df_layer = self.vlay_new_df2(df.reset_index(), layname='event_summary_table',
+            df.columns = map(str.upper, df.columns)
+            df.loc[:, 'IMPACTS'] = df['IMPACTS'].map(lambda impact_val: self.impactFmtFunc(impact_val))
+            df_layer = self.vlay_new_df2(df, layname='event_summary_table',
                                        logger=log)
             # Add table header
             self.add_label(qlayout=qlayout, text='Event Summary Table', qrect=QRectF(5, 145, 100, 100), 
-                                                                            text_size=16, text_bold=False)
+                                                                            text_size=16, text_bold=False, text_underline=True)
             # Add the table under the picture                       
             self.add_table(df_layer, qlayout=qlayout, 
-                            qrect=QRectF(25, 160, 160, 49.050), column_width=50)
+                            qrect=QRectF(25, 160, 160, 49.050), column_width=34)
         
         log.debug('added item from %s'%fp)
         
