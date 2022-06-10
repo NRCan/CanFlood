@@ -115,7 +115,6 @@ class CurvePlotr(DFunc, Plotr):
                 lib_as_df = True, #indicator for format of passed lib
                 title=None,
                 logger=None,
-
                 **lineKwargs
                 ):
         #=======================================================================
@@ -159,7 +158,8 @@ class CurvePlotr(DFunc, Plotr):
         #post format
         fig = ax.figure
         fig.suptitle(title)
-        ax.legend()
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.20),
+                                fancybox=True, shadow=True, ncol=6)
         ax.grid()
         
         return fig

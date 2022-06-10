@@ -27,6 +27,7 @@ import results.djoin
 import results.riskPlot
 import results.compare
 import results.attribution
+import misc.curvePlot
 
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
@@ -362,6 +363,37 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         log.push('run_joinGeo finished')
         self.feedback.upd_prog(None)
+
+    def run_dmgCurvePlot(self):
+        log = self.logger.getChild('run_dmgCurvePlot')
+        
+        #=======================================================================
+        # collect inputs
+        #=======================================================================
+        self._set_setup(set_cf_fp=True)
+
+        #=======================================================================
+        # setup and load
+        #=======================================================================
+        # setup
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        wrkr = misc.curvePlot.CurvePlotr(**kwargs)
+
+        with Model(**kwargs) as model:
+            filePath = 'C:/Users/ben.maxwell/Downloads/tut2a\IBI2015_DamageCurves.xls'
+
+        if filePath is None:
+            return
+
+        #load data
+        cLib_d = wrkr.load_data(filePath)
+
+        #plot
+        fig = wrkr.plotAll(cLib_d)
+        output = self.output_fig(fig, plt_window=False)
+        self.feedback.upd_prog(30, method='append')
+
+        return output
     
     def run_plotRisk(self,
                      plt_window=None,
@@ -779,6 +811,8 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
         plots_d = self.run_plotRisk(plt_window=False)
 
+        dmg_plot = self.run_dmgCurvePlot()
+
         finv_df = self.get_finv() #retrieve the inventory frame
         assert isinstance(finv_df, pd.DataFrame), 'failed to load finv'
         #=======================================================================
@@ -812,6 +846,10 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             for name, fp in plots_d.items():
                 wrkr.add_picture(fp)
             self.feedback.setProgress(50)
+
+            if dmg_plot is not None:
+                wrkr.add_picture(dmg_plot)
+            self.feedback.setProgress(55)
             
             
             # add the control file report
