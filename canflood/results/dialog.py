@@ -27,6 +27,7 @@ import results.djoin
 import results.riskPlot
 import results.compare
 import results.attribution
+
 import misc.curvePlot
 
 
@@ -380,7 +381,11 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         wrkr = misc.curvePlot.CurvePlotr(**kwargs)
 
         with Model(**kwargs) as model:
-            filePath = 'C:/Users/ben.maxwell/Downloads/tut2a\IBI2015_DamageCurves.xls'
+            #load the control file
+            model.init_model(check_pars=False)
+            
+            #get curves filepath from the model
+            filePath = model.curves
 
         if filePath is None:
             return
@@ -576,26 +581,15 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # get finv from control file
         #=======================================================================
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
-        #wrkr = results.riskPlot.RiskPlotr(**kwargs).setup()
         
         with Model(**kwargs) as wrkr:
             #load the control file
             wrkr.init_model(check_pars=False)
             
-            #load data from teh control file
+            #load data from the control file
             dtag_d = {k:d for k,d in wrkr.dtag_d.items() if k=='finv'}
             wrkr.load_df_ctrl(dtag_d=dtag_d)
             df_raw = wrkr.raw_d.pop('finv')
-            
-
-#===============================================================================
-#         finv_fp = wrkr.finv
-# 
-#         assert os.path.exists(finv_fp), 'passed invalid finv file path: %s'%finv_fp
-#         df_raw = pd.read_csv(finv_fp, index_col=0)
-#===============================================================================
-        
-        #df = df_raw.head(10)
 
         return df_raw
 
