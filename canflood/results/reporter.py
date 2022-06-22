@@ -453,8 +453,11 @@ class ReportGenerator(RiskPlotr, Qcoms):
 
         # Check that event summary table is present
         if df is not None:
+            #format table
             df.columns = map(str.upper, df.columns)
-            df.loc[:, 'IMPACTS'] = df['IMPACTS'].map(lambda impact_val: self.impactFmtFunc(impact_val))
+            df.iloc[:, 1] = df.iloc[:, 1].map(lambda impact_val: self.impactFmtFunc(impact_val))
+            
+            #convert to layer
             df_layer = self.vlay_new_df2(df, layname='event_summary_table',
                                        logger=log)
             # Add table header

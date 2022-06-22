@@ -817,7 +817,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             
             # add the total plots
             for name, fp in plots_d.items():
-                wrkr.add_picture(fp=fp, df=r_ttl_df[['aep', 'impacts']])
+                wrkr.add_picture(fp=fp, df=r_ttl_df.iloc[:, 0:2])
             self.feedback.setProgress(50)
             
             
