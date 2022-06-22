@@ -153,20 +153,16 @@ class ReportGenerator(RiskPlotr, Qcoms):
         old_layout = layoutManager.layoutByName(name)
         if not old_layout is None:
             layoutManager.removeLayout(old_layout)
-        
-
-        
+ 
         #=======================================================================
         # create the report
         #=======================================================================
         r = QgsReport(qproj)
         r.setName(name)
-        
-        
+ 
         #add to layout
         layoutManager.addLayout(r)
- 
-        
+  
         log.debug('built report \'%s\''%name)
         
         self.report = r
@@ -242,7 +238,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
         self.add_page_number(qlayout=body)
 
         #add page header to section
-        self.add_page_header(qlayout=body, text=self.name)
+        self.add_page_header(qlayout=body, text='CanFlood Model Report: %s'%self.name)
                 
         #change the page size
         page_collection = body.pageCollection()
@@ -277,7 +273,8 @@ class ReportGenerator(RiskPlotr, Qcoms):
         #increment the section count
         self.section_count += 1
 
-    def add_page_header(self, qlayout=None, qrect=QRectF(5, 5, 100, 10), text='CanFlood Model Report', **kwargs):
+    def add_page_header(self, qlayout=None, qrect=QRectF(5, 5, 150, 10), 
+                        text='CanFlood Model Report', **kwargs):
         #=======================================================================
         # defaults
         #=======================================================================
@@ -287,15 +284,20 @@ class ReportGenerator(RiskPlotr, Qcoms):
         #=======================================================================
         # add page header
         #=======================================================================
-        page_header = QgsLayoutItemLabel(qlayout)
-
-        #setting label styling options
-        page_header.setText(text)
-        page_header.setFont(QFont("Ms Shell Dlg 2", 22))
-        page_header.attemptSetSceneRect(qrect)
-
-        #add page header to body
-        qlayout.addLayoutItem(page_header)
+        label = self.add_label(qlayout=qlayout, text=text, text_size=22, 
+                               qrect=qrect, text_bold=True)
+        
+#===============================================================================
+#         page_header = QgsLayoutItemLabel(qlayout)
+# 
+#         #setting label styling options
+#         page_header.setText(text)
+#         page_header.setFont(QFont("Ms Shell Dlg 2", 22))
+#         page_header.attemptSetSceneRect(qrect)
+# 
+#         #add page header to body
+#         qlayout.addLayoutItem(page_header)
+#===============================================================================
         
     def add_map(self, #add a map to the results report
                 report=None,
@@ -432,6 +434,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
                     df=None, #dataframe to use for the event summary table
                     qlayout=None,
                     report=None,
+                    title=None,
                     ):
         
         #=======================================================================
@@ -446,7 +449,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
         
         layItem_pic = QgsLayoutItemPicture(qlayout)
 
-        layItem_pic.attemptSetSceneRect(QRectF(5, 20, 200, 265))
+        layItem_pic.attemptSetSceneRect(QRectF(5, 30, 200, 265))
         layItem_pic.setPicturePath(fp)
          
         qlayout.addLayoutItem(layItem_pic)
@@ -461,13 +464,19 @@ class ReportGenerator(RiskPlotr, Qcoms):
             df_layer = self.vlay_new_df2(df, layname='event_summary_table',
                                        logger=log)
             # Add table header
-            self.add_label(qlayout=qlayout, text='Event Summary Table', qrect=QRectF(5, 145, 100, 100), 
+            self.add_label(qlayout=qlayout, text='Event Summary Table', qrect=QRectF(5, 150, 100, 100), 
                                                                             text_size=16, text_bold=False, text_underline=True)
             # Add the table under the picture                       
             self.add_table(df_layer, qlayout=qlayout, 
                             qrect=QRectF(25, 160, 160, 49.050), column_width=34)
         
         log.debug('added item from %s'%fp)
+        
+        #=======================================================================
+        # add title
+        #=======================================================================
+        if not title is None:
+            label = self.add_label(qlayout=qlayout, text=title, text_size=20)
         
         return layItem_pic
 
@@ -488,7 +497,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
         #=======================================================================
         # prep data
         #=======================================================================
-        finv_df = finv_df_raw.head(10).iloc[:,:5]
+        finv_df = finv_df_raw.head(10).iloc[:,:3]
 
         #=======================================================================
         # # Create layout and vector layer with finv file path
@@ -516,7 +525,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
     # Param 'qlayout': QgsLayout object to add table to
     # Param 'report': QgsReport object to add layout to
     #===========================================================================
-    def add_table(self, df_layer, qrect=None, column_width=50, qlayout=None, report=None):
+    def add_table(self, df_layer, qrect=None, column_width=35, qlayout=None, report=None):
         #=======================================================================
         # defaults
         #=======================================================================

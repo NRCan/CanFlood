@@ -861,12 +861,13 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             
             # add the total plots
             for name, fp in plots_d.items():
-                wrkr.add_picture(fp=fp, df=r_ttl_df.iloc[:, 0:2])
+                wrkr.add_picture(fp=fp, df=r_ttl_df.iloc[:, 0:2],
+                                 title='Risk Curve (%s)'%name)
             self.feedback.setProgress(50)
             
             #add the damage function library plot
             if dfunc_plot_fp is not None:
-                wrkr.add_picture(dfunc_plot_fp)
+                wrkr.add_picture(dfunc_plot_fp, title='Vulnerability Functions')
             self.feedback.setProgress(55)
             
             
