@@ -28,6 +28,8 @@ import results.riskPlot
 import results.compare
 import results.attribution
 
+import misc.curvePlot
+
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 ui_fp = os.path.join(os.path.dirname(__file__), 'results.ui')
@@ -362,6 +364,41 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         log.push('run_joinGeo finished')
         self.feedback.upd_prog(None)
+
+    def get_dFuncPlot(self):
+        log = self.logger.getChild('get_dFuncPlot')
+        
+        #=======================================================================
+        # collect inputs
+        #=======================================================================
+        self._set_setup(set_cf_fp=True)
+
+        #=======================================================================
+        # setup and load
+        #=======================================================================
+        # setup
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        wrkr = misc.curvePlot.CurvePlotr(**kwargs)
+
+        with Model(**kwargs) as model:
+            #load the control file
+            model.init_model(check_pars=False)
+            
+            #get curves filepath from the model
+            filePath = model.curves
+
+        if filePath is None:
+            return
+
+        #load data
+        cLib_d = wrkr.load_data(filePath)
+
+        #plot
+        fig = wrkr.plotAll(cLib_d)
+        output = self.output_fig(fig, plt_window=False)
+        self.feedback.upd_prog(30, method='append')
+
+        return output
     
     def run_plotRisk(self,
                      plt_window=None,
@@ -544,26 +581,15 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # get finv from control file
         #=======================================================================
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
-        #wrkr = results.riskPlot.RiskPlotr(**kwargs).setup()
         
         with Model(**kwargs) as wrkr:
             #load the control file
             wrkr.init_model(check_pars=False)
             
-            #load data from teh control file
+            #load data from the control file
             dtag_d = {k:d for k,d in wrkr.dtag_d.items() if k=='finv'}
             wrkr.load_df_ctrl(dtag_d=dtag_d)
             df_raw = wrkr.raw_d.pop('finv')
-            
-
-#===============================================================================
-#         finv_fp = wrkr.finv
-# 
-#         assert os.path.exists(finv_fp), 'passed invalid finv file path: %s'%finv_fp
-#         df_raw = pd.read_csv(finv_fp, index_col=0)
-#===============================================================================
-        
-        #df = df_raw.head(10)
 
         return df_raw
 
@@ -779,8 +805,11 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
         plots_d = self.run_plotRisk(plt_window=False)
 
+        dfunc_plot_fp = self.get_dFuncPlot()
+
         finv_df = self.get_finv() #retrieve the inventory frame
         assert isinstance(finv_df, pd.DataFrame), 'failed to load finv'
+        
         #=======================================================================
         # init
         #=======================================================================  
@@ -812,6 +841,11 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             for name, fp in plots_d.items():
                 wrkr.add_picture(fp)
             self.feedback.setProgress(50)
+            
+            #add the damage function library plot
+            if dfunc_plot_fp is not None:
+                wrkr.add_picture(dfunc_plot_fp)
+            self.feedback.setProgress(55)
             
             
             # add the control file report
