@@ -855,7 +855,8 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
                 wrkr.add_map(vlay=geo_vlay)
             self.feedback.setProgress(35)
 
-            wrkr.add_finv_smry(finv_df) #making this mandatory
+            #add a summary of the finv
+            wrkr.add_finv_smry(finv_df)  
             self.feedback.setProgress(45)
             
             # add the total plots

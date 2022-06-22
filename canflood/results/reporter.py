@@ -483,12 +483,12 @@ class ReportGenerator(RiskPlotr, Qcoms):
 
         log = self.logger.getChild('add_finv_smry')
  
-        project = self.qproj
+        #project = self.qproj
         
         #=======================================================================
         # prep data
         #=======================================================================
-        finv_df = finv_df_raw.head(10)
+        finv_df = finv_df_raw.head(10).iloc[:,:5]
 
         #=======================================================================
         # # Create layout and vector layer with finv file path
