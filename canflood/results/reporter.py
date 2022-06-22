@@ -350,6 +350,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
                   qrect=QRectF(5, 20, 200, 10),
                   text_size=8,
                   text_bold=True,
+                  text_underline=False,
                   **kwargs):
         
         #=======================================================================
@@ -369,6 +370,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
         font = QtGui.QFont()
         font.setPointSize(text_size)
         font.setBold(text_bold)
+        font.setUnderline(text_underline)
         label.setFont(font)
         
         qlayout.addLayoutItem(label)
@@ -427,6 +429,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
             
     def add_picture(self, 
                     fp, #path to svg file to load
+                    df=None, #dataframe to use for the event summary table
                     qlayout=None,
                     report=None,
                     ):
@@ -447,13 +450,29 @@ class ReportGenerator(RiskPlotr, Qcoms):
         layItem_pic.setPicturePath(fp)
          
         qlayout.addLayoutItem(layItem_pic)
+
+        # Check that event summary table is present
+        if df is not None:
+            #format table
+            df.columns = map(str.upper, df.columns)
+            df.iloc[:, 1] = df.iloc[:, 1].map(lambda impact_val: self.impactFmtFunc(impact_val))
+            
+            #convert to layer
+            df_layer = self.vlay_new_df2(df, layname='event_summary_table',
+                                       logger=log)
+            # Add table header
+            self.add_label(qlayout=qlayout, text='Event Summary Table', qrect=QRectF(5, 145, 100, 100), 
+                                                                            text_size=16, text_bold=False, text_underline=True)
+            # Add the table under the picture                       
+            self.add_table(df_layer, qlayout=qlayout, 
+                            qrect=QRectF(25, 160, 160, 49.050), column_width=34)
         
         log.debug('added item from %s'%fp)
         
         return layItem_pic
 
     #===========================================================================
-    # Param 'finv': Inventory file DataFrame object
+    # Param 'finv_df_raw': Inventory file DataFrame object
     #===========================================================================
     def add_finv_smry(self, finv_df_raw, qlayout=None, report=None):
         #=======================================================================
@@ -462,7 +481,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
         if qlayout is None: 
             qlayout = self.add_section(report=report)
 
-        log = self.logger.getChild('add_table')
+        log = self.logger.getChild('add_finv_smry')
  
         project = self.qproj
         
@@ -474,66 +493,11 @@ class ReportGenerator(RiskPlotr, Qcoms):
         #=======================================================================
         # # Create layout and vector layer with finv file path
         #=======================================================================
-        
-        
         finv_layer = self.vlay_new_df2(finv_df.reset_index(), layname='finv_summary_table',
                                        logger=log)
- 
-#===============================================================================
-#         finv_layer = QgsVectorLayer('none', 'finv_summary_table', 'memory')
-# 
-#         finv_layer.startEditing()
-# 
-#         # Add fields
-#         index_field = QgsField(finv_df.index.name, QVariant.Int)
-#         finv_layer.addAttribute(index_field)
-# 
-#         for head in finv_df:
-#             field = QgsField(head, QVariant.String)
-#             finv_layer.addAttribute(field)
-#         
-#         finv_layer.updateFields()
-# 
-#         # Add features
-#         for row in finv_df.itertuples():
-#             feature = QgsFeature()
-#             feature.setAttributes([row[0], row[1], row[2]])
-#             finv_layer.addFeature(feature)
-# 
-#         finv_layer.commitChanges()
-#===============================================================================
 
-        # Needs to be added to project instance as a temporary file to prevent data loss
-        project.addMapLayer(finv_layer)
-
-        #=======================================================================
-        # # Set table layer
-        #=======================================================================
-        finv_table = QgsLayoutItemAttributeTable.create(qlayout)
-        finv_table.setVectorLayer(finv_layer)
-
-
-
-        # Resize columns and set alignment to centre
-        columns = finv_table.columns()
-        for column in columns:
-            column.setHAlignment(Qt.AlignHCenter)
-            column.setWidth(50)
-        
-        # Set table column styling and refresh table to display with new styling
-        finv_table.setColumns(columns)
-        finv_table.refresh()
-
-        #=======================================================================
-        # # Add the frame
-        #=======================================================================
-        finv_frame = QgsLayoutFrame(qlayout, finv_table)
-        finv_frame.attemptSetSceneRect(QRectF(25, 40, 160, 67.050))
-        finv_frame.setFrameEnabled(True)
-        finv_table.addFrame(finv_frame)
-        
-        # Add the frame to the layout
-        qlayout.addMultiFrame(finv_table)
+        self.add_table(df_layer=finv_layer, qrect=QRectF(25, 40, 160, 67.050),
+                        qlayout=qlayout, report=report)
         
         #=======================================================================
         # add title
@@ -546,4 +510,54 @@ class ReportGenerator(RiskPlotr, Qcoms):
 
         log.debug('added table from %s'%str(finv_df.shape))
 
-        return finv_table
+    #===========================================================================
+    # Param 'df_layer': QgsVectorLayer object derived from DataFrame
+    # Param 'qrect': QRectF object to specify size and placement of table
+    # Param 'qlayout': QgsLayout object to add table to
+    # Param 'report': QgsReport object to add layout to
+    #===========================================================================
+    def add_table(self, df_layer, qrect=None, column_width=50, qlayout=None, report=None):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if qlayout is None:
+            qlayout = self.add_section(report=report)
+
+        if qrect is None: 
+            qrect = QRectF(25, 20, 160, 67.050)
+
+        log = self.logger.getChild('add_table')
+
+        project = self.qproj
+
+        # Needs to be added to project instance as a temporary file to prevent data loss
+        project.addMapLayer(df_layer)
+
+        #=======================================================================
+        # Set table layer
+        #=======================================================================
+        table = QgsLayoutItemAttributeTable.create(qlayout)
+        table.setVectorLayer(df_layer)
+
+         # Resize columns and set alignment to centre
+        columns = table.columns()
+        for column in columns:
+            column.setHAlignment(Qt.AlignHCenter)
+            column.setWidth(column_width)
+        
+        # Set table column styling and refresh table to display with new styling
+        table.setColumns(columns)
+        table.refresh()
+
+        #=======================================================================
+        # Add the frame
+        #=======================================================================
+        frame = QgsLayoutFrame(qlayout, table)
+        frame.attemptSetSceneRect(qrect)
+        frame.setFrameEnabled(True)
+        table.addFrame(frame)
+
+        # Add the frame to the layout
+        qlayout.addMultiFrame(table)
+
+        return table

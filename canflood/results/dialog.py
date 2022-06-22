@@ -591,6 +591,23 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             wrkr.load_df_ctrl(dtag_d=dtag_d)
             df_raw = wrkr.raw_d.pop('finv')
 
+
+        return df_raw
+
+    def get_r_ttl(self):
+        self._set_setup(set_cf_fp=True)
+
+        #=======================================================================
+        # get r_ttl from control file
+        #=======================================================================
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+
+        with Model(**kwargs) as wrkr:
+            wrkr.init_model(check_pars=False)
+
+
+            df_raw = pd.read_csv(wrkr.r_ttl)
+            
         return df_raw
 
     def run_compare(self):
@@ -809,7 +826,11 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
         finv_df = self.get_finv() #retrieve the inventory frame
         assert isinstance(finv_df, pd.DataFrame), 'failed to load finv'
-        
+
+
+        r_ttl_df = self.get_r_ttl() #retrieve the event summary table
+        assert isinstance(r_ttl_df, pd.DataFrame), 'failed to load r_ttl'
+
         #=======================================================================
         # init
         #=======================================================================  
@@ -839,7 +860,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             
             # add the total plots
             for name, fp in plots_d.items():
-                wrkr.add_picture(fp)
+                wrkr.add_picture(fp=fp, df=r_ttl_df.iloc[:, 0:2])
             self.feedback.setProgress(50)
             
             #add the damage function library plot
