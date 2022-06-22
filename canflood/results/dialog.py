@@ -365,8 +365,8 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         log.push('run_joinGeo finished')
         self.feedback.upd_prog(None)
 
-    def run_dmgCurvePlot(self):
-        log = self.logger.getChild('run_dmgCurvePlot')
+    def get_dFuncPlot(self):
+        log = self.logger.getChild('get_dFuncPlot')
         
         #=======================================================================
         # collect inputs
@@ -805,10 +805,11 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
         plots_d = self.run_plotRisk(plt_window=False)
 
-        dmg_plot = self.run_dmgCurvePlot()
+        dfunc_plot_fp = self.get_dFuncPlot()
 
         finv_df = self.get_finv() #retrieve the inventory frame
         assert isinstance(finv_df, pd.DataFrame), 'failed to load finv'
+        
         #=======================================================================
         # init
         #=======================================================================  
@@ -840,9 +841,10 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             for name, fp in plots_d.items():
                 wrkr.add_picture(fp)
             self.feedback.setProgress(50)
-
-            if dmg_plot is not None:
-                wrkr.add_picture(dmg_plot)
+            
+            #add the damage function library plot
+            if dfunc_plot_fp is not None:
+                wrkr.add_picture(dfunc_plot_fp)
             self.feedback.setProgress(55)
             
             
