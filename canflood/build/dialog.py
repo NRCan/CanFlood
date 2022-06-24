@@ -211,6 +211,13 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             
         self.pushButton_inv_vfunc.clicked.connect(vDia)
         self.pushButton_Inv_curves.clicked.connect(self.store_curves)
+        
+        #purging curves
+        self.pushButton_Inv_purge.clicked.connect(self.purge_curves)
+        
+        #enable/disable the button
+        self.pushButton_Inv_purge.setDisabled(True) #only enable once a curves xls is set
+        self.lineEdit_curve.textChanged.connect(lambda: self.pushButton_Inv_purge.setDisabled(False))
 
         #=======================================================================
         # Store IVlayer
@@ -699,6 +706,94 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         self.feedback.upd_prog(95)
         self.feedback.upd_prog(None)
+        
+    
+    def purge_curves(self): #remove unreferenced curves from the xls
+        
+        """
+        https://github.com/NRCan/CanFlood/issues/54
+        
+        TODO:
+            
+        """
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        log = self.logger.getChild('purve_curves')
+        
+        #=======================================================================
+        # get values
+        #=======================================================================
+        self.set_setup(set_finv=True)
+        curves_fp_raw=self.lineEdit_curve.text()
+ 
+        self.feedback.upd_prog(10)
+        
+        #=======================================================================
+        # precheck
+        #=======================================================================
+        if (curves_fp_raw=='') or (not isinstance(curves_fp_raw, str)):
+            raise IOError('must specify a vulnerability function set')
+        if not os.path.exists(curves_fp_raw):
+            raise IOError('vulnerability function set does not exist: %s'%curves_fp_raw)
+
+
+        #=======================================================================
+        # collect list of unique tags
+        #=======================================================================
+        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        
+        from model.dmg2 import Dmg2
+        with Dmg2(upd_cf=False, **kwargs) as wrkr:
+            #condensed Model.setup()
+            wrkr.init_model(check_pars=False)
+ 
+            dtag_d = {k:v for k,v in wrkr.dtag_d if k in ['finv']} #just the finv
+            wrkr.load_df_ctrl(dtag_d=dtag_d) 
+            
+            #condensed Dmg2.prep_model()
+            wrkr.set_finv()
+            wrkr.build_exp_finv()
+            
+            #get the tags
+            ftags_l = wrkr.get_ftags()
+        
+        log.debug('got %i ftags:\n    %s'%(len(ftags_l), ftags_l))
+        self.feedback.upd_prog(50)
+            
+        #=======================================================================
+        # build curves subset from unique tags
+        #=======================================================================
+        from misc.curvePlot import CurvePlotr
+        """load curves from gui, not control file"""
+        with CurvePlotr(out_dir=self.out_dir, logger=log, tag=self.tag) as wrkr:
+        
+            #load curves
+            cLib_d_raw = wrkr.load_data(curves_fp_raw)
+ 
+ 
+            #check all tags are in curves_fp_raw
+            miss_l = set(cLib_d_raw.keys()).difference(ftags_l)
+            if not len(miss_l)==0:
+                raise IOError('missing %i tags in the curves specified in the finv:\n    %s'%(
+                len(miss_l), miss_l))
+            
+            
+            #purge
+            cLib_d = {k:v for k,v in cLib_d_raw.items() if k in ftags_l}
+            
+            #output
+            curves_fp_clean = wrkr.output(cLib_d)
+        
+        
+        self.feedback.upd_prog(95)
+        self.feedback.upd_prog(None)
+        #=======================================================================
+        # set new curves_fp
+        #=======================================================================
+        self.lineEdit_curve.setText(curves_fp_clean) #update UI
+        self.store_curves() #update control file
+
         
     def store_finv(self): #aoi slice and convert the finv vector to csv file
         log = self.logger.getChild('store_finv')
