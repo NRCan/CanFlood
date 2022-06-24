@@ -29,8 +29,9 @@ from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer, QgsMapLayerPro
 #get hlpr funcs
 import hlpr.plug
 from hlpr.plug import bind_layersListWidget
-#from hlpr.basic import get_valid_filename, force_open_dir 
+from hlpr.basic import set_info
 from hlpr.exceptions import QError as Error
+ 
 
 #get sub-models
 from build.rsamp import Rsamp
@@ -724,7 +725,9 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # get values
         #=======================================================================
-        self.set_setup(set_finv=True)
+        self.set_setup(set_finv=False, 
+                       set_cf_fp=True,
+                       )
         curves_fp_raw=self.lineEdit_curve.text()
  
         self.feedback.upd_prog(10)
@@ -741,14 +744,16 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # collect list of unique tags
         #=======================================================================
-        kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
+        """load finv from control file, not gui"""
+        kwargs = {attn:getattr(self, attn) for attn in [
+            'out_dir', 'tag', 'overwrite', 'absolute_fp', 'feedback', 'cf_fp']}
         
         from model.dmg2 import Dmg2
-        with Dmg2(upd_cf=False, **kwargs) as wrkr:
+        with Dmg2(upd_cf=False, logger=log, **kwargs) as wrkr:
             #condensed Model.setup()
             wrkr.init_model(check_pars=False)
  
-            dtag_d = {k:v for k,v in wrkr.dtag_d if k in ['finv']} #just the finv
+            dtag_d = {k:v for k,v in wrkr.dtag_d.items() if k in ['finv']} #just the finv
             wrkr.load_df_ctrl(dtag_d=dtag_d) 
             
             #condensed Dmg2.prep_model()
@@ -773,10 +778,11 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
  
  
             #check all tags are in curves_fp_raw
-            miss_l = set(cLib_d_raw.keys()).difference(ftags_l)
-            if not len(miss_l)==0:
+            d = set_info(ftags_l, cLib_d_raw.keys())
+ 
+            if not len(d['diff_left'])==0:
                 raise IOError('missing %i tags in the curves specified in the finv:\n    %s'%(
-                len(miss_l), miss_l))
+                len(d['diff_left']), d['diff_left']))
             
             
             #purge
@@ -792,7 +798,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # set new curves_fp
         #=======================================================================
         self.lineEdit_curve.setText(curves_fp_clean) #update UI
-        self.store_curves() #update control file
+        #self.store_curves() #update control file
 
         
     def store_finv(self): #aoi slice and convert the finv vector to csv file
