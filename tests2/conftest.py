@@ -5,7 +5,7 @@ Created on Feb. 21, 2022
 
  
 '''
-import os, shutil
+import os, shutil, sys, datetime
 import pytest
 import numpy as np
 from numpy.testing import assert_equal
@@ -17,7 +17,93 @@ from qgis.core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsWkbTypes,
     QgsMapLayer
     
 import processing
+ 
+
+from wFlow.scripts import Session
+ 
+
+class Session_pytest(Session): #QGIS enabled session handler for testing dialogs
+    """see also
+    dial_coms.DTestSessionQ
+    """
+    iface=None
+    finv_vlay=None
+    def __init__(self, 
+                 crs=None,logger=None,
+                  **kwargs):
+        
+        if logger is None:
+            """unlike the wflow session, plugin loggers use special methods for interfacing with QGIS"""
+
+            logger= devPlugLogger(self, log_nm='L')
+            
+            
+ 
+        super().__init__(crsid = crs.authid(), logger=logger, 
+                         #feedbac=MyFeedBackQ(logger=logger),
+                         **kwargs)  
+ 
+        self.logger.info('finished Session_pytest.__init__')
+        
+    def init_dialog(self,
+                    DialogClass,
+                    ):
+        
+        self.Dialog = DialogClass(None, session=self, plogger=self.logger)
+                    
+        self.Dialog.launch()
+
+        
+    def __enter__(self):
+        return self
+    
+    def __exit__(self, exc_type, exc_value, traceback):
+        pass
+        
+ 
+        
+         
+        #sys.exit(self.qap.exec_()) #wrap
+        #sys.exit() #wrap
+        print('exiting DialTester')
+
+@pytest.fixture(scope='function')
+def session(tmp_path,
   
+            base_dir, 
+            write,  # (scope=session)
+            crs, dialogClass,
+                    
+                    ):
+ 
+    np.random.seed(100)
+    
+    #configure output
+    out_dir=tmp_path
+    if write:
+        #retrieves a directory specific to the test... useful for writing compiled true data
+        """this is dying after the yield statement for some reason...."""
+        out_dir = os.path.join(base_dir, os.path.basename(tmp_path))
+ 
+    
+    with Session_pytest( 
+                 name='test', #probably a better way to propagate through this key
+   
+                 out_dir=out_dir, 
+                 temp_dir=os.path.join(tmp_path, 'temp'),
+ 
+                 crs=crs,
+                 
+ 
+                 
+                   overwrite=True,
+                   write=write, #avoid writing prep layers
+  
+        ) as ses:
+        
+        ses.init_dialog(dialogClass)
+ 
+        yield ses
 
 @pytest.fixture(scope='session')
 def write():
@@ -41,36 +127,61 @@ def write():
 #===============================================================================
 # session.fixtures----------
 #===============================================================================
-@pytest.fixture(scope='session')
-def root_dir():
-    from definitions import root_dir
-    return root_dir
+ 
+#===============================================================================
+# logger
+#===============================================================================
+from hlpr.plug import plugLogger
+from hlpr.logr import basic_logger
+mod_logger = basic_logger()
 
-
-
-@pytest.fixture(scope='session')
-def logger(root_dir):
-
-    os.chdir(root_dir) #set this to the working directory
-    print('working directory set to \"%s\''%os.getcwd())
-
-    from hp.logr import BuildLogr
-    lwrkr = BuildLogr()
-    return lwrkr.logger
-
-@pytest.fixture(scope='session')
-def feedback(logger):
-    from hp.Q import MyFeedBackQ
-    return MyFeedBackQ(logger=logger)
+class devPlugLogger(plugLogger):
+    """wrapper to overwriting Qspecific methods with python logging"""
+ 
+    def getChild(self, new_childnm):
+        
+ 
+        log_nm = '%s.%s'%(self.log_nm, new_childnm)
+        
+        #build a new logger
+        child_log = devPlugLogger(self.parent,log_nm=log_nm)
+ 
+        return child_log
+        
+          
+    
+    def _loghlp(self, #helper function for generalized logging
+                msg_raw, qlevel, 
+                push=False, #treat as a push message on Qgis' bar
+                status=False, #whether to send to the status widget
+                ):
+        
+        #=======================================================================
+        # send message based on qlevel
+        #=======================================================================
+        msgDebug = '%s    %s: %s'%(datetime.datetime.now().strftime('%d-%H.%M.%S'), self.log_nm,  msg_raw)
+        if qlevel < 0: #file logger only
+            
+            mod_logger.debug('D_%s'%msgDebug)
+            push, status = False, False #should never trip
+        else:#console logger
+            msg = '%s:   %s'%(self.log_nm, msg_raw)
+            mod_logger.info(msg)
+ 
+        
+        #Qgis bar
+        if push:
+            print('PUSH: ' +msg_raw)
+            
+ 
  
 
 @pytest.fixture(scope='session')
 def base_dir():
-    
-    #'C:\\LS\\09_REPOS\\03_TOOLS\\RICorDE\\tests\\data\\compiled'
-    base_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'compiled')
  
-    assert os.path.exists(base_dir)
+    base_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+ 
+    assert os.path.exists(base_dir), base_dir
     return base_dir
 
 
