@@ -298,14 +298,6 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
             self.absolute_fp = True #refert to default
         
 
-    def _change_tab(self, tabObjectName): #try to switch the tab on the gui
-        try:
-            tabw = self.tabWidget
-            index = tabw.indexOf(tabw.findChild(QWidget, tabObjectName))
-            assert index > 0, 'failed to find index?'
-            tabw.setCurrentIndex(index)
-        except Exception as e:
-            self.logger.error('failed to change to compile tab w/ \n    %s' % e)
 
     def setup_load(self, #load teh base control file
                   ):
