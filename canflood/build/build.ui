@@ -101,7 +101,7 @@
           </size>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>2</number>
          </property>
          <property name="movable">
           <bool>false</bool>
@@ -1429,6 +1429,9 @@ p, li { white-space: pre-wrap; }
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
+                  </property>
+                  <property name="toolTip">
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Create a new Vulnerability Function library by copying only those functions in the current library found in the inventory (as specified in the control file). The new 'purged' library will not be stored to the control file.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                   </property>
                   <property name="text">
                    <string>Purge Functions</string>
@@ -5999,9 +6002,9 @@ p, li { white-space: pre-wrap; }
  <resources/>
  <connections/>
  <buttongroups>
+  <buttongroup name="buttonGroup_ELfmt"/>
   <buttongroup name="buttonGroup_EV_eventRels"/>
   <buttongroup name="buttonGroup_S_filepaths"/>
   <buttongroup name="buttonGroup_LS_rels"/>
-  <buttongroup name="buttonGroup_ELfmt"/>
  </buttongroups>
 </ui>
