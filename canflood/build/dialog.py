@@ -643,9 +643,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
  
         log.info("default CanFlood model config file created :\n    %s"%cf_path)
         
-        """NO. should only populate this automatically from ModelControlFile.Browse
-        self.lineEdit_curve.setText(os.path.normpath(os.path.join(wdir, 'CanFlood - curve set 01.xls')))"""
-        
+
         """TODO:
         write aoi filepath to scratch file
         """
