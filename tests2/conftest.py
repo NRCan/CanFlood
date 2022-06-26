@@ -5,7 +5,7 @@ Created on Feb. 21, 2022
 
  
 '''
-import os, shutil, sys, datetime
+import os, shutil, sys, datetime, traceback
 import pytest
 import numpy as np
 from numpy.testing import assert_equal
@@ -13,13 +13,27 @@ import pandas as pd
 from pandas.testing import assert_frame_equal, assert_series_equal, assert_index_equal
  
 
+
 from qgis.core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsWkbTypes, QgsRasterLayer, \
     QgsMapLayer
     
+from PyQt5.QtWidgets import QApplication 
+from PyQt5.QtCore import QTimer
 import processing
+
+
+import pytest_qgis #install check (needed by fixtures)
+"""TODO: use a virtual environment?"""
  
 
 from wFlow.scripts import Session
+
+def excepthook(exc_type, exc_value, exc_tb):
+    tb = "".join(traceback.format_exception(exc_type, exc_value, exc_tb))
+    print("error message:\n", tb)
+    QApplication.quit()
+
+sys.excepthook = excepthook
  
 
 class Session_pytest(Session): #QGIS enabled session handler for testing dialogs
@@ -48,10 +62,10 @@ class Session_pytest(Session): #QGIS enabled session handler for testing dialogs
         self.logger.info('finished Session_pytest.__init__')
         
     def init_dialog(self,
-                    DialogClass,
+                    DialogClass, iface=None,
                     ):
         
-        self.Dialog = DialogClass(None, session=self, plogger=self.logger)
+        self.Dialog = DialogClass(iface, session=self, plogger=self.logger)
                     
         self.Dialog.launch()
 
@@ -60,12 +74,14 @@ class Session_pytest(Session): #QGIS enabled session handler for testing dialogs
         return self
     
     def __exit__(self, exc_type, exc_value, traceback):
-        pass
+         
         
  
         
-         
+        self.Dialog.close()
+ 
         #sys.exit(self.qap.exec_()) #wrap
+        
         #sys.exit() #wrap
         print('exiting DialTester')
         
@@ -79,6 +95,9 @@ def session(tmp_path,
             true_dir,
             write,  # (scope=session)
             crs, dialogClass,
+            
+            #pytest-qgis fixtures
+            qgis_app, qgis_processing, qgis_iface
                     
                     ):
  
@@ -99,16 +118,16 @@ def session(tmp_path,
                  out_dir=out_dir, 
                  temp_dir=os.path.join(tmp_path, 'temp'),
  
-                 crs=crs,
-                 
- 
+                 crs=crs, 
                  
                    overwrite=True,
                    write=write, #avoid writing prep layers
+                   
+                   qgis_app=qgis_app,qgis_processing=True,
   
         ) as ses:
         
-        ses.init_dialog(dialogClass)
+        ses.init_dialog(dialogClass, iface=qgis_iface)
  
         yield ses
 
