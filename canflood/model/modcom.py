@@ -2329,7 +2329,7 @@ class Model(ComWrkr,
         if finv_exp_d is None: finv_exp_d=self.finv_exp_d
         
         df = df_raw.copy()
-        
+        log.debug('on %s'%str(df.shape))
         #=======================================================================
         # dimensional checks
         #=======================================================================
@@ -2393,10 +2393,11 @@ class Model(ComWrkr,
                 
                 ser = dfn[coln]
                 for hndl, cval in hndl_d.items():
-                    
+                    log.debug(', '.join([self.tag, nestID, coln, cval.__name__, ser.dtype.name]))
                     if hndl=='type':
-                        assert np.issubdtype(ser.dtype, cval), '%s  %s_%s expected %s got: %s'%(
-                            self.tag, nestID, coln, cval, ser.dtype)
+                        if not np.issubdtype(ser.dtype, cval):
+                            raise TypeError('%s  %s_%s expected type \'%s\' (got \'%s\')'%(
+                                 self.tag, nestID, coln, cval.__name__, ser.dtype))
                         
                         """
                         throwing  FutureWarning: Conversion of the second argument of issubdtype
