@@ -9,13 +9,18 @@ tutorial 2 integration tests
 import pytest, os, shutil
 
 import pandas as pd
+from pandas.testing import assert_frame_equal
 
 from qgis.core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsProject
 from PyQt5.QtTest import QTest
 from PyQt5.Qt import Qt
 from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
 
+from matplotlib import pyplot as plt
+
 from build.dialog import BuildDialog
+from model.dialog import ModelDialog
+from results.dialog import ResultsDialog
 
 @pytest.fixture(scope='module')
 def crs():
@@ -29,8 +34,14 @@ def data_dir(base_dir):
 
 
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
-def test_01_build(session, data_dir):
+def test_t2_A(session, data_dir, true_dir, tmp_path):
+    #===========================================================================
+    # Build---------
+    #===========================================================================
     dial = session.Dialog
+    
+    out_dir = session.out_dir #send the outputs we care about here
+    session.out_dir = tmp_path #overwrite so we don't capture all outputs
     
     #===========================================================================
     # scenario setup
@@ -172,8 +183,93 @@ def test_01_build(session, data_dir):
     QTest.mouseClick(dial.pushButton_Validate, Qt.LeftButton)  
     
     
+    #===========================================================================
+    # model----------
+    #===========================================================================
+    dial = session.init_dialog(ModelDialog)
     
+    dial.radioButton.setChecked(True) #save plots to file
+    dial.comboBox_JGfinv.setCurrentIndex(-1) #clear finv
+    #===========================================================================
+    # impacts (L2)
+    #===========================================================================
+    dial._change_tab('tab_i2')
+    
+    dial.checkBox_i2_outExpnd.setChecked(True)
+    dial.checkBox_i2_pbox.setChecked(False) #no plots
+    
+    QTest.mouseClick(dial.pushButton_i2run, Qt.LeftButton)   #Run dmg2
+    
+    #check it
+    fp = dial.get_cf_par(dial.get_cf_fp(), sectName='risk_fps', varName='dmgs')
+    assert os.path.exists(fp)
+    
+    #===========================================================================
+    # risk (L2)
+    #===========================================================================
+    dial._change_tab('tab_r2')
+    
+    dial.checkBox_r2rpa.setChecked(True)
+    dial.checkBox_r2_ari.setChecked(True)
+    
+    
+    QTest.mouseClick(dial.pushButton_r2Run, Qt.LeftButton) 
+    
+    #check it
+    res_d = dict()
+    for varName in ['r_passet', 'r_ttl', 'eventypes']:
+        fp = dial.get_cf_par(dial.get_cf_fp(), sectName='results_fps', varName=varName)
+        assert os.path.exists(fp), varName
+        res_d[varName] = fp
         
+        #copy over for tests
+        if varName=='r_ttl':
+            shutil.copy2(os.path.join(fp), os.path.join(out_dir, os.path.basename(fp)))
+        
+    #clean up plots
+    """shouldnt be needed if 'save to file' is working"""
+    plt.close() 
+    #===========================================================================
+    # results------
+    #===========================================================================
+    dial = session.init_dialog(ResultsDialog)
+ 
+    #===========================================================================
+    # setup
+    #===========================================================================
+    dial._change_tab('tab_setup')
+    
+    dial.radioButton.setChecked(True) #save plots to file
+    dial.checkBox_SSoverwrite.setChecked(False)
+    
+    #===========================================================================
+    # risk plots
+    #===========================================================================
+    dial._change_tab('tab_riskPlot')
+    
+    """TODO: add plot formatting customization parameters and checks"""
+    
+    
+    QTest.mouseClick(dial.pushButton_RP_plot, Qt.LeftButton) 
+    
+    #===========================================================================
+    # validate-----
+    #===========================================================================
+    varName = 'r_ttl'
+    fp = res_d[varName]
+ 
+    df = pd.read_csv(fp)
+    
+    #load trues
+    match_l = [e for e in os.listdir(true_dir) if e.endswith('ttl.csv')]
+    assert len(match_l)==1
+    
+    
+    true_fp = os.path.join(true_dir, match_l[0])
+    true_df = pd.read_csv(true_fp)
+    
+    assert_frame_equal(df, true_df)
+    
     
     
     
