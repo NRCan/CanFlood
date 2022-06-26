@@ -4,7 +4,7 @@
 6. Tutorials
 ============
 
-This section provides a few tutorials to get a user started in CanFlood. It is suggested to work through the tutorials sequentially, referring to :ref:`Section5 <toolsets>` when more detailed information is desired. For all tutorials, the project CRS can safely be set from any of the data layers, unless otherwise specified. Tutorials are written assuming users are familiar with QGIS and object-based flood risk modelling. All tutorial data can be found in the latest `‘tutorial_data’ zip <https://github.com/IBIGroupCanWest/CanFlood/blob/master/tutorial_data_20210315.zip>`__ on the project page.
+This section provides a few tutorials to get a user started in CanFlood. It is suggested to work through the tutorials sequentially, referring to :ref:`Section5 <toolsets>` when more detailed information is desired. For all tutorials, the project CRS can safely be set from any of the data layers, unless otherwise specified. Tutorials are written assuming users are familiar with QGIS and object-based flood risk modelling. All tutorial data is provided on the github page under `tutorials  <https://github.com/NRCan/CanFlood/tree/master/tutorials>`_ where files can be downloaded individually. A complete zip of this data is provided for convenience `here <https://github.com/NRCan/CanFlood/tree/master/tutorials/_complete>`_ .
 
 .. _Section6.1:
 
@@ -31,7 +31,7 @@ Download the data layers for Tutorial 1:
 
   • *finv_tut1a.gpkg* : flood asset inventory (’finv’) spatial layer.
 
-Ensure your project’s CRS is set to ‘EPSG:3005‘. Depending on your settings, the CRS may have been set automatically when you loaded the datafiles. All tutorials use CRS ‘EPSG:3005’ unless stated otherwise.  See `working with projections <https://docs.qgis.org/3.10/en/docs/user_manual/working_with_projections/working_with_projections.html>`_ ) for more info. 
+Ensure your project’s CRS is set to ‘EPSG:3005‘. Depending on your settings, the CRS may have been set automatically when you loaded the datafiles. All tutorials use CRS ‘EPSG:3005’ unless stated otherwise.  See `working with projections <https://docs.qgis.org/3.10/en/docs/user_manual/working_with_projections/working_with_projections.html>`_ for more info. 
 
 Load the downloaded layers into a new QGIS project (Depending on your QGIS settings, you may be requested to select a transformation if the CRS was not set correctly beforehand). Your map canvas should look something like this:
 
@@ -167,12 +167,12 @@ Notice the six impact fields (boxed in red above) have had their names converted
 6.2. Tutorial 2a: Risk (L2) with Simple Events
 **********************************************
 
-Tutorial 2 demonstrates the use of CanFlood’s ‘Risk (L2)’model (:ref:`Section5.2.3 <Section5.2.3>`). This emulates a more detailed risk assessment where the vulnerability of each asset is known and described as a function of flood depth (rather than simple binary flood presence as in tutorial 1). This tutorial also demonstrates an inventory with ‘relative’ heights and CanFlood’s ‘composite vulnerability function’ feature where multiple functions are applied to the same asset.
+Tutorial 2 demonstrates the use of CanFlood’s ‘Risk (L2)’ model (:ref:`Section5.2.3 <Section5.2.3>`). This emulates a more detailed risk assessment where the vulnerability (as a function of depth) for each asset is known (rather than simple binary flood exposure as in tutorial 1). This tutorial also demonstrates an inventory with ‘relative’ heights and CanFlood’s ‘composite vulnerability function’ feature where multiple functions are applied to the same asset.
 
 6.2.1. Load data to project
 ===========================
 
-Download the tutorial 2 data from the ‘tutorials\2\data’ folder:
+Download the tutorial 2 data from `the project page <https://github.com/NRCan/CanFlood/tree/master/tutorials/2>`_.
 
   • *haz_rast*: hazard event rasters with WSL value predictions for the study area for four probabilities.
 
@@ -204,21 +204,23 @@ On the ‘Setup’ tab, configure the session as shown using your own paths, the
 
 .. image:: /_static/tutorials_6_2_2_img_1.jpg
 
+**Inventory Setup**
+
+Move to the ‘Inventory’ tab, **select the inventory vector layer**, **select the appropriate Index FieldName**, and **set the elevation type to ‘ground’** as shown, then **click ‘Store’**.
+
+.. image:: /_static/tutorials_6_2_2_img_3.jpg
+
+You should see the inventory csv now stored in the working directory.
+
 **Select Vulnerability Function Set**
 
-Move to the ‘Inventory’ tab and **click ‘Select From Library’** to launch the library selection GUI shown below. Select the library ‘IBI_2015’ in the top left window then ‘IBI2015_DamageCurves.xls’ in the bottom left window, then **click ‘Copy Set’** to copy this set of vulnerability functions into your working directory. The inventory provided in this tutorial has been constructed specifically for these ‘IBI2015’ functions. Generally, flood risk modellers must develop or supply their own vulnerability functions.
+On the same ‘Inventory’ tab **click ‘Select From Library’** to launch the library selection GUI shown below. Select the library ‘IBI_2015’ in the top left window then ‘IBI2015_DamageCurves.xls’ in the bottom left window, then **click ‘Copy Set’** to copy this set of vulnerability functions into your working directory. The inventory provided in this tutorial has been constructed specifically for these ‘IBI2015’ functions. Generally, flood risk modellers must develop or supply their own vulnerability functions.
 
 .. image:: /_static/tutorials_6_2_2_img_2.jpg
 
 Close the ‘vFunc Selection’ GUI, and you should now see the new .xls file path entered under ‘Vulnerability Functions’. Finally, **click ‘Update Control File’** to store a reference to this vulnerability function set into the control file.
 
-**Inventory**
 
-On the same ‘Inventory’ tab, select the inventory vector layer, the appropriate Index FieldName, and **set the elevation type to ‘ground’** as shown, then **click ‘Store’**.
-
-.. image:: /_static/tutorials_6_2_2_img_3.jpg
-
-You should see the inventory csv now stored in the working directory.
 
 **Hazard Sampler**
 
