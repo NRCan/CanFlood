@@ -18,6 +18,8 @@ import pytest, os, shutil
 
 import pandas as pd
 
+from pandas.testing import assert_frame_equal
+
 from qgis.core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsProject
 from PyQt5.QtTest import QTest
 from PyQt5.Qt import Qt
@@ -32,7 +34,7 @@ from build.dialog import BuildDialog
 def crs():
     return QgsCoordinateReferenceSystem('EPSG:3005')
 
-@pytest.mark.dev
+
 def test_00_version(qgis_version):
     assert qgis_version==32207, 'bad version: %s'%qgis_version
     
@@ -107,7 +109,7 @@ def test_02_build_inv(session, base_dir, finv_fp, cf_fp):
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_02_build_inv_tests2__data0\CanFlood_test_01.txt']) #from test_02
 def test_03_build_inv_curves(session, base_dir, cf_fp):
     dial = session.Dialog
-    dial._change_tab('tab_inventory')
+ 
     #===========================================================================
     # setup
     #===========================================================================
@@ -142,10 +144,70 @@ def test_03_build_inv_curves(session, base_dir, cf_fp):
     fp = dial.get_cf_par(cf_fp, sectName='dmg_fps', varName='curves')
     assert os.path.exists(fp)
     
+@pytest.mark.dev 
+@pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
+@pytest.mark.parametrize('cf_fp',[r'tests2\data\test_03_build_inv_curves_tests0\CanFlood_test_01.txt']) #from test_03
+@pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.gpkg'])
+@pytest.mark.parametrize('rast_dir',[r'tutorials\2\haz_rast'])
+def test_04_build_hsamp(session, base_dir, cf_fp, rast_dir, finv_fp, true_dir):
+    dial = session.Dialog
+    
+    #===========================================================================
+    # setup
+    #===========================================================================
+    out_dir = session.out_dir
+    cf_fp = build_setup(base_dir, cf_fp, dial, out_dir, testName='test_04')
+    
+    #===========================================================================
+    # setup finv
+    #===========================================================================
+    #select the finv
+    dial._change_tab('tab_inventory')
+    finv_vlay = session.load_vlay(os.path.join(base_dir, finv_fp))
+    dial.comboBox_ivlay.setLayer(finv_vlay)
+    
+    #indeix field name
+    dial.mFieldComboBox_cid.setField('xid')
+    
+    #===========================================================================
+    # setup rasters
+    #===========================================================================
+    dial._change_tab('tab_HazardSampler')
     
     
+    #load rasters
+    lay_d = session.load_layers_dirs([os.path.join(base_dir, rast_dir)])
     
+    QTest.mouseClick(dial.pushButton_expo_refr, Qt.LeftButton) #refresh
+    QTest.mouseClick(dial.pushButton_expo_sAll, Qt.LeftButton) #select All
     
+
+    
+    #===========================================================================
+    # execute
+    #===========================================================================
+    QTest.mouseClick(dial.pushButton_HSgenerate, Qt.LeftButton) #sample
+    
+    #===========================================================================
+    # load result from control file
+    #===========================================================================
+    fp = dial.get_cf_par(dial.get_cf_fp(), sectName='dmg_fps', varName='expos')
+    assert os.path.exists(fp)
+    
+    df = pd.read_csv(fp, index_col=0)
+    
+    #===========================================================================
+    # load trues
+    #===========================================================================
+    
+    true_fp = os.path.join(true_dir, [e for e in os.listdir(true_dir) if e.endswith('.csv')][0])
+    true_df = pd.read_csv(true_fp, index_col=0)
+    
+    #===========================================================================
+    # check
+    #===========================================================================
+    assert_frame_equal(df, true_df)
+ 
     
     
 def build_setup(base_dir, cf_fp, dial, out_dir, testName='testName'): #typical setup for build toolset
