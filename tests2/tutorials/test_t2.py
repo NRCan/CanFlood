@@ -13,6 +13,7 @@ import pandas as pd
 from qgis.core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsProject
 from PyQt5.QtTest import QTest
 from PyQt5.Qt import Qt
+from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
 
 from build.dialog import BuildDialog
 
@@ -121,6 +122,22 @@ def test_01_build(session, data_dir):
     #===========================================================================
     dial._change_tab('tab_eventVars')
     
+    #populate table
+    tblW = dial.fieldsTable_EL
+    evals_l = [1000, 200, 100, 50]
+    for i, pval in enumerate(evals_l):
+        tblW.setItem(i, 1, QTableWidgetItem(str(pval)))
+        
+    #store
+    QTest.mouseClick(dial.pushButton_ELstore, Qt.LeftButton) #refresh
+    
+    #check it
+    fp = dial.get_cf_par(dial.get_cf_fp(), sectName='risk_fps', varName='evals')
+    assert os.path.exists(fp)
+    
+    df = pd.read_csv(fp)
+    assert len(df.columns)==len(evals_l)
+ 
     
         
     
