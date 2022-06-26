@@ -222,7 +222,7 @@ Close the ‘vFunc Selection’ GUI, and you should now see the new .xls file pa
 
 **Hazard Sampler**
 
-Move to the ‘Hazard Sampler’ tab, ensure the four hazard rasters are shown in the window and all other fields are default, then **click ‘Sample Rasters’**. You should see the ‘expos’ data file created in the working directory.
+Move to the ‘Hazard Sampler’ tab, ensure the four hazard rasters are shown in the window and default values are used for other parameters, then **click ‘Sample’**. You should see the ‘expos’ data file created in the working directory.
 
 **Event Variables**
 
@@ -265,7 +265,7 @@ Move to the ‘Risk (L2)’ tab. Check all the boxes shown below and **click ‘
 
 .. image:: /_static/tutorials_6_2_3_img_3.jpg
 
-A set of results files should have been generated (discussed below). For a complete description of the Risk (L2) module, see :ref:`Section5.2.3 <Section5.2.3>`.
+A set of results files should have been generated in your working directory (discussed below). For a complete description of the Risk (L2) module, see :ref:`Section5.2.3 <Section5.2.3>`.
 
 6.2.4. View Results
 ===================
@@ -277,7 +277,7 @@ After completing the Risk (L2) run, navigate to your working directory. It shoul
   • *risk2_run1_tut2a_ttl.csv*: total expected value of all events and assets Risk (L2) results;
   • *dmgs_tut2a_run1.csv*: per asset Impacts (L2) results;
   • *dmgs_expnd_tut2a_run1.csv*: expanded component Impacts (L2) results;
-  • *run1 Impacts-ARI plot for 6 events.svg*: see below.
+  • *run1 Impacts-ARI plot for 6 events.svg*: summary risk curve plot shown below.
 
 .. image:: /_static/tutorials_6_2_4_img_1.jpg
 
@@ -285,7 +285,7 @@ After completing the Risk (L2) run, navigate to your working directory. It shoul
 
 **Risk Plots**
 
-While the Risk modules include some basic risk curve plots (see above), CanFlood provides additional plot customization under the ‘Risk Plot’ tool in the ‘Results’ toolset. **Open the ‘Results’** |visualimage1| **toolset**, configure the session by selecting a working directory, the Control File, and setting ‘Plot Handling’ to ‘Save to file’ as shown:
+While the Risk modules include some basic risk curve plots (see above), CanFlood provides additional plot customization under the ‘Risk Plot’ tool in the ‘Results’ toolset. To learn more about these tools, **Open the ‘Results’** |visualimage1| **toolset**, configure the session by selecting a working directory, the Control File, and setting ‘Plot Handling’ to ‘Save to file’ as shown:
 
 .. image:: /_static/tutorials_6_2_4_img_2.jpg
 
@@ -304,7 +304,7 @@ These parameters control the colour of the plot and the formatting applied to th
 
 .. image:: /_static/tutorials_6_2_4_img_5.jpg
 
-These plots are the two standard risk curve formats for the same total results data. Alternatively, changing ‘Plot Handling’ to ‘Launch separate window’ on the ‘Setup’ tab will launch a dialog window after plotting that provides some built-in tools for further customizing the plot.
+These plots are the two standard risk curve formats for the same total results data ('risk2_run1_tut2a_ttl.csv' in this case). Alternatively, changing ‘Plot Handling’ to ‘Launch separate window’ on the ‘Setup’ tab will launch a dialog window after plotting that provides some built-in tools for further customizing the look and feel of the plot. Of course, you can always generate custom plots in other applications using CanFlood's output files.
 
 .. |visualimage1| image:: /_static/visual_image.jpg
    :align: middle
