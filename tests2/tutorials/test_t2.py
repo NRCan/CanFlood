@@ -188,6 +188,8 @@ def test_t2_A(session, data_dir, true_dir, tmp_path, write):
     #===========================================================================
     dial = session.init_dialog(ModelDialog)
     
+    dial._change_tab('tab_setup')
+    
     dial.radioButton.setChecked(True) #save plots to file
     dial.comboBox_JGfinv.setCurrentIndex(-1) #clear finv
     #===========================================================================
