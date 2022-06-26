@@ -79,6 +79,7 @@ class Session_pytest(Session): #QGIS enabled session handler for testing dialogs
  
         
         self.Dialog.close()
+        self.qproj.clear() #cleare the project
  
         #sys.exit(self.qap.exec_()) #wrap
         
@@ -88,6 +89,11 @@ class Session_pytest(Session): #QGIS enabled session handler for testing dialogs
 @pytest.fixture(scope='function')
 def dialogClass(request): #always passing this as an indirect
     return request.param
+
+@pytest.fixture(scope='function')
+def finv_fp(base_dir, request): #always passing this as an indirect
+    return os.path.join(base_dir, request.param)
+ 
 
 @pytest.fixture(scope='function')
 def session(tmp_path,

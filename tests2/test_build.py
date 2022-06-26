@@ -20,6 +20,8 @@ import pandas as pd
 
 from pandas.testing import assert_frame_equal
 
+from pytest_qgis.utils import clean_qgis_layer
+
 from qgis.core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsProject
 from PyQt5.QtTest import QTest
 from PyQt5.Qt import Qt
@@ -30,11 +32,31 @@ from build.dialog import BuildDialog
 
 
 
-
+#===============================================================================
+# fixtures-------
+#===============================================================================
 @pytest.fixture(scope='module')
 def crs():
     return QgsCoordinateReferenceSystem('EPSG:3005')
 
+
+@pytest.fixture(scope='function')
+@clean_qgis_layer
+def finv_vlay(session, finv_fp):
+    dial = session.Dialog
+    #select the finv
+    dial._change_tab('tab_inventory')
+    finv_vlay = session.load_vlay(finv_fp)
+    dial.comboBox_ivlay.setLayer(finv_vlay)
+    
+    #indeix field name
+    dial.mFieldComboBox_cid.setField('xid')
+    
+    return finv_vlay
+    
+#===============================================================================
+# tests---------
+#===============================================================================
 
 def test_00_version(qgis_version):
     assert qgis_version==32207, 'bad version: %s'%qgis_version
@@ -61,11 +83,11 @@ def test_01_build_scenario(session):
     #===========================================================================
     assert os.path.exists(dial.lineEdit_cf_fp.text())
     
- 
+
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
-@pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.gpkg'])
+@pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.gpkg'], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_01_build_scenario_BuildDi0\CanFlood_test_01.txt']) #from test_01
-def test_02_build_inv(session, base_dir, finv_fp, cf_fp):
+def test_02_build_inv(session, base_dir, finv_vlay, cf_fp):
     dial = session.Dialog
     
     #===========================================================================
@@ -78,13 +100,7 @@ def test_02_build_inv(session, base_dir, finv_fp, cf_fp):
     #===========================================================================
     # inventory setup
     #===========================================================================
-    #select the finv
-    dial._change_tab('tab_inventory')
-    finv_vlay = session.load_vlay(os.path.join(base_dir, finv_fp))
-    dial.comboBox_ivlay.setLayer(finv_vlay)
-    
-    #indeix field name
-    dial.mFieldComboBox_cid.setField('xid')
+
     
     dial.comboBox_SSelv.setCurrentIndex(1) #ground
     #===========================================================================
@@ -145,12 +161,12 @@ def test_03_build_inv_curves(session, base_dir, cf_fp):
     fp = dial.get_cf_par(cf_fp, sectName='dmg_fps', varName='curves')
     assert os.path.exists(fp)
     
- 
+@pytest.mark.dev 
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_03_build_inv_curves_tests0\CanFlood_test_01.txt']) #from test_03
-@pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.gpkg'])
+@pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.gpkg'], indirect=True)
 @pytest.mark.parametrize('rast_dir',[r'tutorials\2\haz_rast'])
-def test_04_build_hsamp(session, base_dir, cf_fp, rast_dir, finv_fp, true_dir):
+def test_04_build_hsamp(session, base_dir, cf_fp, rast_dir, finv_vlay, true_dir):
     dial = session.Dialog
     
     #===========================================================================
@@ -162,14 +178,9 @@ def test_04_build_hsamp(session, base_dir, cf_fp, rast_dir, finv_fp, true_dir):
     #===========================================================================
     # setup finv
     #===========================================================================
-    #select the finv
-    dial._change_tab('tab_inventory')
-    finv_vlay = session.load_vlay(os.path.join(base_dir, finv_fp))
-    dial.comboBox_ivlay.setLayer(finv_vlay)
-    
-    #indeix field name
-    dial.mFieldComboBox_cid.setField('xid')
-    
+    """done with finv_vlay fixture"""
+ 
+ 
     #===========================================================================
     # setup rasters
     #===========================================================================
@@ -267,9 +278,9 @@ def test_05_build_evals(session, base_dir, cf_fp, true_dir):
  
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_05_build_evals_tests2__da0\CanFlood_test_01.txt']) #from test_05
-@pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.gpkg'])
+@pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.gpkg'], indirect=True)
 @pytest.mark.parametrize('dtm_fp',[r'tutorials\2\dtm_tut2.tif'])
-def test_06_build_dtm(session, base_dir, cf_fp, true_dir, finv_fp, dtm_fp):
+def test_06_build_dtm(session, base_dir, cf_fp, true_dir, finv_vlay, dtm_fp):
     dial = session.Dialog
     
     #===========================================================================
@@ -281,13 +292,7 @@ def test_06_build_dtm(session, base_dir, cf_fp, true_dir, finv_fp, dtm_fp):
     #===========================================================================
     # setup finv
     #===========================================================================
-    #select the finv
-    dial._change_tab('tab_inventory')
-    finv_vlay = session.load_vlay(os.path.join(base_dir, finv_fp))
-    dial.comboBox_ivlay.setLayer(finv_vlay)
-    
-    #indeix field name
-    dial.mFieldComboBox_cid.setField('xid')
+    """done with finv_vlay fixture"""
     
     
     #===========================================================================
@@ -329,7 +334,7 @@ def test_06_build_dtm(session, base_dir, cf_fp, true_dir, finv_fp, dtm_fp):
     assert_frame_equal(df, true_df)
 
 
-@pytest.mark.dev 
+
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_06_build_dtm_tutorials__20\CanFlood_test_01.txt']) #from test_06
 def test_07_build_valid(session, base_dir, cf_fp):
