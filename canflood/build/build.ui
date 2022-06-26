@@ -5290,7 +5290,7 @@ p, li { white-space: pre-wrap; }
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="tab_Valid">
+         <widget class="QWidget" name="tab_validation">
           <attribute name="title">
            <string>Validation</string>
           </attribute>
@@ -5344,13 +5344,6 @@ p, li { white-space: pre-wrap; }
                 </property>
                 <property name="checked">
                  <bool>false</bool>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0">
-               <widget class="QCheckBox" name="checkBox_Vr3">
-                <property name="text">
-                 <string>Risk  (L3)</string>
                 </property>
                </widget>
               </item>
@@ -5996,15 +5989,14 @@ p, li { white-space: pre-wrap; }
   <tabstop>checkBox_Vr1</tabstop>
   <tabstop>checkBox_Vi2</tabstop>
   <tabstop>checkBox_Vr2</tabstop>
-  <tabstop>checkBox_Vr3</tabstop>
   <tabstop>pushButton_Validate</tabstop>
  </tabstops>
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="buttonGroup_ELfmt"/>
-  <buttongroup name="buttonGroup_EV_eventRels"/>
-  <buttongroup name="buttonGroup_S_filepaths"/>
   <buttongroup name="buttonGroup_LS_rels"/>
+  <buttongroup name="buttonGroup_EV_eventRels"/>
+  <buttongroup name="buttonGroup_ELfmt"/>
+  <buttongroup name="buttonGroup_S_filepaths"/>
  </buttongroups>
 </ui>
