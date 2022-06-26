@@ -206,11 +206,6 @@ class devPlugLogger(plugLogger):
 def base_dir():
     from definitions import base_dir
  
- #==============================================================================
- #    base_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
- # 
- #    assert os.path.exists(base_dir), base_dir
- #==============================================================================
     return base_dir
 
 @pytest.fixture(scope='session')
@@ -240,44 +235,7 @@ def true_dir(write, tmp_path, test_dir):
     #assert os.path.exists(true_dir)
     return true_dir
     
-#===============================================================================
-# helper funcs-------
-#===============================================================================
-def search_fp(dirpath, ext, pattern): #get a matching file with extension and beginning
-    assert os.path.exists(dirpath), 'searchpath does not exist: %s'%dirpath
-    fns = [e for e in os.listdir(dirpath) if e.endswith(ext)]
-    
-    result= None
-    for fn in fns:
-        if pattern in fn:
-            result = os.path.join(dirpath, fn)
-            break
-        
-    if result is None:
-        raise IOError('failed to find a match for \'%s\' in %s'%(pattern, dirpath))
-    
-    assert os.path.exists(result), result
-        
-        
-    return result
-
-
-def retrieve_data(dkey, fp, ses): #load some compiled result off the session (using the dkey)
-    assert dkey in ses.data_retrieve_hndls
-    hndl_d = ses.data_retrieve_hndls[dkey]
-    assert 'compiled' in hndl_d, '%s has no compliled handles'%dkey
-    
-    return hndl_d['compiled'](fp=fp, dkey=dkey)
-
- 
-            
-def rasterstats(rlay): 
-      
-    ins_d = { 'BAND' : 1, 
-             'INPUT' : rlay,
-              'OUTPUT_HTML_FILE' : 'TEMPORARY_OUTPUT' }
- 
-    return processing.run('native:rasterlayerstatistics', ins_d )   
+  
             
             
             
