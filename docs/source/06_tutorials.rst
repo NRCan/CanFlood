@@ -310,6 +310,8 @@ These plots are the two standard risk curve formats for the same total results d
    :align: middle
    :width: 28
 
+Finally, move to the 'Report' tab and **click 'Create Report'** to generate a pdf report of your model and results. 
+
 *********************************************
 6.3. Tutorial 2b: Risk (L2) with Dike Failure
 *********************************************
