@@ -184,10 +184,13 @@ class devPlugLogger(plugLogger):
 
 @pytest.fixture(scope='session')
 def base_dir():
+    from definitions import base_dir
  
-    base_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
- 
-    assert os.path.exists(base_dir), base_dir
+ #==============================================================================
+ #    base_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+ # 
+ #    assert os.path.exists(base_dir), base_dir
+ #==============================================================================
     return base_dir
 
 

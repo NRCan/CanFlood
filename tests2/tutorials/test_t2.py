@@ -6,7 +6,7 @@ Created on Jun. 24, 2022
 tutorial 2 integration tests
 '''
 
-import pytest, os
+import pytest, os, shutil
 
 from qgis.core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsProject
 from PyQt5.QtTest import QTest
@@ -18,10 +18,15 @@ from build.dialog import BuildDialog
 def crs():
     return QgsCoordinateReferenceSystem('EPSG:3005')
 
+@pytest.fixture(scope='module')
+def data_dir(base_dir):
+    return os.path.join(base_dir, r'tutorials\2')
+    
+
 
 
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
-def test_01_build(session):
+def test_01_build(session, data_dir):
     dial = session.Dialog
     
     #===========================================================================
@@ -29,22 +34,62 @@ def test_01_build(session):
     #===========================================================================
     dial._change_tab('tab_setup')
     dial.lineEdit_wdir.setText(str(session.out_dir))
-    dial.linEdit_ScenTag.setText('testName')
-    dial.build_scenario()
+    dial.linEdit_ScenTag.setText('tut2a')
+    
+    """BuildDialog.build_scenario()"""
+    QTest.mouseClick(dial.pushButton_generate, Qt.LeftButton)
 
     assert os.path.exists(dial.lineEdit_cf_fp.text())
     
     #===========================================================================
-    # Select Vulnerability Function Set
+    # Inventory setup
     #===========================================================================
     dial._change_tab('tab_inventory')
+    
+    #select the finv
+    fp = os.path.join(data_dir, 'finv_tut2.gpkg')
+    finv_vlay = session.load_vlay(fp)
+    dial.comboBox_ivlay.setLayer(finv_vlay)
+    
+    #indeix field name
+    dial.mFieldComboBox_cid.setField('xid')
+    
+    dial.comboBox_SSelv.setCurrentIndex(1) #ground
+    
+    #click Store
+    QTest.mouseClick(dial.pushButton_Inv_store, Qt.LeftButton)
+    
+    
+    #check it
+    #retrieve the filepath from the control file
+    fp = dial.get_cf_par(dial.get_cf_fp(), sectName='dmg_fps', varName='finv')
+    assert os.path.exists(fp)
+    
+    """TODO: incorporate additional tests on finv conversion
+        should be able to use the same tests from some future unit test"""
+    
+    
+    
+    #===========================================================================
+    # Select Vulnerability Function Set
+    #===========================================================================
+    
     
     """too tricky to use this UI. should add at somepoint though
     QTest.mouseClick(dial.pushButton_inv_vfunc, Qt.LeftButton)"""
     
- 
+    #specify curves
     raw_fp = os.path.join(session.pars_dir, 'vfunc\IBI_2015\IBI2015_DamageCurves.xls')
+    
+    #copy over
+    ofp = os.path.join(session.out_dir, os.path.basename(raw_fp))
+    shutil.copy2(raw_fp,ofp)
+    
+    #update the gui
+    dial.lineEdit_curve.setText(ofp)
+    
+    #check
+    assert os.path.exists(dial.lineEdit_curve.text())
  
     
-    print('yay')
  
