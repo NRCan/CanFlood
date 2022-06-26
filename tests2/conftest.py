@@ -42,6 +42,8 @@ class Session_pytest(Session): #QGIS enabled session handler for testing dialogs
         super().__init__(crsid = crs.authid(), logger=logger, 
                          #feedbac=MyFeedBackQ(logger=logger),
                          **kwargs)  
+        
+        
  
         self.logger.info('finished Session_pytest.__init__')
         
@@ -66,6 +68,10 @@ class Session_pytest(Session): #QGIS enabled session handler for testing dialogs
         #sys.exit(self.qap.exec_()) #wrap
         #sys.exit() #wrap
         print('exiting DialTester')
+        
+@pytest.fixture(scope='function')
+def dialogClass(request): #always passing this as an indirect
+    return request.param
 
 @pytest.fixture(scope='function')
 def session(tmp_path,

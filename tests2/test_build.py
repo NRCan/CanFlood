@@ -28,10 +28,9 @@ from build.dialog import BuildDialog
 def crs():
     return QgsCoordinateReferenceSystem('EPSG:3005')
 
-@pytest.fixture(scope='module')
-def dialogClass():
-    return BuildDialog
+ 
 
+@pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
 def test_01_build_scenario(session):
     dial = session.Dialog
     dial._change_tab('tab_setup')
