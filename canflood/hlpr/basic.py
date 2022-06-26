@@ -101,6 +101,8 @@ class ComWrkr(object): #common methods for all classes
         self.temp_dir=temp_dir  
 
         self.data_d = dict() #dictionary for loaded data sets
+        
+        if name is None: name=''
         #======================================================================
         # attach
         #======================================================================
@@ -119,7 +121,7 @@ class ComWrkr(object): #common methods for all classes
         # labels
         if resname is None:
             resname = '%s_%s_%s'%(self.name, self.tag,  datetime.datetime.now().strftime('%m%d'))
-            """TODO: consolidate this with Modcom.resname"""
+            """TODO: consolidate this with modcom.Model.init_model()"""
                  
         self.resname = resname
         #=======================================================================
@@ -783,7 +785,7 @@ def dict_update2(#helper to update a 2level dictionary with a similar new one
 def set_info( #get all the  membership info from two containers
         left, right,
              result='elements'):
-
+ 
     el_d =  {
         'diff_left':set(left).difference(right), #those in left no tin right
         'diff_right':set(right).difference(left),
@@ -791,13 +793,14 @@ def set_info( #get all the  membership info from two containers
         'intersection':set(left).intersection(right),
         'symmetric_difference':set(left).symmetric_difference(right),        
         }
-
+ 
     if result=='elements':
         return el_d
     elif result=='counts':
         return {k:len(v) for k,v in el_d.items()}
     else:
         raise ValueError('unrecognized results key \'%s\''%result)
+ 
     
 if __name__ =="__main__": 
     

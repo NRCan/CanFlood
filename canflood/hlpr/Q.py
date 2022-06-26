@@ -463,12 +463,12 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
     # LOAD/WRITE LAYERS-----------
     #===========================================================================
     
-    def load_vlay(self, 
+    def  load_vlay(self, 
                   fp, 
                   logger=None, 
                   providerLib='ogr',
                   aoi_vlay = None,
-                  allow_none=True, #control check in saveselectedfeastures
+                  allow_none=True, #control check in saveselectedfeatures
                   addSpatialIndex=True,
                   uriParams_d = {'encoding':'System',
                                     'type':'csv',
@@ -477,6 +477,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                                     'geomType':'none',
                                     'subsetIndex':'no',
                                     'watchFile':'no'},
+                  mstore=None,
                   ):
         
         assert os.path.exists(fp), 'requested file does not exist: \n    %s'%fp
@@ -488,6 +489,9 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         log.debug('loading from %s'%fp)
         
+        #=======================================================================
+        # build uri
+        #=======================================================================
         if providerLib == 'delimitedtext':
             #constructor
             uriW = QgsDataSourceUri()
@@ -501,6 +505,10 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
  
         else:
             uri = fp
+        
+        #=======================================================================
+        # load
+        #=======================================================================
         
         vlay_raw = QgsVectorLayer(uri,basefn,providerLib)
         
@@ -517,7 +525,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         #check if this is valid
         if not vlay_raw.isValid():
-            raise Error('loaded vlay \'%s\' is not valid. \n \n did you initilize?'%vlay_raw.name())
+            raise Error('loaded vlay \'%s\' is not valid. \n \n did you initialize?'%vlay_raw.name())
         
         #check if it has geometry
         if not providerLib == 'delimitedtext':
@@ -547,7 +555,10 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             
             vlay.setName(vlay_raw.name()) #reset the name
             
- 
+            if mstore is None:
+                mstore = QgsMapLayerStore()
+            mstore.addMapLayer(vlay_raw)
+            mstore.removeMapLayersById([vlay_raw.id()])
             
         else: 
             vlay = vlay_raw
@@ -563,6 +574,8 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #=======================================================================
         # wrap
         #=======================================================================
+        if not mstore is None:
+            mstore.addMapLayer(vlay)
         dp = vlay.dataProvider()
 
         log.info('loaded vlay \'%s\' as \'%s\' %s geo  with %i feats from file: \n     %s'
@@ -573,7 +586,9 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
     
     def load_rlay(self, fp, 
                   aoi_vlay = None,
-                  logger=None):
+                  logger=None,
+                  mstore=None,
+                  ):
         
         if logger is None: logger = self.logger
         log = logger.getChild('load_rlay')
@@ -612,14 +627,68 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             rlay2 = self.cliprasterwithpolygon(rlayer,aoi_vlay, logger=log, layname=rlayer.name())
             
             #clean up
-            mstore = QgsMapLayerStore() #build a new store
+            if mstore is None:
+                mstore = QgsMapLayerStore() #build a new store
             mstore.addMapLayers([rlayer]) #add the layers to the store
-            mstore.removeAllMapLayers() #remove all the layers
+            mstore.removeMapLayersById([rlayer.id()]) # 
         else:
             rlay2 = rlayer
+            
+        if not mstore is None:
+            mstore.addMapLayer(rlay2)
         
         return rlay2
     
+    def load_rlays(self, #shortcut for loading a set of rasters in a directory
+                   
+                   data_dir,
+                   rfn_l=None,  #optional load passed filepaths
+                   
+
+                   logger=None,
+                   **kwargs
+                   ):
+        
+ 
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log=logger.getChild('load_rlays')
+        
+        #=======================================================================
+        # prechecks
+        #=======================================================================
+        assert os.path.exists(data_dir)
+        
+        #=======================================================================
+        # get filenames
+        #=======================================================================
+        #load all in the passed directory
+        if rfn_l is None:
+            rfn_l = [e for e in os.listdir(data_dir) if e.endswith('.tif')]
+            log.info('scanned directory and found %i rasters: %s'%(len(rfn_l), data_dir))
+
+
+        rfp_d = {fn:os.path.join(data_dir, fn) for fn in rfn_l} #get filepaths
+        
+        #check
+        for fn, fp in rfp_d.items():
+            assert os.path.exists(fp), 'bad filepath for \"%s\''%fn
+        #=======================================================================
+        # loop and assemble
+        #=======================================================================
+        log.debug('loading %i rlays'%len(rfp_d))
+        rlay_d = dict()
+        for fn, fp in rfp_d.items():
+            rlay_d[fn] = self.load_rlay(fp, logger=log, **kwargs)
+            
+
+        assert len(rlay_d)>0, 'failed to load any rasters!'
+            
+        log.info('loaded %i rlays: %s'%(len(rlay_d), list(rlay_d.keys())))
+        
+        return rlay_d
     
     def write_rlay(self, #make a local copy of the passed raster layer
                    rlayer, #raster layer to make a local copy of
@@ -2739,9 +2808,12 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
     def __exit__(self, #destructor
                  *args,**kwargs):
-        
-        self.mstore.removeAllMapLayers()
-        
+         
+        """dialog classes wont have mstores"""
+        if hasattr(self, 'mstore'):
+            if isinstance(self.mstore, QgsMapLayerStore):
+                self.mstore.removeAllMapLayers()
+         
         super().__exit__(*args,**kwargs) #initilzie teh baseclass
 
     
@@ -3099,10 +3171,10 @@ class RasterCalc(object):
     
     def __enter__(self,*args,**kwargs):
         return self
-
+ 
     def __exit__(self, #destructor
                  *args,**kwargs):
-        
+         
         #clear your map store
         #self.mstore.removeAllMapLayers()
         #print('clearing mstore')
@@ -3822,15 +3894,15 @@ def vlay_new_mlay(#create a new mlay
         # prechecks
         #=======================================================================
         if not isinstance(layname, str):
-            raise Error('expected a string for layname, isntead got %s'%type(layname))
+            raise Error('expected a string for layname, instead got %s'%type(layname))
         
         if gtype=='None':
             log.warning('constructing mlay w/ \'None\' type')
         #=======================================================================
         # assemble into new layer
         #=======================================================================
-        #initilzie the layer
-        EPSG_code=int(crs.authid().split(":")[1]) #get teh coordinate reference system of input_layer
+        #initialize the layer
+        EPSG_code=int(crs.authid().split(":")[1]) #get the coordinate reference system of input_layer
         uri = gtype+'?crs=epsg:'+str(EPSG_code)+'&index=yes'
         
         vlaym = QgsVectorLayer(uri, layname, "memory")

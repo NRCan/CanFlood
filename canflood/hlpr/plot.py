@@ -400,7 +400,7 @@ class Plotr(ComWrkr):
                     impactFmtFunc=None, #tick label format function for impact values
 
                     
-                    #figure parametrs
+                    #figure parameters
                     figsize=None,
                     grid=True,        
                     xlims_t = None, #tuple of yaxis limits
@@ -433,7 +433,7 @@ class Plotr(ComWrkr):
         #=======================================================================
         # manipulate data
         #=======================================================================
-        #get a collectio nof arrays from a dataframe's columns
+        #get a collection of arrays from a dataframe's columns
         data = [ser.dropna().values for _, ser in df.items()]
 
         
