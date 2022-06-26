@@ -172,7 +172,7 @@ Tutorial 2 demonstrates the use of CanFlood’s ‘Risk (L2)’ model (:ref:`Sec
 6.2.1. Load data to project
 ===========================
 
-Download the tutorial 2 data from `the project page <https://github.com/NRCan/CanFlood/tree/master/tutorials/2>`_.
+Download the tutorial 2 data from `the project page <https://github.com/NRCan/CanFlood/tree/master/tutorials/2>`_:
 
   • *haz_rast*: hazard event rasters with WSL value predictions for the study area for four probabilities.
 
@@ -206,7 +206,7 @@ On the ‘Setup’ tab, configure the session as shown using your own paths, the
 
 **Inventory Setup**
 
-Move to the ‘Inventory’ tab, **select the inventory vector layer**, **select the appropriate Index FieldName**, and **set the elevation type to ‘ground’** as shown, then **click ‘Store’**.
+Move to the ‘Inventory’ tab, **select the inventory vector layer**, **select the Index FieldName**, and **set the elevation type to ‘ground’** as shown, then **click ‘Store’**.
 
 .. image:: /_static/tutorials_6_2_2_img_3.jpg
 
