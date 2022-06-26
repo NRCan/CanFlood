@@ -264,9 +264,9 @@ def test_05_build_evals(session, base_dir, cf_fp, true_dir):
     #===========================================================================
     assert_frame_equal(df, true_df)
     
-@pytest.mark.dev 
+ 
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
-@pytest.mark.parametrize('cf_fp',[r'tests2\data\test_04_build_hsamp_tutorials_0\CanFlood_test_01.txt']) #from test_04
+@pytest.mark.parametrize('cf_fp',[r'tests2\data\test_05_build_evals_tests2__da0\CanFlood_test_01.txt']) #from test_05
 @pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.gpkg'])
 @pytest.mark.parametrize('dtm_fp',[r'tutorials\2\dtm_tut2.tif'])
 def test_06_build_dtm(session, base_dir, cf_fp, true_dir, finv_fp, dtm_fp):
@@ -276,7 +276,7 @@ def test_06_build_dtm(session, base_dir, cf_fp, true_dir, finv_fp, dtm_fp):
     # setup
     #===========================================================================
     out_dir = session.out_dir
-    cf_fp = build_setup(base_dir, cf_fp, dial, out_dir, testName='test_04')
+    cf_fp = build_setup(base_dir, cf_fp, dial, out_dir, testName='test_06')
     
     #===========================================================================
     # setup finv
@@ -320,13 +320,37 @@ def test_06_build_dtm(session, base_dir, cf_fp, true_dir, finv_fp, dtm_fp):
     # load trues
     #===========================================================================
     true_fp = os.path.join(true_dir, [e for e in os.listdir(true_dir) if e.endswith('.csv')][0])
-    true_df = pd.read_csv(true_fp, index_col=None)
+    true_df = pd.read_csv(true_fp, index_col=0)
     
  
     #===========================================================================
     # check
     #===========================================================================
     assert_frame_equal(df, true_df)
+
+
+@pytest.mark.dev 
+@pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
+@pytest.mark.parametrize('cf_fp',[r'tests2\data\test_06_build_dtm_tutorials__20\CanFlood_test_01.txt']) #from test_06
+def test_07_build_valid(session, base_dir, cf_fp):
+    dial = session.Dialog
+    
+    #===========================================================================
+    # setup
+    #===========================================================================
+    out_dir = session.out_dir
+    cf_fp = build_setup(base_dir, cf_fp, dial, out_dir, testName='test_06')
+    
+    #===========================================================================
+    # validation
+    #===========================================================================
+    dial._change_tab('tab_validation')
+    
+    #check the boxes
+    dial.checkBox_Vi2.setChecked(True)
+    #dial.checkBox_Vr2.setChecked(True)
+    
+    QTest.mouseClick(dial.pushButton_Validate, Qt.LeftButton)  
     
     
 def build_setup(base_dir, cf_fp, dial, out_dir, testName='testName'): #typical setup for build toolset
