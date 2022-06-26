@@ -345,7 +345,7 @@ class Model(ComWrkr,
         #=======================================================================
         cf_fp = self.cf_fp
         if cf_fp == '':
-            raise Error('passed an empty cf_fp!')
+            raise Error('must pass a control file')
         assert os.path.exists(cf_fp), 'provided parameter file path does not exist \n    %s'%cf_fp
 
         self.pars = configparser.ConfigParser(inline_comment_prefixes='#')
@@ -377,10 +377,8 @@ class Model(ComWrkr,
         #=======================================================================
         # attach control file parameter values
         #=======================================================================
-
         self.cfPars_d = self.cf_attach_pars(self.pars)
-        
-        
+
         #=======================================================================
         # #check our validity tag
         #=======================================================================
@@ -402,9 +400,7 @@ class Model(ComWrkr,
         #=======================================================================
         # #wrap
         #=======================================================================
-        self.logger.debug('finished init_modelon Model')
-        
-        
+        self.logger.debug('finished init_model')
 
         
     def cf_attach_pars(self, #load parametersrom file
@@ -710,7 +706,7 @@ class Model(ComWrkr,
     # LOADERS------
     #===========================================================================
     def load_df_ctrl(self,#load raw data from control file
-                     dtag_d=None,
+                     dtag_d=None, #data file loading parameters {key:kwargs for pd.read
                       logger=None,
                       ): 
         #=======================================================================
@@ -789,6 +785,7 @@ class Model(ComWrkr,
         cdf, prefix_l = self._get_finv_cnest(df)
         
         log.info('got %i nests: %s'%(len(prefix_l), prefix_l))
+        
         #=======================================================================
         # mitigation----
         #=======================================================================

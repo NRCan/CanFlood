@@ -127,14 +127,11 @@ class Dmg2(Model, DFunc, Plotr):
             
         self.set_expos()
     
- 
-        
         if self.felv == 'ground':
             self.set_gels()
             self.add_gels()
         
 
-        
         self.build_exp_finv() #build the expanded finv
         self.build_depths()
         
@@ -171,13 +168,7 @@ class Dmg2(Model, DFunc, Plotr):
         # get list of dfuncs in the finv
         #=======================================================================
         if ftags_valid is None:
-            assert self.bdf['ftag'].dtype.char == 'O'
-            ftags_valid = self.bdf['ftag'].unique().tolist()
-            
-        assert isinstance(ftags_valid, list)
-        
-        if np.nan in ftags_valid:
-            raise Error('got some nulls')
+            ftags_valid = self.get_ftags()
 
         log.debug('loading for %i valid ftags in the finv'%len(ftags_valid))
         
@@ -229,11 +220,7 @@ class Dmg2(Model, DFunc, Plotr):
             if min(minDep_d.values())<0:
                 log.warning('ground_water=False but some dfuncs have negative depth values')
                 
-        #=======================================================================
-        # get the impact var
-        #=======================================================================
-        
-        
+ 
         #=======================================================================
         # wrap
         #=======================================================================
@@ -244,6 +231,8 @@ class Dmg2(Model, DFunc, Plotr):
             len(self.dfuncs_d), list(self.dfuncs_d.keys())))
         
         return
+    
+
         
         
 
@@ -1364,6 +1353,27 @@ class Dmg2(Model, DFunc, Plotr):
         log.debug('got \'%s\' = \'%s\''%(attn, attv))
         
         return attv
+    
+    def get_ftags(self, #retrieve ftags from expanded finv
+                  bdf=None):
+        
+        #get expanded finv
+        if bdf is None:
+            bdf = self.bdf.copy()
+        assert isinstance(bdf, pd.DataFrame)
+        assert 'ftag' in bdf
+        assert bdf['ftag'].dtype.char == 'O'
+        
+        #get uniques
+        ftags_valid = bdf['ftag'].unique().tolist()
+        
+        assert len(ftags_valid)>0
+        
+        if np.nan in ftags_valid:
+            raise Error('got some nulls')
+        
+        return ftags_valid
+
     
     #===========================================================================
     # VALIDATORS----
