@@ -19,7 +19,6 @@ curves = C:\LS\09_REPOS\03_TOOLS\CanFlood\_git\tests2\data\test_03_build_inv_cur
 finv = C:\LS\09_REPOS\03_TOOLS\CanFlood\_git\tests2\data\test_02_build_inv_tests2__data0\finv_test_02_32_tut2.csv
 expos = C:\LS\09_REPOS\03_TOOLS\CanFlood\_git\tests2\data\test_04_build_hsamp_tutorials_0\expos_test_04_4_32.csv
 gels = C:\LS\09_REPOS\03_TOOLS\CanFlood\_git\tests2\data\test_06_build_dtm_tutorials__20\gels_test_06_1_32.csv
-#'gels' file path set from rsamp.py at 2022-06-26 18.06.21
 
 [risk_fps]
 dmgs = #damage data results filepath
@@ -28,9 +27,10 @@ evals = C:\LS\09_REPOS\03_TOOLS\CanFlood\_git\tests2\data\test_05_build_evals_te
 
 [validation]
 risk1 = False
-dmg2 = False
+dmg2 = True
 risk2 = False
 risk3 = False
+# 'dmg2' validated by validator.py at 2022-06-26 18.06.21
 
 [results_fps]
 attrimat02 = #lvl2 attribution matrix fp (post dmg model)
