@@ -99,7 +99,9 @@ class ComWrkr(object): #common methods for all classes
             os.makedirs(temp_dir)
         
         self.temp_dir=temp_dir  
-
+        
+        self.pars_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), '_pars')
+        assert os.path.exists(self.pars_dir)
         self.data_d = dict() #dictionary for loaded data sets
         
         if name is None: name=''

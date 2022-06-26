@@ -24,7 +24,7 @@ from qgis.gui import QgisInterface
 #pyQt
 from PyQt5.QtWidgets import QFileDialog, QGroupBox, QComboBox, QTableWidgetItem, QWidget
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
-from PyQt5.QtCore import Qt, QAbstractTableModel, QObject 
+from PyQt5.QtCore import Qt, QAbstractTableModel, QObject
 from PyQt5 import QtCore
 
 
@@ -675,9 +675,15 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
                 self.cid, boolidx.sum()))
         
 
+    def _change_tab(self, tabObjectName): #try to switch the tab on the gui
+        try:
+            tabw = self.tabWidget
+            index = tabw.indexOf(tabw.findChild(QWidget, tabObjectName))
+            assert index > 0, 'failed to find index?'
+            tabw.setCurrentIndex(index)
+        except Exception as e:
+            self.logger.error('failed to change to compile tab w/ \n    %s' % e)
 
-            
-        
             
         
     #===========================================================================
