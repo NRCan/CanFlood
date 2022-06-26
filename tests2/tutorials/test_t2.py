@@ -137,7 +137,29 @@ def test_01_build(session, data_dir):
     
     df = pd.read_csv(fp)
     assert len(df.columns)==len(evals_l)
- 
+    
+    #===========================================================================
+    # dtm sampler
+    #===========================================================================
+    dial._change_tab('tab_dtmSamp')
+    #add raster
+    fp = os.path.join(data_dir, 'dtm_tut2.tif')
+    dtm_rlay = session.load_rlay(fp)
+    
+    #select it
+    dial.comboBox_dtm.setLayer(dtm_rlay)
+    
+    #sample
+    QTest.mouseClick(dial.pushButton_DTMsamp, Qt.LeftButton)  
+    
+    
+    #check it
+    fp = dial.get_cf_par(dial.get_cf_fp(), sectName='dmg_fps', varName='gels')
+    assert os.path.exists(fp)
+    
+    df = pd.read_csv(fp, index_col=0)
+    assert len(df)==finv_vlay.dataProvider().featureCount()
+    
     
         
     
