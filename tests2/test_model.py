@@ -98,10 +98,10 @@ def test_model_01_i2(dial, true_dir): #impacts L2
 @pytest.mark.dev
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_01_i2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True) #from build test_07
 @pytest.mark.parametrize('dialogClass',[ModelDialog], indirect=True)
-def test_model_02_r2(dial, true_dir): #impacts L2
+def test_model_02_r2(dial, true_dir): #risk L2
     
     #===========================================================================
-    # setup ipmacts 2
+    # setup 
     #===========================================================================
     dial._change_tab('tab_r2')
     
