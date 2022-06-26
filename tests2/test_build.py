@@ -139,6 +139,8 @@ def test_03_build_inv_purge(session, base_dir, cf_fp):
     # execute
     #===========================================================================
     #purge it
+    """BuildDialog.purge_curves()"""
+    #dial.purge_curves()
     QTest.mouseClick(dial.pushButton_Inv_purge, Qt.LeftButton)
  
     #===========================================================================
