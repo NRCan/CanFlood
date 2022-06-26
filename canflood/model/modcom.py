@@ -1461,9 +1461,11 @@ class Model(ComWrkr,
         log.info('\'%s\' felv: \n    min=%.2f, mean=%.2f, max=%.2f'%(
              self.felv, s.min(), s.mean(), s.max()))
             
-        if self.felv == 'ground':
+        """allows construction before control file is complete"""
+        if 'gels' in bdf.columns:
             assert not self.as_inun
-            assert 'gels' in bdf.columns, 'missing gels column'            
+            #assert 'gels' in bdf.columns, 'missing gels column'
+            assert self.felv=='ground'            
             assert bdf['gels'].notna().all()
 
 
@@ -1474,11 +1476,7 @@ class Model(ComWrkr,
             
             log.info('converted felv from \'ground\' to \'datum\' \n    min=%.2f, mean=%.2f, max=%.2f'%(
                  s.min(), s.mean(), s.max()))
-            
-        elif self.felv=='datum':
-            log.debug('felv = \'%s\' no conversion'%self.felv)
-        else:
-            raise Error('unrecognized felv=%s'%self.felv)
+ 
         
         #=======================================================================
         # add mitigation data---
