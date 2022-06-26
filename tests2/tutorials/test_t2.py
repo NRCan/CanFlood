@@ -160,6 +160,18 @@ def test_01_build(session, data_dir):
     df = pd.read_csv(fp, index_col=0)
     assert len(df)==finv_vlay.dataProvider().featureCount()
     
+    #===========================================================================
+    # validation
+    #===========================================================================
+    dial._change_tab('tab_validation')
+    
+    #check the boxes
+    dial.checkBox_Vi2.setChecked(True)
+    #dial.checkBox_Vr2.setChecked(True)
+    
+    QTest.mouseClick(dial.pushButton_Validate, Qt.LeftButton)  
+    
+    
     
         
     
