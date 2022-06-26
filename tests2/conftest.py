@@ -76,7 +76,7 @@ def dialogClass(request): #always passing this as an indirect
 @pytest.fixture(scope='function')
 def session(tmp_path,
   
-            base_dir, 
+            true_dir,
             write,  # (scope=session)
             crs, dialogClass,
                     
@@ -89,7 +89,8 @@ def session(tmp_path,
     if write:
         #retrieves a directory specific to the test... useful for writing compiled true data
         """this is dying after the yield statement for some reason...."""
-        out_dir = os.path.join(base_dir, os.path.basename(tmp_path))
+        out_dir = true_dir
+
  
     
     with Session_pytest( 
@@ -193,21 +194,31 @@ def base_dir():
  #==============================================================================
     return base_dir
 
+@pytest.fixture(scope='session')
+def test_dir(base_dir):
+    return os.path.join(base_dir, r'tests2\data')
+    
+
 
 
 @pytest.fixture
-def true_dir(write, tmp_path, base_dir):
-    true_dir = os.path.join(base_dir, os.path.basename(tmp_path))
+def true_dir(write, tmp_path, test_dir):
+    true_dir = os.path.join(test_dir, os.path.basename(tmp_path))
     if write:
         if os.path.exists(true_dir):
             try: 
                 shutil.rmtree(true_dir)
                 os.makedirs(true_dir) #add back an empty folder
-                os.makedirs(os.path.join(true_dir, 'working')) #and the working folder
+                #os.makedirs(os.path.join(true_dir, 'working')) #and the working folder
             except Exception as e:
                 print('failed to cleanup the true_dir: %s w/ \n    %s'%(true_dir, e))
+        
+        """no... this is controlled with the out_dir on the session        
+        #not found.. create a fresh one
+        if not os.path.exists(true_dir):
+            os.makedirs(true_dir)"""
 
-            
+    #assert os.path.exists(true_dir)
     return true_dir
     
 #===============================================================================

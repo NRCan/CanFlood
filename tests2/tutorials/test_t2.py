@@ -90,6 +90,15 @@ def test_01_build(session, data_dir):
     
     #check
     assert os.path.exists(dial.lineEdit_curve.text())
+    
+    #purge it
+    QTest.mouseClick(dial.pushButton_Inv_purge, Qt.LeftButton)
+    
+    #update control file
+    QTest.mouseClick(dial.pushButton_Inv_curves, Qt.LeftButton)
+    
+    
+
  
     
  
