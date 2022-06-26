@@ -65,9 +65,19 @@ class Session_pytest(Session): #QGIS enabled session handler for testing dialogs
                     DialogClass, iface=None,
                     ):
         
+        if not iface is None:
+            self.iface=iface
+        if iface is None:
+            iface = self.iface
+            
+        if hasattr(self, 'Dialog'):
+            self.Dialog.close()
+            
         self.Dialog = DialogClass(iface, session=self, plogger=self.logger)
                     
         self.Dialog.launch()
+        
+        return self.Dialog
 
         
     def __enter__(self):
@@ -139,13 +149,9 @@ def session(tmp_path,
 
 @pytest.fixture(scope='session')
 def write():
-    #===========================================================================
-    # write key
-    #===========================================================================
+ 
     write=False
-    #===========================================================================
-    # write key
-    #===========================================================================
+ 
     
     if write:
         print('WARNING!!! runnig in write mode')
