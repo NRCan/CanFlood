@@ -34,7 +34,7 @@ def data_dir(base_dir):
 
 
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
-def test_t2_A(session, data_dir, true_dir, tmp_path):
+def test_t2_A(session, data_dir, true_dir, tmp_path, write):
     #===========================================================================
     # Build---------
     #===========================================================================
@@ -222,9 +222,9 @@ def test_t2_A(session, data_dir, true_dir, tmp_path):
         assert os.path.exists(fp), varName
         res_d[varName] = fp
         
-        #copy over for tests
-        if varName=='r_ttl':
-            shutil.copy2(os.path.join(fp), os.path.join(out_dir, os.path.basename(fp)))
+        #copy over for validation
+        if varName=='r_ttl' and write:
+            shutil.copy2(fp, os.path.join(out_dir, os.path.basename(fp)))
         
     #clean up plots
     """shouldnt be needed if 'save to file' is working"""
