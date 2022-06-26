@@ -32,8 +32,11 @@ from build.dialog import BuildDialog
 def crs():
     return QgsCoordinateReferenceSystem('EPSG:3005')
 
- 
- 
+@pytest.mark.dev
+def test_00_version(qgis_version):
+    assert qgis_version==32207, 'bad version: %s'%qgis_version
+    
+
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
 def test_01_build_scenario(session):
     dial = session.Dialog
@@ -47,6 +50,7 @@ def test_01_build_scenario(session):
     # execute
     #===========================================================================
     """BuildDialog.build_scenario()"""
+ 
     QTest.mouseClick(dial.pushButton_generate, Qt.LeftButton)
  
     #===========================================================================
@@ -54,22 +58,7 @@ def test_01_build_scenario(session):
     #===========================================================================
     assert os.path.exists(dial.lineEdit_cf_fp.text())
     
-    
-
-def build_setup(base_dir, cf_fp, dial, out_dir, testName='testName'): #typical setup for build toolset
-    dial._change_tab('tab_setup')
-    #copy over the control file
-    assert os.path.exists(os.path.join(base_dir, cf_fp))
-    cf_fp = shutil.copy2(os.path.join(base_dir, cf_fp), os.path.join(out_dir, os.path.basename(cf_fp)))
-    #set the working directory
-    dial.lineEdit_wdir.setText(str(out_dir))
-    dial.linEdit_ScenTag.setText(testName)
-    #set the control file
-    dial.lineEdit_cf_fp.setText(cf_fp)
-    
-    return cf_fp
-
-
+ 
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
 @pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.gpkg'])
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_01_build_scenario_BuildDi0\CanFlood_test_01.txt']) #from test_01
@@ -113,10 +102,10 @@ def test_02_build_inv(session, base_dir, finv_fp, cf_fp):
     
     
     
-@pytest.mark.dev
+
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_02_build_inv_tests2__data0\CanFlood_test_01.txt']) #from test_02
-def test_03_build_inv_purge(session, base_dir, cf_fp):
+def test_03_build_inv_curves(session, base_dir, cf_fp):
     dial = session.Dialog
     dial._change_tab('tab_inventory')
     #===========================================================================
@@ -142,13 +131,32 @@ def test_03_build_inv_purge(session, base_dir, cf_fp):
     """BuildDialog.purge_curves()"""
     #dial.purge_curves()
     QTest.mouseClick(dial.pushButton_Inv_purge, Qt.LeftButton)
-    
+     
     #update control file
     QTest.mouseClick(dial.pushButton_Inv_curves, Qt.LeftButton)
- 
+  
     #===========================================================================
     # check
     #===========================================================================
     #retrieve the filepath from the control file
     fp = dial.get_cf_par(cf_fp, sectName='dmg_fps', varName='curves')
     assert os.path.exists(fp)
+    
+    
+    
+    
+    
+    
+    
+def build_setup(base_dir, cf_fp, dial, out_dir, testName='testName'): #typical setup for build toolset
+    dial._change_tab('tab_setup')
+    #copy over the control file
+    assert os.path.exists(os.path.join(base_dir, cf_fp))
+    cf_fp = shutil.copy2(os.path.join(base_dir, cf_fp), os.path.join(out_dir, os.path.basename(cf_fp)))
+    #set the working directory
+    dial.lineEdit_wdir.setText(str(out_dir))
+    dial.linEdit_ScenTag.setText(testName)
+    #set the control file
+    dial.lineEdit_cf_fp.setText(cf_fp)
+    
+    return cf_fp
