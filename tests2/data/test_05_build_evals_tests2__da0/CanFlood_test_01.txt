@@ -1,0 +1,51 @@
+[parameters]
+name = test_01
+cid = xid
+prec = 4
+ground_water = True     #whether to allow wsl < gel
+felv = ground
+event_probs = ari
+ltail = extrapolate     #EAD extrapolation: left tail treatment code (low prob high damage)
+rtail = 0.5             #EAD extrapolation: right trail treatment (high prob low damage)
+drop_tails = False      #EAD extrapolation: whether to remove the extrapolated values before writing the per-asset results
+integrate = trapz       #integration method to apply: trapz, simps
+as_inun = False
+event_rels = max
+impact_units = impacts  #value to label impacts axis with (generally set by Dmg2)
+apply_miti = False		#whether to apply mitigation algorthihims
+
+[dmg_fps]
+curves = C:\LS\09_REPOS\03_TOOLS\CanFlood\_git\tests2\data\test_03_build_inv_curves_tests0\cLib_test_03_2022-06-26_1626.xls
+finv = C:\LS\09_REPOS\03_TOOLS\CanFlood\_git\tests2\data\test_02_build_inv_tests2__data0\finv_test_02_32_tut2.csv
+expos = C:\LS\09_REPOS\03_TOOLS\CanFlood\_git\tests2\data\test_04_build_hsamp_tutorials_0\expos_test_04_4_32.csv
+gels = #ground elevation data filepath
+
+[risk_fps]
+dmgs = #damage data results filepath
+exlikes = #secondary exposure likelihood data filepath
+evals = C:\LS\09_REPOS\03_TOOLS\CanFlood\_git\tests2\data\test_05_build_evals_tests2__da0\evals_4_test_05.csv
+#evals file path set from build.dialog.py at 2022-06-26 17.30.52
+
+[validation]
+risk1 = False
+dmg2 = False
+risk2 = False
+risk3 = False
+
+[results_fps]
+attrimat02 = #lvl2 attribution matrix fp (post dmg model)
+attrimat03 = #lvl3 attribution matrix fp (post risk model)
+r_passet = #per_asset results from the risk2 model
+r_ttl = #total results from risk2
+eventypes = #dataframe of aep, noFail, and rEventName
+
+[plotting]
+color = black           #line color
+linestyle = dashdot
+linewidth = 2
+alpha = 0.75            #0=transparent 1=opaque
+marker = o
+markersize = 4
+fillstyle = none        #marker fill style
+impactfmt_str = .2e     #python formatter to use for formatting the impact results values
+

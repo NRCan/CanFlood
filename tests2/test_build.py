@@ -23,6 +23,7 @@ from pandas.testing import assert_frame_equal
 from qgis.core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsProject
 from PyQt5.QtTest import QTest
 from PyQt5.Qt import Qt
+from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
 
 from build.dialog import BuildDialog
 
@@ -144,7 +145,7 @@ def test_03_build_inv_curves(session, base_dir, cf_fp):
     fp = dial.get_cf_par(cf_fp, sectName='dmg_fps', varName='curves')
     assert os.path.exists(fp)
     
-@pytest.mark.dev 
+ 
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_03_build_inv_curves_tests0\CanFlood_test_01.txt']) #from test_03
 @pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.gpkg'])
@@ -208,6 +209,65 @@ def test_04_build_hsamp(session, base_dir, cf_fp, rast_dir, finv_fp, true_dir):
     #===========================================================================
     assert_frame_equal(df, true_df)
  
+@pytest.mark.dev 
+@pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
+@pytest.mark.parametrize('cf_fp',[r'tests2\data\test_04_build_hsamp_tutorials_0\CanFlood_test_01.txt']) #from test_04
+ 
+def test_05_build_evals(session, base_dir, cf_fp, true_dir):
+    dial = session.Dialog
+    
+    #===========================================================================
+    # setup
+    #===========================================================================
+    out_dir = session.out_dir
+    cf_fp = build_setup(base_dir, cf_fp, dial, out_dir, testName='test_05')
+    
+    #===========================================================================
+    # get event names
+    #===========================================================================
+    fp = dial.get_cf_par(dial.get_cf_fp(), sectName='dmg_fps', varName='expos')
+    eventNames_l = pd.read_csv(fp, index_col=0).columns.to_list()
+    dial.event_name_set = eventNames_l
+    #===========================================================================
+    # setup table
+    #===========================================================================
+    dial._change_tab('tab_eventVars')
+    tblW = dial.fieldsTable_EL
+    evals_l = [1000, 200, 100, 50]
+    evals_l.sort()
+    tblW.setRowCount(len(evals_l)) #add this many rows
+    for i, (eName, pval) in enumerate(zip(eventNames_l, evals_l)):
+        tblW.setItem(i, 0, QTableWidgetItem(str(eName)))
+        tblW.setItem(i, 1, QTableWidgetItem(str(pval)))
+    
+    #===========================================================================
+    # #store
+    #===========================================================================
+    QTest.mouseClick(dial.pushButton_ELstore, Qt.LeftButton) #refresh
+    
+    #===========================================================================
+    # load result from control file
+    #===========================================================================
+    fp = dial.get_cf_par(dial.get_cf_fp(), sectName='risk_fps', varName='evals')
+    assert os.path.exists(fp)
+    
+    df = pd.read_csv(fp, index_col=None)
+    
+    #===========================================================================
+    # load trues
+    #===========================================================================
+    
+    true_fp = os.path.join(true_dir, [e for e in os.listdir(true_dir) if e.endswith('.csv')][0])
+    true_df = pd.read_csv(true_fp, index_col=None)
+    
+ 
+    
+    #===========================================================================
+    # check
+    #===========================================================================
+    assert_frame_equal(df, true_df)
+    
+    
     
     
 def build_setup(base_dir, cf_fp, dial, out_dir, testName='testName'): #typical setup for build toolset
