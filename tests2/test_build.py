@@ -142,8 +142,13 @@ def test_03_build_inv_purge(session, base_dir, cf_fp):
     """BuildDialog.purge_curves()"""
     #dial.purge_curves()
     QTest.mouseClick(dial.pushButton_Inv_purge, Qt.LeftButton)
+    
+    #update control file
+    QTest.mouseClick(dial.pushButton_Inv_curves, Qt.LeftButton)
  
     #===========================================================================
     # check
     #===========================================================================
-    assert os.path.exists(dial.lineEdit_cf_fp.text())
+    #retrieve the filepath from the control file
+    fp = dial.get_cf_par(cf_fp, sectName='dmg_fps', varName='curves')
+    assert os.path.exists(fp)

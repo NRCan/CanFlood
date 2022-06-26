@@ -797,6 +797,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         self.lineEdit_curve.setText(curves_fp_clean) #update UI
         #self.store_curves() #update control file
+        log.push('purged curves from %i to %i'%(len(cLib_d_raw), len(cLib_d)))
 
         
     def store_finv(self): #aoi slice and convert the finv vector to csv file
