@@ -252,7 +252,20 @@ def test_t2_A(session, data_dir, true_dir, tmp_path, write):
     """TODO: add plot formatting customization parameters and checks"""
     
     
-    QTest.mouseClick(dial.pushButton_RP_plot, Qt.LeftButton) 
+    QTest.mouseClick(dial.pushButton_RP_plot, Qt.LeftButton)
+    
+    #===========================================================================
+    # pdf reporter
+    #===========================================================================
+    dial._change_tab('tab_report')
+    
+    #select finv_vlay
+    
+    #execute
+    QTest.mouseClick(dial.pushButton_rpt_create, Qt.LeftButton)
+    
+    #check all expected pages are in the report
+    
     
     #===========================================================================
     # validate-----
