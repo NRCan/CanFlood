@@ -94,5 +94,34 @@ def test_model_01_i2(dial, true_dir): #impacts L2
     true_df = pd.read_csv(true_fp, index_col=0)
     
     assert_frame_equal(df, true_df)
+
+@pytest.mark.dev
+@pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_01_i2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True) #from build test_07
+@pytest.mark.parametrize('dialogClass',[ModelDialog], indirect=True)
+def test_model_02_r2(dial, true_dir): #impacts L2
     
+    #===========================================================================
+    # setup ipmacts 2
+    #===========================================================================
+    dial._change_tab('tab_r2')
+    
+    dial._change_tab('tab_r2')
+    
+    dial.checkBox_r2rpa.setChecked(True)
+    dial.checkBox_r2_ari.setChecked(False)
+
+    
+    QTest.mouseClick(dial.pushButton_r2Run, Qt.LeftButton) 
+    
+    #retrieve
+    fp = dial.get_cf_par(dial.get_cf_fp(), sectName='results_fps', varName='r_ttl')
+    assert os.path.exists(fp)
+    df = pd.read_csv(fp, index_col=0)
+    #===========================================================================
+    # load trues
+    #===========================================================================
+    true_fp = os.path.join(true_dir, [e for e in os.listdir(true_dir) if e.endswith('_ttl.csv')][0])
+    true_df = pd.read_csv(true_fp, index_col=0)
+    
+    assert_frame_equal(df, true_df)
 
