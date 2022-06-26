@@ -161,54 +161,7 @@ class Rsamp(Plotr, Qcoms):
         return list(raster_d.values()), vlay
     
     
-    def load_rlays(self, #shortcut for loading a set of rasters in a directory
-                   
-                   data_dir,
-                   rfn_l=None,  #if None, loads all tifs in the directory
-                   
-                   aoi_vlay = None,
-                   logger=None,
-                   **kwargs
-                   ):
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        if logger is None: logger=self.logger
-        log=logger.getChild('load_rlays')
-        
-        #=======================================================================
-        # prechecks
-        #=======================================================================
-        assert os.path.exists(data_dir)
-        
-        #=======================================================================
-        # get filenames
-        #=======================================================================
-        #load all in the passed directory
-        if rfn_l is None:
-            rfn_l = [e for e in os.listdir(data_dir) if e.endswith('.tif')]
-            log.info('scanned directory and found %i rasters: %s'%(len(rfn_l), data_dir))
 
-
-        rfp_d = {fn:os.path.join(data_dir, fn) for fn in rfn_l} #get filepaths
-        
-        #check
-        for fn, fp in rfp_d.items():
-            assert os.path.exists(fp), 'bad filepath for \"%s\''%fn
-        #=======================================================================
-        # loop and assemble
-        #=======================================================================
-        log.debug('loading %i rlays'%len(rfp_d))
-        rlay_d = dict()
-        for fn, fp in rfp_d.items():
-            rlay_d[fn] = self.load_rlay(fp, logger=log,aoi_vlay=aoi_vlay, **kwargs)
-            
-
-        assert len(rlay_d)>0, 'failed to load any rasters!'
-            
-        log.info('loaded %i rlays: %s'%(len(rlay_d), list(rlay_d.keys())))
-        
-        return rlay_d
     
 
 

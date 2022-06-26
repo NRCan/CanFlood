@@ -345,7 +345,7 @@ class Model(ComWrkr,
         #=======================================================================
         cf_fp = self.cf_fp
         if cf_fp == '':
-            raise Error('passed an empty cf_fp!')
+            raise Error('must pass a control file')
         assert os.path.exists(cf_fp), 'provided parameter file path does not exist \n    %s'%cf_fp
 
         self.pars = configparser.ConfigParser(inline_comment_prefixes='#')
@@ -377,10 +377,8 @@ class Model(ComWrkr,
         #=======================================================================
         # attach control file parameter values
         #=======================================================================
-
         self.cfPars_d = self.cf_attach_pars(self.pars)
-        
-        
+
         #=======================================================================
         # #check our validity tag
         #=======================================================================
@@ -396,17 +394,16 @@ class Model(ComWrkr,
             self.upd_impStyle()
             self._init_fmtFunc()
             
-        self.resname = '%s_%s_%s'%(self.valid_par, self.name, self.tag)
+        if self.resname is None:
+            self.resname = '%s_%s_%s'%(self.valid_par, self.name, self.tag)
         """TODO: consolidate this with ComWrkr.resname"""
         #=======================================================================
         # #wrap
         #=======================================================================
-        self.logger.debug('finished init_modelon Model')
-        
-        
+        self.logger.debug('finished init_model')
 
         
-    def cf_attach_pars(self, #load parmaeteres from file
+    def cf_attach_pars(self, #load parametersrom file
                     cpars,
                     setAttr=True, #whether to save each attribute 
                     ):
@@ -485,7 +482,7 @@ class Model(ComWrkr,
                           sections=['dmg_fps', 'risk_fps'], #parameter sections to manipulate
                           logger=None,
                           **kwargs):
-        """wraper to work with the control file (rather than the configparser"""
+        """wrapper to work with the control file (rather than the configparser"""
         
         #=======================================================================
         # defaults
@@ -536,7 +533,7 @@ class Model(ComWrkr,
         #assert os.path.exists(base_dir)
         log.debug('w/ base_dir=%s'%base_dir)
         #=======================================================================
-        # #loop through parser and retireve then convert
+        # #loop through parser and retrieve then convert
         #=======================================================================
         res_d = dict() #container for new values
         for sectName in sections:
@@ -549,14 +546,14 @@ class Model(ComWrkr,
                 
                 if os.path.exists(valRaw):
                     """switchged to warning... some tools may not use this fp"""
-                    log.warning(('%s.%s passed aboslute_fp=False but fp exists \n    %s'%(
+                    log.warning(('%s.%s passed abosolute_fp=False but fp exists \n    %s'%(
                         sectName, varName, valRaw)))
                     continue
                 else:
                 
                     #get the absolute filepath
                     fp = os.path.join(base_dir, valRaw)
-                    """dont bother... some models may not use all the fps
+                    """don't bother... some models may not use all the fps
                     better to let the check with handles catch things
                     assert os.path.exists(fp), '%s.%s not found'%(sectName, varName)"""
                     if not os.path.exists(fp) and warn:
@@ -606,7 +603,10 @@ class Model(ComWrkr,
         """checks are done on a configparser (rather than a dictionary)
         to better handle python's type reading from files"""
         assert isinstance(chk_d, dict)
-        if not optional: assert len(chk_d)>0
+        #if not optional: assert len(chk_d)>0
+        if len(chk_d)>0: #skip checks if no pars are passed
+            log.warning('no check parameters passed')
+            0, []
         assert len(cpars)>0
         
         log.debug('\'%s\' optional=%s chk_d:\n    %s'%(self.__class__.__name__, optional, chk_d))
@@ -706,7 +706,7 @@ class Model(ComWrkr,
     # LOADERS------
     #===========================================================================
     def load_df_ctrl(self,#load raw data from control file
-                     dtag_d=None,
+                     dtag_d=None, #data file loading parameters {key:kwargs for pd.read
                       logger=None,
                       ): 
         #=======================================================================
@@ -780,11 +780,12 @@ class Model(ComWrkr,
         self.check_finv(df)
         
         #=======================================================================
-        # resolve column gruops----
+        # resolve column groups----
         #=======================================================================
         cdf, prefix_l = self._get_finv_cnest(df)
         
         log.info('got %i nests: %s'%(len(prefix_l), prefix_l))
+        
         #=======================================================================
         # mitigation----
         #=======================================================================
@@ -2648,7 +2649,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         self.pars_d = pars_d.copy()
         
         #======================================================================
-        # extract depth-dmaage data
+        # extract depth-damage data
         #======================================================================
  
         #get just the dd rows
@@ -2910,7 +2911,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
             return ddf.iloc[:,0].to_dict(), mdf.iloc[:,0].to_dict()
         
         
-    def _get_ddf(self): #return a formatted dataframe fo the dd_ar
+    def _get_ddf(self): #return a formatted dataframe of the dd_ar
         return pd.DataFrame(self.dd_ar.T, columns=['exposure', 'impact'])
         
         

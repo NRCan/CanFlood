@@ -484,6 +484,7 @@ class WorkFlow(wFlow.scripts_retrieve.WF_retriev, Session): #worker with methods
                  session=None,
                  name=None,
                  out_dir=None,
+                 pars_d = dict(),
                  #init_q_d = {},
 
                  **kwargs):
@@ -523,14 +524,18 @@ class WorkFlow(wFlow.scripts_retrieve.WF_retriev, Session): #worker with methods
         
         self.wrkr_d = dict() #container for loaded workers
         
-
+        #pars d
+        
             
         
 
         #=======================================================================
         # checks
         #=======================================================================
-        assert isinstance(self.pars_d, dict)
+        if not isinstance(self.pars_d, dict):
+            raise Error('\'%s\' got bad type on pars_d'%self.name)
+        
+        self.pars_d = {**self.pars_d, **pars_d} #mash together class definition and init values (for child instancing)
         
         self.logger.debug('WorkFlow.__init__ w/ resname: %s'%self.resname)
 

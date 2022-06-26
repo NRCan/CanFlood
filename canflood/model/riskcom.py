@@ -120,7 +120,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         assert valid, 'some complex event probabilities exceed 1 w/ \'%s\'... see logger'%self.event_rels
             
         #=======================================================================
-        # #identify those events that need filling
+        # identify those events that need filling
         #=======================================================================
         fill_exn_d = dict()
         for aep, exn_l in cplx_evn_d.items(): 
@@ -139,7 +139,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             else: raise Error('only allowed 1 empty')
 
                 
-        log.debug('calculating probaility for %i complex events with remaining secnodaries'%(
+        log.debug('calculating probability for %i complex events with remaining secondaries'%(
             len(fill_exn_d)))
             
         self.noFailExn_d =copy.copy(fill_exn_d) #set this for the probability calcs
@@ -279,19 +279,16 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         assert 'ead' in tlRaw_df.iloc[:,0].values, 'dmg_ser missing ead entry'
         
         #=======================================================================
-        # column labling
+        # column labeling
         #=======================================================================
         """letting the user pass whatever label for the impacts
             then reverting"""
         df1 = tlRaw_df.copy()
         
         """
-        TODO: harmonize this with 'impact_units' loaded from control file
-            generally set (in cf) by model.dmg2.Dmg2.run(set_impactUnits=True)
-            or read from control file
-            then written to r_ttl 
+        taking the value from 'impact_units' loaded from control file
         """
-        self.impact_name = list(df1.columns)[1] #get the label for the impacts
+        self.impact_name = self.impact_units #get the label for the impacts
         
         newColNames = list(df1.columns)
         newColNames[1] = 'impacts'
@@ -299,7 +296,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         df1.columns = newColNames
 
         #=======================================================================
-        # #get ead
+        # get ead
         #=======================================================================
         bx = df1['aep'] == 'ead' #locate the ead row
         assert bx.sum()==1
@@ -310,7 +307,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         assert isinstance(self.ead_tot, float), '%s got bad type on ead_tot: %s'%(self.name, type(self.ead_tot))
         
         #=======================================================================
-        # #get plot values
+        # get plot values
         #=======================================================================
         df2 = df1.loc[df1['plot'], :].copy() #drop those not flagged for plotting
         
@@ -323,7 +320,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         """
 
         #=======================================================================
-        # #invert aep (w/ zero handling)
+        # invert aep (w/ zero handling)
         #=======================================================================
         self._get_ttl_ari(df2)
 
@@ -1351,13 +1348,10 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         
         #axis setup
         ax1 = fig.add_subplot(111)
-        #ax2 = ax1.twinx()
-        
         
         # axis label setup
         fig.suptitle(title)
         ax1.set_ylabel(y1lab)
-
 
         ax1.set_xlabel(xlab)
         

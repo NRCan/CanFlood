@@ -299,6 +299,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         
 
 
+
     def setup_load(self, #load teh base control file
                   ):
         #=======================================================================

@@ -363,7 +363,7 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
     def _get_buildPars(self): #helper to retrieve info off the parent class
         
         #=======================================================================
-        # disconntected sessions
+        # disconnected sessions
         #=======================================================================
         if isinstance(self.linEdit_ScenTag, str):
             tag, out_dir = self.linEdit_ScenTag, os.getcwd()
