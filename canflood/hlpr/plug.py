@@ -97,7 +97,8 @@ class QMenuAction(Qcoms): #base class for actions assigned to Q menus
         #=======================================================================
         if not iface is None:
             """only checking real iface for compatabilitgy"""
-            assert isinstance(iface, QgisInterface), 'got bad iface type: %s'%type(iface)
+            assert 'QgisInterface' in type(iface).__name__, 'got bad iface type: %s'%type(iface)
+ 
         self.iface = iface
             
         #=======================================================================
