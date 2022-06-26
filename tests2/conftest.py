@@ -103,6 +103,10 @@ def dialogClass(request): #always passing this as an indirect
 @pytest.fixture(scope='function')
 def finv_fp(base_dir, request): #always passing this as an indirect
     return os.path.join(base_dir, request.param)
+
+@pytest.fixture(scope='function')
+def cf_fp(base_dir, request):
+    return os.path.join(base_dir, request.param)
  
 
 @pytest.fixture(scope='function')

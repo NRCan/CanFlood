@@ -59,9 +59,7 @@ def dial(session, cf_fp): #configured dialog
     
     
 
-@pytest.fixture(scope='function')
-def cf_fp(base_dir, request):
-    return os.path.join(base_dir, request.param)
+
 
 #===============================================================================
 # tests---------
