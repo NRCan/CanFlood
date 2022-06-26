@@ -17,6 +17,8 @@ see tutorials for integration tests
 import pytest, os
 
 from qgis.core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsProject
+from PyQt5.QtTest import QTest
+from PyQt5.Qt import Qt
 
 from build.dialog import BuildDialog
 
@@ -41,8 +43,9 @@ def test_01_build_scenario(session):
     #===========================================================================
     # execute
     #===========================================================================
-    dial.build_scenario()
-    
+    """BuildDialog.build_scenario()"""
+    QTest.mouseClick(dial.pushButton_generate, Qt.LeftButton)
+ 
     #===========================================================================
     # check
     #===========================================================================
