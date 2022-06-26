@@ -581,6 +581,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         log.info('loaded vlay \'%s\' as \'%s\' %s geo  with %i feats from file: \n     %s'
                     %(vlay.name(), dp.storageType(), QgsWkbTypes().displayString(vlay.wkbType()), dp.featureCount(), fp))
         
+        self.qproj.addMapLayer(vlay, False)
 
         return vlay
     
@@ -636,6 +637,8 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             
         if not mstore is None:
             mstore.addMapLayer(rlay2)
+            
+        self.qproj.addMapLayer(rlay2, False)
         
         return rlay2
     
