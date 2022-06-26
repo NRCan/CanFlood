@@ -605,7 +605,7 @@ class Model(ComWrkr,
         assert isinstance(chk_d, dict)
         #if not optional: assert len(chk_d)>0
         if len(chk_d)>0: #skip checks if no pars are passed
-            log.warning('no check parameters passed')
+            log.debug('no check parameters passed')
             0, []
         assert len(cpars)>0
         
@@ -633,8 +633,9 @@ class Model(ComWrkr,
             miss_l = set(vchk_d.keys()).difference(list(csectName))
             if len(miss_l) > 0:
                 """changed this to a warning for backwards compatability"""
-                log.warning('\'%s\' missing %i (of %i) expected varirables: \n    %s'%(
-                    sectName, len(miss_l), len(vchk_d), miss_l))
+                if not optional:
+                    log.warning('\'%s\' missing %i (of %i) expected varirables: \n    %s'%(
+                        sectName, len(miss_l), len(vchk_d), miss_l))
                 
                 vchk_d = {k:v for k,v in vchk_d.items() if k in list(csectName)}
                 if len(vchk_d)==0: continue
@@ -680,11 +681,23 @@ class Model(ComWrkr,
                       cpars):
         
         assert isinstance(cpars, configparser.ConfigParser)
-        errors = []
-
-        for chk_d, opt_f in ((self.exp_pars_md,False), (self.exp_pars_op,True)):
-            _, l = self.cf_chk_pars(cpars, copy.copy(chk_d), optional=opt_f)
-            errors = errors + l
+#===============================================================================
+#         errors = []
+# 
+#         for chk_d, opt_f in ((self.exp_pars_md,False), (self.exp_pars_op,True)):
+#             _, l = self.cf_chk_pars(cpars, copy.copy(chk_d), optional=opt_f)
+#             errors = errors + l
+#===============================================================================
+            
+        #=======================================================================
+        # mandatory
+        #=======================================================================
+        result, errors = self.cf_chk_pars(cpars, copy.copy(self.exp_pars_md), optional=False)
+        
+        #=======================================================================
+        # optional
+        #=======================================================================
+        result, warnings = self.cf_chk_pars(cpars, copy.copy(self.exp_pars_op), optional=True)
             
         return errors
     
@@ -1461,9 +1474,11 @@ class Model(ComWrkr,
         log.info('\'%s\' felv: \n    min=%.2f, mean=%.2f, max=%.2f'%(
              self.felv, s.min(), s.mean(), s.max()))
             
-        if self.felv == 'ground':
+        """allows construction before control file is complete"""
+        if 'gels' in bdf.columns:
             assert not self.as_inun
-            assert 'gels' in bdf.columns, 'missing gels column'            
+            #assert 'gels' in bdf.columns, 'missing gels column'
+            assert self.felv=='ground'            
             assert bdf['gels'].notna().all()
 
 
@@ -1474,11 +1489,7 @@ class Model(ComWrkr,
             
             log.info('converted felv from \'ground\' to \'datum\' \n    min=%.2f, mean=%.2f, max=%.2f'%(
                  s.min(), s.mean(), s.max()))
-            
-        elif self.felv=='datum':
-            log.debug('felv = \'%s\' no conversion'%self.felv)
-        else:
-            raise Error('unrecognized felv=%s'%self.felv)
+ 
         
         #=======================================================================
         # add mitigation data---
@@ -2082,7 +2093,7 @@ class Model(ComWrkr,
                     #so a session can pass a control file... rather than usin gthe workers init
                  logger=None,
                  ):
-        if logger is None: logger=self.logger
+        #if logger is None: logger=self.logger
         
         """only 1 check for now"""
         #=======================================================================

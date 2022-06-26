@@ -109,6 +109,10 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                  crsid = 'EPSG:4326', #default crsID if no init_q_d is passed
                  
                  context=None,
+                 
+                 #pytest-qgis fixtures
+                 qgis_app=None, qgis_processing=None,
+                 
                  **kwargs
                  ):
         
@@ -184,7 +188,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         
         #do your own init (standalone r uns)
         if len(init_q_d) == 0:
-            self._init_standalone()
+            self._init_standalone(qgis_app=qgis_app, qgis_processing=qgis_processing)
         else:
             #check everything is there
             miss_l = set(self.q_hndls).difference(init_q_d.keys())
@@ -211,6 +215,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
     #==========================================================================
         
     def _init_standalone(self,  #setup for qgis runs
+                         qgis_app=None,qgis_processing=None,
                        crsid = None,
                        ):
         """
@@ -234,9 +239,13 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         #=======================================================================
         # setup qgis
         #=======================================================================
+        if qgis_app is None:
+            qgis_app = self.init_qgis()
+        self.qap = qgis_app
         
-        self.qap = self.init_qgis()
-        self.algo_init = self.init_algos()
+        if qgis_processing is None:
+            qgis_processing = self.init_algos()
+        self.algo_init = qgis_processing
         
         self.set_vdrivers()
         #=======================================================================
@@ -313,9 +322,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         # init p[rocessing]
         #=======================================================================
         from processing.core.Processing import Processing
-
-        
-    
+ 
         Processing.initialize()  
     
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
@@ -581,6 +588,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
         log.info('loaded vlay \'%s\' as \'%s\' %s geo  with %i feats from file: \n     %s'
                     %(vlay.name(), dp.storageType(), QgsWkbTypes().displayString(vlay.wkbType()), dp.featureCount(), fp))
         
+        self.qproj.addMapLayer(vlay, False)
 
         return vlay
     
@@ -636,6 +644,8 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
             
         if not mstore is None:
             mstore.addMapLayer(rlay2)
+            
+        self.qproj.addMapLayer(rlay2, False)
         
         return rlay2
     

@@ -5,7 +5,7 @@ Created on Feb. 21, 2022
 
  
 '''
-import os, shutil, sys, datetime
+import os, shutil, sys, datetime, traceback
 import pytest
 import numpy as np
 from numpy.testing import assert_equal
@@ -13,13 +13,27 @@ import pandas as pd
 from pandas.testing import assert_frame_equal, assert_series_equal, assert_index_equal
  
 
+
 from qgis.core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsWkbTypes, QgsRasterLayer, \
     QgsMapLayer
     
+from PyQt5.QtWidgets import QApplication 
+from PyQt5.QtCore import QTimer
 import processing
+
+
+import pytest_qgis #install check (needed by fixtures)
+"""TODO: use a virtual environment?"""
  
 
 from wFlow.scripts import Session
+
+def excepthook(exc_type, exc_value, exc_tb):
+    tb = "".join(traceback.format_exception(exc_type, exc_value, exc_tb))
+    print("error message:\n", tb)
+    QApplication.quit()
+
+sys.excepthook = excepthook
  
 
 class Session_pytest(Session): #QGIS enabled session handler for testing dialogs
@@ -48,24 +62,37 @@ class Session_pytest(Session): #QGIS enabled session handler for testing dialogs
         self.logger.info('finished Session_pytest.__init__')
         
     def init_dialog(self,
-                    DialogClass,
+                    DialogClass, iface=None,
                     ):
         
-        self.Dialog = DialogClass(None, session=self, plogger=self.logger)
+        if not iface is None:
+            self.iface=iface
+        if iface is None:
+            iface = self.iface
+            
+        if hasattr(self, 'Dialog'):
+            self.Dialog.close()
+            
+        self.Dialog = DialogClass(iface, session=self, plogger=self.logger)
                     
         self.Dialog.launch()
+        
+        return self.Dialog
 
         
     def __enter__(self):
         return self
     
     def __exit__(self, exc_type, exc_value, traceback):
-        pass
+         
         
  
         
-         
+        self.Dialog.close()
+        self.qproj.clear() #cleare the project
+ 
         #sys.exit(self.qap.exec_()) #wrap
+        
         #sys.exit() #wrap
         print('exiting DialTester')
         
@@ -74,11 +101,23 @@ def dialogClass(request): #always passing this as an indirect
     return request.param
 
 @pytest.fixture(scope='function')
+def finv_fp(base_dir, request): #always passing this as an indirect
+    return os.path.join(base_dir, request.param)
+
+@pytest.fixture(scope='function')
+def cf_fp(base_dir, request):
+    return os.path.join(base_dir, request.param)
+ 
+
+@pytest.fixture(scope='function')
 def session(tmp_path,
   
-            base_dir, 
+            true_dir,
             write,  # (scope=session)
             crs, dialogClass,
+            
+            #pytest-qgis fixtures
+            qgis_app, qgis_processing, qgis_iface
                     
                     ):
  
@@ -89,7 +128,8 @@ def session(tmp_path,
     if write:
         #retrieves a directory specific to the test... useful for writing compiled true data
         """this is dying after the yield statement for some reason...."""
-        out_dir = os.path.join(base_dir, os.path.basename(tmp_path))
+        out_dir = true_dir
+
  
     
     with Session_pytest( 
@@ -98,28 +138,24 @@ def session(tmp_path,
                  out_dir=out_dir, 
                  temp_dir=os.path.join(tmp_path, 'temp'),
  
-                 crs=crs,
-                 
- 
+                 crs=crs, 
                  
                    overwrite=True,
                    write=write, #avoid writing prep layers
+                   
+                   qgis_app=qgis_app,qgis_processing=True,
   
         ) as ses:
         
-        ses.init_dialog(dialogClass)
+        ses.init_dialog(dialogClass, iface=qgis_iface)
  
         yield ses
 
 @pytest.fixture(scope='session')
 def write():
-    #===========================================================================
-    # write key
-    #===========================================================================
+ 
     write=False
-    #===========================================================================
-    # write key
-    #===========================================================================
+ 
     
     if write:
         print('WARNING!!! runnig in write mode')
@@ -184,67 +220,38 @@ class devPlugLogger(plugLogger):
 
 @pytest.fixture(scope='session')
 def base_dir():
+    from definitions import base_dir
  
-    base_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
- 
-    assert os.path.exists(base_dir), base_dir
     return base_dir
+
+@pytest.fixture(scope='session')
+def test_dir(base_dir):
+    return os.path.join(base_dir, r'tests2\data')
+    
 
 
 
 @pytest.fixture
-def true_dir(write, tmp_path, base_dir):
-    true_dir = os.path.join(base_dir, os.path.basename(tmp_path))
+def true_dir(write, tmp_path, test_dir):
+    true_dir = os.path.join(test_dir, os.path.basename(tmp_path))
     if write:
         if os.path.exists(true_dir):
             try: 
                 shutil.rmtree(true_dir)
                 os.makedirs(true_dir) #add back an empty folder
-                os.makedirs(os.path.join(true_dir, 'working')) #and the working folder
+                #os.makedirs(os.path.join(true_dir, 'working')) #and the working folder
             except Exception as e:
                 print('failed to cleanup the true_dir: %s w/ \n    %s'%(true_dir, e))
+        
+        """no... this is controlled with the out_dir on the session        
+        #not found.. create a fresh one
+        if not os.path.exists(true_dir):
+            os.makedirs(true_dir)"""
 
-            
+    #assert os.path.exists(true_dir)
     return true_dir
     
-#===============================================================================
-# helper funcs-------
-#===============================================================================
-def search_fp(dirpath, ext, pattern): #get a matching file with extension and beginning
-    assert os.path.exists(dirpath), 'searchpath does not exist: %s'%dirpath
-    fns = [e for e in os.listdir(dirpath) if e.endswith(ext)]
-    
-    result= None
-    for fn in fns:
-        if pattern in fn:
-            result = os.path.join(dirpath, fn)
-            break
-        
-    if result is None:
-        raise IOError('failed to find a match for \'%s\' in %s'%(pattern, dirpath))
-    
-    assert os.path.exists(result), result
-        
-        
-    return result
-
-
-def retrieve_data(dkey, fp, ses): #load some compiled result off the session (using the dkey)
-    assert dkey in ses.data_retrieve_hndls
-    hndl_d = ses.data_retrieve_hndls[dkey]
-    assert 'compiled' in hndl_d, '%s has no compliled handles'%dkey
-    
-    return hndl_d['compiled'](fp=fp, dkey=dkey)
-
- 
-            
-def rasterstats(rlay): 
-      
-    ins_d = { 'BAND' : 1, 
-             'INPUT' : rlay,
-              'OUTPUT_HTML_FILE' : 'TEMPORARY_OUTPUT' }
- 
-    return processing.run('native:rasterlayerstatistics', ins_d )   
+  
             
             
             

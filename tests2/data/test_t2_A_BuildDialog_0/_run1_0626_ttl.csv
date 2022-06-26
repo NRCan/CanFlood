@@ -1,0 +1,8 @@
+aep,$CAD,note,plot
+0.5,0.0,extrap,True
+0.02,3462979.5683,impact_sum,True
+0.01,2490212.3989,impact_sum,True
+0.005,2005638.8375,impact_sum,True
+0.001,480277.9977,impact_sum,True
+0.0,98937.7878,extrap,True
+ead,877382.1259,integration,False
