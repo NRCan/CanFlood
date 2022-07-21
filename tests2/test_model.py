@@ -69,7 +69,7 @@ def dial(session, cf_fp): #configured dialog
 def test_model_01_i2(dial, true_dir): #impacts L2
     
     #===========================================================================
-    # setup ipmacts 2
+    # setup impacts 2
     #===========================================================================
     dial._change_tab('tab_i2')
     
@@ -77,7 +77,7 @@ def test_model_01_i2(dial, true_dir): #impacts L2
     dial.checkBox_i2_pbox.setChecked(False) #no plots
     
     #===========================================================================
-    # exceute
+    # execute
     #===========================================================================
     QTest.mouseClick(dial.pushButton_i2run, Qt.LeftButton)   #Run dmg2
     

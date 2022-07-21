@@ -49,7 +49,7 @@ def finv_vlay(session, finv_fp):
     finv_vlay = session.load_vlay(finv_fp)
     dial.comboBox_ivlay.setLayer(finv_vlay)
     
-    #indeix field name
+    #index field name
     dial.mFieldComboBox_cid.setField('xid')
     
     return finv_vlay
