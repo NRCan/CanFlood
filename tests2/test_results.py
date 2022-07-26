@@ -5,25 +5,18 @@ Created on Jun. 26, 2022
 
 unit tests for CanFlood's 'results' toolset
 '''
-
-
-import pytest, os, shutil
-
-import pandas as pd
-
-from pandas.testing import assert_frame_equal
-
-from pytest_qgis.utils import clean_qgis_layer
-from pytest import fail
-
-import pdb
-
 from qgis.core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsProject, QgsReport, QgsReportSectionLayout
-from PyQt5.QtTest import QTest
 from PyQt5.Qt import Qt
+from PyQt5.QtTest import QTest
 from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
+from pandas.testing import assert_frame_equal
+from pytest import fail
+from pytest_qgis.utils import clean_qgis_layer
 
 from results.dialog import ResultsDialog
+import pandas as pd
+#import pdb
+import pytest, os, shutil
 
 
 #===============================================================================
@@ -61,6 +54,7 @@ def dial(session, cf_fp): #configured dialog
     
     return dial
 
+
 #===============================================================================
 # tests---------
 #===============================================================================
@@ -78,6 +72,7 @@ def test_res_01_riskPlot(dial): #test risk plots
         pass
     else:
         fail('Failed to create risk plot svg')
+
     
 @pytest.mark.parametrize('dialogClass',[ResultsDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_02_r2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True) #from build test_07
@@ -90,9 +85,10 @@ def test_res_02_pdf_report(dial):
 
     assert isinstance(report, QgsReport)
 
+
 @pytest.mark.parametrize('dialogClass',[ResultsDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_02_r2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True) #from build test_07
-def test_res_03_report_sections(session, dial):
+def test_res_03_report_sections(dial):
     """generate a pdf report, check that the expected sections are included"""
     dial.iface = None # Preventing layout window opening
 
