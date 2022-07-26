@@ -4,7 +4,7 @@
 3. Applications and Workflows
 =============================
 
-The CanFlood plugin holds a collection of tools designed to support flood risk modellers with range of common tasks. To accomplish this, CanFlood is flexible: allowing users to link together whichever tools and sequences are needed to complete the task at hand. Performing a flood risk assessment using CanFlood requires expertise in flood risk modelling, some procedures like those referenced in :ref:`Section1.1.2 <Section1.1.2>` , and generally employs the following steps:
+The CanFlood plugin holds a collection of tools designed to support flood risk modellers with a range of common tasks. To accomplish this, CanFlood is flexible: allowing users to link together whichever tools and sequences are needed to complete the task at hand. Performing a flood risk assessment using CanFlood requires expertise in flood risk modelling, some procedures like those referenced in :ref:`Section1.1.2 <Section1.1.2>` , and generally employs the following steps:
 
   1. Identifying the objectives, scope, and purpose of the assessment.
   2. Selecting the appropriate CanFlood model level (:ref:`Section1.3 <Section1.3>`) then identifying the necessary input data.
