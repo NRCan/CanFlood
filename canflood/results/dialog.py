@@ -387,10 +387,11 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             #get curves filepath from the model
             filePath = model.curves
 
-        if filePath is None:
+        if filePath is None or ' ':
             return
 
         #load data
+        assert os.path.exists(filePath), 'passed invalid filePath: %s'%filePath
         cLib_d = wrkr.load_data(filePath)
 
         #plot
@@ -888,3 +889,5 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         log.push('run_reporter finished')
         self.feedback.upd_prog(None)
+
+        return report # Used for testing purposes
