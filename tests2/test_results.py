@@ -15,7 +15,6 @@ from pytest_qgis.utils import clean_qgis_layer
 
 from results.dialog import ResultsDialog
 import pandas as pd
-#import pdb
 import pytest, os, shutil
 
 
