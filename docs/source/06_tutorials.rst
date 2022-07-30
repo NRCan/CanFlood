@@ -169,7 +169,7 @@ Notice the six impact fields (boxed in red above) have had their names converted
 
 Tutorial 2 demonstrates the use of CanFlood’s ‘Risk (L2)’ model (:ref:`Section5.2.3 <Section5.2.3>`). This emulates a more detailed risk assessment where the vulnerability (as a function of depth) for each asset is known (rather than simple binary flood exposure as in tutorial 1). This tutorial also demonstrates an inventory with ‘relative’ heights and CanFlood’s ‘composite vulnerability function’ feature where multiple functions are applied to the same asset.
 
-6.2.1. Load data to project
+6.2.1. Load data into the project
 ===========================
 
 Download the tutorial 2 data from `the project page <https://github.com/NRCan/CanFlood/tree/master/tutorials/2>`_:
@@ -663,7 +663,7 @@ For more information on these data sets, see :ref:`Appendix A <appendix_a>`.
 
 Because this tutorial deals with data having disparate CRSs, users should be familiar with QGIS’s native handling of project and layer CRS discussed `here <https://docs.qgis.org/3.10/en/docs/user_manual/working_with_projections/working_with_projections.html>`__.
 
-6.10.1. Load Data to Project
+6.10.1. Load Data into the Project
 ============================
 
 Begin by setting your QGIS project’s CRS to ‘EPSG:3978’ (Project > Properties > CRS > select ‘EPSG:3978’) (Depending on your profile settings, the project’s CRS may be automatically set by the first loaded layer). Now you are ready to download, then add, the data layer for Tutorial 5:
