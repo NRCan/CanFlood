@@ -11,7 +11,7 @@ import pytest, os, shutil
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
-from qgis.core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsProject
+from qgis.core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsProject, QgsReport
 from PyQt5.QtTest import QTest
 from PyQt5.Qt import Qt
 from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
@@ -65,7 +65,7 @@ def test_t2_A(session, data_dir, true_dir, tmp_path, write):
     finv_vlay = session.load_vlay(fp)
     dial.comboBox_ivlay.setLayer(finv_vlay)
     
-    #indeix field name
+    #index field name
     dial.mFieldComboBox_cid.setField('xid')
     
     dial.comboBox_SSelv.setCurrentIndex(1) #ground
@@ -90,7 +90,7 @@ def test_t2_A(session, data_dir, true_dir, tmp_path, write):
     QTest.mouseClick(dial.pushButton_inv_vfunc, Qt.LeftButton)"""
     
     #specify curves
-    raw_fp = os.path.join(session.pars_dir, 'vfunc\IBI_2015\IBI2015_DamageCurves.xls')
+    raw_fp = os.path.join(session.pars_dir, 'vfunc\\IBI_2015\\IBI2015_DamageCurves.xls')
     
     #copy over
     ofp = os.path.join(session.out_dir, os.path.basename(raw_fp))
@@ -240,9 +240,15 @@ def test_t2_A(session, data_dir, true_dir, tmp_path, write):
     # setup
     #===========================================================================
     dial._change_tab('tab_setup')
+    assert os.path.exists(dial.get_cf_fp())
+
+    #set output directory
+    dial.lineEdit_wdir.setText(str(session.out_dir))
+
+    dial.lineEdit_cf_fp.setText(dial.get_cf_fp())
     
     dial.radioButton.setChecked(True) #save plots to file
-    dial.checkBox_SSoverwrite.setChecked(False)
+    dial.checkBox_SSoverwrite.setChecked(True) #set to true to prevent run_reporter crash
     
     #===========================================================================
     # risk plots
@@ -250,22 +256,37 @@ def test_t2_A(session, data_dir, true_dir, tmp_path, write):
     dial._change_tab('tab_riskPlot')
     
     """TODO: add plot formatting customization parameters and checks"""
-    
+    dial.checkBox_RP_ari.setChecked(True)
+    dial.checkBox_RP_aep.setChecked(False)
     
     QTest.mouseClick(dial.pushButton_RP_plot, Qt.LeftButton)
+
+    svg_fp = os.path.join(dial.out_dir, [e for e in os.listdir(dial.out_dir) if e.endswith('.svg')][0])
+
+    assert os.path.exists(svg_fp)
     
     #===========================================================================
     # pdf reporter
     #===========================================================================
     dial._change_tab('tab_report')
-    
+
     #select finv_vlay
-    
+    finv_fp = os.path.join(data_dir, 'finv_tut2.gpkg')
+
+    finv_vlay = session.load_vlay(finv_fp)
+    dial.comboBox_rpt_vlay.setLayer(finv_vlay)
+
+    #prevent test crashing
+    dial.iface = None
+
     #execute
-    QTest.mouseClick(dial.pushButton_rpt_create, Qt.LeftButton)
+    report = ResultsDialog.run_reporter(dial)
     
     #check all expected pages are in the report
-    
+    assert isinstance(report, QgsReport)
+    sections = report.childSections()
+
+    assert len(sections) == 4
     
     #===========================================================================
     # validate-----
