@@ -378,8 +378,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # setup
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
-        wrkr = misc.curvePlot.CurvePlotr(**kwargs)
-
+  
         with Model(**kwargs) as model:
             #load the control file
             model.init_model(check_pars=False)
@@ -387,16 +386,22 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             #get curves filepath from the model
             filePath = model.curves
 
-        if filePath is None or ' ':
+        if filePath is None or filePath==' ':
+            log.debug('no curves found')
             return
 
-        #load data
         assert os.path.exists(filePath), 'passed invalid filePath: %s'%filePath
-        cLib_d = wrkr.load_data(filePath)
-
-        #plot
-        fig = wrkr.plotAll(cLib_d)
-        output = self.output_fig(fig, plt_window=False)
+        #=======================================================================
+        # plot the curves
+        #=======================================================================
+        with misc.curvePlot.CurvePlotr(**kwargs) as wrkr:
+        
+            cLib_d = wrkr.load_data(filePath)
+ 
+            fig = wrkr.plotAll(cLib_d, logger=log)
+            
+            
+        output = self.output_fig(fig, plt_window=False, logger=log)
         self.feedback.upd_prog(30, method='append')
 
         return output

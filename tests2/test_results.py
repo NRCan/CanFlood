@@ -84,7 +84,7 @@ def test_res_02_pdf_report(dial):
 
     assert isinstance(report, QgsReport)
 
-
+@pytest.mark.dev
 @pytest.mark.parametrize('dialogClass',[ResultsDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_02_r2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True) #from build test_07
 def test_res_03_report_sections(dial):
@@ -100,7 +100,7 @@ def test_res_03_report_sections(dial):
     pageCount = len(sections)
 
     # The control file being used will create 4 sections
-    if pageCount == 4:
+    if pageCount == 5:
         pass
     else:
         fail('Report has incorrect amount of pages')
