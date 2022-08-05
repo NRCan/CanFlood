@@ -857,7 +857,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             self.feedback.setProgress(30)
             
             #add the map section
-            if isinstance(geo_vlay, QgsVectorLayer):
+            if not geo_vlay is None:
                 wrkr.add_map(vlay=geo_vlay)
             self.feedback.setProgress(35)
 
