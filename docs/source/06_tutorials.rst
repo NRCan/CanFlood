@@ -310,7 +310,7 @@ These plots are the two standard risk curve formats for the same total results d
    :align: middle
    :width: 28
 
-Finally, move to the 'Report' tab and **click 'Create Report'** to generate a pdf report of your model and results. 
+Finally, move to the 'Report' tab and **click 'Create Report'** to generate a  QGIS report template of your model and results. Open the layout manager and select the report, and **click 'Show'** to open the report manager (CanFlood will attempt to do this automatically). From the layout window, you can select the generated sections and **click 'Edit'** to view and modify the content.  From the layout window, click **Export to pdf** to generate a pdf of the report. For this tutorial, seven pages should be included in the exported pdf, as shown `here <https://github.com/NRCan/CanFlood/blob/63-person-testing-of-feature-report-creating/tests2/data/test_t2_A_BuildDialog_0/CanFlood_report_res1_0805.pdf>`_. 
 
 *********************************************
 6.3. Tutorial 2b: Risk (L2) with Dike Failure
