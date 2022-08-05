@@ -218,7 +218,7 @@ On the same ‘Inventory’ tab **click ‘Select From Library’** to launch th
 
 .. image:: /_static/tutorials_6_2_2_img_2.jpg
 
-Close the ‘vFunc Selection’ GUI, and you should now see the new .xls file path entered under ‘Vulnerability Functions’. This library contains 126 functions, far more than the 4 referenced in our inventory. To removed the unreferenced curves from the set, **click 'Purge Functions'**. You should see a new vulnerability function set created. Finally, **click ‘Update Control File’** to store a reference to this into the control file.
+Close the ‘vFunc Library’ GUI, and you should now see the new .xls file path entered under ‘Vulnerability Functions’. This library contains 126 functions, far more than the 4 referenced in our inventory. To removed the unreferenced curves from the set, **click 'Purge Functions'**. You should see a new vulnerability function set created called 'cLib'. Finally, **click ‘Update Control File’** to store a reference to this into the control file.
 
 **Hazard Sampler**
 

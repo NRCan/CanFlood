@@ -721,7 +721,7 @@ After populating the ‘data’ and ‘smry’ tabs, the workbook should display
 
 This tool generates a financial time-series plot of the benefit and cost data contained in the BCA worksheet.
 
-5.3.4. Report Automator
+5.3.5. Report Automator
 ============================
 
 This tab provides a simple tool for generating a pdf report of your model. A video of this tool is provided `here <https://www.youtube.com/watch?v=7E9hAkirsa8>`_. The number of pages generated will depend on your model and the options selected on preceding tabs of the dialog but generally includes:
