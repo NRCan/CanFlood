@@ -883,8 +883,8 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             self.feedback.setProgress(60)
             
             
-            """this will crash the test run""" 
-            if not self.iface is None:
+            """this will crash the test run otherwise""" 
+            if hasattr(self.iface, 'openLayoutDesigner'):
                 self.iface.openLayoutDesigner(report)
  
         #=======================================================================
@@ -894,5 +894,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         log.push('run_reporter finished')
         self.feedback.upd_prog(None)
+        
+        self.report=report #for testing
 
-        return report # Used for testing purposes
+        return  
