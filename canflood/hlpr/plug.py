@@ -1055,8 +1055,11 @@ def bind_layersListWidget(widget, #instanced widget
                   'get_selected_layers', 'clear_checks','check_all', 'check_byName']:
         setattr(widget, fName, types.MethodType(eval(fName), widget)) 
         
-def bind_MapLayerComboBox(widget, #add some bindings to layer combo boxes
-                          iface=None, layerType=None): 
+def bind_MapLayerComboBox(widget, #
+                          iface=None, layerType=None):
+    """
+    add some bindings to layer combo boxes
+    """
     
     widget.iface=iface
     #default selection

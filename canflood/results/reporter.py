@@ -305,7 +305,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
         #=======================================================================
         # precheck
         #=======================================================================
-        assert isinstance(vlay, QgsVectorLayer)
+        assert isinstance(vlay, QgsVectorLayer), type(QgsVectorLayer).__name__
         assert vlay.extent().area()>0.0
         assert vlay.dataProvider().featureCount()>0, 'selected finv (%i) has no features'%vlay.name()
         #=======================================================================

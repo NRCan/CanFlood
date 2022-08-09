@@ -121,6 +121,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         self.launch_actions['attempt finv'] = lambda: self.comboBox_JGfinv.attempt_selection('finv')
                 
+        
         #=======================================================================
         # results data
         #=======================================================================
@@ -282,6 +283,15 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         #create the template
         self.pushButton_rpt_create.clicked.connect(self.run_reporter)
+        
+        #setup the vlay combobox
+        hlpr.plug.bind_MapLayerComboBox(self.comboBox_rpt_vlay, 
+                      layerType=QgsMapLayerProxyModel.VectorLayer, iface=self.iface)
+        
+        #broadcast changes from 'JoinGeo' tab down onto results tab
+        self.comboBox_JGfinv.layerChanged.connect(
+            lambda:self.comboBox_rpt_vlay.setLayer(self.comboBox_JGfinv.currentLayer())
+            )
         
         #=======================================================================
         # wrap--------
