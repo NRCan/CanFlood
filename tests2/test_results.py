@@ -80,13 +80,19 @@ def test_res_01_riskPlot(dial): #test risk plots
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_02_r2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True) #from build test_07
 @pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.gpkg'], indirect=True)
 def test_res_02_pdf_report(dial, finv_fp):
-    """generate a pdf report, validate"""
+    """generate a pdf report, validate
+    
+    TODO:
+    add additional cases (e.g., no vector layer)
+    """
     
     res_02_reporter(dial, finv_fp=finv_fp, vsect_cnt=6)
 
     
 def res_02_reporter(dial, finv_fp=None, vsect_cnt = 5):
     """build and test report
+    
+    refacorted for use in tutoirals test
     
     ResultsDialog.run_reporter()
     """
