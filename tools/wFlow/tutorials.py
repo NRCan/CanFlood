@@ -92,7 +92,7 @@ class Tut2(WorkFlow): #tutorial 1a
             }
         super().__init__(**kwargs)
     
-class Tut2a(Tut2): #tutorial 1a
+class Tut2a(Tut2): #tutorial 2a
     name='tut2a'
     attriMode = False
     
@@ -176,7 +176,7 @@ class Tut2b(Tut2): #tutorial 1a
         d = self.plot_failSplit(logger=log)
         self.res_d = {**self.res_d, **d}
 
-class Tut2c(Tut2): #tutorial 1a
+class Tut2c(Tut2): #Tutorial 2c: Risk (L2) with Complex Failure
     name='tut2c'
     attriMode = True
     
