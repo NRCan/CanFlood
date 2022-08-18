@@ -22,9 +22,9 @@ from qgis.core import QgsVectorLayer, Qgis, QgsProject, QgsLogger, QgsMessageLog
 from qgis.gui import QgisInterface
 
 #pyQt
-from PyQt5.QtWidgets import QFileDialog, QGroupBox, QComboBox, QTableWidgetItem
+from PyQt5.QtWidgets import QFileDialog, QGroupBox, QComboBox, QTableWidgetItem, QWidget
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
-from PyQt5.QtCore import Qt, QAbstractTableModel, QObject 
+from PyQt5.QtCore import Qt, QAbstractTableModel, QObject
 from PyQt5 import QtCore
 
 
@@ -97,7 +97,8 @@ class QMenuAction(Qcoms): #base class for actions assigned to Q menus
         #=======================================================================
         if not iface is None:
             """only checking real iface for compatabilitgy"""
-            assert isinstance(iface, QgisInterface), 'got bad iface type: %s'%type(iface)
+            assert 'QgisInterface' in type(iface).__name__, 'got bad iface type: %s'%type(iface)
+ 
         self.iface = iface
             
         #=======================================================================
@@ -145,7 +146,7 @@ class QMenuAction(Qcoms): #base class for actions assigned to Q menus
         assert os.path.exists(self.pars_dir)
         
     def connect_slots(self): #placeholder for connection slots (for consistency)
-        pass
+        self.logger.warning('replace?')
     def launch(self):
         raise Error('overwrite with your own method')
     
@@ -232,9 +233,10 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
             
             
         #inventory vector layer
-        if isinstance(self.session.finv_vlay, QgsVectorLayer):
-            if hasattr(self, 'comboBox_JGfinv'): #should just skip the Build
-                self.comboBox_JGfinv.setLayer(self.session.finv_vlay)
+        if hasattr(self.session, 'finv_vlay'):
+            if isinstance(self.session.finv_vlay, QgsVectorLayer):
+                if hasattr(self, 'comboBox_JGfinv'): #should just skip the Build
+                    self.comboBox_JGfinv.setLayer(self.session.finv_vlay)
                 
                 
 
@@ -523,6 +525,18 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
             if not os.path.exists(default_wdir): os.makedirs(default_wdir)
             
     #===========================================================================
+    # widget help------
+    #===========================================================================
+    def _change_tab(self, tabObjectName): #try to switch the tab on the gui
+        try:
+            tabw = self.tabWidget
+            index = tabw.indexOf(tabw.findChild(QWidget, tabObjectName))
+            assert index > 0, 'failed to find index?'
+            tabw.setCurrentIndex(index)
+        except Exception as e:
+            self.logger.error('failed to change to compile tab w/ \n    %s' % e)
+            
+    #===========================================================================
     # run function helpers------
     #===========================================================================
     def get_cf_fp(self):
@@ -662,9 +676,15 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
                 self.cid, boolidx.sum()))
         
 
+    def _change_tab(self, tabObjectName): #try to switch the tab on the gui
+        try:
+            tabw = self.tabWidget
+            index = tabw.indexOf(tabw.findChild(QWidget, tabObjectName))
+            assert index > 0, 'failed to find index?'
+            tabw.setCurrentIndex(index)
+        except Exception as e:
+            self.logger.error('failed to change to compile tab w/ \n    %s' % e)
 
-            
-        
             
         
     #===========================================================================
@@ -1035,8 +1055,11 @@ def bind_layersListWidget(widget, #instanced widget
                   'get_selected_layers', 'clear_checks','check_all', 'check_byName']:
         setattr(widget, fName, types.MethodType(eval(fName), widget)) 
         
-def bind_MapLayerComboBox(widget, #add some bindings to layer combo boxes
-                          iface=None, layerType=None): 
+def bind_MapLayerComboBox(widget, #
+                          iface=None, layerType=None):
+    """
+    add some bindings to layer combo boxes
+    """
     
     widget.iface=iface
     #default selection

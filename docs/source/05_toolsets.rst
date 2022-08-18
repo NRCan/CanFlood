@@ -481,7 +481,9 @@ Another optional output is supplied through the ‘bdmg_smry’ function and cor
 5.2.3. Risk (L2)
 ================
 
-CanFlood’s ‘Risk (L2)’ tool is designed to perform a ‘classic’ object-based deterministic flood risk assessment using impact estimates and probabilities to calculate an annualized risk metric. Beyond this classical risk model, ‘Risk (L2)’ also facilitates risk estimates that incorporate conditional hazard events, like levee failure during a 100-yr flood. This can be conceptualized with Sayers (2012)’s ‘source-pathway-receptor’ framework as shown in Figure5-3_, where:
+CanFlood’s ‘Risk (L2)’ tool is designed to perform a ‘classic’ object-based deterministic flood risk assessment using impact estimates and probabilities to calculate an annualized risk metric as part of an :ref:`L2 assessment <Section3.2>` . In summary, this tool uses the impacts per hazard-event from the  :ref:`Impacts (L2) <Section5.2.2>` tool to compute a single risk metric through integration. 
+
+Beyond this classical risk model, ‘Risk (L2)’ also facilitates risk estimates that incorporate conditional hazard events, like levee failure during a 100-yr flood. This can be conceptualized with Sayers (2012)’s ‘source-pathway-receptor’ framework as shown in Figure5-3_, where:
 
   • *Source*: WSL prediction (in raster format) for levels behind the defense (e.g. levee) of an event with a quantified likelihood.
   • *Pathway*: The infrastructure element separating receptors (i.e. assets) from the raw WSL prediction. Typically, this is a levee, but could be any element where ‘failure’ likelihood and WSL can be quantified (e.g. stormwater outfall gates, stormwater pumps).
@@ -718,6 +720,20 @@ After populating the ‘data’ and ‘smry’ tabs, the workbook should display
 **Plot Financials**
 
 This tool generates a financial time-series plot of the benefit and cost data contained in the BCA worksheet.
+
+5.3.5. Report Automator
+============================
+
+This tab provides a simple tool for generating a pdf report of your model. A video of this tool is provided `here <https://www.youtube.com/watch?v=7E9hAkirsa8>`_. The number of pages generated will depend on your model and the options selected on preceding tabs of the dialog but generally includes:
+
+  1) Cover page
+  2) Summary map
+  3) Inventory Summary
+  4) Risk curve summary plots and corresponding tables
+  5) Plot of all vulnerability functions found in the curve set .xls
+  6) A print out of the control file.
+  
+Generating the pdf report will open QGIS' 'Layout Manager' where you can edit the automatically generated pages before printing. 
 
 *********************
 5.4. Additional Tools

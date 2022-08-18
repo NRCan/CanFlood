@@ -136,7 +136,7 @@
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:7.8pt;&quot;&gt;Welcome to CanFlood 1.1.0&lt;/span&gt;&lt;/p&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:7.8pt;&quot;&gt;Welcome to CanFlood 1.2.0&lt;/span&gt;&lt;/p&gt;
 &lt;p align=&quot;center&quot; style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;img src=&quot;:/plugins/canflood_inprep/icons/logo_20210419_100x66.png&quot; /&gt;&lt;/p&gt;
 &lt;p align=&quot;center&quot; style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:7.8pt;&quot;&gt;&lt;br /&gt;&lt;/span&gt;&lt;/p&gt;
 &lt;p align=&quot;center&quot; style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:7.8pt;&quot;&gt;This collection is the 'Build' toolset. These tools help build/configure a CanFlood model.&lt;/span&gt;&lt;/p&gt;
@@ -402,7 +402,7 @@ p, li { white-space: pre-wrap; }
                    <string>Launch separate window</string>
                   </property>
                   <property name="checked">
-                   <bool>true</bool>
+                   <bool>false</bool>
                   </property>
                  </widget>
                 </item>
@@ -413,6 +413,9 @@ p, li { white-space: pre-wrap; }
                   </property>
                   <property name="text">
                    <string>Save to file</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
                   </property>
                  </widget>
                 </item>
@@ -1419,6 +1422,22 @@ p, li { white-space: pre-wrap; }
                   </property>
                   <property name="text">
                    <string>Update Control File</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="pushButton_Inv_purge">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="toolTip">
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Create a new Vulnerability Function library by copying only those functions in the current library found in the inventory (as specified in the control file). The new 'purged' library will not be stored to the control file.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  </property>
+                  <property name="text">
+                   <string>Purge Functions</string>
                   </property>
                  </widget>
                 </item>
@@ -3065,7 +3084,7 @@ p, li { white-space: pre-wrap; }
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="tab_eaep">
+         <widget class="QWidget" name="tab_eventVars">
           <attribute name="title">
            <string>Event Variables</string>
           </attribute>
@@ -3870,7 +3889,7 @@ p, li { white-space: pre-wrap; }
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
+                   <width>599</width>
                    <height>500</height>
                   </rect>
                  </property>
@@ -5274,7 +5293,7 @@ p, li { white-space: pre-wrap; }
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="tab_Valid">
+         <widget class="QWidget" name="tab_validation">
           <attribute name="title">
            <string>Validation</string>
           </attribute>
@@ -5328,13 +5347,6 @@ p, li { white-space: pre-wrap; }
                 </property>
                 <property name="checked">
                  <bool>false</bool>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0">
-               <widget class="QCheckBox" name="checkBox_Vr3">
-                <property name="text">
-                 <string>Risk  (L3)</string>
                 </property>
                </widget>
               </item>
@@ -5980,15 +5992,14 @@ p, li { white-space: pre-wrap; }
   <tabstop>checkBox_Vr1</tabstop>
   <tabstop>checkBox_Vi2</tabstop>
   <tabstop>checkBox_Vr2</tabstop>
-  <tabstop>checkBox_Vr3</tabstop>
   <tabstop>pushButton_Validate</tabstop>
  </tabstops>
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="buttonGroup_EV_eventRels"/>
   <buttongroup name="buttonGroup_S_filepaths"/>
-  <buttongroup name="buttonGroup_LS_rels"/>
   <buttongroup name="buttonGroup_ELfmt"/>
+  <buttongroup name="buttonGroup_EV_eventRels"/>
+  <buttongroup name="buttonGroup_LS_rels"/>
  </buttongroups>
 </ui>

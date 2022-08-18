@@ -50,7 +50,7 @@ def basic_logger(root_lvl = logging.DEBUG,
     
     os.chdir(new_wdir)
     
-    print('changed current directory to: \n    %s'%os.getcwd())
+    print('changed current directory to: \n    %s'%new_wdir)
     
     #===========================================================================
     # build logger from file

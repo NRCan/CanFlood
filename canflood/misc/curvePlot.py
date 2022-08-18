@@ -24,7 +24,7 @@ import logging, configparser, datetime, itertools
 import os
 import numpy as np
 import pandas as pd
-
+from hlpr.basic import force_open_dir, view, get_valid_filename
 
 mod_name='curvePlot'
 #==============================================================================
@@ -115,7 +115,6 @@ class CurvePlotr(DFunc, Plotr):
                 lib_as_df = True, #indicator for format of passed lib
                 title=None,
                 logger=None,
-
                 **lineKwargs
                 ):
         #=======================================================================
@@ -133,7 +132,7 @@ class CurvePlotr(DFunc, Plotr):
         # convert clib
         #=======================================================================
         if lib_as_df:
-            assert isinstance(cLib_d[list(cLib_d.keys())[0]], pd.DataFrame), 'expected frame'
+            assert isinstance(cLib_d[list(cLib_d.keys())[0]], pd.DataFrame), 'expected frames'
             cLib_d = {k:df.set_index(df.columns[0], drop=True).iloc[:,0].to_dict() for k, df in cLib_d.items()}
             
             """
@@ -159,7 +158,8 @@ class CurvePlotr(DFunc, Plotr):
         #post format
         fig = ax.figure
         fig.suptitle(title)
-        ax.legend()
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.20),
+                                fancybox=True, shadow=True, ncol=6)
         ax.grid()
         
         return fig
@@ -483,12 +483,66 @@ class CurvePlotr(DFunc, Plotr):
     
         return ax
                 
+    def output(self,
+               d,
+               ofn = None,
+               out_dir = None,
+               ):
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        log = self.logger.getChild('output')
+        if out_dir is None: out_dir=self.out_dir
+        if not os.path.exists(out_dir):os.makedirs(out_dir)
+        if ofn is None:
+            ofn = 'cLib_%s_%s.xls'%(self.tag, self.today_str)
+        
+        ofn = get_valid_filename(ofn)
+        assert os.path.splitext(ofn)[1]=='.xls', ofn
+        #=======================================================================
+        # precheck
+        #=======================================================================
 
-
-    
-
-    
-    
+        
+        #=======================================================================
+        # patsh
+        #=======================================================================
+        ofp = os.path.join(out_dir, ofn)
+        assert len(d)>0
+        if os.path.exists(ofp): assert self.overwrite
+        
+        #write to multiple tabs
+        with pd.ExcelWriter(ofp) as writer:
+            for i, (tabnm, data) in enumerate(d.items()):
+                #write handles
+                if tabnm=='_smry':
+                    index, header = True, True
+                else:
+                    index, header = False, False
+                    
+                #tab check
+                
+                if len(tabnm)>30:
+                    log.warning('changing tab name! this can break tagging')
+                    tabnm = tabnm.replace(' ','')
+                    
+                if len(tabnm)>30:
+                    tabnm = tabnm[:29]+'%s'%i
+                    
+                #data format
+                if isinstance(data, dict):
+                    df = pd.Series(data).to_frame()
+                elif isinstance(data,  pd.DataFrame):
+                    df = data
+                else:
+                    raise Error('bad')
+                    
+                df.to_excel(writer, sheet_name=tabnm, index=index, header=header)
+            
+            
+        print('wrote %i sheets to %s'%(len(d), ofp))
+            
+        return ofp
        
 
 

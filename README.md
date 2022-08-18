@@ -4,18 +4,21 @@ Open source flood risk modelling toolbox for Canada
 ![alt text](https://github.com/NRCan/CanFlood/blob/master/img/logo_20210419_500.png)
 
 
-Updated and tested against QGIS 3.16.14 (Qt 5.15.2)
+Updated and tested against QGIS 3.22.8 (Qt 5.15.3)
 
 We welcome/encourage any comments, bugs, or issues you have or find. Please create a GitHub 'issue' ticket [following these instructions](https://github.com/NRCan/CanFlood/issues/6) to let us know about these things.
 
 Happy flood risk modelling!
 
-checkout the [Launch Party](https://www.ibiviz.com/CanFlood/)
 
 ## Documentation
-New documentation is [here](https://canflood.readthedocs.io/en/latest/#). Legacy docuemtnation is archived [here](https://github.com/NRCan/CanFlood/tree/master/docs/legacy_manuals).
+[Documentation](https://canflood.readthedocs.io/en/latest/#) is provided for the latest and archived versions. 
+
 
 ## Phase 3 Development
+v1.2.0 is released with the following major new features:
+1) [new tool](https://canflood.readthedocs.io/en/dev/05_toolsets.html#report-automator) for generating a pdf report of your model.
+
 [v1.1.0](https://github.com/NRCan/CanFlood/releases/tag/v1.1.0) is released with three major new features:
 1) Very nice sphinx/readTheDocs [documentation](https://canflood.readthedocs.io/en/latest/#) thanks in large part to Dhanyatha. This is much easier to browse than the previous pdfs and facilitates preservation of previous, current, and development (and eventually French) versions of the manual.
 2) [new module](https://canflood.readthedocs.io/en/latest/toolsets.html#sensitivity-analysis) providing workflow and tools for performing sensitivity analysis on a L1 or L2 CanFlood models. This can be helpful in understanding and communicating the uncertainty in your model, as well as help identify which parameters should be prioritized during data collection.

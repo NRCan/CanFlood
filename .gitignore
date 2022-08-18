@@ -137,6 +137,7 @@ Qda4/.project
 *.gpkg-wal
 *.gpkg-shm
 *.aux.xml
+*.tif.aux
 
 
 #VisualBasic

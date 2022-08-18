@@ -3,14 +3,13 @@ Created on Feb. 9, 2020
 
 @author: cefect
 
-simple build routines
+dike analysis commons
 '''
 
 #==========================================================================
 # logger setup-----------------------
 #==========================================================================
-import logging, configparser, datetime, shutil
-
+ 
 
 
 #==============================================================================
@@ -32,8 +31,7 @@ from hlpr.exceptions import QError as Error
 from hlpr.basic import ComWrkr, view
     
 
-    
-#from hlpr.basic import get_valid_filename
+ 
 
 #==============================================================================
 # functions-------------------

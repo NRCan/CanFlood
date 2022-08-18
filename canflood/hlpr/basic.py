@@ -23,7 +23,7 @@ import os, configparser, logging, re, datetime, warnings
 import pandas as pd
 pd.set_option('display.max_rows',5)
 import numpy as np
-
+import tempfile #todo: move this up top
 
 
 #==============================================================================
@@ -59,6 +59,7 @@ class ComWrkr(object): #common methods for all classes
 
                  overwrite=True, 
                  out_dir=None, 
+                 temp_dir=None,
                  logger=mod_logger,
 
                  prec = 4,
@@ -84,13 +85,26 @@ class ComWrkr(object): #common methods for all classes
         """consider using self.name instead?"""
         self.logger = logger.getChild(self.__class__.__name__)
         #setup output directory
-        if out_dir is None: out_dir = os.getcwd()
+        if out_dir is None: 
+            out_dir = os.getcwd()
         
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
             self.logger.info('created requested output directory: \n    %s'%out_dir)
-
+            
+        if temp_dir is None:
+            temp_dir = tempfile.mkdtemp()
+        
+        if not os.path.exists(temp_dir):
+            os.makedirs(temp_dir)
+        
+        self.temp_dir=temp_dir  
+        
+        self.pars_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), '_pars')
+        assert os.path.exists(self.pars_dir)
         self.data_d = dict() #dictionary for loaded data sets
+        
+        if name is None: name=''
         #======================================================================
         # attach
         #======================================================================
@@ -109,7 +123,7 @@ class ComWrkr(object): #common methods for all classes
         # labels
         if resname is None:
             resname = '%s_%s_%s'%(self.name, self.tag,  datetime.datetime.now().strftime('%m%d'))
-            """TODO: consolidate this with Modcom.resname"""
+            """TODO: consolidate this with modcom.Model.init_model()"""
                  
         self.resname = resname
         #=======================================================================
@@ -275,6 +289,7 @@ class ComWrkr(object): #common methods for all classes
             
         log.info('updated control file w/ %i pars at :\n    %s'%(
             cnt, cf_fp))
+        log.debug(new_pars_d)
         
         return
     
@@ -398,6 +413,9 @@ class ComWrkr(object): #common methods for all classes
 
     
 class MyFeedBack(object): #simple custom feedback object
+    """TODO: 
+    make this a subclass of QgsProcessingFeedback
+    """
     
     def __init__(self, 
                  logger=mod_logger, 
@@ -753,7 +771,38 @@ def get_valid_filename(s):
     s = re.sub(r'(?u)[^-\w.]', '', s)
     s = re.sub(':','-', s)
     return s
-    
+
+def dict_update2(#helper to update a 2level dictionary with a similar new one 
+                         old_d, new_d,
+                 ):
+        
+        if len(new_d)>0:
+            for k,sub_d in old_d.items():
+                assert isinstance(sub_d, dict), 'bad type on \'%s\''%k
+                if k in new_d:
+                    sub_d.update(new_d[k])
+        
+        return old_d
+ 
+def set_info( #get all the  membership info from two containers
+        left, right,
+             result='elements'):
+ 
+    el_d =  {
+        'diff_left':set(left).difference(right), #those in left no tin right
+        'diff_right':set(right).difference(left),
+        'union':set(left).union(right),
+        'intersection':set(left).intersection(right),
+        'symmetric_difference':set(left).symmetric_difference(right),        
+        }
+ 
+    if result=='elements':
+        return el_d
+    elif result=='counts':
+        return {k:len(v) for k,v in el_d.items()}
+    else:
+        raise ValueError('unrecognized results key \'%s\''%result)
+ 
     
 if __name__ =="__main__": 
     

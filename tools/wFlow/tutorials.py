@@ -531,17 +531,21 @@ class Tut7(WorkFlow): #tutorial 1a
 class Tut7a(Tut7):
     name = 'Tut7a'
     
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self,bk_lib={}, **kwargs):
+        super().__init__(
+            bk_lib = {**bk_lib, **{
+                'rsamp_vlay':{'psmp_fieldName':'sample_stat'},
+                'dtmsamp_vlay':{'psmp_fieldName':'sample_stat'},
+                }},
+            
+            **kwargs)
         
         self.pars_d.update({
             'finv_fp':r'tutorials\7\finv_tut7_polys.gpkg', #setup for R2.. but just using R1
 
             })
         
-        self.tpars_d.update({
-             'Rsamp':{'psmp_fieldName':'sample_stat'}
-            })
+ 
         
         
 #===============================================================================
@@ -551,7 +555,7 @@ wFlow_l = [Tut7a] #used below and by test scripts to bundle workflows
 
 if __name__ == '__main__':
     
-    wrkr = Session(projName='tuts', write=True, plot=False)
+    wrkr = Session(projName='tuts', write=True, plot=True)
     rlib = wrkr.run(wFlow_l)
     
 

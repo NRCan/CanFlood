@@ -4,7 +4,7 @@
 6. Tutorials
 ============
 
-This section provides a few tutorials to get a user started in CanFlood. It is suggested to work through the tutorials sequentially, referring to :ref:`Section5 <toolsets>` when more detailed information is desired. For all tutorials, the project CRS can safely be set from any of the data layers, unless otherwise specified. Tutorials are written assuming users are familiar with QGIS and object-based flood risk modelling. All tutorial data can be found in the latest `‘tutorial_data’ zip <https://github.com/IBIGroupCanWest/CanFlood/blob/master/tutorial_data_20210315.zip>`__ on the project page.
+This section provides a few tutorials to get a user started in CanFlood. It is suggested to work through the tutorials sequentially, referring to :ref:`Section5 <toolsets>` when more detailed information is desired. For all tutorials, the project CRS can safely be set from any of the data layers, unless otherwise specified. Tutorials are written assuming users are familiar with QGIS and object-based flood risk modelling. All tutorial data is provided on the github page under `tutorials  <https://github.com/NRCan/CanFlood/tree/master/tutorials>`_ where files can be downloaded individually. A complete zip of this data is provided for convenience `here <https://github.com/NRCan/CanFlood/tree/master/tutorials/_complete>`_ .
 
 .. _Section6.1:
 
@@ -31,7 +31,9 @@ Download the data layers for Tutorial 1:
 
   • *finv_tut1a.gpkg* : flood asset inventory (’finv’) spatial layer.
 
-Ensure your project’s CRS is set to ‘EPSG:3005’ (Depending on your settings, this may have been set automatically when you loaded the datafiles. All tutorials   use CRS ‘EPSG:3005’ unless stated otherwise. See the following link for an explanation of projections in QGIS. `https://docs.qgis.org/3.10/en/docs/user_manual/working_with_projections/working_with_projections.html <https://docs.qgis.org/3.10/en/docs/user_manual/working_with_projections/working_with_projections.html>`_ ) and load the downloaded layers into a new QGIS project (Depending on your QGIS settings, you may be requested to select a transformation if the CRS was not set correctly beforehand). Your map canvas should look something like this:
+Ensure your project’s CRS is set to ‘EPSG:3005‘. Depending on your settings, the CRS may have been set automatically when you loaded the datafiles. All tutorials use CRS ‘EPSG:3005’ unless stated otherwise.  See `working with projections <https://docs.qgis.org/3.10/en/docs/user_manual/working_with_projections/working_with_projections.html>`_ for more info. 
+
+Load the downloaded layers into a new QGIS project (Depending on your QGIS settings, you may be requested to select a transformation if the CRS was not set correctly beforehand). Your map canvas should look something like this:
 
 .. image:: /_static/tutorials_6_1_1_tiff.jpg
 
@@ -69,11 +71,11 @@ If you view the ‘CanFlood’ Log Messages Tab (View > Panels > Log Messages), 
 
 .. image:: /_static/tutorials_6_1_2_img_2.jpg
 
-Back in CanFlood’s ‘Setup’ tab, next to the working directory file path, click ‘Open’ to open the specified working directory, you should see the Control File ‘CanFlood_Tut1.txt’ created in your working directory. Open the control file. This is a template with some blank, default, and specified parameters. As you work through the remainder of ‘Build’ section of this tutorial, blank parameters will be filled in by the CanFlood tools. Notice the ‘#’ comment letting you know how and when this control file was created. ‘#’ comment lines are ignored by the program when reading from the control file, and are written by some tools to help the user track actions taken by CanFlood on the control file.
+Back on the CanFlood ‘Setup’ tab, next to the working directory file path, click ‘Open’ to open the specified working directory, you should see the Control File ‘CanFlood_Tut1.txt’ created in your working directory. Open this control file. This is a template with some blank, default, and specified parameters. As you work through the remainder of the ‘Build’ section of this tutorial, blank parameters will be filled in by the CanFlood tools. Notice the ‘#’ comment letting you know how and when this control file was created. ‘#’ comment lines are ignored by the program when reading from the control file, and are written by some tools to help the user track actions taken by CanFlood on the control file.
 
 **Store Inventory**
 
-Move to the ‘Inventory’ tab. Under the Inventory Compiler section, select the inventory layer (*finv_tut1a*) and ensure ‘elevation type’ is set to ‘datum’ to reflect that the inventory’s ‘f0_elv’ values are measured from the project’s datum (rather than ground). Now select the inventory vector layer and the appropriate ‘Index FieldName’ as shown, then **click ‘Store’**.
+Move to the ‘Inventory’ tab. Under the Inventory Compiler section, select the inventory layer (*finv_tut1a*) and ensure ‘elevation type’ is set to ‘datum’ to reflect that the inventory’s ‘f0_elv’ values are measured from the project’s datum (rather than ground). Now select the appropriate ‘Index FieldName’ as shown, then **click ‘Store’**.
 
 .. image:: /_static/tutorials_6_1_2_img_3.jpg
 
@@ -112,9 +114,11 @@ Click the ‘Model’ button |runimage| to launch the Model toolset dialog.
 
 On the ‘Setup’ tab, select a working directory (does not have to match the directory from the previous step) where all your results will be stored. Also select your control file created in the previous section if necessary.
 
-Your dialog should look like this (CanFlood will attempt to automatically identify the Inventory Vector Layer; however, this tutorial does not make use of this layer so the selection here can be ignored):
+Your dialog should look like this:
 
 .. image:: /_static/tutorials_6_1_3_img_1.jpg
+
+NOTE: CanFlood will attempt to automatically identify the Inventory Vector Layer; however, this tutorial does not make use of this layer so the selection here can be ignored
 
 **Execute**
 
@@ -137,7 +141,9 @@ These are the non-spatial results which are directly generated by CanFlood’s m
 
 **Join Geometry**
 
-Open the results toolset by **clicking the ‘Results’** |visualimage2| **button**. The CanFlood models are designed to run independent of the QGIS spatial API. Therefore, if you would like to view the results spatially, additional actions are required to re-attach the tabular model results to the asset inventory (‘finv’) vector geometry. To do this, move to the ‘Join Geo’ tab, select the asset inventory (‘finv’) layer. Then select ‘r_passet’ under ‘results parameter to load’ to populate the field below with a filepath to your per-asset results file (If the filepath fails to populate automatically, try changing re-setting the ‘finv’ and ‘parameter’ drop-downs. Alternatively, enter the filepath manually). Finally, select the ‘Results Layer Style’ and ‘Field re-label option’ as shown:
+Open the results toolset by **clicking the ‘Results’** |visualimage2| **button**. The CanFlood models are designed to run independent of the QGIS spatial API. Therefore, if you would like to view the results spatially, additional actions are required to re-attach the tabular model results to the asset inventory (‘finv’) vector geometry. 
+
+To do this, move to the ‘Join Geo’ tab, select the asset inventory (‘finv’) layer. Then select ‘r_passet’ under ‘results parameter to load’ to populate the field below with a filepath to your per-asset results file (If the filepath fails to populate automatically, try re-setting the ‘finv’ and ‘parameter’ drop-downs. Alternatively, enter the filepath manually). Finally, select the ‘Results Layer Style’ and ‘Field re-label option’ as shown:
 
 .. image:: /_static/tutorials_6_1_4_img_2.jpg
 
@@ -161,12 +167,12 @@ Notice the six impact fields (boxed in red above) have had their names converted
 6.2. Tutorial 2a: Risk (L2) with Simple Events
 **********************************************
 
-Tutorial 2 demonstrates the use of CanFlood’s ‘Risk (L2)’model (:ref:`Section5.2.3 <Section5.2.3>`). This emulates a more detailed risk assessment where the vulnerability of each asset is known and described as a function of flood depth (rather than simple binary flood presence as in tutorial 1). This tutorial also demonstrates an inventory with ‘relative’ heights and CanFlood’s ‘composite vulnerability function’ feature where multiple functions are applied to the same asset.
+Tutorial 2 demonstrates the use of CanFlood’s ‘Risk (L2)’ model (:ref:`Section5.2.3 <Section5.2.3>`). This emulates a more detailed risk assessment where the vulnerability (as a function of depth) for each asset is known (rather than simple binary flood exposure as in tutorial 1). This tutorial also demonstrates an inventory with ‘relative’ heights and CanFlood’s ‘composite vulnerability function’ feature where multiple functions are applied to the same asset.
 
-6.2.1. Load data to project
+6.2.1. Load data into the project
 ===========================
 
-Download the tutorial 2 data from the ‘tutorials\2\data’ folder:
+Download the tutorial 2 data from `the project page <https://github.com/NRCan/CanFlood/tree/master/tutorials/2>`_:
 
   • *haz_rast*: hazard event rasters with WSL value predictions for the study area for four probabilities.
 
@@ -198,25 +204,25 @@ On the ‘Setup’ tab, configure the session as shown using your own paths, the
 
 .. image:: /_static/tutorials_6_2_2_img_1.jpg
 
-**Select Vulnerability Function Set**
+**Inventory Setup**
 
-Move to the ‘Inventory’ tab and **click ‘Select From Library’** to launch the library selection GUI shown below. Select the library ‘IBI_2015’ in the top left window then ‘IBI2015_DamageCurves.xls’ in the bottom left window, then **click ‘Copy Set’** to copy this set of vulnerability functions into your working directory. The inventory provided in this tutorial has been constructed specifically for these ‘IBI2015’ functions. Generally, flood risk modellers must develop or supply their own vulnerability functions.
-
-.. image:: /_static/tutorials_6_2_2_img_2.jpg
-
-Close the ‘vFunc Selection’ GUI, and you should now see the new .xls file path entered under ‘Vulnerability Functions’. Finally, **click ‘Update Control File’** to store a reference to this vulnerability function set into the control file.
-
-**Inventory**
-
-On the same ‘Inventory’ tab, select the inventory vector layer, the appropriate Index FieldName, and **set the elevation type to ‘ground’** as shown, then **click ‘Store’**.
+Move to the ‘Inventory’ tab, **select the inventory vector layer**, **select the Index FieldName**, and **set the elevation type to ‘ground’** as shown, then **click ‘Store’**.
 
 .. image:: /_static/tutorials_6_2_2_img_3.jpg
 
 You should see the inventory csv now stored in the working directory.
 
+**Select Vulnerability Function Set**
+
+On the same ‘Inventory’ tab **click ‘Select From Library’** to launch the library selection GUI shown below. Select the library ‘IBI_2015’ in the top left window then ‘IBI2015_DamageCurves.xls’ in the bottom left window, then **click ‘Copy Set’** to copy this set of vulnerability functions into your working directory. The inventory provided in this tutorial has been constructed specifically for these ‘IBI2015’ functions. Generally, flood risk modellers must develop or supply their own vulnerability functions.
+
+.. image:: /_static/tutorials_6_2_2_img_2.jpg
+
+Close the ‘vFunc Library’ GUI, and you should now see the new .xls file path entered under ‘Vulnerability Functions’. This library contains 126 functions, far more than the 4 referenced in our inventory. To removed the unreferenced curves from the set, **click 'Purge Functions'**. You should see a new vulnerability function set created called 'cLib'. Finally, **click ‘Update Control File’** to store a reference to this into the control file.
+
 **Hazard Sampler**
 
-Move to the ‘Hazard Sampler’ tab, ensure the four hazard rasters are shown in the window and all other fields are default, then **click ‘Sample Rasters’**. You should see the ‘expos’ data file created in the working directory.
+Move to the ‘Hazard Sampler’ tab, ensure the four hazard rasters are shown in the window and default values are used for other parameters, then **click ‘Sample’**. You should see the ‘expos’ data file created in the working directory.
 
 **Event Variables**
 
@@ -259,7 +265,7 @@ Move to the ‘Risk (L2)’ tab. Check all the boxes shown below and **click ‘
 
 .. image:: /_static/tutorials_6_2_3_img_3.jpg
 
-A set of results files should have been generated (discussed below). For a complete description of the Risk (L2) module, see :ref:`Section5.2.3 <Section5.2.3>`.
+A set of results files should have been generated in your working directory (discussed below). For a complete description of the Risk (L2) module, see :ref:`Section5.2.3 <Section5.2.3>`.
 
 6.2.4. View Results
 ===================
@@ -271,7 +277,7 @@ After completing the Risk (L2) run, navigate to your working directory. It shoul
   • *risk2_run1_tut2a_ttl.csv*: total expected value of all events and assets Risk (L2) results;
   • *dmgs_tut2a_run1.csv*: per asset Impacts (L2) results;
   • *dmgs_expnd_tut2a_run1.csv*: expanded component Impacts (L2) results;
-  • *run1 Impacts-ARI plot for 6 events.svg*: see below.
+  • *run1 Impacts-ARI plot for 6 events.svg*: summary risk curve plot shown below.
 
 .. image:: /_static/tutorials_6_2_4_img_1.jpg
 
@@ -279,7 +285,7 @@ After completing the Risk (L2) run, navigate to your working directory. It shoul
 
 **Risk Plots**
 
-While the Risk modules include some basic risk curve plots (see above), CanFlood provides additional plot customization under the ‘Risk Plot’ tool in the ‘Results’ toolset. **Open the ‘Results’** |visualimage1| **toolset**, configure the session by selecting a working directory, the Control File, and setting ‘Plot Handling’ to ‘Save to file’ as shown:
+While the Risk modules include some basic risk curve plots (see above), CanFlood provides additional plot customization under the ‘Risk Plot’ tool in the ‘Results’ toolset. To learn more about these tools, **Open the ‘Results’** |visualimage1| **toolset**, configure the session by selecting a working directory, the Control File, and setting ‘Plot Handling’ to ‘Save to file’ as shown:
 
 .. image:: /_static/tutorials_6_2_4_img_2.jpg
 
@@ -298,11 +304,13 @@ These parameters control the colour of the plot and the formatting applied to th
 
 .. image:: /_static/tutorials_6_2_4_img_5.jpg
 
-These plots are the two standard risk curve formats for the same total results data. Alternatively, changing ‘Plot Handling’ to ‘Launch separate window’ on the ‘Setup’ tab will launch a dialog window after plotting that provides some built-in tools for further customizing the plot.
+These plots are the two standard risk curve formats for the same total results data ('risk2_run1_tut2a_ttl.csv' in this case). Alternatively, changing ‘Plot Handling’ to ‘Launch separate window’ on the ‘Setup’ tab will launch a dialog window after plotting that provides some built-in tools for further customizing the look and feel of the plot. Of course, you can always generate custom plots in other applications using CanFlood's output files.
 
 .. |visualimage1| image:: /_static/visual_image.jpg
    :align: middle
    :width: 28
+
+Finally, move to the 'Report' tab, **select the finv vector layer**, and **click 'Create Report'** to generate a  QGIS report template of your model and results. Open the layout manager and select the report, and **click 'Show'** to open the report manager (CanFlood will attempt to do this automatically). From the layout window, you can select the generated sections and **click 'Edit'** to view and modify the content.  From the layout window, click **Export to pdf** to generate a pdf of the report. For this tutorial, seven pages should be included in the exported pdf, as shown `here <https://github.com/NRCan/CanFlood/blob/63-person-testing-of-feature-report-creating/tests2/data/test_t2_A_BuildDialog_0/CanFlood_report_res1_0805.pdf>`_. 
 
 *********************************************
 6.3. Tutorial 2b: Risk (L2) with Dike Failure
@@ -655,7 +663,7 @@ For more information on these data sets, see :ref:`Appendix A <appendix_a>`.
 
 Because this tutorial deals with data having disparate CRSs, users should be familiar with QGIS’s native handling of project and layer CRS discussed `here <https://docs.qgis.org/3.10/en/docs/user_manual/working_with_projections/working_with_projections.html>`__.
 
-6.10.1. Load Data to Project
+6.10.1. Load Data into the Project
 ============================
 
 Begin by setting your QGIS project’s CRS to ‘EPSG:3978’ (Project > Properties > CRS > select ‘EPSG:3978’) (Depending on your profile settings, the project’s CRS may be automatically set by the first loaded layer). Now you are ready to download, then add, the data layer for Tutorial 5:

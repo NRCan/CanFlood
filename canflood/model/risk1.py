@@ -142,6 +142,7 @@ class Risk1(RiskModel):
     def run(self,
             res_per_asset=False, #whether to generate results per asset
             calc_risk=True, #whether to run integration algo
+            as_inun=None,
             ):
         """
         main caller for L1 risk model
@@ -153,11 +154,11 @@ class Risk1(RiskModel):
         # defaults
         #======================================================================
         log = self.logger.getChild('run')
-        #ddf_raw, finv,  = self.data_d['expos'],self.data_d['finv'] 
         aep_ser = self.data_d['evals']
         cid, bid = self.cid, self.bid        
         bdf ,ddf = self.bdf, self.ddf
         
+        if as_inun is None: as_inun=self.as_inun
         #======================================================================
         # prechecks
         #======================================================================
@@ -184,7 +185,7 @@ class Risk1(RiskModel):
         #======================================================================
         # convert exposures to binary
         #======================================================================
-        if not self.as_inun: #standard impact/noimpact analysis
+        if not as_inun: #standard impact/noimpact analysis
             #get relvant bids
             """
             because there are no curves, Risk1 can only use positive depths.
@@ -293,12 +294,7 @@ class Risk1(RiskModel):
 
         
         log.info('finished on %i assets and %i damage cols'%(len(bres_df), len(self.res_ttl)))
-        #=======================================================================
-        # #format total results for writing
-        #=======================================================================
-        
-            
-        
+ 
         #=======================================================================
         # wrap
         #=======================================================================

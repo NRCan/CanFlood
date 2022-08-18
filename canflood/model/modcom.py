@@ -203,7 +203,7 @@ class Model(ComWrkr,
     #===========================================================================
     # field names
     #===========================================================================
-    bid = 'bid' #indexer for expanded finv
+    bid = 'bidx' #indexer for expanded finv
     miLtcn = 'mi_Lthresh'
     miUtcn = 'mi_Uthresh'
     miVcn = 'mi_iVal'
@@ -345,7 +345,7 @@ class Model(ComWrkr,
         #=======================================================================
         cf_fp = self.cf_fp
         if cf_fp == '':
-            raise Error('passed an empty cf_fp!')
+            raise Error('must pass a control file')
         assert os.path.exists(cf_fp), 'provided parameter file path does not exist \n    %s'%cf_fp
 
         self.pars = configparser.ConfigParser(inline_comment_prefixes='#')
@@ -377,10 +377,8 @@ class Model(ComWrkr,
         #=======================================================================
         # attach control file parameter values
         #=======================================================================
-
         self.cfPars_d = self.cf_attach_pars(self.pars)
-        
-        
+
         #=======================================================================
         # #check our validity tag
         #=======================================================================
@@ -396,17 +394,16 @@ class Model(ComWrkr,
             self.upd_impStyle()
             self._init_fmtFunc()
             
-        self.resname = '%s_%s_%s'%(self.valid_par, self.name, self.tag)
+        if self.resname is None:
+            self.resname = '%s_%s_%s'%(self.valid_par, self.name, self.tag)
         """TODO: consolidate this with ComWrkr.resname"""
         #=======================================================================
         # #wrap
         #=======================================================================
-        self.logger.debug('finished init_modelon Model')
-        
-        
+        self.logger.debug('finished init_model')
 
         
-    def cf_attach_pars(self, #load parmaeteres from file
+    def cf_attach_pars(self, #load parametersrom file
                     cpars,
                     setAttr=True, #whether to save each attribute 
                     ):
@@ -485,7 +482,7 @@ class Model(ComWrkr,
                           sections=['dmg_fps', 'risk_fps'], #parameter sections to manipulate
                           logger=None,
                           **kwargs):
-        """wraper to work with the control file (rather than the configparser"""
+        """wrapper to work with the control file (rather than the configparser"""
         
         #=======================================================================
         # defaults
@@ -536,7 +533,7 @@ class Model(ComWrkr,
         #assert os.path.exists(base_dir)
         log.debug('w/ base_dir=%s'%base_dir)
         #=======================================================================
-        # #loop through parser and retireve then convert
+        # #loop through parser and retrieve then convert
         #=======================================================================
         res_d = dict() #container for new values
         for sectName in sections:
@@ -549,14 +546,14 @@ class Model(ComWrkr,
                 
                 if os.path.exists(valRaw):
                     """switchged to warning... some tools may not use this fp"""
-                    log.warning(('%s.%s passed aboslute_fp=False but fp exists \n    %s'%(
+                    log.warning(('%s.%s passed abosolute_fp=False but fp exists \n    %s'%(
                         sectName, varName, valRaw)))
                     continue
                 else:
                 
                     #get the absolute filepath
                     fp = os.path.join(base_dir, valRaw)
-                    """dont bother... some models may not use all the fps
+                    """don't bother... some models may not use all the fps
                     better to let the check with handles catch things
                     assert os.path.exists(fp), '%s.%s not found'%(sectName, varName)"""
                     if not os.path.exists(fp) and warn:
@@ -606,7 +603,10 @@ class Model(ComWrkr,
         """checks are done on a configparser (rather than a dictionary)
         to better handle python's type reading from files"""
         assert isinstance(chk_d, dict)
-        if not optional: assert len(chk_d)>0
+        #if not optional: assert len(chk_d)>0
+        if len(chk_d)>0: #skip checks if no pars are passed
+            log.debug('no check parameters passed')
+            0, []
         assert len(cpars)>0
         
         log.debug('\'%s\' optional=%s chk_d:\n    %s'%(self.__class__.__name__, optional, chk_d))
@@ -633,8 +633,9 @@ class Model(ComWrkr,
             miss_l = set(vchk_d.keys()).difference(list(csectName))
             if len(miss_l) > 0:
                 """changed this to a warning for backwards compatability"""
-                log.warning('\'%s\' missing %i (of %i) expected varirables: \n    %s'%(
-                    sectName, len(miss_l), len(vchk_d), miss_l))
+                if not optional:
+                    log.warning('\'%s\' missing %i (of %i) expected varirables: \n    %s'%(
+                        sectName, len(miss_l), len(vchk_d), miss_l))
                 
                 vchk_d = {k:v for k,v in vchk_d.items() if k in list(csectName)}
                 if len(vchk_d)==0: continue
@@ -680,11 +681,23 @@ class Model(ComWrkr,
                       cpars):
         
         assert isinstance(cpars, configparser.ConfigParser)
-        errors = []
-
-        for chk_d, opt_f in ((self.exp_pars_md,False), (self.exp_pars_op,True)):
-            _, l = self.cf_chk_pars(cpars, copy.copy(chk_d), optional=opt_f)
-            errors = errors + l
+#===============================================================================
+#         errors = []
+# 
+#         for chk_d, opt_f in ((self.exp_pars_md,False), (self.exp_pars_op,True)):
+#             _, l = self.cf_chk_pars(cpars, copy.copy(chk_d), optional=opt_f)
+#             errors = errors + l
+#===============================================================================
+            
+        #=======================================================================
+        # mandatory
+        #=======================================================================
+        result, errors = self.cf_chk_pars(cpars, copy.copy(self.exp_pars_md), optional=False)
+        
+        #=======================================================================
+        # optional
+        #=======================================================================
+        result, warnings = self.cf_chk_pars(cpars, copy.copy(self.exp_pars_op), optional=True)
             
         return errors
     
@@ -706,7 +719,7 @@ class Model(ComWrkr,
     # LOADERS------
     #===========================================================================
     def load_df_ctrl(self,#load raw data from control file
-                     dtag_d=None,
+                     dtag_d=None, #data file loading parameters {key:kwargs for pd.read
                       logger=None,
                       ): 
         #=======================================================================
@@ -780,11 +793,12 @@ class Model(ComWrkr,
         self.check_finv(df)
         
         #=======================================================================
-        # resolve column gruops----
+        # resolve column groups----
         #=======================================================================
         cdf, prefix_l = self._get_finv_cnest(df)
         
         log.info('got %i nests: %s'%(len(prefix_l), prefix_l))
+        
         #=======================================================================
         # mitigation----
         #=======================================================================
@@ -1460,9 +1474,11 @@ class Model(ComWrkr,
         log.info('\'%s\' felv: \n    min=%.2f, mean=%.2f, max=%.2f'%(
              self.felv, s.min(), s.mean(), s.max()))
             
-        if self.felv == 'ground':
+        """allows construction before control file is complete"""
+        if 'gels' in bdf.columns:
             assert not self.as_inun
-            assert 'gels' in bdf.columns, 'missing gels column'            
+            #assert 'gels' in bdf.columns, 'missing gels column'
+            assert self.felv=='ground'            
             assert bdf['gels'].notna().all()
 
 
@@ -1473,11 +1489,7 @@ class Model(ComWrkr,
             
             log.info('converted felv from \'ground\' to \'datum\' \n    min=%.2f, mean=%.2f, max=%.2f'%(
                  s.min(), s.mean(), s.max()))
-            
-        elif self.felv=='datum':
-            log.debug('felv = \'%s\' no conversion'%self.felv)
-        else:
-            raise Error('unrecognized felv=%s'%self.felv)
+ 
         
         #=======================================================================
         # add mitigation data---
@@ -1635,7 +1647,7 @@ class Model(ComWrkr,
                 
             #user wants to keep negative depths.. leave as is
             else:
-                log.info('gorund_water=True. preserving %i (of %i) negative depths'%(
+                log.info('ground_water=True. preserving %i (of %i) negative depths'%(
                     booldf.sum().sum(), booldf.size))
             
         #======================================================================
@@ -1665,7 +1677,43 @@ class Model(ComWrkr,
         
         self.ddf = ddf
         
-
+    def get_expanded_finv(self,
+                          ):
+        """
+        this worker has some poor data storage strategies
+            here we use multindexing to get some nicer data for outputing
+            eventually.. would be nice to switch the whole module over
+        """
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        cid, bid = self.cid, self.bid
+        nestcn = 'nestID'
+        ddf = self.ddf.copy()
+        
+        bdf = self.bdf.copy()
+        
+        
+        #=======================================================================
+        # convert
+        #=======================================================================
+        #get mulindex from expanded finv
+        dxind1 = bdf.set_index([nestcn, cid, bid], drop=True).sort_index(level=cid)
+        
+        #join depths
+        dxind2 = dxind1.join(ddf.set_index([cid, bid]).rename(columns={
+            c:'%s_dep'%c for c in ddf.columns})
+            )
+        
+        dxind2.index = dxind2.index.swaplevel(i=0, j=2)
+        """
+        view(ddf)
+        view(dxind2)
+        """
+        
+        return dxind2
+        
+        
     #===========================================================================
     # CALCULATORS-------
     #===========================================================================
@@ -2045,7 +2093,7 @@ class Model(ComWrkr,
                     #so a session can pass a control file... rather than usin gthe workers init
                  logger=None,
                  ):
-        if logger is None: logger=self.logger
+        #if logger is None: logger=self.logger
         
         """only 1 check for now"""
         #=======================================================================
@@ -2292,7 +2340,7 @@ class Model(ComWrkr,
         if finv_exp_d is None: finv_exp_d=self.finv_exp_d
         
         df = df_raw.copy()
-        
+        log.debug('on %s'%str(df.shape))
         #=======================================================================
         # dimensional checks
         #=======================================================================
@@ -2356,10 +2404,11 @@ class Model(ComWrkr,
                 
                 ser = dfn[coln]
                 for hndl, cval in hndl_d.items():
-                    
+                    log.debug(', '.join([self.tag, nestID, coln, cval.__name__, ser.dtype.name]))
                     if hndl=='type':
-                        assert np.issubdtype(ser.dtype, cval), '%s  %s_%s expected %s got: %s'%(
-                            self.tag, nestID, coln, cval, ser.dtype)
+                        if not np.issubdtype(ser.dtype, cval):
+                            raise TypeError('%s  %s_%s expected type \'%s\' (got \'%s\')'%(
+                                 self.tag, nestID, coln, cval.__name__, ser.dtype))
                         
                         """
                         throwing  FutureWarning: Conversion of the second argument of issubdtype
@@ -2474,7 +2523,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
     #==========================================================================
 
     
-    dd_df = pd.DataFrame() #depth-damage data
+    #dd_df = pd.DataFrame() #depth-damage data
     
     """lets just do columns by location
     exp_coln = []"""
@@ -2533,7 +2582,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         
     
     def build(self,
-              df_raw, #raw parameters to build the DFunc w/ 
+              df_raw, #raw parameters to build the DFunc w/ . dummy index
               logger,
               curve_deviation=None,
               ):
@@ -2545,6 +2594,8 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         log = logger.getChild('%s'%self.tabn)
         if curve_deviation is None: curve_deviation=self.curve_deviation
         log.debug('on %s from %s'%(str(df_raw.shape), self.curves_fp))
+        
+        self.df_raw = df_raw.copy() #useful for retrieving later
         #=======================================================================
         # precheck
         #=======================================================================
@@ -2556,10 +2607,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         
 
         #slice and clean
- 
-        
-        df = df_raw.set_index(0, drop=True).dropna(how='all', axis=1)
-            
+        df = df_raw.set_index(0, drop=True).dropna(how='all', axis=1)            
         
         #======================================================================
         # identify depth-damage data
@@ -2612,7 +2660,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         self.pars_d = pars_d.copy()
         
         #======================================================================
-        # extract depth-dmaage data
+        # extract depth-damage data
         #======================================================================
  
         #get just the dd rows
@@ -2657,7 +2705,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         
         #impact (y) vals
         if not np.all(np.diff(ar[1])>=0):
-            msg = 'impact values are decreasing'
+            msg = '\'%s\' impact values are decreasing'%self.tabn
             if self.monot:
                 raise Error(msg)
             else:
@@ -2715,9 +2763,20 @@ class DFunc(ComWrkr, #damage function or DFunc handler
     def get_stats(self): #get basic stats from the dfunc
         deps = self.dd_ar[0]
         dmgs = self.dd_ar[1]
+        
+        
+        np.all(np.diff(deps)>=0)
+        
+ 
         return {**{'min_dep':min(deps), 'max_dep':max(deps), 
-                'min_dmg':min(dmgs), 'max_dmg':max(dmgs), 'dcnt':len(deps)},
+                'min_dmg':min(dmgs), 'max_dmg':max(dmgs), 'dcnt':len(deps),
+                'dep_mono':np.all(np.diff(deps)>=0), 'dmg_mono':np.all(np.diff(dmgs)>=0)
+                },
+                   
                 **self.pars_d}
+        
+        
+        
         
         
         
@@ -2773,17 +2832,7 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         #=======================================================================
         try:
             df_raw = pd.DataFrame(clib_d).T
-            
-
-            
-            """
-            for k,v in clib_d.items():
-                print(k)
-                for k1,v1 in v.items():
-                    print('    %s:%s'%(k1,v1))
-            clib_d.keys()
-            
-            """
+ 
         except Exception as e:
             raise Error('faild to convert to frame w/ \n    %s'%e)
         
@@ -2851,11 +2900,11 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         """
         return sdf
     
-    def _get_split(self,#split the raw df into depth-damage and metadata
-                   df_raw, #dummy index
+    def _get_split(self,#split the raw df into function and metadata
+                   df_raw=None, #dummy index
                    fmt='dict', #result format
                    ): 
-        
+        if df_raw is None: df_raw=self.df_raw.copy()
         df = df_raw.set_index(0, drop=True)
         
         #get dd
@@ -2871,6 +2920,59 @@ class DFunc(ComWrkr, #damage function or DFunc handler
             return ddf, mdf
         elif fmt=='dict':
             return ddf.iloc[:,0].to_dict(), mdf.iloc[:,0].to_dict()
+        
+        
+    def _get_ddf(self): #return a formatted dataframe of the dd_ar
+        return pd.DataFrame(self.dd_ar.T, columns=['exposure', 'impact'])
+        
+        
+    def set_scale(self,
+                  scale,
+                  logger=None,
+                  **kwargs
+                  ):
+        
+        #=======================================================================
+        # defaults
+        #=======================================================================
+        if logger is None: logger=self.logger
+        log=logger.getChild('set_scale')
+        
+        #get df_raw
+        #df_raw = self.df_raw.copy()
+        self.pars_d['scale'] = scale
+        #=======================================================================
+        # retrieve
+        #=======================================================================
+        ddf_raw, mdf_raw= self._get_split(fmt = 'df')
+        
+        #=======================================================================
+        # scale the function
+        #=======================================================================
+        ddf = ddf_raw*scale
+        
+        #=======================================================================
+        # add the meta
+        #=======================================================================
+        expo_ser = mdf_raw.loc['exposure', :]
+        
+        mdf = mdf_raw.drop('exposure')
+        mdf.loc['scale', 1] = scale
+        
+        #=======================================================================
+        # recombine
+        #=======================================================================
+        
+        df = mdf.append(expo_ser).append(ddf).reset_index()
+        
+        #=======================================================================
+        # rebuild
+        #=======================================================================
+        self.build(df, log, **kwargs)
+        
+        log.info('set scale = %.2f'%scale)
+        
+        
         
         
         

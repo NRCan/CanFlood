@@ -319,11 +319,13 @@ class Risk2(RiskModel, #This inherits 'Model'
         #======================================================================
         # get ead per asset-----
         #======================================================================
+        res_df = None
         if res_per_asset:
-            res_df = self.calc_ead(ddf1)
-                        
-        else:
-            res_df = None
+            try:
+                res_df = self.calc_ead(ddf1)
+            except Exception as e:
+                log.error('failed to get res_per_asset w/ \n    %s'%e)
+ 
             
         #======================================================================
         # get EAD totals-------

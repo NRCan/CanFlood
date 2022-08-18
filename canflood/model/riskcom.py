@@ -120,7 +120,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         assert valid, 'some complex event probabilities exceed 1 w/ \'%s\'... see logger'%self.event_rels
             
         #=======================================================================
-        # #identify those events that need filling
+        # identify those events that need filling
         #=======================================================================
         fill_exn_d = dict()
         for aep, exn_l in cplx_evn_d.items(): 
@@ -139,7 +139,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             else: raise Error('only allowed 1 empty')
 
                 
-        log.debug('calculating probaility for %i complex events with remaining secnodaries'%(
+        log.debug('calculating probability for %i complex events with remaining secondaries'%(
             len(fill_exn_d)))
             
         self.noFailExn_d =copy.copy(fill_exn_d) #set this for the probability calcs
@@ -279,19 +279,16 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         assert 'ead' in tlRaw_df.iloc[:,0].values, 'dmg_ser missing ead entry'
         
         #=======================================================================
-        # column labling
+        # column labeling
         #=======================================================================
         """letting the user pass whatever label for the impacts
             then reverting"""
         df1 = tlRaw_df.copy()
         
         """
-        TODO: harmonize this with 'impact_units' loaded from control file
-            generally set (in cf) by model.dmg2.Dmg2.run(set_impactUnits=True)
-            or read from control file
-            then written to r_ttl 
+        taking the value from 'impact_units' loaded from control file
         """
-        self.impact_name = list(df1.columns)[1] #get the label for the impacts
+        self.impact_name = self.impact_units #get the label for the impacts
         
         newColNames = list(df1.columns)
         newColNames[1] = 'impacts'
@@ -299,7 +296,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         df1.columns = newColNames
 
         #=======================================================================
-        # #get ead
+        # get ead
         #=======================================================================
         bx = df1['aep'] == 'ead' #locate the ead row
         assert bx.sum()==1
@@ -310,7 +307,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         assert isinstance(self.ead_tot, float), '%s got bad type on ead_tot: %s'%(self.name, type(self.ead_tot))
         
         #=======================================================================
-        # #get plot values
+        # get plot values
         #=======================================================================
         df2 = df1.loc[df1['plot'], :].copy() #drop those not flagged for plotting
         
@@ -323,7 +320,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         """
 
         #=======================================================================
-        # #invert aep (w/ zero handling)
+        # invert aep (w/ zero handling)
         #=======================================================================
         self._get_ttl_ari(df2)
 
@@ -727,7 +724,11 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             if not ltail is None:
                 df.loc[:,0] = df.iloc[:,0] 
             if not rtail is None:
-                aep_val = max(df.columns.tolist())*(1+10**-(self.prec+2))
+                if isinstance(rtail, float):
+                    aep_val = rtail
+                else:
+                    aep_val = max(df.columns.tolist())*(1+10**-(self.prec+2))
+                    
                 df[aep_val] = 0
                 
             #re-arrange columns so x is ascending
@@ -760,7 +761,9 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
                     self.extrap_vals_d[0] = df.loc[:,0].mean().round(self.prec) #store for later
                 
             elif ltail == 'extrapolate': #DEFAULT
-                df.loc[bx,0] = df.loc[bx, :].apply(self._extrap_rCurve, axis=1, left=True)
+                df.loc[bx,0] = self.get_extrap(df.loc[bx, :], axis=1, left=True, log=log)
+                
+ 
                 
                 #extrap vqalue will be different for each entry
                 if len(df)==1: 
@@ -784,8 +787,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             if rtail == 'extrapolate':
                 """just using the average for now...
                 could extraploate for each asset but need an alternate method"""
-                aep_ser = df.loc[bx, :].apply(
-                    self._extrap_rCurve, axis=1, left=False)
+                aep_ser = self.get_extrap(df.loc[bx, :], axis=1, left=True, log=log)
                 
                 aep_val = round(aep_ser.mean(), 5)
                 
@@ -962,11 +964,51 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         return evFail_ser.sum() + noFail_ar[0]*noFail_ar[1]
 
 
+    def get_extrap(self,
+                   df_raw,
+                   log=None,
+                   **kwargs
+                   ):
+        """
+ 
+        
+        view(df_raw)
+        ser = df_raw.iloc[1, :]
+        """
+        
+        if log is None: log=self.logger.getChild('get_extrap')
+        
+        #get raw extraploation
+        res_ser = df_raw.apply(self._extrap_rCurve, **kwargs)
+        
+        #report on errors
+        bx = res_ser == -9999
+        if bx.any():
+            log.error('%i/%i values failed to extrapolate.. see log.. setting thes to null'%(
+                bx.sum(), len(bx)))
+            
+            #log the full data set
+            with pd.option_context('display.max_rows', None, 
+                                   'display.max_columns', None,
+                                   'display.width',1000):
+                
+                
+                log.debug('\n %s'%df_raw.join(bx.rename('error'))[bx])
+                
+        res_ser.loc[bx] =np.nan
+        
+        return res_ser
+            
+            
+            
+            
+        
 
 
     def _extrap_rCurve(self,  #extraploating EAD curve data
                ser, #row of dmages (y values) from big df
                left=True, #whether to extraploate left or right
+               errors='ignore',
                ):
         
         """
@@ -976,15 +1018,10 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         #=======================================================================
         from matplotlib import pyplot as plt
 
-        plt.close()
-        
-        fig = plt.figure()
-        ax = fig.add_subplot()
-        
-        ax.plot(ser.index.values,  ser.values, 
-            linestyle='None', marker="o")
+     
+        plt.plot(ser.index.values,  ser.values,linestyle='None', marker="o")
             
-        ax.plot(0, f(0), marker='x', color='red')
+        plt.plot(0, f(0), marker='x', color='red')
 
         ax.grid()
         plt.show()
@@ -1016,7 +1053,12 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         result = float(f(0)) #y value at x=0
         
         if not result >=0:
-            raise Error('got negative extrapolation on \'%s\': %.2f'%(ser.name, result))
+            if errors == 'raise':
+                raise Error('got negative extrapolation on \'%s\': %.2f'%(ser.name, result))
+            elif errors=='ignore':
+                return -9999
+            else:
+                raise Error('unrecognized error key \'%s\''%errors)
         
         return result 
     
@@ -1306,13 +1348,10 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         
         #axis setup
         ax1 = fig.add_subplot(111)
-        #ax2 = ax1.twinx()
-        
         
         # axis label setup
         fig.suptitle(title)
         ax1.set_ylabel(y1lab)
-
 
         ax1.set_xlabel(xlab)
         
