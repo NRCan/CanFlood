@@ -14,4 +14,20 @@ the dev branch is where new features and fixes are collected and tested before r
 
 2) perform a 'person test' by having a non-developer follow relevant tutorials. investigate warnings and fix errors.
 
-Once these tests are complete, a pull request should be completed to merge with the main branch.
+Once these tests are complete, a pull request should be completed and the dev branch merged into the main. 
+
+### Prepare main branch for publication
+
+Now that all the code is tested and in the main branch, perform the following:
+
+1) update the README.md to summarize any new features
+
+2) similarly update canflood\metadata.txt
+
+3) delete all instances of *\__pycache__\
+
+4) zip the \canflood subfolder to some temporary directory
+
+5) login to [plugins.qgis.org](https://plugins.qgis.org/accounts/login/?next=/plugins/my) using the CanFlood credentials (ask Nicky). Navigate to **Upload a plugin** and select the zip file.
+
+6) in git-hub, create a release tag
