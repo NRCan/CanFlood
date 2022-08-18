@@ -72,35 +72,49 @@ def test_res_01_riskPlot(dial): #test risk plots
     else:
         fail('Failed to create risk plot svg')
 
+
+
+
+@pytest.mark.dev
+@pytest.mark.parametrize('dialogClass',[ResultsDialog], indirect=True)
+@pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_02_r2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True) #from build test_07
+@pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.gpkg'], indirect=True)
+def test_res_02_pdf_report(dial, finv_fp):
+    """generate a pdf report, validate
     
-@pytest.mark.parametrize('dialogClass',[ResultsDialog], indirect=True)
-@pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_02_r2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True) #from build test_07
-def test_res_02_pdf_report(dial):
-    """generate a pdf report, check the report has been created"""
-    dial.iface = None # Preventing layout window opening
+    TODO:
+    add additional cases (e.g., no vector layer)
+    """
+    
+    res_02_reporter(dial, finv_fp=finv_fp, vsect_cnt=6)
 
-    # Calling method directly to gain access to report object
-    report = ResultsDialog.run_reporter(dial)
-
-    assert isinstance(report, QgsReport)
-
-
-@pytest.mark.parametrize('dialogClass',[ResultsDialog], indirect=True)
-@pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_02_r2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True) #from build test_07
-def test_res_03_report_sections(dial):
-    """generate a pdf report, check that the expected sections are included"""
-    dial.iface = None # Preventing layout window opening
-
-    # Calling method directly to gain access to report object
-    report = ResultsDialog.run_reporter(dial)
-
+    
+def res_02_reporter(dial, finv_fp=None, vsect_cnt = 5):
+    """build and test report
+    
+    refacorted for use in tutoirals test
+    
+    ResultsDialog.run_reporter()
+    """
+    dial._change_tab('tab_report')
+    
+    #===========================================================================
+    # attach layer
+    #===========================================================================
+    if not finv_fp is None:
+        finv_vlay = dial.session.load_vlay(finv_fp)
+        dial.comboBox_rpt_vlay.setLayer(finv_vlay)
+ 
+    #===========================================================================
+    # build report
+    #===========================================================================
+    QTest.mouseClick(dial.pushButton_rpt_create, Qt.LeftButton)
+    report = dial.report
+    #===========================================================================
+    # validate
+    #===========================================================================
     assert isinstance(report, QgsReport)
     sections = report.childSections()
-
-    pageCount = len(sections)
-
-    # The control file being used will create 4 sections
-    if pageCount == 4:
-        pass
-    else:
-        fail('Report has incorrect amount of pages')
+ 
+    if not len(sections) == vsect_cnt:
+        fail('expected %i sections got %i'%(vsect_cnt, len(sections)))

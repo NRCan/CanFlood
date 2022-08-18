@@ -120,6 +120,7 @@ def session(tmp_path,
             qgis_app, qgis_processing, qgis_iface
                     
                     ):
+    """TODO: fix logger"""
  
     np.random.seed(100)
     

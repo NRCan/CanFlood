@@ -6,35 +6,37 @@ Created on Jun. 24, 2022
 tutorial 2 integration tests
 '''
 
-import pytest, os, shutil
-
-import pandas as pd
-from pandas.testing import assert_frame_equal
-
-from qgis.core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsProject, QgsReport
-from PyQt5.QtTest import QTest
 from PyQt5.Qt import Qt
+from PyQt5.QtTest import QTest
 from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
-
-from matplotlib import pyplot as plt
-
 from build.dialog import BuildDialog
+from matplotlib import pyplot as plt
 from model.dialog import ModelDialog
+from pandas.testing import assert_frame_equal
+from qgis.core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsProject, QgsReport
 from results.dialog import ResultsDialog
+import pandas as pd
+import pytest, os, shutil
+import test_results
+
 
 @pytest.fixture(scope='module')
 def crs():
     return QgsCoordinateReferenceSystem('EPSG:3005')
 
+
 @pytest.fixture(scope='module')
 def data_dir(base_dir):
     return os.path.join(base_dir, r'tutorials\2')
-    
-
 
 
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
 def test_t2_A(session, data_dir, true_dir, tmp_path, write):
+    """
+    
+    TODO: refactor or shorten this code
+    we'll need to re-use a lot of it for subsequent tutorials
+    """
     #===========================================================================
     # Build---------
     #===========================================================================
@@ -72,7 +74,6 @@ def test_t2_A(session, data_dir, true_dir, tmp_path, write):
     
     #click Store
     QTest.mouseClick(dial.pushButton_Inv_store, Qt.LeftButton)
-    
     
     #check it
     #retrieve the filepath from the control file
@@ -163,7 +164,6 @@ def test_t2_A(session, data_dir, true_dir, tmp_path, write):
     #sample
     QTest.mouseClick(dial.pushButton_DTMsamp, Qt.LeftButton)  
     
-    
     #check it
     fp = dial.get_cf_par(dial.get_cf_fp(), sectName='dmg_fps', varName='gels')
     assert os.path.exists(fp)
@@ -181,7 +181,6 @@ def test_t2_A(session, data_dir, true_dir, tmp_path, write):
     #dial.checkBox_Vr2.setChecked(True)
     
     QTest.mouseClick(dial.pushButton_Validate, Qt.LeftButton)  
-    
     
     #===========================================================================
     # model----------
@@ -213,7 +212,6 @@ def test_t2_A(session, data_dir, true_dir, tmp_path, write):
     
     dial.checkBox_r2rpa.setChecked(True)
     dial.checkBox_r2_ari.setChecked(True)
-    
     
     QTest.mouseClick(dial.pushButton_r2Run, Qt.LeftButton) 
     
@@ -268,25 +266,10 @@ def test_t2_A(session, data_dir, true_dir, tmp_path, write):
     #===========================================================================
     # pdf reporter
     #===========================================================================
-    dial._change_tab('tab_report')
-
-    #select finv_vlay
-    finv_fp = os.path.join(data_dir, 'finv_tut2.gpkg')
-
-    finv_vlay = session.load_vlay(finv_fp)
-    dial.comboBox_rpt_vlay.setLayer(finv_vlay)
-
-    #prevent test crashing
-    dial.iface = None
-
-    #execute
-    report = ResultsDialog.run_reporter(dial)
-    
-    #check all expected pages are in the report
-    assert isinstance(report, QgsReport)
-    sections = report.childSections()
-
-    assert len(sections) == 4
+ 
+ 
+    test_results.res_02_reporter(dial, finv_fp = os.path.join(data_dir, 'finv_tut2.gpkg'))
+ 
     
     #===========================================================================
     # validate-----
@@ -300,19 +283,8 @@ def test_t2_A(session, data_dir, true_dir, tmp_path, write):
     match_l = [e for e in os.listdir(true_dir) if e.endswith('ttl.csv')]
     assert len(match_l)==1
     
-    
     true_fp = os.path.join(true_dir, match_l[0])
     true_df = pd.read_csv(true_fp)
     
     assert_frame_equal(df, true_df)
-    
-    
-    
-    
-    
-    
-    
-
- 
-    
  
