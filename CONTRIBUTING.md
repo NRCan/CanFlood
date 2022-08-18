@@ -12,23 +12,24 @@ To help track the workflow, the following template is generally copied into a ne
 
 the dev branch is where new features and fixes are collected and tested before release. The following should be executed on the dev branch in preparation for pushing to the main branch:
 
+- [ ] backwards merge master into dev to capture any upstream changes (these should be minor and limited to documentation tweaks as all development is done on the dev branch)
+
 - [ ] ensure the version tag is updated on \canflood\build\build.ui
-
-- [ ] execute all pytests. investigate warnings. fix errors. 
-
-- [ ] perform a 'person test' by having a non-developer follow relevant tutorials. investigate warnings and fix errors.
-
-- [ ] Once these tests are complete, a pull request should be completed and the dev branch merged into the main. 
-
-### Prepare main branch for publication
-
-Now that all the code is tested and in the main branch, perform the following:
 
 - [ ] update the README.md to summarize any new features for users
 
 - [ ] similarly update canflood\metadata.txt
 
+- [ ] execute all pytests. investigate warnings. fix errors. 
+
+- [ ] perform a 'person test' by having a non-developer follow relevant tutorials. investigate warnings and fix errors.
+
+- [ ] Once these tests are complete **and passing**, a pull request should be completed and the dev branch merged into the main. 
+
+
 ### Publish the plugin
+
+Now that all the code is tested and in the main branch, perform the following:
 
 - [ ] delete all instances of \__pycache__\ in the source code
 
