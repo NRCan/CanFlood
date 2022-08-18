@@ -11,9 +11,12 @@ We welcome/encourage any comments, bugs, or issues you have or find. Please crea
 Happy flood risk modelling!
 
 ## Documentation
-Check out the new [documentation](https://canflood.readthedocs.io/en/latest/#)!
+[Documentation](https://canflood.readthedocs.io/en/latest/#) is provided for the latest and archived versions.  
 
 ## Phase 3 Development
+v1.2.0 is released with the following major new features:
+1) [new tool](https://canflood.readthedocs.io/en/dev/05_toolsets.html#report-automator) for generating a pdf report of your model.
+
 [v1.1.0](https://github.com/NRCan/CanFlood/releases/tag/v1.1.0) is released with three major new features:
 1) Very nice sphinx/readTheDocs [documentation](https://canflood.readthedocs.io/en/latest/#) thanks in large part to Dhanyatha. This is much easier to browse than the previous pdfs and facilitates preservation of previous, current, and development (and eventually French) versions of the manual.
 2) [new module](https://canflood.readthedocs.io/en/latest/toolsets.html#sensitivity-analysis) providing workflow and tools for performing sensitivity analysis on a L1 or L2 CanFlood models. This can be helpful in understanding and communicating the uncertainty in your model, as well as help identify which parameters should be prioritized during data collection.
