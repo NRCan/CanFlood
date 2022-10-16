@@ -16,7 +16,8 @@ Happy flood risk modelling!
 
 
 ## Phase 3 Development
-v1.2.0 is released with the following major new features:
+
+[v1.2.0](https://github.com/NRCan/CanFlood/releases/tag/v1.2.0) is released with the following major new features:
 1) [new tool](https://canflood.readthedocs.io/en/dev/05_toolsets.html#report-automator) for generating a pdf report of your model.
 
 [v1.1.0](https://github.com/NRCan/CanFlood/releases/tag/v1.1.0) is released with three major new features:
