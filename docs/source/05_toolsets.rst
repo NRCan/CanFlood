@@ -613,24 +613,6 @@ Table5-12_ summarize the algorithms implemented in CanFlood to calculate expecte
 +-----------------------------------------------------------------------------------------------------+
 
 
-.. _Section5.2.4:
-
-5.2.4. Risk (L3)
-================
-
-Bryant (2019) developed the Stochastic Object-based Flood damage Dynamic Assessment model framework (SOFDA) to simulate flood risk over time using the Alberta Curves and a residential re-development forecast. Framework development was motivated by a desire to quantify the benefits of Flood Hazard Regulations (FHRs) and to help incorporate the dynamics of risk into decision-making. SOFDA quantifies flood risk of an asset through the use of direct-damage and depth-likelihood functions. In this way, flood risk can be quantified (e.g. monetized) at fine spatial resolutions for robust decision support.
-
-SOFDA has the following capabilities:
-
-  • Estimate the vulnerability reduction of Flood Hazard Regulations;
-  • Estimate the vulnerability reduction of Property Level Protection Measures;
-  • Estimate the influence of elevating damage-features (e.g., raising water heaters);
-  • Simulate changes in relevant building typology brought about by re-development (e.g., larger homes with deeper basements);
-  • Dynamic and flexible modeling of many model components (e.g., more expensive water heaters);
-  • Provide some quantification of uncertainty (i.e., stochastic modeling);
-  • Provide detailed outputs to facilitate the analysis of underlying mechanisms.
-
-For additional information and guidance, see :ref:`Appendix B <appendix_b>`.
 
 .. _section5.3:
 
