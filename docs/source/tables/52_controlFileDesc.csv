@@ -16,7 +16,7 @@ rtail,,None,0.5, zero impacts event  handle
 ,extrapolate ,,,set the zero impact event by extrapolating from the  least extreme impact
 ,none,,,no enforcing of a zero impact event (not recommended)
 ,flat ,,, duplicates the minimum AEP as the zero damage event (NOT IMPLEMENTED)
-,float ,,, use the passed value as the zero impacts aep value
+,float ,,, use the passed value as the zero impacts AEP value
 drop_tails,,bool,FALSE, EAD extrapolation: whether to remove the extrapolated values  before writing the per asset results 
 integrate,,str,, numpy integration method to apply (default trapz)
 as_inun,,bool,, flag whether to treat exposures as %inundation

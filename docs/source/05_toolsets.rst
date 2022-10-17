@@ -297,7 +297,9 @@ To facilitate batch simulations for advanced users, all CanFlood modelling modul
 
 The following table summarizes the relevant parameters for CanFlood’s model toolset that can be specified in the Control File
 
-*CanFlood control file parameter summary*
+.. _tab_551:
+
+*Table 5-5.1: CanFlood control file parameter summary*
 
 .. csv-table:: 
    :file: /tables/52_controlFileDesc.csv
@@ -543,7 +545,7 @@ Where *Fx(x)* is the cumulative probability of any event *x* (e.g. cumulative di
 The following algorithm is implemented in CanFlood’s ‘Risk (L1)’ and ‘Risk (L2)’ models to calculate expected value:
 
   1. Assemble a series of AEPs and total impacts for each event;
-  2. Extrapolate this series with the user provided extrapolation handles (‘rtail’, and ‘ltail’);
+  2. Extrapolate this series with the user provided extrapolation handles (‘rtail’ and ‘ltail’; see :ref:`Table 5-5.1 <tab_551>`);
   3. Use the `numpy integration <https://docs.scipy.org/doc/scipy/reference/integrate.html>`__ method specified by the user to calculate the area under the series.
 
 The same algorithm is used for calculating the total expected value across all assets and for the expected value of individual assets (if ‘res_per_asset’=True).
