@@ -804,8 +804,8 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             
             elif isinstance(rtail, float): #DEFAULT
                 aep_val = round(rtail, 5)
-                assert aep_val > df.columns.max(), 'passed rtail value (%.2f) not > max aep (%.2f)'%(
-                    aep_val, df.columns.max())
+                assert aep_val > df.columns.max(), 'passed rtail value (%.2f) must be > max aep (%.2f)'%(
+                    aep_val, df.columns.max()) + '\n    consider increasing rtail or setting it to \'flat\''
                 
                 df.loc[bx, aep_val] = 0
                 
