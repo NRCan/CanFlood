@@ -29,7 +29,7 @@ Download the data layers for Tutorial 1:
 
     o *haz_1000.tif*
 
-  • *finv_tut1a.gpkg* : flood asset inventory (’finv’) spatial layer.
+  • *finv_tut1a.json* : flood asset inventory (’finv’) spatial layer.
 
 Ensure your project’s CRS is set to ‘EPSG:3005‘. Depending on your settings, the CRS may have been set automatically when you loaded the datafiles. All tutorials use CRS ‘EPSG:3005’ unless stated otherwise.  See `working with projections <https://docs.qgis.org/3.10/en/docs/user_manual/working_with_projections/working_with_projections.html>`_ for more info. 
 
@@ -184,7 +184,7 @@ Download the tutorial 2 data from `the project page <https://github.com/NRCan/Ca
 
       o *haz_1000.tif*
 
-  • *finv_tut2.gpkg*: flood asset inventory (’finv’) spatial layer
+  • *finv_tut2.json*: flood asset inventory (’finv’) spatial layer
   • *dtm_tut2.tif*: digital terrain model raster with ground elevation predictions
   • |ss| *haz_frast*: companion failure event rasters |se| (not used in tutorial 2a)
   • |ss| *haz_fpoly*: companion failure event polygons |se| (not used in tutorial 2a)
@@ -376,7 +376,7 @@ It is recommended that users first complete Tutorial 2b. Tutorial 2c uses the sa
 
 In the same QGIS project as was used for Tutorial 2b, ensure the following are also added to the project:
 
-  • *haz_1000_fail_B_tut2.gpkg*: failure polygon ‘B’;
+  • *haz_1000_fail_B_tut2.json*: failure polygon ‘B’;
   • *haz_1000_fail_B_tut2.tif*: failure raster ‘B’.
 
 These layers represent an additional companion failure event ‘B’ for the 1000-year event where the failure WSL and probabilities are different but complimentary from those of Tutorial 2b’s companion failure event ‘A’. These could be outputs from two modelled breach scenarios.
@@ -562,9 +562,9 @@ Load the following data layers from the ‘tutorials\4\data\’ folder:
 
   • *dtm_cT2.tif*: DTM layer (and corresponding stylized layer definition .qlr file)
 
-  • *finv_tut4a_polygons.gpkg*: flood asset inventory (’finv’) spatial layer
+  • *finv_tut4a_polygons.json*: flood asset inventory (’finv’) spatial layer
 
-  • |ss| *finv_tut4b_lines.gpkg*: |se| (used in tutorial 4b)
+  • |ss| *finv_tut4b_lines.json*: |se| (used in tutorial 4b)
 
 Move the polygon inventory (‘finv’) layer to the top, apply the CanFlood ‘fill transparent blue’ style (Available in the CanFlood styles package described in :ref:`Section5.4.4 <Section5.4.4>` (Plugins > CanFlood > Add Styles)), and your project should look similar to this (Be sure to load the stylized ‘.qlr’ layers in place of the raw layers):
 
@@ -640,7 +640,7 @@ Like Tutorial 4a, this tutorial demonstrates a risk analysis where the impact me
 
 Load the same data layers from the ‘tutorials\4\data\’ folder, with the addition of:
 
-  • *finv_tut4b_lines.gpkg*
+  • *finv_tut4b_lines.json*
 
 Follow all the steps described in Tutorial 4a, but with this new asset inventory (‘finv’) layer.
 
@@ -668,7 +668,7 @@ Because this tutorial deals with data having disparate CRSs, users should be fam
 
 Begin by setting your QGIS project’s CRS to ‘EPSG:3978’ (Project > Properties > CRS > select ‘EPSG:3978’) (Depending on your profile settings, the project’s CRS may be automatically set by the first loaded layer). Now you are ready to download, then add, the data layer for Tutorial 5:
 
-  • *tut5_aoi_3978.gpkg*: AOI polygon for tutorial.
+  • *tut5_aoi_3978.json*: AOI polygon for tutorial.
 
 Set the AOI’s layer style to ‘fill red transparent’ to allow you to see through the polygon. Before inventory construction can begin, we must add the NPRI and GAR15 raw data to the QGIS project. While there are many options for accessing and importing such data, this tutorial will demonstrate how to use CanFlood’s built-in ‘Add Connections’ |addConnectionsImage| feature (:ref:`Section5.4.1 <Section5.4.1>`) to first add a connection to the profile, then download the desired layers.
 
@@ -760,8 +760,8 @@ This tutorial demonstrates how to generate ‘failure polygons’ from typical d
 
         o *1000_noFail.tif*
 
-    • *dike_influence_zones.gpkg*: Dike segment influence area layer with two polygon features, each corresponding to the area of influence of some dike segments;
-    • *dikes.gpkg*: Dike alignment polyline layer
+    • *dike_influence_zones.json*: Dike segment influence area layer with two polygon features, each corresponding to the area of influence of some dike segments;
+    • *dikes.json*: Dike alignment polyline layer
     • *dtm.tif*: Digital Terrain Model (import ‘dtm.qlr’ to get the styled version);
     • *dike_fragility_20210201.xls*: Dike fragility function library.
 
@@ -870,7 +870,7 @@ This tutorial demonstrates *Value Sampling* using sampling statistics specified 
 
   • *dtm_cT2.tif*: DTM layer (and corresponding stylized layer definition .qlr file)
 
-  • *finv_tut7_polys.gpkg*: flood asset inventory (’finv’) spatial layer (and corresponding stylized layer definition .qlr file)
+  • *finv_tut7_polys.json*: flood asset inventory (’finv’) spatial layer (and corresponding stylized layer definition .qlr file)
 
 6.12.1. Build the Model
 =======================
@@ -968,7 +968,7 @@ Begin by downloading the tutorial data from the `tutorials 8 <https://github.com
 
   • *dtm_tut8.tif*: DTM layer (and corresponding stylized layer definition .qlr file)
 
-  • *finv_tut8.gpkg*: flood asset inventory (’finv’) spatial layer (and corresponding stylized layer definition .qlr file)
+  • *finv_tut8.json*: flood asset inventory (’finv’) spatial layer (and corresponding stylized layer definition .qlr file)
   
   • *CanFlood_tut8.txt*: main model control file
   
