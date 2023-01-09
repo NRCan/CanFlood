@@ -574,7 +574,7 @@ class PolyL1_t(L1_t):
         super().__init__(**kwargs)
         
         self.pars_d.update({
-                'finv_fp':r'tutorials\4\finv_tut4a_polygons.gpkg',
+                'finv_fp':r'tutorials\4\finv_tut4a_polygons.json',
                         })
     
 class LineL1_t(L1_t):
@@ -587,7 +587,7 @@ class LineL1_t(L1_t):
         super().__init__(**kwargs)
         
         self.pars_d.update({
-                'finv_fp':r'tutorials\4\finv_tut4b_lines.gpkg',
+                'finv_fp':r'tutorials\4\finv_tut4b_lines.json',
                         })
 
 wFlow_l = [
