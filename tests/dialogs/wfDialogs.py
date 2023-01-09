@@ -432,7 +432,7 @@ class Tut1a(WF_handler, WorkFlow):
         self.pars_d = {
                 
                 #data files
-                'finv_fp':r'tutorials\1\finv_tut1a.gpkg',
+                'finv_fp':r'tutorials\1\finv_tut1a.json',
                 'raster_dir':r'tutorials\1\haz_rast',
                 'evals_fp':r'tests\_data\tuts\evals_4_tut1a.csv',
                 #'fpol_dir':r'tutorials\1\haz_fpoly',

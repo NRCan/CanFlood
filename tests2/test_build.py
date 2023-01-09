@@ -85,7 +85,7 @@ def test_01_build_scenario(session):
     
 
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
-@pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.gpkg'], indirect=True)
+@pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.json'], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_01_build_scenario_BuildDi0\CanFlood_test_01.txt']) #from test_01
 def test_02_build_inv(session, base_dir, finv_vlay, cf_fp):
     dial = session.Dialog
@@ -164,7 +164,7 @@ def test_03_build_inv_curves(session, base_dir, cf_fp):
 @pytest.mark.dev 
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_03_build_inv_curves_tests0\CanFlood_test_01.txt']) #from test_03
-@pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.gpkg'], indirect=True)
+@pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.json'], indirect=True)
 @pytest.mark.parametrize('rast_dir',[r'tutorials\2\haz_rast'])
 def test_04_build_hsamp(session, base_dir, cf_fp, rast_dir, finv_vlay, true_dir):
     dial = session.Dialog
@@ -278,7 +278,7 @@ def test_05_build_evals(session, base_dir, cf_fp, true_dir):
  
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_05_build_evals_tests2__da0\CanFlood_test_01.txt']) #from test_05
-@pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.gpkg'], indirect=True)
+@pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.json'], indirect=True)
 @pytest.mark.parametrize('dtm_fp',[r'tutorials\2\dtm_tut2.tif'])
 def test_06_build_dtm(session, base_dir, cf_fp, true_dir, finv_vlay, dtm_fp):
     dial = session.Dialog
