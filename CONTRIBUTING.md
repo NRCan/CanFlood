@@ -44,3 +44,26 @@ Now that all the code is tested and in the main branch, perform the following:
 - [ ] in git-hub, create a new release tag (e.g., v1.2.0), summarize new features for developers. upload the same zip file. 
 
 - [ ] notify the management team
+
+## Development environment
+
+
+We usually develop CanFlood to target the QGIS LTR. The plugin itself (./canflood) does not require any additional dependencies and is easily installed via the repository. 
+However, development requires some additional dependencies (e.g., pytest_qgis). 
+
+### Building dev environment
+
+To isolate this development environment from your main pyqgis build,  it's best to use a virtual environment.. which can be tricky.
+The batch script `./pyqgis_venv_build.bat` has been provided to do this. 
+    1) create a batch script to initialize your system's pyqgis environment (if you haven't already done so). 
+    2) populate `./settings.bat` with this (and other) variables
+    3) call `./pyqgis_venv_build.bat`, changing the value to 'true' when prompted. this should create a python virtual environment in ./venv and install the additional dependencies. 
+    
+    
+### Activating dev environment
+The batch script `./activate_py.bat` should activate the development environment (if the above is configured correctly). This is useful for running tests from command line. 
+    
+    
+
+
+        

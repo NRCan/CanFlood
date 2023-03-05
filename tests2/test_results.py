@@ -5,10 +5,14 @@ Created on Jun. 26, 2022
 
 unit tests for CanFlood's 'results' toolset
 '''
-from qgis.core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsProject, QgsReport, QgsReportSectionLayout
+from qgis.core import (
+    QgsCoordinateReferenceSystem, QgsVectorLayer, QgsProject, QgsReport, QgsReportSectionLayout,
+ 
+    )
 from PyQt5.Qt import Qt
 from PyQt5.QtTest import QTest
 from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
+ 
 from pandas.testing import assert_frame_equal
 from pytest import fail
 from pytest_qgis.utils import clean_qgis_layer
@@ -78,15 +82,19 @@ def test_res_01_riskPlot(dial): #test risk plots
 @pytest.mark.dev
 @pytest.mark.parametrize('dialogClass',[ResultsDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_02_r2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True) #from build test_07
-@pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.gpkg'], indirect=True)
+@pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.geojson'], indirect=True)
 def test_res_02_pdf_report(dial, finv_fp):
     """generate a pdf report, validate
     
     TODO:
     add additional cases (e.g., no vector layer)
+    
+    write to file (spent 20 mins and couldn't figure this out)
     """
     
-    res_02_reporter(dial, finv_fp=finv_fp, vsect_cnt=6)
+    report = res_02_reporter(dial, finv_fp=finv_fp, vsect_cnt=6)
+    
+ 
 
     
 def res_02_reporter(dial, finv_fp=None, vsect_cnt = 5):
@@ -118,3 +126,5 @@ def res_02_reporter(dial, finv_fp=None, vsect_cnt = 5):
  
     if not len(sections) == vsect_cnt:
         fail('expected %i sections got %i'%(vsect_cnt, len(sections)))
+        
+    return report

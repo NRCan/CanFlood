@@ -3038,5 +3038,21 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         return True
 
     
+def assert_rttl_valid(df_raw, msg=''):
+    """check the total results are valid"""
+    
+    
+    if not __debug__: # true if Python was not started with an -O option
+        return
+    
+    __tracebackhide__ = True
+    
+    #clean to just values
+    df = df_raw.loc[df_raw.iloc[:, 0]!='ead', :].iloc[:, [0, 1]].astype(float)
+    
+    assert df['aep'].is_monotonic_decreasing, msg
+    assert np.all(np.diff(df.iloc[:, 1])>0), 'values must be increasing\n' + msg
+    
+ 
     
     

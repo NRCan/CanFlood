@@ -6,19 +6,31 @@ Created on Jun. 24, 2022
 tutorial 2 integration tests
 '''
 
+import pandas as pd
+import numpy as np
+from numpy.testing import assert_array_equal
+import pytest, os, shutil
+
 from PyQt5.Qt import Qt
 from PyQt5.QtTest import QTest
 from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
 from build.dialog import BuildDialog
 from matplotlib import pyplot as plt
 from model.dialog import ModelDialog
+from model.modcom import assert_rttl_valid
 from pandas.testing import assert_frame_equal
 from qgis.core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsProject, QgsReport
 from results.dialog import ResultsDialog
-import pandas as pd
-import pytest, os, shutil
-import test_results
 
+from tests2 import test_results
+
+from hlpr.basic import view
+
+
+def extract_between_char(s, char='_'):
+    start = s.find(char) + 1
+    end = s.find(char, start)
+    return s[start:end]
 
 @pytest.fixture(scope='module')
 def crs():
@@ -34,9 +46,19 @@ def data_dir(base_dir):
 def test_t2_A(session, data_dir, true_dir, tmp_path, write):
     """
     
-    TODO: refactor or shorten this code
-    we'll need to re-use a lot of it for subsequent tutorials
+    TODO: 
+        refactor or shorten this code (we'll need to re-use a lot of it for subsequent tutorials)
+        add value tests
     """
+
+ 
+    def get_true_fp(sfx):
+        #find this file
+        match_l = [e for e in os.listdir(true_dir) if e.endswith(sfx)]
+        assert len(match_l)==1, f'failed to get a  unique match for {sfx}'
+        
+        return os.path.join(true_dir, match_l[0])
+        
     #===========================================================================
     # Build---------
     #===========================================================================
@@ -63,7 +85,7 @@ def test_t2_A(session, data_dir, true_dir, tmp_path, write):
     dial._change_tab('tab_inventory')
     
     #select the finv
-    fp = os.path.join(data_dir, 'finv_tut2.gpkg')
+    fp = os.path.join(data_dir, 'finv_tut2.geojson')
     finv_vlay = session.load_vlay(fp)
     dial.comboBox_ivlay.setLayer(finv_vlay)
     
@@ -125,9 +147,9 @@ def test_t2_A(session, data_dir, true_dir, tmp_path, write):
     fp = dial.get_cf_par(dial.get_cf_fp(), sectName='dmg_fps', varName='expos')
     assert os.path.exists(fp)
     
-    df = pd.read_csv(fp, index_col=0)
-    assert len(df)==finv_vlay.dataProvider().featureCount()
-    assert len(df.columns)==len(lay_d)
+    haz_df = pd.read_csv(fp, index_col=0)
+    assert len(haz_df)==finv_vlay.dataProvider().featureCount()
+    assert len(haz_df.columns)==len(lay_d)
     
     #===========================================================================
     # event variables
@@ -136,7 +158,7 @@ def test_t2_A(session, data_dir, true_dir, tmp_path, write):
     
     #populate table
     tblW = dial.fieldsTable_EL
-    evals_l = [1000, 200, 100, 50]
+    evals_l = [ 50.,  100.,  200., 1000.]
     for i, pval in enumerate(evals_l):
         tblW.setItem(i, 1, QTableWidgetItem(str(pval)))
         
@@ -147,8 +169,13 @@ def test_t2_A(session, data_dir, true_dir, tmp_path, write):
     fp = dial.get_cf_par(dial.get_cf_fp(), sectName='risk_fps', varName='evals')
     assert os.path.exists(fp)
     
-    df = pd.read_csv(fp)
-    assert len(df.columns)==len(evals_l)
+    eval_df = pd.read_csv(fp)
+    assert len(eval_df.columns)==len(evals_l)
+    
+    #monotonicity
+    evals_from_layerNames_l = [float(extract_between_char(e, char='_')) for e in eval_df.columns]
+    
+    assert_array_equal(np.array(evals_from_layerNames_l), np.array(evals_l, dtype=float))
     
     #===========================================================================
     # dtm sampler
@@ -183,7 +210,7 @@ def test_t2_A(session, data_dir, true_dir, tmp_path, write):
     QTest.mouseClick(dial.pushButton_Validate, Qt.LeftButton)  
     
     #===========================================================================
-    # model----------
+    # MODEL----------
     #===========================================================================
     dial = session.init_dialog(ModelDialog)
     
@@ -199,11 +226,17 @@ def test_t2_A(session, data_dir, true_dir, tmp_path, write):
     dial.checkBox_i2_outExpnd.setChecked(True)
     dial.checkBox_i2_pbox.setChecked(False) #no plots
     
-    QTest.mouseClick(dial.pushButton_i2run, Qt.LeftButton)   #Run dmg2
+    QTest.mouseClick(dial.pushButton_i2run, Qt.LeftButton)   #ModelDialog.run_impact2()
     
     #check it
     fp = dial.get_cf_par(dial.get_cf_fp(), sectName='risk_fps', varName='dmgs')
     assert os.path.exists(fp)
+    
+    dmg_df = pd.read_csv(fp)
+    assert set(eval_df.columns).difference(dmg_df.columns)==set()
+    
+    
+    
     
     #===========================================================================
     # risk (L2)
@@ -213,7 +246,8 @@ def test_t2_A(session, data_dir, true_dir, tmp_path, write):
     dial.checkBox_r2rpa.setChecked(True)
     dial.checkBox_r2_ari.setChecked(True)
     
-    QTest.mouseClick(dial.pushButton_r2Run, Qt.LeftButton) 
+    
+    QTest.mouseClick(dial.pushButton_r2Run, Qt.LeftButton)  #ModelDialog.run_risk2()
     
     #check it
     res_d = dict()
@@ -222,9 +256,22 @@ def test_t2_A(session, data_dir, true_dir, tmp_path, write):
         assert os.path.exists(fp), varName
         res_d[varName] = fp
         
-        #copy over for validation
-        if varName=='r_ttl' and write:
-            shutil.copy2(fp, os.path.join(out_dir, os.path.basename(fp)))
+    rttl_df = pd.read_csv(res_d['r_ttl'])
+    
+    #internal
+    assert_rttl_valid(rttl_df, msg=os.path.basename(res_d['r_ttl']))
+    
+    #validate: against trues
+    true_df = pd.read_pickle(get_true_fp('r_ttl.pkl'))    
+    assert_frame_equal(rttl_df, true_df)
+    
+    """
+    rttl_df.to_pickle('C:\\LS\\09_REPOS\\03_TOOLS\\CanFlood\\_git\\tests2\\data\\test_t2_A_BuildDialog_0\\20230305_r_ttl.pkl')
+    view(rttl_df)
+    """
+ 
+            
+ 
         
     #clean up plots
     """shouldnt be needed if 'save to file' is working"""
@@ -268,23 +315,12 @@ def test_t2_A(session, data_dir, true_dir, tmp_path, write):
     #===========================================================================
  
  
-    test_results.res_02_reporter(dial, finv_fp = os.path.join(data_dir, 'finv_tut2.gpkg'))
+    report = test_results.res_02_reporter(dial, finv_fp = os.path.join(data_dir, 'finv_tut2.geojson'))
+ 
  
     
     #===========================================================================
-    # validate-----
+    # wrap
     #===========================================================================
-    varName = 'r_ttl'
-    fp = res_d[varName]
- 
-    df = pd.read_csv(fp)
-    
-    #load trues
-    match_l = [e for e in os.listdir(true_dir) if e.endswith('ttl.csv')]
-    assert len(match_l)==1
-    
-    true_fp = os.path.join(true_dir, match_l[0])
-    true_df = pd.read_csv(true_fp)
-    
-    assert_frame_equal(df, true_df)
+    print(f'finished w/ ControlFile: {dial.get_cf_fp()}')
  

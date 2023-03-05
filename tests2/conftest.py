@@ -23,7 +23,7 @@ import processing
 
 
 import pytest_qgis #install check (needed by fixtures)
-"""TODO: use a virtual environment?"""
+ 
  
 
 from wFlow.scripts import Session

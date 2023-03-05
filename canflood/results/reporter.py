@@ -14,10 +14,13 @@ import pandas as pd
 
 #Q imports
 from PyQt5.QtXml import QDomDocument
-from qgis.core import QgsPrintLayout, QgsReadWriteContext, QgsLayoutItemHtml, QgsLayoutFrame, \
-    QgsLayoutItemMap, QgsVectorLayer, QgsLayoutMultiFrame, QgsLayoutItemPicture, \
-    QgsReport, QgsLayout, QgsReportSectionLayout, QgsLayoutItemPage, QgsLayoutItemLabel, \
-    QgsLayoutItemAttributeTable, QgsVectorLayer, QgsField, QgsFeature, QgsProject
+from qgis.core import (
+    QgsPrintLayout, QgsReadWriteContext, QgsLayoutItemHtml, QgsLayoutFrame, 
+    QgsLayoutItemMap, QgsVectorLayer, QgsLayoutMultiFrame, QgsLayoutItemPicture, 
+    QgsReport, QgsLayout, QgsReportSectionLayout, QgsLayoutItemPage, QgsLayoutItemLabel, 
+    QgsLayoutItemAttributeTable, QgsVectorLayer, QgsField, QgsFeature, QgsProject,
+    QgsTextFormat,
+    )
  
 
 from PyQt5.QtCore import QRectF, QUrl, Qt, QVariant
@@ -261,7 +264,8 @@ class ReportGenerator(RiskPlotr, Qcoms):
 
         #setting label styling options
         page_label.setText(text)
-        page_label.setFont(QFont("Ms Shell Dlg 2", 10))
+ 
+        page_label.setTextFormat(QgsTextFormat().fromQFont(QFont("Ms Shell Dlg 2", 10)))
         page_label.attemptSetSceneRect(qrect)
 
         #add page number label to body
@@ -364,7 +368,8 @@ class ReportGenerator(RiskPlotr, Qcoms):
         font.setPointSize(text_size)
         font.setBold(text_bold)
         font.setUnderline(text_underline)
-        label.setFont(font)
+ 
+        label.setTextFormat(QgsTextFormat().fromQFont(font))
         
         qlayout.addLayoutItem(label)
         

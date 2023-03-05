@@ -301,6 +301,11 @@ class ModelDialog(QtWidgets.QDialog, FORM_CLASS,
                       ).setup()
         
         res_ttl, res_df = model.run(res_per_asset=self.checkBox_r2rpa.isChecked())
+        
+        """
+        from hlpr.basic import view
+        view(res_ttl)
+        """
         self.feedback.upd_prog(80)
         #======================================================================
         # plots
@@ -342,18 +347,19 @@ class ModelDialog(QtWidgets.QDialog, FORM_CLASS,
 
         return
     
-    def _risk_plots(self,model, res_ttl,d):
+    def _risk_plots(self,model, res_ttl,plotType_checkBox_d):
+        """plot some results on the model worker according to the passed checkboxes"""
         
         #prep the data for plotting
-        model.raw_d['r_ttl'] = res_ttl.copy()
-        model.set_ttl()
+        #model.raw_d['r_ttl'] = res_ttl.copy()
+        ttl_df = model.set_ttl(tlRaw_df=res_ttl.copy(), dtag='r_ttl')
         
         #loop and get each plot
-        for y1lab, cbox in d.items():
+        for y1lab, cbox in plotType_checkBox_d.items():
             if not cbox.isChecked(): continue 
 
             #plot it
-            fig = model.plot_riskCurve(y1lab=y1lab)
+            fig = model.plot_riskCurve(y1lab=y1lab, res_ttl=ttl_df)
             self.output_fig(fig)
 
     def run_risk3(self):
