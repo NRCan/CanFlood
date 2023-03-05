@@ -245,12 +245,15 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             
         return cplx_evn_d, cnt
 
-    def set_ttl(self, # prep the raw results for plotting
+    def set_ttl(self, # 
                 tlRaw_df = None,
                  dtag='r_ttl',
                  logger=None,
                  ):
-        """
+        """prep the raw results for plotting
+        
+        NOTES
+        ----------------
         when ttl is output, we add the EAD data, drop ARI, and add plotting handles
             which is not great for data manipulation
         here we clean it up and only take those for plotting
@@ -1290,8 +1293,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
                     figsize=None, logger=None,  plotTag=None,                
                   ):
         
-        """
-        summary risk results plotter
+        """summary risk results plotter
             see self._lineToAx() for formatting
  
         """
@@ -1340,9 +1342,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         #=======================================================================
         # figure setup
         #=======================================================================
-        """
-        plt.show()
-        """
+ 
         plt.close()
         fig = plt.figure(figsize=figsize, constrained_layout = True)
         
@@ -1389,7 +1389,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         
         return fig
     
-    def _lineToAx(self, #add a risk curve to the axis
+    def _lineToAx(self,  
               res_ttl,
               y1lab,
               ax,
@@ -1397,9 +1397,11 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
               impStyle_d=None,
               hatch_f=True,
               h_color=None, h_alpha=None, hatch=None,
-              ): #add a line to an axis
+              ):  
         
-        """
+        """add a risk curve to the axis
+        
+        
         for plotting vfuncs, see:
             CurvePlotr.line
         """
@@ -1418,6 +1420,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         """
         self.impStyle_d
         plt.show()
+        view(res_ttl)
         """
         #check values
         if hatch_f:
@@ -1430,11 +1433,9 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         # fill the plot
         #======================================================================
         if y1lab == self.impact_name:
-            xar,  yar = res_ttl['ari'].values, res_ttl['impacts'].values
-            pline1 = ax.semilogx(xar,yar,
-                                label       = lineLabel,
-                                **impStyle_d
-                                )
+            xar,  yar = res_ttl['ari'].astype(float).values, res_ttl['impacts'].values
+            pline1 = ax.semilogx(xar,yar,label= lineLabel,**impStyle_d)
+            
             #add a hatch
             if hatch_f:
                 polys = ax.fill_between(xar, yar, y2=0, 
@@ -1455,7 +1456,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
                                     alpha       = h_alpha,
                                     hatch       = hatch)
         else:
-            raise Error('bad yl1ab: %s'%y1lab)
+            raise KeyError('bad yl1ab: %s'%y1lab)
             
         
         return ax
