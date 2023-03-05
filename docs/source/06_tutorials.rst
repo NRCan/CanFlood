@@ -19,7 +19,7 @@ This tutorial guides the user through the simplest application of risk modelling
 
 Download the data layers for Tutorial 1:
 
-  • *haz_rast*: hazard event rasters with WSL value predictions for the study area for four probabilities.
+  • *haz_rast*: hazard event rasters with water surface level/elevation (WSL) value predictions for the study area for four probabilities.
 
     o *haz_0050.tif*
 
@@ -87,7 +87,7 @@ Move to the ‘Hazard Sampler’ tab. Check all the hazard rasters in the displa
 
 .. image:: /_static/tutorials_6_1_2_img_4.jpg
 
-**Click ‘Sample Rasters’** to generate the exposure (‘expos’) dataset. You should see a new csv file in the working directory, and its filepath added to the control file under ‘expos’. These are the WSLs sampled at each asset from each hazard event raster.
+**Click ‘Sample’** to generate the exposure (‘expos’) dataset. You should see a new csv file in the working directory, and its filepath added to the control file under ‘expos’. These are the WSLs sampled at each asset from each hazard event raster.
 
 **Event Variables**
 
