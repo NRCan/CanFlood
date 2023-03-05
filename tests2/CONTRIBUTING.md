@@ -10,3 +10,6 @@ Two types of tests are included:
  - api workflow tests. (TODO)
 
 At the end of each test, a validation against some datafile (previous test result) should be performed to ensure program behavior/performance has not changed. 
+
+## Calling tests
+the batch script `./tests2/pytest_all.bat` is provided to conveniently run all of the "tests2" tests. 
