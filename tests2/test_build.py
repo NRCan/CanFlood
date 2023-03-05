@@ -139,7 +139,7 @@ def test_03_build_inv_curves(session, base_dir, cf_fp):
     dial._change_tab('tab_inventory')
     
     
-    raw_fp = os.path.join(session.pars_dir, 'vfunc\IBI_2015\IBI2015_DamageCurves.xls')
+    raw_fp = os.path.join(session.pars_dir, r'vfunc\IBI_2015\IBI2015_DamageCurves.xls')
     
     #update the gui
     dial.lineEdit_curve.setText(raw_fp)
