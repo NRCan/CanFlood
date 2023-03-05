@@ -268,7 +268,7 @@ def test_t2_A(session, data_dir, true_dir, tmp_path, write):
     #===========================================================================
  
  
-    test_results.res_02_reporter(dial, finv_fp = os.path.join(data_dir, 'finv_tut2.geojson'))
+    report = test_results.res_02_reporter(dial, finv_fp = os.path.join(data_dir, 'finv_tut2.geojson'))
  
     
     #===========================================================================
@@ -287,4 +287,9 @@ def test_t2_A(session, data_dir, true_dir, tmp_path, write):
     true_df = pd.read_csv(true_fp)
     
     assert_frame_equal(df, true_df)
+    
+    #===========================================================================
+    # wrap
+    #===========================================================================
+    print(f'finished w/ ControlFile: {dial.get_cf_fp()}')
  
