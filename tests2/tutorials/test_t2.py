@@ -63,7 +63,7 @@ def test_t2_A(session, data_dir, true_dir, tmp_path, write):
     dial._change_tab('tab_inventory')
     
     #select the finv
-    fp = os.path.join(data_dir, 'finv_tut2.gpkg')
+    fp = os.path.join(data_dir, 'finv_tut2.geojson')
     finv_vlay = session.load_vlay(fp)
     dial.comboBox_ivlay.setLayer(finv_vlay)
     
@@ -268,7 +268,7 @@ def test_t2_A(session, data_dir, true_dir, tmp_path, write):
     #===========================================================================
  
  
-    test_results.res_02_reporter(dial, finv_fp = os.path.join(data_dir, 'finv_tut2.gpkg'))
+    test_results.res_02_reporter(dial, finv_fp = os.path.join(data_dir, 'finv_tut2.geojson'))
  
     
     #===========================================================================

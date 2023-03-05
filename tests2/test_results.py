@@ -78,7 +78,7 @@ def test_res_01_riskPlot(dial): #test risk plots
 @pytest.mark.dev
 @pytest.mark.parametrize('dialogClass',[ResultsDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_02_r2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True) #from build test_07
-@pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.gpkg'], indirect=True)
+@pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.geojson'], indirect=True)
 def test_res_02_pdf_report(dial, finv_fp):
     """generate a pdf report, validate
     
