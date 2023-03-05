@@ -555,7 +555,7 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
         
         return cf_fp
 
-    def get_cf_par(self, #load a parameter value from a controlFile path
+    def get_cf_par(self, #
                       cf_fp, #control file path
                       sectName='results_fps',
                       varName = 'r_ttl',
@@ -563,6 +563,8 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
                       logger=None,
                       ):
         """
+        load a parameter value from a controlFile path
+        
         wrapper for  _get_from_cpar()
             but loads the control file each time and 
         """
