@@ -59,7 +59,11 @@ Considering the limitation of existing tools, and the growing need to minimize f
 
 • Federal Flood Risk Assessment Procedures (in development)
 
-**International Guidelines**
+Some international guidelines are presented in Table1.1_.
+
+.. _Table1-1:
+
+*Table 1-1 - International Guidelines*
 
 +------------------------+------------+----------+----------+----------+----------+----------+----------+
 |Jurisdiction/ Authority |     Guideline (Reference)                                                    |          
@@ -100,11 +104,11 @@ See Section1.1.2_ for a summary of guidelines and procedures related to FRAs in 
 1.3 Risk Model Levels
 *********************
 
-Flood risk analysis objectives and applications are as diverse as the communities they serve. To accommodate this wide range, CanFlood contains three types of risk models with increasing complexity as summarized in Table1-1_ and discussed in :ref:`Section5.2 <Section5.2>`. To support the construction and analysis of these risk models, CanFlood also includes the ‘Build’ and ‘Results’ toolsets respectively (:ref:`Section5.1 <Section5.1>` and :ref:`Section5.3 <Section5.3>`). Connecting all these together to perform an analysis is discussed in :ref:`Section4.5 <Section4.5>` and similar tutorials are provided in :ref:`Section6 <Section6>`.
+Flood risk analysis objectives and applications are as diverse as the communities they serve. To accommodate this wide range, CanFlood contains three types of risk models with increasing complexity as summarized in Table1-2_ and discussed in :ref:`Section5.2 <Section5.2>`. To support the construction and analysis of these risk models, CanFlood also includes the ‘Build’ and ‘Results’ toolsets respectively (:ref:`Section5.1 <Section5.1>` and :ref:`Section5.3 <Section5.3>`). Connecting all these together to perform an analysis is discussed in :ref:`Section4.5 <Section4.5>` and similar tutorials are provided in :ref:`Section6 <Section6>`.
 
-.. _Table1-1:
+.. _Table1-2:
 
-*Table 1-1 - CanFlood model level summaries*
+*Table 1-2 - CanFlood model level summaries*
 
 .. list-table::
     :header-rows: 1
