@@ -295,18 +295,20 @@ To facilitate batch simulations for advanced users, all CanFlood modelling modul
 
 **Parameter Summary**
 
-The following table summarizes the relevant parameters for CanFlood’s model toolset that can be specified in the Control File
+Table5-6_ and Table5-7_ summarize the relevant parameters for CanFlood’s model toolset that can be specified in the Control File
 
-.. _tab_551:
+.. _Table5-6:
 
-*Table 5-5.1: CanFlood control file parameter summary*
+*Table 5-6: CanFlood control file parameter summary*
 
 .. csv-table:: 
    :file: /tables/52_controlFileDesc.csv
    :widths: auto
    :header-rows: 1
 
-*CanFlood control file datafile and plotting summary*
+.. _Table5-7
+
+*Table 5-7: CanFlood control file datafile and plotting summary*
 
 .. csv-table:: 
    :file: /tables/52b_controlFileDesc_filepaths.csv
@@ -320,11 +322,11 @@ Some of these can be configured with CanFlood’s *Build* toolset UI, while othe
 5.2.1. Risk (L1)
 ================
 
-CanFlood’s L1 Risk tool provides a preliminary assessment of flood risk with binary exposure as discussed in :ref:`Section3.1 <Section3.1>`. This tool also supports conditional probability inputs to incorporate flood protection failures. Table5-6_ summarizes the input requirements for the Risk (L1) model, which are generally prepared using the ‘Build’ tools (:ref:`Figure3-1 <Figure3-1>`).
+CanFlood’s L1 Risk tool provides a preliminary assessment of flood risk with binary exposure as discussed in :ref:`Section3.1 <Section3.1>`. This tool also supports conditional probability inputs to incorporate flood protection failures. Table5-8_ summarizes the input requirements for the Risk (L1) model, which are generally prepared using the ‘Build’ tools (:ref:`Figure3-1 <Figure3-1>`).
 
-.. _Table5-6:
+.. _Table5-8:
 
-*Table 5-6: Risk (L1) CanFlood model package requirements.*
+*Table 5-8: Risk (L1) CanFlood model package requirements.*
 
 +------------------------+-------------------------+--------------------+---------+-----------------+
 | Name                   | Description             | Build Tool         | Code    | Reqd.           |
@@ -351,11 +353,11 @@ CanFlood’s L1 Risk tool provides a preliminary assessment of flood risk with b
 
 The Risk (L1) module can be used to estimate a range of simple-metrics through creative use of the asset inventory (‘finv’) fields discussed in :ref:`Section4.1 <Section4.1>`. When the ‘scale’ factor is set to 1, ‘height’ to zero, and no conditional probabilities are used (typical for inundation analysis), most of the calculation becomes trivial as the result is simply the impact values provided by the ‘expos’ table (with the exception of the expected value calculation).
 
-Outputs provided by this tool are summarized in the following table:
+Outputs provided by this tool are summarized in Table5-9_:
 
-.. _Table5-7:
+.. _Table5-9:
 
-*Table 5-7: Risk model output file summary.*
+*Table 5-9: Risk model output file summary.*
 
 +-------------------+-----------+----------------------------------------------------+
 | Output Name       | Code      | Description                                        |
@@ -374,9 +376,11 @@ Outputs provided by this tool are summarized in the following table:
 5.2.2. Impacts (L2)
 ===================
 
-CanFlood’s *Impacts (L2)* tool is designed to perform a ‘classic’ object-based deterministic flood damage assessment using vulnerability curves, asset heights, and WSL values to estimate flood impacts from multiple events. This tool calculates the impacts on each asset from each hazard event (if the provided raster WSL was realized). ‘Impacts (L2)’ does not consider or account for event probabilities (conditional or otherwise) as these are handled in the Risk (L2) module (see Section5.2.3_). Model package requirements are summarized in the following table:
+CanFlood’s *Impacts (L2)* tool is designed to perform a ‘classic’ object-based deterministic flood damage assessment using vulnerability curves, asset heights, and WSL values to estimate flood impacts from multiple events. This tool calculates the impacts on each asset from each hazard event (if the provided raster WSL was realized). ‘Impacts (L2)’ does not consider or account for event probabilities (conditional or otherwise) as these are handled in the Risk (L2) module (see Section5.2.3_). Model package requirements are summarized in Table5-10_.
 
-*Table 5-8: Impacts (L2) model package requirements.*
+.. _Table5-10
+
+*Table 5-10: Impacts (L2) model package requirements.*
 
 +------------------------+-------------------------+--------------------+--------+-------------+
 | Name                   | Description             | Build Tool         | Code   | Reqd.       |
@@ -398,9 +402,11 @@ CanFlood’s *Impacts (L2)* tool is designed to perform a ‘classic’ object-b
 |                        | impact                  |                    |        |             |
 +------------------------+-------------------------+--------------------+--------+-------------+
 
-Impacts (L2) outputs are summarized in the following table, where only the ‘dmgs’ output is required by the Risk (L2) model:
+Impacts (L2) outputs are summarized in Table5-11_, where only the ‘dmgs’ output is required by the Risk (L2) model:
 
-*Table 5-9: Impacts (L2) outputs.*
+.. _Table5-11
+
+*Table 5-11: Impacts (L2) outputs.*
 
 +---------------------+-----------+----------------------------------------------------+
 | Output Name         | Code      | Description                                        |
@@ -497,9 +503,11 @@ Beyond this classical risk model, ‘Risk (L2)’ also facilitates risk estimate
 
 *Figure 5-3: Sayers (2012)'s Source-Path-Receptor framework.*
 
-Model package requirements for the Risk (L2) tool are summarized in the following table:
+Model package requirements for the Risk (L2) tool are summarized in Table5-12_:
 
-*Table 5-10: Risk (L2) model package requirements.*
+.. _Table5-12
+
+*Table 5-12: Risk (L2) model package requirements.*
 
 +------------------------+----------------------------+--------------------+---------+-------------+
 | Name                   | Description                | Build Tool         | Code    | Reqd.       |
@@ -518,7 +526,7 @@ Model package requirements for the Risk (L2) tool are summarized in the followin
 |                        | (L2) model                 |                    |         |             |
 +------------------------+----------------------------+--------------------+---------+-------------+
 
-Outputs provided by this tool are summarized in Table5-7_.
+Outputs provided by this tool are summarized in Table5-9_.
 
 **Events without Failure**
 
@@ -545,7 +553,7 @@ Where *Fx(x)* is the cumulative probability of any event *x* (e.g. cumulative di
 The following algorithm is implemented in CanFlood’s ‘Risk (L1)’ and ‘Risk (L2)’ models to calculate expected value:
 
   1. Assemble a series of AEPs and total impacts for each event;
-  2. Extrapolate this series with the user provided extrapolation handles (‘rtail’ and ‘ltail’; see :ref:`Table 5-5.1 <tab_551>`);
+  2. Extrapolate this series with the user provided extrapolation handles (‘rtail’ and ‘ltail’; see :ref:`Table 5-6 <Table5-6>`);
   3. Use the `numpy integration <https://docs.scipy.org/doc/scipy/reference/integrate.html>`__ method specified by the user to calculate the area under the series.
 
 The same algorithm is used for calculating the total expected value across all assets and for the expected value of individual assets (if ‘res_per_asset’=True).
@@ -560,11 +568,11 @@ When resolving a hazard event with some failure, CanFlood combines the expected 
 
 *Figure 5-5: Example diagram showing three hazard events, one without failure (e3), one with simple (e2) and one with complex failure events (e1), and two companion failure events with simple (f2, f3) and the other (f1) with complex conditional exposure probability polygons (failure polygons).*
 
-Table5-11_ summarizes the treatment of hazard events based on the count of failure events assigned to each.
+Table5-13_ summarizes the treatment of hazard events based on the count of failure events assigned to each.
 
-.. _Table5-11:
+.. _Table5-13:
 
-*Table 5-11: Hazard event treatment by failure event count.*
+*Table 5-13: Hazard event treatment by failure event count.*
 
 +-------------------+-------+----------------------------+----------------------+
 | Type              | Count | Treatment :sup:`1`         | Example (Figure5-5_) |
@@ -576,16 +584,16 @@ Table5-11_ summarizes the treatment of hazard events based on the count of failu
 +-------------------+-------+----------------------------+----------------------+
 | complex           | >1    | ‘max’, ‘mutEx’ or ‘indep’  | e1                   |
 +-------------------+-------+----------------------------+----------------------+
-| 1) See Table5-12_ |       |                                                   |
+| 1) See Table5-14_ |       |                                                   |
 +-------------------+-------+----------------------------+----------------------+
 
 **Events with Complex Failure**
 
-Table5-12_ summarize the algorithms implemented in CanFlood to calculate expected value for those hazard events with more than one companion failure event i.e., ‘complex’ failure events.
+Table5-14_ summarize the algorithms implemented in CanFlood to calculate expected value for those hazard events with more than one companion failure event i.e., ‘complex’ failure events.
 
-.. _Table5-12:
+.. _Table5-14:
 
-*Table5-12: Expected value algorithms for failure events.*
+*Table5-14: Expected value algorithms for failure events.*
 
 +---------------------+----------+--------------------------------------------------------------------+
 | name                | Count    | summary                                                            |
