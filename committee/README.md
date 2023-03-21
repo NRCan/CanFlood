@@ -7,7 +7,7 @@ Thank you everyone for your participation!
 
 Here is a [link to the recording](https://drive.google.com/file/d/1TK2bvfw-cVxONJwQ6JyyjxFBtWfogkbU/view?usp=sharing)
 
-Here is a [link to the presentation](https://github.com/IBIGroupCanWest/CanFlood/blob/master/committee/tasks/CanFlood%20-%20committee%20meet%203%20-%20presentation.pdf)
+Here is a [link to the presentation](https://github.com/NRCan/CanFlood/blob/master/committee/tasks/CanFlood%20-%20committee%20meet%203%20-%20presentation.pdf)
 
 
 ### Thank You!
@@ -19,9 +19,9 @@ The beta tool (Version 1.0) will be released at the end of March, and a webinar 
 
 ## Meeting 2
 
-Here is a [link to the presentation](https://github.com/IBIGroupCanWest/CanFlood/blob/master/committee/tasks/02/CanFlood%20-%20commitee%20meet%202%20(2021%2001%2028).pptx.pdf)
-
 Here is a [link to the recording](https://us02web.zoom.us/rec/share/Lbtw5Eg9CQvr6vcrz6orfbcJu2muYHS2TLpdkxDGIA2Yt8NRKuFv3E4YZNqT7vyx.WVboPi8y47VCwgeO) passcode: dV42t.mf
+
+Here is a [link to the presentation](https://github.com/NRCan/CanFlood/blob/master/committee/tasks/02/CanFlood%20-%20commitee%20meet%202%20(2021%2001%2028).pptx.pdf)
 
 ### During this meeting we presented the two options for Task 2:
 Option 1: Build your own model
@@ -37,7 +37,7 @@ Thank you all for attending our first Committee meeting on Dec 12th!
 
 Here is a [link to the recording](https://youtu.be/SOGrUPylyHM)*  
 
-Here is a [link to the presentation](https://github.com/IBIGroupCanWest/CanFlood/blob/master/committee/tasks/01/CanFlood%20-%20commitee%20meet%201%20(2020%2012%2016).pdf)
+Here is a [link to the presentation](https://github.com/NRCan/CanFlood/blob/master/committee/tasks/01/CanFlood%20-%20commitee%20meet%201%20(2020%2012%2016).pdf)
 
 ### During this meeting we presented Task 1: 
   
