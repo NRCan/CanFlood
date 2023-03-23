@@ -59,7 +59,7 @@ Considering the limitation of existing tools, and the growing need to minimize f
 
 • Federal Flood Risk Assessment Procedures (in development)
 
-Some international guidelines are presented in :numref:`tabl-guidelines`.
+Some international guidelines are provided in :numref:`tabl-guidelines`.
 
 .. _tabl-guidelines:
 
