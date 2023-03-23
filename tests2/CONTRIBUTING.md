@@ -9,7 +9,8 @@ Two types of tests are included:
  - integration tests (one for each tutorial; i.e., 'test_t2.py'). These should closely follow the tutorials to reduce user frustration. 
  - api workflow tests. (TODO)
 
-At the end of each test, a validation against some datafile (previous test result) should be performed to ensure program behavior/performance has not changed. 
+At the end of each test, a validation against some datafile (previous test result) should be performed to ensure program behaviour/performance has not changed. 
 
 ## Calling tests
-the batch script `./tests2/pytest_all.bat` is provided to conveniently run all of the "tests2" tests. 
+The batch script `./tests2/pytest_all.bat` is provided to conveniently run all of the "tests2" tests. 
+This requires a properly configured development environment as explained in `./CONTRIBUTING.md` 
