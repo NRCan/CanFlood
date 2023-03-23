@@ -14,9 +14,11 @@ Tables and Figures should be cross-linked using Sphinx's [numref](https://www.sp
 Reference labels should begin with 'tab' for tables, 'fig' for figures followed by a dash and a description of the asset.
 For example:
 ```
-Some international guidelines are provided in :numref:`tabl-guidelines`.
+Some international guidelines are provided in :numref:`tab-guidelines`.
 
-.. _tabl-guidelines:
+.. _tab-guidelines:
+
+<table here>
 ```
 
 
