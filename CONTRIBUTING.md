@@ -47,22 +47,47 @@ Now that all the code is tested and in the main branch, perform the following:
 
 ## Development environment
 
-
 We usually develop CanFlood to target the QGIS LTR. The plugin itself (./canflood) does not require any additional dependencies and is easily installed via the repository. 
-However, development requires some additional dependencies (e.g., pytest_qgis). 
+However, development requires some additional dependencies (e.g., pytest_qgis for testing and sphinx for building the documentation). 
 
 ### Building dev environment
 
-To isolate this development environment from your main pyqgis build,  it's best to use a virtual environment.. which can be tricky.
-The batch script `./pyqgis_venv_build.bat` has been provided to do this. 
+To isolate this development environment from your main pyqgis build,  it's best to use a virtual environment.. which can be tricky to set up.
+The batch script `./dev/pyqgis_venv_build.bat` has been provided to do this which requires the following steps: 
     1) create a batch script to initialize your system's pyqgis environment (if you haven't already done so). 
-    2) populate `./settings.bat` with this (and other) variables
-    3) call `./pyqgis_venv_build.bat`, changing the value to 'true' when prompted. this should create a python virtual environment in ./venv and install the additional dependencies. 
-    
+    2) create a `./env/settings.bat` to set your environment variables (see example below)
+    3) call `./dev/pyqgis_venv_build.bat`, changing the value to 'true' when prompted. this should create a python virtual environment in `./env/pyqgis_cf` and install the additional dependencies. 
     
 ### Activating dev environment
-The batch script `./activate_py.bat` should activate the development environment (if the above is configured correctly). This is useful for running tests from command line. 
-    
+The batch script `./dev/activate_py.bat` should activate the development environment (if the above is configured correctly). 
+This is useful for running tests from command line. 
+Note the amendments to PYTHONPATH
+
+### Testing the environment
+A simple way to test if the dependencies are installed is to import them within python:
+```
+python
+>>> import qgis.core
+>>> import pytest
+>>> import pytest_qgis
+```
+if you encounter any errors, your environment is not set up correctly.
+
+### Example settings.bat
+```
+:: CanFlood development environment variables and batch scripts
+
+:: system pyqgis environment config file (should call c:\OSGeo4W\bin\o4w_env.bat at a minimum)
+set PYQGIS_ENV_BAT=L:\09_REPOS\01_COMMON\Qall\bin\setup_pyqgis_ltr.bat
+
+:: set the target directory for the environment
+SET VDIR=%~dp0\pyqgis_cf
+
+:: set the venv activation script
+SET ACTIVATE_BAT=%VDIR%/Scripts/activate.bat
+```
+## Tests
+see `./tests2/CONTRIBUTING.md`
     
 
 

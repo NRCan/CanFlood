@@ -1,9 +1,9 @@
-REM pytest suite on all tht
+:: run pytest suite on all tests in the directory
 
-REM activate hte environment
-call "%~dp0../activate_py.bat"
+:: activate the environment
+call "%~dp0../dev/activate_py.bat"
  
-REM call pytest
+:: call pytest
 python -m pytest --maxfail=10 %~dp0
 
-pause
+cmd.exe /k
