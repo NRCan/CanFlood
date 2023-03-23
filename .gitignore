@@ -138,9 +138,14 @@ Qda4/.project
 *.gpkg-shm
 *.aux.xml
 *.tif.aux
-
+*.qmd
 
 #VisualBasic
 .vscode
 
-*.qmd
+#Documentation builds
+docs/env
+docs/build
+
+
+docs/dev/sphinx_warnings.txt
