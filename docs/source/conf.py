@@ -69,3 +69,7 @@ language = "en"
 locale_dirs = ['locale/']   # path is example but recommended.
 gettext_uuid = True
 gettext_compact = False 
+
+# Enable numref
+numfig = True
+

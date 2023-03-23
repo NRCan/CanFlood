@@ -59,23 +59,17 @@ Considering the limitation of existing tools, and the growing need to minimize f
 
 • Federal Flood Risk Assessment Procedures (in development)
 
-**International Guidelines**
+Some international guidelines are provided in :numref:`tab-guidelines`.
 
-+------------------------+------------+----------+----------+----------+----------+----------+----------+
-|Jurisdiction/ Authority |     Guideline (Reference)                                                    |          
-+========================+============+==========+==========+==========+==========+==========+==========+
-| United Kingdom         | Flood and coastal erosion risk management – Manual                           |
-|                        | (Penning-Rowsell et al. 2013)                                                |
-+------------------------+------------+----------+----------+----------+----------+----------+----------+
-| United States          | Multi-Hazard Loss Estimation Methodology, Flood Model:                       |
-|                        |                                                                              |
-|                        | Hazus-MH MR2 Technical Manual (FEMA 2012)                                    |
-|                        | Risk-Based Analysis For Flood Damage Reduction Studies (USACE 1996)          |
-|                        |                                                                              |
-|                        | Tying flood insurance to flood risk for low-lying structures in the          |
-|                        | floodplain (National Research Council 2015)                                  |
-|                        | Principles of Risk Analysis for Water Resources (IWR and USACE 2017)         |
-+------------------------+------------+---------------------+----------+----------+----------+----------+
+.. _tab-guidelines:
+
+.. csv-table:: International Guidelines 
+   :file: tables/international_guidelines.csv
+   :widths: 30, 70
+   :header-rows: 1
+   
+
+ 
 
 
 1.1.3 Risk- vs. Event-Based Models
@@ -100,15 +94,17 @@ See Section1.1.2_ for a summary of guidelines and procedures related to FRAs in 
 1.3 Risk Model Levels
 *********************
 
-Flood risk analysis objectives and applications are as diverse as the communities they serve. To accommodate this wide range, CanFlood contains three types of risk models with increasing complexity as summarized in Table1-1_ and discussed in :ref:`Section5.2 <Section5.2>`. To support the construction and analysis of these risk models, CanFlood also includes the ‘Build’ and ‘Results’ toolsets respectively (:ref:`Section5.1 <Section5.1>` and :ref:`Section5.3 <Section5.3>`). Connecting all these together to perform an analysis is discussed in :ref:`Section4.5 <Section4.5>` and similar tutorials are provided in :ref:`Section6 <Section6>`.
+Flood risk analysis objectives and applications are as diverse as the communities they serve. 
+To accommodate this wide range, CanFlood contains three types of risk models with increasing complexity as summarized in :numref:`tab-ModelLevels` and discussed in :ref:`Section 5.2 <Section5.2>`. 
+To support the construction and analysis of these risk models, CanFlood also includes the ‘Build’ and ‘Results’ toolsets respectively (:ref:`Section 5.1 <Section5.1>` and :ref:`Section 5.3 <Section5.3>`). 
+Connecting all these together to perform an analysis is discussed in :ref:`Section 4.5 <Section4.5>` and similar tutorials are provided in :ref:`Section 6 <Section6>`.
 
-.. _Table1-1:
+.. _tab-ModelLevels:
 
-*Table 1-1 - CanFlood model level summaries*
-
-.. list-table::
+.. list-table:: CanFlood model level summaries
     :header-rows: 1
     :stub-columns: 1
+    :widths: 20, 50, 50, 50
 
     * - Analysis Level 
       - L1: Initial
@@ -119,8 +115,8 @@ Flood risk analysis objectives and applications are as diverse as the communitie
       - More detailed appraisals where further assessment of loss potential is warranted
       - Detailed study of potential losses and robust uncertainty quantification
     * - Workflow 
-      - :ref:`Section3.1 <Section3.1>`
-      - :ref:`Section3.2 <Section3.2>`
+      - :ref:`Section 3.1 <Section3.1>`
+      - :ref:`Section 3.2 <Section3.2>`
       - Appendix B
     * - CanFlood model tool names
       - Risk (L1)
