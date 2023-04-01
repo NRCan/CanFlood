@@ -5,7 +5,7 @@ Created on Feb. 21, 2022
 
  
 '''
-import os, shutil, sys, datetime, traceback
+import os, shutil, sys, datetime, traceback, logging
 import pytest
 import numpy as np
 from numpy.testing import assert_equal
@@ -165,8 +165,13 @@ def write():
 #===============================================================================
 # function.fixtures-------
 #===============================================================================
- 
- 
+@pytest.fixture(scope='function')
+def out_dir(tmp_path):
+    return tmp_path
+
+@pytest.fixture(scope='function')
+def test_name(request):
+    return request.node.name.replace('[','_').replace(']', '_')
 #===============================================================================
 # session.fixtures----------
 #===============================================================================
@@ -216,9 +221,15 @@ class devPlugLogger(plugLogger):
         if push:
             print('PUSH: ' +msg_raw)
             
- 
- 
 
+@pytest.fixture(scope='session')
+def logger():
+    """simple backend loggers"""
+    return mod_logger
+ 
+#===============================================================================
+# directories
+#===============================================================================
 @pytest.fixture(scope='session')
 def base_dir():
     from definitions import base_dir
