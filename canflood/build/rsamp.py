@@ -308,9 +308,17 @@ class Rsamp(Plotr, Qcoms):
                 else:
                     dtm_rlay1 = dtm_rlay
                 
+                #===============================================================
+                # precheck
+                #===============================================================
+                #check raster consistency 
+                for rlay in rlayRaw_l:
+                    assert_rlay_resolution_match(dtm_rlay, rlay,
+                              msg=f'hazard raster {rlay.name()} must have the same resolution as the DEM')
                 #===================================================================
                 # sample by goetype
                 #===================================================================
+            
                 if 'Polygon' in self.gtype:
                     res_vlay = self.samp_inun(finv,rlayRaw_l, dtm_rlay1, dthresh, logger=log)
                 elif 'Line' in self.gtype:
@@ -871,11 +879,7 @@ class Rsamp(Plotr, Qcoms):
         assert 'Memory' in dp.storageType() #zonal stats makes direct edits
         assert 'Polygon' in gtype
         
-        #check raster consistency
- 
-        for rlay in raster_l:
-            assert_rlay_resolution_match(dtm_rlay, rlay,
-                      msg=f'hazard raster {rlay.name()} must have the same resolution as the DEM')
+
 
                 
  
