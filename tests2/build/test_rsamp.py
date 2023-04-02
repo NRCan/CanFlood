@@ -29,7 +29,7 @@ proj_dir = {
             'g214_WSE_0035_OW1.tif', 
             'g214_WSE_0050_OW1.tif',
             ],
-        'finv_fp':'copy_park_inv.gpkg',
+        'finv_fp':'copy_park_inv.geojson',
         'dem_fp':'dem_clip_r1.tif',
         'run_kwargs':dict(dthresh=0.3, as_inun=True),
         'test_build_rsamp_run_fp':'test_build_rsamp_run_res_20230401.pkl'
