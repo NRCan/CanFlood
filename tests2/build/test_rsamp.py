@@ -8,7 +8,12 @@ testing build raster sampling backends (build.rsamp)
 
 import pytest, os, shutil
 from qgis.core import QgsVectorLayer, QgsRasterLayer
+import pandas as pd
+from pandas.testing import assert_frame_equal
+
+
 from build.rsamp import Rsamp
+from hlpr.Q import view
 from definitions import src_dir
 #===============================================================================
 # test data
@@ -20,13 +25,14 @@ proj_dir = {
     'ip1':{
         'dir':os.path.join(test_dir, 'inun_poly_20230401'),
         'rlay_fp_l':[
-            #'g214_WSE_0010_OW1.tif', 'g214_WSE_0020_OW1.tif', 
+            'g214_WSE_0010_OW1.tif', 'g214_WSE_0020_OW1.tif', 
             'g214_WSE_0035_OW1.tif', 
-            #'g214_WSE_0050_OW1.tif',
+            'g214_WSE_0050_OW1.tif',
             ],
         'finv_fp':'copy_park_inv.gpkg',
         'dem_fp':'dem_clip_r1.tif',
         'run_kwargs':dict(dthresh=0.3, as_inun=True),
+        'test_build_rsamp_run_fp':'test_build_rsamp_run_res_20230401.pkl'
         }
     }
 
@@ -38,8 +44,9 @@ for k0, d0 in proj_dir.copy().items():
     k1 = 'rlay_fp_l'    
     proj_dir[k0][k1]=[os.path.join(diri, fname) for fname in d0[k1]]
     
-    for k1 in ['finv_fp', 'dem_fp']:
-        proj_dir[k0][k1] = os.path.join(diri, proj_dir[k0][k1])
+    for k1, v in d0.items():
+        if k1.endswith('_fp'):
+            proj_dir[k0][k1] = os.path.join(diri, v)
  
 #===============================================================================
 # helpers
@@ -124,11 +131,22 @@ def test_init(wrkr):
 @pytest.mark.parametrize('projName',[
     'ip1', #build.rsamp.Rsamp.samp_inun()
     ], indirect=True)
-def test_build_rsamp_run(wrkr, rlayRaw_l, finv_rlay, dem_rlay, run_kwargs):
+def test_build_rsamp_run(wrkr, rlayRaw_l, finv_rlay, dem_rlay, run_kwargs, projName):
+    #run test
     wrkr.set_crs(crs=finv_rlay.crs())
     wrkr.run(rlayRaw_l, finv_rlay, dtm_rlay=dem_rlay, **run_kwargs)
+    print(wrkr.out_dir)
     
     #validate
     res_df = wrkr.res_df.copy()
+    vali_df = pd.read_pickle(proj_dir[projName]['test_build_rsamp_run_fp'])
     
-    print(wrkr.out_dir)
+    assert_frame_equal(res_df, vali_df)
+    
+    """
+    view(res_df)
+    res_df.to_pickle(os.path.join(proj_dir[projName]['dir'], 'test_build_rsamp_run_res_20230401.pkl'))
+    """
+
+    
+    
