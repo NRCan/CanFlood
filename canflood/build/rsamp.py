@@ -35,7 +35,9 @@ from hlpr.exceptions import QError as Error
     
 
 
-from hlpr.Q import Qcoms,vlay_get_fdf, vlay_get_fdata, view, RasterCalc
+from hlpr.Q import (
+    Qcoms,vlay_get_fdf, vlay_get_fdata, view, RasterCalc,assert_rlay_resolution_match,
+    )
 from hlpr.plot import Plotr
 
 #==============================================================================
@@ -839,7 +841,7 @@ class Rsamp(Plotr, Qcoms):
     def samp_inun(self, #inundation percent for polygons
                   finv, raster_l, dtm_rlay, dthresh,
                   
-                  out_dir=None,
+                  out_dir=None, temp_dir=None,
                    logger=None,):
         """TODO:
         implement intelligent retrival of depth rasters
@@ -856,6 +858,8 @@ class Rsamp(Plotr, Qcoms):
         
         #setup temp dir
         if out_dir is None: out_dir=self.temp_dir
+        if temp_dir is None: temp_dir=self.temp_dir
+        
               
         #=======================================================================
         # precheck
@@ -866,7 +870,15 @@ class Rsamp(Plotr, Qcoms):
         assert isinstance(dthresh, float)
         assert 'Memory' in dp.storageType() #zonal stats makes direct edits
         assert 'Polygon' in gtype
+        
+        #check raster consistency
+ 
+        for rlay in raster_l:
+            assert_rlay_resolution_match(dtm_rlay, rlay,
+                      msg=f'hazard raster {rlay.name()} must have the same resolution as the DEM')
 
+                
+ 
         #=======================================================================
         # sample loop---------
         #=======================================================================
@@ -910,7 +922,8 @@ class Rsamp(Plotr, Qcoms):
             thr_rlay_fp = self._get_thresh(dthresh, rlay,log, out_dir=os.path.join(out_dir, 'thresh'))
  
             tdelta = (datetime.datetime.now() - start) - tdelta
-            meta_d[indxr]['thr_rlay'] = { 'fp':thr_rlay_fp, 'time (secs)':tdelta.total_seconds(), 'name':os.path.basename(thr_rlay_fp)[:-4]}
+            meta_d[indxr]['thr_rlay'] = { 'fp':thr_rlay_fp, 'time (secs)':tdelta.total_seconds(), 
+                                         'name':os.path.basename(thr_rlay_fp)[:-4]}
             
             
             #===================================================================
@@ -925,13 +938,17 @@ class Rsamp(Plotr, Qcoms):
                             'INPUT':finv, 
                             'RASTER_BAND':1, 
                             'STATISTICS':[0],#0: pixel counts, 1: sum
-                            'OUTPUT' : 'TEMPORARY_OUTPUT',
+                            #'OUTPUT' : 'TEMPORARY_OUTPUT',
+                            'OUTPUT':os.path.join(temp_dir, f'{indxr}_zonalstatisticsfb.geojson')
                             }
                 
             #execute the algo
-            finvw = processing.run(algo_nm, ins_d, feedback=self.feedback)['OUTPUT']
+            finvw_fp = processing.run(algo_nm, ins_d, feedback=self.feedback)['OUTPUT']
+            finvw = QgsVectorLayer(finvw_fp,os.path.basename(finvw_fp),'ogr')
             
-
+            """
+            finvw.source()
+            """
  
             #===================================================================
             # check/correct field names
@@ -957,8 +974,8 @@ class Rsamp(Plotr, Qcoms):
             # check values
             #===================================================================
             """
-            should return all zeros
-                even if not overlapping the hazard layer
+            should never have nulls.
+                returns all zeros even if not overlapping the hazard layer
             """
             ser = pd.Series(vlay_get_fdata(finvw, fieldn=new_fn), name=new_fn)
             assert ser.notna().all(), 'got %i/%i null cell counts on \'%s\'  from %s'%(
@@ -966,16 +983,14 @@ class Rsamp(Plotr, Qcoms):
             #===================================================================
             # #clean up the layers
             #===================================================================
-            #self.mstore.addMapLayer(finv)
-             
-            finv = finvw
-            
+            #self.mstore.addMapLayer(finv)             
+            finv = finvw            
             meta_d[indxr] = pd.DataFrame.from_dict(meta_d[indxr])
  
             
         assert len(parea_d) == len(raster_l)
         log.debug(pd.concat(meta_d, axis=1).T)
-        #view(pd.concat(meat_d)
+        #view(pd.concat(meta_d))
         #=======================================================================
         # area calc-----------
         #=======================================================================
@@ -985,7 +1000,7 @@ class Rsamp(Plotr, Qcoms):
         #add geometry fields
         finv = self.addgeometrycolumns(finv, logger = log)
         
-        #get data
+        #get raw data (samples for each raster per column)
         df_raw  = vlay_get_fdf(finv, logger=log)
         df = df_raw.rename(columns=names_d) #rename to raster:cellCount:fid
 

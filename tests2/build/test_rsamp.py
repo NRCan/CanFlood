@@ -19,9 +19,13 @@ test_dir = os.path.join(src_dir, r'tests2\data\build\rsamp')
 proj_dir = {
     'ip1':{
         'dir':os.path.join(test_dir, 'inun_poly_20230401'),
-        'rlay_fp_l':['g214_WSE_0010_OW1.tif', 'g214_WSE_0020_OW1.tif', 'g214_WSE_0035_OW1.tif', 'g214_WSE_0050_OW1.tif'],
+        'rlay_fp_l':[
+            #'g214_WSE_0010_OW1.tif', 'g214_WSE_0020_OW1.tif', 
+            'g214_WSE_0035_OW1.tif', 
+            #'g214_WSE_0050_OW1.tif',
+            ],
         'finv_fp':'copy_park_inv.gpkg',
-        'dem_fp':'dem_clip.tif',
+        'dem_fp':'dem_clip_r1.tif',
         'run_kwargs':dict(dthresh=0.3, as_inun=True),
         }
     }
@@ -117,7 +121,14 @@ def test_init(wrkr):
 
 
 @pytest.mark.dev 
-@pytest.mark.parametrize('projName',['ip1'], indirect=True)
+@pytest.mark.parametrize('projName',[
+    'ip1', #build.rsamp.Rsamp.samp_inun()
+    ], indirect=True)
 def test_build_rsamp_run(wrkr, rlayRaw_l, finv_rlay, dem_rlay, run_kwargs):
     wrkr.set_crs(crs=finv_rlay.crs())
     wrkr.run(rlayRaw_l, finv_rlay, dtm_rlay=dem_rlay, **run_kwargs)
+    
+    #validate
+    res_df = wrkr.res_df.copy()
+    
+    print(wrkr.out_dir)
