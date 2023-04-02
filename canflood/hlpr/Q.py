@@ -3213,6 +3213,10 @@ def init_q(gui=False):
     
     except:
         raise Error('QGIS failed to initiate')
+    
+#===============================================================================
+# VLAYS----------
+#===============================================================================
         
 def vlay_check( #helper to check various expectations on the layer
                     vlay,
@@ -4649,7 +4653,9 @@ def vlay_key_convert(#convert a list of ids in one form to another
 
     return res_objs, fid_fval_d #converted objects, conversion dict ONLY FOR THSE OBJECTS!
             
-  
+#===============================================================================
+# RLAY--------
+#===============================================================================
 def getRasterMetadata(fp):
     assert os.path.exists(fp)
     
@@ -4669,6 +4675,8 @@ def getRasterCompression(fp):
     else:
         return md['COMPRESSION']  
         
+        
+ 
 
 #==============================================================================
 # type checks-----------------
@@ -4868,9 +4876,22 @@ def view(#view the vector data (or just a df) as a html frame
     
     return
 
-
-if __name__ == '__main__':
+#===============================================================================
+# ASSERTIONS------
+#===============================================================================\
+def assert_rlay_resolution_match(left, right,  msg='',): 
+    """check all spatial attributes match"""
+    if not __debug__: # true if Python was not started with an -O option
+        return 
+    __tracebackhide__ = True
+     
+    assert isinstance(left, QgsRasterLayer)
+    assert isinstance(right, QgsRasterLayer)
     
-
-    print('???')
+    #crs
+    for attn in ['crs', 'rasterUnitsPerPixelX',  'rasterUnitsPerPixelY']:
+        if not getattr(left, attn)()==getattr(right, attn)(): 
+            raise AssertionError(f'\'{attn}\' mismatch \n'+msg)
+ 
+ 
 

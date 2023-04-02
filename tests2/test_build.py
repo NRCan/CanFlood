@@ -3,9 +3,9 @@ Created on Jun. 24, 2022
 
 @author: cefect
 
-unit tests for CanFlood's 'build' toolset
+unit tests for CanFlood's 'build' dialog
 
-lets launch one dialog worker per module
+launch one dialog worker per module
 
 one test per button click
 
@@ -198,7 +198,9 @@ def test_04_build_hsamp(session, base_dir, cf_fp, rast_dir, finv_vlay, true_dir)
     #===========================================================================
     # execute
     #===========================================================================
-    QTest.mouseClick(dial.pushButton_HSgenerate, Qt.LeftButton) #sample
+    #build.dialog.BuildDialog.run_rsamp()
+    #build.rsamp.Rsamp.run()
+    QTest.mouseClick(dial.pushButton_HSgenerate, Qt.LeftButton) #sample. 
     
     #===========================================================================
     # load result from control file
