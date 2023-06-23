@@ -6,12 +6,15 @@
 name=CanFlood
 qgisMinimumVersion=3.22
 qgisMaximumVersion=3.99
-description=Flood risk modelling toolbox
-version=1.2.0
+description=Flood risk modelling toolbox. 
+description[fr]=Boîte à outils de modélisation des risques d’inondation
+version=1.28.0
 author=Seth Bryant
 email=nicky.hastings@canada.ca
-about=Provides a suite of tools for building, running, and analyzing simple flood risk models from typical asset and exposure data. Includes a tool for performing fragility calculations on dikes, downloading common flood vulnerability function libraries for buildings, and connecting to useful Canadian web-data. While the focus of the plugin is using depth-damage curves to estimate annualized flood risk from tangible building damages, the flexibility of the framework facilitates calculation of a wide-range of vulnerabilities from user-provided functions.
-
+about = Provides a suite of tools for building, running, and analyzing simple flood risk models from typical asset and exposure data. Includes a tool for performing fragility calculations on dikes, downloading common flood vulnerability function libraries for buildings, and connecting to useful Canadian web-data. While the focus of the plugin is using depth-damage curves to estimate annualized flood risk from tangible building damages, the flexibility of the framework facilitates calculation of a wide-range of vulnerabilities from user-provided functions.
+    
+    Fournit une suite d’outils pour élaborer, exécuter et analyser des modèles simples de risques d’inondation à partir de données typiques sur les actifs et l’exposition. Comprend un outil permettant d’effectuer des calculs de fragilité sur les digues, de télécharger des bibliothèques de fonctions courantes de vulnérabilité aux inondations pour les bâtiments et d’accéder à des données canadiennes utiles sur le Web. Bien que le plugiciel soit axé sur l’utilisation de courbes profondeur-dommages pour estimer le risque d’inondation annualisé à partir de dommages matériels causés aux bâtiments, la flexibilité du cadre facilite le calcul d’une large gamme de vulnérabilités à partir de fonctions fournies par l’utilisateur.
+    
 tracker=https://github.com/NRCan/CanFlood/issues
 repository=https://github.com/NRCan/CanFlood
 # End of mandatory metadata
