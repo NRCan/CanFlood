@@ -12,6 +12,8 @@ To help track the workflow, the following template is generally copied into a ne
 
 the dev branch is where new features and fixes are collected and tested before release. The following should be executed on the dev branch in preparation for pushing to the main branch:
 
+- [ ] add/update [sphinx+RTD english documentation]([url](https://github.com/NRCan/CanFlood/tree/master/docs/source)) where applicable
+
 - [ ] backwards merge master into dev to capture any upstream changes (these should be minor and limited to documentation tweaks as all development is done on the dev branch)
 
 - [ ] ensure the version tag is updated on \canflood\build\build.ui
@@ -26,6 +28,14 @@ the dev branch is where new features and fixes are collected and tested before r
 
 - [ ] Once these tests are complete **and passing**, a pull request should be completed and the dev branch merged into the main. 
 
+### Add french language 
+
+The following files/items may need french language content to be updated to reflect any new content from above
+
+- [ ] canflood\metadata.txt
+- [ ] sphinx+RTD documentation
+- [ ] project readme.md
+- [ ] release tag (see below)
 
 ### Publish the plugin
 
@@ -41,7 +51,7 @@ Now that all the code is tested and in the main branch, perform the following:
 
 ### Publish release on git-hub
 
-- [ ] in git-hub, create a new release tag (e.g., v1.2.0), summarize new features for developers. upload the same zip file. 
+- [ ] in git-hub, create a new release tag (e.g., v1.2.0), summarize new features for developers (in english and french). upload the same zip file. 
 
 - [ ] notify the management team
 
