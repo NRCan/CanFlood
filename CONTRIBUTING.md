@@ -13,6 +13,8 @@ To help track the workflow, the following template is generally copied into a ne
 the dev branch is where new features and fixes are collected and tested before release. The following should be executed on the dev branch in preparation for pushing to the main branch:
 
 - [ ] ensure the version tag is updated on \canflood\build\build.ui
+      
+- [ ] update \canflood\requirements.txt
 
 - [ ] execute all pytests. investigate warnings. fix errors. 
 
