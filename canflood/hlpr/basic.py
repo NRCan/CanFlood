@@ -757,8 +757,9 @@ def force_open_dir(folder_path_raw, logger=mod_logger): #force explorer to open 
     try:
 
         args = r'explorer "' + str(folder_path) + '"'
-        subprocess.Popen(args) #spawn process in explorer
-        'this doesnt seem to be working'
+        with subprocess.Popen(args) as p:#spawn process in explorer
+            pass
+ 
         logger.info('forced open folder: \n    %s'%folder_path)
         return True
     except:
