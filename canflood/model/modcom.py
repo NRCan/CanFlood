@@ -73,6 +73,7 @@ class Model(ComWrkr,
             'impact_units':str,
             'apply_miti':bool,
             'curve_deviation':str,
+            'absolute_fp':bool,
             },
         'dmg_fps':{
             'curves':str,
@@ -351,9 +352,22 @@ class Model(ComWrkr,
         self.pars = configparser.ConfigParser(inline_comment_prefixes='#')
         log.info('reading parameters from \n     %s'%self.pars.read(cf_fp))
         
+        
+        
         #=======================================================================
         # filepaths
         #=======================================================================
+        #set absolute_fp flag
+        """need to do this one early to do the file path checking"""
+        
+        
+        if 'absolute_fp' in self.pars['parameters']:
+            absolute_fp = self.pars['parameters'].getboolean('absolute_fp')
+            if not self.absolute_fp==absolute_fp:
+                log.warning(f'overwriting \'aboslute_fp\' with value from control file ({absolute_fp})')
+            self.absolute_fp=absolute_fp
+        
+        
         if not self.absolute_fp:
             log.info('converting relative filepaths')
             self.pars = self._cf_relative(self.pars)
@@ -1121,9 +1135,9 @@ class Model(ComWrkr,
             assert len(miss_l) == 0, '%i eventName mismatch on \'%s\' and \'evals\': \n    %s'%(
                 len(miss_l), dtag, miss_l)
             
-            boolcol = ~pd.Series(index=df.columns, dtype=bool) #all trues
+            boolcol = pd.Series(True, index=df.columns, dtype=bool) #all trues
         
- 
+        assert boolcol.any()
         #======================================================================
         # slice
         #======================================================================
@@ -1162,7 +1176,7 @@ class Model(ComWrkr,
             """forcing this becuase %inundation should never add ground elevations"""
             assert self.felv =='datum', 'felv must equal \'datum\' for pct inundation runs'
 
-        
+        assert len(df.columns)>0
         return df
         
 
@@ -1422,7 +1436,8 @@ class Model(ComWrkr,
             if bdf is None:
                 bdf = df
             else:
-                bdf = bdf.append(df, ignore_index=True, sort=False)
+                #bdf = bdf.append(df, ignore_index=True, sort=False)
+                bdf = pd.concat([bdf, df], ignore_index=True, sort=False)
                         
             log.info('for \"%s\' got %s'%(prefix, str(df.shape)))
             
@@ -1579,7 +1594,7 @@ class Model(ComWrkr,
 
 
         wdf = self.data_d['expos'] #wsl
-
+        assert len(wdf.columns)>0, f'no expos'
         #======================================================================
         # expand
         #======================================================================
@@ -2375,18 +2390,64 @@ class Model(ComWrkr,
         # nests
         #=======================================================================
         dxcol = self._get_finv_dxcol(df_raw)
+        """
+        >>> dxcol
+                nestID    f0                              f1                       
+                bname    tag    scale         cap  elv   tag    scale      cap  elv
+                xid                                                                
+                14879   BA_S  117.990   91300.000  3.0  BA_C  117.990  20000.0  1.0
+                14880   BA_S  140.560  134000.000  3.0  BA_C  140.560  20000.0 -2.0
+                ...      ...      ...         ...  ...   ...      ...      ...  ...
+                74651   CA_S  137.619  139515.359  1.1  CA_C  137.619  15000.0  0.2
+                75511   CA_S  137.619  358502.594  3.0  CA_C  137.619  15000.0 -2.0
+                
+                [32 rows x 8 columns]
 
         """
-        view(df_raw)
-        df_raw.dtypes
-        view(dxcol)
-        dxcol.dtypes
-        """
+
+ 
         #===================================================================
         # loop and check each nest----
         #===================================================================
-        for nestID, dfn in dxcol.groupby(level=0, axis=1):
-            dfn = dfn.droplevel(0, axis=1).dropna(how='all', axis=0)
+        
+#===============================================================================
+#         for nestID, dfn in dxcol.groupby(level=0, axis=1):
+#  
+# 
+#             dfn = dfn.droplevel(0, axis=1).dropna(how='all', axis=0)
+#             """
+#             bname   tag    scale         cap  elv
+#             xid                                  
+#             14879  BA_S  117.990   91300.000  3.0
+#             14880  BA_S  140.560  134000.000  3.0
+#             ...     ...      ...         ...  ...
+#             74651  CA_S  137.619  139515.359  1.1
+#             75511  CA_S  137.619  358502.594  3.0
+#             
+#             """
+#===============================================================================
+            
+            # Group by the first level of the column MultiIndex without using axis=1
+        for nestID in dxcol.columns.get_level_values(0).unique():
+            # Select columns belonging to the current nestID group
+            dfn = dxcol.loc[:, dxcol.columns.get_level_values(0) == nestID]
+ 
+            
+            # Remove the first level from the column MultiIndex
+            dfn.columns = dfn.columns.droplevel(0)
+            
+            # Drop rows where all values are NaN
+            dfn = dfn.dropna(how="all")
+            
+            
+            # Transpose back to restore the original orientation
+            #===================================================================
+            # dfn = dfn.T
+            # # Remove the first level from the column MultiIndex
+            # dfn.columns = dfn.columns.droplevel(0)
+            # # Drop rows where all values are NaN
+            # dfn = dfn.dropna(how="all")
+            #===================================================================
                 
             #===================================================================
             # with handles
@@ -2431,15 +2492,56 @@ class Model(ComWrkr,
         
         return True
     
-    def _get_finv_dxcol(self, #get finv as a dxcol
-                             df):
+    def _get_finv_dxcol(self,df):
         """
-        todo: transition everything to dxcols
-        """
-        dtypes = df.dtypes
-        cdf, prefix_l = self._get_finv_cnest(df)
+        get finv as a dxcol
         
-        df_c = cdf.append(df).dropna(subset=['nestID'], axis=1, how='any').drop('ctype')
+        
+        todo: transition everything to dxcols
+        
+        Parameters
+        --------------
+        pd.DataFrame
+            finv
+                      f0_tag  f0_scale      f0_cap  f0_elv f1_tag  f1_scale   f1_cap  f1_elv
+                xid                                                                         
+                14879   BA_S   117.990   91300.000     3.0   BA_C   117.990  20000.0     1.0
+                14880   BA_S   140.560  134000.000     3.0   BA_C   140.560  20000.0    -2.0
+                ...      ...       ...         ...     ...    ...       ...      ...     ...
+                74651   CA_S   137.619  139515.359     1.1   CA_C   137.619  15000.0     0.2
+                75511   CA_S   137.619  358502.594     3.0   CA_C   137.619  15000.0    -2.0
+                
+                
+        Returns
+        ----------
+        pd.DataFrame (multi-index on columns)
+            nestID    f0                              f1                       
+            bname    tag    scale         cap  elv   tag    scale      cap  elv
+            xid                                                                
+            14879   BA_S  117.990   91300.000  3.0  BA_C  117.990  20000.0  1.0
+            14880   BA_S  140.560  134000.000  3.0  BA_C  140.560  20000.0 -2.0
+            ...      ...      ...         ...  ...   ...      ...      ...  ...
+            74651   CA_S  137.619  139515.359  1.1  CA_C  137.619  15000.0  0.2
+            75511   CA_S  137.619  358502.594  3.0  CA_C  137.619  15000.0 -2.0
+        
+        """
+        
+        #=======================================================================
+        # load variables
+        #=======================================================================
+        dtypes = df.dtypes
+        cdf, _ = self._get_finv_cnest(df) #load extracted codes from column headers
+        
+        """
+        >>> cdf
+                   f0_tag f0_scale f0_cap f0_elv f1_tag f1_scale f1_cap f1_elv
+            ctype    nest     nest   nest   nest   nest     nest   nest   nest
+            nestID     f0       f0     f0     f0     f1       f1     f1     f1
+            bname     tag    scale    cap    elv    tag    scale    cap    elv
+        
+        """
+        
+        df_c = pd.concat((cdf, df)).dropna(subset=['nestID'], axis=1, how='any').drop('ctype')
 
         
         #get multindex from two rows

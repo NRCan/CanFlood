@@ -536,7 +536,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # #inventory vector layer---------
         #=======================================================================
         if set_finv:
-            
+            log.debug(f'set_finv=True')
             #===================================================================
             # get using selection logic
             #===================================================================
@@ -812,7 +812,14 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # extract, download, and update cf
         #=======================================================================
+        
+        
         """
+        2024-12-20: couldn't find what is throwing this:
+            error message:
+             TypeError: setValue(self, value: int): argument 1 has unexpected type 'float'
+        
+        
         for k,v in kwargs.items():
             print(k,v)
         """

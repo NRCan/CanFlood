@@ -20,6 +20,7 @@ import pandas as pd
 
 from pandas.testing import assert_frame_equal
 
+ 
 from pytest_qgis.utils import clean_qgis_layer
 
 from qgis.core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsProject
@@ -59,7 +60,7 @@ def finv_vlay(session, finv_fp):
 #===============================================================================
 
 def test_00_version(qgis_version):
-    assert qgis_version==32804, 'bad version: %s'%qgis_version
+    assert qgis_version==33412, 'bad version: %s'%qgis_version
     
 
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
@@ -88,6 +89,7 @@ def test_01_build_scenario(session):
 @pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.geojson'], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_01_build_scenario_BuildDi0\CanFlood_test_01.txt']) #from test_01
 def test_02_build_inv(session, base_dir, finv_vlay, cf_fp):
+    """on the Inventory t ab, use the 'Inventory Compmiler'"""
     dial = session.Dialog
     
     #===========================================================================
@@ -107,14 +109,15 @@ def test_02_build_inv(session, base_dir, finv_vlay, cf_fp):
     # execute
     #===========================================================================
     #click Store
-    QTest.mouseClick(dial.pushButton_Inv_store, Qt.LeftButton)
+    QTest.mouseClick(dial.pushButton_Inv_store, Qt.LeftButton) #build.dialog.BuildDialog.store_finv()
  
     #===========================================================================
     # check
     #===========================================================================
     #retrieve the filepath from the control file
     fp = dial.get_cf_par(cf_fp, sectName='dmg_fps', varName='finv')
-    assert os.path.exists(fp)
+    assert not fp is None, f'no finv specified'
+    assert os.path.exists(fp), fp
     
     df = pd.read_csv(fp)
     assert len(df)==finv_vlay.dataProvider().featureCount()
@@ -232,13 +235,25 @@ def test_05_build_evals(session, base_dir, cf_fp, true_dir):
     # setup
     #===========================================================================
     out_dir = session.out_dir
+    data_dir = os.path.join(base_dir, os.path.dirname(cf_fp))
     cf_fp = build_setup(base_dir, cf_fp, dial, out_dir, testName='test_05')
     
     #===========================================================================
     # get event names
     #===========================================================================
+
     fp = dial.get_cf_par(dial.get_cf_fp(), sectName='dmg_fps', varName='expos')
-    eventNames_l = pd.read_csv(fp, index_col=0).columns.to_list()
+    
+    """
+    2024-12-20:
+    this is loading the absolute path from the control file... which is some old/wrong path
+    this must have been set to load relative paths at some point?
+    not sure.. fixed
+    """
+    fp = os.path.join(data_dir, os.path.basename(fp))    
+    
+    eventNames_l = pd.read_csv(fp,index_col=0).columns.to_list()
+        
     dial.event_name_set = eventNames_l
     #===========================================================================
     # setup table

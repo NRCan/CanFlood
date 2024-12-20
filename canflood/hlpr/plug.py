@@ -676,6 +676,8 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
             
             raise Error('passed finv cid=\'%s\' values contain %i duplicates... see logger'%(
                 self.cid, boolidx.sum()))
+            
+        return
         
 
     def _change_tab(self, tabObjectName): #try to switch the tab on the gui
