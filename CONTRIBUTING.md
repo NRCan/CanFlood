@@ -1,47 +1,56 @@
 # Contributing to the CanFlood project
 
-CanFlood is an open source project with major contributions from IBI Group funded by NRCan
+CanFlood is an open source project with numerous contributors
+
+## Branches
+
+### dev
+the dev branch is where new features and fixes are collected and tested before release.
+
+### master
+the deployed project version
 
 ## CanFlood Plugin update
 
 Whether fixing a bug or introducing a new feature to CanFlood, contributors should adhere to the following in order to make their work accessible to users via the QGIS plugin repository.
+Execute the below steps to prepare and release an update.
 
-To help track the workflow, the following template is generally copied into a new issue and associated with a github project.
+### Step 1: Pull Request
 
-### Integrate changes to dev branch
+- [ ] merge feature branches into dev branch. test and fix. 
 
-the dev branch is where new features and fixes are collected and tested before release. The following should be executed on the dev branch in preparation for pushing to the main branch:
+- [ ] create a PR (dev > master) named "<plugin version> release candidate" (e.g., v1.2.0 release candidate). Copy this checklist into the description. 
 
-- [ ] ensure the version tag is updated on \canflood\build\build.ui
+- [ ] pull changes from master into dev branch (should just be small changes to .md files) 
+
+- [ ] update the [documentation](./docs/CONTRIBUTING.md) if necessary. 
+
+- [ ] ensure the documentation builds are passing on ReadTheDocs
+
+- [ ] update the QGIS and CanFlood version tag on [build.ui](./canflood/build/build.ui) and the project [README.md](./README.md). 
+
+- [ ] update the **Updates** section of the project [README.md](./README.md). 
+
+- [ ] similarly update [plugin metadata file](./canflood/metadata.txt)
       
-- [ ] update \canflood\requirements.txt
+- [ ] update the plugin [requirements file](./canflood/requirements.txt) to capture the exact dependencies 
 
 - [ ] execute all pytests. investigate warnings. fix errors. 
 
-- [ ] perform a 'person test' by having a non-developer follow relevant tutorials. investigate warnings and fix errors.
+- [ ] use [plug_zip.bat](./dev_tools/plug_zip.bat) to create the plugin zip (`canflood.zip`) installable version of the release candidate in `./plugin_zips`
 
-- [ ] Once these tests are complete, a pull request should be completed and the dev branch merged into the main. 
+- [ ] perform a **person test** by having a non-developer follow relevant tutorials. investigate warnings and fix errors.
 
-### Prepare main branch for publication
+### Step 2: Release update on github
 
-Now that all the code is tested and in the main branch, perform the following:
+- merge and close the above PR (do not delete the dev branch)
 
-- [ ] update the README.md to summarize any new features for users
+- in git-hub, create a new release tag matching the plugin version tag (e.g., v1.2.0) from the recently updated master branch, summarize new features for developers. upload the plugin zip. 
 
-- [ ] similarly update canflood\metadata.txt
+### Step 3: Publish the plugin on the QGIS plugin repo
 
-### Publish the plugin
+- login to [plugins.qgis.org](https://plugins.qgis.org/accounts/login/?next=/plugins/my) using the CanFlood credentials (ask Nicky). Navigate to **Upload a plugin** and select the plugin zip file.
 
-- [ ] delete all instances of \__pycache__\ in the source code
+- In QGIS, refresh the repository and ensure that the new version is available (may take ~10mins for the version to be available). From a clean profile, upgrade and check that it works.
 
-- [ ] zip the \canflood subfolder to some temporary directory
 
-- [ ] login to [plugins.qgis.org](https://plugins.qgis.org/accounts/login/?next=/plugins/my) using the CanFlood credentials (ask Nicky). Navigate to **Upload a plugin** and select the zip file.
-
-- [ ] In QGIS, refresh the repository and ensure that the new version is available (may take ~10mins for the version to be available). Upgrade and check that it works.
-
-### Publish release on git-hub
-
-- [ ] in git-hub, create a new release tag (e.g., v1.2.0), summarize new features for developers. upload the same zip file. 
-
-- [ ] notify the management team
