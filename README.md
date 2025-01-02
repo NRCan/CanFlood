@@ -15,7 +15,16 @@ Happy flood risk modelling!
 [Documentation](https://canflood.readthedocs.io/en/latest/#) is provided for the latest and archived versions. 
 
 
-## Phase 3 Development
+## Updates
+
+v1.2.1 is released addressing the following:
+- update to QGIS 3.34
+- address issue 87: area threshold rebase
+- address issue 52: Error: got negative extrapolation
+- address issue 43:  Model tables are missing table numbers
+- address issue 70: Rtail clarification
+- address issue 93: Missing Depth-Damage Curves in IBI 2020 Dataset
+
 
 [v1.2.0](https://github.com/NRCan/CanFlood/releases/tag/v1.2.0) is released with the following major new features:
 1) [new tool](https://canflood.readthedocs.io/en/dev/05_toolsets.html#report-automator) for generating a pdf report of your model.
