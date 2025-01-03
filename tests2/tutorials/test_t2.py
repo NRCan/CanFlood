@@ -46,6 +46,10 @@ def data_dir(base_dir):
 def test_t2_A(session, data_dir, true_dir, tmp_path, write):
     """
     
+    NOTE:
+        2025-01-03: unit test is crashing when trying to generate the html report
+    
+    
     TODO: 
         refactor or shorten this code (we'll need to re-use a lot of it for subsequent tutorials)
         add value tests
@@ -314,8 +318,7 @@ def test_t2_A(session, data_dir, true_dir, tmp_path, write):
     # pdf reporter
     #===========================================================================
  
- 
-    report = test_results.res_02_reporter(dial, finv_fp = os.path.join(data_dir, 'finv_tut2.geojson'))
+    report = test_results.res_02_reporter(dial, finv_fp = os.path.join(data_dir, 'finv_tut2.geojson')) #unit test is crashing
  
  
     
