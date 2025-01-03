@@ -33,7 +33,7 @@ Execute the below steps to prepare and release an update.
 
 - [ ] similarly update [plugin metadata file](./canflood/metadata.txt)
       
-- [ ] update the plugin [requirements file](./canflood/requirements.txt) to capture the exact dependencies 
+- [ ] update the plugin [requirements file](./canflood/requirements.txt) to capture the exact dependencies (`pip freeze`)
 
 - [ ] execute all pytests. investigate warnings. fix errors. 
 
