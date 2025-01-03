@@ -12,5 +12,5 @@ Two types of tests are included:
 At the end of each test, a validation against some datafile (previous test result) should be performed to ensure program behaviour/performance has not changed. 
 
 ## Calling tests
-The batch script `./tests2/pytest_all.bat` is provided to conveniently run all of the "tests2" tests. 
+The batch script `./tests2/pytest_all.bat` is provided to conveniently run all of the "tests2" tests from environment scripts in `./env`. 
 This requires a properly configured development environment as explained in `./CONTRIBUTING.md` 

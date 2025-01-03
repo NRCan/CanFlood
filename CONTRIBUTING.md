@@ -54,3 +54,16 @@ Execute the below steps to prepare and release an update.
 - In QGIS, refresh the repository and ensure that the new version is available (may take ~10mins for the version to be available). From a clean profile, upgrade and check that it works.
 
 
+## Setting up your development environment
+
+For development, we generally use a virtual pyqgis environment pinned to the QGIS target version (see .\README.md) with the additional dependencies installed from `./requirements.txt`.
+Generally, we launch this with batch scripts in the .\env folder (.gitignored)
+
+
+### PYTHONPATH
+Some tests and utilities expect the following PYTHONPATH:
+
+ - ./
+ - ./canflood
+ - ./tools
+
