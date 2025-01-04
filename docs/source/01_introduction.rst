@@ -1,4 +1,4 @@
-.. _introduction:
+
 
 ===============
 1. Introduction
@@ -14,11 +14,11 @@ CanFlood is an object-based, transparent, open-source flood risk calculation too
 
 Each of these has a suite of tools to assist the flood risk modeller in a wide range of tasks common in developing flood risk assessments in Canada.
 
-CanFlood flood risk models are object-based, where consequences from flood exposure are calculated for each asset (e.g., a house) using a one-dimensional user-supplied vulnerability function (i.e., depth-damage function) before summing the consequences on each asset and integrating a range of events to obtain the total flood risk in an area. To support the diversity of flood risk assessment needs and data availability across Canada, CanFlood supports three modelling frameworks of increasing complexity, data requirements, and effort (Section1.1_). Each of these frameworks was designed to be flexible and agnostic, allowing modellers to implement a single software tool and data structure while maintaining flood risk models that reflect the heterogeneity of Canadian assets and values. Recognizing the significance of flood protection infrastructure on flood risk in many Canadian communities, CanFlood models can incorporate failure potential into risk calculations. To make use of Canada’s growing collection of hazard modelling datasets, CanFlood helps users connect with and manipulate such data into flood risk models.
+CanFlood flood risk models are object-based, where consequences from flood exposure are calculated for each asset (e.g., a house) using a one-dimensional user-supplied vulnerability function (i.e., depth-damage function) before summing the consequences on each asset and integrating a range of events to obtain the total flood risk in an area. To support the diversity of flood risk assessment needs and data availability across Canada, CanFlood supports three modelling frameworks of increasing complexity, data requirements, and effort.
+Each of these frameworks was designed to be flexible and agnostic, allowing modellers to implement a single software tool and data structure while maintaining flood risk models that reflect the heterogeneity of Canadian assets and values. Recognizing the significance of flood protection infrastructure on flood risk in many Canadian communities, CanFlood models can incorporate failure potential into risk calculations. To make use of Canada’s growing collection of hazard modelling datasets, CanFlood helps users connect with and manipulate such data into flood risk models.
 
-The CanFlood plugin is NOT a flood risk model, instead it is a modelling platform with a suite of tools to aid users in building, executing, and analyzing their own models. CanFlood requires users to pre-collect and assemble the datasets that describe flood risk in their study area (see :ref:`Section3 <applications_and_workflows>`). Once analysis in CanFlood is complete, users must apply their own judgement and experience to attach the necessary context and advice to any reporting before communicating results to decision makers. CanFlood results should not be used to *make* decisions, instead they should be used to *inform* decisions along with all the other dimensions and criteria relevant to the community at risk.
+The CanFlood plugin is NOT a flood risk model, instead it is a modelling platform with a suite of tools to aid users in building, executing, and analyzing their own models. CanFlood requires users to pre-collect and assemble the datasets that describe flood risk in their study area (see :ref:`Section 3 <applications_and_workflows>`). Once analysis in CanFlood is complete, users must apply their own judgement and experience to attach the necessary context and advice to any reporting before communicating results to decision makers. CanFlood results should not be used to *make* decisions, instead they should be used to *inform* decisions along with all the other dimensions and criteria relevant to the community at risk.
 
-.. _Section1.1:
 
 **************
 1.1 Background
@@ -46,7 +46,7 @@ Considering the limitation of existing tools, and the growing need to minimize f
 
   • facilitate more sophisticated and stream-lined modelling.
 
-.. _Section1.1.2:
+
 
 1.1.2 Guidelines
 ================
@@ -63,10 +63,17 @@ Some international guidelines are provided in :numref:`tab-guidelines`.
 
 .. _tab-guidelines:
 
-.. csv-table:: International Guidelines
-   :file: tables/international_guidelines.csv
-   :widths: 30, 70
-   :header-rows: 1
+
+.. table:: International Guidelines
+   :class: longtable
+
+   .. csv-table::
+      :file: tables/international_guidelines.csv
+      :widths: 30, 30
+      :header-rows: 1
+
+
+
 
 
 
@@ -90,7 +97,7 @@ The CanFlood plugin is for users with spatial and vulnerability data desiring to
    • Object-based flood risk analysis
    • QGIS (novice)
 
-See Section1.1.2_ for a summary of guidelines and procedures related to FRAs in Canada.
+See :ref:`Section1.1.2` for a summary of guidelines and procedures related to FRAs in Canada.
 
 .. _Section1.3:
 
@@ -175,11 +182,14 @@ Connecting all these together to perform an analysis is discussed in :ref:`Secti
 1.4 Control Files
 *****************
 
-CanFlood models are designed to write and read from small ‘Control Files’. These make it easy to build and share a specific model or scenario, and to keep a record of how the results set were generated. These also facilitate making a small change to a common input file (e.g., the asset inventory), and having this change replicated across all scenario runs. Control Files don’t contain any (large) data, only parameter values and pointers to the datasets required by a CanFlood model. Diligent and consistent file storage and naming conventions are essential for a pleasant modelling experience. Most Control File parameters and Data Files can be configured in the ‘Build’ toolset; however, some advanced parameters must be configured manually (see :ref:`Section5.2 <Section5.2>` for a full description of the Control File Parameters) (All SOFDA inputs must be built and configured manually) . The collection of model inputs and configured control file is called a ‘model package’ as shown in Figure1-1_ . More information on input files is provided in :ref:`Section3 <applications_and_workflows>` .
+CanFlood models are designed to write and read from small ‘Control Files’.
+These make it easy to build and share a specific model or scenario, and to keep a record of how the results set were generated. These also facilitate making a small change to a common input file (e.g., the asset inventory), and having this change replicated across all scenario runs. Control Files don’t contain any (large) data, only parameter values and pointers to the datasets required by a CanFlood model.
+Diligent and consistent file storage and naming conventions are essential for a pleasant modelling experience. Most Control File parameters and Data Files can be configured in the ‘Build’ toolset; however, some advanced parameters must be configured manually (see :ref:`Section 5.2 <Section5.2>` for a full description of the Control File Parameters) (All SOFDA inputs must be built and configured manually).
+The collection of model inputs and configured control file is called a ‘model package’ as shown in :ref:`Figure1-1` . More information on input files is provided in :ref:`Section 3 <applications_and_workflows>` .
 
 .. _Figure1-1:
 
-Figure 1-1. More information on input files is provided in :ref:`Section3 <applications_and_workflows>` .
+Figure 1-1. More information on input files is provided in :ref:`Section 3 <applications_and_workflows>` .
 
 .. image:: /_static/intro_1_4_conrol_files.jpg
 
