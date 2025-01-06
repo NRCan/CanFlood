@@ -25,12 +25,14 @@ Most workflows in CanFlood require the user to employ a similar sequence of the 
   • *Asset heights*: L1 or L2 models incorporating asset inventories with object height data relative to ground require ground elevations data (‘gels’).
   • *Exposure type*: L1 or L2 models with non-point geometry assets evaluating exposure as a percentage of inundation (:ref:`Section5.1.3 <Section5.1.3>`) require a DTM layer.
 
-.. _Figure3-1:
 
-.. image:: /_static/app_workflow_build_model.jpg
 
-*Figure 3-1: Typical model construction workflow using CanFlood’s ‘Build’ tools from ‘Setup’ to ‘Validation’.
-Data inputs are described in :ref:`Section3 <applications_and_workflows>` while tools and outputs are described in*  :ref:`Section5.1 <Section5.1>`
+.. figure:: /_static/app_workflow_build_model.jpg
+  :name: Figure3-1
+  :alt: Workflow for building a model
+
+  Typical model construction workflow using CanFlood’s ‘Build’ tools from ‘Setup’ to ‘Validation’.
+  Data inputs are described in :ref:`Section3 <applications_and_workflows>` while tools and outputs are described in :ref:`Section5.1 <Section5.1>`.
 
 More information and additional tools to support model construction are provided in :ref:`Section5.1 <Section5.1>` .
 
@@ -42,7 +44,8 @@ The remainder of this section summarizes some typical analysis types or workflow
 3.1. Risk (L1) Exposure-Based Assessment
 ****************************************
 
-Exposure-based (L1) assessments quantify the probability of binary exposure of assets to flooding (wet vs. dry). This can be useful for initial assessments, where resources and data are limited, to identify areas for further study. In CanFlood, this is accomplished by collecting data, building a Risk (L1) model, running the model, and evaluating the results. Unlike vulnerability-based assessments (L2, Section3.2_), exposure-based (L1) assessments do not capture the influence of flood depth on risk. In other words, a house with some ponding in the yard would be counted the same as a house fully under-water. However, exposure-based (L1) assessments can be used to estimate additional risk-metrics through application of CanFlood’s scaling parameters (e.g., estimating crop-loss by multiplying the area inundated by some loss/area constant). Exposure-based (L1) assessments can incorporate an assessment of defense failure if exposure probability data is available (Section3.3_). Figure3-1_ and Figure3-2_ summarize a typical Risk (L1) workflow. For more information on the Risk (L1) model, see :ref:`Section5.2.1 <Section5.2.1>`.
+Exposure-based (L1) assessments quantify the probability of binary exposure of assets to flooding (wet vs. dry). This can be useful for initial assessments, where resources and data are limited, to identify areas for further study. In CanFlood, this is accomplished by collecting data, building a Risk (L1) model, running the model, and evaluating the results. Unlike vulnerability-based assessments (L2, Section3.2_), exposure-based (L1) assessments do not capture the influence of flood depth on risk. In other words, a house with some ponding in the yard would be counted the same as a house fully under-water. However, exposure-based (L1) assessments can be used to estimate additional risk-metrics through application of CanFlood’s scaling parameters (e.g., estimating crop-loss by multiplying the area inundated by some loss/area constant). Exposure-based (L1) assessments can incorporate an assessment of defense failure if exposure probability data is available (Section3.3_).
+:numref:`Figure3-1` and :numref:`Figure3-2` summarize a typical Risk (L1) workflow. For more information on the Risk (L1) model, see :ref:`Section5.2.1 <Section5.2.1>`.
 
 .. _Figure3-2:
 
