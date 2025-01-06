@@ -206,6 +206,8 @@ class ComWrkr(object): #common methods for all classes
         # connect feedback to progress bar
         #=======================================================================
         #QgsFeedback like
+        """2025-01-06: something changed here? throwing setValue error?
+        """
         if hasattr(feedback, 'progressChanged'):
             feedback.progressChanged.connect(progressBar.setValue)
             
