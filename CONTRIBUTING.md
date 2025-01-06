@@ -35,7 +35,7 @@ Execute the below steps to prepare and release an update.
       
 - [ ] update the plugin [requirements file](./canflood/requirements.txt) to capture the exact dependencies (`pip freeze`)
 
-- [ ] execute all pytests. investigate warnings. fix errors. 
+- [ ]  execute all pytests. investigate warnings. fix errors. (ctrl+f in console for 'error' and 'warning' as a workaround)
 
 - [ ] use [plug_zip.bat](./dev_tools/plug_zip.bat) to create the plugin zip (`canflood.zip`) installable version of the release candidate in `./plugin_zips`
 
