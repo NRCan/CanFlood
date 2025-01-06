@@ -21,7 +21,7 @@ from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
 #qgis
 #from qgis.core import *
 from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer, QgsMapLayerProxyModel, \
-    QgsWkbTypes, QgsMapLayer
+    QgsWkbTypes, QgsMapLayer, QgsLogger
 
 #==============================================================================
 # custom imports
@@ -1542,7 +1542,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         self.feedback.upd_prog(100)
         
-        log.push('passed %i (of %i) validations. see log for errors'%(
+        log.push(f'passed %i (of %i) validations. see log for errors: {QgsLogger.logFile()}'%(
              np.array(list(res_d.values())).sum(), len(vpars_d)
              ))
         
