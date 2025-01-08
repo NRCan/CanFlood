@@ -13,8 +13,8 @@ author = 'Seth Bryant, James Gibson, Dhanyatha Harish'
 html_logo = '_static/NRCan_logo.jpg'
 
 # The full version, including alpha/beta/rc tags
-release = '1.0'
-version = '1.0'
+release = '1.2.1'
+version = '1.2.1'
 
 
 # -- General configuration ---------------------------------------------------
