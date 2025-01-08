@@ -796,12 +796,15 @@ When applying the Dike Fragility Mapper to your project, the following should be
   • CanFlood does not perform any hydraulic analysis, the user must supply influence polygons denoting the area over which assets should have their probability of realizing the corresponding failure raster WSL. Considering this, influence polygons can safely extend beyond the raster extents without affecting the calculation of failure impacts.
   • Fragility functions should be developed and tagged to each raster segment by a qualified geotechnical expert using field data.
 
-5.4.2. Add Connections
+5.4.2. WebConnections
 ======================
 
-CanFlood’s ‘Add Connections’ |addConnectionsImage| tool adds a pre-compiled set of web-resources to a user’s QGIS profile for easy access and configuration (i.e., adding credentials). The set of web-resources added by this tool are configured in the ‘canflood\_pars\WebConnections.ini’ file (in the user’s plugin directory). :ref:`Appendix A <appendix_a>` summarizes the web-connections added by this tool.
+CanFlood’s WebConnections’ |addConnectionsImage| tool adds a pre-compiled set of web-resources to a user’s QGIS profile for easy access and configuration (i.e., adding credentials).
+The set of web-resources added by this tool are configured in the ‘canflood/_pars/WebConnections.ini’ file (in the user’s plugin directory).
+:ref:`Appendix A <appendix_a>` summarizes the connections added by this tool.
 
-The `QGIS User Guide <https://docs.qgis.org/3.10/en/docs/user_manual/working_with_ogc/ogc_client_support.html#wms-wmts-client>`__ explains how to manage and access these connections. Once the resources are added to a user’s profile, two basic methods can be used to add the data to the project:
+The `QGIS User Guide <https://docs.qgis.org/3.34/en/docs/user_manual/working_with_ogc/ogc_client_support.html>` explains how to manage and access these connections.
+Once the resources are added to a user's profile, two basic methods can be used to add the data to the project:
 
   • **Browser Panel**: This is the simplest method but does not support any refinement of the data request. On the Browser Panel, expand the provider type of interest (e.g., ArcGisFeatureServer) > expand the connection of interest > select the layer of interest > right click > Add Layer To Project.
 
