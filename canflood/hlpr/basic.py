@@ -25,7 +25,7 @@ pd.set_option('display.max_rows',5)
 import numpy as np
 import tempfile #todo: move this up top
 
-
+from PyQt5.QtWidgets import QProgressBar
 #==============================================================================
 # custom
 #==============================================================================
@@ -207,17 +207,49 @@ class ComWrkr(object): #common methods for all classes
         #=======================================================================
         #QgsFeedback like
         """2025-01-06: something changed here? throwing setValue error?
+        
+        link to progressBar method:
+                https://doc.qt.io/qtforpython-5/PySide2/QtWidgets/QProgressBar.html#PySide2.QtWidgets.PySide2.QtWidgets.QProgressBar.setValue
+                
+        there is an issue with how QProgressBar.setValue is connected to the progressChanged signal
+        the d ummy MyProgressReporter works fine, but something changed with  QProgressBar
+        
         """
+        
+        if isinstance(progressBar, QProgressBar): #from PyQt5.QtWidgets import QProgressBar
+            progressBar.setValue(1) #works
+            print('QProgressBar')
+        
+        print(f'\n\nfor {self}\n    connecting {feedback}   \n    {progressBar}\n')
+        feedback.setProgress(1)
         if hasattr(feedback, 'progressChanged'):
             feedback.progressChanged.connect(progressBar.setValue)
-            
-        #dummy feedbacker
-        elif hasattr(feedback, 'slots'):
-            feedback.slots = [progressBar.setValue]
-            
+              
+        #=======================================================================
+        # #dummy feedbacker
+        # elif hasattr(feedback, 'slots'):
+        #     feedback.slots = [progressBar.setValue]
+        #=======================================================================
+              
         else:
             raise Error('unrecognized feedback object: %s'%type(feedback))
         
+ 
+        
+        """
+        from PyQt5.QtWidgets import QProgressBar
+        help(QProgressBar)
+        """
+        
+        if isinstance(progressBar, QProgressBar):
+            print('progressBar connected... testing slot connection')
+            feedback.setProgress(2)
+            """
+            error message:
+             TypeError: setValue(self, value: int): argument 1 has unexpected type 'float'
+             """
+            
+            print('finished')
         #=======================================================================
         # attach
         #=======================================================================
@@ -228,6 +260,8 @@ class ComWrkr(object): #common methods for all classes
         
         self.logger.debug('feedback set as \'%s\' and progressBar: %s'%(
             type(feedback).__name__, type(progressBar).__name__))
+        
+        print(f'feedback done\n\n')
         
         
         
@@ -539,6 +573,7 @@ class MyProgressReporter(object):   #progressBar like basic progress reporter
         print('    prog reset')
     
     def setValue(self, prog):
+        print(f'MyProgressReporter {prog} {type(prog)}')
         self.prog= prog
         
         """disabling for console runs???
