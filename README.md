@@ -28,6 +28,7 @@ v1.2.1 is released addressing the following:
 - address issue 43:  Model tables are missing table numbers
 - address issue 70: Rtail clarification
 - address issue 93: Missing Depth-Damage Curves in IBI 2020 Dataset
+- remove SOFDA/L3
 
 
 [v1.2.0](https://github.com/NRCan/CanFlood/releases/tag/v1.2.0) is released with the following major new features:
