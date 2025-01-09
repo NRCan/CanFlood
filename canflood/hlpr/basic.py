@@ -215,15 +215,19 @@ class ComWrkr(object): #common methods for all classes
         the d ummy MyProgressReporter works fine, but something changed with  QProgressBar
         
         """
-        
+        """
+        2025-01-09:
+        Adding Lambda Function resolves the TypeError
+        """
         if isinstance(progressBar, QProgressBar): #from PyQt5.QtWidgets import QProgressBar
-            progressBar.setValue(1) #works
-            print('QProgressBar')
+            #progressBar.setValue(1) #works
+            #print('QProgressBar')
         
-        print(f'\n\nfor {self}\n    connecting {feedback}   \n    {progressBar}\n')
-        feedback.setProgress(1)
-        if hasattr(feedback, 'progressChanged'):
-            feedback.progressChanged.connect(progressBar.setValue)
+        #print(f'\n\nfor {self}\n    connecting {feedback}   \n    {progressBar}\n')
+        #feedback.setProgress(1)
+        
+        # if hasattr(feedback, 'progressChanged'):
+        #     feedback.progressChanged.connect(progressBar.setValue)
               
         #=======================================================================
         # #dummy feedbacker
@@ -231,25 +235,32 @@ class ComWrkr(object): #common methods for all classes
         #     feedback.slots = [progressBar.setValue]
         #=======================================================================
               
-        else:
-            raise Error('unrecognized feedback object: %s'%type(feedback))
+        # else:
+        #     raise Error('unrecognized feedback object: %s'%type(feedback))
+        
+            try:
+                if hasattr(feedback, 'progressChanged'):
+                    feedback.progressChanged.connect(lambda value: progressBar.setValue(int(value)))
+            
+                elif hasattr(feedback, 'slots'):
+                    feedback.slots = [lambda value: progressBar.setValue(int(value))]  # Ensure conversion to int
+            
+                else:
+                    raise ValueError(f'Unrecognized feedback object: {type(feedback)}')
+            
+            except TypeError as e:
+                print(f"TypeError occurred: {e}")
+                print(f"Feedback object type: {type(feedback)}, attributes: {dir(feedback)}")
+        
+            except Exception as e:
+                print(f"An error occurred: {e}")
+                
         
  
         
-        """
-        from PyQt5.QtWidgets import QProgressBar
-        help(QProgressBar)
-        """
+       
         
-        if isinstance(progressBar, QProgressBar):
-            print('progressBar connected... testing slot connection')
-            feedback.setProgress(2)
-            """
-            error message:
-             TypeError: setValue(self, value: int): argument 1 has unexpected type 'float'
-             """
-            
-            print('finished')
+        
         #=======================================================================
         # attach
         #=======================================================================
@@ -573,7 +584,6 @@ class MyProgressReporter(object):   #progressBar like basic progress reporter
         print('    prog reset')
     
     def setValue(self, prog):
-        print(f'MyProgressReporter {prog} {type(prog)}')
         self.prog= prog
         
         """disabling for console runs???
