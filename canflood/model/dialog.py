@@ -121,19 +121,7 @@ class ModelDialog(QtWidgets.QDialog, FORM_CLASS,
         
 
         
-        #======================================================================
-        # risk level 3-----
-        #======================================================================
-        self.pushButton_r3Run.clicked.connect(self.run_risk3)
-        
-        
-        def r3_browse():
-            return self.browse_button(self.lineEdit_r3cf, 
-                                      prompt='Select SOFDA Control File',
-                                      qfd = QFileDialog.getOpenFileName)
-            
-        
-        self.pushButton_r3.clicked.connect(r3_browse)
+ 
         
         self.logger.debug('Model ui connected')
         
@@ -362,57 +350,7 @@ class ModelDialog(QtWidgets.QDialog, FORM_CLASS,
             fig = model.plot_riskCurve(y1lab=y1lab, res_ttl=ttl_df)
             self.output_fig(fig)
 
-    def run_risk3(self):
-        
-        #======================================================================
-        # get run vars
-        #======================================================================
-        log = self.logger.getChild('run_risk3')
 
-        cf_fp = self.lineEdit_r3cf.text()
-        out_dir = self.get_wd()
-        tag = self.linEdit_Stag.text()
-        
-        #=======================================================================
-        # defaults
-        #=======================================================================
-        
-        
-        #=======================================================================
-        # precheck
-        #=======================================================================
-        assert os.path.exists(cf_fp), 'passed bad control file path: \n    %s'%cf_fp
-        assert os.path.exists(out_dir)
-        
-        
-        #=======================================================================
-        # run the model
-        #=======================================================================
-        
-        
-        log.info('init SOFDA from cf: %s'%cf_fp)
-        from model.sofda.scripts import Session as Sofda
-        self.feedback.setProgress(3)
-        session = Sofda(parspath = cf_fp, 
-                          outpath = out_dir, 
-                          _dbgmstr = 'none', 
-                          logger=self.logger
-                        )
-        
-
-        self.feedback.setProgress(10)
-        session.load_models()
-        
-        self.feedback.setProgress(20)
-        session.run_session()
-
-        self.feedback.setProgress(90)
-        session.write_results()
-
-        self.feedback.setProgress(95)
-        session.wrap_up()
-
-        log.info('sofda finished')
         
 
     

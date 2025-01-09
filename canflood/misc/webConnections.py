@@ -38,7 +38,7 @@ class WebConnectAction(QMenuAction):
     
     
     #action parameters
-    icon_fn = 'eye_23x23.png'
+    icon_fn = 'download-cloud.png'
     icon_name = 'WebConnection'
     icon_location = 'menu'
     
