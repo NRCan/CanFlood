@@ -2846,9 +2846,7 @@ class MyFeedBackQ(QgsProcessingFeedback):
         self.logger=logger.getChild('FeedBack')
         
         super().__init__()
-        
-        
-
+                
     def setProgressText(self, text):
         self.logger.debug(text)
 
@@ -2913,26 +2911,8 @@ class MyFeedBackQ(QgsProcessingFeedback):
         #===================================================================
         self.setProgress(prog)
             
-    def setProgress(self, prog):
-        """throwing a warning despite passing an integer.. seem sto be a bugg
-        using this as a workaround to surpress the warning (which would be very frequent)
-        https://github.com/vispy/vispy/issues/2212       
-        
-        
-        https://qgis.org/pyqgis/3.34/core/QgsFeedback.html#qgis.core.QgsFeedback.setProgress
-        
-        
-        this method is connected to progressBar.setValue
-            basic.ComWrkr.setup_feedback()
-            
-            feedback.progressChanged.connect(progressBar.setValue)
-        
-        
-        """
-        
-        
+    def setProgress(self, prog):        
         prog = int(prog)
-        print(f'setProgress({prog}), ({type(prog)})')
         super().setProgress(prog)
  
         

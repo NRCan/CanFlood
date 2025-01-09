@@ -25,7 +25,6 @@ pd.set_option('display.max_rows',5)
 import numpy as np
 import tempfile #todo: move this up top
 
-from PyQt5.QtWidgets import QProgressBar
 #==============================================================================
 # custom
 #==============================================================================
@@ -160,12 +159,6 @@ class ComWrkr(object): #common methods for all classes
         
         #progress Bar
         if progressBar is None:
-            """
-            Dialog runs should have this attached already
-                just pull the attribute
-            
-            other runs we build a dummy progress reporter
-            """
             #Dialog runs
             #===================================================================
             # if hasattr(self, 'progressBar'):
@@ -206,61 +199,29 @@ class ComWrkr(object): #common methods for all classes
         # connect feedback to progress bar
         #=======================================================================
         #QgsFeedback like
-        """2025-01-06: something changed here? throwing setValue error?
-        
-        link to progressBar method:
-                https://doc.qt.io/qtforpython-5/PySide2/QtWidgets/QProgressBar.html#PySide2.QtWidgets.PySide2.QtWidgets.QProgressBar.setValue
-                
-        there is an issue with how QProgressBar.setValue is connected to the progressChanged signal
-        the d ummy MyProgressReporter works fine, but something changed with  QProgressBar
-        
-        """
         """
         2025-01-09:
         Adding Lambda Function resolves the TypeError
         """
-        if isinstance(progressBar, QProgressBar): #from PyQt5.QtWidgets import QProgressBar
-            #progressBar.setValue(1) #works
-            #print('QProgressBar')
-        
-        #print(f'\n\nfor {self}\n    connecting {feedback}   \n    {progressBar}\n')
-        #feedback.setProgress(1)
-        
-        # if hasattr(feedback, 'progressChanged'):
-        #     feedback.progressChanged.connect(progressBar.setValue)
-              
-        #=======================================================================
-        # #dummy feedbacker
-        # elif hasattr(feedback, 'slots'):
-        #     feedback.slots = [progressBar.setValue]
-        #=======================================================================
-              
-        # else:
-        #     raise Error('unrecognized feedback object: %s'%type(feedback))
-        
-            try:
-                if hasattr(feedback, 'progressChanged'):
-                    feedback.progressChanged.connect(lambda value: progressBar.setValue(int(value)))
-            
-                elif hasattr(feedback, 'slots'):
-                    feedback.slots = [lambda value: progressBar.setValue(int(value))]  # Ensure conversion to int
-            
-                else:
-                    raise ValueError(f'Unrecognized feedback object: {type(feedback)}')
-            
-            except TypeError as e:
-                print(f"TypeError occurred: {e}")
-                print(f"Feedback object type: {type(feedback)}, attributes: {dir(feedback)}")
-        
-            except Exception as e:
-                print(f"An error occurred: {e}")
-                
-        
- 
-        
        
         
+        try:
+            if hasattr(feedback, 'progressChanged'):
+                feedback.progressChanged.connect(lambda value: progressBar.setValue(int(value)))
+            
+            elif hasattr(feedback, 'slots'):
+                feedback.slots = [lambda value: progressBar.setValue(int(value))]  # Ensure conversion to int
+            
+            else:
+                raise ValueError(f'Unrecognized feedback object: {type(feedback)}')
+            
+        except TypeError as e:
+            print(f"TypeError occurred: {e}")
+            print(f"Feedback object type: {type(feedback)}, attributes: {dir(feedback)}")
         
+        except Exception as e:
+            print(f"An error occurred: {e}")
+                
         #=======================================================================
         # attach
         #=======================================================================
@@ -274,11 +235,7 @@ class ComWrkr(object): #common methods for all classes
         
         print(f'feedback done\n\n')
         
-        
-        
-
-        
-        
+             
     def set_cf_pars(self, #update the control file w/ the passed parameters
                   new_pars_d, #new paraemeters 
                     # {section : ({valnm : value } OR string (for notes)})
