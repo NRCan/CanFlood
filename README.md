@@ -127,5 +127,6 @@ S’il n’y a pas encore de billet de problème, suivez les instructions ici po
 
 Nous sommes du même avis. Envisagez de communiquer avec un développeur de CanFlood pour lui faire part d’une amélioration qui répondrait à vos besoins, ou de devenir membre de la communauté de développement. Que vous souhaitiez intégrer la modélisation de CanFlood à certaines bases de données locales existantes, intégrer d’autres modèles de risques d’inondation dans votre analyse, ou encore mettre au point de nouveaux styles d’extrants, l’équipe du projet CanFlood souhaite vous entendre. Veuillez publier un nouveau problème ici avec l’étiquette « amélioration ».
 
+test
 
 
