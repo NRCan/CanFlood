@@ -2837,6 +2837,8 @@ class MyFeedBackQ(QgsProcessingFeedback):
     
     Qworkers:
         built by Qcoms.__init__()
+        
+    QgsProcessingFeedback inherits QgsFeedback
     
     """
     
@@ -2912,9 +2914,12 @@ class MyFeedBackQ(QgsProcessingFeedback):
         self.setProgress(prog)
             
     def setProgress(self, prog):        
-        prog = int(prog)
-        super().setProgress(prog)
+        #call QgsFeedback.setProgress
+        #this emits 'progressChanged' signal, which whould be connected to progressBar.setValue
+        # see hlpr.basic.ComWrkr.setup_feedback()
  
+        super().setProgress(float(prog)) 
+
         
         
 class RasterCalc(object):

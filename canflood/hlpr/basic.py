@@ -233,7 +233,7 @@ class ComWrkr(object): #common methods for all classes
         self.logger.debug('feedback set as \'%s\' and progressBar: %s'%(
             type(feedback).__name__, type(progressBar).__name__))
         
-        print(f'feedback done\n\n')
+ 
         
              
     def set_cf_pars(self, #update the control file w/ the passed parameters
