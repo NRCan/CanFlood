@@ -248,6 +248,9 @@ def test_05_build_evals(session, base_dir, cf_fp, true_dir):
     this is loading the absolute path from the control file... which is some old/wrong path
     this must have been set to load relative paths at some point?
     not sure.. fixed
+    
+    2025-01-10: now I'm really confused... can't see where I set the absolute_fp=False\
+    maybe I fixed this and forgot to commit?
     """
     fp = os.path.join(data_dir, os.path.basename(fp))    
     
