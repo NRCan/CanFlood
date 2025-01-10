@@ -760,8 +760,10 @@ class Model(ComWrkr,
                 log.debug('no \'%s\'... skipping'%dtag)
                 continue
             
-            #check it
-            assert os.path.exists(fp), '\'%s\' got pad filepath: \n    %s'%(dtag, fp)
+            if not os.path.exists(fp):
+                """despite this error, the test is still passing
+                e.g. test_03"""
+                raise AssertionError('\'%s\' got bad filepath: \n    %s'%(dtag, fp))
             
             #load by type
             ext = os.path.splitext(fp)[1]
