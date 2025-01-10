@@ -21,11 +21,11 @@ helper functions w/o qgis api
 #python
 import os, configparser, logging, re, datetime, warnings
 import pandas as pd
-from qgis._core import Qgis
+
 pd.set_option('display.max_rows',5)
 import numpy as np
 import tempfile #todo: move this up top
-from qgis.core import QgsMessageLog
+from qgis.core import QgsMessageLog, Qgis
 import traceback
 #==============================================================================
 # custom
