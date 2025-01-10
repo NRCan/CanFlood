@@ -21,11 +21,12 @@ helper functions w/o qgis api
 #python
 import os, configparser, logging, re, datetime, warnings
 import pandas as pd
+
 pd.set_option('display.max_rows',5)
 import numpy as np
 import tempfile #todo: move this up top
-
-
+from qgis.core import QgsMessageLog, Qgis
+import traceback
 #==============================================================================
 # custom
 #==============================================================================
@@ -160,12 +161,6 @@ class ComWrkr(object): #common methods for all classes
         
         #progress Bar
         if progressBar is None:
-            """
-            Dialog runs should have this attached already
-                just pull the attribute
-            
-            other runs we build a dummy progress reporter
-            """
             #Dialog runs
             #===================================================================
             # if hasattr(self, 'progressBar'):
@@ -206,18 +201,31 @@ class ComWrkr(object): #common methods for all classes
         # connect feedback to progress bar
         #=======================================================================
         #QgsFeedback like
-        """2025-01-06: something changed here? throwing setValue error?
         """
-        if hasattr(feedback, 'progressChanged'):
-            feedback.progressChanged.connect(progressBar.setValue)
-            
-        #dummy feedbacker
-        elif hasattr(feedback, 'slots'):
-            feedback.slots = [progressBar.setValue]
-            
-        else:
-            raise Error('unrecognized feedback object: %s'%type(feedback))
+        2025-01-09:
+        Adding Lambda Function resolves the TypeError
+        """
+       
         
+        try:
+            if hasattr(feedback, 'progressChanged'):
+                feedback.progressChanged.connect(lambda value: progressBar.setValue(int(value)))
+            
+            elif hasattr(feedback, 'slots'):
+                feedback.slots = [lambda value: progressBar.setValue(int(value))]  # Ensure conversion to int
+            
+            else:
+                raise ValueError(f'Unrecognized feedback object: {type(feedback)}')
+            
+        except TypeError as e:
+            error_message = f"TypeError in plugin code: {e}"
+            QgsMessageLog.logMessage(error_message, level=Qgis.Warning)
+        
+        except Exception as e:
+            error_message = f"An unexpected error occurred in the plugin: {e}"
+            QgsMessageLog.logMessage(error_message, level=Qgis.Critical)
+            QgsMessageLog.logMessage(traceback.format_exc(), level=Qgis.Critical)
+                
         #=======================================================================
         # attach
         #=======================================================================
@@ -229,11 +237,9 @@ class ComWrkr(object): #common methods for all classes
         self.logger.debug('feedback set as \'%s\' and progressBar: %s'%(
             type(feedback).__name__, type(progressBar).__name__))
         
+ 
         
-        
-
-        
-        
+             
     def set_cf_pars(self, #update the control file w/ the passed parameters
                   new_pars_d, #new paraemeters 
                     # {section : ({valnm : value } OR string (for notes)})

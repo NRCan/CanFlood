@@ -62,7 +62,6 @@ def finv_vlay(session, finv_fp):
 def test_00_version(qgis_version):
     assert qgis_version==33414, 'bad version: %s'%qgis_version
     
-
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
 def test_01_build_scenario(session):
     dial = session.Dialog
@@ -164,7 +163,7 @@ def test_03_build_inv_curves(session, base_dir, cf_fp):
     fp = dial.get_cf_par(cf_fp, sectName='dmg_fps', varName='curves')
     assert os.path.exists(fp)
     
-@pytest.mark.dev 
+
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_03_build_inv_curves_tests0\CanFlood_test_01.txt']) #from test_03
 @pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.geojson'], indirect=True)

@@ -2836,8 +2836,8 @@ class MyFeedBackQ(QgsProcessingFeedback):
         built by QprojPlug.qproj_setup()
     
     Qworkers:
-        built by Qcoms.__init__()
-    
+        built by Qcoms.__init__() 
+    QgsProcessingFeedback inherits QgsFeedback
     """
     
     def __init__(self,
@@ -2846,7 +2846,7 @@ class MyFeedBackQ(QgsProcessingFeedback):
         self.logger=logger.getChild('FeedBack')
         
         super().__init__()
-
+                
     def setProgressText(self, text):
         self.logger.debug(text)
 
@@ -2907,20 +2907,16 @@ class MyFeedBackQ(QgsProcessingFeedback):
         assert prog<=100
         
         #===================================================================
-        # emit signalling
+        # emit signaling
         #===================================================================
         self.setProgress(prog)
             
-    def setProgress(self, prog):
-        """throwing a warning despite passing an integer.. seem sto be a bugg
-        using this as a workaround to surpress the warning (which would be very frequent)
-        https://github.com/vispy/vispy/issues/2212
-        """
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore')
-            super().setProgress(int(prog))
-        
-        
+    def setProgress(self, prog):        
+        #call QgsFeedback.setProgress
+        #this emits 'progressChanged' signal, which would be connected to progressBar.setValue
+        # see hlpr.basic.ComWrkr.setup_feedback()
+        super().setProgress(float(prog)) 
+       
 class RasterCalc(object):
     
     result= None
