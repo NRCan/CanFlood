@@ -62,7 +62,6 @@ def finv_vlay(session, finv_fp):
 def test_00_version(qgis_version):
     assert qgis_version==33414, 'bad version: %s'%qgis_version
     
-@pytest.mark.dev 
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
 def test_01_build_scenario(session):
     dial = session.Dialog

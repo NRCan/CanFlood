@@ -21,10 +21,12 @@ helper functions w/o qgis api
 #python
 import os, configparser, logging, re, datetime, warnings
 import pandas as pd
+from qgis._core import Qgis
 pd.set_option('display.max_rows',5)
 import numpy as np
 import tempfile #todo: move this up top
-
+from qgis.core import QgsMessageLog
+import traceback
 #==============================================================================
 # custom
 #==============================================================================
@@ -216,11 +218,13 @@ class ComWrkr(object): #common methods for all classes
                 raise ValueError(f'Unrecognized feedback object: {type(feedback)}')
             
         except TypeError as e:
-            print(f"TypeError occurred: {e}")
-            print(f"Feedback object type: {type(feedback)}, attributes: {dir(feedback)}")
+            error_message = f"TypeError in plugin code: {e}"
+            QgsMessageLog.logMessage(error_message, level=Qgis.Warning)
         
         except Exception as e:
-            print(f"An error occurred: {e}")
+            error_message = f"An unexpected error occurred in the plugin: {e}"
+            QgsMessageLog.logMessage(error_message, level=Qgis.Critical)
+            QgsMessageLog.logMessage(traceback.format_exc(), level=Qgis.Critical)
                 
         #=======================================================================
         # attach
