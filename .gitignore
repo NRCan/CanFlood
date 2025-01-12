@@ -149,3 +149,5 @@ docs/build
 
 
 docs/dev/sphinx_warnings.txt
+*.lnk
+*.code-workspace

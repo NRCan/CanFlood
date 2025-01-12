@@ -35,10 +35,21 @@ def dial(session, cf_fp): #configured dialog
     dial = session.Dialog
     
     #===========================================================================
-    # copy over control file
+    # copy over files
     #===========================================================================
-    cf_fp = shutil.copy2(cf_fp, os.path.join(session.out_dir, os.path.basename(cf_fp)))
+    # Get the directory containing cf_fp
+    cf_dir = os.path.dirname(cf_fp)
     
+    # Iterate over all files in the directory
+    for file_name in os.listdir(cf_dir):
+        full_file_path = os.path.join(cf_dir, file_name)
+    
+        # Ensure it's a file (skip directories)
+        if os.path.isfile(full_file_path):
+            # Copy the file to the output directory
+            shutil.copy2(full_file_path, os.path.join(session.out_dir, file_name))
+    
+    cf_fp = os.path.join(session.out_dir, os.path.basename(cf_fp))
     #===========================================================================
     # setup
     #===========================================================================
@@ -75,15 +86,20 @@ def test_model_01_i2(dial, true_dir): #impacts L2
     
     dial.checkBox_i2_outExpnd.setChecked(True)
     dial.checkBox_i2_pbox.setChecked(False) #no plots
-    
+ 
     #===========================================================================
     # execute
     #===========================================================================
-    QTest.mouseClick(dial.pushButton_i2run, Qt.LeftButton)   #Run dmg2
+    QTest.mouseClick(dial.pushButton_i2run, Qt.LeftButton)   #model.dialog.ModelDialog.run_impact2()
     
     #retrieve
-    fp = dial.get_cf_par(dial.get_cf_fp(), sectName='risk_fps', varName='dmgs')
-    assert os.path.exists(fp)
+    cf_fp = dial.get_cf_fp()
+    fp = dial.get_cf_par(cf_fp, sectName='risk_fps', varName='dmgs')
+    assert not fp == '', 'failed to get a result'
+    fp = os.path.join(os.path.dirname(cf_fp), fp)    
+    assert os.path.exists(fp), 'failed to generate risk_fps'
+    
+    #load
     df = pd.read_csv(fp, index_col=0)
     #===========================================================================
     # load trues
@@ -96,7 +112,7 @@ def test_model_01_i2(dial, true_dir): #impacts L2
 @pytest.mark.dev
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_01_i2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True) #from build test_07
 @pytest.mark.parametrize('dialogClass',[ModelDialog], indirect=True)
-def test_model_02_r2(dial, true_dir): #risk L2
+def test_model_02_r2(dial, true_dir, cf_fp): #risk L2
     
     #===========================================================================
     # setup 
@@ -112,8 +128,13 @@ def test_model_02_r2(dial, true_dir): #risk L2
     QTest.mouseClick(dial.pushButton_r2Run, Qt.LeftButton) 
     
     #retrieve
-    fp = dial.get_cf_par(dial.get_cf_fp(), sectName='results_fps', varName='r_ttl')
-    assert os.path.exists(fp)
+    cf_fp = dial.get_cf_fp()
+    fp = dial.get_cf_par(cf_fp, sectName='results_fps', varName='r_ttl')
+    assert not fp == '', 'failed to get a result'
+    fp = os.path.join(os.path.dirname(cf_fp), fp)    
+    assert os.path.exists(fp), 'failed to generate risk_fps'
+    
+        #load
     df = pd.read_csv(fp, index_col=0)
     #===========================================================================
     # load trues
@@ -123,3 +144,4 @@ def test_model_02_r2(dial, true_dir): #risk L2
     
     assert_frame_equal(df, true_df)
 
+0

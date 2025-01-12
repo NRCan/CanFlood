@@ -1,0 +1,4 @@
+pytest-qgis==2.1.*
+pb_tool==3.1.*
+pytest-mock==3.14.*
+openpyxl==3.1.*

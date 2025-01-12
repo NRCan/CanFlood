@@ -16,4 +16,4 @@ Table of Contents
    06_tutorials
    07a_references
    07b_appendix_a
-   07c_appendix_b
+..   07c_appendix_b

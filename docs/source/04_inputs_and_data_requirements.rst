@@ -55,7 +55,9 @@ For the Impacts (L2) model, CanFlood requires an impact function library with a 
   • metadata about the function (not used by CanFlood); and
   • a 1D function translating exposure to impact.
 
-An example is provided below with a description. During the Impacts (L2) model, each asset interpolates its vulnerability function at the exposure value (from the ‘expos’ data set) to estimate the impact value. Typically, the exposure variables are depth and the impact variables are damages, but the user can customize the model by populating the ‘expos’ data set with alternative exposure variables and developing vulnerability functions with alternative outputs (e.g. persons displaced = f(percent inundated)).
+An example is provided in Table4-1_ with a description. During the Impacts (L2) model, each asset interpolates its vulnerability function at the exposure value (from the ‘expos’ data set) to estimate the impact value. Typically, the exposure variables are depth and the impact variables are damages, but the user can customize the model by populating the ‘expos’ data set with alternative exposure variables and developing vulnerability functions with alternative outputs (e.g. persons displaced = f(percent inundated)).
+
+.. _Table4-1:
 
 *Table 4-1: CanFlood impact function format requirements and description.*
 

@@ -1,10 +1,14 @@
-﻿# CanFlood
+[![Documentation Status (dev)](https://readthedocs.org/projects/canflood/badge/?version=dev)](https://canflood.readthedocs.io/en/dev/)
+[![Documentation Status (latest)](https://readthedocs.org/projects/canflood/badge/?version=latest)](https://canflood.readthedocs.io/en/latest/)
+
+ 
+ # CanFlood
 Open source flood risk modelling toolbox for Canada
 
 ![alt text](https://github.com/NRCan/CanFlood/blob/master/img/logo_20210419_500.png)
 
 
-Updated and tested against QGIS 3.22.8
+Updated and tested against QGIS 3.34.14
 
 We welcome/encourage any comments, bugs, or issues you have or find. Please create a GitHub 'issue' ticket [following these instructions](https://github.com/NRCan/CanFlood/issues/6) to let us know about these things.
 
@@ -15,7 +19,17 @@ Happy flood risk modelling!
 [Documentation](https://canflood.readthedocs.io/en/latest/#) is provided for the latest and archived versions. 
 
 
-## Phase 3 Development
+## Updates
+
+v1.2.1 is released addressing the following:
+- update to QGIS 3.34
+- address issue 87: area threshold rebase
+- address issue 52: Error: got negative extrapolation
+- address issue 43:  Model tables are missing table numbers
+- address issue 70: Rtail clarification
+- address issue 93: Missing Depth-Damage Curves in IBI 2020 Dataset
+- remove SOFDA/L3
+
 
 [v1.2.0](https://github.com/NRCan/CanFlood/releases/tag/v1.2.0) is released with the following major new features:
 1) [new tool](https://canflood.readthedocs.io/en/dev/05_toolsets.html#report-automator) for generating a pdf report of your model.

@@ -333,11 +333,42 @@ class Dmg2(Model, DFunc, Plotr):
         return cres_df
     
 
-    def bdmg_raw(self, #get damages on expanded finv
-             
-            bdf = None, #expanded finv. see modcom.build_exp_finv(). each row has 1 ftag
-            ddf = None,  #expanded exposure set. depth at each bid. see build_depths() or get_mitid()
-            ):
+    def bdmg_raw(self, bdf=None, ddf=None):
+        """
+        Calculate damages on an expanded financial inventory (finv).
+    
+        Parameters
+        ----------
+        bdf : pd.DataFrame, optional
+            Expanded financial inventory DataFrame. Each row corresponds to one `ftag`.
+            See `modcom.build_exp_finv()` for details. Default is None.
+            
+            
+                    xid      fcap     felv   fscale  ftag nestID     gels  bidx
+            bidx                                                               
+            0     14879   91300.0  13.1053  117.990  BA_S     f0  10.1053     0
+            1     14880  134000.0  12.7266  140.560  BA_S     f0   9.7266     1
+            ...     ...       ...      ...      ...   ...    ...      ...   ...
+            62    74651   15000.0  10.6174  137.619  CA_C     f1  10.4174    62
+            63    75511   15000.0  96.8564  137.619  CA_C     f1  98.8564    63
+        
+        ddf : pd.DataFrame, optional
+            Expanded exposure set DataFrame. Contains depth information at each `bid`.
+            See `build_depths()` or `get_mitid()` for details. Default is None.
+            
+                  bidx    xid
+                bidx             
+                0        0  14879
+                1        1  14880
+                ...    ...    ...
+                62      62  74651
+                63      63  75511
+        
+        Returns
+        -------
+        pd.DataFrame
+            A DataFrame containing calculated damages based on the inputs.
+        """
         #======================================================================
         # defaults
         #======================================================================
@@ -360,6 +391,7 @@ class Dmg2(Model, DFunc, Plotr):
         
         #identifier for depth columns
         dboolcol = ~ddf.columns.isin([cid, bid])
+        assert dboolcol.any(), f'no exposure values provided'
         
         log.debug('running on %i assets and %i events'%(len(bdf), len(ddf.columns)-2))
         
@@ -501,6 +533,7 @@ class Dmg2(Model, DFunc, Plotr):
         # get data
         #=======================================================================
         if res_df is None: res_df = self.res_df
+        assert len(res_df.columns)>0
         events_df = self.events_df
         
         bdf = self.bdf
@@ -532,6 +565,7 @@ class Dmg2(Model, DFunc, Plotr):
         #=======================================================================
         # wrap
         #=======================================================================
+        
         self.res_df = res_df
         log.info('got scaled impacts: \n    %s'%(self._rdf_smry('_scaled')))
         return res_df
@@ -813,11 +847,9 @@ class Dmg2(Model, DFunc, Plotr):
     
 
 
-    def _rdf_smry(self, #get a summary string of the bid results data
-                          
-                          sfx,
-                          df_raw = None,
-                          ):
+    def _rdf_smry(self, sfx,df_raw = None,):
+        """get a summary string of the bid results data
+        """
         
         if df_raw is None: df_raw = self.res_df
         
@@ -1491,7 +1523,7 @@ class Dmg2(Model, DFunc, Plotr):
         
         """
         #get just the useful stuff off the expanded finv
-        l = set(self.bdf.columns).difference(self.res_df.columns)
+        l = list(set(self.bdf.columns).difference(self.res_df.columns))
         bdf1 = self.bdf.loc[:, l]
         bdf1.index.name = None
                              

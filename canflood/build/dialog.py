@@ -21,7 +21,7 @@ from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
 #qgis
 #from qgis.core import *
 from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer, QgsMapLayerProxyModel, \
-    QgsWkbTypes, QgsMapLayer
+    QgsWkbTypes, QgsMapLayer, QgsLogger
 
 #==============================================================================
 # custom imports
@@ -536,7 +536,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # #inventory vector layer---------
         #=======================================================================
         if set_finv:
-            
+            log.debug(f'set_finv=True')
             #===================================================================
             # get using selection logic
             #===================================================================
@@ -812,7 +812,14 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # extract, download, and update cf
         #=======================================================================
+        
+        
         """
+        2024-12-20: couldn't find what is throwing this:
+            error message:
+             TypeError: setValue(self, value: int): argument 1 has unexpected type 'float'
+        
+        
         for k,v in kwargs.items():
             print(k,v)
         """
@@ -1535,7 +1542,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         self.feedback.upd_prog(100)
         
-        log.push('passed %i (of %i) validations. see log for errors'%(
+        log.push(f'passed %i (of %i) validations. see log for errors: {QgsLogger.logFile()}'%(
              np.array(list(res_d.values())).sum(), len(vpars_d)
              ))
         

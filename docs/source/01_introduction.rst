@@ -6,10 +6,10 @@
 
 CanFlood is an object-based, transparent, open-source flood risk calculation toolbox built for Canada. CanFlood facilitates flood risk calculations with three ‘toolsets’:
 
-  1) Building a model  |buildimage|                      
+  1) Building a model  |buildimage|
 
-  2) Running a model   |runimage|                       
-  
+  2) Running a model   |runimage|
+
   3) Visualizing and analyzing results   |visualimage|
 
 Each of these has a suite of tools to assist the flood risk modeller in a wide range of tasks common in developing flood risk assessments in Canada.
@@ -59,29 +59,27 @@ Considering the limitation of existing tools, and the growing need to minimize f
 
 • Federal Flood Risk Assessment Procedures (in development)
 
-**International Guidelines**
+Some international guidelines are provided in :numref:`tab-guidelines`.
 
-+------------------------+------------+----------+----------+----------+----------+----------+----------+
-|Jurisdiction/ Authority |     Guideline (Reference)                                                    |          
-+========================+============+==========+==========+==========+==========+==========+==========+
-| United Kingdom         | Flood and coastal erosion risk management – Manual                           |
-|                        | (Penning-Rowsell et al. 2013)                                                |
-+------------------------+------------+----------+----------+----------+----------+----------+----------+
-| United States          | Multi-Hazard Loss Estimation Methodology, Flood Model:                       |
-|                        |                                                                              |
-|                        | Hazus-MH MR2 Technical Manual (FEMA 2012)                                    |
-|                        | Risk-Based Analysis For Flood Damage Reduction Studies (USACE 1996)          |
-|                        |                                                                              |
-|                        | Tying flood insurance to flood risk for low-lying structures in the          |
-|                        | floodplain (National Research Council 2015)                                  |
-|                        | Principles of Risk Analysis for Water Resources (IWR and USACE 2017)         |
-+------------------------+------------+---------------------+----------+----------+----------+----------+
+.. _tab-guidelines:
+
+.. csv-table:: International Guidelines
+   :file: tables/international_guidelines.csv
+   :widths: 30, 70
+   :header-rows: 1
+
+
+
 
 
 1.1.3 Risk- vs. Event-Based Models
 ==================================
 
-Historically, flood management has involved decisions based on a single hypothetical, often arbitrary, ‘design event’ (e.g., 100-year discharge). This approach has left many communities under-defended and likely contributes to the rising flood losses recently seen in Canada (Frechette 2016). In response to this, modern flood management recognizes the necessity of comprehensive risk-based assessments that evaluate a range of events and their probability and consequences in management planning. CanFlood was designed to support modern risk-based management by integrating a range of flood events (e.g., 10-year, 50-year, 100-year, 200-year events) and their probabilities into risk-based models that calculate risk-metrics. However, because CanFlood calculates event-based impacts prior to any risk calculations, users can use CanFlood in event- or impact-based assessments by performing all but the final risk-calculation step.  
+Historically, flood management has involved decisions based on a single hypothetical, often arbitrary, ‘design event’ (e.g., 100-year discharge).
+This approach has left many communities under-defended and likely contributes to the rising flood losses recently seen in Canada (Frechette 2016).
+In response to this, modern flood management recognizes the necessity of comprehensive risk-based assessments that evaluate a range of events and their probability and consequences in management planning.
+CanFlood was designed to support modern risk-based management by integrating a range of flood events (e.g., 10-year, 50-year, 100-year, 200-year events) and their probabilities into risk-based models that calculate risk-metrics.
+However, because CanFlood calculates event-based impacts prior to any risk calculations, users can use CanFlood in event- or impact-based assessments by performing all but the final risk-calculation step.
 
 ******************
 1.2 Intended Users
@@ -100,27 +98,29 @@ See Section1.1.2_ for a summary of guidelines and procedures related to FRAs in 
 1.3 Risk Model Levels
 *********************
 
-Flood risk analysis objectives and applications are as diverse as the communities they serve. To accommodate this wide range, CanFlood contains three types of risk models with increasing complexity as summarized in Table1-1_ and discussed in :ref:`Section5.2 <Section5.2>`. To support the construction and analysis of these risk models, CanFlood also includes the ‘Build’ and ‘Results’ toolsets respectively (:ref:`Section5.1 <Section5.1>` and :ref:`Section5.3 <Section5.3>`). Connecting all these together to perform an analysis is discussed in :ref:`Section4.5 <Section4.5>` and similar tutorials are provided in :ref:`Section6 <Section6>`.
+Flood risk analysis objectives and applications are as diverse as the communities they serve.
+To accommodate this wide range, CanFlood contains three types of risk models with increasing complexity as summarized in :numref:`tab-ModelLevels` and discussed in :ref:`Section 5.2 <Section5.2>`.
+To support the construction and analysis of these risk models, CanFlood also includes the ‘Build’ and ‘Results’ toolsets respectively (:ref:`Section 5.1 <Section5.1>` and :ref:`Section 5.3 <Section5.3>`).
+Connecting all these together to perform an analysis is discussed in :ref:`Section 4.5 <Section4.5>` and similar tutorials are provided in :ref:`Section 6 <Section6>`.
 
-.. _Table1-1:
+.. _tab-ModelLevels:
 
-*Table 1-1 - CanFlood model level summaries*
-
-.. list-table::
+.. list-table:: CanFlood model level summaries
     :header-rows: 1
     :stub-columns: 1
+    :widths: 20, 50, 50, 50
 
-    * - Analysis Level 
+    * - Analysis Level
       - L1: Initial
-      - L2: Intermediate 
-      - L3: Detailed 
+      - L2: Intermediate
+      - L3: Detailed
     * - Motivation :sup:`1`
       - Rapid FRA. desktop type appraisals: first approximations to identify areas where more detailed work is required
       - More detailed appraisals where further assessment of loss potential is warranted
       - Detailed study of potential losses and robust uncertainty quantification
     * - Workflow 
-      - :ref:`Section3.1 <Section3.1>`
-      - :ref:`Section3.2 <Section3.2>`
+      - :ref:`Section 3.1 <Section3.1>`
+      - :ref:`Section 3.2 <Section3.2>`
       - Appendix B
     * - CanFlood model tool names
       - Risk (L1)

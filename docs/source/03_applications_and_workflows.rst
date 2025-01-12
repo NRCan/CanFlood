@@ -29,7 +29,8 @@ Most workflows in CanFlood require the user to employ a similar sequence of the 
 
 .. image:: /_static/app_workflow_build_model.jpg
 
-*Figure 3-1: Typical model construction workflow using CanFlood’s ‘Build’ tools from ‘Setup’ to ‘Validation’. Data inputs are described in :ref:`Section3 <applications_and_workflows>` while tools and outputs are described in*  :ref:`Section5.1 <Section5.1>` 
+*Figure 3-1: Typical model construction workflow using CanFlood’s ‘Build’ tools from ‘Setup’ to ‘Validation’.
+Data inputs are described in :ref:`Section3 <applications_and_workflows>` while tools and outputs are described in*  :ref:`Section5.1 <Section5.1>`
 
 More information and additional tools to support model construction are provided in :ref:`Section5.1 <Section5.1>` .
 

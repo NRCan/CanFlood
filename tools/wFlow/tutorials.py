@@ -65,7 +65,7 @@ class Tut2(WorkFlow): #tutorial 1a
         self.pars_d = {
                 
                 #data files
-                'finv_fp':r'tutorials\2\finv_tut2.gpkg',
+                'finv_fp':r'tutorials\2\finv_tut2.geojson',
                 'raster_dir':r'tutorials\2\haz_rast',
                 'evals_fp':r'tests\_data\tuts\evals_4_tut2a.csv',
                 'curves_fp':r'tests\_data\tuts\IBI2015_DamageCurves.xls',
