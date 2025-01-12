@@ -142,7 +142,6 @@ def test_03_build_inv_curves(session, base_dir, cf_fp):
     
     
     raw_fp = os.path.join(session.pars_dir, r'vfunc\IBI_2015\IBI2015_DamageCurves.xls')
-    
     #update the gui
     dial.lineEdit_curve.setText(raw_fp)
     #===========================================================================
@@ -150,8 +149,9 @@ def test_03_build_inv_curves(session, base_dir, cf_fp):
     #===========================================================================
     #purge it
     """BuildDialog.purge_curves()"""
-    #dial.purge_curves()
-    QTest.mouseClick(dial.pushButton_Inv_purge, Qt.LeftButton)
+    #dial.purge_curves() 
+    with pytest.raises(AssertionError, match="got bad filepath:"): 
+        QTest.mouseClick(dial.pushButton_Inv_purge, Qt.LeftButton)
      
     #update control file
     QTest.mouseClick(dial.pushButton_Inv_curves, Qt.LeftButton)

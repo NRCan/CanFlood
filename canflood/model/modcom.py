@@ -761,7 +761,7 @@ class Model(ComWrkr,
                 continue
             
             #check it
-            assert os.path.exists(fp), '\'%s\' got pad filepath: \n    %s'%(dtag, fp)
+            assert os.path.exists(fp), '\'%s\' got bad filepath: \n    %s'%(dtag, fp)
             
             #load by type
             ext = os.path.splitext(fp)[1]
