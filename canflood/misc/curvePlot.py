@@ -512,6 +512,7 @@ class CurvePlotr(DFunc, Plotr):
         if os.path.exists(ofp): assert self.overwrite
         
         #write to multiple tabs
+        ofp = ofp.replace('.xls', '.xlsx') 
         with pd.ExcelWriter(ofp) as writer:
             for i, (tabnm, data) in enumerate(d.items()):
                 #write handles
