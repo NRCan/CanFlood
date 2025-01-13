@@ -1,4 +1,4 @@
-.. _notes_and_acknowledgements:
+
 
 ==========================
 Notes and Acknowledgements

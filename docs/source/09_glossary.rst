@@ -13,16 +13,13 @@ Area of Interest (AOI)
 Coordinate Reference System (CRS)
                                  System used to locate and project spatial information.
 Estimated Annualized Damages (EAD)
-                                  Expected value of impacts. See :ref:`Section5.2.3 <Section5.2.3>`.
+                                  Expected value of impacts. See :numref:`sec-05-riskL2`.
 Flood Risk Assessments (FRA)
                             A formal process of evaluating and quantifying flood risk
 Graphical User Interface (GUI) object (or property) level mitigation measures (PLPM)
-                                                                                    Interventions acting at the micro- or property-scale like backflow valves or sandbagging. See :ref:`Section5.2.2 <Section5.2.2>`.
+                                                                                    Interventions acting at the micro- or property-scale like backflow valves or sandbagging.
 Rapid Flood Damage Assessment Tool (RFDA)
                                          QGIS plugin developed by IBI Group and the Province of Alberta for object-based flood risk calculations (IBI Group and Golder Associates 2015)
-Stochastic Object-based Flood damage Dynamic Assessment model framework (SOFDA)
-                                                                               Dynamic flood risk research model included in CanFlood as Risk (L3) (:ref:`Section5.2.4 <Section5.2.4>`)
-Water Surface Level (WSL)
                          The height of some water above some datum. Not to be confused with ‘water depth’ which is a water height above ground.
 Web Coverage Service (WCS)
                           Protocol for spatial data over the internet 

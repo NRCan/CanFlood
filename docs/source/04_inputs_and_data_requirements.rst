@@ -1,7 +1,7 @@
-.. _inputs_and_data_requirements:
+.. _sec-04:
 
 ===============================
-4. Inputs and Data Requirements
+Inputs and Data Requirements
 ===============================
 
 CanFlood models are only as useful as the datasets they are built with. Below is a summary of the main datasets the user must collect and compile prior to building a CanFlood model.
@@ -9,7 +9,7 @@ CanFlood models are only as useful as the datasets they are built with. Below is
 .. _Section4.1:
 
 ********************
-4.1. Asset Inventory
+Asset Inventory
 ********************
 
 The asset inventory (‘finv’) is a comprehensive list of the objects or assets whose exposure will be evaluated by the CanFlood model routines. The asset inventory is a spatial dataset that requires the following fields when employed in Risk (L1) models:
@@ -24,30 +24,31 @@ For Impacts (L2) and Risk (L2) models, the following additional fields are requi
   • *fX_tag*: value telling the model which vulnerability function to assign to this asset;
   • *fX_cap*: value to cap vulnerability prediction by (e.g., improvement value).
 
-Additional fields are allowed but ignored by CanFlood. The ‘X’ placeholder shown above is called the ‘nestID’ and is used to group the four key attributes that parametrize a ‘nested function’ required by the Impacts (L2) model (:ref:`Section5.2.2 <Section5.2.2>`). The ‘Build’ toolset provides a ‘Inventory Constructor’ tool that can populate an inventory template as a convenience; however, completing this template for a study area generally requires extensive data analysis outside the CanFlood plugin.
+Additional fields are allowed but ignored by CanFlood. The ‘X’ placeholder shown above is called the ‘nestID’ and is used to group the four key attributes that parametrize a ‘nested function’ required by the Impacts (L2) model.
+The ‘Build’ toolset provides a ‘Inventory Constructor’ tool that can populate an inventory template as a convenience; however, completing this template for a study area generally requires extensive data analysis outside the CanFlood plugin.
 
 .. _Section4.2:
 
 ******************
-4.2. Hazard Events
+Hazard Events
 ******************
 
 CanFlood requires a set of ‘hazard events’ to calculate flood exposure and risk. For a risk calculation, each event should have:
 
   • **Event probability**: probability of the event occurring. This can be input as Annual Exceedance Probabilities (AEP) or Annual Recurrence Intervals (ARI). Often these are developed using statistical analysis of past flood events. As this information is not contained in the raster data file itself, best practice is to include it in the layer name.
 
-  • **Event raster**: location and WSL of the flood event. CanFlood’s ‘Hazard Sampler’ tool (:ref:`Section5.1.3 <Section5.1.3>`) expects this as a raster data file, but CanFlood’s Model routines only require the tabular exposure data (‘expos’). Values must be relative to the project datum (WSL) and are typically developed using hydraulic modelling software.
+  • **Event raster**: location and WSL of the flood event. CanFlood’s ‘Hazard Sampler’ tool expects this as a raster data file, but CanFlood’s Model routines only require the tabular exposure data (‘expos’). Values must be relative to the project datum (WSL) and are typically developed using hydraulic modelling software.
 
-  • **Companion failure events (optional)**: contains information about the probability and resulting exposure of a flood protection system failure during the hazard event. Each hazard event can be assigned multiple failure events (see :ref:`Section1.4 <Section1.4>`) by specifying the same event probability for each in the ‘evals’ dataset (see :ref:`Section5.1.4 <Section5.1.4>`).
+  • **Companion failure events (optional)**: contains information about the probability and resulting exposure of a flood protection system failure during the hazard event. Each hazard event can be assigned multiple failure events by specifying the same event probability for each in the ‘evals’ dataset.
 
       o Failure raster: location and WSL of the companion failure event.
 
-      o Failure polygon: Conditional exposure probability polygon layer with features indicating the extent and probability of element failures during the event. The ‘Dike Fragility Mapper’ tool (:ref:`Section5.1.5 <Section5.1.5>`) provides a set of algorithms for preparing these polygons from typical dike fragility information and event rasters. These failure polygons are needed by the ‘Conditional P’ tool to generate the resolved exposure probabilities (‘exlikes’) dataset required by the Risk (L1) and Risk (L2) modules.
+      o Failure polygon: Conditional exposure probability polygon layer with features indicating the extent and probability of element failures during the event. The ‘Dike Fragility Mapper’ tool provides a set of algorithms for preparing these polygons from typical dike fragility information and event rasters. These failure polygons are needed by the ‘Conditional P’ tool to generate the resolved exposure probabilities (‘exlikes’) dataset required by the Risk (L1) and Risk (L2) modules.
 
 .. _Section4.3:
 
 *******************************
-4.3. Vulnerability Function Set
+Vulnerability Function Set
 *******************************
 
 For the Impacts (L2) model, CanFlood requires an impact function library with a function for each asset tag in the inventory. The datafile is a .xls spreadsheet, where each tab corresponds to a separate impact function. Each tab contains:
@@ -70,15 +71,15 @@ An example is provided in Table4-1_ with a description. During the Impacts (L2) 
 .. _Section4.4:
 
 ********************************
-4.4. Digital Terrain Model (DTM)
+Digital Terrain Model (DTM)
 ********************************
 
 A project DTM is only required for those models with relative asset heights (elv).
 
-.. _Section4.5:
+.. _sec-04-dikeInfo:
 
 *********************
-4.5. Dike Information
+Dike Information
 *********************
 
 To use the ‘Dike Fragility Mapper’ module (:ref:`Section5.4.1 <Section5.4.1>`) to generate the ‘failure polygon’ set, the following information on the study area’s diking system is required:
