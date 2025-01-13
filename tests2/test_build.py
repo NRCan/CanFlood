@@ -123,10 +123,11 @@ def test_02_build_inv(session, base_dir, finv_vlay, cf_fp):
     
     
     
-
+@pytest.mark.dev
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_02_build_inv_tests2__data0\CanFlood_test_01.txt']) #from test_02
 def test_03_build_inv_curves(session, base_dir, cf_fp):
+
     dial = session.Dialog
  
     #===========================================================================
@@ -142,16 +143,15 @@ def test_03_build_inv_curves(session, base_dir, cf_fp):
     
     
     raw_fp = os.path.join(session.pars_dir, r'vfunc\IBI_2015\IBI2015_DamageCurves.xls')
-    
     #update the gui
     dial.lineEdit_curve.setText(raw_fp)
     #===========================================================================
     # execute
     #===========================================================================
-    #purge it
-    """BuildDialog.purge_curves()"""
-    #dial.purge_curves()
-    QTest.mouseClick(dial.pushButton_Inv_purge, Qt.LeftButton)
+    
+    #connected to BuildDialog.purge_curves()
+    QTest.mouseClick(dial.pushButton_Inv_purge, Qt.LeftButton)  
+     
      
     #update control file
     QTest.mouseClick(dial.pushButton_Inv_curves, Qt.LeftButton)

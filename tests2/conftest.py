@@ -36,15 +36,16 @@ def excepthook(exc_type, exc_value, exc_tb):
 sys.excepthook = excepthook
  
 
-class Session_pytest(Session): #QGIS enabled session handler for testing dialogs
-    """see also
+class Session_pytest(Session): 
+    """QGIS enabled session handler for testing dialogs
+    
+    see also
     dial_coms.DTestSessionQ
     """
     iface=None
     finv_vlay=None
-    def __init__(self, 
-                 crs=None,logger=None,
-                  **kwargs):
+    def __init__(self, crs=None,logger=None,**kwargs):
+ 
         
         if logger is None:
             """unlike the wflow session, plugin loggers use special methods for interfacing with QGIS"""
@@ -64,6 +65,7 @@ class Session_pytest(Session): #QGIS enabled session handler for testing dialogs
     def init_dialog(self,
                     DialogClass, iface=None,
                     ):
+        """init and launch the dialog for pytest"""
         
         if not iface is None:
             self.iface=iface
