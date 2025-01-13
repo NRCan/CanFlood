@@ -1,20 +1,25 @@
-.. _Section6:
+.. _sec-06:
 
 ============
-6. Tutorials
+Tutorials
 ============
 
-This section provides a few tutorials to get a user started in CanFlood. It is suggested to work through the tutorials sequentially, referring to :ref:`Section5 <toolsets>` when more detailed information is desired. For all tutorials, the project CRS can safely be set from any of the data layers, unless otherwise specified. Tutorials are written assuming users are familiar with QGIS and object-based flood risk modelling. All tutorial data is provided on the github page under `tutorials  <https://github.com/NRCan/CanFlood/tree/master/tutorials>`_ where files can be downloaded individually. A complete zip of this data is provided for convenience `here <https://github.com/NRCan/CanFlood/tree/master/tutorials/_complete>`_ .
+This section provides a few tutorials to get a user started in CanFlood.
+It is suggested to work through the tutorials sequentially, referring to :numref:`sec-05` when more detailed information is desired.
+For all tutorials, the project CRS can safely be set from any of the data layers, unless otherwise specified.
+Tutorials are written assuming users are familiar with QGIS and object-based flood risk modelling.
+All tutorial data is provided on the github page under `tutorials  <https://github.com/NRCan/CanFlood/tree/master/tutorials>`_ where files can be downloaded individually.
+A complete zip of this data is provided for convenience `here <https://github.com/NRCan/CanFlood/tree/master/tutorials/_complete>`_ .
 
 .. _Section6.1:
 
 ***************************
-6.1. Tutorial 1a: Risk (L1)
+Tutorial 1a: Risk (L1)
 ***************************
 
 This tutorial guides the user through the simplest application of risk modelling in CanFlood, called a level 1 (L1) analysis, where only binary exposure is calculated. This ‘exposed vs. not exposed’ analysis can be useful for preliminary analysis where there is insufficient information to model more complex object vulnerability.
 
-6.1.1. Load data to the project
+Load data to the project
 ===============================
 
 Download the data layers for Tutorial 1:
@@ -31,7 +36,9 @@ Download the data layers for Tutorial 1:
 
   • *finv_tut1a.gpkg* : flood asset inventory (’finv’) spatial layer.
 
-Ensure your project’s CRS is set to ‘EPSG:3005‘. Depending on your settings, the CRS may have been set automatically when you loaded the datafiles. All tutorials use CRS ‘EPSG:3005’ unless stated otherwise.  See `working with projections <https://docs.qgis.org/3.10/en/docs/user_manual/working_with_projections/working_with_projections.html>`_ for more info. 
+Ensure your project’s CRS is set to ‘EPSG:3005‘. Depending on your settings, the CRS may have been set automatically when you loaded the datafiles.
+All tutorials use CRS ‘EPSG:3005’ unless stated otherwise.
+See `working with projections <https://docs.qgis.org/3.10/en/docs/user_manual/working_with_projections/working_with_projections.html>`_ for more info.
 
 Load the downloaded layers into a new QGIS project (Depending on your QGIS settings, you may be requested to select a transformation if the CRS was not set correctly beforehand). Your map canvas should look something like this:
 
@@ -52,7 +59,7 @@ For this example, each inventory entry or ‘asset’ could represent a home wit
 
 .. _Section6.1.2:
 
-6.1.2. Build the Model
+Build the Model
 ======================
 
 Press the ‘Build’ button |buildimage| to begin building a CanFlood model.
@@ -105,7 +112,7 @@ The control file should now be fully built for an L1 analysis and the necessary 
 
 .. image:: /_static/tutorials_6_1_2_img_6.jpg
 
-6.1.3. Run the Model
+Run the Model
 ====================
 
 Click the ‘Model’ button |runimage| to launch the Model toolset dialog.
@@ -126,7 +133,7 @@ Navigate to the ‘Risk (L1)’ tab. Check the first two boxes as shown below an
 
 .. image:: /_static/tutorials_6_1_3_img_2.jpg
 
-6.1.4. View Results
+View Results
 ===================
 
 Navigate to the selected working directory. You should see 3 files created:
@@ -164,12 +171,12 @@ Notice the six impact fields (boxed in red above) have had their names converted
 .. _Section6.2:
 
 **********************************************
-6.2. Tutorial 2a: Risk (L2) with Simple Events
+Tutorial 2a: Risk (L2) with Simple Events
 **********************************************
 
-Tutorial 2 demonstrates the use of CanFlood’s ‘Risk (L2)’ model (:ref:`Section5.2.3 <Section5.2.3>`). This emulates a more detailed risk assessment where the vulnerability (as a function of depth) for each asset is known (rather than simple binary flood exposure as in tutorial 1). This tutorial also demonstrates an inventory with ‘relative’ heights and CanFlood’s ‘composite vulnerability function’ feature where multiple functions are applied to the same asset.
+Tutorial 2 demonstrates the use of CanFlood’s ‘Risk (L2)’ model (:numref:`sec-05-riskL2`). This emulates a more detailed risk assessment where the vulnerability (as a function of depth) for each asset is known (rather than simple binary flood exposure as in tutorial 1). This tutorial also demonstrates an inventory with ‘relative’ heights and CanFlood’s ‘composite vulnerability function’ feature where multiple functions are applied to the same asset.
 
-6.2.1. Load data into the project
+Load data into the project
 ===========================
 
 Download the tutorial 2 data from `the project page <https://github.com/NRCan/CanFlood/tree/master/tutorials/2>`_:
@@ -193,7 +200,7 @@ Load these into a QGIS project, it should look something like this:
 
 .. image:: /_static/tutorials_6_2_1_img_1.jpg
 
-6.2.2. Build the Model
+Build the Model
 ======================
 
 Open the ‘Build’ |buildimage| toolset.
@@ -242,7 +249,7 @@ Move to the ‘Validation’ tab, **check the boxes for both L2 models**, then *
 
 This shows that the Risk (L2) model is missing the ‘dmgs’ data file and will not run. This is expected behavior as CanFlood separates the exposure calculation (Impacts L2) from the risk calculation. We will calculate this ‘dmgs’ data file and validate for Risk (L2) in the next section. You’re now ready to run the Impacts (L2) model!
 
-6.2.3. Run the Model
+Run the Model
 ====================
 
 Open the ‘Model’ |runimage| dialog. Configure the ‘Setup’ tab as shown below, selecting your own paths and control file, and ensuring the ‘Outputs Directory’ is a sub-directory of your previous ‘Working Directory’ (Some ‘Results’ tools work better when the model output data files are in the same file tree as the Control File):
@@ -257,7 +264,9 @@ This should create an impacts (‘dmgs’) datafile in your working directory an
 
 .. image:: /_static/tutorials_6_2_3_img_2.jpg
 
-These are the raw impacts per event per asset calculated with each vulnerability function, the sampled WSL and the sampled DTM elevation. The second output is the ‘expanded component impacts’, a large optional output background file used by CanFlood that contains the tabulation of each nested function and the applied scaling and cap values. See :ref:`Section5.2.2 <Section5.2.2>` for more information. Now you’re ready to calculate flood risk!
+These are the raw impacts per event per asset calculated with each vulnerability function, the sampled WSL and the sampled DTM elevation. The second output is the ‘expanded component impacts’, a large optional output background file used by CanFlood that contains the tabulation of each nested function and the applied scaling and cap values.
+See :numref:`sec-05-impactsL2` for more information.
+Now you’re ready to calculate flood risk!
 
 **Risk (L2)**
 
@@ -265,9 +274,9 @@ Move to the ‘Risk (L2)’ tab. Check all the boxes shown below and **click ‘
 
 .. image:: /_static/tutorials_6_2_3_img_3.jpg
 
-A set of results files should have been generated in your working directory (discussed below). For a complete description of the Risk (L2) module, see :ref:`Section5.2.3 <Section5.2.3>`.
+A set of results files should have been generated in your working directory (discussed below). For a complete description of the Risk (L2) module.
 
-6.2.4. View Results
+View Results
 ===================
 
 After completing the Risk (L2) run, navigate to your working directory. It should now contain these files:
@@ -310,10 +319,13 @@ These plots are the two standard risk curve formats for the same total results d
    :align: middle
    :width: 28
 
-Finally, move to the 'Report' tab, **select the finv vector layer**, and **click 'Create Report'** to generate a  QGIS report template of your model and results. Open the layout manager and select the report, and **click 'Show'** to open the report manager (CanFlood will attempt to do this automatically). From the layout window, you can select the generated sections and **click 'Edit'** to view and modify the content.  From the layout window, click **Export to pdf** to generate a pdf of the report. For this tutorial, seven pages should be included in the exported pdf, as shown `here <https://github.com/NRCan/CanFlood/blob/63-person-testing-of-feature-report-creating/tests2/data/test_t2_A_BuildDialog_0/CanFlood_report_res1_0805.pdf>`_. 
+Finally, move to the 'Report' tab, **select the finv vector layer**, and **click 'Create Report'** to generate a  QGIS report template of your model and results.
+Open the layout manager and select the report, and **click 'Show'** to open the report manager (CanFlood will attempt to do this automatically).
+From the layout window, you can select the generated sections and **click 'Edit'** to view and modify the content.
+From the layout window, click **Export to pdf** to generate a pdf of the report. For this tutorial, seven pages should be included in the exported pdf, as shown `here <https://github.com/NRCan/CanFlood/blob/63-person-testing-of-feature-report-creating/tests2/data/test_t2_A_BuildDialog_0/CanFlood_report_res1_0805.pdf>`_.
 
 *********************************************
-6.3. Tutorial 2b: Risk (L2) with Dike Failure
+Tutorial 2b: Risk (L2) with Dike Failure
 *********************************************
 
 Users should first complete Tutorials 1 and 2a. Tutorial 2b uses the same input data as 2a but expands the analysis to demonstrate the risk analysis of a simple levee failure through incorporating a single companion failure event into the model. This companion failure event is composed of two layers:
@@ -321,13 +333,13 @@ Users should first complete Tutorials 1 and 2a. Tutorial 2b uses the same input 
   • *haz_1000_fail_A_tut2*: ‘failure raster’ indicating the WSL that would be realized were any of the levee segments to fail during the event; and
   • *haz_1000_fail_A_tut2*: conditional exposure probability polygon layer with features indicating the extent and probability of failure of each levee segment during the flood event (‘failure polygons’). Notice this layer contains two features that overlap in places, corresponding potential flooding from two breach sites in the levee system. This layer will be used to tell CanFlood when and how to sample the failure raster.
 
-This simplification by using these two layers facilitates the specification of multiple failure probabilities but where any failure (or combination of failures) would realize the same WSL (:ref:`Section5.1.5 <Section5.1.5>`’s ‘complex conditionals’). Ensure these layers are loaded into the same QGIS project as was used for Tutorial 2a.
+This simplification by using these two layers facilitates the specification of multiple failure probabilities but where any failure (or combination of failures) would realize the same WSL (:numref:`sec-05-build-conditionalP`’s ‘complex conditionals’). Ensure these layers are loaded into the same QGIS project as was used for Tutorial 2a.
 
 To better understand the ‘failure polygons’ layer, let’s apply CanFlood’s ‘red fill transparent’ style. Begin by loading this style template into your profile with the ‘Add Styles’ tool (Plugins > CanFlood > Add Styles), then apply it using the Layer Styling Panel (F7). Finally, add a single label for ‘p_fail’ and move the layer just beneath the asset inventory (‘finv’) points layer on the layers panel. Your canvas should look similar to the below:
 
 .. image:: /_static/tutorials_6_3_img_1.jpg
 
-6.3.1. Build the Model
+Build the Model
 ======================
 
 Follow the steps in Tutorials 2a ‘Build the Model’ but with including the ‘failure raster’ (‘haz_1000_fail_A_tut2’, probability=1000ARI) in the ‘Hazard Sampler’ and ‘Event Variables’ steps. On the ‘Event Variables’ step, ensure ‘Failure Event Relation Treatment’ is set to ‘Mutually Exclusive’.
@@ -346,30 +358,36 @@ Two non-spatial summary plots of this data should also have been generated in yo
 
 .. image:: /_static/tutorials_6_3_1_img_3.jpg
 
-These values are the conditional probabilities of each asset realizing the 1000-year companion failure event WSL(Try running the tool again, but this time selecting ‘Max’. If you look closely at the boxplots, you should see a slight difference in the resolved probabilities. This suggests this model is not very sensitive to the relational assumption of these overlapping failure polygons). See :ref:`Section5.2.3 <Section5.2.3>` for a complete description of this tool. Complete the model construction by running the ‘DTM Sampler’ and ‘Validation’ tools.
+These values are the conditional probabilities of each asset realizing the 1000-year companion failure event WSL(Try running the tool again, but this time selecting ‘Max’. If you look closely at the boxplots, you should see a slight difference in the resolved probabilities.
+This suggests this model is not very sensitive to the relational assumption of these overlapping failure polygons).
+Complete the model construction by running the ‘DTM Sampler’ and ‘Validation’ tools.
 
-6.3.2. Run the Model
+Run the Model
 ====================
 
 Open the ‘Model’ dialog |runimage| and setup your session similar to Tutorial 2a but ensure ‘Generate attribution matrix’ is checked under ‘Run Controls’ (we’ll use this to make plots showing the different components that contribute to the risk totals).
 
 **Impacts and Risk**
 
-Navigate to the ‘Impacts (L2)’ tab, check the ‘Run Risk (L2) upon completion’ box to execute the exposure and risk models in sequence from your Control File. Navigate to the ‘Risk (L2)’ tab and ensure ‘Calculate expected values per asset’ is checked. Now move back to the ‘Impacts (L2)’ tab and **click ‘Run dmg2’**. You should see the same types of outputs as Tutorial 2a, but with two additional ‘attribution matrix’ datasets.
+Navigate to the ‘Impacts (L2)’ tab, check the ‘Run Risk (L2) upon completion’ box to execute the exposure and risk models in sequence from your Control File.
+Navigate to the ‘Risk (L2)’ tab and ensure ‘Calculate expected values per asset’ is checked.
+Now move back to the ‘Impacts (L2)’ tab and **click ‘Run dmg2’**. You should see the same types of outputs as Tutorial 2a, but with two additional ‘attribution matrix’ datasets.
 
 .. _Section6.3.3:
 
-6.3.3. View Results
+View Results
 ===================
 
-To better understand the influence of incorporating levee failure, this section will demonstrate how to generate a plot showing the total risk and the portion of that total risk that comes from assuming no failure. Open the ‘Results’ toolset and configure your session by selecting a working directory and the same Control File used above. Now navigate to the ‘Risk Plot’ tab, ensure both plot controls are checked, then **click ‘Plot Fail Split’**. This should generate two risk plot formulations, including the figure below:
+To better understand the influence of incorporating levee failure, this section will demonstrate how to generate a plot showing the total risk and the portion of that total risk that comes from assuming no failure.
+Open the ‘Results’ toolset and configure your session by selecting a working directory and the same Control File used above. Now navigate to the ‘Risk Plot’ tab, ensure both plot controls are checked, then **click ‘Plot Fail Split’**. This should generate two risk plot formulations, including the figure below:
 
 .. image:: /_static/tutorials_6_3_3_img_1.jpg
 
-In this plot, the red line represents the contribution to risk without the companion failure events, which should be nearly identical to the results from Tutorial 2a, and a second line showing the total results(Alternatively, the ‘Compare’ tool can be used to generate a comparison plot between the two tutorials). The area between these two lines illustrates the contribution to risk from incorporating levee failure into the model.
+In this plot, the red line represents the contribution to risk without the companion failure events, which should be nearly identical to the results from Tutorial 2a, and a second line showing the total results (Alternatively, the ‘Compare’ tool can be used to generate a comparison plot between the two tutorials).
+The area between these two lines illustrates the contribution to risk from incorporating levee failure into the model.
 
 ************************************************
-6.4. Tutorial 2c: Risk (L2) with Complex Failure
+Tutorial 2c: Risk (L2) with Complex Failure
 ************************************************
 
 It is recommended that users first complete Tutorial 2b. Tutorial 2c uses the same input data as 2b but expands the analysis to demonstrate the incorporation of more complex levee failure with two companion failure events into the model.
@@ -381,16 +399,17 @@ In the same QGIS project as was used for Tutorial 2b, ensure the following are a
 
 These layers represent an additional companion failure event ‘B’ for the 1000-year event where the failure WSL and probabilities are different but complimentary from those of Tutorial 2b’s companion failure event ‘A’. These could be outputs from two modelled breach scenarios.
 
-6.4.1. Build the Model
+Build the Model
 ======================
 
-Follow the steps in Tutorials 2b ‘Build the Model’ but with including the additional companion failure event ‘B’ in the ‘Hazard Sampler’, ‘Event Variables’ and ‘Conditional P’ steps. For the latter two, ensure both event relation treatments are set to ‘Mutually Exclusive’. Looking at the ‘Conditional P’ boxplot shows the difference in failure probabilities specified by the two companion failure events:
+Follow the steps in Tutorials 2b ‘Build the Model’ but with including the additional companion failure event ‘B’ in the ‘Hazard Sampler’, ‘Event Variables’ and ‘Conditional P’ steps. For the latter two, ensure both event relation treatments are set to ‘Mutually Exclusive’.
+Looking at the ‘Conditional P’ boxplot shows the difference in failure probabilities specified by the two companion failure events:
 
 .. image:: /_static/tutorials_6_4_1_img_1.jpg
 
 Complete the model construction by running the ‘DTM Sampler’ and ‘Validation’ tools.
 
-6.4.2. Run the Model
+Run the Model
 ====================
 
 Open the ‘Model’ dialog |runimage| and follow the steps in Tutorial 2b to setup this model run.
@@ -399,12 +418,15 @@ Open the ‘Model’ dialog |runimage| and follow the steps in Tutorial 2b to se
 
 Execute the ‘Impacts (L2)’ and ‘Risk (L2)’ models similar to Tutorial 2b but ensure ‘Generate attribution matrix’ is de-selected.
 
-To explore the influence of the ‘event_rels’ parameter, open the control file, change the ‘event_rels’ parameter to ‘max’, change the ‘name’ parameter to something unique (e.g., ‘tut2c_max’), then save the file with a different name. On the ‘Setup’ tab, point to this modified control file, a new outputs directory, and run both models again as described above (Advanced users could avoid re-running the ‘Impacts (L2)’ model by manipulating the Control File to point to the ‘dmgs’ results from the previous run as these will not change between the two formulations).
+To explore the influence of the ‘event_rels’ parameter, open the control file, change the ‘event_rels’ parameter to ‘max’, change the ‘name’ parameter to something unique (e.g., ‘tut2c_max’), then save the file with a different name.
+On the ‘Setup’ tab, point to this modified control file, a new outputs directory, and run both models again as described above (Advanced users could avoid re-running the ‘Impacts (L2)’ model by manipulating the Control File to point to the ‘dmgs’ results from the previous run as these will not change between the two formulations).
 
-6.4.3. View Results
+View Results
 ===================
 
-After executing the ‘Risk (L2)’ model for the ‘event_rels=mutEx’ and ‘event_rels=max’ control files, two similar collections of output files should have been generated in the two separate output directories specified during model setup. To visualize the difference between these two model configurations, **open the ‘Results’ toolset** and select a working directory and the original ‘event_rels=mutEx’ control file as the ‘main control file’ on the ‘Setup’ tab (The control file specified on the ‘Setup’ tab will be used for common plot styles (e.g.,). Before generating the comparison files, configure the plot style by opening the same main control file, and changing the following ‘[plotting]’ parameters:
+After executing the ‘Risk (L2)’ model for the ‘event_rels=mutEx’ and ‘event_rels=max’ control files, two similar collections of output files should have been generated in the two separate output directories specified during model setup.
+To visualize the difference between these two model configurations, **open the ‘Results’ toolset** and select a working directory and the original ‘event_rels=mutEx’ control file as the ‘main control file’ on the ‘Setup’ tab (The control file specified on the ‘Setup’ tab will be used for common plot styles (e.g.,).
+Before generating the comparison files, configure the plot style by opening the same main control file, and changing the following ‘[plotting]’ parameters:
 
   • ‘color = red’
   • ‘linestyle = solid’
@@ -432,43 +454,50 @@ Re-running the comparison tool on the four Tutorial 2 control files constructed 
 .. image:: /_static/tutorials_6_4_3_img_4.jpg
 
 *******************************************
-6.5. Tutorial 2d: Risk (L2) with Mitigation
+Tutorial 2d: Risk (L2) with Mitigation
 *******************************************
 
-It is recommended that users first complete Tutorial 2a before proceeding. Tutorial 2d uses the same input data as 2a but expands the analysis to demonstrate the incorporation of object (or property) level mitigation measures (PLPM) into the model. This can be useful for improving the accuracy of a model where two assets are functionally similar, using the same vulnerability function, but where one has some mechanism to reduce the exposure of the asset (e.g., a backflow valve). Similarly, this functionality can be used to investigate the benefits of introducing PLPMs with a comparative analysis.
+It is recommended that users first complete Tutorial 2a before proceeding. Tutorial 2d uses the same input data as 2a but expands the analysis to demonstrate the incorporation of object (or property) level mitigation measures (PLPM) into the model.
+This can be useful for improving the accuracy of a model where two assets are functionally similar, using the same vulnerability function, but where one has some mechanism to reduce the exposure of the asset (e.g., a backflow valve).
+Similarly, this functionality can be used to investigate the benefits of introducing PLPMs with a comparative analysis.
 
-6.5.1. Build the Model
+Build the Model
 ======================
 
 Follow the steps in Tutorials 2a ‘Build the Model’, with the exception of the ‘Inventory’ step, which we’ll modify to apply four new fields to the inventory vector layer (‘finv’) by configuring the ‘Inventory’ tab as shown below before **clicking ‘Construct finv’**:
 
 .. image:: /_static/tutorials_6_5_1_img_1.jpg
 
-This should create a new layer with a ‘finv’ prefix in your map canvas. Exploring the attribute table of this layer (F6) should show the four new fields that were created and filled with the values specified. These are used by the ‘Impacts (L2)’ module to modify the exposure passed to each objects vulnerability function and are described in :ref:`Section5.2.2 <Section5.2.2>`. Complete the inventory construction by ensuring ‘Apply Mitigations’ is checked, the newly created inventory vector layer is selected, and the remainder of the tab is configured as shown below (same as Tutorial 2a). **Click ‘Store’.**
+This should create a new layer with a ‘finv’ prefix in your map canvas. Exploring the attribute table of this layer (F6) should show the four new fields that were created and filled with the values specified.
+These are used by the ‘Impacts (L2)’ module to modify the exposure passed to each objects vulnerability function and are described in :numref:`sec-05-impactsL2`
+Complete the inventory construction by ensuring ‘Apply Mitigations’ is checked, the newly created inventory vector layer is selected, and the remainder of the tab is configured as shown below (same as Tutorial 2a). **Click ‘Store’.**
 
 .. image:: /_static/tutorials_6_5_1_img_2.jpg
 
 Complete the ‘Hazard Sampler’, ‘Event Variables’, ‘DTM Sampler’, and ‘Validation’ steps as described in Tutorial 2a.
 
 
-6.5.2. Run the Model
+Run the Model
 ====================
 
 Open the ‘Model’ dialog |runimage| and setup your session similar to Tutorial 2a.
 
 **Impacts and Risk**
 
-Navigate to the ‘Impacts (L2)’ tab and ensure ALL ‘Run Controls’ are checked then **click ‘Run dmg2’**. You should see the same types of outputs as Tutorial 2a, but with some additional outputs that will help us understand the influence of the mitigation parameters, including the box plot shown below:
+Navigate to the ‘Impacts (L2)’ tab and ensure ALL ‘Run Controls’ are checked then **click ‘Run dmg2’**.
+You should see the same types of outputs as Tutorial 2a, but with some additional outputs that will help us understand the influence of the mitigation parameters, including the box plot shown below:
 
 .. image:: /_static/tutorials_6_5_2_img_1.jpg
 
 This shows data summaries for the four event rasters, the total impact values (in red text), and some key model info.
 
-To understand the effect of the mitigation parameters, open the control file, change the ‘apply_miti’ parameter to ‘False’, change the ‘name’ parameter to ‘tut2d_noMiti’, ‘color’ to ‘red’, and save it under a different name. On the ‘Setup’ tab, point to this new control file and change the ‘Run Tag’ to ‘noMiti’. Now move back to the ‘Impacts (L2)’ tab and **click ‘Run dmg2’ again.** You should see another boxplot generated in your working directory:
+To understand the effect of the mitigation parameters, open the control file, change the ‘apply_miti’ parameter to ‘False’, change the ‘name’ parameter to ‘tut2d_noMiti’, ‘color’ to ‘red’, and save it under a different name. On the ‘Setup’ tab, point to this new control file and change the ‘Run Tag’ to ‘noMiti’.
+Now move back to the ‘Impacts (L2)’ tab and **click ‘Run dmg2’ again.** You should see another boxplot generated in your working directory:
 
 .. image:: /_static/tutorials_6_5_2_img_2.jpg
 
-Notice the smaller events (50yr and 100yr) have changed significantly, while the larger events less-so. This makes sense considering we told CanFlood the mitigations would be overwhelmed at depths above 0.2 m (via the upper depth threshold parameter). We can investigate this model behavior further by opening either (The influence of the mitigation functions on the depths are not reflected in this output) of the ‘depths\_’ outputs, which should look similar to the below (values below the upper threshold are highlighted in red for clarity):
+Notice the smaller events (50yr and 100yr) have changed significantly, while the larger events less-so. This makes sense considering we told CanFlood the mitigations would be overwhelmed at depths above 0.2 m (via the upper depth threshold parameter).
+We can investigate this model behavior further by opening either (The influence of the mitigation functions on the depths are not reflected in this output) of the ‘depths\_’ outputs, which should look similar to the below (values below the upper threshold are highlighted in red for clarity):
 
 .. image:: /_static/tutorials_6_5_2_img_3.jpg
 
@@ -476,9 +505,10 @@ Similarly, the ‘dmg2_smry’ spreadsheet ‘_smry’ tab for the mitigation ru
 
 .. image:: /_static/tutorials_6_5_2_img_4.jpg
 
-This shows the total impacts achieved by the raw curves, then the ‘scaling’ algorithm (‘fX_scale’) the ‘capping’ algorithm (‘fX_cap’), followed by the algorithm that enforced the lower threshold (‘mi_Lthresh’), the mitigation scaling (‘mi_iScale’), the mitigation value addition (‘mi_iVal’), and the final result (identical to the previous row). This progression shows that the ‘capping’ algorithm had a large influence on the results and the mitigation value addition (‘mi_iVal’) had negligible influence.
+This shows the total impacts achieved by the raw curves, then the ‘scaling’ algorithm (‘fX_scale’) the ‘capping’ algorithm (‘fX_cap’), followed by the algorithm that enforced the lower threshold (‘mi_Lthresh’), the mitigation scaling (‘mi_iScale’), the mitigation value addition (‘mi_iVal’), and the final result (identical to the previous row).
+This progression shows that the ‘capping’ algorithm had a large influence on the results and the mitigation value addition (‘mi_iVal’) had negligible influence.
 
-6.5.3. View the Results
+View the Results
 =======================
 
 The ‘Compare’ Results tool can be used to show the influence on the risk curve and total risk:
@@ -486,7 +516,7 @@ The ‘Compare’ Results tool can be used to show the influence on the risk cur
 .. image:: /_static/tutorials_6_5_3_img_1.jpg
 
 ***************************************
-6.6. Tutorial 2e: Benefit-Cost Analysis
+Tutorial 2e: Benefit-Cost Analysis
 ***************************************
 
 This tutorial demonstrates CanFlood’s Benefit-Cost Analysis (BCA) tools for supporting basic benefit-cost analysis for flood risk interventions like the mitigations considered in the previous tutorial. Before continuing with this tutorial, users should have completed and have available the results data for Tutorial 2a (Alternatively, the ‘tut2d_noMiti’ from Tutorial 2d can be used) and 2d:
@@ -494,11 +524,14 @@ This tutorial demonstrates CanFlood’s Benefit-Cost Analysis (BCA) tools for su
   • *CanFlood_tut2a.txt*: control file from Tutorial 2a with valid total results (‘r_ttl’) file and filepath;
   • *CanFlood_tut2d.txt*: control file from Tutorial 2d with valid total results (‘r_ttl’) file filepath.
 
-Begin by opening the ‘Results’ toolbox then navigating to the ‘Setup’ tab to configure it using the control file from Tutorial 2d. Now we’ll generate a test plot to make sure our control files are valid. Ensure the ‘impactfmt_str’ parameter is set to ‘,.0f’ (no apostrophes) in the Tutorial 2d control file. Now move to the ‘Compare/Combine’ tab, enter in both control files, check one of the ‘Plot Controls’, then click ‘Compare’. A plot identical to the one generated at the end of Tutorial 2d should have been generated. Note the EAD of Tutorial 2d is ~57,000. This is the residual annual flood risk for these assets, after the PLPM intervention.
+Begin by opening the ‘Results’ toolbox then navigating to the ‘Setup’ tab to configure it using the control file from Tutorial 2d.
+Now we’ll generate a test plot to make sure our control files are valid. Ensure the ‘impactfmt_str’ parameter is set to ‘,.0f’ (no apostrophes) in the Tutorial 2d control file. Now move to the ‘Compare/Combine’ tab, enter in both control files, check one of the ‘Plot Controls’, then click ‘Compare’.
+A plot identical to the one generated at the end of Tutorial 2d should have been generated. Note the EAD of Tutorial 2d is ~57,000. This is the residual annual flood risk for these assets, after the PLPM intervention.
 
 **Complete BCA Workbook**
 
-Navigate to the ‘BCA’ tab. Ensure the control file path for Tutorial 2d is shown at the top of the window, then click ‘Copy BCA Template’. You should see a new ‘cba_xls’ parameter set in the control file and your ‘BCA’ window should look similar to the below:
+Navigate to the ‘BCA’ tab. Ensure the control file path for Tutorial 2d is shown at the top of the window, then click ‘Copy BCA Template’.
+You should see a new ‘cba_xls’ parameter set in the control file and your ‘BCA’ window should look similar to the below:
 
 .. image:: /_static/tutorials_6_6_img_1.jpg
 
@@ -526,7 +559,8 @@ To further summarize and analyze the data entered into the BCA worksheet (make s
 
 .. image:: /_static/tutorials_6_6_img_4.jpg
 
-This shows the relative values of the cumulative benefits and costs over time (without discounting). Notice the expensive installation costs exceed the benefits initially; however, after ~25 years the benefits of this option outweigh the costs (the ‘pay-back year’). Also notice that, with future values, the plot shows cumulative benefits around $10M at 100 years. Perhaps by then we will all be living in spaceships… so maybe it’s best not to consider such far-off benefits of flood mitigation so significantly.
+This shows the relative values of the cumulative benefits and costs over time (without discounting). Notice the expensive installation costs exceed the benefits initially; however, after ~25 years the benefits of this option outweigh the costs (the ‘pay-back year’).
+Also notice that, with future values, the plot shows cumulative benefits around $10M at 100 years. Perhaps by then we will all be living in spaceships… so maybe it’s best not to consider such far-off benefits of flood mitigation so significantly.
 
 Change the radio button to ‘Present Values’ and click ‘Plot Financials’ again. You should see a plot like the below:
 
@@ -538,12 +572,13 @@ To better understand the role of the discount rate, return to the worksheet, cha
 
 .. image:: /_static/tutorials_6_6_img_6.jpg
 
-Notice the ‘payback year’ has not changed, but the relative size of the positive (green) and negative (red) areas has shifted and the ‘B/C ratio’ has dropped below 1. This reflects the more severe discounting of the future benefits brought by the larger 8% discount rate. In other words, by the time the future residents of the study area accrue significant benefits from the PLPMs, the current stakeholders wish they had spent the money on something else.
+Notice the ‘payback year’ has not changed, but the relative size of the positive (green) and negative (red) areas has shifted and the ‘B/C ratio’ has dropped below 1. This reflects the more severe discounting of the future benefits brought by the larger 8% discount rate.
+In other words, by the time the future residents of the study area accrue significant benefits from the PLPMs, the current stakeholders wish they had spent the money on something else.
 
 
 
 **************************************************************
-6.8. Tutorial 4a: Risk (L1) with Percent Inundation (Polygons)
+Tutorial 4a: Risk (L1) with Percent Inundation (Polygons)
 **************************************************************
 
 This tutorial demonstrates a risk analysis of polygon type assets where the impact metric is percent inundated rather than depth. This can be useful for some coarse risk modelling, or for assets like agricultural fields where the loss can reasonably be calculated from the percent of the asset that is inundated.
@@ -570,7 +605,7 @@ Move the polygon inventory (‘finv’) layer to the top, apply the CanFlood ‘
 
 .. image:: /_static/tutorials_6_8_img_1.jpg
 
-6.8.1. Build the Model
+Build the Model
 ======================
 
 **Setup**
@@ -599,7 +634,7 @@ These values are the calculated percent of each polygon with inundation greater 
 
 Run the ‘Event Variables’ and ‘Validation’ tools as instructed in Tutorial 1a.
 
-6.8.2. Run the Model
+Run the Model
 ====================
 
 Open the ‘Model’ dialog |runimage| and follow the steps in Tutorial 1a to setup this model run. Navigate to the ‘Risk (L1)’ tool, check the boxes shown, and click ‘Run risk1’:
@@ -608,7 +643,7 @@ Open the ‘Model’ dialog |runimage| and follow the steps in Tutorial 1a to se
 
 The set of results files discussed below should have been generated.
 
-6.8.3. View the Results
+View the Results
 =======================
 
 Navigate to your working directory. You should see the following results files have been generated:
@@ -633,7 +668,7 @@ Click **‘Join’**. You should see a new polygon vector layer loaded in your c
 .. image:: /_static/tutorials_6_8_3_img_3.jpg
 
 ***********************************************************
-6.9. Tutorial 4b: Risk (L1) with Percent Inundation (Lines)
+Tutorial 4b: Risk (L1) with Percent Inundation (Lines)
 ***********************************************************
 
 Like Tutorial 4a, this tutorial demonstrates a risk analysis where the impact metric is percent inundated, but with line geometries rather than polygons. This can be useful for the analysis of flood risk to linear assets like roads.
@@ -648,10 +683,12 @@ The per-asset results should look like this:
 
 .. image:: /_static/tutorials_6_9_img_1.jpg
 
-The first non-index ‘impact’ columns represent hazard events, with values showing the percent inundation of each segment multiplied by its ‘f0_scale’ value. This could represent the meters inundated (above the 0.5m depth threshold) per segment, if the ‘f0_scale’ value is the segment length (as is the case with the tutorial inventory). Alternatively, the ‘f0_scale’ value could be set to ‘1.0’ for all features which would cause the values to simply reflect the % inundation of each segment (mirrors the output of the Hazard Sampler tool) and the last column would calculate the expected percent annual inundation of the segment.
+The first non-index ‘impact’ columns represent hazard events, with values showing the percent inundation of each segment multiplied by its ‘f0_scale’ value.
+This could represent the meters inundated (above the 0.5m depth threshold) per segment, if the ‘f0_scale’ value is the segment length (as is the case with the tutorial inventory).
+Alternatively, the ‘f0_scale’ value could be set to ‘1.0’ for all features which would cause the values to simply reflect the % inundation of each segment (mirrors the output of the Hazard Sampler tool) and the last column would calculate the expected percent annual inundation of the segment.
 
 ************************************************
-6.10. Tutorial 5a: Risk (L1) from NPRI and GAR15
+Tutorial 5a: Risk (L1) from NPRI and GAR15
 ************************************************
 
 This tutorial demonstrates how to construct a CanFlood ‘Risk (L1)’ model from two web-sources:
@@ -663,14 +700,15 @@ For more information on these data sets, see :ref:`Appendix A <appendix_a>`.
 
 Because this tutorial deals with data having disparate CRSs, users should be familiar with QGIS’s native handling of project and layer CRS discussed `here <https://docs.qgis.org/3.10/en/docs/user_manual/working_with_projections/working_with_projections.html>`__.
 
-6.10.1. Load Data into the Project
+Load Data into the Project
 ============================
 
 Begin by setting your QGIS project’s CRS to ‘EPSG:3978’ (Project > Properties > CRS > select ‘EPSG:3978’) (Depending on your profile settings, the project’s CRS may be automatically set by the first loaded layer). Now you are ready to download, then add, the data layer for Tutorial 5:
 
   • *tut5_aoi_3978.gpkg*: AOI polygon for tutorial.
 
-Set the AOI’s layer style to ‘fill red transparent’ to allow you to see through the polygon. Before inventory construction can begin, we must add the NPRI and GAR15 raw data to the QGIS project. While there are many options for accessing and importing such data, this tutorial will demonstrate how to use CanFlood’s built-in ‘Add Connections’ |addConnectionsImage| feature (:ref:`Section5.4.1 <Section5.4.1>`) to first add a connection to the profile, then download the desired layers.
+Set the AOI’s layer style to ‘fill red transparent’ to allow you to see through the polygon. Before inventory construction can begin, we must add the NPRI and GAR15 raw data to the QGIS project.
+While there are many options for accessing and importing such data, this tutorial will demonstrate how to use CanFlood’s built-in ‘Add Connections’ |addConnectionsImage| feature to first add a connection to the profile, then download the desired layers.
 
 **Connect to Web-Data**
 
@@ -693,7 +731,9 @@ Note that these connections will remain in your profile for future QGIS sessions
 
 **Download NPRI Data**
 
-Now that the connections have been added to your profile, you are ready to download the layers. To limit the data request, ensure your map canvas roughly matches the extents of the AOI (Ctrl+Shift+F will zoom to the project extents). Now open the QGIS ‘Data Source Manager’ (Ctrl + L) and select ‘ArcGIS Feature Server’. Select ‘ECCC_NationalPollutantReleaseInventory_NPRI’ from the dropdown under ‘Server Connections’. **Click ‘Connect’** to display the layers available on the server. Select layer 3 ‘Reported releases to surface water for 2019’, check ‘Only request features…’, then **click ‘Add’** to add the layer to the project as shown in the following:
+Now that the connections have been added to your profile, you are ready to download the layers. To limit the data request, ensure your map canvas roughly matches the extents of the AOI (Ctrl+Shift+F will zoom to the project extents). Now open the QGIS ‘Data Source Manager’ (Ctrl + L) and select ‘ArcGIS Feature Server’.
+Select ‘ECCC_NationalPollutantReleaseInventory_NPRI’ from the dropdown under ‘Server Connections’.
+**Click ‘Connect’** to display the layers available on the server. Select layer 3 ‘Reported releases to surface water for 2019’, check ‘Only request features…’, then **click ‘Add’** to add the layer to the project as shown in the following:
 
 .. image:: /_static/tutorials_6_10_1_img_3.jpg
 
@@ -715,7 +755,7 @@ You’ll have to load one layer at a time, and you may be prompted to ‘Select 
 
 .. image:: /_static/tutorials_6_10_1_img_5.jpg
 
-6.10.2. Build the Model
+Build the Model
 =======================
 
 This section describes how to complete the construction of a Risk (L1) model from the downloaded NPRI and GAR15 data. For instructions on the remainder of the Risk (L1) modelling process, see Section6.1_.
@@ -728,27 +768,34 @@ Follow the instructions in Section6.1.2_ *Setup*; however, ensure ‘tut5_aoi_39
 
 **Construct and Store Inventory**
 
-Navigate to the ‘Inventory’ tab. To convert the downloaded NPRI data into an L1 inventory layer that CanFlood will recognize, we need to add ‘elv’ and ‘scale’ fields and values. For this simple analysis, we assume each asset has a vulnerability height of zero (i.e., any positive flood depth leads to exposure). This assumption is accomplished in CanFlood by setting ‘felv’= ‘datum’ and setting each ‘f0_elv’=0 (and using depth rather than WSL rasters). Using the Vector Layer drop down, select the NPRI layer and ensure the ‘nestID’, ‘scale’, and ‘elv’ fields match what is shown below. Finally, **click ‘Construct finv’** to build the new inventory layer. To generate the asset inventory (‘finv’) csv file, ensure this new layer is selected in the ‘Inventory Vector Layer’ drop down. Now configure the ‘felv’ and ‘cid’ parameters as shown below, then **click ‘Store’:**
+Navigate to the ‘Inventory’ tab. To convert the downloaded NPRI data into an L1 inventory layer that CanFlood will recognize, we need to add ‘elv’ and ‘scale’ fields and values. For this simple analysis, we assume each asset has a vulnerability height of zero (i.e., any positive flood depth leads to exposure).
+This assumption is accomplished in CanFlood by setting ‘felv’= ‘datum’ and setting each ‘f0_elv’=0 (and using depth rather than WSL rasters).
+Using the Vector Layer drop down, select the NPRI layer and ensure the ‘nestID’, ‘scale’, and ‘elv’ fields match what is shown below.
+Finally, **click ‘Construct finv’** to build the new inventory layer. To generate the asset inventory (‘finv’) csv file, ensure this new layer is selected in the ‘Inventory Vector Layer’ drop down. Now configure the ‘felv’ and ‘cid’ parameters as shown below, then **click ‘Store’:**
 
 .. image:: /_static/tutorials_6_10_2_img_2.jpg
 
 **Hazard Sampler**
 
-Now you’re ready to sample the GAR15 hazard layers with your new NPRI inventory. Unlike the hazard layers used in previous tutorials, the GAR15 hazard layers provide *depth* (rather than WSL) data in *centimeters* (rather than meters) in a coordinate system other than that of our project. Further, these hazard layers’ extents are much larger than what is needed by our project; and because they are web-layers, many of the QGIS processing tools will not work. Therefore, we’ll need to apply the four ‘Raster Preparation’ tools described in :ref:`Table5-2 <Table5-2>` before proceeding with the ‘Hazard Sampler’.
+Now you’re ready to sample the GAR15 hazard layers with your new NPRI inventory. Unlike the hazard layers used in previous tutorials, the GAR15 hazard layers provide *depth* (rather than WSL) data in *centimeters* (rather than meters) in a coordinate system other than that of our project.
+Further, these hazard layers’ extents are much larger than what is needed by our project; and because they are web-layers, many of the QGIS processing tools will not work. Therefore, we’ll need to apply the four ‘Raster Preparation’ tools before proceeding with the ‘Hazard Sampler’.
 
 Navigate to the ‘Hazard Sampler’ tab, ensure the five GAR2015 layers are listed in the window, and click ‘Sample’. You should get an error telling you the layer CRS does not match that of the project. To resolve this, click the "Raster Prep' button and configure the Raster Preparation handles as shown and **click ‘Prep’** and then 'OK':
 
 .. image:: /_static/tutorials_6_10_2_img_3.jpg
 
-You should see five new rasters loaded to your canvas (with a ‘prepd’ suffix). These layers should have rotated pixels, be clipped to the AOI, have reasonable flood depth values (in meters), and have the same CRS as the project (In some cases, QGIS may fail to recognize the CRS assigned to these new rasters, indicated by a “?” shown to the right of the layer in the layers panel. In these cases, you will need to define the projection by going to the layer’s ‘Properties’ and under ‘Source’ set the coordinate system to match that of the project (EPSG: 3978)). Further, each of these rasters should be saved to your working directory. This new set of hazard layers should conform to the expectations of the Hazard Sampler, allowing you to proceed with construction of an L1 model as described in Section6.1_.
+You should see five new rasters loaded to your canvas (with a ‘prepd’ suffix). These layers should have rotated pixels, be clipped to the AOI, have reasonable flood depth values (in meters), and have the same CRS as the project (In some cases, QGIS may fail to recognize the CRS assigned to these new rasters, indicated by a “?” shown to the right of the layer in the layers panel.
+In these cases, you will need to define the projection by going to the layer’s ‘Properties’ and under ‘Source’ set the coordinate system to match that of the project (EPSG: 3978)). Further, each of these rasters should be saved to your working directory.
+This new set of hazard layers should conform to the expectations of the Hazard Sampler, allowing you to proceed with construction of an L1 model as described in Section6.1_.
 
 .. _Section6.11:
 
 ****************************************
-6.11. Tutorial 6a: Dike Failure Polygons
+Tutorial 6a: Dike Failure Polygons
 ****************************************
 
-This tutorial demonstrates how to generate ‘failure polygons’ from typical dike information using CanFlood’s ‘Dike Fragility Mapper’ tool (:ref:`Section5.4.1 <Section5.4.1>`). Before following this tutorial, users should be familiar with the hazard event data types described in :ref:`Section4.2 <Section4.2>` (esp. ‘failure polygons’) that are required of Risk (L1) and (L2) models with some failure. Begin by downloading the tutorial data from the `tutorials\6 <https://github.com/IBIGroupCanWest/CanFlood/tree/master/tutorials/6>`__ folder and loading it into a new QGIS project:
+This tutorial demonstrates how to generate ‘failure polygons’ from typical dike information using CanFlood’s ‘Dike Fragility Mapper’ tool.
+Before following this tutorial, users should be familiar with the hazard event data types described in :ref:`Section4.2 <Section4.2>` (esp. ‘failure polygons’) that are required of Risk (L1) and (L2) models with some failure. Begin by downloading the tutorial data from the `tutorials\6 <https://github.com/IBIGroupCanWest/CanFlood/tree/master/tutorials/6>`__ folder and loading it into a new QGIS project:
 
     • hazard WSL event rasters (without failure)
 
@@ -765,11 +812,13 @@ This tutorial demonstrates how to generate ‘failure polygons’ from typical d
     • *dtm.tif*: Digital Terrain Model (import ‘dtm.qlr’ to get the styled version);
     • *dike_fragility_20210201.xls*: Dike fragility function library.
 
-See :ref:`Section4.5 <Section4.5>` for a description of these datasets. Ensure your project CRS is set to ‘EPSG:3005’. Once the GIS layers are loaded, your map canvas should look similar to the below:
+See :numref:`sec-04-dikeInfo` for a description of these datasets.
+Ensure your project CRS is set to ‘EPSG:3005’. Once the GIS layers are loaded, your map canvas should look similar to the below:
 
 .. image:: /_static/tutorials_6_11_img_1.jpg
 
-To make this workspace more friendly, ensure the ‘dikes’ and ‘dike_influence_zones’ layers are at the top of the layers panel. Now apply the following CanFlood styles (Load these styles onto your profile using the Plugins>CanFlood>Add Styles tool described in :ref:`Section5.4.4 <Section5.4.4>`) to each of these layers:
+To make this workspace more friendly, ensure the ‘dikes’ and ‘dike_influence_zones’ layers are at the top of the layers panel.
+Now apply the following CanFlood styles (Load these styles onto your profile using the Plugins>CanFlood>Add Styles) to each of these layers:
 
   • *dikes*: ‘arrow black’
   • *dike_influence_zones*: ‘fill red transparent’
@@ -782,7 +831,7 @@ Configure your dialog similar to what is shown below but using your own director
 
 .. image:: /_static/tutorials_6_11_img_3.jpg
 
-6.11.1. Calculate Dike Exposure
+Calculate Dike Exposure
 ===============================
 
 This step will calculate the exposure, or freeboard, values of each dike segment. Navigate to the ‘Dike Exposure’ tab, click ‘Refresh’, then configure it as shown below, taking care to select the DTM layer in the drop-down, but not in the selection window:
@@ -824,23 +873,30 @@ To visualize the calculated freeboard values, apply ‘Single Labels’ for the 
 
 .. image:: /_static/tutorials_6_11_1_img_3.jpg
 
-This is a profile plot of dike 43, segment 1 (sid=4301) showing the calculated crest elevation and WSL for the four event rasters (sampled with each transect). Note that, this plot suggests the freeboard of the 50-year to be around -0.2 m (see red circle above). Now open the ‘tut6_dExpo_7_3.csv’ file in the working directory, this is the dike segment exposure (‘dexpo’) dataset that we’ll use in the next step to calculate failure probabilities. Notice the freeboard value of the segment-event in question is -0.2m as expected:
+This is a profile plot of dike 43, segment 1 (sid=4301) showing the calculated crest elevation and WSL for the four event rasters (sampled with each transect).
+Note that, this plot suggests the freeboard of the 50-year to be around -0.2 m (see red circle above). Now open the ‘tut6_dExpo_7_3.csv’ file in the working directory, this is the dike segment exposure (‘dexpo’) dataset that we’ll use in the next step to calculate failure probabilities. Notice the freeboard value of the segment-event in question is -0.2m as expected:
 
 .. image:: /_static/tutorials_6_11_1_img_4.jpg
 
-6.11.2. Calculate Dike Vulnerability
+Calculate Dike Vulnerability
 ====================================
 
-This step will use the previously calculated freeboard values and the user supplied fragility curves to calculate the probability of failure of each segment. Switch to the ‘Dike Vulnerability’ tab, you should see the filepath to the above exposure results automatically populated in the ‘dexpo_fp’ field. Now select the fragility curves library ‘dike_fragility_20210201.xls’ file provided with the tutorial data. The tab-names in this workbook correspond to ‘f0_dtag’ field on the dikes layer, telling CanFlood which curve to apply to which segment. Choose ‘None’ for the length effect corrections. Your dialog should look similar to this:
+This step will use the previously calculated freeboard values and the user supplied fragility curves to calculate the probability of failure of each segment.
+Switch to the ‘Dike Vulnerability’ tab, you should see the filepath to the above exposure results automatically populated in the ‘dexpo_fp’ field.
+Now select the fragility curves library ‘dike_fragility_20210201.xls’ file provided with the tutorial data. The tab-names in this workbook correspond to ‘f0_dtag’ field on the dikes layer, telling CanFlood which curve to apply to which segment. Choose ‘None’ for the length effect corrections.
+Your dialog should look similar to this:
 
 .. image:: /_static/tutorials_6_11_2_img_1.jpg
 
 Now click ‘Calc Fragility’ to generate the tabular failure probability data (‘pfail’).
 
-6.11.3. Join to Areas
+Join to Areas
 =====================
 
-In this final step, we will join the previously calculated failure probabilities to the user supplied influence areas for each segment based on the links provided on the dikes layer. Navigate to the ‘Join Areas’ tab. You should see the ‘pfail’ data filepath in the corresponding field; if not, navigate to this file. If you successfully ran the ‘Dike Exposure’ tool this session, you should see the first column of raster layers selected; if not, select the four WSL rasters manually in the first column. For the second column, select the ‘dike_influence_zone’ polygon layer in the first drop-down, then click ‘Fill Down’ to populate the remaining drop-downs. Once finished, your dialog should look like the below:
+In this final step, we will join the previously calculated failure probabilities to the user supplied influence areas for each segment based on the links provided on the dikes layer.
+Navigate to the ‘Join Areas’ tab. You should see the ‘pfail’ data filepath in the corresponding field; if not, navigate to this file.
+If you successfully ran the ‘Dike Exposure’ tool this session, you should see the first column of raster layers selected; if not, select the four WSL rasters manually in the first column.
+For the second column, select the ‘dike_influence_zone’ polygon layer in the first drop-down, then click ‘Fill Down’ to populate the remaining drop-downs. Once finished, your dialog should look like the below:
 
 .. image:: /_static/tutorials_6_11_3_img_1.jpg
 
@@ -848,12 +904,14 @@ Click **‘Map pFail’**. You should see four polygon layers loaded to your can
 
 .. image:: /_static/tutorials_6_11_3_img_2.jpg
 
-These results layers are automatically stylized as failure polygons, showing the event raster name, source dike segment (‘sid’), and failure probability of each feature. Notice the 200-year contains 3-overlapping polygon features corresponding to the three segments with failure here, despite the original ‘dike_influznce_zones’ layer having two features. This mapping of polygons to dike segments is set on the dikes layer in the ‘Influence Area ID Field’ specified on the ‘Setup’ tab (‘ifzID’ in this case). In this way, 1:1 or many:many segment-polygon links can be specified, allowing the user to map each breach probability, or group segments to apply the calculated probabilities to a larger dike ring. See :ref:`Section5.4.1 <Section5.4.1>` for more information on this tool.
+These results layers are automatically stylized as failure polygons, showing the event raster name, source dike segment (‘sid’), and failure probability of each feature. Notice the 200-year contains 3-overlapping polygon features corresponding to the three segments with failure here, despite the original ‘dike_influznce_zones’ layer having two features.
+This mapping of polygons to dike segments is set on the dikes layer in the ‘Influence Area ID Field’ specified on the ‘Setup’ tab (‘ifzID’ in this case).
+In this way, 1:1 or many:many segment-polygon links can be specified, allowing the user to map each breach probability, or group segments to apply the calculated probabilities to a larger dike ring.
 
 .. _Section6.12:
 
 *************************************************
-6.12. Tutorial 7a: Sampling on Complex Geometries
+Tutorial 7a: Sampling on Complex Geometries
 *************************************************
 
 This tutorial demonstrates *Value Sampling* using sampling statistics specified *Per-Asset*. This can be useful when you would like to sample using heterogeneous statistics within a single inventory (e.g., 'Max' ground elevation for some buildings and 'Min' elevation for others). Begin by downloading the tutorial data from the `tutorials 7 <https://github.com/NRCan/CanFlood/tree/master/tutorials/7>`__ folder and loading it into a new QGIS project:
@@ -872,12 +930,12 @@ This tutorial demonstrates *Value Sampling* using sampling statistics specified 
 
   • *finv_tut7_polys.gpkg*: flood asset inventory (’finv’) spatial layer (and corresponding stylized layer definition .qlr file)
 
-6.12.1. Build the Model
+Build the Model
 =======================
 
 **Setup**
 
-Complete the typical setup as instructed in Tutorial 1a. 
+Complete the typical setup as instructed in Tutorial 1a.
 
 **Hazard Sampler**
 
@@ -887,7 +945,7 @@ Navigate to the ‘Hazard Sampler’ tool, check mark the four hazard rasters, s
 
 Complete the rest of the build process by running the ‘Event Variables’, ‘DTM Sampler’ and ‘Validation’  tools as outlined in Tutorial 1a.
 
-6.12.2. Run the Model
+Run the Model
 =====================
 
 Open the ‘Model’ dialog and follow the steps in Tutorial 1a to setup this model run.  Then execute the ‘Risk (L1)’ model to generate the following files:
@@ -898,7 +956,7 @@ Open the ‘Model’ dialog and follow the steps in Tutorial 1a to setup this mo
 
 In order to understand and visualize the effect of setting the hazard sampling statistic to ‘Per-Asset’, you can try re-building and running the same model with the hazard statistic type set to ‘Global’ and the statistic set to 'Mean', then compare the results.
 
-6.12.3. View Results
+View Results
 ====================
 To visualize the difference between these two model configurations, open the ‘Results’ toolset and select a working directory and the original ‘Per-Asset’ control file as the ‘main control file’ on the ‘Setup’ tab. Before generating the comparison files, configure the plot style by opening the same main control file, and changing the following ‘[plotting]’ parameters: 
 
@@ -949,7 +1007,7 @@ To generate a comparison plot of these two scenarios, navigate to the ‘Compare
 .. _Section6.13:
 
 ***************************************
-6.13. Tutorial 8a: Sensitivity Analysis
+Tutorial 8a: Sensitivity Analysis
 ***************************************
 
 This tutorial demonstrates *Sensitivity Analysis* workflow (:ref:`Section5.4.5 <Section5.4.5>`). This can be useful for quantifying the sensitivity of your model to each parameter and datafile.
@@ -973,7 +1031,7 @@ Begin by downloading the tutorial data from the `tutorials 8 <https://github.com
   • *CanFlood_tut8.txt*: main model control file
   
   
-6.13.1. Setup the Analysis
+Setup the Analysis
 ==========================
 
 Launch the *Sensitivity Analysis* |targetImage| dialog from the Plugins>CanFlood menu. Navigate to the *Setup* menu, select your working directory, set the filepaths to 'relative', then specify your main model control file and 'Model Level' = 'L2' as shown below:
@@ -985,9 +1043,9 @@ Launch the *Sensitivity Analysis* |targetImage| dialog from the Plugins>CanFlood
 .. |targetImage| image:: /_static/target.png
    :align: middle
    :width: 22
-   
-   
-6.13.2. Configure and Compile the Model Suite
+
+
+Configure and Compile the Model Suite
 =============================================
 
 Navigate to the *Compile* tab. It should have been automatically populated with the 'base' values from the control file on the first row, and a duplicate of this on the second row:
@@ -996,37 +1054,40 @@ Navigate to the *Compile* tab. It should have been automatically populated with 
 
 Now add three more candidate models by **clicking the 'Add' button three times**. Notice the model names have been automatically generated, but the remaining fields are identical to the base model. Now we'll modify or 'perturb' one parameter or datafile on each candidate to compile the sensitivity analysis suite.
 
-For the first perturbation, simply **change the rtail value on 'cand01' to 0.1**. For the second perturbation, **change the 'curve_deviation' on 'cand02' to 'lo'** to match the lower bound depth-damage values stored in the curves.xls. We will configure the remaining two perturbations in the following step. 
+For the first perturbation, simply **change the rtail value on 'cand01' to 0.1**.
+For the second perturbation, **change the 'curve_deviation' on 'cand02' to 'lo'** to match the lower bound depth-damage values stored in the curves.xls. We will configure the remaining two perturbations in the following step.
 
-To allow us to differentiate the plots we generate (see below), **click 'Randomize Colors'**. 
+To allow us to differentiate the plots we generate (see below), **click 'Randomize Colors'**.
 
 .. image:: /_static/tutorials_6_13_img_3.JPG
 
 Ensure 'Copy all candidate data files' is selected so the compiler will give each candidate its own data files, rather than have each point back to the main model's datafiles. Finally, **click 'Compile Candidates'**.  You will now see four new folders, one for each candidate model, in your working directory.
 
 
-6.13.3. Manipulate Datafiles
+Manipulate Datafiles
 ============================
 
 On the *DataFiles* tab, select 'cand03' and 'finv' to populate the datafile path with the corresponding datafile. **Click 'Load'** to add this datafile as a memory layer to your project.
 
 .. image:: /_static/tutorials_6_13_img_4.JPG
 
-Now we'll subtract 0.5 m from f0_elvs. **click 'Open Attribute Table'** (or the corresponding button on the QGIS toolbar, or hit 'F6') to open the attribute table window. Make a mental note of the 'f0_elv' values. Now open the *Field Calculator* (Ctrl + I). Check 'Update Existing Field' and select 'f0_elv' from the combobox. Select the custom 'finv_elv_add' expression function from the 'CanFlood' menu in the middle and complete the expression ass shown:
+Now we'll subtract 0.5 m from f0_elvs. **click 'Open Attribute Table'** (or the corresponding button on the QGIS toolbar, or hit 'F6') to open the attribute table window. Make a mental note of the 'f0_elv' values. Now open the *Field Calculator* (Ctrl + I).
+Check 'Update Existing Field' and select 'f0_elv' from the combobox. Select the custom 'finv_elv_add' expression function from the 'CanFlood' menu in the middle and complete the expression ass shown:
 
 .. image:: /_static/tutorials_6_13_img_5.JPG
 
-**Click 'OK'** to make the change to the field values. Examine the 'f0_elv' values in the attribute table, they should now be 0.5 less than before (i.e., 0.5 less than the base model). 
+**Click 'OK'** to make the change to the field values. Examine the 'f0_elv' values in the attribute table, they should now be 0.5 less than before (i.e., 0.5 less than the base model).
 
 Back on the 'DataFiles' tab, **click 'Save Datafile'** to overwrite the old csv with your modifications. 
 
-For our final perturbation, we'll subtract 0.5 m from the ground elevations ('gels'). Select 'cand04' and 'gels' then **click 'Load'** to load this datafile. Follow a similar procedure as above to setup the *Field Calculator* and enter the formula shown below:
+For our final perturbation, we'll subtract 0.5 m from the ground elevations ('gels').
+Select 'cand04' and 'gels' then **click 'Load'** to load this datafile. Follow a similar procedure as above to setup the *Field Calculator* and enter the formula shown below:
 
 .. image:: /_static/tutorials_6_13_img_6.JPG
 
 **Click 'OK'** on the *Field Calculator* to update the values. **click 'Save Datafile'** to write these changes to the csv.
 
-6.13.4. Run the Suite
+Run the Suite
 =====================
 
 On the *Run* tab you should see the base model and the four new candidate model control files shown:
@@ -1037,7 +1098,7 @@ On the *Run* tab you should see the base model and the four new candidate model 
 
 
 
-6.13.5. Analyze the Results
+Analyze the Results
 ===========================
 
 On the *Analysis* tab, you should see the run suite results .pickle file loaded, the summary values, and the summary table populated:
