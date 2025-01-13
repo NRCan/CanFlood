@@ -66,6 +66,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     
 
     def __init__(self, iface, parent=None, **kwargs):
+
         #=======================================================================
         # #init baseclass
         #=======================================================================
@@ -707,14 +708,16 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.feedback.upd_prog(None)
         
     
-    def purge_curves(self): #remove unreferenced curves from the xls
+    def purge_curves(self): #
         
         """
-        https://github.com/NRCan/CanFlood/issues/54
+        remove unreferenced curves from the xls
         
-        TODO:
+        https://github.com/NRCan/CanFlood/issues/54
+ 
             
         """
+ 
         #=======================================================================
         # defaults
         #=======================================================================
@@ -746,8 +749,11 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         kwargs = {attn:getattr(self, attn) for attn in [
             'out_dir', 'tag', 'overwrite', 'absolute_fp', 'feedback', 'cf_fp']}
         
+        
+        
         from model.dmg2 import Dmg2
         with Dmg2(upd_cf=False, logger=log, **kwargs) as wrkr:
+ 
             #condensed Model.setup()
             wrkr.init_model(check_pars=False)
  
