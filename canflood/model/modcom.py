@@ -760,6 +760,9 @@ class Model(ComWrkr,
                 log.debug('no \'%s\'... skipping'%dtag)
                 continue
             
+            base_dir = os.path.dirname(os.path.dirname(__file__))
+            parent_dir = os.path.dirname(base_dir)
+            fp = os.path.join(parent_dir, fp)
             #check it
             assert os.path.exists(fp), '\'%s\' got bad filepath: \n    %s'%(dtag, fp)
             
