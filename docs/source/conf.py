@@ -13,8 +13,8 @@ author = 'Seth Bryant, James Gibson, Dhanyatha Harish'
 html_logo = '_static/NRCan_logo.jpg'
 
 # The full version, including alpha/beta/rc tags
-release = '1.0'
-version = '1.0'
+release = '1.2.1'
+version = '1.2.1'
 
 
 # -- General configuration ---------------------------------------------------
@@ -22,7 +22,8 @@ version = '1.0'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.githubpages'
+extensions = ['sphinx.ext.githubpages',
+'sphinx.ext.autosectionlabel'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -59,4 +60,11 @@ gettext_compact = False
 
 # Enable numref
 numfig = True
+numfig_format = {
+    'code-block': 'Listing %s',
+    'figure': 'Fig. %s',
+    'section': 'Section %s',
+    'table': 'Table %s',
+}
+numfig_secnum_depth=1
 
