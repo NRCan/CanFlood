@@ -605,7 +605,22 @@ class Model(ComWrkr,
                    optional=False, #whether the parameters are optional
                    ):
         """
+        check the parameters against some expectations
         
+        Params
+        ----------
+        cpars: configparser.ConfigParser object
+            loaded control file
+        
+        chk_d: dict
+            expectations
+            {'parameters': {'name': {'type': <class 'str'>}, 'cid': {'type': <class 'str'>}, '
+            
+            from either
+                mandatory parameters: self.exp_pars_md
+                optional parameters: self.exp_pars_op
+                
+            
         """
         
         log = self.logger.getChild('cf_chk_pars')
@@ -2047,10 +2062,13 @@ class Model(ComWrkr,
     #==========================================================================
     # VALIDATORS-----------
     #==========================================================================+
-    def _par_hndl_chk(self, #check a parameter aginast provided handles
+    def _par_hndl_chk(self, 
                      sect, varnm, pval, achk_d,
                      logger=None
                      ):
+        """check a parameter aginast provided handles
+        
+        """
         
         if logger is None: logger=self.logger
         log = logger.getChild('par_hndl_chk')
