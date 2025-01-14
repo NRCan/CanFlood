@@ -787,7 +787,7 @@ class Model(ComWrkr,
                 data = pd.read_excel(fp, **d)
                 log.info('loaded %s w/ %i sheets'%(dtag, len(data)))
             else:
-                raise Error('unrecognized filetype: %s'%ext)
+                raise Error(f'unrecognized extension for \'{dtag}\': %s'%ext)
                 
             self.raw_d[dtag] = data
             

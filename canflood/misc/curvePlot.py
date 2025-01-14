@@ -495,7 +495,7 @@ class CurvePlotr(DFunc, Plotr):
         if out_dir is None: out_dir=self.out_dir
         if not os.path.exists(out_dir):os.makedirs(out_dir)
         if ofn is None:
-            ofn = 'cLib_%s_%s.xlsx'%(self.tag, self.today_str)
+            ofn = 'cLib_%s_%s.xls'%(self.tag, self.today_str)
         
         ofn = get_valid_filename(ofn)
         assert os.path.splitext(ofn)[1] in ['.xls', '.xlsx'], f"Invalid file extension: {ofn}"
