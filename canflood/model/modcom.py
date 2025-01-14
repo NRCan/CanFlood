@@ -616,7 +616,7 @@ class Model(ComWrkr,
             expectations
             {'parameters': {'name': {'type': <class 'str'>}, 'cid': {'type': <class 'str'>}, '
             
-            from either
+            from parameter expectation dictionaries (set on each model object)
                 mandatory parameters: self.exp_pars_md
                 optional parameters: self.exp_pars_op
                 
@@ -678,7 +678,7 @@ class Model(ComWrkr,
                 try: #attempt to tpye set, better error reporting/catching
                     pval = self._get_from_cpar(cpars, sectName, varName, logger=log) #get the typeset variable
                     
-                except Exception as e: #failed to even typeset... mark as an error and move forward
+                except Exception as e:  
                     errors.append(e)
                     continue
                 
@@ -695,8 +695,8 @@ class Model(ComWrkr,
                         
                 else: #expected some value
                 
-                    try:
-                        _ = self._par_hndl_chk(sectName, varName, pval, achk_d, logger=log) #check with handles
+                    try: #check with handles
+                        _ = self._par_hndl_chk(sectName, varName, pval, achk_d, logger=log) 
                     except Exception as e:
                         errors.append(e)
                     
@@ -2067,6 +2067,9 @@ class Model(ComWrkr,
                      logger=None
                      ):
         """check a parameter aginast provided handles
+        
+        called by cf_chk_pars() on each variable
+        
         
         """
         

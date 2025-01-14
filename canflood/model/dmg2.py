@@ -72,7 +72,7 @@ class Dmg2(Model, DFunc, Plotr):
             
         'dmg_fps':{
              'finv':{'ext':('.csv',)},
-             'curves':{'ext':('.xls',)},
+             'curves':{'ext':('.xls','.xlsx')},
              'expos':{'ext':('.csv',)},
                     },
 
