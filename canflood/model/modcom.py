@@ -605,7 +605,22 @@ class Model(ComWrkr,
                    optional=False, #whether the parameters are optional
                    ):
         """
+        check the parameters against some expectations
         
+        Params
+        ----------
+        cpars: configparser.ConfigParser object
+            loaded control file
+        
+        chk_d: dict
+            expectations
+            {'parameters': {'name': {'type': <class 'str'>}, 'cid': {'type': <class 'str'>}, '
+            
+            from parameter expectation dictionaries (set on each model object)
+                mandatory parameters: self.exp_pars_md
+                optional parameters: self.exp_pars_op
+                
+            
         """
         
         log = self.logger.getChild('cf_chk_pars')
@@ -663,7 +678,7 @@ class Model(ComWrkr,
                 try: #attempt to tpye set, better error reporting/catching
                     pval = self._get_from_cpar(cpars, sectName, varName, logger=log) #get the typeset variable
                     
-                except Exception as e: #failed to even typeset... mark as an error and move forward
+                except Exception as e:  
                     errors.append(e)
                     continue
                 
@@ -680,8 +695,8 @@ class Model(ComWrkr,
                         
                 else: #expected some value
                 
-                    try:
-                        _ = self._par_hndl_chk(sectName, varName, pval, achk_d, logger=log) #check with handles
+                    try: #check with handles
+                        _ = self._par_hndl_chk(sectName, varName, pval, achk_d, logger=log) 
                     except Exception as e:
                         errors.append(e)
                     
@@ -772,7 +787,7 @@ class Model(ComWrkr,
                 data = pd.read_excel(fp, **d)
                 log.info('loaded %s w/ %i sheets'%(dtag, len(data)))
             else:
-                raise Error('unrecognized filetype: %s'%ext)
+                raise Error(f'unrecognized extension for \'{dtag}\': %s'%ext)
                 
             self.raw_d[dtag] = data
             
@@ -2047,10 +2062,16 @@ class Model(ComWrkr,
     #==========================================================================
     # VALIDATORS-----------
     #==========================================================================+
-    def _par_hndl_chk(self, #check a parameter aginast provided handles
+    def _par_hndl_chk(self, 
                      sect, varnm, pval, achk_d,
                      logger=None
                      ):
+        """check a parameter aginast provided handles
+        
+        called by cf_chk_pars() on each variable
+        
+        
+        """
         
         if logger is None: logger=self.logger
         log = logger.getChild('par_hndl_chk')

@@ -6,7 +6,7 @@ ui class for the BUILD toolset
 # imports-----------
 #==============================================================================
 #python
-import sys, os, datetime, time
+import sys, os, datetime, time, copy
 
 
 
@@ -1518,6 +1518,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # loop through each possibility and validate
         #======================================================================
         res_d = dict()
+        validation_result_d = dict()
         for vtag, modObj in vpars_d.items():
             log.debug('checking \"%s\''%vtag)
             #===================================================================
@@ -1529,6 +1530,8 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             # #report on all the errors
             for indxr, msg in enumerate(errors):
                 log.warning('%s error %i: \n%s'%(vtag, indxr+1, msg))
+                
+            validation_result_d[vtag] = copy.deepcopy(errors)
                 
             #===================================================================
             # update control file
@@ -1553,6 +1556,10 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
              ))
         
         self.feedback.upd_prog(None)
+        self.validation_result_d=validation_result_d #store for ttests
+        
+ 
+        
         return
     
     #==========================================================================
