@@ -4,6 +4,10 @@ Created on Jun. 24, 2022
 @author: cefect
 
 tutorial 2 integration tests
+
+
+
+
 '''
 
 import pandas as pd
@@ -26,6 +30,8 @@ from tests2 import test_results
 
 from hlpr.basic import view
 
+from ..conftest import _build_dialog_validate_handler
+
 
 def extract_between_char(s, char='_'):
     start = s.find(char) + 1
@@ -46,8 +52,9 @@ def data_dir(base_dir):
 
 
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
-def test_t2_A(session, data_dir, true_dir, tmp_path, write):
-    """
+def test_tutorial_02a(session, data_dir, true_dir, tmp_path, write):
+    """simulate tutorial 2A
+    https://canflood.readthedocs.io/en/latest/06_tutorials.html#tutorial-2a-risk-l2-with-simple-events
     
     NOTE:
         2025-01-03: unit test is crashing when trying to generate the html report
