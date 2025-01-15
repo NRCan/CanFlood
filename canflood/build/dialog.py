@@ -1556,7 +1556,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
              ))
         
         self.feedback.upd_prog(None)
-        self.validation_result_d=validation_result_d #store for ttests
+        self.validation_result_d=validation_result_d #store for tests
         
  
         

@@ -775,9 +775,7 @@ class Model(ComWrkr,
                 log.debug('no \'%s\'... skipping'%dtag)
                 continue
             
-            base_dir = os.path.dirname(os.path.dirname(__file__))
-            parent_dir = os.path.dirname(base_dir)
-            fp = os.path.join(parent_dir, fp)
+            fp = os.path.join(self.cf_dir, fp)
             #check it
             assert os.path.exists(fp), '\'%s\' got bad filepath: \n    %s'%(dtag, fp)
             
@@ -2106,6 +2104,8 @@ class Model(ComWrkr,
                 assert isinstance(pval, str), '%s.%s expected a filepath '%(sect, varnm)
                 if pval == '':
                     raise Error('must provided a valid \'%s.%s\' filepath'%(sect, varnm))
+                if not os.path.exists(pval):
+                    pval = os.path.join(self.cf_dir,pval)
                 assert os.path.exists(pval), '%s.%s passed invalid filepath: \'%s\''%(sect, varnm, pval)
                 
                 ext = os.path.splitext(os.path.split(pval)[1])[1]
