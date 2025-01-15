@@ -95,7 +95,7 @@ def test_02_build_inv(session, base_dir, finv_vlay, cf_fp):
     # setup
     #===========================================================================
     out_dir = session.out_dir
-    cf_fp = build_setup(base_dir, cf_fp, dial, out_dir, testName='test_02')
+    cf_fp = _build_setup(base_dir, cf_fp, dial, out_dir, testName='test_02')
     
     
     #===========================================================================
@@ -134,7 +134,7 @@ def test_03_build_inv_curves(session, base_dir, cf_fp):
     # setup
     #===========================================================================
     out_dir = session.out_dir
-    cf_fp = build_setup(base_dir, cf_fp, dial, out_dir, testName='test_03')
+    cf_fp = _build_setup(base_dir, cf_fp, dial, out_dir, testName='test_03')
     
     #===========================================================================
     # setup curves
@@ -175,7 +175,7 @@ def test_04_build_hsamp(session, base_dir, cf_fp, rast_dir, finv_vlay, true_dir)
     # setup
     #===========================================================================
     out_dir = session.out_dir
-    cf_fp = build_setup(base_dir, cf_fp, dial, out_dir, testName='test_04')
+    cf_fp = _build_setup(base_dir, cf_fp, dial, out_dir, testName='test_04')
     
     #===========================================================================
     # setup finv
@@ -235,7 +235,7 @@ def test_05_build_evals(session, base_dir, cf_fp, true_dir):
     #===========================================================================
     out_dir = session.out_dir
     data_dir = os.path.join(base_dir, os.path.dirname(cf_fp))
-    cf_fp = build_setup(base_dir, cf_fp, dial, out_dir, testName='test_05')
+    cf_fp = _build_setup(base_dir, cf_fp, dial, out_dir, testName='test_05')
     
     #===========================================================================
     # get event names
@@ -303,7 +303,7 @@ def test_06_build_dtm(session, base_dir, cf_fp, true_dir, finv_vlay, dtm_fp):
     # setup
     #===========================================================================
     out_dir = session.out_dir
-    cf_fp = build_setup(base_dir, cf_fp, dial, out_dir, testName='test_06')
+    cf_fp = _build_setup(base_dir, cf_fp, dial, out_dir, testName='test_06')
     
     #===========================================================================
     # setup finv
@@ -360,7 +360,7 @@ def test_07_build_valid(session, base_dir, cf_fp):
     # setup
     #===========================================================================
     out_dir = session.out_dir
-    cf_fp = build_setup(base_dir, cf_fp, dial, out_dir, testName='test_06')
+    cf_fp = _build_setup(base_dir, cf_fp, dial, out_dir, testName='test_06')
     
     #===========================================================================
     # validation
@@ -375,14 +375,33 @@ def test_07_build_valid(session, base_dir, cf_fp):
     _build_dialog_validate_handler(dial)  
     
     
-def build_setup(base_dir, cf_fp, dial, out_dir, testName='testName'): #typical setup for build toolset
+    
+#===============================================================================
+# helpers------
+#===============================================================================
+def _build_setup(base_dir, cf_fp, dial, out_dir, testName='testName'): 
+    """typical setup for build toolset
+    
+    copy over all the test data to the temp and run as a relative.
+    """
     dial._change_tab('tab_setup')
+    
+    #set the relative filepath flag
+    dial.radioButton_SS_fpRel.setChecked(True)
+    
     #copy over the control file
+    """need to copy everything"""
     assert os.path.exists(os.path.join(base_dir, cf_fp))
     cf_fp = shutil.copy2(os.path.join(base_dir, cf_fp), os.path.join(out_dir, os.path.basename(cf_fp)))
+    
+    
+    
     #set the working directory
     dial.lineEdit_wdir.setText(str(out_dir))
     dial.linEdit_ScenTag.setText(testName)
+    
+
+    
     #set the control file
     dial.lineEdit_cf_fp.setText(cf_fp)
     
