@@ -31,7 +31,7 @@ from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
 from build.dialog import BuildDialog
 
 
-
+from .conftest import _build_dialog_validate_handler
 
 #===============================================================================
 # fixtures-------
@@ -123,7 +123,7 @@ def test_02_build_inv(session, base_dir, finv_vlay, cf_fp):
     
     
     
-@pytest.mark.dev
+
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_02_build_inv_tests2__data0\CanFlood_test_01.txt']) #from test_02
 def test_03_build_inv_curves(session, base_dir, cf_fp):
@@ -350,7 +350,7 @@ def test_06_build_dtm(session, base_dir, cf_fp, true_dir, finv_vlay, dtm_fp):
     assert_frame_equal(df, true_df)
 
 
-
+@pytest.mark.dev
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_06_build_dtm_tutorials__20\CanFlood_test_01.txt']) #from test_06
 def test_07_build_valid(session, base_dir, cf_fp):
@@ -371,7 +371,8 @@ def test_07_build_valid(session, base_dir, cf_fp):
     dial.checkBox_Vi2.setChecked(True)
     #dial.checkBox_Vr2.setChecked(True)
     
-    QTest.mouseClick(dial.pushButton_Validate, Qt.LeftButton)  
+    #QTest.mouseClick(dial.pushButton_Validate, Qt.LeftButton)
+    _build_dialog_validate_handler(dial)  
     
     
 def build_setup(base_dir, cf_fp, dial, out_dir, testName='testName'): #typical setup for build toolset
