@@ -392,10 +392,15 @@ def _build_setup(base_dir, cf_fp, dial, out_dir, testName='testName'):
     #copy over the control file
     """need to copy everything"""
     assert os.path.exists(os.path.join(base_dir, cf_fp))
+    par_dir = os.path.join(base_dir, cf_fp)
+    directory_path = os.path.dirname(par_dir)    
     cf_fp = shutil.copy2(os.path.join(base_dir, cf_fp), os.path.join(out_dir, os.path.basename(cf_fp)))
     
-    
-    
+    for item in os.listdir(directory_path):
+        source_item = os.path.join(directory_path, item)
+        destination_item = os.path.join(out_dir, item)
+        if os.path.isfile(source_item):
+            shutil.copy2(source_item, destination_item)    
     #set the working directory
     dial.lineEdit_wdir.setText(str(out_dir))
     dial.linEdit_ScenTag.setText(testName)
