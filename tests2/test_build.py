@@ -390,7 +390,12 @@ def _build_setup(base_dir, cf_fp, dial, out_dir, testName='testName'):
     dial.radioButton_SS_fpRel.setChecked(True)
     
     #copy over the control file
-    """need to copy everything"""
+    """need to copy everything
+    
+    
+    clean this up to simply copy everything over to the temp
+    then build the cf_fp = os.path.join(dir, cf_+fp)
+    """
     assert os.path.exists(os.path.join(base_dir, cf_fp))
     par_dir = os.path.join(base_dir, cf_fp)
     directory_path = os.path.dirname(par_dir)    
