@@ -32,7 +32,6 @@ from hlpr.exceptions import QError as Error
 
 from hlpr.Q import view, Qcoms, vlay_get_fdf, vlay_get_fdata, vlay_new_df
 from hlpr.plot import Plotr
-from lxml.apihelpers import result
 #==============================================================================
 # classes-------------
 #==============================================================================
