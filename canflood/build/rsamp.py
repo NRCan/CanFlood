@@ -1743,10 +1743,13 @@ class Rsamp(Plotr, Qcoms):
         title = '%s Raster Sample Histogram on %i Events'%(self.tag, len(df.columns))
         
         self._set_valstr(df)
-        return self.plot_impact_hist(df,
+        result =  self.plot_impact_hist(df,
                      title=title, xlab = 'raster value',
 
                      val_str=self.val_str, **kwargs)
+        self.plt.show()
+        
+        return result
         
 
     def plot_boxes(self, #plot boxplots of results
