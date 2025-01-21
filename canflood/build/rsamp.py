@@ -1759,10 +1759,13 @@ class Rsamp(Plotr, Qcoms):
 
         self._set_valstr(df)
         
-        return self.plot_impact_boxes(df,
+        result =  self.plot_impact_boxes(df,
                      title=title, xlab = 'hazard layer', ylab = 'raster value',
                      smry_method='mean',
                      val_str=self.val_str,   **kwargs)
+        self.plt.show()
+        
+        return result
         
     def _set_valstr(self, df):
         self.val_str= 'finv_fcnt=%i \nfinv_name=\'%s\' \nas_inun=%s \ngtype=%s \ndate=%s'%(
