@@ -2064,16 +2064,25 @@ class Model(ComWrkr,
     #==========================================================================+
     def _par_hndl_chk(self, 
                      sect, varnm, pval, achk_d,
-                     logger=None
+                     logger=None,
+                     absolute_fp=None,
                      ):
         """check a parameter aginast provided handles
         
         called by cf_chk_pars() on each variable
         
+        Params
+        -------
+        absolute_fp: bool, optional
+            flag to control whether or not filepath paramters are aboslute (vs. relative)
+            
+        
+        
         
         """
         
         if logger is None: logger=self.logger
+        if absolute_fp= None: absolute_fp=self.aboslute_fp
         log = logger.getChild('par_hndl_chk')
         
         #=======================================================================
@@ -2100,9 +2109,19 @@ class Model(ComWrkr,
                 assert pval in hvals, '%s.%s unexpected value: \'%s\''%(sect, varnm, pval)
             
             elif chk_hndl == 'ext':
+                
+                #basic checks
                 assert isinstance(pval, str), '%s.%s expected a filepath '%(sect, varnm)
                 if pval == '':
                     raise Error('must provided a valid \'%s.%s\' filepath'%(sect, varnm))
+                
+                
+                #handl relative filepaths
+                if not absolute_fp:
+                    pval = os.path.join(self.cf_dir, pval)
+                
+                
+
                 assert os.path.exists(pval), '%s.%s passed invalid filepath: \'%s\''%(sect, varnm, pval)
                 
                 ext = os.path.splitext(os.path.split(pval)[1])[1]
