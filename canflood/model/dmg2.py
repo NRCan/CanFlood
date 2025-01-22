@@ -1567,9 +1567,12 @@ class Dmg2(Model, DFunc, Plotr):
         title = '%s %s dmg2.Impact Boxplots on %i Events'%(plotTag, self.name, len(df.columns))
         self._set_valstr(df) 
 
-        return self.plot_impact_boxes(df,
+        result =  self.plot_impact_boxes(df,
                       title=title, xlab = 'hazard event raster', ylab = impact_name,
                        val_str=self.val_str, **kwargs)
+        self.plt.show()
+        
+        return result
             
     def plot_hist(self, #box plots for each event 
                    df=None, 
@@ -1589,9 +1592,13 @@ class Dmg2(Model, DFunc, Plotr):
 
         title = '%s %s dmg2.Impact Histograms on %i Events'%(plotTag, self.name, len(df.columns))
         self._set_valstr(df) 
-        return self.plot_impact_hist(df,
+        result =  self.plot_impact_hist(df,
                       title=title, xlab = impact_name,
                        val_str=self.val_str, **kwargs)
+        
+        self.plt.show()
+        
+        return result
             
         
                    
