@@ -1,24 +1,11 @@
 # Configuration file for the Sphinx documentation builder.
-#
-# This file only contains a selection of the most common options. For a full
-# list see the documentation:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-# -- Path setup --------------------------------------------------------------
-
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
 
 
 # -- Project information -----------------------------------------------------
 
 project = 'CanFlood'
-copyright = '2021, NRCan'
+copyright = '2024, NRCan'
 author = 'Seth Bryant, James Gibson, Dhanyatha Harish'
 
 # The name of an image file (relative to this directory) to place at the top
@@ -26,8 +13,8 @@ author = 'Seth Bryant, James Gibson, Dhanyatha Harish'
 html_logo = '_static/NRCan_logo.jpg'
 
 # The full version, including alpha/beta/rc tags
-release = '1.0'
-version = '1.0'
+release = '1.2.1'
+version = '1.2.1'
 
 
 # -- General configuration ---------------------------------------------------
@@ -35,7 +22,8 @@ version = '1.0'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.githubpages'
+extensions = ['sphinx.ext.githubpages',
+'sphinx.ext.autosectionlabel'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -69,3 +57,14 @@ language = "en"
 locale_dirs = ['locale/']   # path is example but recommended.
 gettext_uuid = True
 gettext_compact = False 
+
+# Enable numref
+numfig = True
+numfig_format = {
+    'code-block': 'Listing %s',
+    'figure': 'Fig. %s',
+    'section': 'Section %s',
+    'table': 'Table %s',
+}
+numfig_secnum_depth=1
+

@@ -1,0 +1,38 @@
+{
+    "language": "en-CA",
+    "dictionaries": [
+        "en-CA"
+    ],
+    "dictionaryDefinitions": [
+        {
+            "name": "en-CA",
+            "path": "l:\\09_REPOS\\01_COMMON\\sphinx\\env\\sphinx\\node_modules\\@cspell\\dict-en-ca\\en_CA.trie"
+        }
+    ],
+    "enableFiletypes": [
+        "rst"
+    ],
+    "ignoreRegExpList": [
+        "/<[^>]*>/g", // Ignore text within angle brackets
+        "/^\\../" // Ignore lines that begin with ..
+    ],
+    "ignorePaths": [
+        "package-lock.json",
+        "node_modules",
+        "vscode-extension",
+        ".git/objects",
+        ".vscode",
+        ".vscode-insiders",
+        ".settings"
+    ],
+    "words": [
+        "CanFlood",
+        "DDFP",
+        "Frechette",
+        "operationalize",
+        "QGIS",
+        "toolsets",
+        "UNISDR",
+        "Xactimate"
+    ]
+}

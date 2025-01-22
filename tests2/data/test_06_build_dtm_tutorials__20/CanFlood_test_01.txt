@@ -15,10 +15,10 @@ impact_units = impacts  #value to label impacts axis with (generally set by Dmg2
 apply_miti = False		#whether to apply mitigation algorthihims
 
 [dmg_fps]
-curves = C:\LS\09_REPOS\03_TOOLS\CanFlood\_git\tests2\data\test_03_build_inv_curves_tests0\cLib_test_03_2022-06-26_1806.xls
-finv = C:\LS\09_REPOS\03_TOOLS\CanFlood\_git\tests2\data\test_02_build_inv_tests2__data0\finv_test_02_32_tut2.csv
-expos = C:\LS\09_REPOS\03_TOOLS\CanFlood\_git\tests2\data\test_04_build_hsamp_tutorials_0\expos_test_04_4_32.csv
-gels = C:\LS\09_REPOS\03_TOOLS\CanFlood\_git\tests2\data\test_06_build_dtm_tutorials__20\gels_test_06_1_32.csv
+curves = tests2\data\test_03_build_inv_curves_tests0\cLib_test_03_2022-06-26_1806.xls
+finv = tests2\data\test_02_build_inv_tests2__data0\finv_test_02_32_tut2.csv
+expos = tests2\data\test_04_build_hsamp_tutorials_0\expos_test_04_4_32.csv
+gels = tests2\data\test_06_build_dtm_tutorials__20\gels_test_06_1_32.csv
 #'gels' file path set from rsamp.py at 2022-06-26 18.06.21
 
 [risk_fps]

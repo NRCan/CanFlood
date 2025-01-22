@@ -498,7 +498,7 @@ class CurvePlotr(DFunc, Plotr):
             ofn = 'cLib_%s_%s.xls'%(self.tag, self.today_str)
         
         ofn = get_valid_filename(ofn)
-        assert os.path.splitext(ofn)[1]=='.xls', ofn
+        assert os.path.splitext(ofn)[1] in ['.xls', '.xlsx'], f"Invalid file extension: {ofn}"
         #=======================================================================
         # precheck
         #=======================================================================
@@ -512,7 +512,7 @@ class CurvePlotr(DFunc, Plotr):
         if os.path.exists(ofp): assert self.overwrite
         
         #write to multiple tabs
-        with pd.ExcelWriter(ofp) as writer:
+        with pd.ExcelWriter(ofp, engine='openpyxl') as writer:
             for i, (tabnm, data) in enumerate(d.items()):
                 #write handles
                 if tabnm=='_smry':

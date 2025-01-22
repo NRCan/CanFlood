@@ -6,7 +6,7 @@ ui class for the BUILD toolset
 # imports-----------
 #==============================================================================
 #python
-import sys, os, datetime, time
+import sys, os, datetime, time, copy
 
 
 
@@ -21,7 +21,7 @@ from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
 #qgis
 #from qgis.core import *
 from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer, QgsMapLayerProxyModel, \
-    QgsWkbTypes, QgsMapLayer
+    QgsWkbTypes, QgsMapLayer, QgsLogger
 
 #==============================================================================
 # custom imports
@@ -66,6 +66,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     
 
     def __init__(self, iface, parent=None, **kwargs):
+
         #=======================================================================
         # #init baseclass
         #=======================================================================
@@ -536,7 +537,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # #inventory vector layer---------
         #=======================================================================
         if set_finv:
-            
+            log.debug(f'set_finv=True')
             #===================================================================
             # get using selection logic
             #===================================================================
@@ -707,14 +708,16 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.feedback.upd_prog(None)
         
     
-    def purge_curves(self): #remove unreferenced curves from the xls
+    def purge_curves(self): #
         
         """
-        https://github.com/NRCan/CanFlood/issues/54
+        remove unreferenced curves from the xls
         
-        TODO:
+        https://github.com/NRCan/CanFlood/issues/54
+ 
             
         """
+ 
         #=======================================================================
         # defaults
         #=======================================================================
@@ -746,8 +749,11 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         kwargs = {attn:getattr(self, attn) for attn in [
             'out_dir', 'tag', 'overwrite', 'absolute_fp', 'feedback', 'cf_fp']}
         
+        
+        
         from model.dmg2 import Dmg2
         with Dmg2(upd_cf=False, logger=log, **kwargs) as wrkr:
+ 
             #condensed Model.setup()
             wrkr.init_model(check_pars=False)
  
@@ -812,7 +818,14 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # extract, download, and update cf
         #=======================================================================
+        
+        
         """
+        2024-12-20: couldn't find what is throwing this:
+            error message:
+             TypeError: setValue(self, value: int): argument 1 has unexpected type 'float'
+        
+        
         for k,v in kwargs.items():
             print(k,v)
         """
@@ -1505,6 +1518,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # loop through each possibility and validate
         #======================================================================
         res_d = dict()
+        validation_result_d = dict()
         for vtag, modObj in vpars_d.items():
             log.debug('checking \"%s\''%vtag)
             #===================================================================
@@ -1516,6 +1530,8 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
             # #report on all the errors
             for indxr, msg in enumerate(errors):
                 log.warning('%s error %i: \n%s'%(vtag, indxr+1, msg))
+                
+            validation_result_d[vtag] = copy.deepcopy(errors)
                 
             #===================================================================
             # update control file
@@ -1535,11 +1551,15 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         self.feedback.upd_prog(100)
         
-        log.push('passed %i (of %i) validations. see log for errors'%(
+        log.push(f'passed %i (of %i) validations. see log for errors: {QgsLogger.logFile()}'%(
              np.array(list(res_d.values())).sum(), len(vpars_d)
              ))
         
         self.feedback.upd_prog(None)
+        self.validation_result_d=validation_result_d #store for ttests
+        
+ 
+        
         return
     
     #==========================================================================

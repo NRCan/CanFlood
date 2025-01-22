@@ -3,9 +3,9 @@ Created on Jun. 24, 2022
 
 @author: cefect
 
-unit tests for CanFlood's 'build' toolset
+unit tests for CanFlood's 'build' dialog
 
-lets launch one dialog worker per module
+launch one dialog worker per module
 
 one test per button click
 
@@ -20,6 +20,7 @@ import pandas as pd
 
 from pandas.testing import assert_frame_equal
 
+ 
 from pytest_qgis.utils import clean_qgis_layer
 
 from qgis.core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsProject
@@ -30,7 +31,7 @@ from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
 from build.dialog import BuildDialog
 
 
-
+from .conftest import _build_dialog_validate_handler
 
 #===============================================================================
 # fixtures-------
@@ -59,9 +60,8 @@ def finv_vlay(session, finv_fp):
 #===============================================================================
 
 def test_00_version(qgis_version):
-    assert qgis_version==32208, 'bad version: %s'%qgis_version
+    assert qgis_version==33414, 'bad version: %s'%qgis_version
     
-
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
 def test_01_build_scenario(session):
     dial = session.Dialog
@@ -85,16 +85,17 @@ def test_01_build_scenario(session):
     
 
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
-@pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.gpkg'], indirect=True)
+@pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.geojson'], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_01_build_scenario_BuildDi0\CanFlood_test_01.txt']) #from test_01
 def test_02_build_inv(session, base_dir, finv_vlay, cf_fp):
+    """on the Inventory t ab, use the 'Inventory Compmiler'"""
     dial = session.Dialog
     
     #===========================================================================
     # setup
     #===========================================================================
     out_dir = session.out_dir
-    cf_fp = build_setup(base_dir, cf_fp, dial, out_dir, testName='test_02')
+    cf_fp = _build_setup(base_dir, cf_fp, dial, out_dir, testName='test_02')
     
     
     #===========================================================================
@@ -107,14 +108,15 @@ def test_02_build_inv(session, base_dir, finv_vlay, cf_fp):
     # execute
     #===========================================================================
     #click Store
-    QTest.mouseClick(dial.pushButton_Inv_store, Qt.LeftButton)
+    QTest.mouseClick(dial.pushButton_Inv_store, Qt.LeftButton) #build.dialog.BuildDialog.store_finv()
  
     #===========================================================================
     # check
     #===========================================================================
     #retrieve the filepath from the control file
     fp = dial.get_cf_par(cf_fp, sectName='dmg_fps', varName='finv')
-    assert os.path.exists(fp)
+    assert not fp is None, f'no finv specified'
+    assert os.path.exists(fp), fp
     
     df = pd.read_csv(fp)
     assert len(df)==finv_vlay.dataProvider().featureCount()
@@ -125,13 +127,14 @@ def test_02_build_inv(session, base_dir, finv_vlay, cf_fp):
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_02_build_inv_tests2__data0\CanFlood_test_01.txt']) #from test_02
 def test_03_build_inv_curves(session, base_dir, cf_fp):
+
     dial = session.Dialog
  
     #===========================================================================
     # setup
     #===========================================================================
     out_dir = session.out_dir
-    cf_fp = build_setup(base_dir, cf_fp, dial, out_dir, testName='test_03')
+    cf_fp = _build_setup(base_dir, cf_fp, dial, out_dir, testName='test_03')
     
     #===========================================================================
     # setup curves
@@ -139,17 +142,16 @@ def test_03_build_inv_curves(session, base_dir, cf_fp):
     dial._change_tab('tab_inventory')
     
     
-    raw_fp = os.path.join(session.pars_dir, 'vfunc\IBI_2015\IBI2015_DamageCurves.xls')
-    
+    raw_fp = os.path.join(session.pars_dir, r'vfunc\IBI_2015\IBI2015_DamageCurves.xls')
     #update the gui
     dial.lineEdit_curve.setText(raw_fp)
     #===========================================================================
     # execute
     #===========================================================================
-    #purge it
-    """BuildDialog.purge_curves()"""
-    #dial.purge_curves()
-    QTest.mouseClick(dial.pushButton_Inv_purge, Qt.LeftButton)
+    
+    #connected to BuildDialog.purge_curves()
+    QTest.mouseClick(dial.pushButton_Inv_purge, Qt.LeftButton)  
+     
      
     #update control file
     QTest.mouseClick(dial.pushButton_Inv_curves, Qt.LeftButton)
@@ -161,10 +163,10 @@ def test_03_build_inv_curves(session, base_dir, cf_fp):
     fp = dial.get_cf_par(cf_fp, sectName='dmg_fps', varName='curves')
     assert os.path.exists(fp)
     
-@pytest.mark.dev 
+
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_03_build_inv_curves_tests0\CanFlood_test_01.txt']) #from test_03
-@pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.gpkg'], indirect=True)
+@pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.geojson'], indirect=True)
 @pytest.mark.parametrize('rast_dir',[r'tutorials\2\haz_rast'])
 def test_04_build_hsamp(session, base_dir, cf_fp, rast_dir, finv_vlay, true_dir):
     dial = session.Dialog
@@ -173,7 +175,7 @@ def test_04_build_hsamp(session, base_dir, cf_fp, rast_dir, finv_vlay, true_dir)
     # setup
     #===========================================================================
     out_dir = session.out_dir
-    cf_fp = build_setup(base_dir, cf_fp, dial, out_dir, testName='test_04')
+    cf_fp = _build_setup(base_dir, cf_fp, dial, out_dir, testName='test_04')
     
     #===========================================================================
     # setup finv
@@ -198,7 +200,9 @@ def test_04_build_hsamp(session, base_dir, cf_fp, rast_dir, finv_vlay, true_dir)
     #===========================================================================
     # execute
     #===========================================================================
-    QTest.mouseClick(dial.pushButton_HSgenerate, Qt.LeftButton) #sample
+    #build.dialog.BuildDialog.run_rsamp()
+    #build.rsamp.Rsamp.run()
+    QTest.mouseClick(dial.pushButton_HSgenerate, Qt.LeftButton) #sample. 
     
     #===========================================================================
     # load result from control file
@@ -230,13 +234,25 @@ def test_05_build_evals(session, base_dir, cf_fp, true_dir):
     # setup
     #===========================================================================
     out_dir = session.out_dir
-    cf_fp = build_setup(base_dir, cf_fp, dial, out_dir, testName='test_05')
+    data_dir = os.path.join(base_dir, os.path.dirname(cf_fp))
+    cf_fp = _build_setup(base_dir, cf_fp, dial, out_dir, testName='test_05')
     
     #===========================================================================
     # get event names
     #===========================================================================
+
     fp = dial.get_cf_par(dial.get_cf_fp(), sectName='dmg_fps', varName='expos')
-    eventNames_l = pd.read_csv(fp, index_col=0).columns.to_list()
+    
+    """
+    2024-12-20:
+    this is loading the absolute path from the control file... which is some old/wrong path
+    this must have been set to load relative paths at some point?
+    not sure.. fixed
+    """
+    fp = os.path.join(data_dir, os.path.basename(fp))    
+    
+    eventNames_l = pd.read_csv(fp,index_col=0).columns.to_list()
+        
     dial.event_name_set = eventNames_l
     #===========================================================================
     # setup table
@@ -278,7 +294,7 @@ def test_05_build_evals(session, base_dir, cf_fp, true_dir):
  
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_05_build_evals_tests2__da0\CanFlood_test_01.txt']) #from test_05
-@pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.gpkg'], indirect=True)
+@pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.geojson'], indirect=True)
 @pytest.mark.parametrize('dtm_fp',[r'tutorials\2\dtm_tut2.tif'])
 def test_06_build_dtm(session, base_dir, cf_fp, true_dir, finv_vlay, dtm_fp):
     dial = session.Dialog
@@ -287,7 +303,7 @@ def test_06_build_dtm(session, base_dir, cf_fp, true_dir, finv_vlay, dtm_fp):
     # setup
     #===========================================================================
     out_dir = session.out_dir
-    cf_fp = build_setup(base_dir, cf_fp, dial, out_dir, testName='test_06')
+    cf_fp = _build_setup(base_dir, cf_fp, dial, out_dir, testName='test_06')
     
     #===========================================================================
     # setup finv
@@ -334,7 +350,7 @@ def test_06_build_dtm(session, base_dir, cf_fp, true_dir, finv_vlay, dtm_fp):
     assert_frame_equal(df, true_df)
 
 
-
+@pytest.mark.dev
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_06_build_dtm_tutorials__20\CanFlood_test_01.txt']) #from test_06
 def test_07_build_valid(session, base_dir, cf_fp):
@@ -344,7 +360,7 @@ def test_07_build_valid(session, base_dir, cf_fp):
     # setup
     #===========================================================================
     out_dir = session.out_dir
-    cf_fp = build_setup(base_dir, cf_fp, dial, out_dir, testName='test_06')
+    cf_fp = _build_setup(base_dir, cf_fp, dial, out_dir, testName='test_06')
     
     #===========================================================================
     # validation
@@ -355,17 +371,47 @@ def test_07_build_valid(session, base_dir, cf_fp):
     dial.checkBox_Vi2.setChecked(True)
     #dial.checkBox_Vr2.setChecked(True)
     
-    QTest.mouseClick(dial.pushButton_Validate, Qt.LeftButton)  
+    #QTest.mouseClick(dial.pushButton_Validate, Qt.LeftButton)
+    _build_dialog_validate_handler(dial)  
     
     
-def build_setup(base_dir, cf_fp, dial, out_dir, testName='testName'): #typical setup for build toolset
+    
+#===============================================================================
+# helpers------
+#===============================================================================
+def _build_setup(base_dir, cf_fp, dial, out_dir, testName='testName'): 
+    """typical setup for build toolset
+    
+    copy over all the test data to the temp and run as a relative.
+    """
     dial._change_tab('tab_setup')
+    
+    #set the relative filepath flag
+    dial.radioButton_SS_fpRel.setChecked(True)
+    
     #copy over the control file
+    """need to copy everything
+    
+    
+    clean this up to simply copy everything over to the temp
+    then build the cf_fp = os.path.join(dir, cf_+fp)
+    """
     assert os.path.exists(os.path.join(base_dir, cf_fp))
+    par_dir = os.path.join(base_dir, cf_fp)
+    directory_path = os.path.dirname(par_dir)    
     cf_fp = shutil.copy2(os.path.join(base_dir, cf_fp), os.path.join(out_dir, os.path.basename(cf_fp)))
+    
+    for item in os.listdir(directory_path):
+        source_item = os.path.join(directory_path, item)
+        destination_item = os.path.join(out_dir, item)
+        if os.path.isfile(source_item):
+            shutil.copy2(source_item, destination_item)    
     #set the working directory
     dial.lineEdit_wdir.setText(str(out_dir))
     dial.linEdit_ScenTag.setText(testName)
+    
+
+    
     #set the control file
     dial.lineEdit_cf_fp.setText(cf_fp)
     
