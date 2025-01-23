@@ -15,14 +15,14 @@ test_cases = {
 }
 
 @pytest.fixture(scope="function")
-def risk_model():
-    """Fixture to create a properly initialized RiskModel instance."""
-    model = RiskModel()
-    model.prec = 2  # Precision for rounding
-    model.integrate = "trapz"  # Integration method
-    model.data_d = {}  # Mock data dictionary
-    model.logger = logging.getLogger("RiskModel")  # Attach a logger
-    return model
+def risk_model(logger, test_name):
+    with RiskModel(  
+        logger=logging.getLogger("RiskModel"),
+        tag=test_name, 
+        overwrite=True          
+    ) as model:
+        yield model 
+
 
 @pytest.fixture(scope="function")
 def test_data(request):
@@ -43,7 +43,6 @@ def test_get_ev_with_parameters(risk_model, test_data):
     # Input data
     ser = pd.Series(data=damage_values, index=aep_values)
 
-    
     result = risk_model._get_ev(ser, dx=dx)
 
     # Assertion
