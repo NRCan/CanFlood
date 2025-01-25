@@ -514,8 +514,8 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
     #===========================================================================
     # HELPERS----------
     #===========================================================================
-    def set_setup(self, set_cf_fp=True, set_finv=True, #attach parameters from setup tab
-                  logger=None,): 
+    def set_setup(self, set_cf_fp=True, set_finv=True, logger=None,): 
+        """attach parameters from setup tab"""
         if logger is None: logger=self.logger
         log = logger.getChild('set_setup')
         #=======================================================================
@@ -625,8 +625,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # prechecks
         #======================================================================= 
-        if self.radioButton_SS_fpRel.isChecked():
-            raise Error('Relative filepaths not implemented')
+ 
 
         self.feedback.upd_prog(10)
             
