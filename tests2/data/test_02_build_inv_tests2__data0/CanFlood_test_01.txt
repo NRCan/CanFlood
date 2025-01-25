@@ -16,10 +16,10 @@ apply_miti = False		#whether to apply mitigation algorthihims
 
 [dmg_fps]
 curves = #damage curve library filepath
-finv = finv_test_02_32_tut2.csv
+finv = tests2\data\test_02_build_inv_tests2__data0\finv_test_02_32_tut2.csv
 expos = #exposure data filepath
 gels = #ground elevation data filepath
-#'finv' file path set from prepr.py at 2022-06-26 14.30.12
+ 
 
 [risk_fps]
 dmgs = #damage data results filepath
