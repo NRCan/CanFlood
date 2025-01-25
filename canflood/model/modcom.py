@@ -2104,6 +2104,9 @@ class Model(ComWrkr,
                 assert isinstance(hvals, tuple), '%s.%s got bad type on hvals: %s'%(sect, varnm, type(hvals))
                 assert pval in hvals, '%s.%s unexpected value: \'%s\''%(sect, varnm, pval)
             
+            #===================================================================
+            # filepaths
+            #===================================================================
             elif chk_hndl == 'ext':
                 
                 #basic checks
@@ -2114,11 +2117,9 @@ class Model(ComWrkr,
                 
                 #handl relative filepaths
                 if not absolute_fp:
-                    pval = os.path.join(self.cf_dir, pval)
-                
-                
+                    pval = os.path.join(self.cf_dir, pval)                
 
-                assert os.path.exists(pval), '%s.%s passed invalid filepath: \'%s\''%(sect, varnm, pval)
+                assert os.path.exists(pval), f'%s.%s passed invalid filepath (absolute_fp={absolute_fp}):\n    %s'%(sect, varnm, pval)
                 
                 ext = os.path.splitext(os.path.split(pval)[1])[1]
 
@@ -2139,22 +2140,23 @@ class Model(ComWrkr,
     
 
                 
-    def validate(self, #validate this model object
-                 cpars, #initilzied config parser
-                    #so a session can pass a control file... rather than usin gthe workers init
-                 logger=None,
-                 ):
+    def validate(self, cpars, logger=None,):
+        
+        """run all validation checks on this model 
+        only 1 check for now. check the control file expectations
+        
+        children could over-write this method with custom validations
+        
+        Params
+        ---------
+        cpars: config parser
+            so a session can pass a control file... rather than usin gthe workers init
+         
+        """
         #if logger is None: logger=self.logger
+ 
         
-        """only 1 check for now"""
-        #=======================================================================
-        # check the control file expectations
-        #=======================================================================
-        errors = self._get_cf_miss(cpars)
-        
-        
-        
-        return errors
+        return self._get_cf_miss(cpars) #check the control file expectations
         
     def check_attrimat(self, #check the logic of the attrimat
                        atr_dxcol=None,
