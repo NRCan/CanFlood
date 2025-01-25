@@ -23,8 +23,8 @@ gels = #ground elevation data filepath
 [risk_fps]
 dmgs = #damage data results filepath
 exlikes = #secondary exposure likelihood data filepath
-evals = C:\LS\09_REPOS\03_TOOLS\CanFlood\_git\tests2\data\test_05_build_evals_tests2__da0\evals_4_test_05.csv
-#evals file path set from build.dialog.py at 2022-06-26 18.06.20
+evals = tests2\data\test_05_build_evals_tests2__da0\evals_4_test_05.csv
+
 
 [validation]
 risk1 = False

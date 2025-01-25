@@ -19,18 +19,18 @@ curves = tests2\data\test_03_build_inv_curves_tests0\cLib_test_03_2022-06-26_180
 finv = tests2\data\test_02_build_inv_tests2__data0\finv_test_02_32_tut2.csv
 expos = tests2\data\test_04_build_hsamp_tutorials_0\expos_test_04_4_32.csv
 gels = tests2\data\test_06_build_dtm_tutorials__20\gels_test_06_1_32.csv
-#'gels' file path set from rsamp.py at 2022-06-26 18.06.21
 
 [risk_fps]
 dmgs = #damage data results filepath
 exlikes = #secondary exposure likelihood data filepath
-evals = C:\LS\09_REPOS\03_TOOLS\CanFlood\_git\tests2\data\test_05_build_evals_tests2__da0\evals_4_test_05.csv
+evals = tests2\data\test_05_build_evals_tests2__da0\evals_4_test_05.csv
 
 [validation]
 risk1 = False
 dmg2 = False
 risk2 = False
 risk3 = False
+# 'dmg2' validated by validator.py at 2025-01-24 16.59.58
 
 [results_fps]
 attrimat02 = #lvl2 attribution matrix fp (post dmg model)
