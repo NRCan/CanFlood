@@ -90,12 +90,20 @@ class Vali(ComWrkr):
         return cpars
         
         
-    def cf_check(self, #check the control file against a passed model's expectation handles
-                 modObj #model object to run check against
+    def cf_check(self, #
+                 modObj 
                  ):
+        """check the control file against a passed model's expectation handles
+        
+        Params
+        ----------
+        modObj: class object
+            an uninitalized child of the model.modcom.Model() class
+            must have a `validate` method
+        """
         
 
-        wrkr = modObj(cf_fp = self.cf_fp, logger=self.logger) #initilize it
+        wrkr = modObj(cf_fp = self.cf_fp, logger=self.logger, absolute_fp=self.absolute_fp) #initilize it
         #=======================================================================
         # check against expectations
         #=======================================================================
