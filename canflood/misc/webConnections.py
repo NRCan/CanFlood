@@ -55,6 +55,9 @@ class WebConnectAction(QMenuAction):
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
         with WebConnect(**kwargs) as wrkr:
             newCons_d = wrkr.addAll()
+            wrkr.add_arcgis_rest_connection("NHSL", "https://maps-cartes.services.geo.ca/server_serveur/rest/services/NRCan/nhsl_en/MapServer")
+            wrkr.add_arcgis_rest_connection("NPRI", "https://maps-cartes.ec.gc.ca/arcgis/rest/services/STB_DGST/NPRI/MapServer")
+
             
         #=======================================================================
         # wrap
@@ -143,7 +146,24 @@ class WebConnect(ComWrkr):
         
         return newCons_d
     
+    def add_arcgis_rest_connection(self, name, url):
+        """Add an ArcGIS FeatureServer connection using QGIS API."""
     
+        settings = QgsSettings()
+        base_key = f"connections/arcgisfeatureserver/items/{name}"
+    
+        # Set required parameters
+        settings.setValue(f"{base_key}/url", url)
+        settings.setValue(f"{base_key}/username", "")  # If authentication is required, update this
+        settings.setValue(f"{base_key}/password", "")
+        settings.setValue(f"{base_key}/authcfg", "")
+        settings.setValue(f"{base_key}/http-header", "@Variant(\0\0\0\b\0\0\0\0)")
+    
+    # Set the selected connection
+        settings.setValue("connections/arcgisfeatureserver/selected", name)
+    
+        print(f"Added ArcGIS REST connection: {name}")
+        
     def addAll(self, #add all connections
                qini_fp = None, #users settings path
                newCons_d = None, #connections to load
@@ -161,8 +181,9 @@ class WebConnect(ComWrkr):
         # initilize settings
         #=======================================================================
         assert os.path.exists(qini_fp), 'bad settings filepath: %s'%qini_fp
-        usets = QgsSettings(qini_fp, QSettings.IniFormat) 
-        
+        #log.push('filepath'%(qini_fp))
+        usets = QSettings(qini_fp, QSettings.IniFormat) 
+        log.push("Here")
         #navigate to group1
         """all connectins are in the qgis group"""
         usets.beginGroup('qgis') 
@@ -340,8 +361,8 @@ if __name__ =="__main__":
     
     
     wrkr = WebConnect(
-        newSettings_fp = r'C:\LS\03_TOOLS\CanFlood\_git\canflood\_pars\WebConnections1.ini',
-        qini_fp = r'C:\Users\cefect\AppData\Roaming\QGIS\QGIS3\profiles\dev\QGIS\QGIS3.ini') #setup worker
+        newSettings_fp = r'D:\CEFlood\CanFlood\canflood\_pars\WebConnections.ini',
+        qini_fp = r'C:\Users\bhati\AppData\Local\QGIS\QGIS3\profiles\dev\QGIS\QGIS3.ini') #setup worker
     
     
     wrkr.addAll() #add everything
