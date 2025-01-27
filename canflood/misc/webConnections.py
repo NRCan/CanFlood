@@ -18,7 +18,7 @@ import numpy as np
 
 
 from qgis.core import QgsApplication, QgsSettings
-from PyQt5.QtCore import QSettings
+from PyQt5.QtCore import QSettings, QStandardPaths
 #==============================================================================
 # custom imports
 #==============================================================================
@@ -57,6 +57,8 @@ class WebConnectAction(QMenuAction):
             newCons_d = wrkr.addAll()
             wrkr.add_arcgis_rest_connection("NHSL", "https://maps-cartes.services.geo.ca/server_serveur/rest/services/NRCan/nhsl_en/MapServer")
             wrkr.add_arcgis_rest_connection("NPRI", "https://maps-cartes.ec.gc.ca/arcgis/rest/services/STB_DGST/NPRI/MapServer")
+            wrkr.add_arcgis_rest_connection("GAR15", "http://preview.grid.unep.ch/geoserver/wcs?bbox=-180,-89,180,84&styles=&version=1.0.0&coverage=GAR2015:flood_hazard_1000_yrp&width=640&height=309&crs=EPSG:4326")
+            wrkr.add_arcgis_rest_connection("AutomaticallyExtractedBuildings", "https://maps.geogratis.gc.ca/wms/automatic_extraction_building_footprint_en?request=getcapabilities&service=wms&layers=automatic_extraction_building_footprint_en&version=1.3.0&legend_format=image/png&feature_info_type=text/html")
 
             
         #=======================================================================
@@ -181,9 +183,7 @@ class WebConnect(ComWrkr):
         # initilize settings
         #=======================================================================
         assert os.path.exists(qini_fp), 'bad settings filepath: %s'%qini_fp
-        #log.push('filepath'%(qini_fp))
         usets = QSettings(qini_fp, QSettings.IniFormat) 
-        log.push("Here")
         #navigate to group1
         """all connectins are in the qgis group"""
         usets.beginGroup('qgis') 
@@ -359,12 +359,16 @@ class WebConnect(ComWrkr):
         
 if __name__ =="__main__":
     
-    
+    base_dir = os.path.dirname(os.path.dirname(__file__))
+    newSettings_fp1=os.path.join(base_dir, r'_pars\WebConnections.ini')
+    settings_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation) + "/QGIS/QGIS3/profiles/dev/QGIS/QGIS3.ini"
+    if not os.path.exists(settings_dir):
+        settings_dir = settings_dir.replace('Roaming', 'Local')
+        
     wrkr = WebConnect(
-        newSettings_fp = r'D:\CEFlood\CanFlood\canflood\_pars\WebConnections.ini',
-        qini_fp = r'C:\Users\bhati\AppData\Local\QGIS\QGIS3\profiles\dev\QGIS\QGIS3.ini') #setup worker
-    
-    
+    newSettings_fp=newSettings_fp1,
+    qini_fp = settings_dir 
+    )
     wrkr.addAll() #add everything
     
         
