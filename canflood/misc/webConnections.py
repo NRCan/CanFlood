@@ -173,7 +173,7 @@ class WebConnect(ComWrkr):
             elif "connections-wms" in group:
                 self.add_wms_connection(name, url)
             else:
-                print(f"Unknown connection type for {name}: {url}")
+                raise ValueError(f"Unknown connection type for '{name}': {url}. Group '{group}' is not recognized.")
         
     def add_arcgis_rest_connection(self, name, url):
         settings = QgsSettings()
