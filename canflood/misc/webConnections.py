@@ -43,6 +43,21 @@ class WebConnectAction(QMenuAction):
     icon_location = 'menu'
     
     def launch(self):
+        
+        base_dir = os.path.dirname(os.path.dirname(__file__))
+        newSettings_fp1=os.path.join(base_dir, r'_pars\WebConnections.ini')
+        settings_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation) + "/profiles/dev/QGIS/QGIS3.ini"
+        if not os.path.exists(settings_dir):
+            settings_dir = settings_dir.replace('Roaming', 'Local')
+        
+        wrkr = WebConnect(
+            newSettings_fp=newSettings_fp1,
+            qini_fp = settings_dir 
+            )
+        wrkr.addAll() 
+        wrkr.read_connections(newSettings_fp1)
+        
+       
         #=======================================================================
         # defai;ts
         #=======================================================================
@@ -54,13 +69,7 @@ class WebConnectAction(QMenuAction):
         #=======================================================================
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
         with WebConnect(**kwargs) as wrkr:
-            newCons_d = wrkr.addAll()
-            wrkr.add_arcgis_rest_connection("NHSL", "https://maps-cartes.services.geo.ca/server_serveur/rest/services/NRCan/nhsl_en/MapServer")
-            wrkr.add_arcgis_rest_connection("NPRI", "https://maps-cartes.ec.gc.ca/arcgis/rest/services/STB_DGST/NPRI/MapServer")
-            wrkr.add_arcgis_rest_connection("GAR15", "http://preview.grid.unep.ch/geoserver/wcs?bbox=-180,-89,180,84&styles=&version=1.0.0&coverage=GAR2015:flood_hazard_1000_yrp&width=640&height=309&crs=EPSG:4326")
-            wrkr.add_arcgis_rest_connection("AutomaticallyExtractedBuildings", "https://maps.geogratis.gc.ca/wms/automatic_extraction_building_footprint_en?request=getcapabilities&service=wms&layers=automatic_extraction_building_footprint_en&version=1.3.0&legend_format=image/png&feature_info_type=text/html")
-
-            
+            newCons_d = wrkr.addAll()     
         #=======================================================================
         # wrap
         #=======================================================================
@@ -148,23 +157,58 @@ class WebConnect(ComWrkr):
         
         return newCons_d
     
+    def read_connections(self, newSettings_fp = None):
+        config = ConfigParser()
+        config.read(newSettings_fp)
+
+        for section in config.sections():
+            name = section  
+            url = config.get(section, 'url', fallback="")
+            group = config.get(section, 'group', fallback="")
+
+            if "connections-arcgisfeatureserver" in group:
+                self.add_arcgis_rest_connection(name, url)
+            elif "connections-wcs" in group:
+                self.add_wcs_connection(name, url)
+            elif "connections-wms" in group:
+                self.add_wms_connection(name, url)
+            else:
+                print(f"Unknown connection type for {name}: {url}")
+        
     def add_arcgis_rest_connection(self, name, url):
-        """Add an ArcGIS FeatureServer connection using QGIS API."""
-    
         settings = QgsSettings()
         base_key = f"connections/arcgisfeatureserver/items/{name}"
-    
-        # Set required parameters
         settings.setValue(f"{base_key}/url", url)
-        settings.setValue(f"{base_key}/username", "")  # If authentication is required, update this
+        settings.setValue(f"{base_key}/username", "")
         settings.setValue(f"{base_key}/password", "")
         settings.setValue(f"{base_key}/authcfg", "")
         settings.setValue(f"{base_key}/http-header", "@Variant(\0\0\0\b\0\0\0\0)")
-    
-    # Set the selected connection
         settings.setValue("connections/arcgisfeatureserver/selected", name)
+        
+    def add_wcs_connection(self, name, url):
+        """Adds a Web Coverage Service (WCS) connection to QGIS."""
+        settings = QgsSettings()
+        base_key = f"connections/ows/items/wcs/connections/items/{name}"
+
+        settings.setValue(f"{base_key}/url", url)  
+        settings.setValue(f"{base_key}/username", "")
+        settings.setValue(f"{base_key}/password", "")
+        settings.setValue(f"{base_key}/authcfg", "")
+
+        settings.sync()  
+        
     
-        print(f"Added ArcGIS REST connection: {name}")
+    def add_wms_connection(self, name, url):
+        """Adds a WMS connection to QGIS settings."""
+        settings = QgsSettings()
+        base_key = f"connections/ows/items/wms/connections/items/{name}"
+
+        settings.setValue(f"{base_key}/url", url)
+        settings.setValue(f"{base_key}/username", "")
+        settings.setValue(f"{base_key}/password", "")
+        settings.setValue(f"{base_key}/authcfg", "")
+
+        settings.sync()  
         
     def addAll(self, #add all connections
                qini_fp = None, #users settings path
@@ -350,25 +394,4 @@ class WebConnect(ComWrkr):
             
         
         return result, msg
-            
-
-    
-
-        
-    
-        
-if __name__ =="__main__":
-    
-    base_dir = os.path.dirname(os.path.dirname(__file__))
-    newSettings_fp1=os.path.join(base_dir, r'_pars\WebConnections.ini')
-    settings_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation) + "/QGIS/QGIS3/profiles/dev/QGIS/QGIS3.ini"
-    if not os.path.exists(settings_dir):
-        settings_dir = settings_dir.replace('Roaming', 'Local')
-        
-    wrkr = WebConnect(
-    newSettings_fp=newSettings_fp1,
-    qini_fp = settings_dir 
-    )
-    wrkr.addAll() #add everything
-    
         
