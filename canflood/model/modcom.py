@@ -2082,7 +2082,7 @@ class Model(ComWrkr,
         """
         
         if logger is None: logger=self.logger
-        if absolute_fp= None: absolute_fp=self.aboslute_fp
+        if absolute_fp is None: absolute_fp=self.aboslute_fp
         log = logger.getChild('par_hndl_chk')
         
         #=======================================================================
