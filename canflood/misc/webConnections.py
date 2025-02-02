@@ -13,12 +13,12 @@ web connections
 #python standards
 import os, logging, copy
 
-from configparser import ConfigParser, RawConfigParser
+from configparser import ConfigParser
 import numpy as np
 
 
 from qgis.core import QgsApplication, QgsSettings
-from PyQt5.QtCore import QSettings, QStandardPaths
+from PyQt5.QtCore import QSettings
 #==============================================================================
 # custom imports
 #==============================================================================
@@ -46,20 +46,9 @@ class WebConnectAction(QMenuAction):
         
         base_dir = os.path.dirname(os.path.dirname(__file__))
         newSettings_fp1=os.path.join(base_dir, r'_pars\WebConnections.ini')
-        settings_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation) + "/profiles/dev/QGIS/QGIS3.ini"
-        if not os.path.exists(settings_dir):
-            settings_dir = settings_dir.replace('Roaming', 'Local')
-        
-        wrkr = WebConnect(
-            newSettings_fp=newSettings_fp1,
-            qini_fp = settings_dir 
-            )
-        wrkr.addAll() 
-        wrkr.read_connections(newSettings_fp1)
-        
        
         #=======================================================================
-        # defai;ts
+        # details
         #=======================================================================
         log = self.logger.getChild('l')
  
@@ -69,7 +58,8 @@ class WebConnectAction(QMenuAction):
         #=======================================================================
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
         with WebConnect(**kwargs) as wrkr:
-            newCons_d = wrkr.addAll()     
+            newCons_d = wrkr.addAll()
+            wrkr.read_connections(newSettings_fp1)    
         #=======================================================================
         # wrap
         #=======================================================================
@@ -94,11 +84,7 @@ class WebConnect(ComWrkr):
                  
                  **kwargs):
         
- 
-        
-        
-        
-        super().__init__(**kwargs) #initilzie teh baseclass
+        super().__init__(**kwargs) #initilzie the baseclass
         
         #setup
         
@@ -220,7 +206,6 @@ class WebConnect(ComWrkr):
         log = self.logger.getChild('addAll')
         if newCons_d is None: newCons_d = self.newCons_d
         if qini_fp is None: qini_fp = self.qini_fp
-        
         log.debug('addAll on %i'%len(newCons_d))
         
         #=======================================================================
