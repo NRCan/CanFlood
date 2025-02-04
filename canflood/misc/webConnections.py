@@ -146,7 +146,6 @@ class WebConnect(ComWrkr):
     def read_connections(self, newSettings_fp = None):
         config = ConfigParser()
         config.read(newSettings_fp)
-
         for section in config.sections():
             name = section  
             url = config.get(section, 'url', fallback="")
@@ -162,7 +161,7 @@ class WebConnect(ComWrkr):
                 raise ValueError(f"Unknown connection type for '{name}': {url}. Group '{group}' is not recognized.")
         
     def add_arcgis_rest_connection(self, name, url):
-        settings = QgsSettings()
+        settings = QgsSettings(self.qini_fp, QSettings.IniFormat)
         base_key = f"connections/arcgisfeatureserver/items/{name}"
         settings.setValue(f"{base_key}/url", url)
         settings.setValue(f"{base_key}/username", "")
@@ -171,9 +170,11 @@ class WebConnect(ComWrkr):
         settings.setValue(f"{base_key}/http-header", "@Variant(\0\0\0\b\0\0\0\0)")
         settings.setValue("connections/arcgisfeatureserver/selected", name)
         
+        settings.sync()
+        
     def add_wcs_connection(self, name, url):
         """Adds a Web Coverage Service (WCS) connection to QGIS."""
-        settings = QgsSettings()
+        settings = QgsSettings(self.qini_fp, QSettings.IniFormat)
         base_key = f"connections/ows/items/wcs/connections/items/{name}"
 
         settings.setValue(f"{base_key}/url", url)  
@@ -186,7 +187,7 @@ class WebConnect(ComWrkr):
     
     def add_wms_connection(self, name, url):
         """Adds a WMS connection to QGIS settings."""
-        settings = QgsSettings()
+        settings = QgsSettings(self.qini_fp, QSettings.IniFormat)
         base_key = f"connections/ows/items/wms/connections/items/{name}"
 
         settings.setValue(f"{base_key}/url", url)
