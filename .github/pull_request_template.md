@@ -4,10 +4,15 @@
 
 - 
 
-## Test coverage for this change:
+## Related Issue
+<!-- Link the issue this PR is addressing, e.g., Closes #123 -->
 
-- [ ] I have added API unit tests
-- [ ] I have added appropriate UI unit tests
-- [ ] I have not added tests
+## Checklist
+
+- [ ] added core tests
+- [ ] added appropriate UI tests
+- [ ] tests are passing (if not, explain why for each)
+
+
 
 ## Additional Notes:
