@@ -12,7 +12,7 @@ def web_connect(tmpdir):
     web_connect = WebConnect(qini_fp=str(qini_fp))
 
     settings = QSettings(str(qini_fp), QSettings.IniFormat)
-    settings.clear()
+    settings.clear()  
     settings.sync()
 
     yield web_connect
@@ -39,12 +39,12 @@ def create_config(tmpdir, config_content):
 
         ({"GAR15": {
             "group": "connections-wcs\\UNISDR_GAR15_GlobalRiskAssessment",
-            "url": "http://preview.grid.unep.ch/geoserver/wcs?bbox=-180,-89,180,84&styles=&version=1.0.0&coverage=GAR2015:flood_hazard_1000_yrp&width=640&height=309&crs=EPSG:4326"
+            "url": "http://preview.grid.unep.ch/geoserver/wcs"
         }}, "connections/ows/items/wcs/connections/items/GAR15/url"),
 
         ({"NPRI": {
             "group": "connections-arcgisfeatureserver\\ECCC_NationalPollutantReleaseInventory_NPRI",
-            "url": "https://maps-cartes.ec.gc.ca/arcgis/rest/services/STB_DGST/NPRI/MapServer"
+            "url": "http://preview.grid.unep.ch/geoserver/wcs?bbox=-180,-89,180,84&styles=&version=1.0.0&coverage=GAR2015:flood_hazard_1000_yrp&width=640&height=309&crs=EPSG:4326"
         }}, "connections/arcgisfeatureserver/items/NPRI/url")
     ]
 )
@@ -52,10 +52,9 @@ def test_read_connections(web_connect, create_config, config_content, expected_k
     """Test the read_connections function and check expected QGIS3.ini structure."""
     config_path = create_config  
 
-   
     web_connect.read_connections(config_path)
 
-    
     settings = QSettings(web_connect.qini_fp, QSettings.IniFormat)
     settings.sync() 
+
     assert expected_key in settings.allKeys(), f"Expected key '{expected_key}' was not found in the updated QGIS3.ini file"
