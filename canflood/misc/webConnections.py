@@ -48,7 +48,7 @@ class WebConnectAction(QMenuAction):
         newSettings_fp1=os.path.join(base_dir, r'_pars\WebConnections.ini')
        
         #=======================================================================
-        # details
+        # defaults
         #=======================================================================
         log = self.logger.getChild('l')
  
