@@ -616,10 +616,13 @@ class LikeSampler(Plotr, Qcoms):
         title = '%s Conditional P Histogram on %i Events'%(self.tag, len(df.columns))
         
         self._set_valstr(df)
-        return self.plot_impact_hist(df,
+        result =  self.plot_impact_hist(df,
                      title=title, xlab = 'Pfail',
                      xlims_t = (0, 1.0),
                      val_str=self.val_str, **kwargs)
+        self.plt.show();
+        
+        return result
         
 
     def plot_boxes(self, #plot boxplots of results
@@ -632,10 +635,13 @@ class LikeSampler(Plotr, Qcoms):
         
         self._set_valstr(df)
 
-        return self.plot_impact_boxes(df,
+        result =  self.plot_impact_boxes(df,
                      title=title, xlab = 'hazard layer', ylab = 'Pfail',
                      ylims_t = (0, 1.0),smry_method='mean',
                      val_str=self.val_str,   **kwargs)
+        self.plt.show()
+        
+        return result
         
     def _set_valstr(self, df):
         self.val_str= 'finv_fcnt=%i \nevent_rels=\'%s\' \ndate=%s'%(

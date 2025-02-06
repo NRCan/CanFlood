@@ -13,7 +13,7 @@ from scipy import interpolate, integrate
 from hlpr.exceptions import QError as Error
 from hlpr.plot import Plotr, view
 from model.modcom import Model
-
+import scipy
 
 class RiskModel(Plotr, Model): #common methods for risk1 and risk2
     
@@ -1107,11 +1107,27 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         # 
         #======================================================================
         if self.integrate == 'trapz':
-        
-            ead_tot = integrate.trapz(
+            try:
+                ead_tot = integrate.trapezoid(
                 y, #yaxis - aeps
                 x=x, #xaxis = damages 
                 dx = dx)
+            except AttributeError:
+                try:
+                    # Fall back to the older `trapz` method if `trapezoid` is not available
+                    ead_tot = integrate.trapz(
+                        y,  # y-axis (e.g., aeps)
+                        x=x,  # x-axis (e.g., damages)
+                        dx=dx  # Spacing between points
+                        )
+                
+                except AttributeError:
+                    # Handle the case where neither method is available
+                    scipy_version =  scipy.__version__
+                    raise RuntimeError(
+                        f"Integration failed. Ensure you have a compatible SciPy version. "
+                        f"Detected SciPy version: {scipy_version}."
+                        )
             
         elif self.integrate == 'simps':
             self.logger.warning('integration method not tested')
