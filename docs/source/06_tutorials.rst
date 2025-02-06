@@ -691,6 +691,8 @@ Alternatively, the ‘f0_scale’ value could be set to ‘1.0’ for all featur
 Tutorial 5a: Risk (L1) from NPRI and GAR15
 ************************************************
 
+**WARNING: the data connections required for this tutorial are no longer available, so you will not be able to follow the tutorial as written**
+
 This tutorial demonstrates how to construct a CanFlood ‘Risk (L1)’ model from two web-sources:
 
   • The `National Pollutant Release Inventory (NPRI) <https://www.canada.ca/en/services/environment/pollution-waste-management/national-pollutant-release-inventory.html>`__; and
@@ -698,7 +700,7 @@ This tutorial demonstrates how to construct a CanFlood ‘Risk (L1)’ model fro
 
 For more information on these data sets, see :ref:`Appendix A <appendix_a>`.
 
-Because this tutorial deals with data having disparate CRSs, users should be familiar with QGIS’s native handling of project and layer CRS discussed `here <https://docs.qgis.org/3.10/en/docs/user_manual/working_with_projections/working_with_projections.html>`__.
+Because this tutorial deals with data having disparate CRSs, users should be familiar with QGIS’s native handling of project and layer CRS discussed `here <https://docs.qgis.org/3.34/en/docs/user_manual/working_with_projections/working_with_projections.html>`__.
 
 Load Data into the Project
 ============================
@@ -758,11 +760,11 @@ You’ll have to load one layer at a time, and you may be prompted to ‘Select 
 Build the Model
 =======================
 
-This section describes how to complete the construction of a Risk (L1) model from the downloaded NPRI and GAR15 data. For instructions on the remainder of the Risk (L1) modelling process, see Section6.1_.
+This section describes how to complete the construction of a Risk (L1) model from the downloaded NPRI and GAR15 data. For instructions on the remainder of the Risk (L1) modelling process, see :numref:`Section6.1`.
 
 **Setup**
 
-Follow the instructions in Section6.1.2_ *Setup*; however, ensure ‘tut5_aoi_3978’ is selected under ‘Project AOI’ and ‘Load session results…’ is selected.
+Follow the instructions in :numref:`Section6.1.2` *Setup*; however, ensure ‘tut5_aoi_3978’ is selected under ‘Project AOI’ and ‘Load session results…’ is selected.
 
 .. image:: /_static/tutorials_6_10_2_img_1.jpg
 
@@ -786,7 +788,7 @@ Navigate to the ‘Hazard Sampler’ tab, ensure the five GAR2015 layers are lis
 
 You should see five new rasters loaded to your canvas (with a ‘prepd’ suffix). These layers should have rotated pixels, be clipped to the AOI, have reasonable flood depth values (in meters), and have the same CRS as the project (In some cases, QGIS may fail to recognize the CRS assigned to these new rasters, indicated by a “?” shown to the right of the layer in the layers panel.
 In these cases, you will need to define the projection by going to the layer’s ‘Properties’ and under ‘Source’ set the coordinate system to match that of the project (EPSG: 3978)). Further, each of these rasters should be saved to your working directory.
-This new set of hazard layers should conform to the expectations of the Hazard Sampler, allowing you to proceed with construction of an L1 model as described in Section6.1_.
+This new set of hazard layers should conform to the expectations of the Hazard Sampler, allowing you to proceed with construction of an L1 model as described in :numref:`Section6.1`.
 
 .. _Section6.11:
 
