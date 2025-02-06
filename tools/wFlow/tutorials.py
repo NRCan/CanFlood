@@ -17,7 +17,7 @@ class Tut1a(WorkFlow): #tutorial 1a
         self.pars_d = {
                 
                 #data files
-                'finv_fp':r'tutorials\1\finv_tut1a.gpkg',
+                'finv_fp':r'tutorials\1\finv_tut1a.geojson',
                 'raster_dir':r'tutorials\1\haz_rast',
                 'evals_fp':r'tests\_data\tuts\evals_4_tut1a.csv',
                 #'fpol_dir':r'tutorials\1\haz_fpoly',
@@ -329,7 +329,7 @@ class Tut4a(Tut4):
         super().__init__(**kwargs)
         
         self.pars_d.update({
-            'finv_fp':r'tutorials\4\finv_tut4a_polygons.gpkg',
+            'finv_fp':r'tutorials\4\finv_tut4a_polygons.geojson',
             'as_inun':True, 'dthresh':0.5,
             })
 
@@ -340,7 +340,7 @@ class Tut4b(Tut4):
         super().__init__(**kwargs)
         
         self.pars_d.update({
-            'finv_fp':r'tutorials\4\finv_tut4b_lines.gpkg',
+            'finv_fp':r'tutorials\4\finv_tut4b_lines.geojson',
             'as_inun':True, 'dthresh':0.5,
             })
 
@@ -362,8 +362,8 @@ class Tut5a(WorkFlow): #tutorial 1a
                 
                 #data files
                 'raster_dir':r'tests\_data\tuts\5a', #using local data instead of web data for the test
-                'finv_fp':r'tests\_data\tuts\5a\NPRI_lay3_3978.gpkg',
-                'aoi_fp':r'tutorials\5\tut5_aoi_3978.gpkg',
+                'finv_fp':r'tests\_data\tuts\5a\NPRI_lay3_3978.geojson',
+                'aoi_fp':r'tutorials\5\tut5_aoi_3978.geojson',
                 #'evals_fp':r'tests\_data\tuts\evals_5_tut5a.csv',
                 
                 #run controls
@@ -439,7 +439,7 @@ class Tut5a(WorkFlow): #tutorial 1a
 #===============================================================================
 #Tutorial 6---------
 #===============================================================================
-ifz_fp = r'tutorials\6\dike_influence_zones.gpkg'
+ifz_fp = r'tutorials\6\dike_influence_zones.geojson'
 class Tut6a(WorkFlow): #tutorial 1a
     name = 'tut6a'
     crsid ='EPSG:3005'
@@ -450,7 +450,7 @@ class Tut6a(WorkFlow): #tutorial 1a
                 'raster_dir':r'tutorials\6\haz_rast',
                 'evals_fp':r'tests\_data\tuts\evals_4_tut4a.csv',
                 'dtm_fp':r'tutorials\6\dtm.tif',
-                'dikes_fp':r'tutorials\6\dikes.gpkg',
+                'dikes_fp':r'tutorials\6\dikes.geojson',
                 'dcurves_fp':r'tutorials\6\dike_fragility_20210201.xls',
 
                 'eifz_d':{
@@ -541,7 +541,7 @@ class Tut7a(Tut7):
             **kwargs)
         
         self.pars_d.update({
-            'finv_fp':r'tutorials\7\finv_tut7_polys.gpkg', #setup for R2.. but just using R1
+            'finv_fp':r'tutorials\7\finv_tut7_polys.geojson', #setup for R2.. but just using R1
 
             })
         
