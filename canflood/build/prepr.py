@@ -139,7 +139,7 @@ class Preparor(Model, Qcoms):
                     vlay,
                     felv='datum', #should probabl just leave this if none
                     cid=None, tag=None,
-                    logger=None, write=True,
+                    logger=None, abs_fp = None, write=True
                     ):
         
         #=======================================================================
@@ -260,7 +260,8 @@ class Preparor(Model, Qcoms):
     def upd_cf_finv(self, out_fp):
         
         assert os.path.exists(self.cf_fp), 'bad cf_fp: %s'%self.cf_fp
- 
+        if not self.absolute_fp: 
+            out_fp = os.path.relpath(out_fp, start=os.getcwd())
         self.set_cf_pars(
             {
             'dmg_fps':(

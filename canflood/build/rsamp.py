@@ -1704,6 +1704,8 @@ class Rsamp(Plotr, Qcoms):
 
     def update_cf(self, cf_fp): #configured control file updater
         """make sure you write the file first"""
+        if not self.absolute_fp: 
+            self.out_fp = os.path.relpath(self.out_fp, start=os.getcwd())
         return self.set_cf_pars(
             {
             'dmg_fps':(
