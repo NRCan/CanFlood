@@ -131,7 +131,7 @@ def test_model_02_r2(dial, true_dir, cf_fp): #risk L2
     cf_fp = dial.get_cf_fp()
     fp = dial.get_cf_par(cf_fp, sectName='results_fps', varName='r_ttl')
     assert not fp == '', 'failed to get a result'
-    fp = os.path.join(os.path.dirname(cf_fp), fp)    
+    #fp = os.path.join(os.path.dirname(cf_fp), fp)   
     assert os.path.exists(fp), 'failed to generate risk_fps'
     
         #load

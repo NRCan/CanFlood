@@ -596,6 +596,8 @@ class LikeSampler(Plotr, Qcoms):
     
     def update_cf(self, cf_fp=None): #configured control file updater
         if cf_fp is None: cf_fp=self.cf_fp
+        if not self.absolute_fp: 
+            self.out_fp = os.path.relpath(self.out_fp, start=os.getcwd())
         return self.set_cf_pars(
             {'risk_fps':(
                 {'exlikes':self.out_fp}, 

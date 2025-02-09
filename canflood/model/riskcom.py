@@ -1227,6 +1227,8 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         out_fp = self.output_df(df, ofn, write_index=False, logger=logger)
         
         if upd_cf:
+            if not self.absolute_fp: 
+                out_fp = os.path.relpath(out_fp, start=os.getcwd())
             self.set_cf_pars( {
                     'results_fps':(
                         {dtag:out_fp}, 
@@ -1250,6 +1252,8 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         out_fp = self.output_df(self.res_df, ofn, logger=logger)
         
         if upd_cf:
+            if not self.absolute_fp: 
+                out_fp = os.path.relpath(out_fp, start=os.getcwd())
             self.set_cf_pars( {
                     'results_fps':(
                         {dtag:out_fp}, 
@@ -1281,6 +1285,8 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         
         #update the control file
         if upd_cf:
+            if not self.absolute_fp: 
+                out_fp = os.path.relpath(out_fp, start=os.getcwd())
             self.set_cf_pars(
                     {
                     'results_fps':(

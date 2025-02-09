@@ -865,6 +865,8 @@ class WorkFlow(wFlow.scripts_retrieve.WF_retriev, Session): #worker with methods
         #=======================================================================
         # #update control file
         #=======================================================================
+        if not self.absolute_fp: 
+            fp = os.path.relpath(fp, start=os.getcwd())
         wrkr.set_cf_pars(
             {
 

@@ -694,6 +694,8 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
         wrkr = Preparor(**kwargs) 
         self.feedback.upd_prog(50)
+        if not self.absolute_fp: 
+            curves_fp = os.path.relpath(curves_fp, start=os.getcwd())
         wrkr.set_cf_pars(
             {
             'dmg_fps':(
@@ -1454,6 +1456,8 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
         # update the control file
         #======================================================================
+        if not self.absolute_fp: 
+            eaep_fp = os.path.relpath(eaep_fp, start=os.getcwd())
         wrkr.set_cf_pars(
             {
                 'parameters':({

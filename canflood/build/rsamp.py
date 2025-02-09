@@ -1722,6 +1722,8 @@ class Rsamp(Plotr, Qcoms):
         
     def upd_cf_dtm(self, cf_fp=None):
         if cf_fp is None: cf_fp=self.cf_fp
+        if not self.absolute_fp: 
+            self.out_fp = os.path.relpath(self.out_fp, start=os.getcwd())
         return self.set_cf_pars(
             {
             'dmg_fps':(
