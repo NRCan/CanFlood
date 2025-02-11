@@ -50,9 +50,9 @@ def data_dir(base_dir):
 
 
 
-
+@pytest.mark.parametrize('absolute_fp',[True, False])
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
-def test_tutorial_02a(session, data_dir, true_dir, tmp_path, write):
+def test_tutorial_02a(session, data_dir, true_dir, tmp_path, write, absolute_fp):
     """simulate tutorial 2A
     https://canflood.readthedocs.io/en/latest/06_tutorials.html#tutorial-2a-risk-l2-with-simple-events
     
@@ -64,13 +64,11 @@ def test_tutorial_02a(session, data_dir, true_dir, tmp_path, write):
         refactor or shorten this code (we'll need to re-use a lot of it for subsequent tutorials)
         add value tests
     """
-
- 
+    
     def get_true_fp(sfx):
         #find this file
         match_l = [e for e in os.listdir(true_dir) if e.endswith(sfx)]
         assert len(match_l)==1, f'failed to get a  unique match for {sfx}'
-        
         return os.path.join(true_dir, match_l[0])
         
     #===========================================================================
@@ -81,18 +79,20 @@ def test_tutorial_02a(session, data_dir, true_dir, tmp_path, write):
     out_dir = session.out_dir #send the outputs we care about here
     session.out_dir = tmp_path #overwrite so we don't capture all outputs
     
+    if absolute_fp:
+        dial.radioButton_SS_fpAbs.setChecked(True)
+    else:
+        dial.radioButton_SS_fpRel.setChecked(True)
     #===========================================================================
     # scenario setup
     #===========================================================================
     dial._change_tab('tab_setup')
     dial.lineEdit_wdir.setText(str(session.out_dir))
     dial.linEdit_ScenTag.setText('tut2a')
-    
     """BuildDialog.build_scenario()"""
     QTest.mouseClick(dial.pushButton_generate, Qt.LeftButton)
-
-    assert os.path.exists(dial.lineEdit_cf_fp.text())
     
+    assert os.path.exists(dial.lineEdit_cf_fp.text())
     #===========================================================================
     # Inventory setup
     #===========================================================================
