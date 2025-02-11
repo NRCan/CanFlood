@@ -139,7 +139,7 @@ class Preparor(Model, Qcoms):
                     vlay,
                     felv='datum', #should probabl just leave this if none
                     cid=None, tag=None,
-                    logger=None, abs_fp = None, write=True
+                    logger=None, write=True
                     ):
         
         #=======================================================================
