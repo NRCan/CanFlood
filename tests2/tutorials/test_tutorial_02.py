@@ -281,6 +281,9 @@ def test_tutorial_02a(session, data_dir, true_dir, tmp_path, write, absolute_fp)
     #internal
     assert_rttl_valid(rttl_df, msg=os.path.basename(res_d['r_ttl']))
     
+    if write:
+        raise NotImplementedError('add validation writing code')
+    
     #validate: against trues
     true_df = pd.read_pickle(get_true_fp('r_ttl.pkl'))    
     assert_frame_equal(rttl_df, true_df)
