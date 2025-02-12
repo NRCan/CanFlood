@@ -56,16 +56,21 @@ def test_tutorial_02a(session, data_dir, true_dir, tmp_path, write, absolute_fp)
     """simulate tutorial 2A
     https://canflood.readthedocs.io/en/latest/06_tutorials.html#tutorial-2a-risk-l2-with-simple-events
     
+    
+    Validation
+    ----------------
+    uses '.pkl' file in the true_dir to validate risk L2 model results
+    
 
     
     
     TODO: 
         refactor or shorten this code (we'll need to re-use a lot of it for subsequent tutorials)
-        add value tests
+        add more value tests
     """
     
     def get_true_fp(sfx):
-        #find this file
+        """retrieve the true/validation datafile from a suffix"""
         match_l = [e for e in os.listdir(true_dir) if e.endswith(sfx)]
         assert len(match_l)==1, f'failed to get a  unique match for {sfx}'
         return os.path.join(true_dir, match_l[0])
