@@ -1477,8 +1477,8 @@ class Dmg2(Model, DFunc, Plotr):
         #=======================================================================
         # convert to relative
         #=======================================================================
-        if not self.absolute_fp:
-            out_fp = os.path.split(out_fp)[1]
+        if not self.absolute_fp: 
+                out_fp = os.path.relpath(out_fp, start=os.getcwd())
         
         return self.set_cf_pars(
             {

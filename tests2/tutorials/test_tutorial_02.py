@@ -238,6 +238,10 @@ def test_tutorial_02a(session, data_dir, true_dir, tmp_path, write, absolute_fp)
     
     dial.radioButton.setChecked(True) #save plots to file
     dial.comboBox_JGfinv.setCurrentIndex(-1) #clear finv
+    if absolute_fp:
+        dial.radioButton_SS_fpAbs.setChecked(True)
+    else:
+        dial.radioButton_S_fpRel.setChecked(True)
     #===========================================================================
     # impacts (L2)
     #===========================================================================
