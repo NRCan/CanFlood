@@ -110,7 +110,7 @@ def xxx_test_res_02_pdf_report(dial, finv_fp):
 
     
 def res_02_reporter(dial, finv_fp=None, vsect_cnt = 5):
-    """build and test report
+    """build and test QgsReport tool
     
     refacorted for use in tutoirals test
     
@@ -138,5 +138,7 @@ def res_02_reporter(dial, finv_fp=None, vsect_cnt = 5):
  
     if not len(sections) == vsect_cnt:
         fail('expected %i sections got %i'%(vsect_cnt, len(sections)))
+        
+    print(f'finished res_02_reporter')
         
     return report

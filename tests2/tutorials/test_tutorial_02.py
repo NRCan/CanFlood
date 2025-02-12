@@ -56,8 +56,7 @@ def test_tutorial_02a(session, data_dir, true_dir, tmp_path, write, absolute_fp)
     """simulate tutorial 2A
     https://canflood.readthedocs.io/en/latest/06_tutorials.html#tutorial-2a-risk-l2-with-simple-events
     
-    NOTE:
-        2025-01-03: unit test is crashing when trying to generate the html report
+
     
     
     TODO: 
@@ -330,7 +329,7 @@ def test_tutorial_02a(session, data_dir, true_dir, tmp_path, write, absolute_fp)
     # pdf reporter
     #===========================================================================
  
-    report = test_results.res_02_reporter(dial, finv_fp = os.path.join(data_dir, 'finv_tut2.geojson')) #unit test is crashing
+    report = test_results.res_02_reporter(dial, finv_fp = os.path.join(data_dir, 'finv_tut2.geojson'))
  
  
     
