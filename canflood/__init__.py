@@ -8,6 +8,11 @@ This is th efirst call of the tool
 TODO: better dependency check
 
 """
+
+#===============================================================================
+# plugin metadata
+#===============================================================================
+__version__='1.2.1_t'
 #==============================================================================
 # dependency check
 #==============================================================================
@@ -47,5 +52,5 @@ def classFactory(iface):  # pylint: disable=invalid-name
     """
     #
 
-    from .CanFlood import CanFlood
+    from .plugin import CanFlood
     return CanFlood(iface)

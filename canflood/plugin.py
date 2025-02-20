@@ -10,10 +10,10 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QMenu
 
 # Initialize Qt resources from file resources.py
-from .resources import *
+#from .resources import *
 
 
-import weakref
+#import weakref
 import os.path
 from qgis.core import Qgis, QgsMessageLog, QgsExpression
 
@@ -27,7 +27,6 @@ from qgis.core import Qgis, QgsMessageLog, QgsExpression
 relative references seem to work in Qgis.. but IDE doesnt recognize
 """
 from hlpr.plug import plugLogger
-
 from hlpr.exceptions import QError as Error
 
 
