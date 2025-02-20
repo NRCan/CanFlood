@@ -595,7 +595,9 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
         """
         return varType(pars[sectName][varName])
     
-    def _set_setup(self, set_cf_fp=True,): #attach parameters from setup tab
+    def _set_setup(self, set_cf_fp=True,): 
+        """attach parameters from setup tab
+        common for all dialogs"""
         
         inherit_fieldNames = ['logger', 'out_dir','tag', 'overwrite', 'absolute_fp', 'feedback']
         
@@ -605,6 +607,10 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
         
         assert not self.out_dir == '', 'must specify a working directory!'
         if not os.path.exists(self.out_dir): os.makedirs(self.out_dir)
+        
+        #file behavior
+        self.overwrite=self.checkBox_SSoverwrite.isChecked()
+        self.absolute_fp = self.radioButton_SS_fpAbs.isChecked()
         
         if set_cf_fp:
 
@@ -616,11 +622,13 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
             inherit_fieldNames.append('cf_fp')
             
             self.session.cf_fp = self.cf_fp #set for other dialogs
+            
+            #set working directory based on control file (self.cf_fp) location
+            if not self.absolute_fp:
+                os.chdir(os.path.dirname(os.path.abspath(self.cf_fp)))
 
         
-        #file behavior
-        self.overwrite=self.checkBox_SSoverwrite.isChecked()
-        self.absolute_fp = self.radioButton_SS_fpAbs.isChecked()
+
         
         #layer loading
         self.groupName = 'CanFlood.%s'%self.tag
