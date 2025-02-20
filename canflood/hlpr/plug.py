@@ -32,11 +32,11 @@ from PyQt5 import QtCore
 # custom imports
 #==============================================================================
 
-from hlpr.exceptions import QError as Error
-from hlpr.Q import MyFeedBackQ, Qcoms
-import hlpr.Q
-from hlpr.basic import force_open_dir, view, ComWrkr
-from hlpr.plt_qt import PltWindow
+from canflood.hlpr.exceptions import QError as Error
+from canflood.hlpr.Q import MyFeedBackQ, Qcoms, vlay_get_fdata
+#import hlpr.Q
+from canflood.hlpr.basic import force_open_dir, view, ComWrkr
+from canflood.hlpr.plt_qt import PltWindow
  
 
 #==============================================================================
@@ -669,7 +669,7 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
             self.cid, fields_d[self.cid].typeName())
                 
         #unique values
-        cid_ser = hlpr.Q.vlay_get_fdata(self.finv_vlay, fieldn=self.cid, fmt='df', logger=log)
+        cid_ser = vlay_get_fdata(self.finv_vlay, fieldn=self.cid, fmt='df', logger=log)
         boolidx = cid_ser.duplicated(keep=False)
         if boolidx.any():
             log.debug('duplicated values \n%s'%cid_ser[boolidx])
@@ -680,14 +680,16 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
         return
         
 
-    def _change_tab(self, tabObjectName): #try to switch the tab on the gui
-        try:
-            tabw = self.tabWidget
-            index = tabw.indexOf(tabw.findChild(QWidget, tabObjectName))
-            assert index > 0, 'failed to find index?'
-            tabw.setCurrentIndex(index)
-        except Exception as e:
-            self.logger.error('failed to change to compile tab w/ \n    %s' % e)
+    #===========================================================================
+    # def _change_tab(self, tabObjectName): #try to switch the tab on the gui
+    #     try:
+    #         tabw = self.tabWidget
+    #         index = tabw.indexOf(tabw.findChild(QWidget, tabObjectName))
+    #         assert index > 0, 'failed to find index?'
+    #         tabw.setCurrentIndex(index)
+    #     except Exception as e:
+    #         self.logger.error('failed to change to compile tab w/ \n    %s' % e)
+    #===========================================================================
 
             
         

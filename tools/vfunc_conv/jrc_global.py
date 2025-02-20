@@ -11,10 +11,10 @@ start =  datetime.datetime.now()
 import pandas as pd
 import numpy as np
 from pandas import IndexSlice as idx
-from hlpr.basic import view, force_open_dir
+from canflood.hlpr.basic import view, force_open_dir
 
 from vfunc_conv.vcoms import VfConv
-#from model.modcom import DFunc
+#from canflood.model.modcom import DFunc
 
 mod_name = 'misc.jrc_global'
 today_str = datetime.datetime.today().strftime('%Y%m%d')

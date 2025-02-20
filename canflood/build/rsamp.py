@@ -31,14 +31,14 @@ import processing
 # custom imports
 #==============================================================================
 
-from hlpr.exceptions import QError as Error
+from canflood.hlpr.exceptions import QError as Error
     
 
 
-from hlpr.Q import (
+from canflood.hlpr.Q import (
     Qcoms,vlay_get_fdf, vlay_get_fdata, view, RasterCalc,assert_rlay_resolution_match,
     )
-from hlpr.plot import Plotr
+from canflood.hlpr.plot import Plotr
 
 #==============================================================================
 # functions-------------------

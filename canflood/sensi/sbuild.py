@@ -14,11 +14,11 @@ import pandas as pd
 import numpy as np
  
 
-from hlpr.basic import view
+from canflood.hlpr.basic import view
 
         
                      
-from sensi.coms import SensiShared
+from canflood.sensi.coms import SensiShared
 
     
     

@@ -12,12 +12,12 @@ import os, datetime
 import pandas as pd
 import numpy as np
 
-from hlpr.logr import basic_logger
+from canflood.hlpr.logr import basic_logger
 mod_logger = basic_logger() 
     
     
-from hlpr.Q import view
-from hlpr.exceptions import Error
+from canflood.hlpr.Q import view
+from canflood.hlpr.exceptions import Error
 
 from runComs import Runner
 
@@ -98,7 +98,7 @@ class DikeRunner(Runner):
         #=======================================================================
         # setup the tool
         #=======================================================================
-        from misc.dikes.expo import Dexpo
+        from canflood.misc.dikes.expo import Dexpo
         
         wrkr = Dexpo(logger=log,  out_dir=os.path.join(self.out_dir, self.toolName),   
                           segID=pars_d['segID'], dikeID=pars_d['dikeID'],tag=self.scenarioName,
@@ -192,7 +192,7 @@ class DikeRunner(Runner):
         #assert 'dexpo_fp' in pars_d, 'vuln requires the dexpo_fp.. did you run expo yet?'
         #assert not 'pfail_fp' in pars_d, 'output parameter already set!'
         
-        from misc.dikes.vuln import Dvuln
+        from canflood.misc.dikes.vuln import Dvuln
  
         #===========================================================================
         #run--------
@@ -260,7 +260,7 @@ class DikeRunner(Runner):
         #=======================================================================
         #assert 'pfail_fp' in pars_d, '%s requires the pfail_fp.. did you run vuln yet?'%self.toolName
         
-        from misc.dikes.rjoin import DikeJoiner
+        from canflood.misc.dikes.rjoin import DikeJoiner
  
         #===========================================================================
         #setup the worker

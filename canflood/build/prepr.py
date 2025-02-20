@@ -30,13 +30,13 @@ from qgis.core import QgsVectorLayer, QgsWkbTypes
 
 #standalone runs
  
-from hlpr.exceptions import QError as Error
+from canflood.hlpr.exceptions import QError as Error
     
 
-from hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata
-from hlpr.basic import get_valid_filename, view
+from canflood.hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata
+from canflood.hlpr.basic import get_valid_filename, view
 
-from model.modcom import Model #for data checks
+from canflood.model.modcom import Model #for data checks
 
 #==============================================================================
 # functions-------------------

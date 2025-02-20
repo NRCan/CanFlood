@@ -10,9 +10,9 @@ idx = pd.IndexSlice
 import numpy as np
 from scipy import interpolate, integrate
 
-from hlpr.exceptions import QError as Error
-from hlpr.plot import Plotr, view
-from model.modcom import Model
+from canflood.hlpr.exceptions import QError as Error
+from canflood.hlpr.plot import Plotr, view
+from .modcom import Model
 import scipy
 
 class RiskModel(Plotr, Model): #common methods for risk1 and risk2

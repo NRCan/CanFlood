@@ -34,7 +34,7 @@ def crs():
 
 @pytest.mark.parametrize('dialogClass',[DikesDialog], indirect=True)
 #@pytest.mark.parametrize('cf_fp',[os.path.join(tutorial_data_dir, 'baseModel', 'CanFlood_tut8.txt')])
-def test_misc_rfda_01_init(session):
+def test_misc_dikes_01_init(session):
     """basic init"""
     dial = session.Dialog
     

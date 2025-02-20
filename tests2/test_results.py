@@ -17,7 +17,7 @@ from pandas.testing import assert_frame_equal
 from pytest import fail
 from pytest_qgis.utils import clean_qgis_layer
 
-from results.dialog import ResultsDialog
+from canflood.results.dialog import ResultsDialog
 import pandas as pd
 import pytest, os, shutil
 

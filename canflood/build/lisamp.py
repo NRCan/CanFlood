@@ -28,10 +28,10 @@ from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProj
 #==============================================================================
 # custom imports
 #==============================================================================
-from hlpr.exceptions import QError as Error
+from canflood.hlpr.exceptions import QError as Error
 
-from hlpr.Q import view, Qcoms, vlay_get_fdf, vlay_get_fdata, vlay_new_df
-from hlpr.plot import Plotr
+from canflood.hlpr.Q import view, Qcoms, vlay_get_fdf, vlay_get_fdata, vlay_new_df
+from canflood.hlpr.plot import Plotr
 #==============================================================================
 # classes-------------
 #==============================================================================

@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 import numpy as np
 import logging
-from model.riskcom import RiskModel
+from canflood.model.riskcom import RiskModel
 
 # Test cases for parameterization
 test_cases = {

@@ -19,14 +19,14 @@ import pandas as pd
 
 from dialogs.wfDialComs import DialWF, run_set, WF_handler
 from wFlow.scripts import WorkFlow
-from hlpr.plug import QTableWidgetItem
+from canflood.hlpr.plug import QTableWidgetItem
 
 from PyQt5.QtTest import QTest 
 from PyQt5.QtCore import Qt
 #===============================================================================
 # custom imports
 #===============================================================================
-from model.modcom import Model
+from canflood.model.modcom import Model
 #===============================================================================
 # dialog testers---------
 #===============================================================================
@@ -34,7 +34,7 @@ from model.modcom import Model
 #===============================================================================
 # Sensitivity Dialog
 #===============================================================================
-from sensi.dialog import SensiDialog
+from canflood.sensi.dialog import SensiDialog
 
 class SensiDialogTester(SensiDialog):
     def connect_slots(self, ):        
@@ -43,7 +43,7 @@ class SensiDialogTester(SensiDialog):
 #===============================================================================
 # build
 #===============================================================================
-from build.dialog import BuildDialog
+from canflood.build.dialog import BuildDialog
 class BuildDialogTester(BuildDialog):
     def connect_slots(self, ):        
         super(BuildDialogTester, self).connect_slots() 
@@ -51,7 +51,7 @@ class BuildDialogTester(BuildDialog):
 #===============================================================================
 # model
 #===============================================================================
-from model.dialog import ModelDialog
+from canflood.model.dialog import ModelDialog
 class ModelDialogTester(ModelDialog):
     def connect_slots(self, ):        
         super(ModelDialogTester, self).connect_slots() 
@@ -59,7 +59,7 @@ class ModelDialogTester(ModelDialog):
 #===============================================================================
 # results        
 #===============================================================================
-from results.dialog import ResultsDialog
+from canflood.results.dialog import ResultsDialog
 class ResultsDialogTester(ResultsDialog):
     def connect_slots(self, ):        
         super(ResultsDialogTester, self).connect_slots() 

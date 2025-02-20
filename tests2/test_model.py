@@ -19,7 +19,7 @@ from PyQt5.QtTest import QTest
 from PyQt5.Qt import Qt
 from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
 
-from model.dialog import ModelDialog
+from canflood.model.dialog import ModelDialog
 
 
 #===============================================================================

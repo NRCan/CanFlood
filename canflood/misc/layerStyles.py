@@ -6,7 +6,7 @@ Created on Nov. 24, 2021
 worker to add styles to the menu
 '''
 import os
-from hlpr.plug import QMenuAction
+from canflood.hlpr.plug import QMenuAction
 
 from qgis.core import  QgsStyle
 

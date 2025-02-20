@@ -20,41 +20,39 @@ import numpy as np
 #===============================================================================
 # cf_simp helpers
 #===============================================================================
-from hlpr.logr import basic_logger
- 
-from hlpr.exceptions import Error
-import hlpr.Q
-import hlpr.plot
+from canflood.hlpr.logr import basic_logger 
+from canflood.hlpr.exceptions import Error
+from canflood.hlpr.Q import Qcoms
+from canflood.hlpr.plot import Plotr
+from canflood.hlpr.Q import view
 
-from hlpr.Q import view
-
-import wFlow.scripts_retrieve
+from tools.wFlow.scripts_retrieve import WF_retriev
 #===============================================================================
 # CF workers
 #===============================================================================
-from build.prepr import Preparor
-from build.rsamp import Rsamp
-from build.lisamp import LikeSampler
-from build.validator import Vali
+from canflood.build.prepr import Preparor
+from canflood.build.rsamp import Rsamp
+from canflood.build.lisamp import LikeSampler
+from canflood.build.validator import Vali
 
-from model.risk1 import Risk1
-from model.risk2 import Risk2
-from model.dmg2 import Dmg2
+from canflood.model.risk1 import Risk1
+from canflood.model.risk2 import Risk2
+from canflood.model.dmg2 import Dmg2
 
-from results.djoin import Djoiner
-from results.riskPlot import RiskPlotr
-from results.attribution import Attr
-from results.compare import Cmpr
+from canflood.results.djoin import Djoiner
+from canflood.results.riskPlot import RiskPlotr
+from canflood.results.attribution import Attr
+from canflood.results.compare import Cmpr
 
-from misc.dikes.dcoms import Dcoms
-from misc.dikes.expo import Dexpo
-from misc.dikes.vuln import Dvuln
-from misc.dikes.rjoin import DikeJoiner
+from canflood.misc.dikes.dcoms import Dcoms
+from canflood.misc.dikes.expo import Dexpo
+from canflood.misc.dikes.vuln import Dvuln
+from canflood.misc.dikes.rjoin import DikeJoiner
 #===============================================================================
 # methods---------
 #===============================================================================
 
-class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session 
+class Session(Qcoms, Plotr, Dcoms): #handle one test session 
     
     #===========================================================================
     # #qgis attributes
@@ -447,7 +445,7 @@ class Session(hlpr.Q.Qcoms, hlpr.plot.Plotr, Dcoms): #handle one test session
         return d
             
 
-class WorkFlow(wFlow.scripts_retrieve.WF_retriev, Session): #worker with methods to build a CF workflow from
+class WorkFlow(WF_retriev, Session): #worker with methods to build a CF workflow from
     """
     #===========================================================================
     # INSTRUCTIONS

@@ -24,13 +24,13 @@ from PyQt5.QtCore import QSettings
 #==============================================================================
 
 
-from hlpr.exceptions import QError as Error
-from hlpr.basic import force_open_dir, view, ComWrkr
+from canflood.hlpr.exceptions import QError as Error
+from canflood.hlpr.basic import force_open_dir, view, ComWrkr
 
-#from hlpr.Q import *
+#from canflood.hlpr.Q import *
  
 
-from hlpr.plug import QMenuAction
+from canflood.hlpr.plug import QMenuAction
 
 
 class WebConnectAction(QMenuAction):

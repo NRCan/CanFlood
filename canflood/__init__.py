@@ -37,9 +37,11 @@ del hard_dependencies, dependency, missing_dependencies
 #===============================================================================
 # add module directory to environemnt
 #===============================================================================
-import os, sys
-file_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(file_dir)
+#===============================================================================
+# import os, sys
+# file_dir = os.path.dirname(os.path.abspath(__file__))
+# sys.path.append(file_dir)
+#===============================================================================
 
 
 

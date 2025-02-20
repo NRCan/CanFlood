@@ -18,41 +18,53 @@ import pytest, os, shutil
 from PyQt5.Qt import Qt
 from PyQt5.QtTest import QTest
 from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
-from build.dialog import BuildDialog
+from canflood.build.dialog import BuildDialog
 from matplotlib import pyplot as plt
-from model.dialog import ModelDialog
-from model.modcom import assert_rttl_valid
+from canflood.model.dialog import ModelDialog
+from canflood.model.modcom import assert_rttl_valid
 from pandas.testing import assert_frame_equal
 from qgis.core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsProject, QgsReport
-from results.dialog import ResultsDialog
+from canflood.results.dialog import ResultsDialog
 
 from tests2 import test_results
 
-from hlpr.basic import view
+from canflood.hlpr.basic import view
 
-from ..conftest import _build_dialog_validate_handler
+from ..conftest import _build_dialog_validate_handler, base_dir
 
 
+#===============================================================================
+# params------
+#===============================================================================
+data_dir = os.path.join(base_dir, r'tutorials\2')
+
+#===============================================================================
+# helpers------
+#===============================================================================
 def extract_between_char(s, char='_'):
     start = s.find(char) + 1
     end = s.find(char, start)
     return s[start:end]
 
+#===============================================================================
+# fixtures------
+#===============================================================================
 @pytest.fixture(scope='module')
 def crs():
     return QgsCoordinateReferenceSystem('EPSG:3005')
 
 
-@pytest.fixture(scope='module')
-def data_dir(base_dir):
-    return os.path.join(base_dir, r'tutorials\2')
+
+#===============================================================================
+# tests------
+#===============================================================================
 
 
 
 
 @pytest.mark.parametrize('absolute_fp',[True, False])
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
-def test_tutorial_02a(session, data_dir, true_dir, tmp_path, write, absolute_fp):
+def test_tutorial_02a(session, true_dir, tmp_path, write, absolute_fp):
     """simulate tutorial 2A
     https://canflood.readthedocs.io/en/latest/06_tutorials.html#tutorial-2a-risk-l2-with-simple-events
     

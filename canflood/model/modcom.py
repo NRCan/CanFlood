@@ -24,9 +24,8 @@ import numpy as np
 
 mod_logger = logging.getLogger('common') #get the root logger
 
-from hlpr.exceptions import QError as Error
-    
-from hlpr.basic import ComWrkr, view
+from canflood.hlpr.exceptions import QError as Error    
+from canflood.hlpr.basic import ComWrkr, view
 
 
 #==============================================================================
