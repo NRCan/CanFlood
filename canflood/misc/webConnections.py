@@ -197,10 +197,8 @@ class WebConnect(ComWrkr):
 
         settings.sync()  
         
-    def addAll(self, #add all connections
-               qini_fp = None, #users settings path
-               newCons_d = None, #connections to load
-               ): 
+    def addAll(self, qini_fp = None,newCons_d = None): 
+        """add all the connections to the users ini file"""
         #=======================================================================
         # defaults
         #=======================================================================
@@ -248,7 +246,8 @@ class WebConnect(ComWrkr):
         # check result
         #=======================================================================
         result, chk_d = self.checkSettingsGroup(newCons_d, logger=log)
-        assert result, 'failed to set some values \n    %s'%chk_d
+        if not result:
+            log.warning('failed to set some values \n    %s'%chk_d)
                 
                 
         
@@ -260,7 +259,7 @@ class WebConnect(ComWrkr):
                            cons_d,
                            qini_fp = None,
                            logger=None,
-                           parent_group = 'qgis',
+                           #parent_group = 'qgis',
                            ):
         """there's probably some builtin functions for this"""
         
