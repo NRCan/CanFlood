@@ -139,13 +139,15 @@ class Preparor(Model, Qcoms):
                     vlay,
                     felv='datum', #should probabl just leave this if none
                     cid=None, tag=None,
-                    logger=None, write=True
+                    logger=None, write=True, absolute_fp=None,
                     ):
         
         #=======================================================================
         # defaults
         #=======================================================================
         if logger is None: logger=self.logger
+        if absolute_fp is None: absolute_fp=self.absolute_fp
+        assert isinstance(absolute_fp, bool)
         log=logger.getChild('finv_to_csv')
         
         if cid is None: cid=self.cid
@@ -245,23 +247,42 @@ class Preparor(Model, Qcoms):
         df.to_csv(out_fp, index=True)  
         
         log.info("inventory csv written to file:\n    %s"%out_fp)
-        assert os.path.exists(out_fp)
+        assert os.path.exists(out_fp), f'nothing written'
         self.feedback.upd_prog(80)
         #=======================================================================
         # write to control file
-        #=======================================================================
+        #=======================================================================\
+        
+        if not absolute_fp:
+            try:
+                out_fp = os.path.relpath(out_fp, start=os.getcwd())
+            except Exception as e:
+                raise ValueError(f'failed to relpath w/ \n    {e}')
+            
+        log.debug(f'upd_cf_finv w/ absolute_fp={absolute_fp} \n    {out_fp}')
+            
         self.upd_cf_finv(out_fp)
         
         self.feedback.upd_prog(99)
         
-        
+        log.debug(f'finished w/ {df.shape}')
         return df
     
     def upd_cf_finv(self, out_fp):
+        """update the control file with the finv filepath
+        
+        Parameters
+        ----------
+        out_fp: str
+            filepath to finv (should already be set for absolute_fp)
+            
+        """
+        
         
         assert os.path.exists(self.cf_fp), 'bad cf_fp: %s'%self.cf_fp
-        if not self.absolute_fp: 
-            out_fp = os.path.relpath(out_fp, start=os.getcwd())
+
+            
+            
         self.set_cf_pars(
             {
             'dmg_fps':(

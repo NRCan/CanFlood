@@ -809,7 +809,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
     def store_finv(self): #aoi slice and convert the finv vector to csv file
         log = self.logger.getChild('store_finv')
-        log.debug('start')
+        log.debug('\n\nstart\n======================================\n')
         #=======================================================================
         # retrieve data
         #=======================================================================
@@ -833,6 +833,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
         wrkr = Preparor(**kwargs) 
         
+        log.debug(f'finv_to_csv w/ \n    {kwargs}')
         _ = wrkr.finv_to_csv(self.finv_vlay, felv=self.comboBox_SSelv.currentText(),
                                    logger=self.logger)
 
