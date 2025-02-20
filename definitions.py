@@ -15,3 +15,5 @@ Created on Jun. 26, 2022
 #user's test data location
 #although this is included in the repo tracking, leaving this here for consistency and future changes
 test_data_dir = r'l:\09_REPOS\04_TOOLS\CanFlood\tests2\data'
+
+tutorial_data_dir = r'l:\09_REPOS\04_TOOLS\CanFlood\tutorials'

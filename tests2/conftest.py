@@ -26,10 +26,17 @@ import processing
 
 
 import pytest_qgis #install check (needed by fixtures)
- 
- 
 
-from wFlow.scripts import Session
+from tools.wFlow.scripts import Session
+
+from definitions import test_data_dir as test_dir
+
+#===============================================================================
+# test-wide params
+#===============================================================================
+#project repo source location ('L:\\09_REPOS\\04_TOOLS\\CanFlood')
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 
 def excepthook(exc_type, exc_value, exc_tb):
     tb = "".join(traceback.format_exception(exc_type, exc_value, exc_tb))
@@ -109,11 +116,11 @@ def dialogClass(request): #always passing this as an indirect
     return request.param
 
 @pytest.fixture(scope='function')
-def finv_fp(base_dir, request): #always passing this as an indirect
+def finv_fp(request): #always passing this as an indirect
     return os.path.join(base_dir, request.param)
 
 @pytest.fixture(scope='function')
-def cf_fp(base_dir, request):
+def cf_fp(request):
     return os.path.join(base_dir, request.param)
  
 
@@ -174,7 +181,7 @@ def test_name(request):
 
 
 @pytest.fixture(scope='function')
-def true_dir(write, tmp_path, test_dir):
+def true_dir(write, tmp_path):
     true_dir = os.path.join(test_dir, os.path.basename(tmp_path))
     if write:
         if os.path.exists(true_dir):
@@ -209,8 +216,8 @@ def write():
 #===============================================================================
 # logger
 #===============================================================================
-from hlpr.plug import plugLogger
-from hlpr.logr import basic_logger
+from canflood.hlpr.plug import plugLogger
+from canflood.hlpr.logr import basic_logger
 mod_logger = basic_logger()
 
 class devPlugLogger(plugLogger):
@@ -258,15 +265,19 @@ def logger():
     return mod_logger
  
  
-@pytest.fixture(scope='session')
-def base_dir():
-    from definitions import base_dir
- 
-    return base_dir
+#===============================================================================
+# @pytest.fixture(scope='session')
+# def base_dir():
+#     from definitions import base_dir
+#  
+#     return base_dir
+#===============================================================================
 
-@pytest.fixture(scope='session')
-def test_dir(base_dir):
-    return os.path.join(base_dir, r'tests2\data')
+#===============================================================================
+# @pytest.fixture(scope='session')
+# def test_dir(base_dir):
+#     return os.path.join(base_dir, r'tests2\data')
+#===============================================================================
     
 
 
