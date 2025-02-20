@@ -26,9 +26,9 @@ import numpy as np
 #standalone runs
 mod_logger = logging.getLogger('risk1') #get the root logger
 
-from hlpr.exceptions import QError as Error
+from canflood.hlpr.exceptions import QError as Error
  
-from model.riskcom import RiskModel
+from .riskcom import RiskModel
 
 
 

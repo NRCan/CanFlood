@@ -11,7 +11,7 @@ import os, datetime
 from qgis.core import QgsCoordinateReferenceSystem
 import pandas as pd
 
-from hlpr.logr import basic_logger
+from canflood.hlpr.logr import basic_logger
 mod_logger = basic_logger() 
 
 

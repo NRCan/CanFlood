@@ -26,10 +26,17 @@ import processing
 
 
 import pytest_qgis #install check (needed by fixtures)
- 
- 
 
-from wFlow.scripts import Session
+from tools.wFlow.scripts import Session
+
+from definitions import test_data_dir as test_dir
+
+#===============================================================================
+# test-wide params
+#===============================================================================
+#project repo source location ('L:\\09_REPOS\\04_TOOLS\\CanFlood')
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 
 def excepthook(exc_type, exc_value, exc_tb):
     tb = "".join(traceback.format_exception(exc_type, exc_value, exc_tb))
@@ -59,9 +66,7 @@ class Session_pytest(Session):
  
         super().__init__(crsid = crs.authid(), logger=logger, 
                          #feedbac=MyFeedBackQ(logger=logger),
-                         **kwargs)  
-        
-        
+                         **kwargs)        
  
         self.logger.info('finished Session_pytest.__init__')
         
@@ -101,16 +106,21 @@ class Session_pytest(Session):
         #sys.exit() #wrap
         print('exiting DialTester')
         
+
+#===============================================================================
+# FIXTURES.FUNCTIONS-------
+#===============================================================================
+        
 @pytest.fixture(scope='function')
 def dialogClass(request): #always passing this as an indirect
     return request.param
 
 @pytest.fixture(scope='function')
-def finv_fp(base_dir, request): #always passing this as an indirect
+def finv_fp(request): #always passing this as an indirect
     return os.path.join(base_dir, request.param)
 
 @pytest.fixture(scope='function')
-def cf_fp(base_dir, request):
+def cf_fp(request):
     return os.path.join(base_dir, request.param)
  
 
@@ -128,6 +138,7 @@ def session(tmp_path,
     """TODO: fix logger"""
  
     np.random.seed(100)
+    print(f'tmp_path\n    {tmp_path}')
     
     #configure output
     out_dir=tmp_path
@@ -157,6 +168,41 @@ def session(tmp_path,
  
         yield ses
 
+
+
+
+@pytest.fixture(scope='function')
+def out_dir(tmp_path):
+    return tmp_path
+
+@pytest.fixture(scope='function')
+def test_name(request):
+    return request.node.name.replace('[','_').replace(']', '_')
+
+
+@pytest.fixture(scope='function')
+def true_dir(write, tmp_path):
+    true_dir = os.path.join(test_dir, os.path.basename(tmp_path))
+    if write:
+        if os.path.exists(true_dir):
+            try: 
+                shutil.rmtree(true_dir)
+                os.makedirs(true_dir) #add back an empty folder
+                #os.makedirs(os.path.join(true_dir, 'working')) #and the working folder
+            except Exception as e:
+                print('failed to cleanup the true_dir: %s w/ \n    %s'%(true_dir, e))
+        
+        """no... this is controlled with the out_dir on the session        
+        #not found.. create a fresh one
+        if not os.path.exists(true_dir):
+            os.makedirs(true_dir)"""
+
+    #assert os.path.exists(true_dir)
+    return true_dir
+
+#===============================================================================
+# FIXTURES.SESSIOn----------
+#===============================================================================
 @pytest.fixture(scope='session')
 def write():
  
@@ -166,26 +212,12 @@ def write():
     if write:
         print('WARNING!!! runnig in write mode')
     return write
-
-#===============================================================================
-# function.fixtures-------
-#===============================================================================
-@pytest.fixture(scope='function')
-def out_dir(tmp_path):
-    return tmp_path
-
-@pytest.fixture(scope='function')
-def test_name(request):
-    return request.node.name.replace('[','_').replace(']', '_')
-#===============================================================================
-# session.fixtures----------
-#===============================================================================
  
 #===============================================================================
 # logger
 #===============================================================================
-from hlpr.plug import plugLogger
-from hlpr.logr import basic_logger
+from canflood.hlpr.plug import plugLogger
+from canflood.hlpr.logr import basic_logger
 mod_logger = basic_logger()
 
 class devPlugLogger(plugLogger):
@@ -232,41 +264,25 @@ def logger():
     """simple backend loggers"""
     return mod_logger
  
-#===============================================================================
-# directories----------
-#===============================================================================
-@pytest.fixture(scope='session')
-def base_dir():
-    from definitions import base_dir
  
-    return base_dir
+#===============================================================================
+# @pytest.fixture(scope='session')
+# def base_dir():
+#     from definitions import base_dir
+#  
+#     return base_dir
+#===============================================================================
 
-@pytest.fixture(scope='session')
-def test_dir(base_dir):
-    return os.path.join(base_dir, r'tests2\data')
+#===============================================================================
+# @pytest.fixture(scope='session')
+# def test_dir(base_dir):
+#     return os.path.join(base_dir, r'tests2\data')
+#===============================================================================
     
 
 
 
-@pytest.fixture
-def true_dir(write, tmp_path, test_dir):
-    true_dir = os.path.join(test_dir, os.path.basename(tmp_path))
-    if write:
-        if os.path.exists(true_dir):
-            try: 
-                shutil.rmtree(true_dir)
-                os.makedirs(true_dir) #add back an empty folder
-                #os.makedirs(os.path.join(true_dir, 'working')) #and the working folder
-            except Exception as e:
-                print('failed to cleanup the true_dir: %s w/ \n    %s'%(true_dir, e))
-        
-        """no... this is controlled with the out_dir on the session        
-        #not found.. create a fresh one
-        if not os.path.exists(true_dir):
-            os.makedirs(true_dir)"""
 
-    #assert os.path.exists(true_dir)
-    return true_dir
     
   
 #===============================================================================
@@ -280,7 +296,7 @@ def _build_dialog_validate_handler(dial):
     but in a test environment, we want to raise these
     """
     QTest.mouseClick(dial.pushButton_Validate, Qt.LeftButton)
-# Loop through errors generated by Model.cf_chk_pars() and raise them
+    # Loop through errors generated by Model.cf_chk_pars() and raise them
     for vtag, error_l in dial.validation_result_d.items():
         for error in error_l:
             if isinstance(error, Exception):

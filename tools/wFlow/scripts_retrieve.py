@@ -12,7 +12,7 @@ import inspect, logging, os,  datetime, shutil, gc, weakref
 import pandas as pd
 import numpy as np
 
-from hlpr.Q import view
+from canflood.hlpr.Q import view
 
 
 class WF_retriev(object):

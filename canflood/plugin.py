@@ -10,10 +10,10 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QMenu
 
 # Initialize Qt resources from file resources.py
-from .resources import *
+#from .resources import *
 
 
-import weakref
+#import weakref
 import os.path
 from qgis.core import Qgis, QgsMessageLog, QgsExpression
 
@@ -26,21 +26,19 @@ from qgis.core import Qgis, QgsMessageLog, QgsExpression
 """
 relative references seem to work in Qgis.. but IDE doesnt recognize
 """
-from hlpr.plug import plugLogger
+from .hlpr.plug import plugLogger
+from .hlpr.exceptions import QError as Error
 
-from hlpr.exceptions import QError as Error
 
+from .build.dialog import BuildDialog
+from .model.dialog import ModelDialog
+from .results.dialog import ResultsDialog
+from .sensi.dialog import SensiDialog
 
-from build.dialog import BuildDialog
-from model.dialog import ModelDialog
-from results.dialog import ResultsDialog
-from sensi.dialog import SensiDialog
-
-from misc.rfda.dialog import RfdaDialog
-from misc.dikes.dialog import DikesDialog
-
-from misc.webConnections import WebConnectAction
-from misc.layerStyles import StylesAction
+from .misc.rfda.dialog import RfdaDialog
+from .misc.dikes.dialog import DikesDialog
+from .misc.webConnections import WebConnectAction
+from. misc.layerStyles import StylesAction
 
 
 
@@ -189,7 +187,7 @@ class CanFlood(object):
         #=======================================================================
         # unload expression functions
         #=======================================================================
-        from misc.expressionFunctions import all_funcs_l
+        from canflood.misc.expressionFunctions import all_funcs_l
         for func in all_funcs_l:
             QgsExpression.unregisterFunction(func.name())
             

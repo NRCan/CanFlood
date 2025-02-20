@@ -14,7 +14,7 @@ import configparser, os, inspect, logging
 #==============================================================================
 #standalone runs
 if __name__ =="__main__": 
-    from hlpr.logr import basic_logger
+    from canflood.hlpr.logr import basic_logger
     mod_logger = basic_logger()   
 
     
@@ -22,11 +22,11 @@ if __name__ =="__main__":
 else:
     mod_logger = logging.getLogger('common') #get the root logger
 
-from hlpr.exceptions import QError as Error
+from canflood.hlpr.exceptions import QError as Error
     
-from hlpr.basic import *
+from canflood.hlpr.basic import *
 
-from model.modcom import Model
+from canflood.model.modcom import Model
 
 
 class ForceWorker(Model):

@@ -14,7 +14,7 @@ see tutorials for integration tests
 
 '''
 
-import pytest, os, shutil
+import pytest, os, shutil, configparser
 
 import pandas as pd
 
@@ -26,12 +26,12 @@ from pytest_qgis.utils import clean_qgis_layer
 from qgis.core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsProject
 from PyQt5.QtTest import QTest
 from PyQt5.Qt import Qt
-from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
+from PyQt5.QtWidgets import QTableWidgetItem
 
-from build.dialog import BuildDialog
+from canflood.build.dialog import BuildDialog
 
 
-from .conftest import _build_dialog_validate_handler
+from .conftest import _build_dialog_validate_handler, base_dir
 
 #===============================================================================
 # fixtures-------
@@ -86,8 +86,11 @@ def test_01_build_scenario(session):
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
 @pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.geojson'], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_01_build_scenario_BuildDi0\CanFlood_test_01.txt']) #from test_01
-def test_02_build_inv(session, base_dir, finv_vlay, cf_fp):
-    """on the Inventory t ab, use the 'Inventory Compmiler'"""
+def test_02_build_inv(session, finv_vlay, cf_fp):
+    """on the Inventory t ab, use the 'Inventory Compmiler
+    
+    TODO: it looks like the 'base_dir' is being used instead of the 'test_dir'
+    '"""
     dial = session.Dialog
     
     #===========================================================================
@@ -115,7 +118,7 @@ def test_02_build_inv(session, base_dir, finv_vlay, cf_fp):
     #retrieve the filepath from the control file
     fp = dial.get_cf_par(cf_fp, sectName='dmg_fps', varName='finv')
     assert not fp is None, f'no finv specified'
-    assert os.path.exists(fp), fp
+    assert os.path.exists(fp), f'failed to write control file\n    {fp}'
     
     df = pd.read_csv(fp)
     assert len(df)==finv_vlay.dataProvider().featureCount()
@@ -125,7 +128,7 @@ def test_02_build_inv(session, base_dir, finv_vlay, cf_fp):
 
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_02_build_inv_tests2__data0\CanFlood_test_01.txt']) #from test_02
-def test_03_build_inv_curves(session, base_dir, cf_fp):
+def test_03_build_inv_curves(session, cf_fp):
 
     dial = session.Dialog
  
@@ -167,7 +170,7 @@ def test_03_build_inv_curves(session, base_dir, cf_fp):
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_03_build_inv_curves_tests0\CanFlood_test_01.txt']) #from test_03
 @pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.geojson'], indirect=True)
 @pytest.mark.parametrize('rast_dir',[r'tutorials\2\haz_rast'])
-def test_04_build_hsamp(session, base_dir, cf_fp, rast_dir, finv_vlay, true_dir):
+def test_04_build_hsamp(session,  cf_fp, rast_dir, finv_vlay, true_dir):
     dial = session.Dialog
     
     #===========================================================================
@@ -226,7 +229,7 @@ def test_04_build_hsamp(session, base_dir, cf_fp, rast_dir, finv_vlay, true_dir)
  
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_04_build_hsamp_tutorials_0\CanFlood_test_01.txt']) #from test_04
-def test_05_build_evals(session, base_dir, cf_fp, true_dir):
+def test_05_build_evals(session,  cf_fp, true_dir):
     dial = session.Dialog
     
     #===========================================================================
@@ -295,9 +298,10 @@ def test_05_build_evals(session, base_dir, cf_fp, true_dir):
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_05_build_evals_tests2__da0\CanFlood_test_01.txt']) #from test_05
 @pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.geojson'], indirect=True)
 @pytest.mark.parametrize('dtm_fp',[r'tutorials\2\dtm_tut2.tif'])
-def test_06_build_dtm(session, base_dir, cf_fp, true_dir, finv_vlay, dtm_fp):
+def test_06_build_dtm(session,  cf_fp, true_dir, finv_vlay, dtm_fp):
     dial = session.Dialog
     
+
     #===========================================================================
     # setup
     #===========================================================================
@@ -352,9 +356,10 @@ def test_06_build_dtm(session, base_dir, cf_fp, true_dir, finv_vlay, dtm_fp):
 @pytest.mark.dev
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_06_build_dtm_tutorials__20\CanFlood_test_01.txt']) #from test_06
-def test_07_build_valid(session, base_dir, cf_fp):
+def test_07_build_valid(session,  cf_fp):
     dial = session.Dialog
-    
+    """NO... this is set with the radio button"""
+    #assert not dial.absolute_fp
     #===========================================================================
     # setup
     #===========================================================================
@@ -388,6 +393,9 @@ def _build_setup(base_dir, cf_fp, dial, out_dir, testName='testName'):
     #set the relative filepath flag
     dial.radioButton_SS_fpRel.setChecked(True)
     
+    #===========================================================================
+    # copy over files
+    #===========================================================================
     #copy over the control file
     """need to copy everything
     
@@ -396,22 +404,54 @@ def _build_setup(base_dir, cf_fp, dial, out_dir, testName='testName'):
     then build the cf_fp = os.path.join(dir, cf_+fp)
     """
     assert os.path.exists(os.path.join(base_dir, cf_fp))
-    par_dir = os.path.join(base_dir, cf_fp)
-    directory_path = os.path.dirname(par_dir)    
-    cf_fp = shutil.copy2(os.path.join(base_dir, cf_fp), os.path.join(out_dir, os.path.basename(cf_fp)))
+    cf_fp = os.path.join(base_dir, cf_fp)
+    cf_fn = os.path.basename(cf_fp)
+    #directory_path = os.path.dirname(par_dir)
     
-    for item in os.listdir(directory_path):
-        source_item = os.path.join(directory_path, item)
-        destination_item = os.path.join(out_dir, item)
-        if os.path.isfile(source_item):
-            shutil.copy2(source_item, destination_item)    
-    #set the working directory
+    #copy control file
+    cf_fp_new =os.path.join(out_dir, cf_fn)    
+    _ = shutil.copy2(cf_fp, cf_fp_new)
+    
+    
+    #extract datafilepaths from parameter file
+    params_lib = _extract_fps_parameters(cf_fp)
+    
+    new_fp_d = dict()
+    for _, d in params_lib.items():
+        for k, fp1 in d.items():
+            try:
+                ofp = os.path.join(out_dir, fp1)
+                os.makedirs(os.path.dirname(ofp), exist_ok=True)
+                new_fp_d[k] = shutil.copy2(os.path.join(base_dir, fp1), ofp)
+            except Exception as e:
+                raise IOError(f'failed to copy datafile \n    {fp1}\n    {cf_fp}\n    {e}')
+            
+    
+    print(f'copied over {len(new_fp_d)} data files to \n    {out_dir}')
+    #===========================================================================
+    # #set the working directory
+    #===========================================================================
     dial.lineEdit_wdir.setText(str(out_dir))
     dial.linEdit_ScenTag.setText(testName)
     
 
     
     #set the control file
-    dial.lineEdit_cf_fp.setText(cf_fp)
+    dial.lineEdit_cf_fp.setText(cf_fp_new)
     
-    return cf_fp
+    return cf_fp_new
+
+
+# Function to load the parameter file and extract _fps sections
+def _extract_fps_parameters(file_path):
+    config = configparser.ConfigParser(allow_no_value=True)  # `allow_no_value=True` allows empty values
+    config.read(file_path)
+    
+    fps_data = {}
+    
+    # Iterate over all sections
+    for section in config.sections():
+        if section.endswith("_fps"):
+            fps_data[section] = {key: value for key, value in config.items(section) if not value.startswith('#')}
+    
+    return fps_data

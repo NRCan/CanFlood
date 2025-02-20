@@ -31,14 +31,14 @@ import processing
 # custom imports
 #==============================================================================
 
-from hlpr.exceptions import QError as Error
+from canflood.hlpr.exceptions import QError as Error
     
 
 
-from hlpr.Q import (
+from canflood.hlpr.Q import (
     Qcoms,vlay_get_fdf, vlay_get_fdata, view, RasterCalc,assert_rlay_resolution_match,
     )
-from hlpr.plot import Plotr
+from canflood.hlpr.plot import Plotr
 
 #==============================================================================
 # functions-------------------
@@ -389,10 +389,12 @@ class Rsamp(Plotr, Qcoms):
         return res_vlay
     
 
-    def runPrep(self, #apply raster preparation handels to a set of rasters
+    def runPrep(self, #
                 rlayRaw_l,
                 **kwargs
                 ):
+        """ apply raster preparation handels to a set of rasters. wrapper for self.prep()"""
+        
         
         #=======================================================================
         # do the prep
@@ -406,7 +408,10 @@ class Rsamp(Plotr, Qcoms):
             self.feedback.upd_prog(70/len(rlayRaw_l), method='append')
             self.logger.debug('finished on %s'%rlay.name())
 
-            
+        
+        #=======================================================================
+        # close
+        #=======================================================================
         self.feedback.setProgress(90)
         
         self.logger.debug('finished all %i'%len(res_l))
@@ -414,8 +419,8 @@ class Rsamp(Plotr, Qcoms):
         return res_l
             
         
-    def prep(self, #prepare a raster for sampling
-             rlayRaw, #set of raw raster to apply prep handles to
+    def prep(self, #
+             rlayRaw,  
              allow_download=False,
              aoi_vlay=None,
              
@@ -428,6 +433,32 @@ class Rsamp(Plotr, Qcoms):
              
              ):
         """
+        Prepare a raster for sampling.
+    
+        Parameters
+        ----------
+        rlayRaw : QgsRasterLayer
+            Raw raster to prepare.
+        
+        clip_rlays : bool, default=True
+            Whether to clip the raster with a polygon.
+        
+        allow_download : bool, default=True
+            Whether to check the provider type.
+        
+        allow_rproj : bool, default=False
+            If CRS mismatch occurs, allow warping and reprojection.
+            
+        scaleFactor: float, default=1.0
+            value to multiply by
+    
+        Returns
+        -------
+        None
+            
+        
+        
+        
         #=======================================================================
         # mstore
         #=======================================================================
@@ -453,7 +484,8 @@ class Rsamp(Plotr, Qcoms):
         # precheck
         #=======================================================================
         #check the aoi
-        if clip_rlays: assert isinstance(aoi_vlay, QgsVectorLayer)
+        if clip_rlays: 
+            assert isinstance(aoi_vlay, QgsVectorLayer)
         if not aoi_vlay is None:
             self.check_aoi(aoi_vlay)
         
@@ -479,6 +511,7 @@ class Rsamp(Plotr, Qcoms):
                 newLayerName='%s_gdal' % rlayRaw.name(),
                 out_dir =  os.environ['TEMP'], #will write to the working directory at the end
                 logger=log)
+            
             #load this file
             rlayDp = self.load_rlay(ofp, logger=log)
             #check
@@ -505,12 +538,9 @@ class Rsamp(Plotr, Qcoms):
             #save a local copy?
             newName = '%s_%s' % (rlayDp.name(), self.qproj.crs().authid()[5:])
             
-            """just write at the end
-            if allow_download:
-                output = os.path.join(self.out_dir, '%s.tif' % newName)
-            else:
-                output = 'TEMPORARY_OUTPUT'"""
+ 
             output = 'TEMPORARY_OUTPUT'
+            
             #change the projection
             rlayProj = self.warpreproject(rlayDp, crsOut=self.qproj.crs(), 
                 output=output, layname=newName)
@@ -575,7 +605,7 @@ class Rsamp(Plotr, Qcoms):
             """control canvas loading in the plugin"""
             
         else:
-            log.warning('layer \'%s\' not written to file!'%resLay.name())
+            log.warning('no operations triggerd')
             resLay=resLay1
             
 
@@ -1704,6 +1734,8 @@ class Rsamp(Plotr, Qcoms):
 
     def update_cf(self, cf_fp): #configured control file updater
         """make sure you write the file first"""
+        if not self.absolute_fp: 
+            self.out_fp = os.path.relpath(self.out_fp, start=os.getcwd())
         return self.set_cf_pars(
             {
             'dmg_fps':(
@@ -1720,6 +1752,8 @@ class Rsamp(Plotr, Qcoms):
         
     def upd_cf_dtm(self, cf_fp=None):
         if cf_fp is None: cf_fp=self.cf_fp
+        if not self.absolute_fp: 
+            self.out_fp = os.path.relpath(self.out_fp, start=os.getcwd())
         return self.set_cf_pars(
             {
             'dmg_fps':(

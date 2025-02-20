@@ -17,7 +17,7 @@ from PyQt5.QtWidgets import QFileSystemModel, QListView, QHeaderView
 from PyQt5.QtCore import QStringListModel, QAbstractTableModel
 from PyQt5 import QtGui
 
-import hlpr.plug
+from canflood.hlpr.plug import QprojPlug
 
 #===============================================================================
 # load UI file
@@ -28,7 +28,7 @@ assert os.path.exists(ui_fp), 'failed to find the ui file: \n    %s'%ui_fp
 FORM_CLASS, _ = uic.loadUiType(ui_fp)
 
 
-class RPrepDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
+class RPrepDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
     inherit_atts =  [] #for passing from the main
     def __init__(self, iface, parent=None, **kwargs):
         super(RPrepDialog, self).__init__(parent) #only calls QtWidgets.QDialog

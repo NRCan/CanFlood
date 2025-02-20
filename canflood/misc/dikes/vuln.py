@@ -27,14 +27,14 @@ import processing
 #==============================================================================
 # custom imports
 #==============================================================================
-from hlpr.exceptions import QError as Error
+from canflood.hlpr.exceptions import QError as Error
     
 
 #from .dcoms import Dcoms
 from .dPlot import DPlotr
-from hlpr.basic import ComWrkr, view
+from canflood.hlpr.basic import ComWrkr, view
     
-#from hlpr.basic import get_valid_filename
+#from canflood.hlpr.basic import get_valid_filename
 
 #==============================================================================
 # functions-------------------
@@ -433,7 +433,7 @@ class Dvuln(DPlotr):
             
 
     
-from model.dmg2 import DFunc
+from canflood.model.dmg2 import DFunc
 
 class FragFunc(DFunc): #simple wrapper around DFunc
     def __init__(self, 

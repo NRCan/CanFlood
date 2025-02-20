@@ -32,7 +32,7 @@ import traceback
 #==============================================================================
 mod_logger = logging.getLogger('basic') #get the root logger
 
-from hlpr.exceptions import QError as Error
+from .exceptions import QError as Error
 
 #==============================================================================
 # functions-------------
@@ -301,14 +301,19 @@ class ComWrkr(object): #common methods for all classes
         
         return
     
-    def _get_from_cpar(self, #special parameter extraction recognizing object's t ype
+    def _get_from_cpar(self, #
                       cpars,
                       sectName,
                       varName,
                       logger = None):
         
-        """each parameter should exist on teh class instance.
-                we use this to set the type"""
+        """special parameter extraction recognizing object's type
+        
+        each parameter should exist on teh class instance.
+                we use this to set the type
+                
+                
+        """
         
         if logger is None: logger=self.logger
         log = logger.getChild('_get_from_cpar')

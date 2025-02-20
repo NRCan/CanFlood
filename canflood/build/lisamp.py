@@ -28,10 +28,10 @@ from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProj
 #==============================================================================
 # custom imports
 #==============================================================================
-from hlpr.exceptions import QError as Error
+from canflood.hlpr.exceptions import QError as Error
 
-from hlpr.Q import view, Qcoms, vlay_get_fdf, vlay_get_fdata, vlay_new_df
-from hlpr.plot import Plotr
+from canflood.hlpr.Q import view, Qcoms, vlay_get_fdf, vlay_get_fdata, vlay_new_df
+from canflood.hlpr.plot import Plotr
 #==============================================================================
 # classes-------------
 #==============================================================================
@@ -596,6 +596,8 @@ class LikeSampler(Plotr, Qcoms):
     
     def update_cf(self, cf_fp=None): #configured control file updater
         if cf_fp is None: cf_fp=self.cf_fp
+        if not self.absolute_fp: 
+            self.out_fp = os.path.relpath(self.out_fp, start=os.getcwd())
         return self.set_cf_pars(
             {'risk_fps':(
                 {'exlikes':self.out_fp}, 

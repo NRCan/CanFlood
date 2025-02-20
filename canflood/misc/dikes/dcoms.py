@@ -26,9 +26,9 @@ import processing
 #==============================================================================
 # custom imports
 #==============================================================================
-from hlpr.exceptions import QError as Error
+from canflood.hlpr.exceptions import QError as Error
     
-from hlpr.basic import ComWrkr, view
+from canflood.hlpr.basic import ComWrkr, view
     
 
  

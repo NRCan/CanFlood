@@ -24,11 +24,11 @@ import numpy as np
 #===============================================================================
 # CanFlood generals
 #===============================================================================
-from hlpr.basic import force_open_dir, view
+from canflood.hlpr.basic import force_open_dir, view
 
-from hlpr.exceptions import Error
+from canflood.hlpr.exceptions import Error
 
-from results.compare import Cmpr
+from canflood.results.compare import Cmpr
 
 def plot_fixr(
         cf_fp_xls=r'C:\LS\03_TOOLS\_jobs\202012_kent\_ins\risk_curve\kent_risk_curves_01.xls',

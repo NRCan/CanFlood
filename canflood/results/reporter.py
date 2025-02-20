@@ -31,12 +31,12 @@ from PyQt5 import QtGui
 #===============================================================================
 # customs
 #===============================================================================
-from hlpr.exceptions import QError as Error
-from hlpr.basic import view
+from canflood.hlpr.exceptions import QError as Error
+from canflood.hlpr.basic import view
  
-from hlpr.Q import Qcoms 
+from canflood.hlpr.Q import Qcoms 
  
-from results.riskPlot import RiskPlotr
+from canflood.results.riskPlot import RiskPlotr
 
 
 #==============================================================================

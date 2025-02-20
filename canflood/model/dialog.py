@@ -22,17 +22,17 @@ from qgis.core import QgsMapLayerProxyModel, QgsVectorLayer
 #==============================================================================
 # custom imports 
 #==============================================================================
-from model.risk1 import Risk1
-from model.risk2 import Risk2
-from model.dmg2 import Dmg2
+from canflood.model.risk1 import Risk1
+from canflood.model.risk2 import Risk2
+from canflood.model.dmg2 import Dmg2
 
 
-import results.djoin
+from canflood.results.djoin import Djoiner
 
 
-import hlpr.plug
-from hlpr.basic import force_open_dir
-from hlpr.exceptions import QError as Error
+from canflood.hlpr.plug import QprojPlug, bind_MapLayerComboBox
+from canflood.hlpr.basic import force_open_dir
+from canflood.hlpr.exceptions import QError as Error
 
 
 #===============================================================================
@@ -43,8 +43,7 @@ assert os.path.exists(ui_fp)
 FORM_CLASS, _ = uic.loadUiType(ui_fp)
 
 
-class ModelDialog(QtWidgets.QDialog, FORM_CLASS,  
-                       hlpr.plug.QprojPlug):
+class ModelDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
     
     icon_fn = 'house_flood.png'
     icon_name = 'Model'
@@ -96,7 +95,7 @@ class ModelDialog(QtWidgets.QDialog, FORM_CLASS,
         # Join Geometry 
         #=======================================================================
 
-        hlpr.plug.bind_MapLayerComboBox(self.comboBox_JGfinv, 
+        bind_MapLayerComboBox(self.comboBox_JGfinv, 
                       layerType=QgsMapLayerProxyModel.VectorLayer, iface=self.iface)
                 
         self.launch_actions['attempt finv'] = lambda: self.comboBox_JGfinv.attempt_selection('finv')
@@ -291,7 +290,7 @@ class ModelDialog(QtWidgets.QDialog, FORM_CLASS,
         res_ttl, res_df = model.run(res_per_asset=self.checkBox_r2rpa.isChecked())
         
         """
-        from hlpr.basic import view
+        from canflood.hlpr.basic import view
         view(res_ttl)
         """
         self.feedback.upd_prog(80)
@@ -381,7 +380,7 @@ class ModelDialog(QtWidgets.QDialog, FORM_CLASS,
         
         #setup
         kwargs = {attn:getattr(self, attn) for attn in ['logger', 'tag', 'cf_fp', 'out_dir', 'feedback', 'init_q_d']}
-        wrkr = results.djoin.Djoiner(**kwargs).setup()
+        wrkr = Djoiner(**kwargs).setup()
         
 
         

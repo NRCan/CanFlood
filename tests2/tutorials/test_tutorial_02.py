@@ -18,59 +18,73 @@ import pytest, os, shutil
 from PyQt5.Qt import Qt
 from PyQt5.QtTest import QTest
 from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
-from build.dialog import BuildDialog
+from canflood.build.dialog import BuildDialog
 from matplotlib import pyplot as plt
-from model.dialog import ModelDialog
-from model.modcom import assert_rttl_valid
+from canflood.model.dialog import ModelDialog
+from canflood.model.modcom import assert_rttl_valid
 from pandas.testing import assert_frame_equal
 from qgis.core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsProject, QgsReport
-from results.dialog import ResultsDialog
+from canflood.results.dialog import ResultsDialog
 
 from tests2 import test_results
 
-from hlpr.basic import view
+from canflood.hlpr.basic import view
 
-from ..conftest import _build_dialog_validate_handler
+from ..conftest import _build_dialog_validate_handler, base_dir
 
 
+#===============================================================================
+# params------
+#===============================================================================
+data_dir = os.path.join(base_dir, r'tutorials\2')
+
+#===============================================================================
+# helpers------
+#===============================================================================
 def extract_between_char(s, char='_'):
     start = s.find(char) + 1
     end = s.find(char, start)
     return s[start:end]
 
+#===============================================================================
+# fixtures------
+#===============================================================================
 @pytest.fixture(scope='module')
 def crs():
     return QgsCoordinateReferenceSystem('EPSG:3005')
 
 
-@pytest.fixture(scope='module')
-def data_dir(base_dir):
-    return os.path.join(base_dir, r'tutorials\2')
+
+#===============================================================================
+# tests------
+#===============================================================================
 
 
 
 
-
+@pytest.mark.parametrize('absolute_fp',[True, False])
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
-def test_tutorial_02a(session, data_dir, true_dir, tmp_path, write):
+def test_tutorial_02a(session, true_dir, tmp_path, write, absolute_fp):
     """simulate tutorial 2A
     https://canflood.readthedocs.io/en/latest/06_tutorials.html#tutorial-2a-risk-l2-with-simple-events
     
-    NOTE:
-        2025-01-03: unit test is crashing when trying to generate the html report
+    
+    Validation
+    ----------------
+    uses '.pkl' file in the true_dir to validate risk L2 model results
+    
+
     
     
     TODO: 
         refactor or shorten this code (we'll need to re-use a lot of it for subsequent tutorials)
-        add value tests
+        add more value tests
     """
-
- 
+    
     def get_true_fp(sfx):
-        #find this file
+        """retrieve the true/validation datafile from a suffix"""
         match_l = [e for e in os.listdir(true_dir) if e.endswith(sfx)]
         assert len(match_l)==1, f'failed to get a  unique match for {sfx}'
-        
         return os.path.join(true_dir, match_l[0])
         
     #===========================================================================
@@ -81,18 +95,20 @@ def test_tutorial_02a(session, data_dir, true_dir, tmp_path, write):
     out_dir = session.out_dir #send the outputs we care about here
     session.out_dir = tmp_path #overwrite so we don't capture all outputs
     
+    if absolute_fp:
+        dial.radioButton_SS_fpAbs.setChecked(True)
+    else:
+        dial.radioButton_SS_fpRel.setChecked(True)
     #===========================================================================
     # scenario setup
     #===========================================================================
     dial._change_tab('tab_setup')
     dial.lineEdit_wdir.setText(str(session.out_dir))
     dial.linEdit_ScenTag.setText('tut2a')
-    
     """BuildDialog.build_scenario()"""
     QTest.mouseClick(dial.pushButton_generate, Qt.LeftButton)
-
-    assert os.path.exists(dial.lineEdit_cf_fp.text())
     
+    assert os.path.exists(dial.lineEdit_cf_fp.text())
     #===========================================================================
     # Inventory setup
     #===========================================================================
@@ -234,6 +250,10 @@ def test_tutorial_02a(session, data_dir, true_dir, tmp_path, write):
     
     dial.radioButton.setChecked(True) #save plots to file
     dial.comboBox_JGfinv.setCurrentIndex(-1) #clear finv
+    if absolute_fp:
+        dial.radioButton_SS_fpAbs.setChecked(True)
+    else:
+        dial.radioButton_S_fpRel.setChecked(True)
     #===========================================================================
     # impacts (L2)
     #===========================================================================
@@ -276,6 +296,9 @@ def test_tutorial_02a(session, data_dir, true_dir, tmp_path, write):
     
     #internal
     assert_rttl_valid(rttl_df, msg=os.path.basename(res_d['r_ttl']))
+    
+    if write:
+        raise NotImplementedError('add validation writing code')
     
     #validate: against trues
     true_df = pd.read_pickle(get_true_fp('r_ttl.pkl'))    
@@ -330,7 +353,7 @@ def test_tutorial_02a(session, data_dir, true_dir, tmp_path, write):
     # pdf reporter
     #===========================================================================
  
-    report = test_results.res_02_reporter(dial, finv_fp = os.path.join(data_dir, 'finv_tut2.geojson')) #unit test is crashing
+    report = test_results.res_02_reporter(dial, finv_fp = os.path.join(data_dir, 'finv_tut2.geojson'))
  
  
     

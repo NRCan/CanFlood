@@ -24,9 +24,8 @@ import numpy as np
 
 mod_logger = logging.getLogger('common') #get the root logger
 
-from hlpr.exceptions import QError as Error
-    
-from hlpr.basic import ComWrkr, view
+from canflood.hlpr.exceptions import QError as Error    
+from canflood.hlpr.basic import ComWrkr, view
 
 
 #==============================================================================
@@ -364,7 +363,7 @@ class Model(ComWrkr,
         if 'absolute_fp' in self.pars['parameters']:
             absolute_fp = self.pars['parameters'].getboolean('absolute_fp')
             if not self.absolute_fp==absolute_fp:
-                log.warning(f'overwriting \'aboslute_fp\' with value from control file ({absolute_fp})')
+                log.warning(f'overwriting \'absolute_fp\' with value from control file ({absolute_fp})')
             self.absolute_fp=absolute_fp
         
         
@@ -710,13 +709,7 @@ class Model(ComWrkr,
                       cpars):
         
         assert isinstance(cpars, configparser.ConfigParser)
-#===============================================================================
-#         errors = []
-# 
-#         for chk_d, opt_f in ((self.exp_pars_md,False), (self.exp_pars_op,True)):
-#             _, l = self.cf_chk_pars(cpars, copy.copy(chk_d), optional=opt_f)
-#             errors = errors + l
-#===============================================================================
+ 
             
         #=======================================================================
         # mandatory
@@ -2082,7 +2075,9 @@ class Model(ComWrkr,
         """
         
         if logger is None: logger=self.logger
-        if absolute_fp is None: absolute_fp=self.aboslute_fp
+        if not hasattr(self, 'absolute_fp'):
+            raise AttributeError(f'object {self.__name__} missing attribute \'absolute_fp\'')
+        if absolute_fp is None: absolute_fp=self.absolute_fp
         log = logger.getChild('par_hndl_chk')
         
         #=======================================================================
@@ -2108,6 +2103,9 @@ class Model(ComWrkr,
                 assert isinstance(hvals, tuple), '%s.%s got bad type on hvals: %s'%(sect, varnm, type(hvals))
                 assert pval in hvals, '%s.%s unexpected value: \'%s\''%(sect, varnm, pval)
             
+            #===================================================================
+            # filepaths
+            #===================================================================
             elif chk_hndl == 'ext':
                 
                 #basic checks
@@ -2118,11 +2116,10 @@ class Model(ComWrkr,
                 
                 #handl relative filepaths
                 if not absolute_fp:
-                    pval = os.path.join(self.cf_dir, pval)
-                
-                
-
-                assert os.path.exists(pval), '%s.%s passed invalid filepath: \'%s\''%(sect, varnm, pval)
+                    if not os.path.exists(pval):
+                        pval = os.path.join(self.cf_dir, pval)               
+                        
+                assert os.path.exists(pval), f'%s.%s passed invalid filepath (absolute_fp={absolute_fp}):\n    %s'%(sect, varnm, pval)
                 
                 ext = os.path.splitext(os.path.split(pval)[1])[1]
 
@@ -2143,22 +2140,23 @@ class Model(ComWrkr,
     
 
                 
-    def validate(self, #validate this model object
-                 cpars, #initilzied config parser
-                    #so a session can pass a control file... rather than usin gthe workers init
-                 logger=None,
-                 ):
+    def validate(self, cpars, logger=None,):
+        
+        """run all validation checks on this model 
+        only 1 check for now. check the control file expectations
+        
+        children could over-write this method with custom validations
+        
+        Params
+        ---------
+        cpars: config parser
+            so a session can pass a control file... rather than usin gthe workers init
+         
+        """
         #if logger is None: logger=self.logger
+ 
         
-        """only 1 check for now"""
-        #=======================================================================
-        # check the control file expectations
-        #=======================================================================
-        errors = self._get_cf_miss(cpars)
-        
-        
-        
-        return errors
+        return self._get_cf_miss(cpars) #check the control file expectations
         
     def check_attrimat(self, #check the logic of the attrimat
                        atr_dxcol=None,
@@ -2629,6 +2627,8 @@ class Model(ComWrkr,
         
         #update the control file
         if upd_cf:
+            if not self.absolute_fp: 
+                out_fp = os.path.relpath(out_fp, start=os.getcwd())
             self.set_cf_pars(
                     {
                     'results_fps':(
