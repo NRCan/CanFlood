@@ -1,6 +1,6 @@
 import pytest
 import configparser
-from misc.webConnections import WebConnect
+from canflood.misc.webConnections import WebConnect
 from PyQt5.QtCore import QSettings
 
 @pytest.fixture(scope="function")
@@ -48,7 +48,7 @@ def create_config(tmpdir, config_content):
         }}, "connections/arcgisfeatureserver/items/NPRI/url")
     ]
 )
-def test_read_connections(web_connect, create_config, config_content, expected_key):
+def test_misc_webcon_01_read_connections(web_connect, create_config, config_content, expected_key):
     """Test the read_connections function and check expected QGIS3.ini structure."""
     config_path = create_config  
 
