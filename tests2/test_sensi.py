@@ -24,7 +24,7 @@ from PyQt5.Qt import Qt
 
 from canflood.sensi.dialog import SensiDialog
 
-from .conftest import _build_dialog_validate_handler, base_dir
+#from .conftest import _build_dialog_validate_handler, base_dir
 
 #===============================================================================
 # params-----
