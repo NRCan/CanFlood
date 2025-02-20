@@ -31,14 +31,14 @@ import processing
 # custom imports
 #==============================================================================
 
-from hlpr.exceptions import QError as Error
+from canflood.hlpr.exceptions import QError as Error
     
 
 
-from hlpr.Q import (
+from canflood.hlpr.Q import (
     Qcoms,vlay_get_fdf, vlay_get_fdata, view, RasterCalc,assert_rlay_resolution_match,
     )
-from hlpr.plot import Plotr
+from canflood.hlpr.plot import Plotr
 
 #==============================================================================
 # functions-------------------
@@ -1734,6 +1734,8 @@ class Rsamp(Plotr, Qcoms):
 
     def update_cf(self, cf_fp): #configured control file updater
         """make sure you write the file first"""
+        if not self.absolute_fp: 
+            self.out_fp = os.path.relpath(self.out_fp, start=os.getcwd())
         return self.set_cf_pars(
             {
             'dmg_fps':(
@@ -1750,6 +1752,8 @@ class Rsamp(Plotr, Qcoms):
         
     def upd_cf_dtm(self, cf_fp=None):
         if cf_fp is None: cf_fp=self.cf_fp
+        if not self.absolute_fp: 
+            self.out_fp = os.path.relpath(self.out_fp, start=os.getcwd())
         return self.set_cf_pars(
             {
             'dmg_fps':(

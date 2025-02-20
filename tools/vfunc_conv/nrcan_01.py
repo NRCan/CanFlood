@@ -17,13 +17,13 @@ import pandas as pd
 import numpy as np
 
 
-from hlpr.logr import basic_logger
+from canflood.hlpr.logr import basic_logger
 mod_logger = basic_logger() 
-from hlpr.basic import force_open_dir, view
-from hlpr.exceptions import Error
+from canflood.hlpr.basic import force_open_dir, view
+from canflood.hlpr.exceptions import Error
 
 from vfunc_conv.vcoms import VfConv
-#from model.modcom import DFunc
+#from canflood.model.modcom import DFunc
 
 mod_name = 'misc.nrcan_01'
 today_str = datetime.datetime.today().strftime('%Y%m%d')

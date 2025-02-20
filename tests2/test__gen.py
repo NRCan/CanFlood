@@ -7,7 +7,7 @@ general project-wide tests
 '''
 import pkg_resources, os
 import pytest
-
+from .conftest import base_dir
 
 #===============================================================================
 # HERLPERS-----
@@ -44,7 +44,7 @@ def parse_requirements(file_path):
 # TESTS--------
 #===============================================================================
 
-def test_00_version(qgis_version):
+def test_version(qgis_version):
     assert qgis_version==33414, 'bad version: %s'%qgis_version
     
     
@@ -54,7 +54,7 @@ def test_00_version(qgis_version):
 
 
 @pytest.mark.parametrize('requirements_path',[r'canflood\requirements.txt'])
-def test_requirements(requirements_path, base_dir):
+def test_requirements(requirements_path):
     """
     Compare the current environment's installed packages to the requirements.txt file.
     """

@@ -28,12 +28,12 @@ import pandas as pd
 # custom imports
 #==============================================================================
 
-from hlpr.exceptions import QError as Error
+from canflood.hlpr.exceptions import QError as Error
     
 
-from hlpr.basic import ComWrkr
+from canflood.hlpr.basic import ComWrkr
 """do we need the pyqgis handles?"""
-#from hlpr.basic import *
+#from canflood.hlpr.basic import *
 
 #==============================================================================
 # functions-------------------

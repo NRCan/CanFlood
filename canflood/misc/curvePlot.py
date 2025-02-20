@@ -24,14 +24,14 @@ import logging, configparser, datetime, itertools
 import os
 import numpy as np
 import pandas as pd
-from hlpr.basic import force_open_dir, view, get_valid_filename
+from canflood.hlpr.basic import force_open_dir, view, get_valid_filename
 
 mod_name='curvePlot'
 #==============================================================================
 # # custom
 #==============================================================================
 
-from hlpr.exceptions import QError as Error
+from canflood.hlpr.exceptions import QError as Error
     
 #===============================================================================
 # setup matplotlib
@@ -39,10 +39,10 @@ from hlpr.exceptions import QError as Error
  
     
 
-#from hlpr.basic import ComWrkr
+#from canflood.hlpr.basic import ComWrkr
 #import hlpr.basic
-from model.modcom import DFunc, view
-from hlpr.plot import Plotr
+from canflood.model.modcom import DFunc, view
+from canflood.hlpr.plot import Plotr
 
 
 #==============================================================================

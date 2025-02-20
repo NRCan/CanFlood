@@ -12,7 +12,7 @@ integrate = trapz       #integration method to apply: trapz, simps
 as_inun = False         #flag whether to treat exposures as percent inundation
 event_rels = mutEx		#assumption for calculated expected value on complex events
 impact_units = impacts  #value to label impacts axis with (generally set by Dmg2)
-apply_miti = False		#whether to apply mitigation algorthihims
+apply_miti = False		#whether to apply mitigation algorithms
 
 [dmg_fps]
 curves =                #damage curve library filepath
@@ -40,7 +40,7 @@ r_ttl =                #total results from risk2
 eventypes =             #dataframe of aep, noFail, and rEventName
 
 [plotting]
-color = black           #line color
+color = black           #line colour
 linestyle = dashdot
 linewidth = 2
 alpha = 0.75            #0=transparent 1=opaque

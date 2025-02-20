@@ -58,12 +58,15 @@ Execute the below steps to prepare and release an update.
 
 For development, we generally use a virtual pyqgis environment pinned to the QGIS target version (see .\README.md) with the additional dependencies installed from `./requirements.txt`.
 Generally, we launch this with batch scripts in the .\env folder (.gitignored)
+Requires a `./definitions.py` file for running tests with machine specific paths matching the below
 
 
 ### PYTHONPATH
-Some tests and utilities expect the following PYTHONPATH:
+only the source directory should be included (`./CanFlood` not `./CanFlood/canflood`)
 
- - ./
- - ./canflood
- - ./tools
+### definitions.py
+```python
+#user's test data location
+test_data_dir = r'l:\09_REPOS\04_TOOLS\CanFlood\tests2\data'
+```
 

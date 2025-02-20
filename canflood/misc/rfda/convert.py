@@ -25,12 +25,12 @@ from qgis.core import QgsVectorLayer
 # custom imports
 #==============================================================================
  
-from hlpr.exceptions import QError as Error
+from canflood.hlpr.exceptions import QError as Error
 
-from hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata, vlay_new_df
-#from hlpr.basic import *
+from canflood.hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata, vlay_new_df
+#from canflood.hlpr.basic import *
 
-from model.modcom import DFunc
+from canflood.model.modcom import DFunc
 #==============================================================================
 # parametessr
 #==============================================================================

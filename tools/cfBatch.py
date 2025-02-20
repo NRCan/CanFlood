@@ -53,10 +53,10 @@ from qgis.core import QgsCoordinateReferenceSystem
 #===============================================================================
 # CanFlood generals
 #===============================================================================
-from hlpr.basic import view
-from hlpr.exceptions import Error
+from canflood.hlpr.basic import view
+from canflood.hlpr.exceptions import Error
 
-from hlpr.logr import basic_logger
+from canflood.hlpr.logr import basic_logger
 mod_logger = basic_logger() 
 
 from runComs import Runner
@@ -685,10 +685,10 @@ class CFbatch(Runner): #handerl of batch CanFlood runs (build, model, results)
         # imports
         #=======================================================================
         # CanFlood tool imports
-        from build.prepr import Preparor
-        from build.rsamp import Rsamp
-        from build.lisamp import LikeSampler
-        from build.validator import Vali
+        from canflood.build.prepr import Preparor
+        from canflood.build.rsamp import Rsamp
+        from canflood.build.lisamp import LikeSampler
+        from canflood.build.validator import Vali
         
 
         
@@ -911,9 +911,9 @@ class CFbatch(Runner): #handerl of batch CanFlood runs (build, model, results)
             # validator----
             #=======================================================================
             wrkrVA =  super(wrkr.baseClassConv_d['Vali'], wrkr) #get a special worker
-            from model.risk1 import Risk1
-            #from model.risk2 import Risk2
-            from model.dmg2 import Dmg2
+            from canflood.model.risk1 import Risk1
+            #from canflood.model.risk2 import Risk2
+            from canflood.model.dmg2 import Dmg2
             
             wrkrVA.config_cf() #initlize the pars_der
             
@@ -982,7 +982,7 @@ class CFbatch(Runner): #handerl of batch CanFlood runs (build, model, results)
         meta_d=dict()
         out_dir=None
         
-        from model.dmg2 import Dmg2
+        from canflood.model.dmg2 import Dmg2
         
         wrkr = Dmg2(out_dir=os.getcwd(), #overwriting below
                     logger=logger, tag='dmg2',**kwargs)
@@ -1165,14 +1165,14 @@ class CFbatch(Runner): #handerl of batch CanFlood runs (build, model, results)
     
     def tools_risk2(self, pars_d, **kwargs):
         
-        from model.risk2 import Risk2
+        from canflood.model.risk2 import Risk2
         
         return self._riskTools(pars_d, Risk2, **kwargs)
     
     
     def tools_risk1(self,pars_d, **kwargs):
         
-        from model.risk1 import Risk1
+        from canflood.model.risk1 import Risk1
         
         return self._riskTools(pars_d, Risk1, **kwargs)
     
@@ -1190,7 +1190,7 @@ class CFbatch(Runner): #handerl of batch CanFlood runs (build, model, results)
         #=======================================================================
         # setup
         #=======================================================================
-        from results.djoin import Djoiner
+        from canflood.results.djoin import Djoiner
         wrkr = Djoiner(tag=self.scenarioName, **kwargs)
         
         self._init_child_q(wrkr) #setup Q
@@ -1270,7 +1270,7 @@ class CFbatch(Runner): #handerl of batch CanFlood runs (build, model, results)
         #=======================================================================
         # setup the worker
         #=======================================================================
-        from results.compare import Cmpr
+        from canflood.results.compare import Cmpr
         fps_d = {k:d['cf_fp'] for k,d in runpars_d.items()}
     
         wrkr = Cmpr(fps_d = fps_d, logger=log,cf_fp = fps_d[list(fps_d)[0]],

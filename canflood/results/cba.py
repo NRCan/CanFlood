@@ -47,10 +47,10 @@ import openpyxl
 #===============================================================================
 # customs
 #===============================================================================
-from hlpr.exceptions import QError as Error
-from hlpr.basic import view
+from canflood.hlpr.exceptions import QError as Error
+from canflood.hlpr.basic import view
  
-from results.riskPlot import RiskPlotr
+from canflood.results.riskPlot import RiskPlotr
 
 #==============================================================================
 # functions-------------------

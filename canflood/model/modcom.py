@@ -24,9 +24,8 @@ import numpy as np
 
 mod_logger = logging.getLogger('common') #get the root logger
 
-from hlpr.exceptions import QError as Error
-    
-from hlpr.basic import ComWrkr, view
+from canflood.hlpr.exceptions import QError as Error    
+from canflood.hlpr.basic import ComWrkr, view
 
 
 #==============================================================================
@@ -2117,8 +2116,9 @@ class Model(ComWrkr,
                 
                 #handl relative filepaths
                 if not absolute_fp:
-                    pval = os.path.join(self.cf_dir, pval)                
-
+                    if not os.path.exists(pval):
+                        pval = os.path.join(self.cf_dir, pval)               
+                        
                 assert os.path.exists(pval), f'%s.%s passed invalid filepath (absolute_fp={absolute_fp}):\n    %s'%(sect, varnm, pval)
                 
                 ext = os.path.splitext(os.path.split(pval)[1])[1]
@@ -2627,6 +2627,8 @@ class Model(ComWrkr,
         
         #update the control file
         if upd_cf:
+            if not self.absolute_fp: 
+                out_fp = os.path.relpath(out_fp, start=os.getcwd())
             self.set_cf_pars(
                     {
                     'results_fps':(

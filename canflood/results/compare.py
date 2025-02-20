@@ -23,7 +23,7 @@ import pandas as pd
 
 
 
-from hlpr.exceptions import QError as Error
+from canflood.hlpr.exceptions import QError as Error
     
 
 
@@ -32,9 +32,9 @@ from hlpr.exceptions import QError as Error
 #===============================================================================
 # non-Qgis
 #===============================================================================
-from hlpr.basic import view
-#from model.modcom import Model
-from results.riskPlot import RiskPlotr
+from canflood.hlpr.basic import view
+
+from canflood.results.riskPlot import RiskPlotr
 
 #==============================================================================
 # functions-------------------

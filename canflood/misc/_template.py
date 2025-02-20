@@ -30,14 +30,14 @@ import pandas as pd
 
 #standalone runs
 if __name__ =="__main__": 
-    from hlpr.logr import basic_logger
+    from canflood.hlpr.logr import basic_logger
     mod_logger = basic_logger()   
     
-    from hlpr.exceptions import Error
+    from canflood.hlpr.exceptions import Error
 #plugin runs
 else:
     #base_class = object
-    from hlpr.exceptions import QError as Error
+    from canflood.hlpr.exceptions import QError as Error
     
 
 
@@ -46,12 +46,12 @@ else:
 #===============================================================================
 from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProject
 
-from hlpr.Q import Qcoms
+from canflood.hlpr.Q import Qcoms
 
 #===============================================================================
 # non-Qgis
 #===============================================================================
-from hlpr.basic import ComWrkr
+from canflood.hlpr.basic import ComWrkr
 
 #==============================================================================
 # functions-------------------

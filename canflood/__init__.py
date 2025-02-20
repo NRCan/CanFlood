@@ -8,6 +8,11 @@ This is th efirst call of the tool
 TODO: better dependency check
 
 """
+
+#===============================================================================
+# plugin metadata
+#===============================================================================
+__version__='1.2.1_fp_fix'
 #==============================================================================
 # dependency check
 #==============================================================================
@@ -32,9 +37,11 @@ del hard_dependencies, dependency, missing_dependencies
 #===============================================================================
 # add module directory to environemnt
 #===============================================================================
-import os, sys
-file_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(file_dir)
+#===============================================================================
+# import os, sys
+# file_dir = os.path.dirname(os.path.abspath(__file__))
+# sys.path.append(file_dir)
+#===============================================================================
 
 
 
@@ -47,5 +54,5 @@ def classFactory(iface):  # pylint: disable=invalid-name
     """
     #
 
-    from .CanFlood import CanFlood
+    from .plugin import CanFlood
     return CanFlood(iface)

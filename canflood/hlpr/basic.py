@@ -32,7 +32,7 @@ import traceback
 #==============================================================================
 mod_logger = logging.getLogger('basic') #get the root logger
 
-from hlpr.exceptions import QError as Error
+from .exceptions import QError as Error
 
 #==============================================================================
 # functions-------------

@@ -27,21 +27,23 @@ from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer, QgsMapLayerPro
 # custom imports
 #==============================================================================
 #get hlpr funcs
-import hlpr.plug
-from hlpr.plug import bind_layersListWidget
-from hlpr.basic import set_info
-from hlpr.exceptions import QError as Error
+ 
+from canflood.hlpr.plug import (
+    bind_layersListWidget, QprojPlug, bind_MapLayerComboBox, qtbl_get_df
+    )
+from canflood.hlpr.basic import set_info
+from canflood.hlpr.exceptions import QError as Error
  
 
 #get sub-models
-from build.rsamp import Rsamp
-from build.lisamp import LikeSampler
-from build.prepr import Preparor
-from build.validator import Vali
+from canflood.build.rsamp import Rsamp
+from canflood.build.lisamp import LikeSampler
+from canflood.build.prepr import Preparor
+from canflood.build.validator import Vali
 
 #get sub-dialogs
-from build.dialog_vfunc import vDialog
-from build.dialog_rprep import RPrepDialog
+from canflood.build.dialog_vfunc import vDialog
+from canflood.build.dialog_rprep import RPrepDialog
 
 #===============================================================================
 # load UI file
@@ -56,7 +58,7 @@ FORM_CLASS, _ = uic.loadUiType(ui_fp)
 # class objects-------
 #===============================================================================
 
-class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
+class BuildDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
     
     event_name_set = [] #event names
     
@@ -129,6 +131,8 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # general----------------
         #=======================================================================
+        from canflood import __version__
+        self.label_version.setText(f'v{__version__}')
 
         #ok/cancel buttons
         self.buttonBox.accepted.connect(self.reject) #back out of the dialog
@@ -159,7 +163,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
 
         
         #AOI
-        hlpr.plug.bind_MapLayerComboBox(self.comboBox_aoi, 
+        bind_MapLayerComboBox(self.comboBox_aoi, 
                                         iface=self.iface, layerType=QgsMapLayerProxyModel.PolygonLayer)
 
         
@@ -225,7 +229,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # Store IVlayer
         #=======================================================================
         #inventory vector layer box
-        hlpr.plug.bind_MapLayerComboBox(self.comboBox_ivlay, 
+        bind_MapLayerComboBox(self.comboBox_ivlay, 
                       layerType=QgsMapLayerProxyModel.VectorLayer, iface=self.iface)
         
         #attempt to select the layer during launch
@@ -284,7 +288,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # inundation
         #=======================================================================
-        hlpr.plug.bind_MapLayerComboBox(self.comboBox_HS_DTM, 
+        bind_MapLayerComboBox(self.comboBox_HS_DTM, 
                       layerType=QgsMapLayerProxyModel.RasterLayer, iface=self.iface)
         
         #attempt to select the layer during launch
@@ -488,7 +492,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
         # DTM sampler---------
         #======================================================================       
-        hlpr.plug.bind_MapLayerComboBox(self.comboBox_dtm, 
+        bind_MapLayerComboBox(self.comboBox_dtm, 
                       layerType=QgsMapLayerProxyModel.RasterLayer, iface=self.iface)
         
         #attempt to select the layer during launch
@@ -694,6 +698,8 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
         wrkr = Preparor(**kwargs) 
         self.feedback.upd_prog(50)
+        if not self.absolute_fp: 
+            curves_fp = os.path.relpath(curves_fp, start=os.getcwd())
         wrkr.set_cf_pars(
             {
             'dmg_fps':(
@@ -750,7 +756,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
         
         
-        from model.dmg2 import Dmg2
+        from canflood.model.dmg2 import Dmg2
         with Dmg2(upd_cf=False, logger=log, **kwargs) as wrkr:
  
             #condensed Model.setup()
@@ -772,7 +778,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # build curves subset from unique tags
         #=======================================================================
-        from misc.curvePlot import CurvePlotr
+        from canflood.misc.curvePlot import CurvePlotr
         """load curves from gui, not control file"""
         with CurvePlotr(out_dir=self.out_dir, logger=log, tag=self.tag) as wrkr:
         
@@ -807,7 +813,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         
     def store_finv(self): #aoi slice and convert the finv vector to csv file
         log = self.logger.getChild('store_finv')
-        log.debug('start')
+        log.debug('\n\nstart\n======================================\n')
         #=======================================================================
         # retrieve data
         #=======================================================================
@@ -831,6 +837,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
         wrkr = Preparor(**kwargs) 
         
+        log.debug(f'finv_to_csv w/ \n    {kwargs}')
         _ = wrkr.finv_to_csv(self.finv_vlay, felv=self.comboBox_SSelv.currentText(),
                                    logger=self.logger)
 
@@ -1415,7 +1422,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # collcet table data
         #======================================================================
 
-        df = hlpr.plug.qtbl_get_df(self.fieldsTable_EL)
+        df = qtbl_get_df(self.fieldsTable_EL)
         
         self.logger.info('extracted data w/ %s \n%s'%(str(df.shape), df))
         
@@ -1441,7 +1448,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
         ofn = os.path.join(self.lineEdit_wdir.text(), 'evals_%i_%s.csv'%(len(aep_df.columns), tag))
         
-        from hlpr.basic import ComWrkr
+        from canflood.hlpr.basic import ComWrkr
         
         #build a shell worker for these taxks
         wrkr = ComWrkr(logger=log, tag=tag, feedback=self.feedback, out_dir=out_dir)
@@ -1454,6 +1461,8 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #======================================================================
         # update the control file
         #======================================================================
+        if not self.absolute_fp: 
+            eaep_fp = os.path.relpath(eaep_fp, start=os.getcwd())
         wrkr.set_cf_pars(
             {
                 'parameters':({
@@ -1493,9 +1502,9 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # assemble the validation parameters
         #======================================================================
         #import the class objects
-        from model.dmg2 import Dmg2
-        from model.risk2 import Risk2
-        from model.risk1 import Risk1
+        from canflood.model.dmg2 import Dmg2
+        from canflood.model.risk2 import Risk2
+        from canflood.model.risk1 import Risk1
         
         #populate all possible test parameters
         vpars_all_d = {

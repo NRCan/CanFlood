@@ -34,9 +34,9 @@ start = datetime.datetime.now()
 # cf helpers
 #===============================================================================
 #import hlpr.basic
-#from hlpr.logr import basic_logger
+#from canflood.hlpr.logr import basic_logger
  
-from hlpr.exceptions import Error
+from canflood.hlpr.exceptions import Error
 
 
 #===============================================================================
@@ -44,7 +44,7 @@ from hlpr.exceptions import Error
 #===============================================================================
 from wFlow.scripts import Session, WorkFlow, view
 
-from model.riskcom import RiskModel
+from canflood.model.riskcom import RiskModel
 
 
 #===============================================================================

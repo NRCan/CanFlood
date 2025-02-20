@@ -17,18 +17,21 @@ import pandas as pd
 # custom imports
 #==============================================================================
 
-import hlpr.plug
+#import hlpr.plug
 
-from hlpr.basic import force_open_dir
-from hlpr.exceptions import QError as Error
-from model.modcom import Model
+#from canflood.hlpr.basic import force_open_dir
+from canflood.hlpr.exceptions import QError as Error
+from canflood.hlpr.plug import QprojPlug, bind_MapLayerComboBox
+from canflood.model.modcom import Model
 
-import results.djoin
-import results.riskPlot
-import results.compare
-import results.attribution
 
-import misc.curvePlot
+from canflood.results.djoin import Djoiner
+from canflood.results.riskPlot import RiskPlotr
+from canflood.results.compare import Cmpr
+from canflood.results.attribution import Attr
+from canflood.results.cba import CbaWrkr 
+
+from canflood.misc.curvePlot import CurvePlotr
 
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
@@ -37,7 +40,7 @@ assert os.path.exists(ui_fp)
 FORM_CLASS, _ = uic.loadUiType(ui_fp)
 
 
-class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
+class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
     
     groupName = 'CanFlood.results'
     
@@ -116,7 +119,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
 
         #vector geometry layer
-        hlpr.plug.bind_MapLayerComboBox(self.comboBox_JGfinv, 
+        bind_MapLayerComboBox(self.comboBox_JGfinv, 
                       layerType=QgsMapLayerProxyModel.VectorLayer, iface=self.iface)
         
         self.launch_actions['attempt finv'] = lambda: self.comboBox_JGfinv.attempt_selection('finv')
@@ -285,7 +288,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.pushButton_rpt_create.clicked.connect(self.run_reporter)
         
         #setup the vlay combobox
-        hlpr.plug.bind_MapLayerComboBox(self.comboBox_rpt_vlay, 
+        bind_MapLayerComboBox(self.comboBox_rpt_vlay, 
                       layerType=QgsMapLayerProxyModel.VectorLayer, iface=self.iface)
         
         #broadcast changes from 'JoinGeo' tab down onto results tab
@@ -339,7 +342,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         kwargs = {attn:getattr(self, attn) for attn in ['logger', 'tag', 'cf_fp', 
                                             'out_dir', 'feedback', 'init_q_d']}
         
-        wrkr = results.djoin.Djoiner(**kwargs).setup()
+        wrkr = Djoiner(**kwargs).setup()
         
         """shortened setup... loading the data here"""
         #wrkr.init_model() #load the control file
@@ -404,7 +407,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # plot the curves
         #=======================================================================
-        with misc.curvePlot.CurvePlotr(**kwargs) as wrkr:
+        with CurvePlotr(**kwargs) as wrkr:
         
             cLib_d = wrkr.load_data(filePath)
  
@@ -434,7 +437,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         self.feedback.setProgress(5)
         #setup
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
-        wrkr = results.riskPlot.RiskPlotr(**kwargs).setup()
+        wrkr = RiskPlotr(**kwargs).setup()
         
         self.feedback.setProgress(10)
 
@@ -477,7 +480,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # setup and load
         #=======================================================================
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
-        wrkr = results.attribution.Attr(**kwargs).setup()
+        wrkr = Attr(**kwargs).setup()
         
         
         
@@ -522,7 +525,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # setup and load
         #=======================================================================
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
-        wrkr = results.attribution.Attr(**kwargs).setup()
+        wrkr = Attr(**kwargs).setup()
         self.feedback.setProgress(10)
         
         si_ttl = wrkr.get_slice_noFail()
@@ -643,7 +646,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # init
         #=======================================================================
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
-        wrkr = results.compare.Cmpr(fps_d = fps_d,**kwargs).setup()
+        wrkr = Cmpr(fps_d = fps_d,**kwargs).setup()
     
         #load
         #sWrkr_d = wrkr.load_scenarios(list(fp_d.values()))
@@ -694,7 +697,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # init
         #=======================================================================
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
-        wrkr = results.compare.Cmpr(fps_d = fps_d,**kwargs).setup()
+        wrkr = Cmpr(fps_d = fps_d,**kwargs).setup()
         
         self.feedback.setProgress(50)
         #===========================================================================
@@ -736,7 +739,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         log.info('user pushed \'run_cba_copy\'')
         
         """put this here to avoid the global openpyxl dependency"""
-        from results.cba import CbaWrkr 
+        
         self.feedback.setProgress(10)
         #=======================================================================
         # collect inputs
@@ -748,7 +751,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         # init
         #=======================================================================
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
-        wrkr = results.cba.CbaWrkr(**kwargs).setup()
+        wrkr = CbaWrkr(**kwargs).setup()
         
         self.feedback.setProgress(50)
         
@@ -796,9 +799,9 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         """put this here to avoid the global openpyxl dependency
         
         TODO: cleanup this import using a with statement"""
-        #from results.cba import CbaWrkr 
+        #from canflood.results.cba import CbaWrkr 
         kwargs = {attn:getattr(self, attn) for attn in self.inherit_fieldNames}
-        wrkr = results.cba.CbaWrkr(**kwargs).setup()
+        wrkr = CbaWrkr(**kwargs).setup()
         
         self.feedback.setProgress(50)
         
@@ -850,7 +853,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # init
         #=======================================================================  
-        from results.reporter import ReportGenerator
+        from canflood.results.reporter import ReportGenerator
         
         kwargs = {attn:getattr(self, attn) for attn in ['logger', 'tag', 'cf_fp', 
                                     'out_dir', 'feedback', 'init_q_d']}
