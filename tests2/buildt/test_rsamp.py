@@ -12,14 +12,14 @@ import pandas as pd
 from pandas.testing import assert_frame_equal
 
 
-from build.rsamp import Rsamp
-from hlpr.Q import view
-from definitions import src_dir
+from canflood.build.rsamp import Rsamp
+from canflood.hlpr.Q import view
+from definitions import test_data_dir
 #===============================================================================
 # test data
 #===============================================================================
 
-test_dir = os.path.join(src_dir, r'tests2\data\build\rsamp')
+test_dir = os.path.join(test_data_dir, r'build\rsamp')
 
 proj_dir = {
     'ip1':{
