@@ -129,6 +129,8 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
         #=======================================================================
         # general----------------
         #=======================================================================
+        from canflood import __version__
+        self.label_version.setText(f'v{__version__}')
 
         #ok/cancel buttons
         self.buttonBox.accepted.connect(self.reject) #back out of the dialog
