@@ -22,7 +22,17 @@ Happy flood risk modelling!
 ## Updates
 
 v1.2.1 is released addressing the following:
+
 - update to QGIS 3.34
+- address issue 107: module 'scipy.integrate' has no attribute 'trapz'
+- address issue 106: pytest not catching backend errors w/ Qtest
+- address issue 104: relative paths in test data
+- address issue 101: WebConnections not being added
+- address issue 100: TypeError: setValue(self, value: int): argument 1 has unexpected type 'float'
+- address issue 95: vFunc Library: ImportError: Pandas requires version '2.0.1' or newer of 'xlrd'
+- address issue 94: update requirements
+- address issue 24: launching plots in separate window fails
+- address issue 22: raster prep crash on load (Tutorial 5)
 - address issue 87: area threshold rebase
 - address issue 52: Error: got negative extrapolation
 - address issue 43:  Model tables are missing table numbers
