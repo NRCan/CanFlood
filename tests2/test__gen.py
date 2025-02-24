@@ -64,8 +64,7 @@ def test_requirements(requirements_path):
     for package, required_version in required_packages.items():
         try:
             # Get the installed version of the package
-            installed_version = pkg_resources.get_distribution(package).version
-
+            installed_version = pkg_resources.get_distribution(package).version   #DeprecationWarning: pkg_resources is deprecated as an API.
             if required_version and '://' not in required_version and '@' not in required_version:
                 assert installed_version == required_version, (
                     f"Package {package} has version {installed_version}, "
