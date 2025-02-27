@@ -454,8 +454,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
         if df is not None:
             #format table
             df.columns = map(str.upper, df.columns)
-            df.iloc[:, 1] = df.iloc[:, 1].map(lambda impact_val: self.impactFmtFunc(impact_val)) #FutureWarning: Setting an item of incompatible dtype is deprecated and will raise in a future error of pandas. Value '0    0.00e+00
-            
+            df.iloc[:, 1] = df.iloc[:, 1].map(lambda impact_val: self.impactFmtFunc(impact_val)).astype(float)            
             #convert to layer
             df_layer = self.vlay_new_df2(df, layname='event_summary_table',
                                        logger=log)

@@ -437,8 +437,8 @@ class CurvePlotr(DFunc, Plotr):
         #=======================================================================
         if ax is None:
 
-            fig = plt.figure(figsize=figsize,tight_layout=tight_layout,  #UserWarning: The Figure parameters 'tight_layout' and 'constrained_layout' cannot be used together.
-                     constrained_layout = constrained_layout)
+            fig = plt.figure(figsize=figsize,
+                     constrained_layout = True)
 
             ax = fig.add_subplot(subplot)  
             
