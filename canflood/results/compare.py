@@ -199,11 +199,13 @@ class Cmpr(RiskPlotr):
                 first = False
 
 
-        return self.plot_mRiskCurves(plotPars_d,y1lab=y1lab, 
+        result = self.plot_mRiskCurves(plotPars_d,y1lab=y1lab, 
                                      impactFmtFunc=self.impactFmtFunc,
                                      val_str=val_str, 
                                      logger=log,
                                      **plotKwargs)
+        self.plt.show()
+        return result
         
     def cf_compare(self, #compare control file values between Scenarios
                    sWrkr_d=None,
