@@ -1428,7 +1428,7 @@ class Model(ComWrkr,
 
         bdf = None
         
-        for prefix, fcolsi_df in finv_cdf.drop('ctype', axis=0).dropna(axis=1).T.groupby('nestID', axis=0):
+        for prefix, fcolsi_df in finv_cdf.drop('ctype', axis=0).dropna(axis=1).T.groupby('nestID'):
 
 
             #get slice and clean

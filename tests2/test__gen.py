@@ -5,9 +5,11 @@ Created on Jan. 24, 2025
 
 general project-wide tests
 '''
-import pkg_resources, os
+import os
 import pytest
 from .conftest import base_dir
+import importlib.util
+from importlib.metadata import version, PackageNotFoundError
 
 #===============================================================================
 # HERLPERS-----
@@ -62,14 +64,14 @@ def test_requirements(requirements_path):
     required_packages = parse_requirements(requirements_path)
 
     for package, required_version in required_packages.items():
-        try:
-            # Get the installed version of the package
-            installed_version = pkg_resources.get_distribution(package).version
-
-            if required_version and '://' not in required_version and '@' not in required_version:
-                assert installed_version == required_version, (
-                    f"Package {package} has version {installed_version}, "
-                    f"but {required_version} is required."
-                )
-        except pkg_resources.DistributionNotFound:
+        try: 
+            spec = importlib.util.find_spec(package)
+            if spec is not None:
+                installed_version = version(package)
+                if required_version and '://' not in required_version and '@' not in required_version:
+                    assert installed_version == required_version, (
+                        f"Package {package} has version {installed_version}, "
+                        f"but {required_version} is required."
+                    )    
+        except PackageNotFoundError:
             pytest.fail(f"Package {package} is not installed.")

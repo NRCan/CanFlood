@@ -454,8 +454,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
         if df is not None:
             #format table
             df.columns = map(str.upper, df.columns)
-            df.iloc[:, 1] = df.iloc[:, 1].map(lambda impact_val: self.impactFmtFunc(impact_val))
-            
+            df.iloc[:, 1] = df.iloc[:, 1].map(lambda impact_val: self.impactFmtFunc(impact_val)).astype(float)            
             #convert to layer
             df_layer = self.vlay_new_df2(df, layname='event_summary_table',
                                        logger=log)
