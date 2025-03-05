@@ -54,3 +54,4 @@ docs/dev/sphinx_warnings.txt
 definitions.py
 
 docs/_build/
+*.log

@@ -905,9 +905,11 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         self.feedback.setProgress(95)
         
-        log.push('run_reporter finished')
+        
         self.feedback.upd_prog(None)
         
         self.report=report #for testing
+        
+        log.push('run_reporter finished')
 
         return  

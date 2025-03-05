@@ -1559,11 +1559,13 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         self.feedback.upd_prog(100)
         
-        log.push('passed %i (of %i) validations. see log for errors: %s' % (
-            np.array(list(res_d.values())).sum(), 
-            len(vpars_d), 
-            QgsLogger.logFile()
-            ))
+        passed = np.array(list(res_d.values())).sum()
+        total = len(vpars_d)
+        
+        if passed == total:
+            log.push("All validations passed (%d of %d)." % (passed, total))
+        else:
+            log.push("Only %d of %d validations passed. See log for errors: \n    %s" % (passed, total, QgsLogger.logFile()))
         
         self.feedback.upd_prog(None)
         self.validation_result_d=validation_result_d #store for ttests
