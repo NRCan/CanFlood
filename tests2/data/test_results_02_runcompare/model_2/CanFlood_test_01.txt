@@ -1,0 +1,52 @@
+[parameters]
+name = model_2
+cid = xid
+prec = 4
+ground_water = True     #whether to allow wsl < gel
+felv = ground
+event_probs = ari
+ltail = extrapolate     #EAD extrapolation: left tail treatment code (low prob high damage)
+rtail = 0.5             #EAD extrapolation: right trail treatment (high prob low damage)
+drop_tails = False      #EAD extrapolation: whether to remove the extrapolated values before writing the per-asset results
+integrate = trapz       #integration method to apply: trapz, simps
+as_inun = False
+event_rels = max
+impact_units = $CAD
+apply_miti = False		#whether to apply mitigation algorthihims
+absolute_fp=False
+
+[dmg_fps]
+curves = cLib_test_03_2022-06-26_1806.xls
+finv = finv_test_02_32_tut2.csv
+expos = expos_test_04_4_32.csv
+gels = gels_test_06_1_32.csv
+
+[risk_fps]
+dmgs = dmgs_test_01_run1.csv
+exlikes = #secondary exposure likelihood data filepath
+evals = evals_4_test_05.csv
+
+[validation]
+risk1 = False
+dmg2 = True
+risk2 = True
+risk3 = False
+
+[results_fps]
+attrimat02 = #lvl2 attribution matrix fp (post dmg model)
+attrimat03 = #lvl3 attribution matrix fp (post risk model)
+r_passet = _run1_0626_r_passet.csv
+r_ttl = _run1_0626_ttl.csv
+eventypes = eventypes_run1_test_01.csv
+
+
+[plotting]
+color = black           #line color
+linestyle = dashdot
+linewidth = 2
+alpha = 0.75            #0=transparent 1=opaque
+marker = o
+markersize = 4
+fillstyle = none        #marker fill style
+impactfmt_str = .2e     #python formatter to use for formatting the impact results values
+

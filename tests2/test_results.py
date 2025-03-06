@@ -117,9 +117,10 @@ def test_results_01_riskPlot(dial, cf_fp): #test risk plots
         
         
 @pytest.mark.parametrize('dialogClass',[ResultsDialog], indirect=True)
-@pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_02_r2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True)
-@pytest.mark.parametrize('cf_fp2',[os.path.join(test_dir, 'test_results_02_runcompare','CanFlood_test_01.txt')], )
-def test_results_02_runcompare(dial, cf_fp, cf_fp2):
+@pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_02_r2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True) #base cf for init
+@pytest.mark.parametrize('cf_fp2',[os.path.join(test_dir, 'test_results_02_runcompare','model_1', 'CanFlood_test_01.txt')], )
+@pytest.mark.parametrize('cf_fp3',[os.path.join(test_dir, 'test_results_02_runcompare','model_2', 'CanFlood_test_01.txt')], )
+def test_results_02_runcompare(dial, cf_fp, cf_fp2, cf_fp3):
     """test ResultsDialog.run_compare()
     
     """
@@ -129,7 +130,7 @@ def test_results_02_runcompare(dial, cf_fp, cf_fp2):
     dial._change_tab('tab_Compare')
     
     #set the control files
-    dial.lineEdit_C_cf_1.setText(cf_fp)
+    dial.lineEdit_C_cf_1.setText(cf_fp3)
     dial.lineEdit_C_cf_2.setText(cf_fp2)
     
     #turn the plots on
