@@ -204,7 +204,7 @@ class Cmpr(RiskPlotr):
                                      val_str=val_str, 
                                      logger=log,
                                      **plotKwargs)
-        self.plt.show()
+ 
         return result
         
     def cf_compare(self, #compare control file values between Scenarios
@@ -240,7 +240,8 @@ class Cmpr(RiskPlotr):
                     cdf = sdf
                     firstC=False
                 else:
-                    cdf = cdf.append(sdf)
+                    cdf = pd.concat([cdf, sdf], axis=0)
+ 
                     
             #add the control file path itself
             cdf.loc['cf_fp', childName] = sWrkr.cf_fp

@@ -22,6 +22,8 @@ from pandas.testing import assert_frame_equal
 from pytest import fail
 from pytest_qgis.utils import clean_qgis_layer
 
+
+from .conftest import test_dir
 from canflood.results.dialog import ResultsDialog
 
 
@@ -80,16 +82,18 @@ def dial(session, cf_fp): #configured dialog
 #===============================================================================
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_02_r2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True) 
 @pytest.mark.parametrize('dialogClass',[ResultsDialog], indirect=True)
-def test_00_init(dial):
+def test_results_00_init(dial):
     """test ResultsDialog init
     
     not setup in the best way... need to pass all the params
     """
     
     """uncomment the below to use pytest to launch the dialog interactively"""
-    dial.show()
-    QApp = QApplication(sys.argv) #initlize a QT appliaction (inplace of Qgis) to manually inspect    
-    sys.exit(QApp.exec_()) #wrap
+    #===========================================================================
+    # dial.show()
+    # QApp = QApplication(sys.argv) #initlize a QT appliaction (inplace of Qgis) to manually inspect    
+    # sys.exit(QApp.exec_()) #wrap
+    #===========================================================================
  
  
     
@@ -98,7 +102,7 @@ def test_00_init(dial):
 
 @pytest.mark.parametrize('dialogClass',[ResultsDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_02_r2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True) #from build test_07
-def test_01_riskPlot(dial, cf_fp): #test risk plots
+def test_results_01_riskPlot(dial, cf_fp): #test risk plots
     dial._change_tab('tab_riskPlot')
 
     QTest.mouseClick(dial.pushButton_RP_plot, Qt.LeftButton) #ResultsDialog.run_plotRisk()
@@ -110,6 +114,42 @@ def test_01_riskPlot(dial, cf_fp): #test risk plots
         pass
     else:
         fail('Failed to create risk plot svg')
+        
+        
+@pytest.mark.parametrize('dialogClass',[ResultsDialog], indirect=True)
+@pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_02_r2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True)
+@pytest.mark.parametrize('cf_fp2',[os.path.join(test_dir, 'test_results_02_runcompare','CanFlood_test_01.txt')], )
+def test_results_02_runcompare(dial, cf_fp, cf_fp2):
+    """test ResultsDialog.run_compare()
+    
+    """
+    #===========================================================================
+    # setup
+    #===========================================================================
+    dial._change_tab('tab_Compare')
+    
+    #set the control files
+    dial.lineEdit_C_cf_1.setText(cf_fp)
+    dial.lineEdit_C_cf_2.setText(cf_fp2)
+    
+    #turn the plots on
+    dial.checkBox_C_ari.setChecked(True)
+    dial.checkBox_C_aep.setChecked(True)
+    
+    #turn the control file comparison on
+    dial.checkBox_C_cf.setChecked(True)
+    
+    #===========================================================================
+    # test
+    #===========================================================================
+    QTest.mouseClick(dial.pushButton_C_compare, Qt.LeftButton) #ResultsDialog.run_compare()
+    
+    #===========================================================================
+    # validate
+    #===========================================================================
+    assert os.path.exists(dial.comparison_df_ofp)
+    
+ 
 
 
 
