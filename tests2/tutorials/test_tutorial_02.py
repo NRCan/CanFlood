@@ -249,7 +249,7 @@ def test_tutorial_02a(session, true_dir, tmp_path, write, absolute_fp, logger):
     
     dial._change_tab('tab_setup')
     
-    dial.radioButton.setChecked(True) #save plots to file
+    dial.radioButton_s_saveToFile.setChecked(True) #save plots to file
     dial.comboBox_JGfinv.setCurrentIndex(-1) #clear finv
     if absolute_fp:
         dial.radioButton_SS_fpAbs.setChecked(True)
@@ -332,7 +332,7 @@ def test_tutorial_02a(session, true_dir, tmp_path, write, absolute_fp, logger):
 
     dial.lineEdit_cf_fp.setText(dial.get_cf_fp())
     
-    dial.radioButton.setChecked(True) #save plots to file
+    dial.radioButton_s_saveToFile.setChecked(True) #save plots to file
     dial.checkBox_SSoverwrite.setChecked(True) #set to true to prevent run_reporter crash
     
     #===========================================================================

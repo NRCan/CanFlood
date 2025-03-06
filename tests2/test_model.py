@@ -63,7 +63,7 @@ def dial(session, cf_fp): #configured dialog
     #set the control file
     dial.lineEdit_cf_fp.setText(cf_fp)
     
-    dial.radioButton.setChecked(True) #save plots to file
+    dial.radioButton_s_saveToFile.setChecked(True) #save plots to file
     dial.comboBox_JGfinv.setCurrentIndex(-1) #clear finv
     
     return dial

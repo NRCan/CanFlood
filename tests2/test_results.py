@@ -103,7 +103,7 @@ def test_results_00_init(dial):
     
     assert hasattr(dial, 'logger')
 
-
+@pytest.mark.dev
 @pytest.mark.parametrize('dialogClass',[ResultsDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_02_r2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True) #from build test_07
 @pytest.mark.parametrize('plt_window',[True, False])
@@ -112,6 +112,7 @@ def test_results_01_riskPlot(dial, cf_fp, plt_window): #test risk plots
 
     QTest.mouseClick(dial.pushButton_RP_plot, Qt.LeftButton) #ResultsDialog.run_plotRisk()
 
+    assert dial.plt_window==plt_window
     if not plt_window:
         # Check if there is any .svg file in the out_dir
         svg_files = [e for e in os.listdir(dial.out_dir) if e.endswith('.svg')]
@@ -198,7 +199,9 @@ def res_02_reporter(dial, finv_fp=None, vsect_cnt = 5):
     #===========================================================================
     # build report
     #===========================================================================
-    QTest.mouseClick(dial.pushButton_rpt_create, Qt.LeftButton)
+    QTest.mouseClick(dial.pushButton_rpt_create, Qt.LeftButton) #ResultsDialog.run_reporter()
+    if not hasattr(dial, 'report'):
+        fail('failed to build report')
     report = dial.report
     #===========================================================================
     # validate
