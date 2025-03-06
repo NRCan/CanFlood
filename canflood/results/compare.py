@@ -135,9 +135,9 @@ class Cmpr(RiskPlotr):
         for i,(tag, fp) in enumerate(fps_d.items()):
             log.debug('loading %i/%i'%(i+1, len(fps_d)))
 
-            # build/load the children
+            # build/load the children. call model.modcom.Model.setup()
             sWrkr = Scenario(self, cf_fp=fp, absolute_fp=self.absolute_fp, 
-                             base_dir=os.path.dirname(fp), tag=tag).setup()
+                             base_dir=os.path.dirname(fp), tag=tag, logger=log).setup()
 
 
             # add to family
@@ -427,10 +427,7 @@ class Scenario(RiskPlotr): #simple class for a scenario
     cfPars_d = None
     
     #plotting variables
-    """
-    plt.show()
-    moved to Model
-    """
+ 
     
     out_funcs_d = { #data tag:function that outputs it
         'r_ttl':'output_ttl'

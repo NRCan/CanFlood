@@ -662,7 +662,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             ofp = os.path.join(wrkr.out_dir, 'CFcompare_%s_%i.csv'%(wrkr.tag, len(mdf.columns)))
             mdf.to_csv(ofp)
             self.comparison_df_ofp = ofp #attach for testing
-            log.info(f'wrote comparison {str(mdf.shape)} to \    %s'%ofp)
+            log.info(f'wrote comparison {str(mdf.shape)} to \n    %s'%ofp)
         
         self.feedback.setProgress(70)
         #=======================================================================
