@@ -637,6 +637,8 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
         #plot window
         if hasattr(self, 'radioButton_s_pltW'):
             self.plt_window = self.radioButton_s_pltW.isChecked()
+            if self.plt_window:
+                assert not self.radioButton_s_saveToFile.isChecked(), 'not set up for saving to file'
             
         #qgis handles
         self.crs = self.qproj.crs()
@@ -765,12 +767,13 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
         #=======================================================================
         else:
             log.debug(f'launching matplotlib window on {fig}')
-            """not working"""
-            app = PltWindow(fig, out_dir=out_dir)
-            app.show()
-            log.info('launched matplotlib window on %s'%fig._suptitle.get_text())
-            app.activateWindow()
-            app.raise_()
+ 
+            window = PltWindow(fig, out_dir=out_dir, parent=self.iface.mainWindow())
+            window.show()
+            log.info('launched matplotlib window on %s' % fig._suptitle.get_text())
+            window.activateWindow()
+            window.raise_()
+            
             
         
         

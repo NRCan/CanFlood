@@ -376,7 +376,7 @@ p, li { white-space: pre-wrap; }
                  </widget>
                 </item>
                 <item>
-                 <widget class="QRadioButton" name="radioButton">
+                 <widget class="QRadioButton" name="radioButton_s_saveToFile">
                   <property name="text">
                    <string>Save to file</string>
                   </property>

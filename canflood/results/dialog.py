@@ -420,17 +420,20 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         return output
     
     def run_plotRisk(self,
-                     plt_window=None,
-                     ): #single risk plot of total results
+                     #plt_window=None,
+                     ):
+        """#single risk plot of total results"""
         log = self.logger.getChild('run_plotRisk')
         log.info('user pushed \'plotRisk\'')
+        
         
         #=======================================================================
         # collect inputs
         #=======================================================================
         self._set_setup(set_cf_fp=True)
-
+        plt_window=self.plt_window
             
+        log.debug(f'plt_window: {plt_window}')
         #=======================================================================
         # setup and load
         #=======================================================================

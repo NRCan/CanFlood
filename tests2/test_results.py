@@ -38,7 +38,7 @@ def crs():
 
 
 @pytest.fixture(scope='function')
-def dial(session, cf_fp): #configured dialog
+def dial(session, cf_fp, plt_window): #configured dialog
     
     dial = session.Dialog
     
@@ -71,7 +71,10 @@ def dial(session, cf_fp): #configured dialog
     #set the control file
     dial.lineEdit_cf_fp.setText(cf_fp)
     
-    dial.radioButton.setChecked(True) #save plots to file
+    if plt_window:
+        dial.radioButton_s_pltW.setChecked(True) #plot to window\
+    else:
+        dial.radioButton_s_saveToFile.setChecked(True) #save plots to file
     dial.checkBox_SSoverwrite.setChecked(False)
     
     return dial
@@ -82,6 +85,7 @@ def dial(session, cf_fp): #configured dialog
 #===============================================================================
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_02_r2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True) 
 @pytest.mark.parametrize('dialogClass',[ResultsDialog], indirect=True)
+@pytest.mark.parametrize('plt_window',[False])
 def test_results_00_init(dial):
     """test ResultsDialog init
     
@@ -102,21 +106,24 @@ def test_results_00_init(dial):
 
 @pytest.mark.parametrize('dialogClass',[ResultsDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_02_r2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True) #from build test_07
-def test_results_01_riskPlot(dial, cf_fp): #test risk plots
+@pytest.mark.parametrize('plt_window',[True, False])
+def test_results_01_riskPlot(dial, cf_fp, plt_window): #test risk plots
     dial._change_tab('tab_riskPlot')
 
     QTest.mouseClick(dial.pushButton_RP_plot, Qt.LeftButton) #ResultsDialog.run_plotRisk()
 
-    # If an SVG is created, we can assume that the plotter has completed
-    svg_fp = os.path.join(dial.out_dir, [e for e in os.listdir(dial.out_dir) if e.endswith('.svg')][0])
-
-    if os.path.exists(svg_fp):
-        pass
-    else:
-        fail('Failed to create risk plot svg')
+    if not plt_window:
+        # Check if there is any .svg file in the out_dir
+        svg_files = [e for e in os.listdir(dial.out_dir) if e.endswith('.svg')]
+        
+        if svg_files:
+            pass
+        else:
+            fail('Failed to create risk plot svg')
         
         
 @pytest.mark.parametrize('dialogClass',[ResultsDialog], indirect=True)
+@pytest.mark.parametrize('plt_window',[False])
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_02_r2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True) #base cf for init
 @pytest.mark.parametrize('cf_fp2',[os.path.join(test_dir, 'test_results_02_runcompare','model_1', 'CanFlood_test_01.txt')], )
 @pytest.mark.parametrize('cf_fp3',[os.path.join(test_dir, 'test_results_02_runcompare','model_2', 'CanFlood_test_01.txt')], )

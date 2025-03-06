@@ -407,7 +407,7 @@ p, li { white-space: pre-wrap; }
                  </widget>
                 </item>
                 <item>
-                 <widget class="QRadioButton" name="radioButton">
+                 <widget class="QRadioButton" name="radioButton_s_saveToFile">
                   <property name="toolTip">
                    <string>When plots are generated, just save a default version straight to file</string>
                   </property>
@@ -3892,7 +3892,7 @@ p, li { white-space: pre-wrap; }
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>96</width>
+                   <width>98</width>
                    <height>500</height>
                   </rect>
                  </property>
@@ -6022,9 +6022,9 @@ QLabel {
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="buttonGroup_ELfmt"/>
   <buttongroup name="buttonGroup_LS_rels"/>
-  <buttongroup name="buttonGroup_S_filepaths"/>
+  <buttongroup name="buttonGroup_ELfmt"/>
   <buttongroup name="buttonGroup_EV_eventRels"/>
+  <buttongroup name="buttonGroup_S_filepaths"/>
  </buttongroups>
 </ui>
