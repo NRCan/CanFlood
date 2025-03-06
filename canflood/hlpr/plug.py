@@ -727,7 +727,7 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
         if plt_window is None: plt_window=self.plt_window
         if logger is None: logger=self.logger
         log = logger.getChild('output_fig')
-        
+        assert isinstance(plt_window, bool)
         #=======================================================================
         # precheck
         #=======================================================================
@@ -738,6 +738,7 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
         # save file
         #======================================================================
         if not plt_window:
+            log.debug(f'writing figure to file')
             #file setup
             if fname is None:
                 try:
@@ -763,6 +764,7 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
         # launch window
         #=======================================================================
         else:
+            log.debug(f'launching matplotlib window on {fig}')
             """not working"""
             app = PltWindow(fig, out_dir=out_dir)
             app.show()

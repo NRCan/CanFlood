@@ -5,11 +5,16 @@ Created on Jun. 26, 2022
 
 unit tests for CanFlood's 'results' toolset
 '''
+
+import pandas as pd
+import pytest, os, shutil, sys
+
+
 from qgis.core import (
     QgsCoordinateReferenceSystem, QgsVectorLayer, QgsProject, QgsReport, QgsReportSectionLayout,
  
     )
-from PyQt5.Qt import Qt
+from PyQt5.Qt import Qt, QApplication
 from PyQt5.QtTest import QTest
 from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
  
@@ -18,8 +23,7 @@ from pytest import fail
 from pytest_qgis.utils import clean_qgis_layer
 
 from canflood.results.dialog import ResultsDialog
-import pandas as pd
-import pytest, os, shutil
+
 
 
 #===============================================================================
@@ -28,6 +32,7 @@ import pytest, os, shutil
 @pytest.fixture(scope='module')
 def crs():
     return QgsCoordinateReferenceSystem('EPSG:3005')
+
 
 
 @pytest.fixture(scope='function')
@@ -73,12 +78,30 @@ def dial(session, cf_fp): #configured dialog
 #===============================================================================
 # tests---------
 #===============================================================================
+@pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_02_r2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True) 
+@pytest.mark.parametrize('dialogClass',[ResultsDialog], indirect=True)
+def test_00_init(dial):
+    """test ResultsDialog init
+    
+    not setup in the best way... need to pass all the params
+    """
+    
+    """uncomment the below to use pytest to launch the dialog interactively"""
+    dial.show()
+    QApp = QApplication(sys.argv) #initlize a QT appliaction (inplace of Qgis) to manually inspect    
+    sys.exit(QApp.exec_()) #wrap
+ 
+ 
+    
+    assert hasattr(dial, 'logger')
+
+
 @pytest.mark.parametrize('dialogClass',[ResultsDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_02_r2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True) #from build test_07
-def test_res_01_riskPlot(dial, cf_fp): #test risk plots
+def test_01_riskPlot(dial, cf_fp): #test risk plots
     dial._change_tab('tab_riskPlot')
 
-    QTest.mouseClick(dial.pushButton_RP_plot, Qt.LeftButton)
+    QTest.mouseClick(dial.pushButton_RP_plot, Qt.LeftButton) #ResultsDialog.run_plotRisk()
 
     # If an SVG is created, we can assume that the plotter has completed
     svg_fp = os.path.join(dial.out_dir, [e for e in os.listdir(dial.out_dir) if e.endswith('.svg')][0])
@@ -92,7 +115,6 @@ def test_res_01_riskPlot(dial, cf_fp): #test risk plots
 
 """test is crashing"""
 @pytest.mark.dev
-@pytest.mark.parametrize('dialogClass',[ResultsDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_02_r2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True) #from build test_07
 @pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.geojson'], indirect=True)
 def xxx_test_res_02_pdf_report(dial, finv_fp):
