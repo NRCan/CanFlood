@@ -1294,7 +1294,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
             
         return psmp_stat, psmp_fieldName, as_inun, dtm_rlay, dthresh
         
-    def run_lisamp(self): #liklihood polygon sampling
+    def run_lisamp(self, plt_window=None): #liklihood polygon sampling
         
         self.logger.info('user pressed \'run_lisamp\'')
         
@@ -1303,6 +1303,8 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         # assemble/prepare inputs
         #=======================================================================
         self.set_setup()
+        if plt_window is None: 
+            plt_window=self.plt_window
  
         
         lfield = self.mFieldComboBox_LSfn.currentField()
@@ -1355,7 +1357,7 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #save csv results to file
         wrkr.write_res(res_df)
         
-        #update ocntrol file
+        #update control file
         wrkr.update_cf()
         
         #=======================================================================
@@ -1363,12 +1365,12 @@ class BuildDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         if self.checkBox_LS_hist.isChecked():
             fig = wrkr.plot_hist()
-            self.output_fig(fig)
+            self.output_fig(fig, plt_window=plt_window)
 
             
         if self.checkBox_LS_box.isChecked():
             fig = wrkr.plot_boxes()
-            self.output_fig(fig)
+            self.output_fig(fig, plt_window=plt_window)
         
         #======================================================================
         # add to map

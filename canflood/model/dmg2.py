@@ -1570,7 +1570,6 @@ class Dmg2(Model, DFunc, Plotr):
         result =  self.plot_impact_boxes(df,
                       title=title, xlab = 'hazard event raster', ylab = impact_name,
                        val_str=self.val_str, **kwargs)
-        self.plt.show()
         
         return result
             
@@ -1595,8 +1594,7 @@ class Dmg2(Model, DFunc, Plotr):
         result =  self.plot_impact_hist(df,
                       title=title, xlab = impact_name,
                        val_str=self.val_str, **kwargs)
-        
-        self.plt.show()
+
         
         return result
             

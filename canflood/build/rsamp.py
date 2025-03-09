@@ -1781,7 +1781,6 @@ class Rsamp(Plotr, Qcoms):
                      title=title, xlab = 'raster value',
 
                      val_str=self.val_str, **kwargs)
-        self.plt.show()
         
         return result
         
@@ -1800,7 +1799,6 @@ class Rsamp(Plotr, Qcoms):
                      title=title, xlab = 'hazard layer', ylab = 'raster value',
                      smry_method='mean',
                      val_str=self.val_str,   **kwargs)
-        self.plt.show()
         
         return result
         

@@ -622,7 +622,6 @@ class LikeSampler(Plotr, Qcoms):
                      title=title, xlab = 'Pfail',
                      xlims_t = (0, 1.0),
                      val_str=self.val_str, **kwargs)
-        self.plt.show();
         
         return result
         
@@ -641,7 +640,6 @@ class LikeSampler(Plotr, Qcoms):
                      title=title, xlab = 'hazard layer', ylab = 'Pfail',
                      ylims_t = (0, 1.0),smry_method='mean',
                      val_str=self.val_str,   **kwargs)
-        self.plt.show()
         
         return result
         
