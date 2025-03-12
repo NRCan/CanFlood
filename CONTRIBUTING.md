@@ -68,5 +68,6 @@ only the source directory should be included (`./CanFlood` not `./CanFlood/canfl
 ```python
 #user's test data location
 test_data_dir = r'l:\09_REPOS\04_TOOLS\CanFlood\tests2\data'
+tutorial_data_dir = r'l:\09_REPOS\04_TOOLS\CanFlood\tutorials'
 ```
 
