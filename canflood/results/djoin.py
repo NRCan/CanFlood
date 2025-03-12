@@ -29,12 +29,12 @@ from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProj
 # # custom
 #==============================================================================
 
-from hlpr.exceptions import QError as Error
+from canflood.hlpr.exceptions import QError as Error
     
 
-from hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata, view
-#from hlpr.basic import *
-from model.modcom import Model
+from canflood.hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata, view
+#from canflood.hlpr.basic import *
+from canflood.model.modcom import Model
 
 #==============================================================================
 # functions-------------------

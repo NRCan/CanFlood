@@ -24,9 +24,8 @@ import numpy as np
 
 mod_logger = logging.getLogger('common') #get the root logger
 
-from hlpr.exceptions import QError as Error
-    
-from hlpr.basic import ComWrkr, view
+from canflood.hlpr.exceptions import QError as Error    
+from canflood.hlpr.basic import ComWrkr, view
 
 
 #==============================================================================
@@ -73,6 +72,7 @@ class Model(ComWrkr,
             'impact_units':str,
             'apply_miti':bool,
             'curve_deviation':str,
+            'absolute_fp':bool,
             },
         'dmg_fps':{
             'curves':str,
@@ -351,9 +351,22 @@ class Model(ComWrkr,
         self.pars = configparser.ConfigParser(inline_comment_prefixes='#')
         log.info('reading parameters from \n     %s'%self.pars.read(cf_fp))
         
+        
+        
         #=======================================================================
         # filepaths
         #=======================================================================
+        #set absolute_fp flag
+        """need to do this one early to do the file path checking"""
+        
+        
+        if 'absolute_fp' in self.pars['parameters']:
+            absolute_fp = self.pars['parameters'].getboolean('absolute_fp')
+            if not self.absolute_fp==absolute_fp:
+                log.warning(f'overwriting \'absolute_fp\' with value from control file ({absolute_fp})')
+            self.absolute_fp=absolute_fp
+        
+        
         if not self.absolute_fp:
             log.info('converting relative filepaths')
             self.pars = self._cf_relative(self.pars)
@@ -544,23 +557,30 @@ class Model(ComWrkr,
                 log.debug('%s.%s:    %s'%(sectName, varName, valRaw))
                 if valRaw == '': continue #skip blanks
                 
-                if os.path.exists(valRaw):
-                    """switchged to warning... some tools may not use this fp"""
-                    log.warning(('%s.%s passed abosolute_fp=False but fp exists \n    %s'%(
-                        sectName, varName, valRaw)))
-                    continue
-                else:
+                #===============================================================
+                # if os.path.exists(valRaw):
+                #     """switchged to warning... some tools may not use this fp"""
+                #     log.warning(('%s.%s passed abosolute_fp=False but fp exists \n    %s'%(
+                #         sectName, varName, valRaw)))
+                #     continue
+                # else:
+                # 
+                #     #get the absolute filepath
+                #     fp = os.path.join(base_dir, valRaw)
+                #     """don't bother... some models may not use all the fps
+                #     better to let the check with handles catch things
+                #     assert os.path.exists(fp), '%s.%s not found'%(sectName, varName)"""
+                #     if not os.path.exists(fp) and warn:
+                #         log.warning('%s.%s got bad fp: %s'%(sectName, varName, fp))
+                #===============================================================
                 
-                    #get the absolute filepath
-                    fp = os.path.join(base_dir, valRaw)
-                    """don't bother... some models may not use all the fps
-                    better to let the check with handles catch things
-                    assert os.path.exists(fp), '%s.%s not found'%(sectName, varName)"""
-                    if not os.path.exists(fp) and warn:
-                        log.warning('%s.%s got bad fp: %s'%(sectName, varName, fp))
+                fp_aboslute = os.path.join(base_dir, valRaw)
+                if not os.path.exists(fp_aboslute) and warn:
+                    log.warning('%s.%s got bad fp: %s'%(sectName, varName, fp_aboslute))
+                
                 
                 #set it
-                res_d[sectName][varName]=fp
+                res_d[sectName][varName]=fp_aboslute
                 
         #=======================================================================
         # set the new values
@@ -591,7 +611,22 @@ class Model(ComWrkr,
                    optional=False, #whether the parameters are optional
                    ):
         """
+        check the parameters against some expectations
         
+        Params
+        ----------
+        cpars: configparser.ConfigParser object
+            loaded control file
+        
+        chk_d: dict
+            expectations
+            {'parameters': {'name': {'type': <class 'str'>}, 'cid': {'type': <class 'str'>}, '
+            
+            from parameter expectation dictionaries (set on each model object)
+                mandatory parameters: self.exp_pars_md
+                optional parameters: self.exp_pars_op
+                
+            
         """
         
         log = self.logger.getChild('cf_chk_pars')
@@ -649,7 +684,7 @@ class Model(ComWrkr,
                 try: #attempt to tpye set, better error reporting/catching
                     pval = self._get_from_cpar(cpars, sectName, varName, logger=log) #get the typeset variable
                     
-                except Exception as e: #failed to even typeset... mark as an error and move forward
+                except Exception as e:  
                     errors.append(e)
                     continue
                 
@@ -666,8 +701,8 @@ class Model(ComWrkr,
                         
                 else: #expected some value
                 
-                    try:
-                        _ = self._par_hndl_chk(sectName, varName, pval, achk_d, logger=log) #check with handles
+                    try: #check with handles
+                        _ = self._par_hndl_chk(sectName, varName, pval, achk_d, logger=log) 
                     except Exception as e:
                         errors.append(e)
                     
@@ -681,13 +716,7 @@ class Model(ComWrkr,
                       cpars):
         
         assert isinstance(cpars, configparser.ConfigParser)
-#===============================================================================
-#         errors = []
-# 
-#         for chk_d, opt_f in ((self.exp_pars_md,False), (self.exp_pars_op,True)):
-#             _, l = self.cf_chk_pars(cpars, copy.copy(chk_d), optional=opt_f)
-#             errors = errors + l
-#===============================================================================
+ 
             
         #=======================================================================
         # mandatory
@@ -747,7 +776,7 @@ class Model(ComWrkr,
                 continue
             
             #check it
-            assert os.path.exists(fp), '\'%s\' got pad filepath: \n    %s'%(dtag, fp)
+            assert os.path.exists(fp), '\'%s\' got bad filepath: \n    %s'%(dtag, fp)
             
             #load by type
             ext = os.path.splitext(fp)[1]
@@ -758,7 +787,7 @@ class Model(ComWrkr,
                 data = pd.read_excel(fp, **d)
                 log.info('loaded %s w/ %i sheets'%(dtag, len(data)))
             else:
-                raise Error('unrecognized filetype: %s'%ext)
+                raise Error(f'unrecognized extension for \'{dtag}\': %s'%ext)
                 
             self.raw_d[dtag] = data
             
@@ -1121,9 +1150,9 @@ class Model(ComWrkr,
             assert len(miss_l) == 0, '%i eventName mismatch on \'%s\' and \'evals\': \n    %s'%(
                 len(miss_l), dtag, miss_l)
             
-            boolcol = ~pd.Series(index=df.columns, dtype=bool) #all trues
+            boolcol = pd.Series(True, index=df.columns, dtype=bool) #all trues
         
- 
+        assert boolcol.any()
         #======================================================================
         # slice
         #======================================================================
@@ -1162,7 +1191,7 @@ class Model(ComWrkr,
             """forcing this becuase %inundation should never add ground elevations"""
             assert self.felv =='datum', 'felv must equal \'datum\' for pct inundation runs'
 
-        
+        assert len(df.columns)>0
         return df
         
 
@@ -1406,7 +1435,7 @@ class Model(ComWrkr,
 
         bdf = None
         
-        for prefix, fcolsi_df in finv_cdf.drop('ctype', axis=0).dropna(axis=1).T.groupby('nestID', axis=0):
+        for prefix, fcolsi_df in finv_cdf.drop('ctype', axis=0).dropna(axis=1).T.groupby('nestID'):
 
 
             #get slice and clean
@@ -1422,7 +1451,8 @@ class Model(ComWrkr,
             if bdf is None:
                 bdf = df
             else:
-                bdf = bdf.append(df, ignore_index=True, sort=False)
+                #bdf = bdf.append(df, ignore_index=True, sort=False)
+                bdf = pd.concat([bdf, df], ignore_index=True, sort=False)
                         
             log.info('for \"%s\' got %s'%(prefix, str(df.shape)))
             
@@ -1579,7 +1609,7 @@ class Model(ComWrkr,
 
 
         wdf = self.data_d['expos'] #wsl
-
+        assert len(wdf.columns)>0, f'no expos'
         #======================================================================
         # expand
         #======================================================================
@@ -2032,12 +2062,29 @@ class Model(ComWrkr,
     #==========================================================================
     # VALIDATORS-----------
     #==========================================================================+
-    def _par_hndl_chk(self, #check a parameter aginast provided handles
+    def _par_hndl_chk(self, 
                      sect, varnm, pval, achk_d,
-                     logger=None
+                     logger=None,
+                     absolute_fp=None,
                      ):
+        """check a parameter aginast provided handles
+        
+        called by cf_chk_pars() on each variable
+        
+        Params
+        -------
+        absolute_fp: bool, optional
+            flag to control whether or not filepath paramters are aboslute (vs. relative)
+            
+        
+        
+        
+        """
         
         if logger is None: logger=self.logger
+        if not hasattr(self, 'absolute_fp'):
+            raise AttributeError(f'object {self.__name__} missing attribute \'absolute_fp\'')
+        if absolute_fp is None: absolute_fp=self.absolute_fp
         log = logger.getChild('par_hndl_chk')
         
         #=======================================================================
@@ -2063,11 +2110,23 @@ class Model(ComWrkr,
                 assert isinstance(hvals, tuple), '%s.%s got bad type on hvals: %s'%(sect, varnm, type(hvals))
                 assert pval in hvals, '%s.%s unexpected value: \'%s\''%(sect, varnm, pval)
             
+            #===================================================================
+            # filepaths
+            #===================================================================
             elif chk_hndl == 'ext':
+                
+                #basic checks
                 assert isinstance(pval, str), '%s.%s expected a filepath '%(sect, varnm)
                 if pval == '':
                     raise Error('must provided a valid \'%s.%s\' filepath'%(sect, varnm))
-                assert os.path.exists(pval), '%s.%s passed invalid filepath: \'%s\''%(sect, varnm, pval)
+                
+                
+                #handl relative filepaths
+                if not absolute_fp:
+                    if not os.path.exists(pval):
+                        pval = os.path.join(self.cf_dir, pval)               
+                        
+                assert os.path.exists(pval), f'%s.%s passed invalid filepath (absolute_fp={absolute_fp}):\n    %s'%(sect, varnm, pval)
                 
                 ext = os.path.splitext(os.path.split(pval)[1])[1]
 
@@ -2088,22 +2147,23 @@ class Model(ComWrkr,
     
 
                 
-    def validate(self, #validate this model object
-                 cpars, #initilzied config parser
-                    #so a session can pass a control file... rather than usin gthe workers init
-                 logger=None,
-                 ):
+    def validate(self, cpars, logger=None,):
+        
+        """run all validation checks on this model 
+        only 1 check for now. check the control file expectations
+        
+        children could over-write this method with custom validations
+        
+        Params
+        ---------
+        cpars: config parser
+            so a session can pass a control file... rather than usin gthe workers init
+         
+        """
         #if logger is None: logger=self.logger
+ 
         
-        """only 1 check for now"""
-        #=======================================================================
-        # check the control file expectations
-        #=======================================================================
-        errors = self._get_cf_miss(cpars)
-        
-        
-        
-        return errors
+        return self._get_cf_miss(cpars) #check the control file expectations
         
     def check_attrimat(self, #check the logic of the attrimat
                        atr_dxcol=None,
@@ -2375,18 +2435,64 @@ class Model(ComWrkr,
         # nests
         #=======================================================================
         dxcol = self._get_finv_dxcol(df_raw)
+        """
+        >>> dxcol
+                nestID    f0                              f1                       
+                bname    tag    scale         cap  elv   tag    scale      cap  elv
+                xid                                                                
+                14879   BA_S  117.990   91300.000  3.0  BA_C  117.990  20000.0  1.0
+                14880   BA_S  140.560  134000.000  3.0  BA_C  140.560  20000.0 -2.0
+                ...      ...      ...         ...  ...   ...      ...      ...  ...
+                74651   CA_S  137.619  139515.359  1.1  CA_C  137.619  15000.0  0.2
+                75511   CA_S  137.619  358502.594  3.0  CA_C  137.619  15000.0 -2.0
+                
+                [32 rows x 8 columns]
 
         """
-        view(df_raw)
-        df_raw.dtypes
-        view(dxcol)
-        dxcol.dtypes
-        """
+
+ 
         #===================================================================
         # loop and check each nest----
         #===================================================================
-        for nestID, dfn in dxcol.groupby(level=0, axis=1):
-            dfn = dfn.droplevel(0, axis=1).dropna(how='all', axis=0)
+        
+#===============================================================================
+#         for nestID, dfn in dxcol.groupby(level=0, axis=1):
+#  
+# 
+#             dfn = dfn.droplevel(0, axis=1).dropna(how='all', axis=0)
+#             """
+#             bname   tag    scale         cap  elv
+#             xid                                  
+#             14879  BA_S  117.990   91300.000  3.0
+#             14880  BA_S  140.560  134000.000  3.0
+#             ...     ...      ...         ...  ...
+#             74651  CA_S  137.619  139515.359  1.1
+#             75511  CA_S  137.619  358502.594  3.0
+#             
+#             """
+#===============================================================================
+            
+            # Group by the first level of the column MultiIndex without using axis=1
+        for nestID in dxcol.columns.get_level_values(0).unique():
+            # Select columns belonging to the current nestID group
+            dfn = dxcol.loc[:, dxcol.columns.get_level_values(0) == nestID]
+ 
+            
+            # Remove the first level from the column MultiIndex
+            dfn.columns = dfn.columns.droplevel(0)
+            
+            # Drop rows where all values are NaN
+            dfn = dfn.dropna(how="all")
+            
+            
+            # Transpose back to restore the original orientation
+            #===================================================================
+            # dfn = dfn.T
+            # # Remove the first level from the column MultiIndex
+            # dfn.columns = dfn.columns.droplevel(0)
+            # # Drop rows where all values are NaN
+            # dfn = dfn.dropna(how="all")
+            #===================================================================
                 
             #===================================================================
             # with handles
@@ -2431,15 +2537,56 @@ class Model(ComWrkr,
         
         return True
     
-    def _get_finv_dxcol(self, #get finv as a dxcol
-                             df):
+    def _get_finv_dxcol(self,df):
         """
-        todo: transition everything to dxcols
-        """
-        dtypes = df.dtypes
-        cdf, prefix_l = self._get_finv_cnest(df)
+        get finv as a dxcol
         
-        df_c = cdf.append(df).dropna(subset=['nestID'], axis=1, how='any').drop('ctype')
+        
+        todo: transition everything to dxcols
+        
+        Parameters
+        --------------
+        pd.DataFrame
+            finv
+                      f0_tag  f0_scale      f0_cap  f0_elv f1_tag  f1_scale   f1_cap  f1_elv
+                xid                                                                         
+                14879   BA_S   117.990   91300.000     3.0   BA_C   117.990  20000.0     1.0
+                14880   BA_S   140.560  134000.000     3.0   BA_C   140.560  20000.0    -2.0
+                ...      ...       ...         ...     ...    ...       ...      ...     ...
+                74651   CA_S   137.619  139515.359     1.1   CA_C   137.619  15000.0     0.2
+                75511   CA_S   137.619  358502.594     3.0   CA_C   137.619  15000.0    -2.0
+                
+                
+        Returns
+        ----------
+        pd.DataFrame (multi-index on columns)
+            nestID    f0                              f1                       
+            bname    tag    scale         cap  elv   tag    scale      cap  elv
+            xid                                                                
+            14879   BA_S  117.990   91300.000  3.0  BA_C  117.990  20000.0  1.0
+            14880   BA_S  140.560  134000.000  3.0  BA_C  140.560  20000.0 -2.0
+            ...      ...      ...         ...  ...   ...      ...      ...  ...
+            74651   CA_S  137.619  139515.359  1.1  CA_C  137.619  15000.0  0.2
+            75511   CA_S  137.619  358502.594  3.0  CA_C  137.619  15000.0 -2.0
+        
+        """
+        
+        #=======================================================================
+        # load variables
+        #=======================================================================
+        dtypes = df.dtypes
+        cdf, _ = self._get_finv_cnest(df) #load extracted codes from column headers
+        
+        """
+        >>> cdf
+                   f0_tag f0_scale f0_cap f0_elv f1_tag f1_scale f1_cap f1_elv
+            ctype    nest     nest   nest   nest   nest     nest   nest   nest
+            nestID     f0       f0     f0     f0     f1       f1     f1     f1
+            bname     tag    scale    cap    elv    tag    scale    cap    elv
+        
+        """
+        
+        df_c = pd.concat((cdf, df)).dropna(subset=['nestID'], axis=1, how='any').drop('ctype')
 
         
         #get multindex from two rows
@@ -2487,6 +2634,8 @@ class Model(ComWrkr,
         
         #update the control file
         if upd_cf:
+            if not self.absolute_fp: 
+                out_fp = os.path.relpath(out_fp, start=os.getcwd())
             self.set_cf_pars(
                     {
                     'results_fps':(
@@ -3038,5 +3187,21 @@ class DFunc(ComWrkr, #damage function or DFunc handler
         return True
 
     
+def assert_rttl_valid(df_raw, msg=''):
+    """check the total results are valid"""
+    
+    
+    if not __debug__: # true if Python was not started with an -O option
+        return
+    
+    __tracebackhide__ = True
+    
+    #clean to just values
+    df = df_raw.loc[df_raw.iloc[:, 0]!='ead', :].iloc[:, [0, 1]].astype(float)
+    
+    assert df['aep'].is_monotonic_decreasing, msg
+    assert np.all(np.diff(df.iloc[:, 1])>0), 'values must be increasing\n' + msg
+    
+ 
     
     

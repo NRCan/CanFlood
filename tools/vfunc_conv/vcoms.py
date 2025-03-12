@@ -10,13 +10,13 @@ import pandas as pd
 import numpy as np
 
 
-#from hlpr.logr import basic_logger
+#from canflood.hlpr.logr import basic_logger
 #mod_logger = basic_logger() 
-from hlpr.basic import force_open_dir, view, get_valid_filename
-from hlpr.exceptions import Error
+from canflood.hlpr.basic import force_open_dir, view, get_valid_filename
+from canflood.hlpr.exceptions import Error
 
-from misc.curvePlot import CurvePlotr
-#from model.modcom import DFunc
+from canflood.misc.curvePlot import CurvePlotr
+#from canflood.model.modcom import DFunc
 
 mod_name = 'misc.vcoms'
 today_str = datetime.datetime.today().strftime('%Y%m%d')

@@ -10,12 +10,12 @@ common methods for sensitivity analylsis
 #===============================================================================
 import os, datetime, pickle, copy, shutil, configparser
 
-from model.modcom import Model
+from canflood.model.modcom import Model
  
 
-from model.risk1 import Risk1
-from model.risk2 import Risk2
-from model.dmg2 import Dmg2
+from canflood.model.risk1 import Risk1
+from canflood.model.risk2 import Risk2
+from canflood.model.dmg2 import Dmg2
 
 
 

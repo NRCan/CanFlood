@@ -34,9 +34,9 @@ start = datetime.datetime.now()
 # cf helpers
 #===============================================================================
 #import hlpr.basic
-#from hlpr.logr import basic_logger
+#from canflood.hlpr.logr import basic_logger
  
-from hlpr.exceptions import Error
+from canflood.hlpr.exceptions import Error
 
 
 #===============================================================================
@@ -44,7 +44,7 @@ from hlpr.exceptions import Error
 #===============================================================================
 from wFlow.scripts import Session, WorkFlow, view
 
-from model.riskcom import RiskModel
+from canflood.model.riskcom import RiskModel
 
 
 #===============================================================================
@@ -574,7 +574,7 @@ class PolyL1_t(L1_t):
         super().__init__(**kwargs)
         
         self.pars_d.update({
-                'finv_fp':r'tutorials\4\finv_tut4a_polygons.gpkg',
+                'finv_fp':r'tutorials\4\finv_tut4a_polygons.geojson',
                         })
     
 class LineL1_t(L1_t):
@@ -587,7 +587,7 @@ class LineL1_t(L1_t):
         super().__init__(**kwargs)
         
         self.pars_d.update({
-                'finv_fp':r'tutorials\4\finv_tut4b_lines.gpkg',
+                'finv_fp':r'tutorials\4\finv_tut4b_lines.geojson',
                         })
 
 wFlow_l = [

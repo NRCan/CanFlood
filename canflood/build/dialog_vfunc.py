@@ -29,13 +29,13 @@ from PyQt5 import QtGui
 # custom imports
 #==============================================================================
 
-import hlpr.plug
-from hlpr.basic import get_valid_filename, view
-from hlpr.exceptions import QError as Error
-from hlpr.plug import MyFeedBackQ, QprojPlug, pandasModel
-from misc.curvePlot import CurvePlotr
+#import hlpr.plug
+from canflood.hlpr.basic import get_valid_filename, view
+from canflood.hlpr.exceptions import QError as Error
+from canflood.hlpr.plug import MyFeedBackQ, QprojPlug, pandasModel, plugLogger
+from canflood.misc.curvePlot import CurvePlotr
 
-from model.modcom import DFunc
+from canflood.model.modcom import DFunc
 
 #===============================================================================
 # logger
@@ -98,7 +98,7 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
         """setup to run outside qgis
         self.qproj_setup() #basic dialog worker setup"""
         
-        if plogger is None: plogger = hlpr.plug.plugLogger(self) 
+        if plogger is None: plogger = plugLogger(self) 
         self.logger=plogger
         
 

@@ -32,11 +32,11 @@ from PyQt5 import QtCore
 # custom imports
 #==============================================================================
 
-from hlpr.exceptions import QError as Error
-from hlpr.Q import MyFeedBackQ, Qcoms
-import hlpr.Q
-from hlpr.basic import force_open_dir, view, ComWrkr
-from hlpr.plt_qt import PltWindow
+from canflood.hlpr.exceptions import QError as Error
+from canflood.hlpr.Q import MyFeedBackQ, Qcoms, vlay_get_fdata
+#import hlpr.Q
+from canflood.hlpr.basic import force_open_dir, view, ComWrkr
+from canflood.hlpr.plt_qt import PltWindow
  
 
 #==============================================================================
@@ -555,7 +555,7 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
         
         return cf_fp
 
-    def get_cf_par(self, #load a parameter value from a controlFile path
+    def get_cf_par(self, #
                       cf_fp, #control file path
                       sectName='results_fps',
                       varName = 'r_ttl',
@@ -563,6 +563,8 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
                       logger=None,
                       ):
         """
+        load a parameter value from a controlFile path
+        
         wrapper for  _get_from_cpar()
             but loads the control file each time and 
         """
@@ -593,7 +595,9 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
         """
         return varType(pars[sectName][varName])
     
-    def _set_setup(self, set_cf_fp=True,): #attach parameters from setup tab
+    def _set_setup(self, set_cf_fp=True,): 
+        """attach parameters from setup tab
+        common for all dialogs"""
         
         inherit_fieldNames = ['logger', 'out_dir','tag', 'overwrite', 'absolute_fp', 'feedback']
         
@@ -603,6 +607,10 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
         
         assert not self.out_dir == '', 'must specify a working directory!'
         if not os.path.exists(self.out_dir): os.makedirs(self.out_dir)
+        
+        #file behavior
+        self.overwrite=self.checkBox_SSoverwrite.isChecked()
+        self.absolute_fp = self.radioButton_SS_fpAbs.isChecked()
         
         if set_cf_fp:
 
@@ -614,11 +622,13 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
             inherit_fieldNames.append('cf_fp')
             
             self.session.cf_fp = self.cf_fp #set for other dialogs
+            
+            #set working directory based on control file (self.cf_fp) location
+            if not self.absolute_fp:
+                os.chdir(os.path.dirname(os.path.abspath(self.cf_fp)))
 
         
-        #file behavior
-        self.overwrite=self.checkBox_SSoverwrite.isChecked()
-        self.absolute_fp = self.radioButton_SS_fpAbs.isChecked()
+
         
         #layer loading
         self.groupName = 'CanFlood.%s'%self.tag
@@ -627,6 +637,8 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
         #plot window
         if hasattr(self, 'radioButton_s_pltW'):
             self.plt_window = self.radioButton_s_pltW.isChecked()
+            if self.plt_window:
+                assert not self.radioButton_s_saveToFile.isChecked(), 'not set up for saving to file'
             
         #qgis handles
         self.crs = self.qproj.crs()
@@ -667,23 +679,27 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
             self.cid, fields_d[self.cid].typeName())
                 
         #unique values
-        cid_ser = hlpr.Q.vlay_get_fdata(self.finv_vlay, fieldn=self.cid, fmt='df', logger=log)
+        cid_ser = vlay_get_fdata(self.finv_vlay, fieldn=self.cid, fmt='df', logger=log)
         boolidx = cid_ser.duplicated(keep=False)
         if boolidx.any():
             log.debug('duplicated values \n%s'%cid_ser[boolidx])
             
             raise Error('passed finv cid=\'%s\' values contain %i duplicates... see logger'%(
                 self.cid, boolidx.sum()))
+            
+        return
         
 
-    def _change_tab(self, tabObjectName): #try to switch the tab on the gui
-        try:
-            tabw = self.tabWidget
-            index = tabw.indexOf(tabw.findChild(QWidget, tabObjectName))
-            assert index > 0, 'failed to find index?'
-            tabw.setCurrentIndex(index)
-        except Exception as e:
-            self.logger.error('failed to change to compile tab w/ \n    %s' % e)
+    #===========================================================================
+    # def _change_tab(self, tabObjectName): #try to switch the tab on the gui
+    #     try:
+    #         tabw = self.tabWidget
+    #         index = tabw.indexOf(tabw.findChild(QWidget, tabObjectName))
+    #         assert index > 0, 'failed to find index?'
+    #         tabw.setCurrentIndex(index)
+    #     except Exception as e:
+    #         self.logger.error('failed to change to compile tab w/ \n    %s' % e)
+    #===========================================================================
 
             
         
@@ -713,7 +729,7 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
         if plt_window is None: plt_window=self.plt_window
         if logger is None: logger=self.logger
         log = logger.getChild('output_fig')
-        
+        assert isinstance(plt_window, bool)
         #=======================================================================
         # precheck
         #=======================================================================
@@ -724,6 +740,7 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
         # save file
         #======================================================================
         if not plt_window:
+            log.debug(f'writing figure to file')
             #file setup
             if fname is None:
                 try:
@@ -749,12 +766,14 @@ class QprojPlug(QMenuAction): #baseclass for plugin dialogs
         # launch window
         #=======================================================================
         else:
-            """not working"""
-            app = PltWindow(fig, out_dir=out_dir)
-            app.show()
-            log.info('launched matplotlib window on %s'%fig._suptitle.get_text())
-            app.activateWindow()
-            app.raise_()
+            log.debug(f'launching matplotlib window on {fig}')
+ 
+            window = PltWindow(fig, out_dir=out_dir, parent=self.iface.mainWindow())
+            window.show()
+            log.info('launched matplotlib window on %s' % fig._suptitle.get_text())
+            window.activateWindow()
+            window.raise_()
+            
             
         
         

@@ -30,12 +30,12 @@ from qgis.core import QgsMapLayer, QgsMapLayerProxyModel, QgsProject
 #==============================================================================
 
 
-from hlpr.basic import get_valid_filename, view
-from hlpr.exceptions import QError as Error
+from canflood.hlpr.basic import get_valid_filename, view
+from canflood.hlpr.exceptions import QError as Error
 #import hlpr.plug
-from hlpr.plug import MyFeedBackQ, QprojPlug, pandasModel, bind_layersListWidget, bind_MapLayerComboBox
-from hlpr.plug import bind_link_boxes
-import hlpr.logr
+from canflood.hlpr.plug import MyFeedBackQ, QprojPlug, pandasModel, bind_layersListWidget, bind_MapLayerComboBox
+from canflood.hlpr.plug import bind_link_boxes
+#import hlpr.logr
 
 #===============================================================================
 # workers
@@ -299,7 +299,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.set_setup() #attach all the commons
         self.inherit_fieldNames.add('init_q_d')
         self.feedback.setProgress(5)
-        from misc.dikes.expo import Dexpo
+        from canflood.misc.dikes.expo import Dexpo
         #=======================================================================
         # collect inputs
         #=======================================================================
@@ -411,7 +411,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         log.debug('start')
         self.set_setup() #attach all the commons
         self.feedback.setProgress(5)
-        from misc.dikes.vuln import Dvuln
+        from canflood.misc.dikes.vuln import Dvuln
         #=======================================================================
         # collect inputs
         #=======================================================================
@@ -471,7 +471,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         self.set_setup() #attach all the commons
         self.inherit_fieldNames.add('init_q_d')
         self.feedback.setProgress(5)
-        from misc.dikes.rjoin import DikeJoiner
+        from canflood.misc.dikes.rjoin import DikeJoiner
         
         """no reason to build the layers if they won't be loaded"""
         assert self.loadRes, 'ensure \'Load Results to Canvas..\' is selected'

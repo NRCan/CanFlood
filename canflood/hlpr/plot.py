@@ -23,10 +23,10 @@ import qgis.core
 # # custom
 #==============================================================================
 
-from hlpr.exceptions import QError as Error
+from .exceptions import QError as Error
 
-from hlpr.basic import view
-from hlpr.basic import ComWrkr, view
+from .basic import view
+from .basic import ComWrkr, view
 
 
 class Plotr(ComWrkr):

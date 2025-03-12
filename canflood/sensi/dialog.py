@@ -19,17 +19,17 @@ from PyQt5.QtCore import Qt
 
 
 
-from hlpr.exceptions import QError as Error
+from canflood.hlpr.exceptions import QError as Error
 #===============================================================================
 # customs
 #===============================================================================
-import hlpr.plug
-import misc.expressionFunctions as expF
+from canflood.hlpr.plug import QprojPlug, bind_TableWidget
+import canflood.misc.expressionFunctions as expF
 
 import numpy as np
 import pandas as pd
-from hlpr.basic import view
-from hlpr.Q import vlay_get_fdf
+from canflood.hlpr.basic import view
+from canflood.hlpr.Q import vlay_get_fdf
 
 #===============================================================================
 # load qt ui
@@ -41,17 +41,16 @@ FORM_CLASS, _ = uic.loadUiType(ui_fp)
 #===============================================================================
 # Classes ---------
 #===============================================================================
-from sensi.coms import SensiShared
-from sensi.sbuild import SensiConstructor
-from sensi.srun import SensiSessRunner, SensiSessResults
+from canflood.sensi.coms import SensiShared
+from canflood.sensi.sbuild import SensiConstructor
+from canflood.sensi.srun import SensiSessRunner, SensiSessResults
 
-from model.modcom import Model #for data loading parameters
+from canflood.model.modcom import Model #for data loading parameters
 
  
  
 
-class SensiDialog(QtWidgets.QDialog, FORM_CLASS,  
-                       hlpr.plug.QprojPlug):
+class SensiDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
     
     colorMap = 'hsv' #cyclical
     
@@ -128,7 +127,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         # compile----
         #=======================================================================
         #bind custom methods to the table widget
-        hlpr.plug.bind_TableWidget(self.tableWidget_P, log)
+        bind_TableWidget(self.tableWidget_P, log)
          
         self.pushButton_P_addCand.clicked.connect(self.compile_add)
         self.pushButton_C_remove.clicked.connect(self.compile_remove)
@@ -140,7 +139,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         # run-----
         #=======================================================================
-        hlpr.plug.bind_TableWidget(self.tableWidget_R, log)
+        bind_TableWidget(self.tableWidget_R, log)
         
         self.pushButton_R_run.clicked.connect(self.run_RunSuite)
         
@@ -220,7 +219,7 @@ class SensiDialog(QtWidgets.QDialog, FORM_CLASS,
         #=======================================================================
         # Analyze----------
         #=======================================================================
-        hlpr.plug.bind_TableWidget(self.tableWidget_A, log)
+        bind_TableWidget(self.tableWidget_A, log)
         
         #pickel file
         self.pushButton_A_browse.clicked.connect(

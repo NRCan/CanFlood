@@ -30,11 +30,11 @@ from qgis.core import *
 
 
 
-import hlpr.plug
-#from hlpr.Q import vlay_get_fdf
+from canflood.hlpr.plug import QprojPlug
+#from canflood.hlpr.Q import vlay_get_fdf
 
-from hlpr.basic import get_valid_filename, force_open_dir 
-from hlpr.exceptions import QError as Error
+from canflood.hlpr.basic import get_valid_filename, force_open_dir 
+from canflood.hlpr.exceptions import QError as Error
 
 from .convert import RFDAconv
 
@@ -51,7 +51,7 @@ FORM_CLASS, _ = uic.loadUiType(ui_fp)
 # class objects-------
 #===============================================================================
 
-class RfdaDialog(QtWidgets.QDialog, FORM_CLASS, hlpr.plug.QprojPlug):
+class RfdaDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
     
     #action parameters
     icon_fn = 'rfda.png'

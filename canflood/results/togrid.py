@@ -33,9 +33,9 @@ from qgis.core import *
 # # custom
 #==============================================================================
 
-from hlpr.exceptions import QError as Error
+from canflood.hlpr.exceptions import QError as Error
     
-from hlpr.Q import Qcoms, view, vlay_get_fdf, vlay_rename_fields, vlay_get_fdata
+from canflood.hlpr.Q import Qcoms, view, vlay_get_fdf, vlay_rename_fields, vlay_get_fdata
 
 import processing  
 

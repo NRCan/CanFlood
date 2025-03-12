@@ -9,8 +9,8 @@ from io import BytesIO
 
 import requests, os, configparser, sys, locale
 import pandas as pd
-from hlpr.basic import view, force_open_dir
-from hlpr.exceptions import Error
+from canflood.hlpr.basic import view, force_open_dir
+from canflood.hlpr.exceptions import Error
 
 """couldnt get this to work
 r = requests.get('https://docs.google.com/spreadsheets/d/1CwoGkVlY6YPF3zb67BlJTKjeNr09Mez0f6c7EjPOmNg/edit?usp=sharing')

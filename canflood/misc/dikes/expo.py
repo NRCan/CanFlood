@@ -28,17 +28,17 @@ import processing
 #==============================================================================
 # custom imports
 #==============================================================================
-from hlpr.exceptions import QError as Error
+from canflood.hlpr.exceptions import QError as Error
     
 
-from hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata, view, stat_pars_d, \
+from canflood.hlpr.Q import Qcoms, vlay_get_fdf, vlay_get_fdata, view, stat_pars_d, \
     vlay_rename_fields
     
  
 
 from .dPlot import DPlotr
     
-#from hlpr.basic import get_valid_filename
+#from canflood.hlpr.basic import get_valid_filename
 
 #==============================================================================
 # functions-------------------

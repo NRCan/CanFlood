@@ -27,11 +27,11 @@ import pandas as pd
 # # custom
 #==============================================================================
 
-from hlpr.exceptions import QError as Error
+from canflood.hlpr.exceptions import QError as Error
 
-from hlpr.basic import view
-from model.riskcom import RiskModel
-#from hlpr.plot import Plotr
+from canflood.hlpr.basic import view
+from canflood.model.riskcom import RiskModel
+#from canflood.hlpr.plot import Plotr
 
 #==============================================================================
 # functions-------------------

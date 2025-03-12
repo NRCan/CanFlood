@@ -57,11 +57,16 @@ def basic_logger(root_lvl = logging.DEBUG,
     #===========================================================================
     logger = logging.getLogger() #get the root logger
     logging.config.fileConfig(logcfg_file) #load the configuration file
-    logger.info('root logger initiated and configured from file: %s'%(logcfg_file))
+    logger.info('root logger initiated and configured from file:\n    %s'%(logcfg_file))
     
     #override default level in the config file
     logger.setLevel(root_lvl)
     
+    # Retrieve filename and path of the file handler
+    for handler in logger.handlers:
+        if isinstance(handler, logging.FileHandler):
+            print(f"log file location: {handler.baseFilename}")  # Prints the file path
+        
 
 
     

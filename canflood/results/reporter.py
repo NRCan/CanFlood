@@ -14,10 +14,13 @@ import pandas as pd
 
 #Q imports
 from PyQt5.QtXml import QDomDocument
-from qgis.core import QgsPrintLayout, QgsReadWriteContext, QgsLayoutItemHtml, QgsLayoutFrame, \
-    QgsLayoutItemMap, QgsVectorLayer, QgsLayoutMultiFrame, QgsLayoutItemPicture, \
-    QgsReport, QgsLayout, QgsReportSectionLayout, QgsLayoutItemPage, QgsLayoutItemLabel, \
-    QgsLayoutItemAttributeTable, QgsVectorLayer, QgsField, QgsFeature, QgsProject
+from qgis.core import (
+    QgsPrintLayout, QgsReadWriteContext, QgsLayoutItemHtml, QgsLayoutFrame, 
+    QgsLayoutItemMap, QgsVectorLayer, QgsLayoutMultiFrame, QgsLayoutItemPicture, 
+    QgsReport, QgsLayout, QgsReportSectionLayout, QgsLayoutItemPage, QgsLayoutItemLabel, 
+    QgsLayoutItemAttributeTable, QgsVectorLayer, QgsField, QgsFeature, QgsProject,
+    QgsTextFormat,
+    )
  
 
 from PyQt5.QtCore import QRectF, QUrl, Qt, QVariant
@@ -28,12 +31,12 @@ from PyQt5 import QtGui
 #===============================================================================
 # customs
 #===============================================================================
-from hlpr.exceptions import QError as Error
-from hlpr.basic import view
+from canflood.hlpr.exceptions import QError as Error
+from canflood.hlpr.basic import view
  
-from hlpr.Q import Qcoms 
+from canflood.hlpr.Q import Qcoms 
  
-from results.riskPlot import RiskPlotr
+from canflood.results.riskPlot import RiskPlotr
 
 
 #==============================================================================
@@ -261,7 +264,8 @@ class ReportGenerator(RiskPlotr, Qcoms):
 
         #setting label styling options
         page_label.setText(text)
-        page_label.setFont(QFont("Ms Shell Dlg 2", 10))
+ 
+        page_label.setTextFormat(QgsTextFormat().fromQFont(QFont("Ms Shell Dlg 2", 10)))
         page_label.attemptSetSceneRect(qrect)
 
         #add page number label to body
@@ -364,7 +368,8 @@ class ReportGenerator(RiskPlotr, Qcoms):
         font.setPointSize(text_size)
         font.setBold(text_bold)
         font.setUnderline(text_underline)
-        label.setFont(font)
+ 
+        label.setTextFormat(QgsTextFormat().fromQFont(font))
         
         qlayout.addLayoutItem(label)
         
@@ -449,8 +454,7 @@ class ReportGenerator(RiskPlotr, Qcoms):
         if df is not None:
             #format table
             df.columns = map(str.upper, df.columns)
-            df.iloc[:, 1] = df.iloc[:, 1].map(lambda impact_val: self.impactFmtFunc(impact_val))
-            
+            df.iloc[:, 1] = df.iloc[:, 1].map(lambda impact_val: self.impactFmtFunc(impact_val)).astype(float)            
             #convert to layer
             df_layer = self.vlay_new_df2(df, layname='event_summary_table',
                                        logger=log)

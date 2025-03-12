@@ -5,7 +5,7 @@ Created on Feb. 21, 2022
 
  
 '''
-import os, shutil, sys, datetime, traceback
+import os, shutil, sys, datetime, traceback, logging
 import pytest
 import numpy as np
 from numpy.testing import assert_equal
@@ -19,14 +19,24 @@ from qgis.core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsWkbTypes,
     
 from PyQt5.QtWidgets import QApplication 
 from PyQt5.QtCore import QTimer
+from PyQt5.Qt import Qt
+from PyQt5.QtTest import QTest
+
 import processing
 
 
 import pytest_qgis #install check (needed by fixtures)
-"""TODO: use a virtual environment?"""
- 
 
-from wFlow.scripts import Session
+from tools.wFlow.scripts import Session
+
+from definitions import test_data_dir as test_dir
+
+#===============================================================================
+# test-wide params
+#===============================================================================
+#project repo source location ('L:\\09_REPOS\\04_TOOLS\\CanFlood')
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 
 def excepthook(exc_type, exc_value, exc_tb):
     tb = "".join(traceback.format_exception(exc_type, exc_value, exc_tb))
@@ -36,15 +46,16 @@ def excepthook(exc_type, exc_value, exc_tb):
 sys.excepthook = excepthook
  
 
-class Session_pytest(Session): #QGIS enabled session handler for testing dialogs
-    """see also
+class Session_pytest(Session): 
+    """QGIS enabled session handler for testing dialogs
+    
+    see also
     dial_coms.DTestSessionQ
     """
     iface=None
     finv_vlay=None
-    def __init__(self, 
-                 crs=None,logger=None,
-                  **kwargs):
+    def __init__(self, crs=None,logger=None,**kwargs):
+ 
         
         if logger is None:
             """unlike the wflow session, plugin loggers use special methods for interfacing with QGIS"""
@@ -55,15 +66,14 @@ class Session_pytest(Session): #QGIS enabled session handler for testing dialogs
  
         super().__init__(crsid = crs.authid(), logger=logger, 
                          #feedbac=MyFeedBackQ(logger=logger),
-                         **kwargs)  
-        
-        
+                         **kwargs)        
  
         self.logger.info('finished Session_pytest.__init__')
         
     def init_dialog(self,
                     DialogClass, iface=None,
                     ):
+        """init and launch the dialog for pytest"""
         
         if not iface is None:
             self.iface=iface
@@ -96,16 +106,21 @@ class Session_pytest(Session): #QGIS enabled session handler for testing dialogs
         #sys.exit() #wrap
         print('exiting DialTester')
         
+
+#===============================================================================
+# FIXTURES.FUNCTIONS-------
+#===============================================================================
+        
 @pytest.fixture(scope='function')
 def dialogClass(request): #always passing this as an indirect
     return request.param
 
 @pytest.fixture(scope='function')
-def finv_fp(base_dir, request): #always passing this as an indirect
+def finv_fp(request): #always passing this as an indirect
     return os.path.join(base_dir, request.param)
 
 @pytest.fixture(scope='function')
-def cf_fp(base_dir, request):
+def cf_fp(request):
     return os.path.join(base_dir, request.param)
  
 
@@ -123,6 +138,7 @@ def session(tmp_path,
     """TODO: fix logger"""
  
     np.random.seed(100)
+    print(f'tmp_path\n    {tmp_path}')
     
     #configure output
     out_dir=tmp_path
@@ -152,6 +168,41 @@ def session(tmp_path,
  
         yield ses
 
+
+
+
+@pytest.fixture(scope='function')
+def out_dir(tmp_path):
+    return tmp_path
+
+@pytest.fixture(scope='function')
+def test_name(request):
+    return request.node.name.replace('[','_').replace(']', '_')
+
+
+@pytest.fixture(scope='function')
+def true_dir(write, tmp_path):
+    true_dir = os.path.join(test_dir, os.path.basename(tmp_path))
+    if write:
+        if os.path.exists(true_dir):
+            try: 
+                shutil.rmtree(true_dir)
+                os.makedirs(true_dir) #add back an empty folder
+                #os.makedirs(os.path.join(true_dir, 'working')) #and the working folder
+            except Exception as e:
+                print('failed to cleanup the true_dir: %s w/ \n    %s'%(true_dir, e))
+        
+        """no... this is controlled with the out_dir on the session        
+        #not found.. create a fresh one
+        if not os.path.exists(true_dir):
+            os.makedirs(true_dir)"""
+
+    #assert os.path.exists(true_dir)
+    return true_dir
+
+#===============================================================================
+# FIXTURES.SESSIOn----------
+#===============================================================================
 @pytest.fixture(scope='session')
 def write():
  
@@ -161,21 +212,12 @@ def write():
     if write:
         print('WARNING!!! runnig in write mode')
     return write
-
-#===============================================================================
-# function.fixtures-------
-#===============================================================================
- 
- 
-#===============================================================================
-# session.fixtures----------
-#===============================================================================
  
 #===============================================================================
 # logger
 #===============================================================================
-from hlpr.plug import plugLogger
-from hlpr.logr import basic_logger
+from canflood.hlpr.plug import plugLogger
+from canflood.hlpr.logr import basic_logger
 mod_logger = basic_logger()
 
 class devPlugLogger(plugLogger):
@@ -216,48 +258,53 @@ class devPlugLogger(plugLogger):
         if push:
             print('PUSH: ' +msg_raw)
             
- 
- 
 
 @pytest.fixture(scope='session')
-def base_dir():
-    from definitions import base_dir
+def logger():
+    """simple backend loggers"""
+    return mod_logger
  
-    return base_dir
+ 
+#===============================================================================
+# @pytest.fixture(scope='session')
+# def base_dir():
+#     from definitions import base_dir
+#  
+#     return base_dir
+#===============================================================================
 
-@pytest.fixture(scope='session')
-def test_dir(base_dir):
-    return os.path.join(base_dir, r'tests2\data')
+#===============================================================================
+# @pytest.fixture(scope='session')
+# def test_dir(base_dir):
+#     return os.path.join(base_dir, r'tests2\data')
+#===============================================================================
     
 
 
 
-@pytest.fixture
-def true_dir(write, tmp_path, test_dir):
-    true_dir = os.path.join(test_dir, os.path.basename(tmp_path))
-    if write:
-        if os.path.exists(true_dir):
-            try: 
-                shutil.rmtree(true_dir)
-                os.makedirs(true_dir) #add back an empty folder
-                #os.makedirs(os.path.join(true_dir, 'working')) #and the working folder
-            except Exception as e:
-                print('failed to cleanup the true_dir: %s w/ \n    %s'%(true_dir, e))
-        
-        """no... this is controlled with the out_dir on the session        
-        #not found.. create a fresh one
-        if not os.path.exists(true_dir):
-            os.makedirs(true_dir)"""
 
-    #assert os.path.exists(true_dir)
-    return true_dir
     
   
-            
-            
-            
-            
-            
+#===============================================================================
+# test helpers------
+#===============================================================================
+
+def _build_dialog_validate_handler(dial):
+    """click the validate button and handle the errors
+    
+    Normally, the button returns the validation issues to the user
+    but in a test environment, we want to raise these
+    """
+    QTest.mouseClick(dial.pushButton_Validate, Qt.LeftButton)
+    # Loop through errors generated by Model.cf_chk_pars() and raise them
+    for vtag, error_l in dial.validation_result_d.items():
+        for error in error_l:
+            if isinstance(error, Exception):
+                raise error # Raise the exception directly
+            elif isinstance(error, str):
+                raise Exception(error) # Wrap string errors in a generic Exception
+            else:
+                raise Exception(f"Unhandled error type: {error}")
             
             
             

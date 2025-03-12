@@ -10,10 +10,10 @@ idx = pd.IndexSlice
 import numpy as np
 from scipy import interpolate, integrate
 
-from hlpr.exceptions import QError as Error
-from hlpr.plot import Plotr, view
-from model.modcom import Model
-
+from canflood.hlpr.exceptions import QError as Error
+from canflood.hlpr.plot import Plotr, view
+from .modcom import Model
+import scipy
 
 class RiskModel(Plotr, Model): #common methods for risk1 and risk2
     
@@ -245,12 +245,15 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             
         return cplx_evn_d, cnt
 
-    def set_ttl(self, # prep the raw results for plotting
+    def set_ttl(self, # 
                 tlRaw_df = None,
                  dtag='r_ttl',
                  logger=None,
                  ):
-        """
+        """prep the raw results for plotting
+        
+        NOTES
+        ----------------
         when ttl is output, we add the EAD data, drop ARI, and add plotting handles
             which is not great for data manipulation
         here we clean it up and only take those for plotting
@@ -804,8 +807,8 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
             
             elif isinstance(rtail, float): #DEFAULT
                 aep_val = round(rtail, 5)
-                assert aep_val > df.columns.max(), 'passed rtail value (%.2f) not > max aep (%.2f)'%(
-                    aep_val, df.columns.max())
+                assert aep_val > df.columns.max(), 'passed rtail value (%.2f) must be > max aep (%.2f)'%(
+                    aep_val, df.columns.max()) + '\n    consider increasing rtail or setting it to \'flat\''
                 
                 df.loc[bx, aep_val] = 0
                 
@@ -1104,11 +1107,27 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         # 
         #======================================================================
         if self.integrate == 'trapz':
-        
-            ead_tot = integrate.trapz(
+            try:
+                ead_tot = integrate.trapezoid(
                 y, #yaxis - aeps
                 x=x, #xaxis = damages 
                 dx = dx)
+            except AttributeError:
+                try:
+                    # Fall back to the older `trapz` method if `trapezoid` is not available
+                    ead_tot = integrate.trapz(
+                        y,  # y-axis (e.g., aeps)
+                        x=x,  # x-axis (e.g., damages)
+                        dx=dx  # Spacing between points
+                        )
+                
+                except AttributeError:
+                    # Handle the case where neither method is available
+                    scipy_version =  scipy.__version__
+                    raise RuntimeError(
+                        f"Integration failed. Ensure you have a compatible SciPy version. "
+                        f"Detected SciPy version: {scipy_version}."
+                        )
             
         elif self.integrate == 'simps':
             self.logger.warning('integration method not tested')
@@ -1208,6 +1227,8 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         out_fp = self.output_df(df, ofn, write_index=False, logger=logger)
         
         if upd_cf:
+            if not self.absolute_fp: 
+                out_fp = os.path.relpath(out_fp, start=os.getcwd())
             self.set_cf_pars( {
                     'results_fps':(
                         {dtag:out_fp}, 
@@ -1231,6 +1252,8 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         out_fp = self.output_df(self.res_df, ofn, logger=logger)
         
         if upd_cf:
+            if not self.absolute_fp: 
+                out_fp = os.path.relpath(out_fp, start=os.getcwd())
             self.set_cf_pars( {
                     'results_fps':(
                         {dtag:out_fp}, 
@@ -1262,6 +1285,8 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         
         #update the control file
         if upd_cf:
+            if not self.absolute_fp: 
+                out_fp = os.path.relpath(out_fp, start=os.getcwd())
             self.set_cf_pars(
                     {
                     'results_fps':(
@@ -1290,8 +1315,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
                     figsize=None, logger=None,  plotTag=None,                
                   ):
         
-        """
-        summary risk results plotter
+        """summary risk results plotter
             see self._lineToAx() for formatting
  
         """
@@ -1340,9 +1364,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         #=======================================================================
         # figure setup
         #=======================================================================
-        """
-        plt.show()
-        """
+ 
         plt.close()
         fig = plt.figure(figsize=figsize, constrained_layout = True)
         
@@ -1389,7 +1411,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         
         return fig
     
-    def _lineToAx(self, #add a risk curve to the axis
+    def _lineToAx(self,  
               res_ttl,
               y1lab,
               ax,
@@ -1397,9 +1419,11 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
               impStyle_d=None,
               hatch_f=True,
               h_color=None, h_alpha=None, hatch=None,
-              ): #add a line to an axis
+              ):  
         
-        """
+        """add a risk curve to the axis
+        
+        
         for plotting vfuncs, see:
             CurvePlotr.line
         """
@@ -1418,6 +1442,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         """
         self.impStyle_d
         plt.show()
+        view(res_ttl)
         """
         #check values
         if hatch_f:
@@ -1430,11 +1455,9 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
         # fill the plot
         #======================================================================
         if y1lab == self.impact_name:
-            xar,  yar = res_ttl['ari'].values, res_ttl['impacts'].values
-            pline1 = ax.semilogx(xar,yar,
-                                label       = lineLabel,
-                                **impStyle_d
-                                )
+            xar,  yar = res_ttl['ari'].astype(float).values, res_ttl['impacts'].values
+            pline1 = ax.semilogx(xar,yar,label= lineLabel,**impStyle_d)
+            
             #add a hatch
             if hatch_f:
                 polys = ax.fill_between(xar, yar, y2=0, 
@@ -1455,7 +1478,7 @@ class RiskModel(Plotr, Model): #common methods for risk1 and risk2
                                     alpha       = h_alpha,
                                     hatch       = hatch)
         else:
-            raise Error('bad yl1ab: %s'%y1lab)
+            raise KeyError('bad yl1ab: %s'%y1lab)
             
         
         return ax

@@ -13,13 +13,13 @@ start =  datetime.datetime.now()
 import pandas as pd
 import numpy as np
 from pandas import IndexSlice as idx
-from hlpr.basic import view, force_open_dir
-from hlpr.exceptions import Error
+from canflood.hlpr.basic import view, force_open_dir
+from canflood.hlpr.exceptions import Error
 
 from vfunc_conv.vcoms import VfConv
 #import pandas_access as mdb
 import pyodbc
-#from model.modcom import DFunc
+#from canflood.model.modcom import DFunc
 
 mod_name = 'hazus'
 today_str = datetime.datetime.today().strftime('%Y%m%d')

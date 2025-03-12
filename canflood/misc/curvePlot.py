@@ -24,14 +24,14 @@ import logging, configparser, datetime, itertools
 import os
 import numpy as np
 import pandas as pd
-from hlpr.basic import force_open_dir, view, get_valid_filename
+from canflood.hlpr.basic import force_open_dir, view, get_valid_filename
 
 mod_name='curvePlot'
 #==============================================================================
 # # custom
 #==============================================================================
 
-from hlpr.exceptions import QError as Error
+from canflood.hlpr.exceptions import QError as Error
     
 #===============================================================================
 # setup matplotlib
@@ -39,10 +39,10 @@ from hlpr.exceptions import QError as Error
  
     
 
-#from hlpr.basic import ComWrkr
+#from canflood.hlpr.basic import ComWrkr
 #import hlpr.basic
-from model.modcom import DFunc, view
-from hlpr.plot import Plotr
+from canflood.model.modcom import DFunc, view
+from canflood.hlpr.plot import Plotr
 
 
 #==============================================================================
@@ -401,7 +401,7 @@ class CurvePlotr(DFunc, Plotr):
                 
                 #figure controls
                 constrained_layout=None,
-                tight_layout=None,
+ 
                 
                 #plot controls
                 ax = None,
@@ -427,7 +427,7 @@ class CurvePlotr(DFunc, Plotr):
         
         if constrained_layout is None:
             constrained_layout=self.constrained_layout
-        if tight_layout is None: tight_layout=self.tight_layout
+
         
         """
         plt.show()
@@ -437,7 +437,7 @@ class CurvePlotr(DFunc, Plotr):
         #=======================================================================
         if ax is None:
 
-            fig = plt.figure(figsize=figsize,tight_layout=tight_layout,
+            fig = plt.figure(figsize=figsize,
                      constrained_layout = constrained_layout)
 
             ax = fig.add_subplot(subplot)  
@@ -473,12 +473,7 @@ class CurvePlotr(DFunc, Plotr):
         #==========================================================================
         #log.debug('plotting \"%s\' w/ \n    %s \n    %s'%( title, xvals, yvals))
         
-        ax.plot(xvals, yvals, 
-                #markerfacecolor='black',
-                #markersize=markersize, 
-                #fillstyle='full',
-
-                **kwargs)
+        ax.plot(xvals, yvals, **kwargs)
  
     
         return ax
@@ -498,7 +493,7 @@ class CurvePlotr(DFunc, Plotr):
             ofn = 'cLib_%s_%s.xls'%(self.tag, self.today_str)
         
         ofn = get_valid_filename(ofn)
-        assert os.path.splitext(ofn)[1]=='.xls', ofn
+        assert os.path.splitext(ofn)[1] in ['.xls', '.xlsx'], f"Invalid file extension: {ofn}"
         #=======================================================================
         # precheck
         #=======================================================================
@@ -512,7 +507,7 @@ class CurvePlotr(DFunc, Plotr):
         if os.path.exists(ofp): assert self.overwrite
         
         #write to multiple tabs
-        with pd.ExcelWriter(ofp) as writer:
+        with pd.ExcelWriter(ofp, engine='openpyxl') as writer:
             for i, (tabnm, data) in enumerate(d.items()):
                 #write handles
                 if tabnm=='_smry':

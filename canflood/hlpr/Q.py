@@ -35,11 +35,8 @@ mod_logger = logging.getLogger('Q') #get the root logger
     
  
 
-from hlpr.exceptions import QError as Error
-    
-
-import hlpr.basic as basic
-from hlpr.basic import get_valid_filename
+from .exceptions import QError as Error 
+from .basic import get_valid_filename, ComWrkr, linr, is_null, view
 
 
 #==============================================================================
@@ -79,7 +76,7 @@ field_dtype_d = {'Float':0,'Integer':1,'String':2,'Date':3}
 # classes -------------
 #==============================================================================
 
-class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native console
+class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native console
     
     
     
@@ -365,7 +362,7 @@ class Qcoms(basic.ComWrkr): #baseclass for working w/ pyqgis outside the native 
                 
         self.vlay_drivers = vlay_drivers
         
-        log.debug('built driver:extensions dict: \n    %s'%vlay_drivers)
+        #log.debug('built driver:extensions dict: \n    %s'%vlay_drivers)
         
         return
         
@@ -2836,8 +2833,8 @@ class MyFeedBackQ(QgsProcessingFeedback):
         built by QprojPlug.qproj_setup()
     
     Qworkers:
-        built by Qcoms.__init__()
-    
+        built by Qcoms.__init__() 
+    QgsProcessingFeedback inherits QgsFeedback
     """
     
     def __init__(self,
@@ -2846,7 +2843,7 @@ class MyFeedBackQ(QgsProcessingFeedback):
         self.logger=logger.getChild('FeedBack')
         
         super().__init__()
-
+                
     def setProgressText(self, text):
         self.logger.debug(text)
 
@@ -2907,20 +2904,16 @@ class MyFeedBackQ(QgsProcessingFeedback):
         assert prog<=100
         
         #===================================================================
-        # emit signalling
+        # emit signaling
         #===================================================================
         self.setProgress(prog)
             
-    def setProgress(self, prog):
-        """throwing a warning despite passing an integer.. seem sto be a bugg
-        using this as a workaround to surpress the warning (which would be very frequent)
-        https://github.com/vispy/vispy/issues/2212
-        """
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore')
-            super().setProgress(int(prog))
-        
-        
+    def setProgress(self, prog):        
+        #call QgsFeedback.setProgress
+        #this emits 'progressChanged' signal, which would be connected to progressBar.setValue
+        # see hlpr.basic.ComWrkr.setup_feedback()
+        super().setProgress(float(prog)) 
+       
 class RasterCalc(object):
     
     result= None
@@ -3213,6 +3206,10 @@ def init_q(gui=False):
     
     except:
         raise Error('QGIS failed to initiate')
+    
+#===============================================================================
+# VLAYS----------
+#===============================================================================
         
 def vlay_check( #helper to check various expectations on the layer
                     vlay,
@@ -3244,7 +3241,7 @@ def vlay_check( #helper to check various expectations on the layer
     #=======================================================================
     # expected field names
     #=======================================================================
-    if not basic.is_null(exp_fieldns): #robust null checking
+    if not is_null(exp_fieldns): #robust null checking
         skip=False
         if isinstance(exp_fieldns, str):
             if exp_fieldns=='all':
@@ -3253,7 +3250,7 @@ def vlay_check( #helper to check various expectations on the layer
         
         
         if not skip:
-            fnl = basic.linr(exp_fieldns, vlay_fieldnl(vlay),
+            fnl = linr(exp_fieldns, vlay_fieldnl(vlay),
                                       'expected field names', vlay.name(),
                                       result_type='missing', logger=log, fancy_log=db_f)
             
@@ -3267,11 +3264,11 @@ def vlay_check( #helper to check various expectations on the layer
     # unexpected field names
     #=======================================================================
         
-    if not basic.is_null(uexp_fieldns): #robust null checking
+    if not is_null(uexp_fieldns): #robust null checking
         #fields on the layer
         if len(vlay_fieldnl(vlay))>0:
         
-            fnl = basic.linr(uexp_fieldns, vlay_fieldnl(vlay),
+            fnl = linr(uexp_fieldns, vlay_fieldnl(vlay),
                                       'un expected field names', vlay.name(),
                                       result_type='matching', logger=log, fancy_log=db_f)
             
@@ -4097,7 +4094,7 @@ def feats_build( #build a set of features from teh passed data
         else:
             raise Error('unexpected type')
         
-        if not basic.linr(dfid_l, list(geo_d.keys()),'feat_data', 'geo_d', 
+        if not linr(dfid_l, list(geo_d.keys()),'feat_data', 'geo_d', 
                             sort_values=True, result_type='exact', logger=log):
             raise Error('passed geo_d and data indexes dont match')
     
@@ -4649,7 +4646,9 @@ def vlay_key_convert(#convert a list of ids in one form to another
 
     return res_objs, fid_fval_d #converted objects, conversion dict ONLY FOR THSE OBJECTS!
             
-  
+#===============================================================================
+# RLAY--------
+#===============================================================================
 def getRasterMetadata(fp):
     assert os.path.exists(fp)
     
@@ -4669,6 +4668,8 @@ def getRasterCompression(fp):
     else:
         return md['COMPRESSION']  
         
+        
+ 
 
 #==============================================================================
 # type checks-----------------
@@ -4862,15 +4863,28 @@ def view(#view the vector data (or just a df) as a html frame
     else:
         raise Error('got unexpected object type: %s'%type(obj))
     
-    basic.view(df)
+    view(df)
     
     logger.info('viewer closed')
     
     return
 
-
-if __name__ == '__main__':
+#===============================================================================
+# ASSERTIONS------
+#===============================================================================\
+def assert_rlay_resolution_match(left, right,  msg='',): 
+    """check all spatial attributes match"""
+    if not __debug__: # true if Python was not started with an -O option
+        return 
+    __tracebackhide__ = True
+     
+    assert isinstance(left, QgsRasterLayer)
+    assert isinstance(right, QgsRasterLayer)
     
-
-    print('???')
+    #crs
+    for attn in ['crs', 'rasterUnitsPerPixelX',  'rasterUnitsPerPixelY']:
+        if not getattr(left, attn)()==getattr(right, attn)(): 
+            raise AssertionError(f'\'{attn}\' mismatch \n'+msg)
+ 
+ 
 

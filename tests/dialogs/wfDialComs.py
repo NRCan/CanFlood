@@ -17,9 +17,9 @@ from PyQt5.QtWidgets import QApplication, QMainWindow
 
 from wFlow.scripts import WorkFlow, Session
 
-from hlpr.exceptions import Error
+from canflood.hlpr.exceptions import Error
 
-from hlpr.plug import plugLogger
+from canflood.hlpr.plug import plugLogger
 
 
 from unittest import TestLoader
@@ -39,8 +39,8 @@ def excepthook(exc_type, exc_value, exc_tb):
 #===============================================================================
 # logger
 #===============================================================================
-from hlpr.plug import plugLogger
-from hlpr.logr import basic_logger
+from canflood.hlpr.plug import plugLogger
+from canflood.hlpr.logr import basic_logger
 mod_logger = basic_logger()
 
 class devPlugLogger(plugLogger):

@@ -35,26 +35,26 @@ import os, datetime, pickle
 import pandas as pd
 import numpy as np
 
-from hlpr.logr import basic_logger
+from canflood.hlpr.logr import basic_logger
 
-from hlpr.basic import view, Error
-import hlpr.plot
+from canflood.hlpr.basic import view, Error
+from canflood.hlpr.plot import Plotr
 
 
 #import model.riskcom
-import results.riskPlot
+from canflood.results.riskPlot import RiskPlotr
 
-from model.risk1 import Risk1
-from model.risk2 import Risk2
-from model.dmg2 import Dmg2
+from canflood.model.risk1 import Risk1
+from canflood.model.risk2 import Risk2
+from canflood.model.dmg2 import Dmg2
 
-from results.compare import Cmpr
+from canflood.results.compare import Cmpr
 
 
 #===============================================================================
 # workers-------
 #===============================================================================
-class Shared(hlpr.plot.Plotr): #shared methods
+class Shared(Plotr): #shared methods
     """
     we want both model and session to have some exclusive init/methods AND some shared
     
@@ -440,7 +440,7 @@ class SensiSessRunner(SensiSessionComs): #running a sensitivity session
 
 
 class SensiSessResults( #analyzing results of a sensi session
-        SensiSessionComs, results.riskPlot.RiskPlotr):
+        SensiSessionComs, RiskPlotr):
     
     #===========================================================================
     # #expectations from parameter file

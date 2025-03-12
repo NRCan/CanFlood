@@ -22,13 +22,12 @@ import numpy as np
 
 mod_logger = logging.getLogger('risk2') #get the root logger
 
-from hlpr.exceptions import QError as Error
+from canflood.hlpr.exceptions import QError as Error
 
-#from hlpr.Q import *
-from hlpr.basic import view
-#from model.modcom import Model
-#from results.riskPlot import Plotr
-from model.riskcom import RiskModel
+ 
+from canflood.hlpr.basic import view
+ 
+from canflood.model.riskcom import RiskModel
 #==============================================================================
 # functions----------------------
 #==============================================================================

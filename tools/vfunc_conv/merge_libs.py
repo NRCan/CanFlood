@@ -14,8 +14,8 @@ start =  datetime.datetime.now()
 import numpy as np
 import pandas as pd
 
-from hlpr.basic import view, force_open_dir
-from hlpr.exceptions import Error
+from canflood.hlpr.basic import view, force_open_dir
+from canflood.hlpr.exceptions import Error
 
 from vfunc_conv.vcoms import VfConv
 

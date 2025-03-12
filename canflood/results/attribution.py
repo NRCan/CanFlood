@@ -24,7 +24,7 @@ from pandas import IndexSlice as idx
 
 
 
-from hlpr.exceptions import QError as Error
+from canflood.hlpr.exceptions import QError as Error
     
 
 
@@ -34,8 +34,8 @@ from hlpr.exceptions import QError as Error
 # non-Qgis
 #===============================================================================
 
-from results.riskPlot import RiskPlotr
-from hlpr.basic import view
+from canflood.results.riskPlot import RiskPlotr
+from canflood.hlpr.basic import view
 
 #==============================================================================
 # functions-------------------

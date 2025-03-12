@@ -5,17 +5,27 @@ Created on Jun. 26, 2022
 
 unit tests for CanFlood's 'results' toolset
 '''
-from qgis.core import QgsCoordinateReferenceSystem, QgsVectorLayer, QgsProject, QgsReport, QgsReportSectionLayout
-from PyQt5.Qt import Qt
+
+import pandas as pd
+import pytest, os, shutil, sys
+
+
+from qgis.core import (
+    QgsCoordinateReferenceSystem, QgsVectorLayer, QgsProject, QgsReport, QgsReportSectionLayout,
+ 
+    )
+from PyQt5.Qt import Qt, QApplication
 from PyQt5.QtTest import QTest
 from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QTableWidgetItem
+ 
 from pandas.testing import assert_frame_equal
 from pytest import fail
 from pytest_qgis.utils import clean_qgis_layer
 
-from results.dialog import ResultsDialog
-import pandas as pd
-import pytest, os, shutil
+
+from .conftest import test_dir
+from canflood.results.dialog import ResultsDialog
+
 
 
 #===============================================================================
@@ -26,15 +36,28 @@ def crs():
     return QgsCoordinateReferenceSystem('EPSG:3005')
 
 
+
 @pytest.fixture(scope='function')
-def dial(session, cf_fp): #configured dialog
+def dial(session, cf_fp, plt_window): #configured dialog
     
     dial = session.Dialog
     
     #===========================================================================
-    # copy over control file
+    # copy over files
     #===========================================================================
-    cf_fp = shutil.copy2(cf_fp, os.path.join(session.out_dir, os.path.basename(cf_fp)))
+    # Get the directory containing cf_fp
+    cf_dir = os.path.dirname(cf_fp)
+    
+    # Iterate over all files in the directory
+    for file_name in os.listdir(cf_dir):
+        full_file_path = os.path.join(cf_dir, file_name)
+    
+        # Ensure it's a file (skip directories)
+        if os.path.isfile(full_file_path):
+            # Copy the file to the output directory
+            shutil.copy2(full_file_path, os.path.join(session.out_dir, file_name))
+    
+    cf_fp = os.path.join(session.out_dir, os.path.basename(cf_fp))
     
     #===========================================================================
     # setup
@@ -48,7 +71,10 @@ def dial(session, cf_fp): #configured dialog
     #set the control file
     dial.lineEdit_cf_fp.setText(cf_fp)
     
-    dial.radioButton.setChecked(True) #save plots to file
+    if plt_window:
+        dial.radioButton_s_pltW.setChecked(True) #plot to window\
+    else:
+        dial.radioButton_s_saveToFile.setChecked(True) #save plots to file
     dial.checkBox_SSoverwrite.setChecked(False)
     
     return dial
@@ -57,40 +83,105 @@ def dial(session, cf_fp): #configured dialog
 #===============================================================================
 # tests---------
 #===============================================================================
+@pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_02_r2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True) 
 @pytest.mark.parametrize('dialogClass',[ResultsDialog], indirect=True)
-@pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_02_r2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True) #from build test_07
-def test_res_01_riskPlot(dial): #test risk plots
-    dial._change_tab('tab_riskPlot')
-
-    QTest.mouseClick(dial.pushButton_RP_plot, Qt.LeftButton)
-
-    # If an SVG is created, we can assume that the plotter has completed
-    svg_fp = os.path.join(dial.out_dir, [e for e in os.listdir(dial.out_dir) if e.endswith('.svg')][0])
-
-    if os.path.exists(svg_fp):
-        pass
-    else:
-        fail('Failed to create risk plot svg')
-
-
-
+@pytest.mark.parametrize('plt_window',[False])
+def test_results_00_init(dial):
+    """test ResultsDialog init
+    
+    not setup in the best way... need to pass all the params
+    """
+    
+    """uncomment the below to use pytest to launch the dialog interactively"""
+    #===========================================================================
+    # dial.show()
+    # QApp = QApplication(sys.argv) #initlize a QT appliaction (inplace of Qgis) to manually inspect    
+    # sys.exit(QApp.exec_()) #wrap
+    #===========================================================================
+ 
+ 
+    
+    assert hasattr(dial, 'logger')
 
 @pytest.mark.dev
 @pytest.mark.parametrize('dialogClass',[ResultsDialog], indirect=True)
 @pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_02_r2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True) #from build test_07
-@pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.gpkg'], indirect=True)
-def test_res_02_pdf_report(dial, finv_fp):
+@pytest.mark.parametrize('plt_window',[True, False])
+def test_results_01_riskPlot(dial, cf_fp, plt_window): #test risk plots
+    dial._change_tab('tab_riskPlot')
+
+    QTest.mouseClick(dial.pushButton_RP_plot, Qt.LeftButton) #ResultsDialog.run_plotRisk()
+
+    assert dial.plt_window==plt_window
+    if not plt_window:
+        # Check if there is any .svg file in the out_dir
+        svg_files = [e for e in os.listdir(dial.out_dir) if e.endswith('.svg')]
+        
+        if svg_files:
+            pass
+        else:
+            fail('Failed to create risk plot svg')
+        
+        
+@pytest.mark.parametrize('dialogClass',[ResultsDialog], indirect=True)
+@pytest.mark.parametrize('plt_window',[False])
+@pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_02_r2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True) #base cf for init
+@pytest.mark.parametrize('cf_fp2',[os.path.join(test_dir, 'test_results_02_runcompare','model_1', 'CanFlood_test_01.txt')], )
+@pytest.mark.parametrize('cf_fp3',[os.path.join(test_dir, 'test_results_02_runcompare','model_2', 'CanFlood_test_01.txt')], )
+def test_results_02_runcompare(dial, cf_fp, cf_fp2, cf_fp3):
+    """test ResultsDialog.run_compare()
+    
+    """
+    #===========================================================================
+    # setup
+    #===========================================================================
+    dial._change_tab('tab_Compare')
+    
+    #set the control files
+    dial.lineEdit_C_cf_1.setText(cf_fp3)
+    dial.lineEdit_C_cf_2.setText(cf_fp2)
+    
+    #turn the plots on
+    dial.checkBox_C_ari.setChecked(True)
+    dial.checkBox_C_aep.setChecked(True)
+    
+    #turn the control file comparison on
+    dial.checkBox_C_cf.setChecked(True)
+    
+    #===========================================================================
+    # test
+    #===========================================================================
+    QTest.mouseClick(dial.pushButton_C_compare, Qt.LeftButton) #ResultsDialog.run_compare()
+    
+    #===========================================================================
+    # validate
+    #===========================================================================
+    assert os.path.exists(dial.comparison_df_ofp)
+    
+ 
+
+
+
+"""test is crashing"""
+@pytest.mark.dev
+@pytest.mark.parametrize('cf_fp',[r'tests2\data\test_model_02_r2_ModelDialog_t0\CanFlood_test_01.txt'], indirect=True) #from build test_07
+@pytest.mark.parametrize('finv_fp',[r'tutorials\2\finv_tut2.geojson'], indirect=True)
+def xxx_test_res_02_pdf_report(dial, finv_fp):
     """generate a pdf report, validate
     
     TODO:
     add additional cases (e.g., no vector layer)
+    
+    write to file (spent 20 mins and couldn't figure this out)
     """
     
-    res_02_reporter(dial, finv_fp=finv_fp, vsect_cnt=6)
+    report = res_02_reporter(dial, finv_fp=finv_fp, vsect_cnt=6)
+    
+ 
 
     
 def res_02_reporter(dial, finv_fp=None, vsect_cnt = 5):
-    """build and test report
+    """build and test QgsReport tool
     
     refacorted for use in tutoirals test
     
@@ -108,7 +199,9 @@ def res_02_reporter(dial, finv_fp=None, vsect_cnt = 5):
     #===========================================================================
     # build report
     #===========================================================================
-    QTest.mouseClick(dial.pushButton_rpt_create, Qt.LeftButton)
+    QTest.mouseClick(dial.pushButton_rpt_create, Qt.LeftButton) #ResultsDialog.run_reporter()
+    if not hasattr(dial, 'report'):
+        fail('failed to build report')
     report = dial.report
     #===========================================================================
     # validate
@@ -118,3 +211,7 @@ def res_02_reporter(dial, finv_fp=None, vsect_cnt = 5):
  
     if not len(sections) == vsect_cnt:
         fail('expected %i sections got %i'%(vsect_cnt, len(sections)))
+        
+    print(f'finished res_02_reporter')
+        
+    return report

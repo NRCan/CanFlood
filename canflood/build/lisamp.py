@@ -28,10 +28,10 @@ from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, QgsProj
 #==============================================================================
 # custom imports
 #==============================================================================
-from hlpr.exceptions import QError as Error
+from canflood.hlpr.exceptions import QError as Error
 
-from hlpr.Q import view, Qcoms, vlay_get_fdf, vlay_get_fdata, vlay_new_df
-from hlpr.plot import Plotr
+from canflood.hlpr.Q import view, Qcoms, vlay_get_fdf, vlay_get_fdata, vlay_new_df
+from canflood.hlpr.plot import Plotr
 #==============================================================================
 # classes-------------
 #==============================================================================
@@ -596,6 +596,8 @@ class LikeSampler(Plotr, Qcoms):
     
     def update_cf(self, cf_fp=None): #configured control file updater
         if cf_fp is None: cf_fp=self.cf_fp
+        if not self.absolute_fp: 
+            self.out_fp = os.path.relpath(self.out_fp, start=os.getcwd())
         return self.set_cf_pars(
             {'risk_fps':(
                 {'exlikes':self.out_fp}, 
@@ -616,10 +618,12 @@ class LikeSampler(Plotr, Qcoms):
         title = '%s Conditional P Histogram on %i Events'%(self.tag, len(df.columns))
         
         self._set_valstr(df)
-        return self.plot_impact_hist(df,
+        result =  self.plot_impact_hist(df,
                      title=title, xlab = 'Pfail',
                      xlims_t = (0, 1.0),
                      val_str=self.val_str, **kwargs)
+        
+        return result
         
 
     def plot_boxes(self, #plot boxplots of results
@@ -632,10 +636,12 @@ class LikeSampler(Plotr, Qcoms):
         
         self._set_valstr(df)
 
-        return self.plot_impact_boxes(df,
+        result =  self.plot_impact_boxes(df,
                      title=title, xlab = 'hazard layer', ylab = 'Pfail',
                      ylims_t = (0, 1.0),smry_method='mean',
                      val_str=self.val_str,   **kwargs)
+        
+        return result
         
     def _set_valstr(self, df):
         self.val_str= 'finv_fcnt=%i \nevent_rels=\'%s\' \ndate=%s'%(

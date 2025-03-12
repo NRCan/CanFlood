@@ -13,17 +13,18 @@ as_inun = False
 event_rels = max
 impact_units = $CAD
 apply_miti = False		#whether to apply mitigation algorthihims
+absolute_fp=False
 
 [dmg_fps]
-curves = C:\LS\09_REPOS\03_TOOLS\CanFlood\_git\tests2\data\test_03_build_inv_curves_tests0\cLib_test_03_2022-06-26_1806.xls
-finv = C:\LS\09_REPOS\03_TOOLS\CanFlood\_git\tests2\data\test_02_build_inv_tests2__data0\finv_test_02_32_tut2.csv
-expos = C:\LS\09_REPOS\03_TOOLS\CanFlood\_git\tests2\data\test_04_build_hsamp_tutorials_0\expos_test_04_4_32.csv
-gels = C:\LS\09_REPOS\03_TOOLS\CanFlood\_git\tests2\data\test_06_build_dtm_tutorials__20\gels_test_06_1_32.csv
+curves = cLib_test_03_2022-06-26_1806.xls
+finv = finv_test_02_32_tut2.csv
+expos = expos_test_04_4_32.csv
+gels = gels_test_06_1_32.csv
 
 [risk_fps]
-dmgs = C:\LS\09_REPOS\03_TOOLS\CanFlood\_git\tests2\data\test_model_01_i2_ModelDialog_t0\dmgs_test_01_run1.csv
+dmgs = dmgs_test_01_run1.csv
 exlikes = #secondary exposure likelihood data filepath
-evals = C:\LS\09_REPOS\03_TOOLS\CanFlood\_git\tests2\data\test_05_build_evals_tests2__da0\evals_4_test_05.csv
+evals = evals_4_test_05.csv
 
 [validation]
 risk1 = False
@@ -34,10 +35,10 @@ risk3 = False
 [results_fps]
 attrimat02 = #lvl2 attribution matrix fp (post dmg model)
 attrimat03 = #lvl3 attribution matrix fp (post risk model)
-r_passet = C:\LS\09_REPOS\03_TOOLS\CanFlood\_git\tests2\data\test_model_02_r2_ModelDialog_t0\_run1_0626_r_passet.csv
-r_ttl = C:\LS\09_REPOS\03_TOOLS\CanFlood\_git\tests2\data\test_model_02_r2_ModelDialog_t0\_run1_0626_ttl.csv
-eventypes = C:\LS\09_REPOS\03_TOOLS\CanFlood\_git\tests2\data\test_model_02_r2_ModelDialog_t0\eventypes_run1_test_01.csv
-#'r_passet' file path set from output_passet at 2022-06-26 19.48.35
+r_passet = _run1_0626_r_passet.csv
+r_ttl = _run1_0626_ttl.csv
+eventypes = eventypes_run1_test_01.csv
+
 
 [plotting]
 color = black           #line color

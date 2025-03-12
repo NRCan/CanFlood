@@ -31,12 +31,14 @@ import processing
 # custom imports
 #==============================================================================
 
-from hlpr.exceptions import QError as Error
+from canflood.hlpr.exceptions import QError as Error
     
 
 
-from hlpr.Q import Qcoms,vlay_get_fdf, vlay_get_fdata, view, RasterCalc
-from hlpr.plot import Plotr
+from canflood.hlpr.Q import (
+    Qcoms,vlay_get_fdf, vlay_get_fdata, view, RasterCalc,assert_rlay_resolution_match,
+    )
+from canflood.hlpr.plot import Plotr
 
 #==============================================================================
 # functions-------------------
@@ -306,9 +308,17 @@ class Rsamp(Plotr, Qcoms):
                 else:
                     dtm_rlay1 = dtm_rlay
                 
+                #===============================================================
+                # precheck
+                #===============================================================
+                #check raster consistency 
+                for rlay in rlayRaw_l:
+                    assert_rlay_resolution_match(dtm_rlay, rlay,
+                              msg=f'hazard raster {rlay.name()} must have the same resolution as the DEM')
                 #===================================================================
                 # sample by goetype
                 #===================================================================
+            
                 if 'Polygon' in self.gtype:
                     res_vlay = self.samp_inun(finv,rlayRaw_l, dtm_rlay1, dthresh, logger=log)
                 elif 'Line' in self.gtype:
@@ -379,10 +389,12 @@ class Rsamp(Plotr, Qcoms):
         return res_vlay
     
 
-    def runPrep(self, #apply raster preparation handels to a set of rasters
+    def runPrep(self, #
                 rlayRaw_l,
                 **kwargs
                 ):
+        """ apply raster preparation handels to a set of rasters. wrapper for self.prep()"""
+        
         
         #=======================================================================
         # do the prep
@@ -396,7 +408,10 @@ class Rsamp(Plotr, Qcoms):
             self.feedback.upd_prog(70/len(rlayRaw_l), method='append')
             self.logger.debug('finished on %s'%rlay.name())
 
-            
+        
+        #=======================================================================
+        # close
+        #=======================================================================
         self.feedback.setProgress(90)
         
         self.logger.debug('finished all %i'%len(res_l))
@@ -404,8 +419,8 @@ class Rsamp(Plotr, Qcoms):
         return res_l
             
         
-    def prep(self, #prepare a raster for sampling
-             rlayRaw, #set of raw raster to apply prep handles to
+    def prep(self, #
+             rlayRaw,  
              allow_download=False,
              aoi_vlay=None,
              
@@ -418,6 +433,32 @@ class Rsamp(Plotr, Qcoms):
              
              ):
         """
+        Prepare a raster for sampling.
+    
+        Parameters
+        ----------
+        rlayRaw : QgsRasterLayer
+            Raw raster to prepare.
+        
+        clip_rlays : bool, default=True
+            Whether to clip the raster with a polygon.
+        
+        allow_download : bool, default=True
+            Whether to check the provider type.
+        
+        allow_rproj : bool, default=False
+            If CRS mismatch occurs, allow warping and reprojection.
+            
+        scaleFactor: float, default=1.0
+            value to multiply by
+    
+        Returns
+        -------
+        None
+            
+        
+        
+        
         #=======================================================================
         # mstore
         #=======================================================================
@@ -443,7 +484,8 @@ class Rsamp(Plotr, Qcoms):
         # precheck
         #=======================================================================
         #check the aoi
-        if clip_rlays: assert isinstance(aoi_vlay, QgsVectorLayer)
+        if clip_rlays: 
+            assert isinstance(aoi_vlay, QgsVectorLayer)
         if not aoi_vlay is None:
             self.check_aoi(aoi_vlay)
         
@@ -469,6 +511,7 @@ class Rsamp(Plotr, Qcoms):
                 newLayerName='%s_gdal' % rlayRaw.name(),
                 out_dir =  os.environ['TEMP'], #will write to the working directory at the end
                 logger=log)
+            
             #load this file
             rlayDp = self.load_rlay(ofp, logger=log)
             #check
@@ -495,12 +538,9 @@ class Rsamp(Plotr, Qcoms):
             #save a local copy?
             newName = '%s_%s' % (rlayDp.name(), self.qproj.crs().authid()[5:])
             
-            """just write at the end
-            if allow_download:
-                output = os.path.join(self.out_dir, '%s.tif' % newName)
-            else:
-                output = 'TEMPORARY_OUTPUT'"""
+ 
             output = 'TEMPORARY_OUTPUT'
+            
             #change the projection
             rlayProj = self.warpreproject(rlayDp, crsOut=self.qproj.crs(), 
                 output=output, layname=newName)
@@ -517,7 +557,7 @@ class Rsamp(Plotr, Qcoms):
         #=======================================================================
         if clip_rlays:
             log.debug('trimming raster %s by AOI'%rlayRaw.name())
-            log.warning('not Tested!')
+            log.warning('not Tested!') #warning
             
             #clip to just the polygons
             rlayTrim = self.cliprasterwithpolygon(rlayProj,aoi_vlay, logger=log)
@@ -565,7 +605,7 @@ class Rsamp(Plotr, Qcoms):
             """control canvas loading in the plugin"""
             
         else:
-            log.warning('layer \'%s\' not written to file!'%resLay.name())
+            log.warning('no operations triggerd') #warning
             resLay=resLay1
             
 
@@ -839,7 +879,7 @@ class Rsamp(Plotr, Qcoms):
     def samp_inun(self, #inundation percent for polygons
                   finv, raster_l, dtm_rlay, dthresh,
                   
-                  out_dir=None,
+                  out_dir=None, temp_dir=None,
                    logger=None,):
         """TODO:
         implement intelligent retrival of depth rasters
@@ -856,6 +896,8 @@ class Rsamp(Plotr, Qcoms):
         
         #setup temp dir
         if out_dir is None: out_dir=self.temp_dir
+        if temp_dir is None: temp_dir=self.temp_dir
+        
               
         #=======================================================================
         # precheck
@@ -866,7 +908,11 @@ class Rsamp(Plotr, Qcoms):
         assert isinstance(dthresh, float)
         assert 'Memory' in dp.storageType() #zonal stats makes direct edits
         assert 'Polygon' in gtype
+        
 
+
+                
+ 
         #=======================================================================
         # sample loop---------
         #=======================================================================
@@ -910,7 +956,8 @@ class Rsamp(Plotr, Qcoms):
             thr_rlay_fp = self._get_thresh(dthresh, rlay,log, out_dir=os.path.join(out_dir, 'thresh'))
  
             tdelta = (datetime.datetime.now() - start) - tdelta
-            meta_d[indxr]['thr_rlay'] = { 'fp':thr_rlay_fp, 'time (secs)':tdelta.total_seconds(), 'name':os.path.basename(thr_rlay_fp)[:-4]}
+            meta_d[indxr]['thr_rlay'] = { 'fp':thr_rlay_fp, 'time (secs)':tdelta.total_seconds(), 
+                                         'name':os.path.basename(thr_rlay_fp)[:-4]}
             
             
             #===================================================================
@@ -925,13 +972,17 @@ class Rsamp(Plotr, Qcoms):
                             'INPUT':finv, 
                             'RASTER_BAND':1, 
                             'STATISTICS':[0],#0: pixel counts, 1: sum
-                            'OUTPUT' : 'TEMPORARY_OUTPUT',
+                            #'OUTPUT' : 'TEMPORARY_OUTPUT',
+                            'OUTPUT':os.path.join(temp_dir, f'{indxr}_zonalstatisticsfb.geojson')
                             }
                 
             #execute the algo
-            finvw = processing.run(algo_nm, ins_d, feedback=self.feedback)['OUTPUT']
+            finvw_fp = processing.run(algo_nm, ins_d, feedback=self.feedback)['OUTPUT']
+            finvw = QgsVectorLayer(finvw_fp,os.path.basename(finvw_fp),'ogr')
             
-
+            """
+            finvw.source()
+            """
  
             #===================================================================
             # check/correct field names
@@ -957,8 +1008,8 @@ class Rsamp(Plotr, Qcoms):
             # check values
             #===================================================================
             """
-            should return all zeros
-                even if not overlapping the hazard layer
+            should never have nulls.
+                returns all zeros even if not overlapping the hazard layer
             """
             ser = pd.Series(vlay_get_fdata(finvw, fieldn=new_fn), name=new_fn)
             assert ser.notna().all(), 'got %i/%i null cell counts on \'%s\'  from %s'%(
@@ -966,16 +1017,14 @@ class Rsamp(Plotr, Qcoms):
             #===================================================================
             # #clean up the layers
             #===================================================================
-            #self.mstore.addMapLayer(finv)
-             
-            finv = finvw
-            
+            #self.mstore.addMapLayer(finv)             
+            finv = finvw            
             meta_d[indxr] = pd.DataFrame.from_dict(meta_d[indxr])
  
             
         assert len(parea_d) == len(raster_l)
         log.debug(pd.concat(meta_d, axis=1).T)
-        #view(pd.concat(meat_d)
+        #view(pd.concat(meta_d))
         #=======================================================================
         # area calc-----------
         #=======================================================================
@@ -985,7 +1034,7 @@ class Rsamp(Plotr, Qcoms):
         #add geometry fields
         finv = self.addgeometrycolumns(finv, logger = log)
         
-        #get data
+        #get raw data (samples for each raster per column)
         df_raw  = vlay_get_fdf(finv, logger=log)
         df = df_raw.rename(columns=names_d) #rename to raster:cellCount:fid
 
@@ -1463,7 +1512,7 @@ class Rsamp(Plotr, Qcoms):
             os.makedirs(out_dir)
             
         if os.path.exists(outputFile):
-            msg = 'requseted outputFile exists: %s'%outputFile
+            msg = 'requseted outputFile exists: %s'%outputFile #warning
             if self.overwrite:
                 log.warning(msg)
                 os.remove(outputFile)
@@ -1685,6 +1734,8 @@ class Rsamp(Plotr, Qcoms):
 
     def update_cf(self, cf_fp): #configured control file updater
         """make sure you write the file first"""
+        if not self.absolute_fp: 
+            self.out_fp = os.path.relpath(self.out_fp, start=os.getcwd())
         return self.set_cf_pars(
             {
             'dmg_fps':(
@@ -1701,6 +1752,8 @@ class Rsamp(Plotr, Qcoms):
         
     def upd_cf_dtm(self, cf_fp=None):
         if cf_fp is None: cf_fp=self.cf_fp
+        if not self.absolute_fp: 
+            self.out_fp = os.path.relpath(self.out_fp, start=os.getcwd())
         return self.set_cf_pars(
             {
             'dmg_fps':(
@@ -1724,10 +1777,12 @@ class Rsamp(Plotr, Qcoms):
         title = '%s Raster Sample Histogram on %i Events'%(self.tag, len(df.columns))
         
         self._set_valstr(df)
-        return self.plot_impact_hist(df,
+        result =  self.plot_impact_hist(df,
                      title=title, xlab = 'raster value',
 
                      val_str=self.val_str, **kwargs)
+        
+        return result
         
 
     def plot_boxes(self, #plot boxplots of results
@@ -1740,10 +1795,12 @@ class Rsamp(Plotr, Qcoms):
 
         self._set_valstr(df)
         
-        return self.plot_impact_boxes(df,
+        result =  self.plot_impact_boxes(df,
                      title=title, xlab = 'hazard layer', ylab = 'raster value',
                      smry_method='mean',
                      val_str=self.val_str,   **kwargs)
+        
+        return result
         
     def _set_valstr(self, df):
         self.val_str= 'finv_fcnt=%i \nfinv_name=\'%s\' \nas_inun=%s \ngtype=%s \ndate=%s'%(
