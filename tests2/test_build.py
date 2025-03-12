@@ -44,6 +44,7 @@ def crs():
 @pytest.fixture(scope='function')
 @clean_qgis_layer
 def finv_vlay(session, finv_fp):
+    """load the finv layer into the session and add to the dialog"""
     dial = session.Dialog
     #select the finv
     dial._change_tab('tab_inventory')

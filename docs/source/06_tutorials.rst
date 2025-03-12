@@ -322,7 +322,7 @@ These plots are the two standard risk curve formats for the same total results d
 Finally, move to the 'Report' tab, **select the finv vector layer**, and **click 'Create Report'** to generate a  QGIS report template of your model and results.
 Open the layout manager and select the report, and **click 'Show'** to open the report manager (CanFlood will attempt to do this automatically).
 From the layout window, you can select the generated sections and **click 'Edit'** to view and modify the content.
-From the layout window, click **Export to pdf** to generate a pdf of the report. For this tutorial, seven pages should be included in the exported pdf, as shown `here <https://github.com/NRCan/CanFlood/blob/63-person-testing-of-feature-report-creating/tests2/data/test_t2_A_BuildDialog_0/CanFlood_report_res1_0805.pdf>`_.
+From the layout window, click **Export to pdf** to generate a pdf of the report. For this tutorial, seven pages should be included in the exported pdf.
 
 *********************************************
 Tutorial 2b: Risk (L2) with Dike Failure
@@ -330,8 +330,8 @@ Tutorial 2b: Risk (L2) with Dike Failure
 
 Users should first complete Tutorials 1 and 2a. Tutorial 2b uses the same input data as 2a but expands the analysis to demonstrate the risk analysis of a simple levee failure through incorporating a single companion failure event into the model. This companion failure event is composed of two layers:
 
-  • *haz_1000_fail_A_tut2*: ‘failure raster’ indicating the WSL that would be realized were any of the levee segments to fail during the event; and
-  • *haz_1000_fail_A_tut2*: conditional exposure probability polygon layer with features indicating the extent and probability of failure of each levee segment during the flood event (‘failure polygons’). Notice this layer contains two features that overlap in places, corresponding potential flooding from two breach sites in the levee system. This layer will be used to tell CanFlood when and how to sample the failure raster.
+  • *haz_1000_fail_A_tut2.tif*: ‘failure raster’ indicating the WSL that would be realized were any of the levee segments to fail during the event; and
+  • *haz_1000_fail_A_tut2.geojson*: conditional exposure probability polygon layer with features indicating the extent and probability of failure of each levee segment during the flood event (‘failure polygons’). Notice this layer contains two features that overlap in places, corresponding potential flooding from two breach sites in the levee system. This layer will be used to tell CanFlood when and how to sample the failure raster.
 
 This simplification by using these two layers facilitates the specification of multiple failure probabilities but where any failure (or combination of failures) would realize the same WSL (:numref:`sec-05-build-conditionalP`’s ‘complex conditionals’). Ensure these layers are loaded into the same QGIS project as was used for Tutorial 2a.
 

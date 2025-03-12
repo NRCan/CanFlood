@@ -1,6 +1,9 @@
+alabaster==1.0.0
+attrs==23.2.0
 certifi==2024.2.2
 chardet==5.2.0
 charset-normalizer==3.3.2
+cligj==0.7.2
 colorama==0.4.6
 contourpy==1.2.1
 cycler==0.12.1

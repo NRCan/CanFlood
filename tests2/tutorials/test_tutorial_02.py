@@ -64,7 +64,7 @@ def crs():
 
 @pytest.mark.parametrize('absolute_fp',[True, False])
 @pytest.mark.parametrize('dialogClass',[BuildDialog], indirect=True)
-def test_tutorial_02a(session, true_dir, tmp_path, write, absolute_fp):
+def test_tutorial_02a(session, true_dir, tmp_path, write, absolute_fp, logger):
     """simulate tutorial 2A
     https://canflood.readthedocs.io/en/latest/06_tutorials.html#tutorial-2a-risk-l2-with-simple-events
     
@@ -87,6 +87,7 @@ def test_tutorial_02a(session, true_dir, tmp_path, write, absolute_fp):
         assert len(match_l)==1, f'failed to get a  unique match for {sfx}'
         return os.path.join(true_dir, match_l[0])
         
+    logger.info(f'start test_tutorial_02a with absolute_fp: {absolute_fp}')
     #===========================================================================
     # Build---------
     #===========================================================================
@@ -248,7 +249,7 @@ def test_tutorial_02a(session, true_dir, tmp_path, write, absolute_fp):
     
     dial._change_tab('tab_setup')
     
-    dial.radioButton.setChecked(True) #save plots to file
+    dial.radioButton_s_saveToFile.setChecked(True) #save plots to file
     dial.comboBox_JGfinv.setCurrentIndex(-1) #clear finv
     if absolute_fp:
         dial.radioButton_SS_fpAbs.setChecked(True)
@@ -331,7 +332,7 @@ def test_tutorial_02a(session, true_dir, tmp_path, write, absolute_fp):
 
     dial.lineEdit_cf_fp.setText(dial.get_cf_fp())
     
-    dial.radioButton.setChecked(True) #save plots to file
+    dial.radioButton_s_saveToFile.setChecked(True) #save plots to file
     dial.checkBox_SSoverwrite.setChecked(True) #set to true to prevent run_reporter crash
     
     #===========================================================================
@@ -360,5 +361,5 @@ def test_tutorial_02a(session, true_dir, tmp_path, write, absolute_fp):
     #===========================================================================
     # wrap
     #===========================================================================
-    print(f'finished w/ ControlFile: {dial.get_cf_fp()}')
+    logger.info(f'finished w/ ControlFile: {dial.get_cf_fp()}')
  

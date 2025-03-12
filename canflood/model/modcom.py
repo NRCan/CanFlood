@@ -557,23 +557,30 @@ class Model(ComWrkr,
                 log.debug('%s.%s:    %s'%(sectName, varName, valRaw))
                 if valRaw == '': continue #skip blanks
                 
-                if os.path.exists(valRaw):
-                    """switchged to warning... some tools may not use this fp"""
-                    log.warning(('%s.%s passed abosolute_fp=False but fp exists \n    %s'%(
-                        sectName, varName, valRaw)))
-                    continue
-                else:
+                #===============================================================
+                # if os.path.exists(valRaw):
+                #     """switchged to warning... some tools may not use this fp"""
+                #     log.warning(('%s.%s passed abosolute_fp=False but fp exists \n    %s'%(
+                #         sectName, varName, valRaw)))
+                #     continue
+                # else:
+                # 
+                #     #get the absolute filepath
+                #     fp = os.path.join(base_dir, valRaw)
+                #     """don't bother... some models may not use all the fps
+                #     better to let the check with handles catch things
+                #     assert os.path.exists(fp), '%s.%s not found'%(sectName, varName)"""
+                #     if not os.path.exists(fp) and warn:
+                #         log.warning('%s.%s got bad fp: %s'%(sectName, varName, fp))
+                #===============================================================
                 
-                    #get the absolute filepath
-                    fp = os.path.join(base_dir, valRaw)
-                    """don't bother... some models may not use all the fps
-                    better to let the check with handles catch things
-                    assert os.path.exists(fp), '%s.%s not found'%(sectName, varName)"""
-                    if not os.path.exists(fp) and warn:
-                        log.warning('%s.%s got bad fp: %s'%(sectName, varName, fp))
+                fp_aboslute = os.path.join(base_dir, valRaw)
+                if not os.path.exists(fp_aboslute) and warn:
+                    log.warning('%s.%s got bad fp: %s'%(sectName, varName, fp_aboslute))
+                
                 
                 #set it
-                res_d[sectName][varName]=fp
+                res_d[sectName][varName]=fp_aboslute
                 
         #=======================================================================
         # set the new values
@@ -1428,7 +1435,7 @@ class Model(ComWrkr,
 
         bdf = None
         
-        for prefix, fcolsi_df in finv_cdf.drop('ctype', axis=0).dropna(axis=1).T.groupby('nestID', axis=0):
+        for prefix, fcolsi_df in finv_cdf.drop('ctype', axis=0).dropna(axis=1).T.groupby('nestID'):
 
 
             #get slice and clean

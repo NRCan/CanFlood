@@ -362,7 +362,7 @@ class Qcoms(ComWrkr): #baseclass for working w/ pyqgis outside the native consol
                 
         self.vlay_drivers = vlay_drivers
         
-        log.debug('built driver:extensions dict: \n    %s'%vlay_drivers)
+        #log.debug('built driver:extensions dict: \n    %s'%vlay_drivers)
         
         return
         

@@ -557,7 +557,7 @@ class Rsamp(Plotr, Qcoms):
         #=======================================================================
         if clip_rlays:
             log.debug('trimming raster %s by AOI'%rlayRaw.name())
-            log.warning('not Tested!')
+            log.warning('not Tested!') #warning
             
             #clip to just the polygons
             rlayTrim = self.cliprasterwithpolygon(rlayProj,aoi_vlay, logger=log)
@@ -605,7 +605,7 @@ class Rsamp(Plotr, Qcoms):
             """control canvas loading in the plugin"""
             
         else:
-            log.warning('no operations triggerd')
+            log.warning('no operations triggerd') #warning
             resLay=resLay1
             
 
@@ -1512,7 +1512,7 @@ class Rsamp(Plotr, Qcoms):
             os.makedirs(out_dir)
             
         if os.path.exists(outputFile):
-            msg = 'requseted outputFile exists: %s'%outputFile
+            msg = 'requseted outputFile exists: %s'%outputFile #warning
             if self.overwrite:
                 log.warning(msg)
                 os.remove(outputFile)
@@ -1781,7 +1781,6 @@ class Rsamp(Plotr, Qcoms):
                      title=title, xlab = 'raster value',
 
                      val_str=self.val_str, **kwargs)
-        self.plt.show()
         
         return result
         
@@ -1800,7 +1799,6 @@ class Rsamp(Plotr, Qcoms):
                      title=title, xlab = 'hazard layer', ylab = 'raster value',
                      smry_method='mean',
                      val_str=self.val_str,   **kwargs)
-        self.plt.show()
         
         return result
         

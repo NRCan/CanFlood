@@ -357,7 +357,7 @@ class ComWrkr(object): #common methods for all classes
         if pval == '':
             pval = np.nan"""
         
-        log.debug('retrieved \'%s.%s\'=\'%s\' w/ type: \'%s\''%(sectName, varName, pval, type(pval)))
+        #log.debug('retrieved \'%s.%s\'=\'%s\' w/ type: \'%s\''%(sectName, varName, pval, type(pval)))
         return pval
     
     

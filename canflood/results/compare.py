@@ -135,9 +135,9 @@ class Cmpr(RiskPlotr):
         for i,(tag, fp) in enumerate(fps_d.items()):
             log.debug('loading %i/%i'%(i+1, len(fps_d)))
 
-            # build/load the children
+            # build/load the children. call model.modcom.Model.setup()
             sWrkr = Scenario(self, cf_fp=fp, absolute_fp=self.absolute_fp, 
-                             base_dir=os.path.dirname(fp), tag=tag).setup()
+                             base_dir=os.path.dirname(fp), tag=tag, logger=log).setup()
 
 
             # add to family
@@ -199,11 +199,13 @@ class Cmpr(RiskPlotr):
                 first = False
 
 
-        return self.plot_mRiskCurves(plotPars_d,y1lab=y1lab, 
+        result = self.plot_mRiskCurves(plotPars_d,y1lab=y1lab, 
                                      impactFmtFunc=self.impactFmtFunc,
                                      val_str=val_str, 
                                      logger=log,
                                      **plotKwargs)
+ 
+        return result
         
     def cf_compare(self, #compare control file values between Scenarios
                    sWrkr_d=None,
@@ -238,7 +240,8 @@ class Cmpr(RiskPlotr):
                     cdf = sdf
                     firstC=False
                 else:
-                    cdf = cdf.append(sdf)
+                    cdf = pd.concat([cdf, sdf], axis=0)
+ 
                     
             #add the control file path itself
             cdf.loc['cf_fp', childName] = sWrkr.cf_fp
@@ -424,10 +427,7 @@ class Scenario(RiskPlotr): #simple class for a scenario
     cfPars_d = None
     
     #plotting variables
-    """
-    plt.show()
-    moved to Model
-    """
+ 
     
     out_funcs_d = { #data tag:function that outputs it
         'r_ttl':'output_ttl'

@@ -401,7 +401,7 @@ class CurvePlotr(DFunc, Plotr):
                 
                 #figure controls
                 constrained_layout=None,
-                tight_layout=None,
+ 
                 
                 #plot controls
                 ax = None,
@@ -427,7 +427,7 @@ class CurvePlotr(DFunc, Plotr):
         
         if constrained_layout is None:
             constrained_layout=self.constrained_layout
-        if tight_layout is None: tight_layout=self.tight_layout
+
         
         """
         plt.show()
@@ -437,7 +437,7 @@ class CurvePlotr(DFunc, Plotr):
         #=======================================================================
         if ax is None:
 
-            fig = plt.figure(figsize=figsize,tight_layout=tight_layout,
+            fig = plt.figure(figsize=figsize,
                      constrained_layout = constrained_layout)
 
             ax = fig.add_subplot(subplot)  
@@ -473,12 +473,7 @@ class CurvePlotr(DFunc, Plotr):
         #==========================================================================
         #log.debug('plotting \"%s\' w/ \n    %s \n    %s'%( title, xvals, yvals))
         
-        ax.plot(xvals, yvals, 
-                #markerfacecolor='black',
-                #markersize=markersize, 
-                #fillstyle='full',
-
-                **kwargs)
+        ax.plot(xvals, yvals, **kwargs)
  
     
         return ax

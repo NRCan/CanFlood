@@ -419,18 +419,23 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
 
         return output
     
-    def run_plotRisk(self,
+    def run_plotRisk(self,*args,
                      plt_window=None,
-                     ): #single risk plot of total results
+                     ):
+        """#single risk plot of total results"""
         log = self.logger.getChild('run_plotRisk')
         log.info('user pushed \'plotRisk\'')
+        
         
         #=======================================================================
         # collect inputs
         #=======================================================================
         self._set_setup(set_cf_fp=True)
-
+        if plt_window is None: 
+            plt_window=self.plt_window
+ 
             
+         
         #=======================================================================
         # setup and load
         #=======================================================================
@@ -630,6 +635,9 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         return df_raw
 
     def run_compare(self):
+        """compare control files
+        pushButton_C_compare
+        """
         log = self.logger.getChild('run_compare')
         log.info('user pushed \'run_compare\'')
         
@@ -656,7 +664,10 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         if self.checkBox_C_cf.isChecked():
             mdf = wrkr.cf_compare()
-            mdf.to_csv(os.path.join(wrkr.out_dir, 'CFcompare_%s_%i.csv'%(wrkr.tag, len(mdf.columns))))
+            ofp = os.path.join(wrkr.out_dir, 'CFcompare_%s_%i.csv'%(wrkr.tag, len(mdf.columns)))
+            mdf.to_csv(ofp)
+            self.comparison_df_ofp = ofp #attach for testing
+            log.info(f'wrote comparison {str(mdf.shape)} to \n    %s'%ofp)
         
         self.feedback.setProgress(70)
         #=======================================================================
@@ -723,6 +734,7 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         # write
         #=======================================================================
+        #composite scenario
         if self.checkBox_C_composite.isChecked():
             cWrkr.write(logger=log, out_dir=self.out_dir)
             self.lineEdit_cf_fp.setText(cWrkr.cf_fp) #change the dialog's selection
@@ -852,7 +864,8 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
 
         #=======================================================================
         # init
-        #=======================================================================  
+        #======================================================================= 
+        log.debug(f'initiating ReportGenerator')
         from canflood.results.reporter import ReportGenerator
         
         kwargs = {attn:getattr(self, attn) for attn in ['logger', 'tag', 'cf_fp', 
@@ -905,9 +918,11 @@ class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         #=======================================================================
         self.feedback.setProgress(95)
         
-        log.push('run_reporter finished')
+        
         self.feedback.upd_prog(None)
         
         self.report=report #for testing
+        
+        log.push('run_reporter finished')
 
         return  
