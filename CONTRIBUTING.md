@@ -27,7 +27,7 @@ Execute the below steps to prepare and release an update.
 
 - [ ] ensure the documentation builds are passing on ReadTheDocs
 
-- [ ] update the QGIS and CanFlood version tag on [build.ui](./canflood/build/build.ui) and the project [README.md](./README.md). 
+- [ ] update the QGIS and CanFlood version tag in `./canflood/__init__.py` and the project [README.md](./README.md). 
 
 - [ ] update the **Updates** section of the project [README.md](./README.md). 
 
@@ -37,7 +37,7 @@ Execute the below steps to prepare and release an update.
 
 - [ ]  execute all pytests. investigate warnings. fix errors. (ctrl+f in console for 'error' and 'warning' as a workaround)
 
-- [ ] use [plug_zip.bat](./dev_tools/plug_zip.bat) to create the plugin zip (`canflood.zip`) installable version of the release candidate in `./plugin_zips`
+- [ ] create the plugin zip (`canflood.zip`) installable version of the release candidate (.gitignored)
 
 - [ ] perform a **person test** by having a non-developer follow relevant tutorials. investigate warnings and fix errors.
 
