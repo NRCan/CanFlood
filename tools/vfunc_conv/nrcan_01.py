@@ -500,46 +500,48 @@ def run(set_d,
         
         
 
-if __name__=='__main__':
-    
-    
-    out_dir = run(
-        {
-        #=======================================================================
-        # 'Acres_1968':{
-        #     'srch_str':'Acres Ltd., Guidelines for analysis',
-        #     'as_pct':False,
-        #     'metac_d':{
-        #                   'desc':'depth-damage functions for Residential, Commericial, and Inudstrial buildings in 1968 Galt, ON',
-        #             },
-        #             },
-        #=======================================================================
-        
-          'KGS_2000':{
-              'srch_str':'KGS Group, Red River',
-              'as_pct':True,
-              'metac_d':{
-                          'desc':'depth-damage functions for buildings and basements in 1997 Southern Manitoba',
-                          'location':'Red River Basin, MB',
-                          'scale_var':'total market value',
-                          'scale_units':'$CAD',
-                          'impact_units':'pct',
-                          'exposure_var':'flood depth above main floor',
-                          'empirical_synthetic':'semi-empirical',
-                          'cost_year':'1997',
-                    },
-              'lt_impactVal_d':{'total':'total foundation, structure components, and moveable losses'},
-              'noMeta_colns':{'Type', 'Notes on Depths', 'Notes2', '$ Year', 'Region/Floodplain', 'Coverage of Report'}
-             },
-        }
-        )
-
-    
-
-
-    #===========================================================================
-    # wrap
-    #===========================================================================
-    #force_open_dir(wrkr.out_dir)
-    tdelta = datetime.datetime.now() - start
-    print('finished in %s'%tdelta)
+#===============================================================================
+# if __name__=='__main__':
+#     
+#     
+#     out_dir = run(
+#         {
+#         #=======================================================================
+#         # 'Acres_1968':{
+#         #     'srch_str':'Acres Ltd., Guidelines for analysis',
+#         #     'as_pct':False,
+#         #     'metac_d':{
+#         #                   'desc':'depth-damage functions for Residential, Commericial, and Inudstrial buildings in 1968 Galt, ON',
+#         #             },
+#         #             },
+#         #=======================================================================
+#         
+#           'KGS_2000':{
+#               'srch_str':'KGS Group, Red River',
+#               'as_pct':True,
+#               'metac_d':{
+#                           'desc':'depth-damage functions for buildings and basements in 1997 Southern Manitoba',
+#                           'location':'Red River Basin, MB',
+#                           'scale_var':'total market value',
+#                           'scale_units':'$CAD',
+#                           'impact_units':'pct',
+#                           'exposure_var':'flood depth above main floor',
+#                           'empirical_synthetic':'semi-empirical',
+#                           'cost_year':'1997',
+#                     },
+#               'lt_impactVal_d':{'total':'total foundation, structure components, and moveable losses'},
+#               'noMeta_colns':{'Type', 'Notes on Depths', 'Notes2', '$ Year', 'Region/Floodplain', 'Coverage of Report'}
+#              },
+#         }
+#         )
+# 
+#     
+# 
+# 
+#     #===========================================================================
+#     # wrap
+#     #===========================================================================
+#     #force_open_dir(wrkr.out_dir)
+#     tdelta = datetime.datetime.now() - start
+#     print('finished in %s'%tdelta)
+#===============================================================================
