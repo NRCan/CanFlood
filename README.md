@@ -22,8 +22,11 @@ Happy flood risk modelling!
 
 ## Updates
 
-v1.2.1 is released addressing the following:
+v1.2.2 released fixing:
+- resource rendering issue
 
+
+[v1.2.1](https://github.com/NRCan/CanFlood/releases/tag/v1.2.1) is released addressing the following:
 - update to QGIS 3.34
 - address issue 107: module 'scipy.integrate' has no attribute 'trapz'
 - address issue 106: pytest not catching backend errors w/ Qtest
