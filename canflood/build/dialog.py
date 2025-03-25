@@ -49,6 +49,12 @@ from canflood.build.dialog_rprep import RPrepDialog
 #===============================================================================
 # load UI file
 #===============================================================================
+#resources pathing workaround
+from ..parameters import plugin_dir
+resources_module_fp = os.path.join(plugin_dir, 'resources.py')
+assert os.path.exists(resources_module_fp), resources_module_fp 
+if not os.path.dirname(resources_module_fp) in sys.path:
+    sys.path.append(os.path.dirname(resources_module_fp))
  
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 ui_fp = os.path.join(os.path.dirname(__file__), 'build.ui')
