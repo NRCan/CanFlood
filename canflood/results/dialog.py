@@ -3,7 +3,7 @@
 results toolbox dialog
 """
 
-import os, copy
+import os, copy, sys
 
 #===============================================================================
 # PyQT
@@ -25,6 +25,7 @@ from canflood.hlpr.plug import QprojPlug, bind_MapLayerComboBox
 from canflood.model.modcom import Model
 
 
+
 from canflood.results.djoin import Djoiner
 from canflood.results.riskPlot import RiskPlotr
 from canflood.results.compare import Cmpr
@@ -34,11 +35,15 @@ from canflood.results.cba import CbaWrkr
 from canflood.misc.curvePlot import CurvePlotr
 
 
+#===============================================================================
+# load qt ui
+#===============================================================================
+
+
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 ui_fp = os.path.join(os.path.dirname(__file__), 'results.ui')
-assert os.path.exists(ui_fp)
-FORM_CLASS, _ = uic.loadUiType(ui_fp)
-
+assert os.path.exists(ui_fp), f'UI file not found: {ui_fp}'
+FORM_CLASS, _ = uic.loadUiType(ui_fp, resource_suffix='') #Unknown C++ class: Qgis
 
 class ResultsDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
     
