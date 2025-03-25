@@ -559,24 +559,26 @@ class HAZconv(VfConv):
         
 
 
-if __name__=='__main__':
-    out_dir = r'C:\LS\03_TOOLS\CanFlood\outs\misc\vfunc_conv\hazus'
-    
-    wrkr = HAZconv(out_dir=out_dir, 
-                   figsize = (10, 10),
-                   )
-    raw_lib_d = wrkr.load()
-    cLib_d, meta_dx = wrkr.convert(raw_lib_d)
-    
-    out_meta = wrkr.output_set(cLib_d, plot=True)
-    
-    meta_dx.to_csv( 
-                 os.path.join(wrkr.out_dir, 'meta_%s_%i.csv'%(wrkr.libName, len(meta_dx)))
-                 )
-
-    #===========================================================================
-    # wrap
-    #===========================================================================
-    #force_open_dir(wrkr.out_dir)
-    tdelta = datetime.datetime.now() - start
-    print('finished in %s'%tdelta)
+#===============================================================================
+# if __name__=='__main__':
+#     out_dir = r'C:\LS\03_TOOLS\CanFlood\outs\misc\vfunc_conv\hazus'
+#     
+#     wrkr = HAZconv(out_dir=out_dir, 
+#                    figsize = (10, 10),
+#                    )
+#     raw_lib_d = wrkr.load()
+#     cLib_d, meta_dx = wrkr.convert(raw_lib_d)
+#     
+#     out_meta = wrkr.output_set(cLib_d, plot=True)
+#     
+#     meta_dx.to_csv( 
+#                  os.path.join(wrkr.out_dir, 'meta_%s_%i.csv'%(wrkr.libName, len(meta_dx)))
+#                  )
+# 
+#     #===========================================================================
+#     # wrap
+#     #===========================================================================
+#     #force_open_dir(wrkr.out_dir)
+#     tdelta = datetime.datetime.now() - start
+#     print('finished in %s'%tdelta)
+#===============================================================================

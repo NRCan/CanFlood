@@ -492,7 +492,7 @@ class Dmg2(Model, DFunc, Plotr):
             """multi-threading would nice for this loop"""
             
             #loop each depth through the damage function to get the result                
-            e_impacts_d = {dep:dfunc.get_dmg(dep) for dep in deps_ar}
+            e_impacts_d = {dep:dfunc.get_dmg(dep) for dep in deps_ar} #modcom.DFunc.get_dmg()
             
             #===================================================================
             # link

@@ -168,34 +168,30 @@ class JRConv(VfConv):
 
                 
 
-
-"""
-view(dxind)
-view(dx_raw)
-"""
+ 
 
 
-
-
-if __name__=='__main__':
-    out_dir = r'C:\LS\03_TOOLS\CanFlood\outs\misc\vfunc_conv'
-    
-    wrkr = JRConv(out_dir=out_dir, figsize = (10,10))
-    wrkr.load()
-    cLib_d = wrkr.convert()
-    
-    wrkr.output(cLib_d)
-    
-    #===========================================================================
-    # plots
-    #===========================================================================
-
-    fig = wrkr.plotAll(cLib_d, title=wrkr.libName,lib_as_df=True)
-    wrkr.output_fig(fig)
-    
-    #===========================================================================
-    # wrap
-    #===========================================================================
-    force_open_dir(wrkr.out_dir)
-    tdelta = datetime.datetime.now() - start
-    print('finished in %s'%tdelta)
+#===============================================================================
+# if __name__=='__main__':
+#     out_dir = r'C:\LS\03_TOOLS\CanFlood\outs\misc\vfunc_conv'
+#     
+#     wrkr = JRConv(out_dir=out_dir, figsize = (10,10))
+#     wrkr.load()
+#     cLib_d = wrkr.convert()
+#     
+#     wrkr.output(cLib_d)
+#     
+#     #===========================================================================
+#     # plots
+#     #===========================================================================
+# 
+#     fig = wrkr.plotAll(cLib_d, title=wrkr.libName,lib_as_df=True)
+#     wrkr.output_fig(fig)
+#     
+#     #===========================================================================
+#     # wrap
+#     #===========================================================================
+#     force_open_dir(wrkr.out_dir)
+#     tdelta = datetime.datetime.now() - start
+#     print('finished in %s'%tdelta)
+#===============================================================================

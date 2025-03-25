@@ -5,6 +5,12 @@ main plugin parent
 #==============================================================================
 #imports
 #==============================================================================
+#import weakref
+import sys
+import os.path
+from qgis.core import Qgis, QgsMessageLog, QgsExpression
+
+
 #from PyQt5.QtCore import QSettings, QTranslator, QCoreApplication, QObject
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QMenu
@@ -13,9 +19,7 @@ from PyQt5.QtWidgets import QAction, QFileDialog, QListWidget, QMenu
 #from .resources import *
 
 
-#import weakref
-import os.path
-from qgis.core import Qgis, QgsMessageLog, QgsExpression
+
 
 
 
@@ -38,9 +42,17 @@ from .sensi.dialog import SensiDialog
 from .misc.rfda.dialog import RfdaDialog
 from .misc.dikes.dialog import DikesDialog
 from .misc.webConnections import WebConnectAction
-from. misc.layerStyles import StylesAction
+from .misc.layerStyles import StylesAction
 
 
+#===============================================================================
+# resources path workaround
+#===============================================================================
+from .parameters import plugin_dir
+resources_module_fp = os.path.join(plugin_dir, 'resources.py')
+assert os.path.exists(resources_module_fp), resources_module_fp 
+if not os.path.dirname(resources_module_fp) in sys.path:
+    sys.path.append(os.path.dirname(resources_module_fp))
 
 
 class CanFlood(object):

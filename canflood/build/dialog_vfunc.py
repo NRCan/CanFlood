@@ -257,7 +257,7 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
         # data setup
         #=======================================================================
         focus_dir = self.vdata_d[libName]['basedir']
-        #focus_dir = r'C:\LS\03_TOOLS\CanFlood\_git\canflood\_pars\vfunc'
+
 
         #=======================================================================
         # #build the model
@@ -600,11 +600,7 @@ class vDialog(QtWidgets.QDialog, FORM_CLASS, DFunc, QprojPlug):
                 
             
         
-if __name__=='__main__':
-    print('yay')
-
-    
-
+ 
         
         
         

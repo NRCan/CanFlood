@@ -3,7 +3,7 @@
 ui class for the MODEL toolset
 """
 
-import os,  os.path, time
+import os,  os.path, time, sys
 from shutil import copyfile
 
 from PyQt5 import uic, QtWidgets
@@ -34,13 +34,17 @@ from canflood.hlpr.plug import QprojPlug, bind_MapLayerComboBox
 from canflood.hlpr.basic import force_open_dir
 from canflood.hlpr.exceptions import QError as Error
 
-
+ 
 #===============================================================================
 # load qt ui
 #===============================================================================
+ 
+
+# This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 ui_fp = os.path.join(os.path.dirname(__file__), 'model.ui')
-assert os.path.exists(ui_fp)
-FORM_CLASS, _ = uic.loadUiType(ui_fp)
+assert os.path.exists(ui_fp), f'UI file not found: {ui_fp}'
+FORM_CLASS, _ = uic.loadUiType(ui_fp, resource_suffix='') #Unknown C++ class: Qgis
+
 
 
 class ModelDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):

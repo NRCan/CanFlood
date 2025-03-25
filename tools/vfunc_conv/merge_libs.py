@@ -137,22 +137,24 @@ class VfMerge(VfConv):
 
     
 
-if __name__=='__main__':
-    
-    wrkr = VfMerge(out_dir=r'C:\LS\02_WORK\NHC\202012_Kent\03_SOFT\_py\_out\cf\vf_merge')
-    
-    lib_d = wrkr.load_all(
-        fp_l=['curves_CFcc_20200608_nrp.xls','curves_CFcc_20200608_ag.xls'],
-        base_dir=r'C:\LS\02_WORK\NHC\202012_Kent\04_CALC\risk\curves')
-    
-    mlib = wrkr.run(lib_d, overlaps='warn')
-    
-    wrkr.output(mlib, ofn='curves_merge_%s.xls'%datetime.datetime.now().strftime('%Y-%m-%d'))
-    
-    #===========================================================================
-    # wrap
-    #===========================================================================
-    #force_open_dir(wrkr.out_dir)
-    tdelta = datetime.datetime.now() - start
-    print('finished in %s'%tdelta)
-    
+#===============================================================================
+# if __name__=='__main__':
+#     
+#     wrkr = VfMerge(out_dir=r'C:\LS\02_WORK\NHC\202012_Kent\03_SOFT\_py\_out\cf\vf_merge')
+#     
+#     lib_d = wrkr.load_all(
+#         fp_l=['curves_CFcc_20200608_nrp.xls','curves_CFcc_20200608_ag.xls'],
+#         base_dir=r'C:\LS\02_WORK\NHC\202012_Kent\04_CALC\risk\curves')
+#     
+#     mlib = wrkr.run(lib_d, overlaps='warn')
+#     
+#     wrkr.output(mlib, ofn='curves_merge_%s.xls'%datetime.datetime.now().strftime('%Y-%m-%d'))
+#     
+#     #===========================================================================
+#     # wrap
+#     #===========================================================================
+#     #force_open_dir(wrkr.out_dir)
+#     tdelta = datetime.datetime.now() - start
+#     print('finished in %s'%tdelta)
+#     
+#===============================================================================

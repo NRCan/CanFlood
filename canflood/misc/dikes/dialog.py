@@ -507,9 +507,7 @@ class DikesDialog(QtWidgets.QDialog, FORM_CLASS, QprojPlug):
         log.info('finisehd Join Areas w/ %i'%len(vlay_d))
         self.feedback.upd_prog(None)
         
-if __name__=='__main__':
-    print('???')
-
+ 
     
 
         

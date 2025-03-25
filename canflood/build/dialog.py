@@ -33,7 +33,7 @@ from canflood.hlpr.plug import (
     )
 from canflood.hlpr.basic import set_info
 from canflood.hlpr.exceptions import QError as Error
- 
+from ..parameters import plugin_dir
 
 #get sub-models
 from canflood.build.rsamp import Rsamp
@@ -45,13 +45,21 @@ from canflood.build.validator import Vali
 from canflood.build.dialog_vfunc import vDialog
 from canflood.build.dialog_rprep import RPrepDialog
 
+
 #===============================================================================
 # load UI file
 #===============================================================================
+#resources pathing workaround
+from ..parameters import plugin_dir
+resources_module_fp = os.path.join(plugin_dir, 'resources.py')
+assert os.path.exists(resources_module_fp), resources_module_fp 
+if not os.path.dirname(resources_module_fp) in sys.path:
+    sys.path.append(os.path.dirname(resources_module_fp))
+ 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 ui_fp = os.path.join(os.path.dirname(__file__), 'build.ui')
-assert os.path.exists(ui_fp), 'failed to find the ui file: \n    %s'%ui_fp
-FORM_CLASS, _ = uic.loadUiType(ui_fp)
+assert os.path.exists(ui_fp), f'UI file not found: {ui_fp}'
+FORM_CLASS, _ = uic.loadUiType(ui_fp, resource_suffix='') #Unknown C++ class: Qgis
 
 
 #===============================================================================
