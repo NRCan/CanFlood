@@ -49,7 +49,7 @@ Execute the below steps to prepare and release an update.
 
 ### Step 3: Publish the plugin on the QGIS plugin repo
 
-- login to [plugins.qgis.org](https://plugins.qgis.org/accounts/login/?next=/plugins/my) using the CanFlood credentials (ask Nicky). Navigate to **Upload a plugin** and select the plugin zip file.
+- login to [plugins.qgis.org](https://plugins.qgis.org/accounts/login/?next=/plugins/my) using the CanFlood credentials (ask Nicky). Navigate to **CanFlood** and select **Add Version**. Click **Save** and the web tool will do some simple checks on the .zip. 
 
 - In QGIS, refresh the repository and ensure that the new version is available (may take ~10mins for the version to be available). From a clean profile, upgrade and check that it works.
 

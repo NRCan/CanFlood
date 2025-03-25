@@ -4,7 +4,7 @@
 
 [general]
 name=CanFlood
-qgisMinimumVersion=3.22
+qgisMinimumVersion=3.34
 qgisMaximumVersion=3.99
 description=Flood risk modelling toolbox. 
 description[fr]=Boîte à outils de modélisation des risques d’inondation
