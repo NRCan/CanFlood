@@ -6,8 +6,6 @@ Notes and Acknowledgements
 
 CanFlood is an open-source experimental flood risk modelling platform. Natural Resources Canada and IBI Group assume no liability for any errors or inaccuracies. The tools provided in CanFlood are for convenience only, and the user is responsible for developing their own tests and confidence in any model results.
 
-For the latest manual and software version, please visit the project page:
-https://github.com/IBIGroupCanWest/CanFlood
 
 **Development Acknowledgements**
 
